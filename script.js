@@ -66,15 +66,19 @@ async function loadTutorials() {
         }
         
         // List of tutorial files (you'll add more as you create them)
-        const tutorialFiles = [
+                const tutorialFiles = [
             'introduction-to-bioinformatics.md',
-            'command-line-basics-detailed.md',
-            'conda-mamba-installation-guide.md',
-            'single-cell-rnaseq-introduction.md',
+            'conda-mamba-part1.md',
+            'single-cell-rnaseq-part2.md',
+            'command-line-part2.md',
             '1-Connection.md',
+            'single-cell-rnaseq-part3.md',
             '2-HPC_Basic_Commands.md',
-            '3-Writing_a_Submission_Script.md',
-            '4-Support.md'
+            'command-line-part3.md',
+            'command-line-part1.md',
+            '4-Support.md',
+            'hpc-submission-part1.md',
+            'single-cell-rnaseq-part1.md',
         ];
         
         tutorials = [];

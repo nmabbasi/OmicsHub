@@ -1,9 +1,9 @@
 ---
-title: "Writing a Submission script for Linux"
+title: "Writing a Submission script for Linux - Part 1"
 date: "2025-08-23"
 author: "Shell2R Team"
 category: "HPC"
-excerpt: "Learn how to write and submit job scripts to HPC schedulers, automating tasks and efficiently managing computational workloads."
+excerpt: "Part 1 of the Writing a Submission script for Linux series."
 image: "images/sc.png"
 ---
 
