@@ -1,9 +1,9 @@
 ---
-title: "Single-cell RNA-seq Analysis: From Raw Data to Biological Insights - Part 2"
+title: "Single-cell RNA-seq: Quality Control, Normalization, and Dimensionality Reduction"
 date: "2025-08-12"
 author: "OmicsHub Team"
 category: "Single-cell RNA-seq"
-excerpt: "Part 2 of the Single-cell RNA-seq Analysis: From Raw Data to Biological Insights series."
+excerpt: "Step-by-step guide to filtering low-quality cells, normalizing count data, selecting highly variable genes, and performing PCA and UMAP for visualization."
 image: "images/single-cell-analysis.png"
 ---
 

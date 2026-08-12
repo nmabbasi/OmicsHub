@@ -1,9 +1,9 @@
 ---
-title: "Writing a Submission script for Linux - Part 1"
+title: "HPC Job Submission: Writing Slurm Scripts on Linux Clusters"
 date: "2025-08-23"
 author: "OmicsHub Team"
 category: "HPC"
-excerpt: "Part 1 of the Writing a Submission script for Linux series."
+excerpt: "Learn how to write and submit Slurm batch scripts on HPC clusters, allocate compute resources efficiently, and run parallel jobs at scale."
 image: "images/sc.png"
 ---
 
@@ -31,7 +31,6 @@ I use `ibrain` as the argument for `--partition`. You may not have access to it.
 #SBATCH --error %x-%j.out
 #SBATCH --hint=nomultithread
 
-## This is a comment.
 
 module purge
 module load gcc/7.3.1
@@ -145,7 +144,6 @@ The rest of this documentation assumes we don’t use hyperthreading.
 #SBATCH --error %x-%j.out
 #SBATCH --hint=nomultithread
 
-## This is a comment.
 
 module purge
 module load gcc/7.3.1
@@ -172,7 +170,6 @@ Here is the full script.
 #SBATCH --error %x-%j.out
 #SBATCH --hint=nomultithread
 
-## This is a comment.
 
 module purge
 module load gcc/7.3.1
@@ -203,7 +200,6 @@ This is useful when you want to use the same programs multiple times with variou
 #SBATCH --error %x-%A-%a.out
 #SBATCH --hint=nomultithread
 
-## This is a comment.
 
 module purge
 module load gcc/7.3.1

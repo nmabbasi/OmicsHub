@@ -1,9 +1,9 @@
 ---
-title: "Command Line Mastery: A Detailed Guide for Bioinformatics Beginners - Part 2"
+title: "Command Line for Bioinformatics: Text Processing and Data Manipulation"
 date: "2025-08-14"
 author: "OmicsHub Team"
 category: "Shell Commands"
-excerpt: "Part 2 of the Command Line Mastery: A Detailed Guide for Bioinformatics Beginners series."
+excerpt: "Master grep, sed, cut, and sort to filter, extract, and reshape biological data files directly from the command line."
 image: "images/command-line-terminal.png"
 ---
 

@@ -1,9 +1,9 @@
 ---
-title: "Conda and Mamba: The Complete Installation and Usage Guide for Bioinformatics - Part 1"
+title: "Conda and Mamba: Managing Software Environments for Reproducible Bioinformatics"
 date: "2025-08-13"
 author: "OmicsHub Team"
 category: "Conda"
-excerpt: "Part 1 of the Conda and Mamba: The Complete Installation and Usage Guide for Bioinformatics series."
+excerpt: "A complete guide to installing Conda and Mamba, creating isolated environments, and managing bioinformatics software to ensure fully reproducible analyses."
 image: "images/conda-environment.png"
 ---
 

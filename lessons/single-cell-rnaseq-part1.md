@@ -1,9 +1,9 @@
 ---
-title: "Single-cell RNA-seq Analysis: From Raw Data to Biological Insights - Part 1"
+title: "Single-cell RNA-seq: Concepts, Technologies, and Experimental Design"
 date: "2025-08-12"
 author: "OmicsHub Team"
 category: "Single-cell RNA-seq"
-excerpt: "Part 1 of the Single-cell RNA-seq Analysis: From Raw Data to Biological Insights series."
+excerpt: "Understand the principles behind single-cell RNA sequencing, key technologies (10x Genomics, Smart-seq2), and how to design your experiment for meaningful biological discovery."
 image: "images/single-cell-analysis.png"
 ---
 

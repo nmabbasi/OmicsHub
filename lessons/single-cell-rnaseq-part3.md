@@ -1,9 +1,9 @@
 ---
-title: "Single-cell RNA-seq Analysis: From Raw Data to Biological Insights - Part 3"
+title: "Single-cell RNA-seq: Clustering, Differential Expression, and Biological Interpretation"
 date: "2025-08-12"
 author: "OmicsHub Team"
 category: "Single-cell RNA-seq"
-excerpt: "Part 3 of the Single-cell RNA-seq Analysis: From Raw Data to Biological Insights series."
+excerpt: "Cluster cells into transcriptionally distinct populations, identify marker genes through differential expression analysis, and annotate cell types with biological meaning."
 image: "images/single-cell-analysis.png"
 ---
 

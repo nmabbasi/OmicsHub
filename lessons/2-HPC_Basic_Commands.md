@@ -1,9 +1,9 @@
 ---
-title: "HPC Basic Commands for Linux"
+title: "HPC Essentials: Modules, Partitions, and Job Monitoring on Linux Clusters"
 date: "2025-08-23"
 author: "OmicsHub Team"
 category: "HPC"
-excerpt: "Master fundamental HPC commands for navigating the file system, managing files, and exploring data on remote clusters.."
+excerpt: "Learn to load software modules, inspect cluster partitions and nodes, monitor running jobs with squeue, and submit your first tasks on an HPC system."
 image: "images/hpc.png"
 ---
 

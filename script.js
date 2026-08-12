@@ -285,6 +285,18 @@ function showFallbackTutorials() {
     updateSidebar();
 }
 
+// Map category to color badge CSS class
+function getBadgeClass(category) {
+    const map = {
+        'HPC': 'badge-hpc',
+        'Shell Commands': 'badge-shell',
+        'Conda': 'badge-conda',
+        'Single-cell RNA-seq': 'badge-scrna',
+        'Bioinformatics': 'badge-bio',
+    };
+    return map[category] || 'badge-bio';
+}
+
 // Update tutorials list on homepage
 function updateTutorialsList() {
     const tutorialsList = document.getElementById('tutorials-list');
@@ -298,18 +310,15 @@ function updateTutorialsList() {
     const latestTutorials = tutorials.slice(0, 5); // Show latest 5 tutorials
     
     tutorialsList.innerHTML = latestTutorials.map(tutorial => `
-        <article class="tutorial-card cursor-pointer" onclick="showTutorial(\'${tutorial.id}\')">
-            <div class="flex items-start justify-between mb-3">
-                <span class="category">${tutorial.category}</span>
-                <span class="text-sm text-gray-500">${formatDate(tutorial.date)}</span>
+        <article class="tutorial-card" onclick="showTutorial('${tutorial.id}')">
+            <div class="flex items-center justify-between mb-3">
+                <span class="badge ${getBadgeClass(tutorial.category)}">${tutorial.category}</span>
+                <span class="meta" style="margin:0">${formatDate(tutorial.date)}</span>
             </div>
             <h3>${tutorial.title}</h3>
-            <div class="meta">
-                by ${tutorial.author}
-            </div>
             <p class="excerpt">${tutorial.excerpt}</p>
-            <a href="#" class="read-more" onclick="event.stopPropagation(); showTutorial(\'${tutorial.id}\')">
-                Read More →
+            <a href="#" class="read-more" onclick="event.stopPropagation(); showTutorial('${tutorial.id}')">
+                Read article <svg style="width:14px;height:14px;display:inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
             </a>
         </article>
     `).join('');
@@ -394,24 +403,16 @@ function updateTutorialsList(tutorialsToShow = null) {
     }
     
     tutorialsList.innerHTML = displayTutorials.map(tutorial => `
-        <article class="tutorial-card cursor-pointer" onclick="showTutorial('${tutorial.id}')">
-            <div class="flex items-start justify-between mb-3">
-                <span class="category">${tutorial.category}</span>
-                <span class="text-sm text-gray-500">${formatDate(tutorial.date)}</span>
+        <article class="tutorial-card" onclick="showTutorial('${tutorial.id}')">
+            <div class="flex items-center justify-between mb-3">
+                <span class="badge ${getBadgeClass(tutorial.category)}">${tutorial.category}</span>
+                <span class="meta" style="margin:0">${formatDate(tutorial.date)}</span>
             </div>
-            <h3 class="text-xl font-bold text-gray-900 mb-3 hover:text-blue-600 transition-colors">
-                ${tutorial.title}
-            </h3>
-            <p class="text-gray-600 mb-3 leading-relaxed">${tutorial.excerpt}</p>
-            <div class="flex items-center justify-between">
-                <span class="text-sm text-gray-500">by ${tutorial.author}</span>
-                <a href="#tutorial-${tutorial.id}" class="read-more inline-flex items-center text-blue-600 hover:text-blue-800 font-medium" onclick="event.stopPropagation(); showTutorial('${tutorial.id}')">
-                    Read More 
-                    <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                    </svg>
-                </a>
-            </div>
+            <h3>${tutorial.title}</h3>
+            <p class="excerpt">${tutorial.excerpt}</p>
+            <a href="#" class="read-more" onclick="event.stopPropagation(); showTutorial('${tutorial.id}')">
+                Read article <svg style="width:14px;height:14px;display:inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+            </a>
         </article>
     `).join('');
 }

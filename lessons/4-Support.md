@@ -1,9 +1,9 @@
 ---
-title: "Linux Support"
+title: "Troubleshooting HPC Issues: Getting Help on Linux Clusters"
 date: "2025-08-23"
 author: "OmicsHub Team"
 category: "HPC"
-excerpt: "Discover how to troubleshoot issues and get help effectively when working on HPC systems, ensuring smooth workflow execution."
+excerpt: "Learn how to diagnose common errors on HPC systems, use man pages and help flags effectively, read error logs, and know when and how to contact cluster support."
 image: "images/support.png"
 ---
 

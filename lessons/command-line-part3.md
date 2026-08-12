@@ -1,9 +1,9 @@
 ---
-title: "Command Line Mastery: A Detailed Guide for Bioinformatics Beginners - Part 3"
+title: "Command Line for Bioinformatics: Pipelines, Permissions, and Automation"
 date: "2025-08-14"
 author: "OmicsHub Team"
 category: "Shell Commands"
-excerpt: "Part 3 of the Command Line Mastery: A Detailed Guide for Bioinformatics Beginners series."
+excerpt: "Build reusable bioinformatics pipelines using awk, pipes, redirects, and shell scripting best practices for reproducible research."
 image: "images/command-line-terminal.png"
 ---
 
