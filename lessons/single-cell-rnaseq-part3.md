@@ -210,7 +210,7 @@ Combining RNA-seq with other measurements:
 
 Single-cell RNA-seq has revolutionized our understanding of biology by revealing the incredible diversity and complexity of cellular systems. What once appeared to be homogeneous cell populations are now known to contain multiple distinct subtypes, each with unique functions and regulatory programs.
 
-The analytical techniques covered in this tutorial provide a foundation for exploring single-cell data, but remember that the technology and methods are rapidly evolving. The key principles: careful quality control, appropriate normalization, thoughtful interpretation, and biological validation: will remain important regardless of which specific tools you use.
+The analytical techniques covered in this tutorial provide a foundation for exploring single-cell data, but remember that the technology and methods are fast-moving. The key principles: careful quality control, appropriate normalization, thoughtful interpretation, and biological validation: will remain important regardless of which specific tools you use.
 
 As you begin your single-cell analysis journey, remember that the goal isn't just to generate pretty UMAP plots or identify clusters. The real value comes from translating these computational results into biological insights that advance our understanding of health and disease.
 
