@@ -21,5 +21,5 @@ This repository hosts the source code for the interactive web portal, featuring 
 - **scRNA-seq Mastery:** Dedicated tutorials on processing, quality control, dimensional reduction, and differential expression analysis of single-cell datasets.
 
 ## 📧 Contact & Author
-**Dr. Nasir Mahmood Abbasi**  
+**Nasir Mahmood Abbasi, Ph.D.**  
 GitHub: [@nmabbasi](https://github.com/nmabbasi)
