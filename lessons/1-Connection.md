@@ -20,9 +20,6 @@ Download and install [MobaXterm](https://mobaxterm.mobatek.net/download.html).
 
 Run MobaXterm, click on `Start local terminal`, and execute the following command:
 
-![Start](images/Mobaxterm.png)
-
-
 ```bash
 ssh-keygen -t rsa -f esmeralda
 ```

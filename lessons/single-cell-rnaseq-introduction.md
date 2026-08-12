@@ -488,7 +488,7 @@ As you begin your single-cell analysis journey, remember that the goal isn't jus
 Ready to dive into single-cell analysis? Here's your roadmap:
 
 ### 1. **Set Up Your Environment**
-Follow our [Conda and Mamba guide](conda-mamba-installation-guide.md) to install the necessary software:
+Follow our [Conda and Mamba guide](#tutorial-conda-mamba-installation-guide) to install the necessary software:
 ```bash
 # Create single-cell environment
 mamba create -n single-cell r-base r-seurat r-ggplot2 r-dplyr jupyter scanpy
@@ -496,8 +496,8 @@ mamba create -n single-cell r-base r-seurat r-ggplot2 r-dplyr jupyter scanpy
 
 ### 2. **Master the Fundamentals**
 Ensure you're comfortable with:
-- [Command line basics](command-line-basics-detailed.md) for data manipulation
-- [R or Python programming](introduction-to-bioinformatics.md) for analysis
+- [Command line basics](#tutorial-command-line-basics-detailed) for data manipulation
+- [R or Python programming](#tutorial-introduction-to-bioinformatics) for analysis
 - Statistical concepts for interpretation
 
 ### 3. **Practice with Public Data**
