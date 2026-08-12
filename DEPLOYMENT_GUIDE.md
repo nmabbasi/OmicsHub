@@ -1,11 +1,11 @@
-# Shell2R Deployment Guide
+# OmicsHub Deployment Guide
 
-This guide will help you deploy your Shell2R website to GitHub Pages with a custom domain.
+This guide will help you deploy your OmicsHub website to GitHub Pages with a custom domain.
 
 ## 📋 Prerequisites
 
 - GitHub account
-- Your domain name (e.g., shell2r.com)
+- Your domain name (e.g., nmabbasi.github.io/OmicsHub)
 - Access to your domain's DNS settings
 
 ## 🚀 Step-by-Step Deployment
@@ -15,13 +15,13 @@ This guide will help you deploy your Shell2R website to GitHub Pages with a cust
 1. **Create a new GitHub repository**:
    - Go to [GitHub](https://github.com) and sign in
    - Click "New repository"
-   - Name it something like `shell2r` or `Shell2SingleR`
+   - Name it something like `omicshub` or `Shell2SingleR`
    - Make it **Public** (required for free GitHub Pages)
    - Don't initialize with README, .gitignore, or license
 
 2. **Upload your website files**:
-   - Extract the `shell2r-simple-website.tar.gz` file
-   - Upload ALL contents of the `shell2r-simple` folder to your repository root
+   - Extract the `OmicsHub-website.tar.gz` file
+   - Upload ALL contents of the `OmicsHub` folder to your repository root
    - Your repository should contain:
      ```
      index.html
@@ -52,16 +52,16 @@ This guide will help you deploy your Shell2R website to GitHub Pages with a cust
    - This usually takes 1-5 minutes
    - You'll see a green checkmark when it's ready
 
-### Step 3: Configure Custom Domain (shell2r.com)
+### Step 3: Configure Custom Domain (nmabbasi.github.io/OmicsHub)
 
 1. **Add custom domain in GitHub**:
    - Still in Pages settings, find "Custom domain"
-   - Enter: `shell2r.com`
+   - Enter: `nmabbasi.github.io/OmicsHub`
    - Click "Save"
    - GitHub will create a `CNAME` file in your repository
 
 2. **Configure DNS settings**:
-   - Go to your domain registrar (where you bought shell2r.com)
+   - Go to your domain registrar (where you bought nmabbasi.github.io/OmicsHub)
    - Find DNS settings or DNS management
    - Add these A records:
 
@@ -86,7 +86,7 @@ This guide will help you deploy your Shell2R website to GitHub Pages with a cust
 3. **Wait for DNS propagation**:
    - DNS changes can take 24-48 hours to fully propagate
    - You can check status using online DNS checkers
-   - Your site should be accessible at `https://shell2r.com` once ready
+   - Your site should be accessible at `https://nmabbasi.github.io/OmicsHub` once ready
 
 ### Step 4: Enable HTTPS
 
@@ -99,8 +99,8 @@ This guide will help you deploy your Shell2R website to GitHub Pages with a cust
 
 ### Common Issues
 
-**"The custom domain shell2r.com is not properly formatted"**
-- Make sure the `CNAME` file contains only `shell2r.com` (no http:// or www.)
+**"The custom domain nmabbasi.github.io/OmicsHub is not properly formatted"**
+- Make sure the `CNAME` file contains only `nmabbasi.github.io/OmicsHub` (no http:// or www.)
 - Wait a few minutes and try again
 - Clear your browser cache
 
@@ -117,7 +117,7 @@ This guide will help you deploy your Shell2R website to GitHub Pages with a cust
 
 **DNS not resolving**
 - DNS changes take time (up to 48 hours)
-- Use `nslookup shell2r.com` to check DNS status
+- Use `nslookup nmabbasi.github.io/OmicsHub` to check DNS status
 - Contact your domain registrar if issues persist
 
 ### Verification Steps
@@ -134,7 +134,7 @@ This guide will help you deploy your Shell2R website to GitHub Pages with a cust
    - Check mobile responsiveness
 
 3. **Verify custom domain**:
-   - Visit `https://shell2r.com`
+   - Visit `https://nmabbasi.github.io/OmicsHub`
    - Check that HTTPS is working
    - Test all pages and functionality
 
@@ -196,11 +196,11 @@ If you encounter issues:
 ## 🎉 Success!
 
 Once everything is set up:
-- Your website will be live at `https://shell2r.com`
+- Your website will be live at `https://nmabbasi.github.io/OmicsHub`
 - New tutorials automatically appear when you add them
 - The site is optimized for Google AdSense
 - All legal pages are included for compliance
 - Mobile-responsive design works on all devices
 
-Your Shell2R educational platform is now ready to help others learn bioinformatics!
+Your OmicsHub educational platform is now ready to help others learn bioinformatics!
 

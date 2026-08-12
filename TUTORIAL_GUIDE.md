@@ -1,6 +1,6 @@
-# Tutorial Creation Guide for Shell2R
+# Tutorial Creation Guide for OmicsHub
 
-Complete guide for creating and adding new bioinformatics tutorials to your Shell2R website.
+Complete guide for creating and adding new bioinformatics tutorials to your OmicsHub website.
 
 ## 📝 Tutorial Structure
 
@@ -24,7 +24,7 @@ image: "images/tutorial-image.png"
 **Field Descriptions**:
 - `title`: Clear, descriptive title (60-80 characters for SEO)
 - `date`: Publication date in YYYY-MM-DD format
-- `author`: Author name (can be "Shell2R Team" or individual name)
+- `author`: Author name (can be "OmicsHub Team" or individual name)
 - `category`: One of the predefined categories (see categories section)
 - `excerpt`: 150-200 character summary for listings and meta descriptions
 - `image`: Path to tutorial header image (relative to project root)
@@ -569,7 +569,7 @@ Include calls-to-action in tutorials:
 ## Your Turn!
 
 Try this tutorial and let us know how it goes:
-- Share your results on social media with #Shell2R
+- Share your results on social media with #OmicsHub
 - Ask questions in our [GitHub discussions](link)
 - Suggest improvements via [email](contact.html)
 ```

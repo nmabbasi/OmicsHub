@@ -1,7 +1,7 @@
 ---
 title: "Single-cell RNA-seq Analysis: From Raw Data to Biological Insights - Part 2"
 date: "2025-08-12"
-author: "Shell2R Team"
+author: "OmicsHub Team"
 category: "Single-cell RNA-seq"
 excerpt: "Part 2 of the Single-cell RNA-seq Analysis: From Raw Data to Biological Insights series."
 image: "images/single-cell-analysis.png"

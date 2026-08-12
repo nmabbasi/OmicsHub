@@ -1,7 +1,7 @@
 ---
 title: "Linux Support"
 date: "2025-08-23"
-author: "Shell2R Team"
+author: "OmicsHub Team"
 category: "HPC"
 excerpt: "Discover how to troubleshoot issues and get help effectively when working on HPC systems, ensuring smooth workflow execution."
 image: "images/support.png"

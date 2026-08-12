@@ -1,7 +1,7 @@
 ---
 title: "Command Line Mastery: A Detailed Guide for Bioinformatics Beginners - Part 1"
 date: "2025-08-14"
-author: "Shell2R Team"
+author: "OmicsHub Team"
 category: "Shell Commands"
 excerpt: "Part 1 of the Command Line Mastery: A Detailed Guide for Bioinformatics Beginners series."
 image: "images/command-line-terminal.png"

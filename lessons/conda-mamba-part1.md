@@ -1,7 +1,7 @@
 ---
 title: "Conda and Mamba: The Complete Installation and Usage Guide for Bioinformatics - Part 1"
 date: "2025-08-13"
-author: "Shell2R Team"
+author: "OmicsHub Team"
 category: "Conda"
 excerpt: "Part 1 of the Conda and Mamba: The Complete Installation and Usage Guide for Bioinformatics series."
 image: "images/conda-environment.png"

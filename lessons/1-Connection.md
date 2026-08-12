@@ -1,7 +1,7 @@
 ---
 title: "Connection to Linux"
 date: "2025-08-23"
-author: "Shell2R Team"
+author: "OmicsHub Team"
 category: "HPC"
 excerpt: "Learn how to connect securely to remote HPC systems using SSH and MobaXterm, and set up your working environment efficiently."
 image: "images/connection.png"

@@ -1,7 +1,7 @@
 ---
 title: "Writing a Submission script for Linux - Part 1"
 date: "2025-08-23"
-author: "Shell2R Team"
+author: "OmicsHub Team"
 category: "HPC"
 excerpt: "Part 1 of the Writing a Submission script for Linux series."
 image: "images/sc.png"

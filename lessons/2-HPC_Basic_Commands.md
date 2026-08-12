@@ -1,7 +1,7 @@
 ---
 title: "HPC Basic Commands for Linux"
 date: "2025-08-23"
-author: "Shell2R Team"
+author: "OmicsHub Team"
 category: "HPC"
 excerpt: "Master fundamental HPC commands for navigating the file system, managing files, and exploring data on remote clusters.."
 image: "images/hpc.png"

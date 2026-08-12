@@ -83,7 +83,7 @@ for filename, config in files_to_split.items():
         new_frontmatter = f"""---
 title: "{part_title}"
 date: "{frontmatter.get('date', '2025-08-12')}"
-author: "{frontmatter.get('author', 'Shell2R Team')}"
+author: "{frontmatter.get('author', 'OmicsHub Team')}"
 category: "{frontmatter.get('category', 'Bioinformatics')}"
 excerpt: "Part {i+1} of the {frontmatter.get('title', 'tutorial')} series."
 image: "{frontmatter.get('image', 'images/default.png')}"
