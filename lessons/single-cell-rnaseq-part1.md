@@ -11,7 +11,7 @@ image: "images/single-cell-analysis.png"
 
 ## Introduction to Single-cell RNA-seq
 
-Single-cell RNA sequencing (scRNA-seq) is a revolutionary technology that has fundamentally transformed our understanding of biology. Instead of measuring the average gene expression across millions of cells — like traditional bulk RNA-seq — scRNA-seq allows us to peek inside individual cells and measure their unique molecular signatures.
+Single-cell RNA sequencing (scRNA-seq) is a revolutionary technology that has fundamentally transformed our understanding of biology. Instead of measuring the average gene expression across millions of cells: like traditional bulk RNA-seq: scRNA-seq allows us to peek inside individual cells and measure their unique molecular signatures.
 
 Think of it this way: if bulk RNA-seq is like listening to a symphony and hearing only the overall sound, single-cell RNA-seq is like having superhuman hearing that can distinguish every individual instrument, every note, and every subtle variation in the performance.
 
@@ -19,14 +19,14 @@ Think of it this way: if bulk RNA-seq is like listening to a symphony and hearin
 
 ### The Problem with Bulk RNA-seq
 
-Traditional bulk RNA-seq has been incredibly valuable, but it has a fundamental limitation — it provides an average expression profile across all cells in a sample. This averaging can mask important biological differences and lead to misleading conclusions.
+Traditional bulk RNA-seq has been incredibly valuable, but it has a fundamental limitation: it provides an average expression profile across all cells in a sample. This averaging can mask important biological differences and lead to misleading conclusions.
 
 Consider a tissue sample containing:
 - 70% cell type A (highly expressing gene X)
 - 20% cell type B (not expressing gene X)  
 - 10% cell type C (moderately expressing gene X)
 
-Bulk RNA-seq would show moderate expression of gene X across the entire sample, potentially missing the fact that it's specifically and highly expressed in cell type A — information that could be crucial for understanding disease mechanisms or drug targets.
+Bulk RNA-seq would show moderate expression of gene X across the entire sample, potentially missing the fact that it's specifically and highly expressed in cell type A: information that could be crucial for understanding disease mechanisms or drug targets.
 
 ### The Single-cell Revolution
 
@@ -36,10 +36,10 @@ Single-cell RNA-seq overcomes these limitations by revealing:
 Even cells that look identical under a microscope can have dramatically different gene expression profiles. scRNA-seq reveals this hidden diversity, showing us that what we thought was a homogeneous cell population might actually contain multiple distinct subtypes.
 
 #### **Rare Cell Types**
-Some of the most important cells in our body — like stem cells or certain immune cells — make up less than 1% of a tissue. Bulk RNA-seq would miss these entirely, but scRNA-seq can identify and characterize these rare but crucial populations.
+Some of the most important cells in our body: like stem cells or certain immune cells: make up less than 1% of a tissue. Bulk RNA-seq would miss these entirely, but scRNA-seq can identify and characterize these rare but crucial populations.
 
 #### **Dynamic Processes**
-Cells are constantly changing — differentiating, responding to stimuli, or transitioning between states. scRNA-seq captures these dynamic processes by revealing cells at different stages of transition.
+Cells are constantly changing: differentiating, responding to stimuli, or transitioning between states. scRNA-seq captures these dynamic processes by revealing cells at different stages of transition.
 
 #### **Spatial Organization**
 When combined with spatial techniques, scRNA-seq helps us understand not just what types of cells are present, but how they're organized and how they communicate with each other.
@@ -83,7 +83,7 @@ A major challenge in scRNA-seq analysis is distinguishing between these two sour
 
 ### The Dropout Problem
 
-One of the unique challenges in scRNA-seq is "dropout" — the failure to detect a gene that is actually expressed in a cell. This happens because:
+One of the unique challenges in scRNA-seq is "dropout": the failure to detect a gene that is actually expressed in a cell. This happens because:
 
 1. **Low starting material**: Each cell contains only ~10 picograms of RNA
 2. **Stochastic sampling**: Not every mRNA molecule gets captured

@@ -11,9 +11,9 @@ image: "images/conda-environment.png"
 
 ## Why Package Management Matters in Bioinformatics
 
-If you've ever spent hours trying to install a bioinformatics tool only to run into dependency conflicts, version mismatches, or the dreaded "it works on my machine" problem — you're not alone. Package management is one of the biggest pain points for researchers entering computational biology.
+If you've ever spent hours trying to install a bioinformatics tool only to run into dependency conflicts, version mismatches, or the dreaded "it works on my machine" problem: you're not alone. Package management is one of the biggest pain points for researchers entering computational biology.
 
-That's where Conda and Mamba come in. Think of them as your personal assistants for managing software installations — they handle all the messy details of dependencies, versions, and compatibility so you can focus on your research instead of wrestling with installation issues.
+That's where Conda and Mamba come in. Think of them as your personal assistants for managing software installations: they handle all the messy details of dependencies, versions, and compatibility so you can focus on your research instead of wrestling with installation issues.
 
 ## What Are Conda and Mamba?
 
@@ -29,7 +29,7 @@ Key features of Conda:
 
 ### Mamba: The Speed Demon
 
-**Mamba** is a reimplementation of Conda that's significantly faster — we're talking about going from minutes to seconds for complex installations. It's essentially Conda with a turbo engine, using the same commands and configuration files but with dramatically improved performance.
+**Mamba** is a reimplementation of Conda that's significantly faster: we're talking about going from minutes to seconds for complex installations. It's essentially Conda with a turbo engine, using the same commands and configuration files but with dramatically improved performance.
 
 Why Mamba is faster:
 - **Parallel processing**: Downloads and installs packages simultaneously
@@ -103,7 +103,7 @@ conda install -c conda-forge mamba
 mamba --version
 ```
 
-From now on, you can use `mamba` instead of `conda` for most commands — it's faster and uses the same syntax!
+From now on, you can use `mamba` instead of `conda` for most commands: it's faster and uses the same syntax!
 
 ## Understanding Environments
 
@@ -537,19 +537,19 @@ Conda and Mamba are game-changers for bioinformatics research. They eliminate th
 - Share your computational setup with collaborators
 - Reproduce analyses months or years later
 
-Remember, good package management isn't just about convenience — it's about reproducible science. When you document your environments and pin your package versions, you're contributing to the reproducibility crisis solution in computational biology.
+Remember, good package management isn't just about convenience: it's about reproducible science. When you document your environments and pin your package versions, you're contributing to the reproducibility crisis solution in computational biology.
 
 ## Next Steps
 
 Now that you've mastered package management, you're ready to tackle more advanced bioinformatics topics:
 
-1. **[Command Line Fundamentals](command-line-basics-detailed.md)** — Master the terminal for bioinformatics
-2. **[Single-cell RNA-seq Analysis](single-cell-rnaseq-introduction.md)** — Apply your new environment to cutting-edge analysis
-3. **[Introduction to Bioinformatics](introduction-to-bioinformatics.md)** — Understand the broader context
+1. **[Command Line Fundamentals](command-line-basics-detailed.md)**: Master the terminal for bioinformatics
+2. **[Single-cell RNA-seq Analysis](single-cell-rnaseq-introduction.md)**: Apply your new environment to cutting-edge analysis
+3. **[Introduction to Bioinformatics](introduction-to-bioinformatics.md)**: Understand the broader context
 
 With proper package management under your belt, you'll never have to worry about "dependency hell" again. Welcome to the world of reproducible bioinformatics!
 
 ---
 
-*Having trouble with package installations? Need help setting up a specific environment? [Contact us](contact.html) — we're here to help you get your computational environment running smoothly!*
+*Having trouble with package installations? Need help setting up a specific environment? [Contact us](contact.html): we're here to help you get your computational environment running smoothly!*
 

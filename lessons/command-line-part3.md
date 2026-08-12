@@ -317,13 +317,13 @@ Once you're comfortable with these basics, consider learning:
 
 ## Conclusion
 
-Mastering the command line is like learning a new language — it takes practice, but once you're fluent, it opens up a world of possibilities. The commands and concepts covered in this tutorial form the foundation of computational biology work.
+Mastering the command line is like learning a new language: it takes practice, but once you're fluent, it opens up a world of possibilities. The commands and concepts covered in this tutorial form the foundation of computational biology work.
 
 Remember:
-- **Practice regularly** — Use the command line for daily tasks
-- **Start simple** — Master basic commands before moving to complex pipelines
-- **Read the manual** — Use `man command_name` to learn more about any command
-- **Don't be afraid to experiment** — The best way to learn is by doing
+- **Practice regularly**: Use the command line for daily tasks
+- **Start simple**: Master basic commands before moving to complex pipelines
+- **Read the manual**: Use `man command_name` to learn more about any command
+- **Don't be afraid to experiment**: The best way to learn is by doing
 
 The command line is your gateway to powerful bioinformatics analysis. With these skills, you're ready to tackle real biological datasets and start uncovering the secrets hidden in genomic data.
 
@@ -331,11 +331,11 @@ The command line is your gateway to powerful bioinformatics analysis. With these
 
 Ready to level up your bioinformatics skills? Check out our other tutorials:
 
-1. **[Package Management with Conda](conda-mamba-installation-guide.md)** — Learn to install and manage bioinformatics software
-2. **[Single-cell RNA-seq Analysis](single-cell-rnaseq-introduction.md)** — Apply your command line skills to cutting-edge analysis
-3. **[Introduction to Bioinformatics](introduction-to-bioinformatics.md)** — Understand the bigger picture
+1. **[Package Management with Conda](conda-mamba-installation-guide.md)**: Learn to install and manage bioinformatics software
+2. **[Single-cell RNA-seq Analysis](single-cell-rnaseq-introduction.md)**: Apply your command line skills to cutting-edge analysis
+3. **[Introduction to Bioinformatics](introduction-to-bioinformatics.md)**: Understand the bigger picture
 
 ---
 
-*Questions about command line usage? Need help with a specific bioinformatics task? [Contact us](contact.html) — we're here to help you master computational biology!*
+*Questions about command line usage? Need help with a specific bioinformatics task? [Contact us](contact.html): we're here to help you master computational biology!*
 

@@ -13,7 +13,7 @@ image: "images/bioinformatics-intro.png"
 
 Bioinformatics is an interdisciplinary field that combines biology, computer science, mathematics, and statistics to analyze and interpret biological data. With the explosion of biological data from genomics, proteomics, and other high-throughput technologies, bioinformatics has become essential for modern biological research.
 
-Think of bioinformatics as the bridge between raw biological data and meaningful scientific insights — it's where computational power meets biological curiosity to unlock the secrets hidden within massive datasets.
+Think of bioinformatics as the bridge between raw biological data and meaningful scientific insights: it's where computational power meets biological curiosity to unlock the secrets hidden within massive datasets.
 
 ## The Data Revolution in Biology
 
@@ -24,7 +24,7 @@ In today's data-driven world, biological research generates staggering amounts o
 - Protein databases contain information on **hundreds of thousands of proteins**
 - The NCBI GenBank database doubles in size approximately **every 18 months**
 
-Without computational tools, analyzing this data would be like trying to read every book in the Library of Congress in a single afternoon — technically impossible and practically meaningless.
+Without computational tools, analyzing this data would be like trying to read every book in the Library of Congress in a single afternoon: technically impossible and practically meaningless.
 
 ## Why Learn Bioinformatics?
 
@@ -45,7 +45,7 @@ Bioinformatics has accelerated drug discovery, enabled personalized medicine, an
 ## Core Areas of Bioinformatics
 
 ### Sequence Analysis
-The foundation of bioinformatics — comparing DNA, RNA, and protein sequences to understand evolutionary relationships and functional similarities.
+The foundation of bioinformatics: comparing DNA, RNA, and protein sequences to understand evolutionary relationships and functional similarities.
 
 ```bash
 # Example: Finding similar sequences using BLAST
@@ -84,7 +84,7 @@ Understanding statistical concepts is crucial for:
 - Recognizing bias and confounding factors
 
 ### 4. **Biological Knowledge**
-Domain expertise remains essential — you need to understand:
+Domain expertise remains essential: you need to understand:
 - Central dogma of molecular biology
 - Basic genetics and genomics concepts
 - Experimental techniques and their limitations
@@ -92,7 +92,7 @@ Domain expertise remains essential — you need to understand:
 ## Common Bioinformatics Workflows
 
 ### Genome Assembly
-Taking short sequencing reads and reconstructing the original genome sequence — like solving a massive jigsaw puzzle where some pieces might be missing or duplicated.
+Taking short sequencing reads and reconstructing the original genome sequence: like solving a massive jigsaw puzzle where some pieces might be missing or duplicated.
 
 ### Variant Calling
 Identifying differences between a sample genome and a reference genome to find mutations that might be associated with disease or other traits.
@@ -130,7 +130,7 @@ Start with our detailed tutorials on:
 - [Package management with Conda](conda-mamba-installation-guide.md)
 
 ### Step 2: Choose Your Focus Area
-Bioinformatics is broad — consider specializing in:
+Bioinformatics is broad: consider specializing in:
 - **Genomics**: Whole genome sequencing and analysis
 - **Transcriptomics**: Gene expression analysis
 - **Proteomics**: Protein identification and quantification
@@ -152,7 +152,7 @@ Bioinformatics has a vibrant, supportive community:
 ## Common Challenges and How to Overcome Them
 
 ### The Learning Curve
-Bioinformatics can feel overwhelming at first — you're learning biology, statistics, and programming simultaneously. **Solution**: Take it one step at a time and focus on practical applications.
+Bioinformatics can feel overwhelming at first: you're learning biology, statistics, and programming simultaneously. **Solution**: Take it one step at a time and focus on practical applications.
 
 ### Reproducibility
 Ensuring your analyses can be reproduced by others (including future you) is crucial. **Solution**: Learn version control (Git), document your code, and use workflow management systems.
@@ -177,19 +177,19 @@ Bioinformatics continues to evolve rapidly, driven by:
 
 Bioinformatics represents one of the most exciting intersections of technology and biology. Whether you're interested in understanding human disease, exploring biodiversity, or developing new therapeutic approaches, bioinformatics provides the computational foundation for modern biological discovery.
 
-The journey may seem daunting at first, but remember — every expert was once a beginner. Start with the fundamentals, practice regularly, and don't be afraid to ask questions. The bioinformatics community is known for being welcoming and supportive of newcomers.
+The journey may seem daunting at first, but remember: every expert was once a beginner. Start with the fundamentals, practice regularly, and don't be afraid to ask questions. The bioinformatics community is known for being welcoming and supportive of newcomers.
 
 ## Next Steps
 
 Ready to dive deeper? Here's your roadmap:
 
-1. **Master the command line** — Check out our [detailed command line tutorial](command-line-basics-detailed.md)
-2. **Set up your environment** — Learn about [Conda and Mamba for package management](conda-mamba-installation-guide.md)
-3. **Explore single-cell analysis** — Discover the cutting-edge field of [single-cell RNA-seq](single-cell-rnaseq-introduction.md)
+1. **Master the command line**: Check out our [detailed command line tutorial](command-line-basics-detailed.md)
+2. **Set up your environment**: Learn about [Conda and Mamba for package management](conda-mamba-installation-guide.md)
+3. **Explore single-cell analysis**: Discover the cutting-edge field of [single-cell RNA-seq](single-cell-rnaseq-introduction.md)
 
-Remember, bioinformatics is not just about the tools — it's about asking the right biological questions and using computational approaches to find meaningful answers. Welcome to this exciting field where biology meets big data!
+Remember, bioinformatics is not just about the tools: it's about asking the right biological questions and using computational approaches to find meaningful answers. Welcome to this exciting field where biology meets big data!
 
 ---
 
-*Have questions about getting started in bioinformatics? Feel free to [contact us](contact.html) — we're here to help you on your computational biology journey.*
+*Have questions about getting started in bioinformatics? Feel free to [contact us](contact.html): we're here to help you on your computational biology journey.*
 

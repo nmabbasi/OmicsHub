@@ -11,7 +11,7 @@ image: "images/single-cell-analysis.png"
 
 ### Trajectory Analysis
 
-Cells don't just exist in discrete states — they transition between them. Trajectory analysis reconstructs these transitions:
+Cells don't just exist in discrete states: they transition between them. Trajectory analysis reconstructs these transitions:
 
 ```r
 # Using Monocle3 for trajectory analysis
@@ -210,7 +210,7 @@ Combining RNA-seq with other measurements:
 
 Single-cell RNA-seq has revolutionized our understanding of biology by revealing the incredible diversity and complexity of cellular systems. What once appeared to be homogeneous cell populations are now known to contain multiple distinct subtypes, each with unique functions and regulatory programs.
 
-The analytical techniques covered in this tutorial provide a foundation for exploring single-cell data, but remember that the technology and methods are rapidly evolving. The key principles — careful quality control, appropriate normalization, thoughtful interpretation, and biological validation — will remain important regardless of which specific tools you use.
+The analytical techniques covered in this tutorial provide a foundation for exploring single-cell data, but remember that the technology and methods are rapidly evolving. The key principles: careful quality control, appropriate normalization, thoughtful interpretation, and biological validation: will remain important regardless of which specific tools you use.
 
 As you begin your single-cell analysis journey, remember that the goal isn't just to generate pretty UMAP plots or identify clusters. The real value comes from translating these computational results into biological insights that advance our understanding of health and disease.
 
@@ -242,9 +242,9 @@ Start with well-characterized datasets:
 - Join the Seurat Discord server
 - Attend single-cell conferences and workshops
 
-Single-cell RNA-seq is more than just a technology — it's a new way of thinking about biology at the cellular level. Welcome to this exciting field where every cell has a story to tell!
+Single-cell RNA-seq is more than just a technology: it's a new way of thinking about biology at the cellular level. Welcome to this exciting field where every cell has a story to tell!
 
 ---
 
-*Questions about single-cell analysis? Need help with a specific dataset? [Contact us](contact.html) — we're here to help you unlock the secrets hidden within your single-cell data!*
+*Questions about single-cell analysis? Need help with a specific dataset? [Contact us](contact.html): we're here to help you unlock the secrets hidden within your single-cell data!*
 

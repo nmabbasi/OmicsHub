@@ -21,7 +21,7 @@ Here's why every bioinformatician needs command line skills:
 - **Working on remote servers** where GUIs aren't available
 - **Reproducing analyses** with precise, documented commands
 
-Think of the command line as your Swiss Army knife for biological data — once you master it, you'll wonder how you ever lived without it.
+Think of the command line as your Swiss Army knife for biological data: once you master it, you'll wonder how you ever lived without it.
 
 ## Getting Started: Your First Commands
 
@@ -55,7 +55,7 @@ pwd
 # Output: /home/username
 ```
 
-Think of it as your GPS for the file system — you should always know where you are before you start moving around.
+Think of it as your GPS for the file system: you should always know where you are before you start moving around.
 
 ### What's Here? (`ls`)
 
@@ -69,7 +69,7 @@ ls -lh                # Human-readable file sizes
 ls *.fasta            # List only FASTA files
 ```
 
-**Pro tip**: The `-l` flag shows permissions, file sizes, and modification dates — incredibly useful for troubleshooting.
+**Pro tip**: The `-l` flag shows permissions, file sizes, and modification dates: incredibly useful for troubleshooting.
 
 ### Moving Around (`cd`)
 
@@ -99,7 +99,7 @@ mkdir -p project/data/raw       # Create nested directories
 mkdir project_{1..5}            # Create multiple directories
 ```
 
-The `-p` flag is a lifesaver — it creates parent directories if they don't exist.
+The `-p` flag is a lifesaver: it creates parent directories if they don't exist.
 
 ### Creating Files (`touch`)
 
@@ -139,4 +139,4 @@ rm -f file.txt                  # Force removal (no confirmation)
 rm *.tmp                        # Remove all temporary files
 ```
 
-**⚠️ Warning**: There's no "trash" in the command line — deleted files are gone forever!
+**⚠️ Warning**: There's no "trash" in the command line: deleted files are gone forever!
