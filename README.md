@@ -20,12 +20,6 @@ This repository hosts the source code for the interactive web portal, featuring 
 - **Shell to R Transitions:** Seamless workflows demonstrating how to transition raw sequencing data (processed in Linux/Shell) into robust statistical analysis frameworks (processed in R).
 - **scRNA-seq Mastery:** Dedicated tutorials on processing, quality control, dimensional reduction, and differential expression analysis of single-cell datasets.
 
-## ⚙️ Deployment Architecture
-- Built with **Tailwind CSS** and **HTML5**.
-- Uses automated **GitHub Actions** (`static.yml`) for continuous deployment directly to GitHub Pages.
-
----
 ## 📧 Contact & Author
-**Nasir Mahmood Abbasi**  
-PhD Researcher in Computational Biology & Immunology  
+**Dr. Nasir Mahmood Abbasi**  
 GitHub: [@nmabbasi](https://github.com/nmabbasi)
