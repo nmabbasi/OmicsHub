@@ -2,7 +2,7 @@
 
 [![Language: HTML](https://img.shields.io/badge/Language-HTML-orange.svg)]()
 [![Status: Deployed](https://img.shields.io/badge/Status-Deployed-brightgreen.svg)]()
-[![Website: Live](https://img.shields.io/badge/Website-Live-blue.svg)](https://nmabbasi.github.io/OmicsHub/)
+[![Website: Live](https://img.shields.io/badge/Website-Live-blue.svg)](https://nmabbasi.github.io/OmicsHub)
 
 ## 🌐 Live Website
 **Access the interactive portal here: [https://nmabbasi.github.io/OmicsHub/](https://nmabbasi.github.io/OmicsHub/)**
