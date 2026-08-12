@@ -2,10 +2,10 @@
 
 [![Language: HTML](https://img.shields.io/badge/Language-HTML-orange.svg)]()
 [![Status: Deployed](https://img.shields.io/badge/Status-Deployed-brightgreen.svg)]()
-[![Website: Live](https://img.shields.io/badge/Website-Live-blue.svg)](https://nmabbasi.github.io/S2R/)
+[![Website: Live](https://img.shields.io/badge/Website-Live-blue.svg)](https://nmabbasi.github.io/OmicsHub/)
 
 ## 🌐 Live Website
-**Access the interactive portal here: [https://nmabbasi.github.io/S2R/](https://nmabbasi.github.io/S2R/)**
+**Access the interactive portal here: [https://nmabbasi.github.io/OmicsHub/](https://nmabbasi.github.io/OmicsHub/)**
 
 *(Note: Previously hosted at a custom domain, this project is now fully and permanently hosted on GitHub Pages).*
 
