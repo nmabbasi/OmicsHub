@@ -768,24 +768,29 @@ function toggleMobileMenu() {
 // Note: The showPage function is removed as static pages are now direct HTML files.
 // The navigation links in index.html and other pages are updated to reflect this.
 
-// Global function for switching code tabs within tutorials
-window.switchCodeTab = function(groupId, lang) {
-    const container = document.getElementById(groupId);
-    if (!container) return;
-    
-    container.querySelectorAll('.code-tab-btn').forEach(btn => {
-        if (btn.dataset.lang === lang) {
-            btn.classList.add('active');
-        } else {
-            btn.classList.remove('active');
-        }
-    });
-    
-    container.querySelectorAll('.code-tab-content').forEach(content => {
-        if (content.dataset.lang === lang) {
-            content.classList.add('active');
-        } else {
-            content.classList.remove('active');
-        }
-    });
-};
+// Event delegation for switching code tabs within tutorials
+document.addEventListener('click', function(e) {
+    if (e.target && e.target.classList.contains('code-tab-btn')) {
+        const btn = e.target;
+        const lang = btn.dataset.lang;
+        const container = btn.closest('.code-tab-container');
+        
+        if (!container) return;
+        
+        container.querySelectorAll('.code-tab-btn').forEach(b => {
+            if (b.dataset.lang === lang) {
+                b.classList.add('active');
+            } else {
+                b.classList.remove('active');
+            }
+        });
+        
+        container.querySelectorAll('.code-tab-content').forEach(c => {
+            if (c.dataset.lang === lang) {
+                c.classList.add('active');
+            } else {
+                c.classList.remove('active');
+            }
+        });
+    }
+});
