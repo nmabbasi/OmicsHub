@@ -82,9 +82,9 @@ async function loadTutorials() {
             '4-Support.md',
             'hpc-submission-part1.md',
             'single-cell-rnaseq-part1.md',
-            'real-world-scrna-seq-scanpy.md',
-            'real-world-scrna-seq-heterogeneity.md',
-            'real-world-scrna-seq-metabolism.md',
+            'scrna-seq-basics.md',
+            'scrna-seq-trajectory-inference.md',
+            'scrna-seq-downstream-analysis.md',
         ];
         
         tutorials = [];
@@ -767,3 +767,25 @@ function toggleMobileMenu() {
 
 // Note: The showPage function is removed as static pages are now direct HTML files.
 // The navigation links in index.html and other pages are updated to reflect this.
+
+// Global function for switching code tabs within tutorials
+window.switchCodeTab = function(groupId, lang) {
+    const container = document.getElementById(groupId);
+    if (!container) return;
+    
+    container.querySelectorAll('.code-tab-btn').forEach(btn => {
+        if (btn.dataset.lang === lang) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    });
+    
+    container.querySelectorAll('.code-tab-content').forEach(content => {
+        if (content.dataset.lang === lang) {
+            content.classList.add('active');
+        } else {
+            content.classList.remove('active');
+        }
+    });
+};
