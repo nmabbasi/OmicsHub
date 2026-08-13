@@ -410,8 +410,8 @@ function updateTutorialsList(tutorialsToShow = null) {
     
     tutorialsList.innerHTML = displayTutorials.map(tutorial => `
         <article class="tutorial-card" style="padding: 0; overflow: hidden;" onclick="showTutorial('${tutorial.id}')">
-            ${tutorial.image ? `<img src="${tutorial.image}" alt="${tutorial.title}" class="w-full h-48 object-cover border-b border-gray-100">` : ''}
-            <div style="padding: 1.6rem; display: flex; flex-direction: column; height: calc(100% - 12rem);">
+            ${tutorial.image ? `<img src="${tutorial.image}" alt="${tutorial.title}" class="w-full aspect-video md:aspect-[21/9] object-cover border-b border-gray-100">` : ''}
+            <div style="padding: 1.6rem; display: flex; flex-direction: column;">
                 <div class="flex items-center justify-between mb-3">
                     <span class="badge ${getBadgeClass(tutorial.category)}">${tutorial.category}</span>
                     <span class="meta" style="margin:0">${formatDate(tutorial.date)}</span>
@@ -460,7 +460,7 @@ async function showTutorial(tutorialId, addToHistory = true) {
             <div class="bg-white rounded-lg shadow-lg p-8 mb-8">
                 <!-- Tutorial Header -->
                 <div class="border-b border-gray-200 pb-6 mb-8">
-                    ${tutorial.image ? `<img src="${tutorial.image}" alt="${tutorial.title}" class="w-full h-64 md:h-96 object-cover rounded-lg mb-8 shadow-sm">` : ''}
+                    ${tutorial.image ? `<img src="${tutorial.image}" alt="${tutorial.title}" class="w-full aspect-video md:aspect-[21/9] object-cover rounded-lg mb-8 shadow-sm" style="object-position: center;">` : ''}
                     <div class="flex items-center justify-between mb-4">
                         <span class="badge ${getBadgeClass(tutorial.category)}">
                             ${tutorial.category}
