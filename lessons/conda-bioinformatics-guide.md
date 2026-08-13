@@ -1,6 +1,6 @@
 ---
 title: "Conda for Bioinformatics: Installation, Environments, and Channel Configuration"
-date: "2025-08-19"
+date: "2026-08-13"
 author: "Bioinformatics Workflow Hub"
 category: "Conda"
 excerpt: "A focused guide to Conda: installing Miniconda, configuring bioconda and conda-forge channels correctly, and creating reproducible project environments. Covers the libmamba solver upgrade that makes modern Conda as fast as Mamba."

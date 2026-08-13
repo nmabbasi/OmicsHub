@@ -83,6 +83,8 @@ async function loadTutorials() {
             'hpc-submission-part1.md',
             'single-cell-rnaseq-part1.md',
             'real-world-scrna-seq-scanpy.md',
+            'real-world-scrna-seq-heterogeneity.md',
+            'real-world-scrna-seq-metabolism.md',
         ];
         
         tutorials = [];

@@ -1,6 +1,6 @@
 ---
 title: "Mamba and Micromamba: High-Performance Package Management for Bioinformatics"
-date: "2025-08-18"
+date: "2026-08-13"
 author: "Bioinformatics Workflow Hub"
 category: "Conda"
 excerpt: "A deep dive into Mamba and Micromamba. Learn how to drastically speed up environment resolution, use Micromamba in CI/CD pipelines and Docker containers, and optimize high-performance computing workflows."
