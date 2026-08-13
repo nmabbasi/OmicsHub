@@ -1,120 +1,112 @@
 ---
-title: "Advanced scRNA-seq Analysis: Metabolic Vulnerabilities and CLIC1"
+title: "Advanced scRNA-seq Analysis: Metabolic Heterogeneity and Pathway Analysis"
 date: "2026-08-13"
 author: "Bioinformatics Workflow Hub"
 category: "Single-cell RNA-seq"
-excerpt: "Learn how to use single-cell transcriptomics to identify metabolic dependencies in tumor subclones, with a specific focus on the role of CLIC1 in maintaining pH and redox balance in malignant T cells."
+excerpt: "Learn how to use single-cell transcriptomics to identify metabolic dependencies in specific cellular subclones, and how to run Gene Set Enrichment Analysis (GSEA) on single-cell data."
 ---
 
-## Uncovering Metabolic Vulnerabilities in Single Cells
+## Uncovering Metabolic Heterogeneity in Single Cells
 
-A major frontier in cancer biology is identifying the specific metabolic dependencies of malignant cells. Unlike normal cells, tumors often rewire their metabolism (e.g., the Warburg effect) to support rapid proliferation. Single-cell RNA-sequencing (scRNA-seq) allows us to identify these metabolic shifts at the subclonal level, revealing potential therapeutic targets that spare healthy tissue.
+A major frontier in single-cell biology is identifying specific metabolic states within a heterogeneous population. For example, within a complex tissue or a tumor microenvironment, distinct subclones often rewire their metabolism (e.g., shifting toward glycolysis or oxidative phosphorylation) to adapt to local conditions like hypoxia.
 
-In this tutorial, we will focus on **CLIC1 (Chloride Intracellular Channel 1)**, a protein increasingly recognized for its role in pH regulation and redox balance in highly metabolic subclones of Cutaneous T-Cell Lymphoma (CTCL) and Sézary Syndrome.
+Single-cell RNA-sequencing (scRNA-seq) allows us to identify these metabolic shifts at the subclonal level, revealing potential functional dependencies.
+
+In this tutorial, we will demonstrate how to score cells for specific metabolic phenotypes and identify the transcriptional pathways that co-occur with these metabolic shifts.
 
 ---
 
 ## 1. Setting Up and Loading Data
 
-We will use Scanpy to isolate malignant cells and evaluate their metabolic transcriptional networks.
+We will use Scanpy to evaluate metabolic transcriptional networks within a subset of cells.
 
 ```python
 import scanpy as sc
 import pandas as pd
+import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-# Load our annotated dataset
-adata = sc.read_h5ad('./data/ss_patient_annotated.h5ad')
+# Load an annotated dataset
+adata = sc.read_h5ad('./data/annotated_dataset.h5ad')
 
-# Isolate the malignant T-cell compartment for focused analysis
-# Assuming 'cell_type' contains the annotation 'Malignant T'
-tumor_cells = adata[adata.obs['cell_type'] == 'Malignant T'].copy()
+# Isolate the specific cell compartment of interest for focused analysis
+# Assuming 'cell_type' contains an annotation 'Target_Population'
+subset_cells = adata[adata.obs['cell_type'] == 'Target_Population'].copy()
 ```
 
 ---
 
-## 2. Investigating CLIC1 Expression
+## 2. Creating a "Glycolytic / Hypoxia" Module Score
 
-CLIC1 expression is highly heterogeneous. Some subclones rely heavily on it to export chloride ions, which is coupled with proton export to prevent fatal intracellular acidification caused by high glycolytic rates.
-
-```python
-# Visualize CLIC1 expression across the malignant clusters (subclones)
-sc.pl.violin(tumor_cells, 'CLIC1', groupby='leiden', 
-             stripplot=False, inner='box')
-
-# Map CLIC1 expression onto the UMAP
-sc.pl.umap(tumor_cells, color=['leiden', 'CLIC1'], wspace=0.3)
-```
-
-If CLIC1 is highly expressed in a specific cluster (e.g., Cluster 2), this suggests that Cluster 2 represents a metabolically hyperactive subclone.
-
----
-
-## 3. Creating a "Glycolytic / Redox" Module Score
-
-To confirm that CLIC1 expression is actually tied to metabolic hyperactivity, we shouldn't look at CLIC1 in isolation. We need to evaluate whether the entire glycolytic and redox-management machinery is co-upregulated.
+To identify metabolically hyperactive or hypoxic cells, we shouldn't rely on a single gene. Instead, we evaluate whether the entire metabolic machinery is co-upregulated by creating a module score (or signature score).
 
 ```python
-# Define a metabolic gene signature
+# Define a general metabolic/hypoxia gene signature
 metabolic_signature = [
-    'CLIC1',    # pH/redox balance
     'LDHA',     # Glycolysis (Lactate Dehydrogenase)
     'ENO1',     # Glycolysis (Enolase)
     'GAPDH',    # Glycolysis
     'SLC2A1',   # Glucose transporter (GLUT1)
-    'SLC16A1',  # Lactate transporter (MCT1)
-    'HIF1A'     # Hypoxia-inducible factor
+    'SLC16A1',  # Lactate transporter
+    'HIF1A',    # Hypoxia-inducible factor
+    'VEGFA'     # Angiogenesis marker
 ]
 
-# Ensure genes are in the dataset
-valid_metabolic = [g for g in metabolic_signature if g in tumor_cells.var_names]
+# Ensure genes are actually present in the dataset's vocabulary
+valid_metabolic = [g for g in metabolic_signature if g in subset_cells.var_names]
 
 # Score the cells for this metabolic phenotype
-sc.tl.score_genes(tumor_cells, gene_list=valid_metabolic, score_name='glycolytic_redox_score')
+sc.tl.score_genes(subset_cells, gene_list=valid_metabolic, score_name='glycolytic_score')
 
-# Visualize the correlation between CLIC1 and the overall metabolic score
-sc.pl.scatter(tumor_cells, x='CLIC1', y='glycolytic_redox_score', 
-              color='leiden', title='CLIC1 vs. Metabolic Activity')
+# Visualize the distribution of the metabolic score across different clusters
+sc.pl.violin(subset_cells, 'glycolytic_score', groupby='leiden', 
+             stripplot=False, inner='box')
+
+# Map the score onto the UMAP to see spatial distribution in the manifold
+sc.pl.umap(subset_cells, color=['leiden', 'glycolytic_score'], wspace=0.3, cmap='viridis')
 ```
 
-A strong positive correlation here provides computational evidence that CLIC1 is functioning as a critical release valve for highly metabolic, glycolytic subclones.
+If the `glycolytic_score` is highly enriched in a specific cluster, this suggests that the cluster represents a metabolically distinct subpopulation adapting to its microenvironment.
 
 ---
 
-## 4. Differential Expression: Identifying Co-Dependencies
+## 3. Differential Expression: Identifying Co-Dependencies
 
-If we want to target the CLIC1-high subclone therapeutically, what other vulnerabilities does it have? We can perform differential expression (DE) comparing the CLIC1-high cells to the CLIC1-low cells.
+If we want to understand what else is driving this high-glycolysis population, we can perform differential expression (DE) comparing the metabolically "High" cells to the "Low" cells.
 
 ```python
-# Categorize cells into CLIC1-High and CLIC1-Low
+# Categorize cells into High and Low metabolic states
 # We use the 75th percentile as a cutoff for "High"
-clic1_threshold = np.percentile(tumor_cells[:, 'CLIC1'].X.toarray(), 75)
+score_threshold = np.percentile(subset_cells.obs['glycolytic_score'], 75)
 
-tumor_cells.obs['CLIC1_status'] = 'Low'
-tumor_cells.obs.loc[tumor_cells[:, 'CLIC1'].X.toarray().flatten() > clic1_threshold, 'CLIC1_status'] = 'High'
+subset_cells.obs['Metabolic_State'] = 'Low'
+subset_cells.obs.loc[subset_cells.obs['glycolytic_score'] > score_threshold, 'Metabolic_State'] = 'High'
 
-# Run DE analysis
-sc.tl.rank_genes_groups(tumor_cells, groupby='CLIC1_status', 
+# Run DE analysis comparing High vs Low
+sc.tl.rank_genes_groups(subset_cells, groupby='Metabolic_State', 
                         groups=['High'], reference='Low', method='wilcoxon')
 
-# Extract top upregulated genes in the CLIC1-High population
-de_results = pd.DataFrame(tumor_cells.uns['rank_genes_groups']['names'])
-top_genes_clic1_high = de_results['High'].head(20).tolist()
+# Extract top upregulated genes in the metabolically active population
+de_results = pd.DataFrame(subset_cells.uns['rank_genes_groups']['names'])
+top_genes_high_metabolism = de_results['High'].head(20).tolist()
 
-print("Top co-expressed genes with CLIC1:")
-print(top_genes_clic1_high)
+print("Top co-expressed genes with the glycolytic signature:")
+print(top_genes_high_metabolism)
 ```
 
-### Gene Set Enrichment Analysis (GSEA)
+---
 
-To understand the biological pathways driving these DE genes, we export the results for pathway analysis using `gseapy`.
+## 4. Gene Set Enrichment Analysis (GSEA)
+
+To understand the broader biological pathways driving these differentially expressed genes, we can export the results for pathway analysis using `gseapy`.
 
 ```python
+# Install gseapy if you haven't already: pip install gseapy
 import gseapy as gp
 
-# Extract the ranked list of genes (log fold changes)
-ranked_genes = sc.get.rank_genes_groups_df(tumor_cells, group='High')
+# Extract the ranked list of genes based on log fold changes
+ranked_genes = sc.get.rank_genes_groups_df(subset_cells, group='High')
 ranked_genes = ranked_genes[['names', 'logfoldchanges']].sort_values('logfoldchanges', ascending=False)
 
 # Run GSEA against the KEGG pathways database
@@ -123,13 +115,13 @@ gsea_results = gp.prerank(rnk=ranked_genes, gene_sets='KEGG_2021_Human',
 
 # Plot the top enriched pathways
 terms = gsea_results.res2d.sort_values('NES', ascending=False).head(5)
-gp.plot.barplot(terms, column="NES", title="Pathways Enriched in CLIC1-High Cells")
+gp.plot.barplot(terms, column="NES", title="Pathways Enriched in High-Metabolism Cells")
 ```
 
 ---
 
 ## Conclusion
 
-By isolating specific sub-populations based on marker expression (`CLIC1`) and defining biological module scores, scRNA-seq allows us to reconstruct the metabolic landscape of a tumor. 
+By isolating specific sub-populations based on module scores, scRNA-seq allows us to reconstruct the metabolic landscape of a tissue or disease state. 
 
-In the context of Sézary Syndrome, demonstrating that CLIC1-high cells exhibit distinct metabolic and redox dependencies provides the preclinical rationale for targeting CLIC1 to selectively induce apoptosis in the most aggressive tumor subclones, while sparing conventional, metabolically quiescent T cells.
+This workflow—moving from gene signatures to module scoring, followed by subpopulation thresholding and GSEA—is a standard, robust approach for uncovering functional dependencies that are completely invisible in bulk RNA-sequencing data.
