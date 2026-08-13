@@ -9,11 +9,15 @@ let currentTutorial = null;
 document.addEventListener('DOMContentLoaded', function() {
     loadTutorials();
     setupEventListeners();
-    // Check for hash in URL to navigate directly to a tutorial or page
+    createBackToTopButton();
+});
+
+// Handle initial routing after tutorials load
+function handleInitialRoute() {
     const hash = window.location.hash;
     if (hash) {
         if (hash.startsWith('#tutorial-')) {
-            const tutorialId = hash.substring(11); // Remove '#tutorial-'
+            const tutorialId = hash.substring(10); // Remove '#tutorial-'
             showTutorial(tutorialId);
         } else if (hash === '#tutorials') {
             showTutorials();
@@ -23,8 +27,7 @@ document.addEventListener('DOMContentLoaded', function() {
     } else {
         showHome();
     }
-    createBackToTopButton();
-});
+}
 
 // Setup event listeners
 function setupEventListeners() {
@@ -42,7 +45,7 @@ function setupEventListeners() {
         const hash = window.location.hash;
         if (hash) {
             if (hash.startsWith('#tutorial-')) {
-                const tutorialId = hash.substring(11);
+                const tutorialId = hash.substring(10);
                 showTutorial(tutorialId, false); // false to prevent adding to history again
             } else if (hash === '#tutorials') {
                 showTutorials(false);
@@ -122,6 +125,9 @@ async function loadTutorials() {
         // Update the UI
         updateTutorialsList();
         updateSidebar();
+        
+        // Handle routing now that tutorials are loaded
+        handleInitialRoute();
         
     } catch (error) {
         console.error('Error loading tutorials:', error);
