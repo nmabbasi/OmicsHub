@@ -4,6 +4,7 @@ date: "2026-08-13"
 author: "Bioinformatics Workflow Hub"
 category: "Single-cell RNA-seq"
 excerpt: "A complete, production-ready single-cell RNA-seq pipeline using the scverse ecosystem (Scanpy). Covers standard QC, Leiden clustering, and marker gene identification on a 10x Genomics dataset."
+image: "images/single-cell-analysis.png"
 ---
 
 ## From Raw Counts to Biological Insights

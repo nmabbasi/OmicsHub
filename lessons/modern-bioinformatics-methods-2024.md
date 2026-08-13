@@ -4,6 +4,7 @@ date: "2026-08-13"
 author: "Bioinformatics Workflow Hub"
 category: "Bioinformatics"
 excerpt: "An evidence-based overview of the most impactful computational methods published in 2024-2025, covering single-cell foundation models, multi-omics integration, spatial transcriptomics, and long-read sequencing analysis."
+image: "images/bioinformatics-intro.png"
 ---
 
 ## The Changing Landscape of Computational Biology
