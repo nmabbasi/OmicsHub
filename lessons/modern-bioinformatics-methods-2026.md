@@ -1,9 +1,9 @@
 ---
-title: "Modern Bioinformatics Methods: A 2024-2025 Research Landscape"
+title: "Modern Bioinformatics Methods: A 2025-2026 Research Landscape"
 date: "2026-08-13"
 author: "Bioinformatics Workflow Hub"
 category: "Bioinformatics"
-excerpt: "An evidence-based overview of the most impactful computational methods published in 2024-2025, covering single-cell foundation models, multi-omics integration, spatial transcriptomics, and long-read sequencing analysis."
+excerpt: "An evidence-based overview of the most impactful computational methods published in 2025-2026, covering single-cell foundation models, multi-omics integration, spatial transcriptomics, and long-read sequencing analysis."
 image: "images/bioinformatics-intro.png"
 ---
 
@@ -109,7 +109,7 @@ For researchers interested in regulatory genomics, **scTFBridge** (2025) disenta
 
 Standard Visium spatial transcriptomics captures gene expression at 55-micron spots, each of which typically contains 5-20 cells. This means you cannot directly determine which cell type within a spot is expressing which gene.
 
-### Current Solutions (2024-2025)
+### Current Solutions (2025-2026)
 
 **SpatialCell AI** (2025) uses morphology-guided deep learning, leveraging the H&E histological image alongside the gene expression data to infer single-cell resolution from spot-based data. It was benchmarked against ground-truth Xenium data in breast cancer tissue.
 

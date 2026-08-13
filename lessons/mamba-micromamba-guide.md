@@ -13,7 +13,7 @@ Bioinformatics environments often have complex dependency trees. A typical singl
 
 **Mamba** was created as a C++ reimplementation of the Conda package manager, specifically to address these performance bottlenecks.
 
-> **2024-2025 Context:** Conda has recently adopted Mamba's core solver (`libmamba`). While standard Conda is now much faster, Mamba and specifically **Micromamba** remain essential tools for CI/CD, containerization, and High-Performance Computing (HPC).
+> **2025-2026 Context:** Conda has recently adopted Mamba's core solver (`libmamba`). While standard Conda is now much faster, Mamba and specifically **Micromamba** remain essential tools for CI/CD, containerization, and High-Performance Computing (HPC).
 
 ---
 
