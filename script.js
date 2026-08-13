@@ -299,7 +299,6 @@ function getBadgeClass(category) {
         'Conda': 'badge-conda',
         'Single-cell RNA-seq': 'badge-scrna',
         'Bioinformatics': 'badge-bio',
-        'Real Work Examples': 'badge-hpc',
     };
     return map[category] || 'badge-bio';
 }

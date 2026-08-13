@@ -2,7 +2,7 @@
 title: "Advanced scRNA-seq Analysis: Metabolic Vulnerabilities and CLIC1"
 date: "2026-08-13"
 author: "Bioinformatics Workflow Hub"
-category: "Real Work Examples"
+category: "Single-cell RNA-seq"
 excerpt: "Learn how to use single-cell transcriptomics to identify metabolic dependencies in tumor subclones, with a specific focus on the role of CLIC1 in maintaining pH and redox balance in malignant T cells."
 ---
 

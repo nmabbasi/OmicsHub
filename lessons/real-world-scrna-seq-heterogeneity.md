@@ -2,7 +2,7 @@
 title: "Advanced scRNA-seq Analysis: Transcriptional Heterogeneity and the Four-State Model"
 date: "2026-08-13"
 author: "Bioinformatics Workflow Hub"
-category: "Real Work Examples"
+category: "Single-cell RNA-seq"
 excerpt: "Learn how to investigate intra-tumoral heterogeneity and plasticity using single-cell RNA-seq, focusing on regulatory T cell phenotypes (FOXP3) and the Four-State Model in Cutaneous T-Cell Lymphoma."
 ---
 

@@ -2,7 +2,7 @@
 title: "Real-World Workflow: End-to-End scRNA-seq Analysis with Scanpy (2024)"
 date: "2026-08-13"
 author: "Bioinformatics Workflow Hub"
-category: "Real Work Examples"
+category: "Single-cell RNA-seq"
 excerpt: "A complete, production-ready single-cell RNA-seq pipeline using the scverse ecosystem (Scanpy). Covers standard QC, Leiden clustering, and marker gene identification on a 10x Genomics dataset."
 ---
 
