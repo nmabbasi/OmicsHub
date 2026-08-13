@@ -124,4 +124,4 @@ gp.plot.barplot(terms, column="NES", title="Pathways Enriched in High-Metabolism
 
 By isolating specific sub-populations based on module scores, scRNA-seq allows us to reconstruct the metabolic landscape of a tissue or disease state. 
 
-This workflow—moving from gene signatures to module scoring, followed by subpopulation thresholding and GSEA—is a standard, robust approach for uncovering functional dependencies that are completely invisible in bulk RNA-sequencing data.
+This workflow (moving from gene signatures to module scoring, followed by subpopulation thresholding and GSEA) is a standard, robust approach for uncovering functional dependencies that are completely invisible in bulk RNA-sequencing data.

@@ -45,7 +45,7 @@ sc.settings.set_figure_params(dpi=100, facecolor='white')
 
 ## 2. Loading the Data
 
-We will use a standard 10x Genomics output folder. The `read_10x_mtx` function efficiently loads the sparse matrix into an `AnnData` object—the foundational data structure of the scverse ecosystem.
+We will use a standard 10x Genomics output folder. The `read_10x_mtx` function efficiently loads the sparse matrix into an `AnnData` object, which is the foundational data structure of the scverse ecosystem.
 
 ```python
 # Path to your 10x output directory containing matrix.mtx, barcodes.tsv, genes.tsv

@@ -32,7 +32,7 @@ adata = sc.read_h5ad('./data/complex_tissue_clustered.h5ad')
 
 ## 2. Defining Transcriptional States via Module Scoring
 
-Rather than relying on single marker genes—which are subject to technical dropout in scRNA-seq—we can identify complex cell states by calculating **module scores** (or signature scores) using known biological pathways.
+Rather than relying on single marker genes, which are subject to technical dropout in scRNA-seq, we can identify complex cell states by calculating **module scores** (or signature scores) using known biological pathways.
 
 Consider a population that can exist in several distinct phenotypic states:
 1. **Proliferative/Stem-like**: Actively dividing or maintaining progenitor status.

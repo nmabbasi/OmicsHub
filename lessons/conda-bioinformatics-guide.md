@@ -23,7 +23,7 @@ The core problem Conda solves: bioinformatics tools have rigid version requireme
 Miniconda installs only the minimal base: Conda, Python, and a handful of packages. You build environments from scratch, which gives you full control.
 
 ```bash
-# Linux (x86_64) — HPC default
+# Linux (x86_64) - HPC default
 wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
 bash Miniconda3-latest-Linux-x86_64.sh -b -p $HOME/miniconda3
 
@@ -120,7 +120,7 @@ conda env list
 The `environment.yml` file is the standard way to share and reproduce environments. Always commit this file to version control.
 
 ```yaml
-# environment.yml — commit this file to your repository
+# environment.yml - commit this file to your repository
 name: scrna-analysis
 channels:
   - conda-forge
@@ -175,7 +175,7 @@ conda install -c bioconda samtools picard
 # Variant calling
 conda install -c bioconda gatk4 bcftools
 
-# Cell Ranger (10x Genomics) — install from 10x directly, not conda
+# Cell Ranger (10x Genomics) - install from 10x directly, not conda
 ```
 
 ### R Bioconductor Packages

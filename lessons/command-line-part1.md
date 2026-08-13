@@ -3,7 +3,7 @@ title: "Command Line for Bioinformatics: Navigation and File Management"
 date: "2025-08-14"
 author: "OmicsHub Team"
 category: "Shell Commands"
-excerpt: "Learn essential Unix/Linux commands for navigating the file system, managing directories, and handling files — the foundation of every bioinformatics workflow."
+excerpt: "Learn essential Unix/Linux commands for navigating the file system, managing directories, and handling files, which form the foundation of every bioinformatics workflow."
 image: "images/command-line-terminal.png"
 ---
 
