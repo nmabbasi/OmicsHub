@@ -452,14 +452,14 @@ async function showTutorial(tutorialId, addToHistory = true) {
                 <!-- Tutorial Header -->
                 <div class="border-b border-gray-200 pb-6 mb-8">
                     <div class="flex items-center justify-between mb-4">
-                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                        <span class="badge ${getBadgeClass(tutorial.category)}">
                             ${tutorial.category}
                         </span>
-                        <button onclick="showHome()" class="inline-flex items-center text-gray-600 hover:text-blue-600 transition-colors">
+                        <button onclick="showHome()" class="inline-flex items-center text-gray-600 hover:text-blue-600 transition-colors text-sm font-medium">
                             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
                             </svg>
-                            Back to Home
+                            Back to Tutorials
                         </button>
                     </div>
                     <h1 class="text-4xl font-bold text-gray-900 mb-4 leading-tight">${tutorial.title}</h1>
@@ -568,24 +568,16 @@ function showTutorials(addToHistory = true) {
 
     // Display all tutorials
     allTutorialsList.innerHTML = tutorials.map(tutorial => `
-        <article class="bg-white rounded-lg shadow-md overflow-hidden transform transition-transform hover:scale-105 duration-300">
-            <div class="p-6">
-                <div class="flex items-center justify-between mb-3">
-                    <span class="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">${tutorial.category}</span>
-                    <span class="text-sm text-gray-500">${formatDate(tutorial.date)}</span>
-                </div>
-                <h3 class="text-xl font-bold text-gray-900 mb-2 hover:text-blue-600 transition-colors cursor-pointer" onclick="showTutorial('${tutorial.id}')">${tutorial.title}</h3>
-                <p class="text-gray-700 text-base mb-4">${tutorial.excerpt}</p>
-                <div class="flex items-center justify-between">
-                    <span class="text-sm text-gray-500">by ${tutorial.author}</span>
-                    <a href="#tutorial-${tutorial.id}" class="text-blue-600 hover:text-blue-800 font-semibold inline-flex items-center" onclick="event.preventDefault(); showTutorial('${tutorial.id}')">
-                        Read More 
-                        <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                        </svg>
-                    </a>
-                </div>
+        <article class="tutorial-card" onclick="showTutorial('${tutorial.id}')">
+            <div class="flex items-center justify-between mb-3">
+                <span class="badge ${getBadgeClass(tutorial.category)}">${tutorial.category}</span>
+                <span class="meta" style="margin:0">${formatDate(tutorial.date)}</span>
             </div>
+            <h3>${tutorial.title}</h3>
+            <p class="excerpt">${tutorial.excerpt}</p>
+            <a href="#" class="read-more" onclick="event.stopPropagation(); showTutorial('${tutorial.id}')">
+                Read article <svg style="width:14px;height:14px;display:inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+            </a>
         </article>
     `).join('');
     
