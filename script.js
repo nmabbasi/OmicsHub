@@ -71,7 +71,7 @@ async function loadTutorials() {
         // List of tutorial files (you'll add more as you create them)
         const tutorialFiles = [
             'introduction-to-bioinformatics.md',
-            'modern-bioinformatics-methods-2024.md',
+            'modern-bioinformatics-methods-2026.md',
             'conda-bioinformatics-guide.md',
             'mamba-micromamba-guide.md',
             'conda-mamba-part1.md',
