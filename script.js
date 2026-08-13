@@ -382,9 +382,8 @@ function renderTutorialCard(tutorial) {
     return `
         <article class="tutorial-card" style="padding: 0; overflow: hidden; display: flex; flex-direction: column;" onclick="showTutorial('${tutorial.id}')">
             ${tutorial.image ? `
-            <div class="w-full h-64 relative overflow-hidden border-b border-gray-100 bg-gray-900">
-                <div class="absolute inset-0 bg-cover bg-center opacity-40 transition-transform duration-700 hover:scale-110" style="background-image: url('${tutorial.image}'); filter: blur(12px); transform: scale(1.1);"></div>
-                <img src="${tutorial.image}" alt="${tutorial.title}" class="absolute inset-0 w-full h-full object-contain z-10 drop-shadow-xl p-4">
+            <div class="w-full aspect-[21/9] relative overflow-hidden border-b border-gray-100">
+                <img src="${tutorial.image}" alt="${tutorial.title}" class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 hover:scale-105">
             </div>
             ` : ''}
             <div style="padding: 1.6rem; display: flex; flex-direction: column; flex-grow: 1;">
