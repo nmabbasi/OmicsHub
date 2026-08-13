@@ -19,11 +19,10 @@ In this tutorial, we cover the foundational tools for these advanced downstream 
 
 To understand how populations (e.g., T-cells and Macrophages) interact, we can map the expression of known Ligand-Receptor pairs. **CellChat** (R) and **CellPhoneDB** (Python) are the industry standards.
 
-<div class="code-tab-container" id="tab-group-ccc">
-    <div class="code-tab-header">
+    
         <button class="code-tab-btn active" data-lang="r" onclick="switchCodeTab('tab-group-ccc', 'r')">R (CellChat)</button>
-        <button class="code-tab-btn" data-lang="python" onclick="switchCodeTab('tab-group-ccc', 'python')">Python (CellPhoneDB)</button>
-    </div>
+        
+    
     
     <div class="code-tab-content active" data-lang="r">
 ```r
@@ -55,9 +54,9 @@ groupSize <- as.numeric(table(cellchat@idents))
 netVisual_circle(cellchat@net$count, vertex.weight = groupSize, 
                  weight.scale = T, label.edge= F, title.name = "Number of interactions")
 ```
-    </div>
     
-    <div class="code-tab-content" data-lang="python">
+    
+    
 ```python
 # In Python, CellPhoneDB is typically run via the command line on exported count matrices.
 # First, export your Scanpy AnnData object to raw counts and metadata.
@@ -84,8 +83,7 @@ cellphonedb method statistical_analysis meta.tsv counts.tsv \
     --output-path=out_cpdb \
     --threads=8
 ```
-    </div>
-</div>
+    
 
 ---
 
@@ -93,11 +91,10 @@ cellphonedb method statistical_analysis meta.tsv counts.tsv \
 
 Gene expression alone doesn't prove a Transcription Factor is active. Using tools like **Decoupler** (Python) or **DoRothEA** (R), we can infer TF activity based on the expression of its known downstream target genes.
 
-<div class="code-tab-container" id="tab-group-tf">
-    <div class="code-tab-header">
+    
         <button class="code-tab-btn active" data-lang="python" onclick="switchCodeTab('tab-group-tf', 'python')">Python (Decoupler)</button>
-        <button class="code-tab-btn" data-lang="r" onclick="switchCodeTab('tab-group-tf', 'r')">R (DoRothEA)</button>
-    </div>
+        
+    
     
     <div class="code-tab-content active" data-lang="python">
 ```python
@@ -114,9 +111,9 @@ dc.run_mlm(mat=adata, net=net, source='source', target='target', weight='weight'
 # The results are stored in obsm. We can visualize the activity of a specific TF (e.g., STAT1)
 sc.pl.umap(adata, color='STAT1', cmap='RdBu_r', vcenter=0)
 ```
-    </div>
     
-    <div class="code-tab-content" data-lang="r">
+    
+    
 ```r
 library(dorothea)
 library(Seurat)
@@ -135,8 +132,7 @@ pbmc <- run_viper(pbmc, regulon,
 DefaultAssay(pbmc) <- "dorothea"
 FeaturePlot(pbmc, features = "STAT1", cols = c("blue", "white", "red"))
 ```
-    </div>
-</div>
+    
 
 ---
 
@@ -144,10 +140,9 @@ FeaturePlot(pbmc, features = "STAT1", cols = c("blue", "white", "red"))
 
 While Seurat's base plotting functions are good, the **SCpubr** package in R generates highly polished, publication-ready graphics automatically.
 
-<div class="code-tab-container" id="tab-group-plot">
-    <div class="code-tab-header">
+    
         <button class="code-tab-btn active" data-lang="r" onclick="switchCodeTab('tab-group-plot', 'r')">R (SCpubr)</button>
-    </div>
+    
     
     <div class="code-tab-content active" data-lang="r">
 ```r
@@ -169,8 +164,7 @@ SCpubr::do_DotPlot(sample = pbmc,
                    group.by = "ident",
                    colors.use = c("lightgrey", "darkblue"))
 ```
-    </div>
-</div>
+    
 
 ## Conclusion
 

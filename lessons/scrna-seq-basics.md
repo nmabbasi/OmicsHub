@@ -19,11 +19,10 @@ In this tutorial, we will walk through a standard end-to-end analysis on a 10x G
 
 We begin by loading the sparse matrix into our core data structures: `AnnData` in Python, or a `Seurat` object in R.
 
-<div class="code-tab-container" id="tab-group-1">
-    <div class="code-tab-header">
+    
         <button class="code-tab-btn active" data-lang="python" onclick="switchCodeTab('tab-group-1', 'python')">Python (Scanpy)</button>
-        <button class="code-tab-btn" data-lang="r" onclick="switchCodeTab('tab-group-1', 'r')">R (Seurat)</button>
-    </div>
+        
+    
     
     <div class="code-tab-content active" data-lang="python">
 ```python
@@ -43,9 +42,9 @@ adata = sc.read_10x_mtx(
 
 adata.var_names_make_unique()
 ```
-    </div>
     
-    <div class="code-tab-content" data-lang="r">
+    
+    
 ```r
 library(Seurat)
 library(dplyr)
@@ -58,8 +57,7 @@ pbmc.data <- Read10X(data.dir = data_dir)
 # Initialize the Seurat object
 pbmc <- CreateSeuratObject(counts = pbmc.data, project = "pbmc3k", min.cells = 3, min.features = 200)
 ```
-    </div>
-</div>
+    
 
 ---
 
@@ -67,11 +65,10 @@ pbmc <- CreateSeuratObject(counts = pbmc.data, project = "pbmc3k", min.cells = 3
 
 Empty droplets or dying cells can confound downstream analysis. A universal rule of thumb is to filter cells with excessively high mitochondrial gene expression (which indicates ruptured cell membranes) or unusually low gene counts.
 
-<div class="code-tab-container" id="tab-group-2">
-    <div class="code-tab-header">
+    
         <button class="code-tab-btn active" data-lang="python" onclick="switchCodeTab('tab-group-2', 'python')">Python (Scanpy)</button>
-        <button class="code-tab-btn" data-lang="r" onclick="switchCodeTab('tab-group-2', 'r')">R (Seurat)</button>
-    </div>
+        
+    
     
     <div class="code-tab-content active" data-lang="python">
 ```python
@@ -87,9 +84,9 @@ adata = adata[adata.obs.pct_counts_mt < 5, :]
 
 print(f"Cells remaining after QC: {adata.n_obs}")
 ```
-    </div>
     
-    <div class="code-tab-content" data-lang="r">
+    
+    
 ```r
 # Calculate mitochondrial percentage
 pbmc[["percent.mt"]] <- PercentageFeatureSet(pbmc, pattern = "^MT-")
@@ -99,8 +96,7 @@ pbmc <- subset(pbmc, subset = nFeature_RNA > 200 & nFeature_RNA < 2500 & percent
 
 print(paste("Cells remaining after QC:", ncol(pbmc)))
 ```
-    </div>
-</div>
+    
 
 ---
 
@@ -108,11 +104,10 @@ print(paste("Cells remaining after QC:", ncol(pbmc)))
 
 Because different droplets capture different total amounts of RNA, we must normalize the data to a common scale (usually 10,000 counts per cell), log-transform it, and extract the most highly variable genes for dimensionality reduction.
 
-<div class="code-tab-container" id="tab-group-3">
-    <div class="code-tab-header">
+    
         <button class="code-tab-btn active" data-lang="python" onclick="switchCodeTab('tab-group-3', 'python')">Python (Scanpy)</button>
-        <button class="code-tab-btn" data-lang="r" onclick="switchCodeTab('tab-group-3', 'r')">R (Seurat)</button>
-    </div>
+        
+    
     
     <div class="code-tab-content active" data-lang="python">
 ```python
@@ -131,9 +126,9 @@ sc.pp.scale(adata, max_value=10)
 sc.tl.pca(adata, svd_solver='arpack')
 sc.pl.pca_variance_ratio(adata, log=True)
 ```
-    </div>
     
-    <div class="code-tab-content" data-lang="r">
+    
+    
 ```r
 # Normalize
 pbmc <- NormalizeData(pbmc, normalization.method = "LogNormalize", scale.factor = 10000)
@@ -149,8 +144,7 @@ pbmc <- ScaleData(pbmc, features = all.genes)
 pbmc <- RunPCA(pbmc, features = VariableFeatures(object = pbmc))
 ElbowPlot(pbmc)
 ```
-    </div>
-</div>
+    
 
 ---
 
@@ -158,11 +152,10 @@ ElbowPlot(pbmc)
 
 We compute the k-nearest neighbors graph in PCA space, embed it into 2D space using UMAP, and cluster the cells to identify transcriptionally distinct subpopulations.
 
-<div class="code-tab-container" id="tab-group-4">
-    <div class="code-tab-header">
+    
         <button class="code-tab-btn active" data-lang="python" onclick="switchCodeTab('tab-group-4', 'python')">Python (Scanpy)</button>
-        <button class="code-tab-btn" data-lang="r" onclick="switchCodeTab('tab-group-4', 'r')">R (Seurat)</button>
-    </div>
+        
+    
     
     <div class="code-tab-content active" data-lang="python">
 ```python
@@ -176,9 +169,9 @@ sc.tl.leiden(adata, resolution=0.5)
 # Visualize
 sc.pl.umap(adata, color=['leiden'])
 ```
-    </div>
     
-    <div class="code-tab-content" data-lang="r">
+    
+    
 ```r
 # Compute neighbors
 pbmc <- FindNeighbors(pbmc, dims = 1:10)
@@ -192,8 +185,7 @@ pbmc <- RunUMAP(pbmc, dims = 1:10)
 # Visualize
 DimPlot(pbmc, reduction = "umap", label = TRUE)
 ```
-    </div>
-</div>
+    
 
 ## Conclusion
 

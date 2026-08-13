@@ -529,9 +529,84 @@ async function showTutorial(tutorialId, addToHistory = true) {
             </div>
         `;
 
-        tutorialContentDiv.innerHTML = htmlContent;
+        document.getElementById('content-area').innerHTML = htmlContent;
+        
+        // Dynamically convert adjacent Python and R code blocks into interactive tabs
+        const contentDiv = document.querySelector('.tutorial-content');
+        if (contentDiv) {
+            const pythonBlocks = Array.from(contentDiv.querySelectorAll('pre code.language-python, pre code.language-py')).map(code => code.parentElement);
+            
+            pythonBlocks.forEach(pyPre => {
+                let next = pyPre.nextElementSibling;
+                if (next && next.tagName === 'PRE' && (next.querySelector('code.language-r') || next.querySelector('code.language-R'))) {
+                    const rPre = next;
+                    
+                    const wrapper = document.createElement('div');
+                    wrapper.className = 'code-tab-container mb-8 border border-gray-200 rounded-lg overflow-hidden shadow-sm';
+                    
+                    const header = document.createElement('div');
+                    header.className = 'code-tab-header flex bg-gray-100 border-b border-gray-200';
+                    
+                    const pyBtn = document.createElement('button');
+                    pyBtn.className = 'code-tab-btn active px-6 py-3 text-sm font-bold text-blue-700 bg-white border-b-2 border-blue-600 outline-none transition-colors';
+                    pyBtn.dataset.lang = 'python';
+                    pyBtn.innerText = 'Python (Scanpy)';
+                    
+                    const rBtn = document.createElement('button');
+                    rBtn.className = 'code-tab-btn px-6 py-3 text-sm font-semibold text-gray-600 hover:text-gray-900 hover:bg-gray-200 outline-none border-b-2 border-transparent transition-colors';
+                    rBtn.dataset.lang = 'r';
+                    rBtn.innerText = 'R (Seurat)';
+                    
+                    header.appendChild(pyBtn);
+                    header.appendChild(rBtn);
+                    
+                    const pyContent = document.createElement('div');
+                    pyContent.className = 'code-tab-content block';
+                    pyContent.dataset.lang = 'python';
+                    
+                    const rContent = document.createElement('div');
+                    rContent.className = 'code-tab-content hidden';
+                    rContent.dataset.lang = 'r';
+                    
+                    // Remove margins and border-radius from the pre tags since they are in a container now
+                    pyPre.style.margin = '0';
+                    pyPre.style.borderRadius = '0';
+                    rPre.style.margin = '0';
+                    rPre.style.borderRadius = '0';
+                    
+                    pyPre.parentNode.insertBefore(wrapper, pyPre);
+                    pyContent.appendChild(pyPre);
+                    rContent.appendChild(rPre);
+                    
+                    wrapper.appendChild(header);
+                    wrapper.appendChild(pyContent);
+                    wrapper.appendChild(rContent);
+                }
+            });
 
-        // Highlight code blocks after content is loaded
+            // Event delegation for tab buttons
+            contentDiv.addEventListener('click', (e) => {
+                if (e.target.classList.contains('code-tab-btn')) {
+                    const container = e.target.closest('.code-tab-container');
+                    const lang = e.target.dataset.lang;
+                    
+                    container.querySelectorAll('.code-tab-btn').forEach(btn => {
+                        btn.classList.toggle('active', btn === e.target);
+                        btn.classList.toggle('bg-white', btn === e.target);
+                        btn.classList.toggle('text-blue-700', btn === e.target);
+                        btn.classList.toggle('border-blue-600', btn === e.target);
+                        btn.classList.toggle('text-gray-600', btn !== e.target);
+                    });
+                    
+                    container.querySelectorAll('.code-tab-content').forEach(content => {
+                        content.classList.toggle('hidden', content.dataset.lang !== lang);
+                        content.classList.toggle('block', content.dataset.lang === lang);
+                    });
+                }
+            });
+        }
+
+        // Initialize syntax highlighting code blocks after content is loaded
         if (typeof Prism !== 'undefined') {
             Prism.highlightAll();
         }
@@ -784,17 +859,19 @@ document.addEventListener('click', function(e) {
         
         container.querySelectorAll('.code-tab-btn').forEach(b => {
             if (b.dataset.lang === lang) {
-                b.classList.add('active');
+                b.className = 'code-tab-btn active px-6 py-3 text-sm font-bold text-blue-700 bg-white border-b-2 border-blue-600 outline-none transition-colors';
             } else {
-                b.classList.remove('active');
+                b.className = 'code-tab-btn px-6 py-3 text-sm font-semibold text-gray-600 hover:text-gray-900 hover:bg-gray-200 outline-none border-b-2 border-transparent transition-colors';
             }
         });
         
         container.querySelectorAll('.code-tab-content').forEach(c => {
             if (c.dataset.lang === lang) {
-                c.classList.add('active');
+                c.classList.remove('hidden');
+                c.classList.add('block');
             } else {
-                c.classList.remove('active');
+                c.classList.remove('block');
+                c.classList.add('hidden');
             }
         });
     }

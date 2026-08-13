@@ -21,10 +21,9 @@ In this tutorial, we will explore the foundational tools for TI in both Python a
 
 **Partition-based Graph Abstraction (PAGA)** is integrated directly into the Scanpy ecosystem. It generates a coarse-grained map of cellular connectivity and provides a robust scaffold for embedding and pseudotime calculation.
 
-<div class="code-tab-container" id="tab-group-paga">
-    <div class="code-tab-header">
+    
         <button class="code-tab-btn active" data-lang="python" onclick="switchCodeTab('tab-group-paga', 'python')">Python (Scanpy + PAGA)</button>
-    </div>
+    
     
     <div class="code-tab-content active" data-lang="python">
 ```python
@@ -56,8 +55,7 @@ sc.tl.dpt(adata)
 # Visualize pseudotime progression across the manifold
 sc.pl.umap(adata, color='dpt_pseudotime', cmap='viridis')
 ```
-    </div>
-</div>
+    
 
 ---
 
@@ -65,11 +63,10 @@ sc.pl.umap(adata, color='dpt_pseudotime', cmap='viridis')
 
 In the R ecosystem, **Monocle3** and **Slingshot** are the leading frameworks for trajectory inference. Slingshot is highly favored for its simplicity and ability to handle branching trajectories effectively from existing Seurat objects.
 
-<div class="code-tab-container" id="tab-group-r-ti">
-    <div class="code-tab-header">
+    
         <button class="code-tab-btn active" data-lang="r" onclick="switchCodeTab('tab-group-r-ti', 'r')">R (Slingshot)</button>
-        <button class="code-tab-btn" data-lang="monocle" onclick="switchCodeTab('tab-group-r-ti', 'monocle')">R (Monocle3)</button>
-    </div>
+        
+    
     
     <div class="code-tab-content active" data-lang="r">
 ```r
@@ -92,9 +89,9 @@ plotcol <- colors[cut(sce$slingPseudotime_1, breaks=100)]
 plot(reducedDims(sce)$UMAP, col = plotcol, pch=16, asp = 1)
 lines(SlingshotDataSet(sce), lwd=2, col='black')
 ```
-    </div>
+    
 
-    <div class="code-tab-content" data-lang="monocle">
+    
 ```r
 library(monocle3)
 library(SeuratWrappers)
@@ -121,8 +118,7 @@ plot_cells(cds,
            label_branch_points=FALSE,
            graph_label_size=1.5)
 ```
-    </div>
-</div>
+    
 
 ## Conclusion
 
