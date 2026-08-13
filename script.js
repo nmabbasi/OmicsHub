@@ -382,8 +382,8 @@ function renderTutorialCard(tutorial) {
     return `
         <article class="tutorial-card" style="padding: 0; overflow: hidden; display: flex; flex-direction: column;" onclick="showTutorial('${tutorial.id}')">
             ${tutorial.image ? `
-            <div class="w-full aspect-[21/9] relative overflow-hidden border-b border-gray-100">
-                <img src="${tutorial.image}" alt="${tutorial.title}" class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 hover:scale-105">
+            <div class="w-full h-56 relative overflow-hidden border-b border-gray-100 bg-white">
+                <img src="${tutorial.image}" alt="${tutorial.title}" class="absolute inset-0 w-full h-full object-contain transition-transform duration-700 hover:scale-105 p-2">
             </div>
             ` : ''}
             <div style="padding: 1.6rem; display: flex; flex-direction: column; flex-grow: 1;">
