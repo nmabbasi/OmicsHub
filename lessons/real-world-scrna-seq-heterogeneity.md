@@ -4,7 +4,7 @@ date: "2026-08-13"
 author: "Bioinformatics Workflow Hub"
 category: "Single-cell RNA-seq"
 excerpt: "Learn how to investigate cellular heterogeneity and plasticity using single-cell RNA-seq, focusing on defining complex cell states via module scoring and inferring transitions with RNA Velocity."
-image: "images/single-cell-analysis.png"
+image: "images/scrna_heterogeneity.png"
 ---
 
 ## Understanding Transcriptional Plasticity

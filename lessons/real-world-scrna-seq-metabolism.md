@@ -4,7 +4,7 @@ date: "2026-08-13"
 author: "Bioinformatics Workflow Hub"
 category: "Single-cell RNA-seq"
 excerpt: "Learn how to use single-cell transcriptomics to identify metabolic dependencies in specific cellular subclones, and how to run Gene Set Enrichment Analysis (GSEA) on single-cell data."
-image: "images/single-cell-analysis.png"
+image: "images/scrna_metabolism.png"
 ---
 
 ## Uncovering Metabolic Heterogeneity in Single Cells
