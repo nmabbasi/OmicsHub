@@ -309,32 +309,7 @@ function getBadgeClass(category) {
     return map[category] || 'badge-bio';
 }
 
-// Update tutorials list on homepage
-function updateTutorialsList() {
-    const tutorialsList = document.getElementById('tutorials-list');
-    if (!tutorialsList) return;
-    
-    if (tutorials.length === 0) {
-        tutorialsList.innerHTML = '<p class="text-gray-500">Loading tutorials...</p>';
-        return;
-    }
-    
-    const latestTutorials = tutorials.slice(0, 5); // Show latest 5 tutorials
-    
-    tutorialsList.innerHTML = latestTutorials.map(tutorial => `
-        <article class="tutorial-card" onclick="showTutorial('${tutorial.id}')">
-            <div class="flex items-center justify-between mb-3">
-                <span class="badge ${getBadgeClass(tutorial.category)}">${tutorial.category}</span>
-                <span class="meta" style="margin:0">${formatDate(tutorial.date)}</span>
-            </div>
-            <h3>${tutorial.title}</h3>
-            <p class="excerpt">${tutorial.excerpt}</p>
-            <a href="#" class="read-more" onclick="event.stopPropagation(); showTutorial('${tutorial.id}')">
-                Read article <svg style="width:14px;height:14px;display:inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-            </a>
-        </article>
-    `).join('');
-}
+// (Removed duplicate updateTutorialsList)
 
 // Update sidebar with categories and recent posts
 function updateSidebar() {
@@ -402,6 +377,31 @@ function filterTutorialsOnHomePage(category) {
     }
 }
 
+// Helper function to render a single tutorial card with cinematic image
+function renderTutorialCard(tutorial) {
+    return `
+        <article class="tutorial-card" style="padding: 0; overflow: hidden; display: flex; flex-direction: column;" onclick="showTutorial('${tutorial.id}')">
+            ${tutorial.image ? `
+            <div class="w-full h-64 relative overflow-hidden border-b border-gray-100 bg-gray-900">
+                <div class="absolute inset-0 bg-cover bg-center opacity-40 transition-transform duration-700 hover:scale-110" style="background-image: url('${tutorial.image}'); filter: blur(12px); transform: scale(1.1);"></div>
+                <img src="${tutorial.image}" alt="${tutorial.title}" class="absolute inset-0 w-full h-full object-contain z-10 drop-shadow-xl p-4">
+            </div>
+            ` : ''}
+            <div style="padding: 1.6rem; display: flex; flex-direction: column; flex-grow: 1;">
+                <div class="flex items-center justify-between mb-3">
+                    <span class="badge ${getBadgeClass(tutorial.category)}">${tutorial.category}</span>
+                    <span class="meta" style="margin:0">${formatDate(tutorial.date)}</span>
+                </div>
+                <h3 class="text-xl font-bold text-gray-900 mb-2">${tutorial.title}</h3>
+                <p class="excerpt text-gray-600 mb-4">${tutorial.excerpt}</p>
+                <a href="#tutorial-${tutorial.id}" class="read-more mt-auto" onclick="event.stopPropagation(); showTutorial('${tutorial.id}')">
+                    Read article <svg style="width:14px;height:14px;display:inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                </a>
+            </div>
+        </article>
+    `;
+}
+
 // Update tutorials list display
 function updateTutorialsList(tutorialsToShow = null) {
     const tutorialsList = document.getElementById('tutorials-list');
@@ -414,22 +414,7 @@ function updateTutorialsList(tutorialsToShow = null) {
         return;
     }
     
-    tutorialsList.innerHTML = displayTutorials.map(tutorial => `
-        <article class="tutorial-card" style="padding: 0; overflow: hidden; display: flex; flex-direction: column;" onclick="showTutorial('${tutorial.id}')">
-            ${tutorial.image ? `<img src="${tutorial.image}" alt="${tutorial.title}" class="w-full h-40 object-cover border-b border-gray-100">` : ''}
-            <div style="padding: 1.6rem; display: flex; flex-direction: column; flex-grow: 1;">
-                <div class="flex items-center justify-between mb-3">
-                    <span class="badge ${getBadgeClass(tutorial.category)}">${tutorial.category}</span>
-                    <span class="meta" style="margin:0">${formatDate(tutorial.date)}</span>
-                </div>
-                <h3>${tutorial.title}</h3>
-                <p class="excerpt">${tutorial.excerpt}</p>
-                <a href="#" class="read-more" onclick="event.stopPropagation(); showTutorial('${tutorial.id}')">
-                    Read article <svg style="width:14px;height:14px;display:inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-                </a>
-            </div>
-        </article>
-    `).join('');
+    tutorialsList.innerHTML = displayTutorials.map(tutorial => renderTutorialCard(tutorial)).join('');
 }
 
 // Filter tutorials by category
@@ -663,19 +648,7 @@ function showTutorials(addToHistory = true) {
     }
 
     // Display all tutorials
-    allTutorialsList.innerHTML = tutorials.map(tutorial => `
-        <article class="tutorial-card" onclick="showTutorial('${tutorial.id}')">
-            <div class="flex items-center justify-between mb-3">
-                <span class="badge ${getBadgeClass(tutorial.category)}">${tutorial.category}</span>
-                <span class="meta" style="margin:0">${formatDate(tutorial.date)}</span>
-            </div>
-            <h3>${tutorial.title}</h3>
-            <p class="excerpt">${tutorial.excerpt}</p>
-            <a href="#" class="read-more" onclick="event.stopPropagation(); showTutorial('${tutorial.id}')">
-                Read article <svg style="width:14px;height:14px;display:inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-            </a>
-        </article>
-    `).join('');
+    allTutorialsList.innerHTML = tutorials.map(tutorial => renderTutorialCard(tutorial)).join('');
     
     window.scrollTo(0, 0); // Scroll to top of page
 }
@@ -687,27 +660,7 @@ function filterTutorialsOnly(category) {
 
     const filteredTutorials = category === 'all' ? tutorials : tutorials.filter(t => t.category === category);
 
-    allTutorialsList.innerHTML = filteredTutorials.map(tutorial => `
-        <article class="bg-white rounded-lg shadow-md overflow-hidden transform transition-transform hover:scale-105 duration-300">
-            <div class="p-6">
-                <div class="flex items-center justify-between mb-3">
-                    <span class="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">${tutorial.category}</span>
-                    <span class="text-sm text-gray-500">${formatDate(tutorial.date)}</span>
-                </div>
-                <h3 class="text-xl font-bold text-gray-900 mb-2 hover:text-blue-600 transition-colors cursor-pointer" onclick="showTutorial('${tutorial.id}')">${tutorial.title}</h3>
-                <p class="text-gray-700 text-base mb-4">${tutorial.excerpt}</p>
-                <div class="flex items-center justify-between">
-                    <span class="text-sm text-gray-500">by ${tutorial.author}</span>
-                    <a href="#tutorial-${tutorial.id}" class="text-blue-600 hover:text-blue-800 font-semibold inline-flex items-center" onclick="event.preventDefault(); showTutorial('${tutorial.id}')">
-                        Read More 
-                        <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                        </svg>
-                    </a>
-                </div>
-            </div>
-        </article>
-    `).join('');
+    allTutorialsList.innerHTML = filteredTutorials.map(tutorial => renderTutorialCard(tutorial)).join('');
 
     // Update active category button
     document.querySelectorAll('#category-filter .category-btn').forEach(btn => {
