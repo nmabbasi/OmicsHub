@@ -257,12 +257,3 @@ results <- results(dds, contrast = c("condition", "treated", "control"))
 | Resolve splice isoforms | FLAMES / IsoQuant |
 | Infer differentiation trajectory | Monocle 3 / Slingshot |
 | Compare conditions across donors | Pseudobulk DESeq2 |
-
----
-
-## Further Reading
-
-- Hao et al. (2024). "Dictionary learning for integrative, multimodal and scalable single-cell analysis." *Nature Biotechnology*.
-- Cui et al. (2024). "scGPT: toward building a foundation model for single-cell multi-omics using generative AI." *Nature Methods*.
-- Hou et al. (2024). "A systematic evaluation of single-cell RNA-sequencing analysis pipelines." *Nature Communications*.
-- Long et al. (2024). "SpatialGlue: deciphering spatial domains of multi-omics by cross-omics integration." *Nature Methods*.
