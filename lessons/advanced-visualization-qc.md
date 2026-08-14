@@ -97,6 +97,48 @@ plot_cell_fractions(seurat_obj,
                     celltype = "cell_type")
 ```
 
+### scplotter
+**scplotter** provides an intuitive, high-level interface for creating complex, multi-layered visualizations that are difficult to build in raw ggplot2. It is especially powerful for Immune Repertoire (TCR/BCR) visualizations and feature-rich scatter plots.
+
+```r
+library(scplotter)
+
+# Example: Generate a detailed scatter plot highlighting specific cellular subsets
+sc_scatter(seurat_obj, 
+           group.by = "cell_type", 
+           split.by = "condition",
+           palette = "Set1")
+```
+
+### dittoSeq
+**dittoSeq** is a universal visualization package highly regarded for its color-blind friendly default palettes and its ability to rapidly generate cellular composition barplots and expression heatmaps.
+
+```r
+library(dittoSeq)
+
+# Generate a color-blind friendly cellular composition barplot across samples
+dittoBarPlot(seurat_obj, var = "cell_type", group.by = "patient_id")
+
+# Generate a multi-annotation heatmap for top marker genes
+dittoHeatmap(seurat_obj, genes = top_10_markers, annot.by = c("cell_type", "condition"))
+```
+
+### Radar Plots (Pathway Visualization)
+When you have multiple pathway enrichment scores (e.g., from GSEA or PROGENy) across different clusters, a standard bar chart is often insufficient. **Radar Plots** (or Spider Plots) allow you to compare the multidimensional signaling state of different cell types simultaneously.
+
+```r
+library(ggradar)
+library(ggplot2)
+
+# Assuming 'pathway_data' is a data frame of normalized pathway scores per cluster
+ggradar(pathway_data,
+        grid.min = 0, grid.mid = 0.5, grid.max = 1,
+        group.line.width = 1, 
+        group.point.size = 3) +
+  theme(legend.position = "bottom") +
+  labs(title = "Pathway Activity Radar Plot")
+```
+
 ## Conclusion
 
 By incorporating **LISI** and **Silhouette** scores into your pipeline, you bulletproof your analysis against peer-review criticism. By switching your final outputs to **SCpubr** and **plot1cell**, you ensure your figures meet the rigorous aesthetic standards of top-tier journals.
