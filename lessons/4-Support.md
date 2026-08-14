@@ -7,8 +7,6 @@ excerpt: "Learn how to diagnose common errors on HPC systems, use man pages and 
 image: "images/support.png"
 ---
 
-![Bioinformatics](images/support.png)
-
 # Linux/Unix Commands and Scripting
 
 ## Linux

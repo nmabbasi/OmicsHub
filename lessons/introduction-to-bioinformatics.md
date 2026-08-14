@@ -7,8 +7,6 @@ excerpt: "Learn the fundamentals of bioinformatics and discover how computationa
 image: "images/bioinformatics-intro.png"
 ---
 
-![Bioinformatics Overview](images/bioinformatics-intro.png)
-
 ## What is Bioinformatics?
 
 Bioinformatics is an interdisciplinary field that combines biology, computer science, mathematics, and statistics to analyze and interpret biological data. With the explosion of biological data from genomics, proteomics, and other high-throughput technologies, bioinformatics has become essential for modern biological research.

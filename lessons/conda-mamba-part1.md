@@ -7,8 +7,6 @@ excerpt: "A complete guide to installing Conda and Mamba, creating isolated envi
 image: "images/conda-environment.png"
 ---
 
-![Conda Environment Management](images/conda-environment.png)
-
 ## Why Package Management Matters in Bioinformatics
 
 If you've ever spent hours trying to install a bioinformatics tool only to run into dependency conflicts, version mismatches, or the dreaded "it works on my machine" problem: you're not alone. Package management is one of the biggest pain points for researchers entering computational biology.

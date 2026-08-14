@@ -7,9 +7,6 @@ excerpt: "Set up secure SSH connections to remote HPC systems from Windows and m
 image: "images/connection.png"
 ---
 
-![Bioinformatics](images/connection.png)
-
-
 # Connecting with SSH (Windows)
 
 ## Windows

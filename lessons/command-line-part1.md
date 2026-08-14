@@ -7,8 +7,6 @@ excerpt: "Learn essential Unix/Linux commands for navigating the file system, ma
 image: "images/command-line-terminal.png"
 ---
 
-![Command Line Terminal](images/command-line-terminal.png)
-
 ## Why the Command Line Matters in Bioinformatics
 
 The command line is like learning to drive a manual transmission car. Sure, automatic is easier to start with, but once you master manual, you have complete control over the machine. In bioinformatics, that control translates to unprecedented power and efficiency.

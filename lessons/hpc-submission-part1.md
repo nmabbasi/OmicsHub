@@ -7,9 +7,6 @@ excerpt: "Learn how to write and submit Slurm batch scripts on HPC clusters, all
 image: "images/sc.png"
 ---
 
-![Bioinformatics](images/sc.png)
-
-
 ## A basic script
 
 All options actually have short versions (e.g., `--job-name` can be replaced by `-J`). The long names are used here for clarity. Not all options in this script are mandatory, but they represent the minimum recommended for clarity.

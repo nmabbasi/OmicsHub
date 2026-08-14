@@ -7,8 +7,6 @@ excerpt: "Learn to load software modules, inspect cluster partitions and nodes, 
 image: "images/hpc.png"
 ---
 
-![Bioinformatics](images/hpc.png)
-
 ## Modules
 
 Some programs on the HPC cluster are only accessible by loading specific modules. For example, to compile MPI programs with `mpic++`, you would load the appropriate module:

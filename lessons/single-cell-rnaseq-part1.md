@@ -7,8 +7,6 @@ excerpt: "Understand the principles behind single-cell RNA sequencing, key techn
 image: "images/single-cell-analysis.png"
 ---
 
-![Single-cell RNA-seq Analysis](images/single-cell-analysis.png)
-
 ## Introduction to Single-cell RNA-seq
 
 Single-cell RNA sequencing (scRNA-seq) is a revolutionary technology that has fundamentally transformed our understanding of biology. Instead of measuring the average gene expression across millions of cells: like traditional bulk RNA-seq: scRNA-seq allows us to peek inside individual cells and measure their unique molecular signatures.
