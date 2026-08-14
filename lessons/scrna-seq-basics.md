@@ -20,11 +20,9 @@ In this tutorial, we will walk through a standard end-to-end analysis on a 10x G
 We begin by loading the sparse matrix into our core data structures: `AnnData` in Python, or a `Seurat` object in R.
 
     
-        <button class="code-tab-btn active" data-lang="python" onclick="switchCodeTab('tab-group-1', 'python')">Python (Scanpy)</button>
         
     
     
-    <div class="code-tab-content active" data-lang="python">
 ```python
 import scanpy as sc
 import pandas as pd
@@ -66,11 +64,9 @@ pbmc <- CreateSeuratObject(counts = pbmc.data, project = "pbmc3k", min.cells = 3
 Empty droplets or dying cells can confound downstream analysis. A universal rule of thumb is to filter cells with excessively high mitochondrial gene expression (which indicates ruptured cell membranes) or unusually low gene counts.
 
     
-        <button class="code-tab-btn active" data-lang="python" onclick="switchCodeTab('tab-group-2', 'python')">Python (Scanpy)</button>
         
     
     
-    <div class="code-tab-content active" data-lang="python">
 ```python
 # Identify mitochondrial genes
 adata.var['mt'] = adata.var_names.str.startswith('MT-')
@@ -105,11 +101,9 @@ print(paste("Cells remaining after QC:", ncol(pbmc)))
 Because different droplets capture different total amounts of RNA, we must normalize the data to a common scale (usually 10,000 counts per cell), log-transform it, and extract the most highly variable genes for dimensionality reduction.
 
     
-        <button class="code-tab-btn active" data-lang="python" onclick="switchCodeTab('tab-group-3', 'python')">Python (Scanpy)</button>
         
     
     
-    <div class="code-tab-content active" data-lang="python">
 ```python
 # Normalize and log transform
 sc.pp.normalize_total(adata, target_sum=1e4)
@@ -153,11 +147,9 @@ ElbowPlot(pbmc)
 We compute the k-nearest neighbors graph in PCA space, embed it into 2D space using UMAP, and cluster the cells to identify transcriptionally distinct subpopulations.
 
     
-        <button class="code-tab-btn active" data-lang="python" onclick="switchCodeTab('tab-group-4', 'python')">Python (Scanpy)</button>
         
     
     
-    <div class="code-tab-content active" data-lang="python">
 ```python
 # Compute neighbors and UMAP
 sc.pp.neighbors(adata, n_neighbors=10, n_pcs=40)

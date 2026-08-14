@@ -20,11 +20,9 @@ In this tutorial, we cover the foundational tools for these advanced downstream 
 To understand how populations (e.g., T-cells and Macrophages) interact, we can map the expression of known Ligand-Receptor pairs. **CellChat** (R) and **CellPhoneDB** (Python) are the industry standards.
 
     
-        <button class="code-tab-btn active" data-lang="r" onclick="switchCodeTab('tab-group-ccc', 'r')">R (CellChat)</button>
         
     
     
-    <div class="code-tab-content active" data-lang="r">
 ```r
 library(CellChat)
 library(patchwork)
@@ -92,11 +90,9 @@ cellphonedb method statistical_analysis meta.tsv counts.tsv \
 Gene expression alone doesn't prove a Transcription Factor is active. Using tools like **Decoupler** (Python) or **DoRothEA** (R), we can infer TF activity based on the expression of its known downstream target genes.
 
     
-        <button class="code-tab-btn active" data-lang="python" onclick="switchCodeTab('tab-group-tf', 'python')">Python (Decoupler)</button>
         
     
     
-    <div class="code-tab-content active" data-lang="python">
 ```python
 import decoupler as dc
 import scanpy as sc
@@ -141,10 +137,8 @@ FeaturePlot(pbmc, features = "STAT1", cols = c("blue", "white", "red"))
 While Seurat's base plotting functions are good, the **SCpubr** package in R generates highly polished, publication-ready graphics automatically.
 
     
-        <button class="code-tab-btn active" data-lang="r" onclick="switchCodeTab('tab-group-plot', 'r')">R (SCpubr)</button>
     
     
-    <div class="code-tab-content active" data-lang="r">
 ```r
 library(SCpubr)
 
