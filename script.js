@@ -119,8 +119,9 @@ async function loadTutorials() {
             }
         }
         
-        // Sort tutorials by date (newest first)
-        tutorials.sort((a, b) => new Date(b.date) - new Date(a.date));
+        // We intentionally DO NOT sort by date anymore.
+        // The tutorials will render in the exact pedagogical order defined in the tutorialFiles array above,
+        // ensuring beginners start with the Introduction and end with Advanced Single-Cell analysis.
         
         // Update the UI
         updateTutorialsList();
