@@ -100,7 +100,11 @@ ggplot(res_df, aes(x = log2FoldChange, y = -log10(padj))) +
 
 If you are working with single-cell RNA-seq data (scRNA-seq), performing DGE on individual cells is statistically flawed (it artificially inflates your sample size, creating massive false positives). 
 
-The modern best practice is **Pseudobulking**: aggregating all cells of a specific cell type from the same patient into a single "bulk" sample, and then running DESeq2.
+The modern best practice is **Pseudobulking**: aggregating all cells of a specific cell type from the same biological replicate into a single "bulk" sample, and then running DE analysis.
+
+There are two primary ways to do this:
+
+### Option A: Manual Aggregation (Seurat)
 
 ```r
 # Example using Seurat
@@ -117,4 +121,26 @@ tcell_counts <- GetAssayData(subset(pseudobulk_obj, cell_type == "T_cell"), slot
 # You can now feed 'tcell_counts' directly into DESeqDataSetFromMatrix!
 ```
 
-By mastering this DESeq2 pipeline, you are fully equipped to handle both traditional bulk assays and cutting-edge single-cell cohort studies.
+### Option B: The Libra Framework (Recommended)
+
+To drastically simplify this workflow, the **Libra** R package (developed by the NeuroRestore group) provides a unified interface. Instead of manually extracting counts, building matrices, and managing metadata loops for every single cell type, `Libra` performs the aggregation and runs your preferred DE algorithm (edgeR, DESeq2, limma) across all cell types simultaneously in one line of code.
+
+```r
+library(Libra)
+
+# Ensure your Seurat object has standard metadata columns:
+# seurat_obj$cell_type (the clusters/identities)
+# seurat_obj$replicate (patient/sample ID)
+# seurat_obj$label (Condition: e.g., Treated vs Control)
+
+# Run pseudobulk DE across all cell types automatically
+de_results <- run_de(seurat_obj, 
+                     de_family = "pseudobulk", 
+                     de_method = "edgeR", # Can swap seamlessly to 'DESeq2' or 'limma'
+                     de_type = "LRT")     # Likelihood ratio test
+
+# View results for a specific cell type
+head(de_results$T_cell)
+```
+
+By leveraging `Libra`, you ensure statistically rigorous, replicate-aware differential expression testing while completely avoiding the massive false-discovery rates of traditional cell-level tests.
