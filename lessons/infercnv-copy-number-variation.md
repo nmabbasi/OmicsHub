@@ -1,5 +1,5 @@
 ---
-title: "Part 4: Inferring Copy Number Variation (inferCNV)"
+title: "Inferring Copy Number Variation (inferCNV)"
 date: "2026-08-14"
 author: "OmicsHub Team"
 category: "Advanced Single-Cell Analysis"

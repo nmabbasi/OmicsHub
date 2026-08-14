@@ -1,5 +1,5 @@
 ---
-title: "Part 2: Cell-Cell Communication"
+title: "Cell-Cell Communication"
 date: "2026-08-14"
 author: "OmicsHub Team"
 category: "Advanced Single-Cell Analysis"

@@ -1,5 +1,5 @@
 ---
-title: "Part 4: Managing Resources"
+title: "Managing Resources"
 date: "2025-08-23"
 author: "OmicsHub Team"
 category: "High-Performance Computing (HPC)"

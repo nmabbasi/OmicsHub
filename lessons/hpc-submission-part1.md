@@ -1,5 +1,5 @@
 ---
-title: "Part 3: Writing Job Scripts"
+title: "Writing Job Scripts"
 date: "2025-08-23"
 author: "OmicsHub Team"
 category: "High-Performance Computing (HPC)"

@@ -1,5 +1,5 @@
 ---
-title: "Part 1: Basic Navigation"
+title: "Basic Navigation"
 date: "2025-08-14"
 author: "OmicsHub Team"
 category: "Shell Command Basics"

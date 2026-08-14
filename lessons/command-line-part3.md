@@ -1,5 +1,5 @@
 ---
-title: "Part 3: Advanced Shell Scripting"
+title: "Advanced Shell Scripting"
 date: "2025-08-14"
 author: "OmicsHub Team"
 category: "Shell Command Basics"

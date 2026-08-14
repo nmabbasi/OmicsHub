@@ -1,5 +1,5 @@
 ---
-title: "Part 2: Modern Methods Landscape"
+title: "Modern Methods Landscape"
 date: "2026-08-13"
 author: "Bioinformatics Workflow Hub"
 category: "Introduction to Bioinformatics"

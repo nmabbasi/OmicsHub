@@ -1,5 +1,5 @@
 ---
-title: "Part 1: Conda, Mamba, and Micromamba"
+title: "Conda, Mamba, and Micromamba"
 date: "2025-08-13"
 author: "OmicsHub Team"
 category: "Package Management"

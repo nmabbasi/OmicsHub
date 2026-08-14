@@ -1,5 +1,5 @@
 ---
-title: "Part 2: Phylogenomics with OrthoFinder"
+title: "Phylogenomics with OrthoFinder"
 date: "2026-08-14"
 author: "OmicsHub Team"
 category: "Evolutionary Bioinformatics Analysis"

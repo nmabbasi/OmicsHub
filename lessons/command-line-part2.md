@@ -1,5 +1,5 @@
 ---
-title: "Part 2: Text Processing"
+title: "Text Processing"
 date: "2025-08-14"
 author: "OmicsHub Team"
 category: "Shell Command Basics"

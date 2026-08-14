@@ -1,5 +1,5 @@
 ---
-title: "Part 5: Bulk RNA-seq Deconvolution using scRNA-seq"
+title: "Bulk RNA-seq Deconvolution using scRNA-seq"
 date: "2026-08-14"
 author: "OmicsHub Team"
 category: "Advanced Single-Cell Analysis"

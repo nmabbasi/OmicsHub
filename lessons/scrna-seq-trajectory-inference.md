@@ -1,5 +1,5 @@
 ---
-title: "Part 3: Trajectory Inference"
+title: "Trajectory Inference"
 date: "2026-08-13"
 author: "Bioinformatics Workflow Hub"
 category: "Single-Cell RNA-seq"

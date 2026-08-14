@@ -1,5 +1,5 @@
 ---
-title: "Part 2: Basic Slurm Commands"
+title: "Basic Slurm Commands"
 date: "2025-08-23"
 author: "OmicsHub Team"
 category: "High-Performance Computing (HPC)"

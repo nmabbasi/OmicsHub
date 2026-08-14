@@ -1,5 +1,5 @@
 ---
-title: "Part 1: Immune Repertoire Analysis"
+title: "Immune Repertoire Analysis"
 date: "2026-08-14"
 author: "OmicsHub Team"
 category: "Advanced Single-Cell Analysis"

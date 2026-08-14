@@ -1,5 +1,5 @@
 ---
-title: "Part 2: Functional Pathway Analysis with HUMAnN 3"
+title: "Functional Pathway Analysis with HUMAnN 3"
 date: "2026-08-14"
 author: "OmicsHub Team"
 category: "Metatranscriptomics"

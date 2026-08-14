@@ -1,5 +1,5 @@
 ---
-title: "Part 1: Snakemake & Nextflow"
+title: "Snakemake & Nextflow"
 date: "2026-08-14"
 author: "OmicsHub Team"
 category: "Workflow & Containerization"

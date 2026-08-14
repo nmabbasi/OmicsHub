@@ -1,5 +1,5 @@
 ---
-title: "Part 1: scRNA-seq Basics"
+title: "scRNA-seq Basics"
 date: "2026-08-13"
 author: "Bioinformatics Workflow Hub"
 category: "Single-Cell RNA-seq"

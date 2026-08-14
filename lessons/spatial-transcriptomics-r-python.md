@@ -1,5 +1,5 @@
 ---
-title: "Part 1: Spatial Transcriptomics"
+title: "Spatial Transcriptomics"
 date: "2026-08-14"
 author: "OmicsHub Team"
 category: "Spatial & Long-Read Omics"

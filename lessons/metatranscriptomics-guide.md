@@ -1,5 +1,5 @@
 ---
-title: "Part 1: Metatranscriptomics Basics"
+title: "Metatranscriptomics Basics"
 date: "2026-08-14"
 author: "OmicsHub Team"
 category: "Metatranscriptomics"

@@ -1,5 +1,5 @@
 ---
-title: "Part 2: Long-Read Sequencing"
+title: "Long-Read Sequencing"
 date: "2026-08-14"
 author: "OmicsHub Team"
 category: "Spatial & Long-Read Omics"

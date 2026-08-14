@@ -1,5 +1,5 @@
 ---
-title: "Part 2: Downstream Analysis"
+title: "Downstream Analysis"
 date: "2026-08-13"
 author: "Bioinformatics Workflow Hub"
 category: "Single-Cell RNA-seq"

@@ -1,5 +1,5 @@
 ---
-title: "Part 1: Connecting to HPC"
+title: "Connecting to HPC"
 date: "2025-08-23"
 author: "OmicsHub Team"
 category: "High-Performance Computing (HPC)"

@@ -1,5 +1,5 @@
 ---
-title: "Part 1: Introduction to Bioinformatics"
+title: "Introduction to Bioinformatics"
 date: "2025-08-15"
 author: "OmicsHub Team"
 category: "Introduction to Bioinformatics"

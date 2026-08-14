@@ -1,5 +1,5 @@
 ---
-title: "Part 3: Advanced AI Cell Annotation"
+title: "Advanced AI Cell Annotation"
 date: "2026-08-14"
 author: "OmicsHub Team"
 category: "Advanced Single-Cell Analysis"

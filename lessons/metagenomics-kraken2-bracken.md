@@ -1,5 +1,5 @@
 ---
-title: "Part 3: Taxonomic Profiling with Kraken2 and Bracken"
+title: "Taxonomic Profiling with Kraken2 and Bracken"
 date: "2026-08-14"
 author: "OmicsHub Team"
 category: "Metagenomics"

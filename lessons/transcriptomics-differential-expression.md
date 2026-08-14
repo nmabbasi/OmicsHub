@@ -1,5 +1,5 @@
 ---
-title: "Part 4: Pseudobulk DE Analysis"
+title: "Pseudobulk DE Analysis"
 date: "2026-08-14"
 author: "OmicsHub Team"
 category: "Single-Cell RNA-seq"

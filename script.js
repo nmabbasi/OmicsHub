@@ -528,6 +528,29 @@ async function showTutorial(tutorialId, addToHistory = true) {
                     ${marked.parse(tutorial.content)}
                 </div>
 
+                ${(function() {
+                    const currentIndex = tutorials.findIndex(t => t.id === tutorialId);
+                    if (currentIndex !== -1 && currentIndex < tutorials.length - 1) {
+                        const nextTutorial = tutorials[currentIndex + 1];
+                        if (nextTutorial.category === tutorial.category) {
+                            return `
+                            <div class="mt-12 mb-4 p-8 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-100 flex items-center justify-between group cursor-pointer transition-all duration-300 hover:shadow-md hover:-translate-y-1" onclick="showTutorial('${nextTutorial.id}')">
+                                <div>
+                                    <span class="text-xs font-black tracking-widest text-blue-600 uppercase mb-2 block opacity-80">Next Step in ${tutorial.category}</span>
+                                    <h4 class="text-2xl font-bold text-gray-900 group-hover:text-blue-800 transition-colors">${nextTutorial.title}</h4>
+                                </div>
+                                <div class="bg-white p-4 rounded-full shadow-sm text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-all duration-300">
+                                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+                                    </svg>
+                                </div>
+                            </div>
+                            `;
+                        }
+                    }
+                    return '';
+                })()}
+
                 <!-- Tutorial Footer -->
                 <div class="border-t border-gray-200 pt-6 mt-8">
                     <div class="flex items-center justify-between">

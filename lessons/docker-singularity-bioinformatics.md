@@ -1,5 +1,5 @@
 ---
-title: "Part 2: Docker & Singularity"
+title: "Docker & Singularity"
 date: "2026-08-14"
 author: "OmicsHub Team"
 category: "Workflow & Containerization"

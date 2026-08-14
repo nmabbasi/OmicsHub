@@ -1,5 +1,5 @@
 ---
-title: "Part 1: Evolutionary Phylogeny"
+title: "Evolutionary Phylogeny"
 date: "2026-08-14"
 author: "OmicsHub Team"
 category: "Evolutionary Bioinformatics Analysis"
