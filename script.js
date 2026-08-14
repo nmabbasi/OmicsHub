@@ -70,24 +70,24 @@ async function loadTutorials() {
         
         // List of tutorial files (you'll add more as you create them)
         const tutorialFiles = [
+            // Bioinformatics Fundamentals
             'introduction-to-bioinformatics.md',
             'modern-bioinformatics-methods-2026.md',
-            'conda-bioinformatics-guide.md',
-            'mamba-micromamba-guide.md',
-            'conda-mamba-part1.md',
-            'single-cell-rnaseq-part2.md',
-            'command-line-part2.md',
-            '1-Connection.md',
-            'single-cell-rnaseq-part3.md',
-            '2-HPC_Basic_Commands.md',
-            'command-line-part3.md',
+            // Linux Command Line Mastery
             'command-line-part1.md',
-            '4-Support.md',
+            'command-line-part2.md',
+            'command-line-part3.md',
+            // Software Management
+            'conda-mamba-part1.md',
+            // High Performance Computing (HPC)
+            '1-Connection.md',
+            '2-HPC_Basic_Commands.md',
             'hpc-submission-part1.md',
-            'single-cell-rnaseq-part1.md',
+            '4-Support.md',
+            // Single-Cell RNA-seq (2026 Curriculum)
             'scrna-seq-basics.md',
-            'scrna-seq-trajectory-inference.md',
             'scrna-seq-downstream-analysis.md',
+            'scrna-seq-trajectory-inference.md'
         ];
         
         tutorials = [];
@@ -216,14 +216,14 @@ function showFallbackTutorials() {
             image: 'images/bioinformatics-intro.png'
         },
         {
-            id: 'command-line-basics-detailed',
-            title: 'Command Line Mastery: A Detailed Guide for Bioinformatics Beginners',
-            date: '2025-08-14',
+            id: 'command-line-basics',
+            title: 'Linux Command Line',
+            description: 'Master the essential command-line tools and shell scripting for bioinformatics data processing.',
+            filename: 'command-line-part1.md',
             author: 'OmicsHub Team',
             category: 'Shell Commands',
             excerpt: 'Master the command line from scratch, learn essential Unix commands, file manipulation, and text processing skills that every bioinformatician needs to succeed.',
             content: `# Command Line Mastery for Bioinformatics\n\n## Why the Command Line Matters\n\nThe command line is like learning to drive a manual transmission car. Sure, automatic is easier to start with, but once you master manual, you have complete control over the machine. In bioinformatics, that control translates to:\n\n- **Processing massive datasets** that would crash graphical programs\n- **Automating repetitive tasks** that would take hours manually\n- **Connecting tools together** in powerful workflows\n- **Working on remote servers** where GUIs aren't available\n\n## Essential Commands\n\n### Navigation\n\`\`\`bash\npwd          # Print working directory\nls           # List files\nls -la       # List all files with details\ncd           # Change directory\ncd ..        # Go up one level\ncd ~         # Go to home directory\n\`\`\`\n\n### File Operations\n\`\`\`bash\ncp file1 file2       # Copy file\nmv file1 file2       # Move/rename file\nrm file              # Remove file\nmkdir directory      # Create directory\nrmdir directory      # Remove empty directory\n\`\`\`\n\n### Text Processing\n\`\`\`bash\ncat file.txt         # Display file content\nhead file.txt        # Show first 10 lines\ntail file.txt        # Show last 10 lines\ngrep "pattern" file  # Search for pattern\nwc -l file.txt       # Count lines\n\`\`\`\n\n## Bioinformatics Examples\n\n### Count sequences in a FASTA file\n\`\`\`bash\ngrep -c ">" sequences.fasta\n\`\`\`\n\n### Extract sequence IDs\n\`\`\`bash\ngrep ">" sequences.fasta | sed 's/>//'\n\`\`\`\n\n### Calculate sequence lengths\n\`\`\`bash\nawk '/^>/ {if (seq) print length(seq); seq=""; next} {seq=seq$0} END {print length(seq)}' sequences.fasta\n\`\`\`\n\n## Conclusion\n\nThe command line is your gateway to powerful bioinformatics analysis. Practice these commands regularly, and you'll soon find yourself working more efficiently than ever before.`,
-            filename: 'command-line-basics-detailed.md',
             image: 'images/command-line-terminal.png'
         },
         
@@ -248,13 +248,14 @@ function showFallbackTutorials() {
 	image: 'images/HPC.png'
 },
 {
-	id: 'Submission Scripts',
-	title: 'Submission Scripts',
+	id: '3-writing_a_submission_script',
+	title: 'HPC Job Submission',
 	date: '2025-08-23',
 	author: 'OmicsHub Team',
 	category: 'HPC',
+	description: 'Learn how to write and submit batch scripts using Slurm on high-performance computing clusters.',
 	excerpt: 'Learn how to write and submit job scripts to HPC schedulers, automating tasks and efficiently managing computational workloads.',
-	filename: '3-Writing_a_Submission_Script.md',
+	filename: 'hpc-submission-part1.md',
 	image: 'images/sc.png'
 },
 {
@@ -269,25 +270,23 @@ function showFallbackTutorials() {
 },
 
         {
-            id: 'conda-mamba-installation-guide',
-            title: 'Conda and Mamba: The Complete Installation and Usage Guide for Bioinformatics',
-            date: '2025-08-13',
+            id: 'conda-mamba-guide',
+            title: 'Conda & Mamba Environments',
+            description: 'Learn how to manage software dependencies, create reproducible environments, and install bioinformatics tools safely.',
+            filename: 'conda-mamba-part1.md',
             author: 'OmicsHub Team',
             category: 'Conda',
             excerpt: 'Master package management in bioinformatics with Conda and Mamba, learn installation, environment management, and how to install essential tools like Seurat for single-cell analysis.',
             content: `# Conda and Mamba for Bioinformatics\n\n## Why Package Management Matters\n\nIf you've ever spent hours trying to install a bioinformatics tool only to run into dependency conflicts, version mismatches, or the dreaded "it works on my machine" problem, you're not alone. Package management is one of the biggest pain points for researchers entering computational biology.\n\nThat's where Conda and Mamba come in. Think of them as your personal assistants for managing software installations, they handle all the messy details of dependencies, versions, and compatibility so you can focus on your research.\n\n## What Are Conda and Mamba?\n\n**Conda** is a package manager and environment management system that was originally created for Python but has evolved to support packages from any language. It's like having a smart librarian who not only knows where every book is but also ensures that when you check out a book, all the related materials you need are available and compatible.\n\n**Mamba** is a reimplementation of Conda that's significantly faster, we're talking about going from minutes to seconds for complex installations. It's essentially Conda with a turbo engine.\n\n## Installing Conda\n\n### Option 1: Miniconda (Recommended)\n\n\`\`\`bash\n# Download Miniconda for Linux\nwget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh\n\n# Make it executable\nchmod +x Miniconda3-latest-Linux-x86_64.sh\n\n# Run the installer\nbash Miniconda3-latest-Linux-x86_64.sh\n\`\`\`\n\n## Installing Mamba\n\n\`\`\`bash\nconda install -c conda-forge mamba\n\`\`\`\n\n## Creating Environments\n\n\`\`\`bash\n# Create environment for single-cell analysis\nmamba create -n single-cell python=3.9\n\n# Activate the environment\nconda activate single-cell\n\n# Install Seurat and dependencies\nmamba install -c conda-forge -c bioconda r-seurat r-ggplot2 r-dplyr\n\`\`\`\n\n## Best Practices\n\n1. **One Environment Per Project**\n2. **Document Your Environments**\n3. **Pin Important Versions**\n4. **Regular Maintenance**\n\nWith proper package management, you'll never have to worry about "dependency hell" again!`,
-            filename: 'conda-mamba-installation-guide.md',
             image: 'images/conda-environment.png'
         },
         {
-            id: 'single-cell-rnaseq-introduction',
-            title: 'Single-cell RNA-seq Analysis: From Raw Data to Biological Insights',
-            date: '2025-08-12',
-            author: 'OmicsHub Team',
-            category: 'Single-cell RNA-seq',
+            id: 'single-cell-rnaseq',
+            title: 'Single-cell RNA-seq',
+            description: 'A complete end-to-end guide to analyzing single-cell RNA-seq data, from QC and clustering to trajectory inference.',
+            filename: 'scrna-seq-basics.md',
             excerpt: 'Discover the revolutionary world of single-cell RNA sequencing, learn how this technology is transforming our understanding of cellular heterogeneity and development.',
             content: `# Single-cell RNA-seq Analysis\n\n## Introduction to Single-cell RNA-seq\n\nSingle-cell RNA sequencing (scRNA-seq) is a revolutionary technology that allows us to measure gene expression in individual cells rather than bulk tissue samples. This approach has transformed our understanding of cellular heterogeneity, development, and disease.\n\n## Why Single-cell?\n\nTraditional bulk RNA-seq provides an average expression profile across all cells in a sample, potentially masking important biological differences between cell types or states. Single-cell RNA-seq overcomes this limitation by:\n\n- Revealing cellular heterogeneity within tissues\n- Identifying rare cell types and subtypes\n- Tracking developmental trajectories\n- Understanding cell state transitions\n- Discovering new biological mechanisms\n\n## Key Concepts\n\n### Cell Types vs. Cell States\n- **Cell types**: Distinct cellular identities (e.g., neurons, T cells, fibroblasts)\n- **Cell states**: Temporary conditions within a cell type (e.g., activated, resting, stressed)\n\n## Analysis Workflow\n\n### 1. Quality Control\n\`\`\`r\n# Load libraries\nlibrary(Seurat)\nlibrary(ggplot2)\n\n# Load data\ndata <- Read10X(data.dir = "filtered_feature_bc_matrix/")\nseurat_obj <- CreateSeuratObject(counts = data, project = "scRNA_analysis")\n\n# Calculate QC metrics\nseurat_obj[["percent.mt"]] <- PercentageFeatureSet(seurat_obj, pattern = "^MT-")\n\n# Visualize QC metrics\nVlnPlot(seurat_obj, features = c("nFeature_RNA", "nCount_RNA", "percent.mt"), ncol = 3)\n\`\`\`\n\n### 2. Normalization and Scaling\n\`\`\`r\n# Normalize data\nseurat_obj <- NormalizeData(seurat_obj)\n\n# Find variable features\nseurat_obj <- FindVariableFeatures(seurat_obj, selection.method = "vst", nfeatures = 2000)\n\n# Scale data\nseurat_obj <- ScaleData(seurat_obj)\n\`\`\`\n\n### 3. Dimensionality Reduction\n\`\`\`r\n# Principal Component Analysis\nseurat_obj <- RunPCA(seurat_obj, features = VariableFeatures(object = seurat_obj))\n\n# UMAP\nseurat_obj <- RunUMAP(seurat_obj, dims = 1:10)\n\`\`\`\n\n### 4. Clustering\n\`\`\`r\n# Find neighbors\nseurat_obj <- FindNeighbors(seurat_obj, dims = 1:10)\n\n# Find clusters\nseurat_obj <- FindClusters(seurat_obj, resolution = 0.5)\n\n# Visualize clusters\nDimPlot(seurat_obj, reduction = "umap")\n\`\`\`\n\n## Common Challenges\n\n1. **Dropout Events**: Not all genes are detected in every cell\n2. **Batch Effects**: Technical variation between experiments\n3. **Cell Cycle Effects**: Cells in different phases of division\n4. **Doublets**: Two cells captured together\n\n## Best Practices\n\n- Always perform thorough quality control\n- Use appropriate normalization methods\n- Validate findings with independent datasets\n- Consider biological context in interpretation\n\n## Conclusion\n\nSingle-cell RNA-seq is a powerful technology that continues to evolve rapidly. By understanding the key concepts and following best practices, you can unlock valuable biological insights from your data.\n\n## Next Steps\n\n- Practice with public datasets\n- Learn advanced analysis techniques\n- Explore trajectory inference methods\n- Study cell-cell communication analysis`,
-            filename: 'single-cell-rnaseq-introduction.md',
             image: 'images/single-cell-analysis.png'
         },
         
