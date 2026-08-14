@@ -451,7 +451,7 @@ async function showTutorial(tutorialId, addToHistory = true) {
                 <!-- Tutorial Header -->
                 <div class="border-b border-gray-200 pb-6 mb-8">
                     ${tutorial.image ? `
-                    <div class="w-full aspect-video md:aspect-[21/9] relative overflow-hidden rounded-lg mb-8 shadow-sm bg-gray-50 border border-gray-100">
+                    <div class="w-full aspect-video md:aspect-video relative overflow-hidden rounded-lg mb-8 shadow-sm bg-gray-50 border border-gray-100">
                         <img src="${tutorial.image}" alt="${tutorial.title}" class="absolute inset-0 w-full h-full object-cover">
                     </div>
                     ` : ''}
