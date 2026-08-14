@@ -123,6 +123,42 @@ dittoBarPlot(seurat_obj, var = "cell_type", group.by = "patient_id")
 dittoHeatmap(seurat_obj, genes = top_10_markers, annot.by = c("cell_type", "condition"))
 ```
 
+### scCustomize
+**scCustomize** is a collection of functions created to improve and extend the default Seurat visualizations. It is highly valued for automatically configuring intuitive color palettes, handling complex multi-gene overlays, and easily customizing axes and legends without raw ggplot2 code.
+
+```r
+library(scCustomize)
+
+# Create a customized FeaturePlot with a continuous viridis color scale
+FeaturePlot_scCustom(seurat_obj, features = "GeneA", colors_use = viridis::viridis(50))
+
+# Create a clustered dot plot (hierarchically grouping both genes and cell types)
+Clustered_DotPlot(seurat_obj, features = top_10_markers, group.by = "cell_type")
+```
+
+### SeuratExtend
+**SeuratExtend** is an incredibly powerful toolkit that bridges the gap between basic Seurat analysis and advanced pathway/enrichment plotting. It excels at generating publication-ready heatmaps and GSEA enrichment plots directly from the Seurat object.
+
+```r
+library(SeuratExtend)
+
+# Generate a complex Gene Set Enrichment Analysis (GSEA) waterfall plot directly
+Plot_GSEA(seurat_obj, pathway = "HALLMARK_HYPOXIA", group.by = "condition")
+```
+
+### SCP (SingleCellPlot)
+**SCP** provides a massive suite of high-level wrappers designed specifically for "multi-omics" and spatial transcriptomics visualization. If you need to generate highly complex, data-dense figures (like volcano plots embedded inside UMAPs or spatial gene expression maps), SCP is unmatched.
+
+```r
+library(SCP)
+
+# Example: Generate a highly annotated, split violin plot for gene expression
+CellStatPlot(seurat_obj, 
+             stat.by = "cell_type", 
+             group.by = "condition", 
+             plot_type = "violin")
+```
+
 ### Radar Plots (Pathway Visualization)
 When you have multiple pathway enrichment scores (e.g., from GSEA or PROGENy) across different clusters, a standard bar chart is often insufficient. **Radar Plots** (or Spider Plots) allow you to compare the multidimensional signaling state of different cell types simultaneously.
 
