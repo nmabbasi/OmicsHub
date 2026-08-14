@@ -538,12 +538,12 @@ async function showTutorial(tutorialId, addToHistory = true) {
                     header.className = 'code-tab-header flex bg-gray-100 border-b border-gray-200';
                     
                     const pyBtn = document.createElement('button');
-                    pyBtn.className = 'code-tab-btn active px-6 py-3 text-sm font-bold text-blue-700 bg-white border-b-2 border-blue-600 outline-none transition-colors';
+                    pyBtn.className = 'code-tab-btn active px-6 py-3 text-sm font-bold text-white bg-blue-600 rounded-md shadow-sm outline-none transition-all m-1';
                     pyBtn.dataset.lang = 'python';
                     pyBtn.innerText = 'Python (Scanpy)';
                     
                     const rBtn = document.createElement('button');
-                    rBtn.className = 'code-tab-btn px-6 py-3 text-sm font-semibold text-gray-600 hover:text-gray-900 hover:bg-gray-200 outline-none border-b-2 border-transparent transition-colors';
+                    rBtn.className = 'code-tab-btn px-6 py-3 text-sm font-semibold text-gray-600 hover:text-gray-900 hover:bg-gray-200 rounded-md outline-none transition-all m-1';
                     rBtn.dataset.lang = 'r';
                     rBtn.innerText = 'R (Seurat)';
                     
@@ -819,9 +819,9 @@ document.addEventListener('click', function(e) {
         
         container.querySelectorAll('.code-tab-btn').forEach(b => {
             if (b.dataset.lang === lang) {
-                b.className = 'code-tab-btn active px-6 py-3 text-sm font-bold text-blue-700 bg-white border-b-2 border-blue-600 outline-none transition-colors';
+                b.className = 'code-tab-btn active px-6 py-3 text-sm font-bold text-white bg-blue-600 rounded-md shadow-sm outline-none transition-all m-1';
             } else {
-                b.className = 'code-tab-btn px-6 py-3 text-sm font-semibold text-gray-600 hover:text-gray-900 hover:bg-gray-200 outline-none border-b-2 border-transparent transition-colors';
+                b.className = 'code-tab-btn px-6 py-3 text-sm font-semibold text-gray-600 hover:text-gray-900 hover:bg-gray-200 rounded-md outline-none transition-all m-1';
             }
         });
         
@@ -845,14 +845,14 @@ function updateNavActiveState(activeTab) {
     const navMobileTutorials = document.getElementById('nav-mobile-tutorials');
 
     if (activeTab === 'home') {
-        if (navDesktopHome) navDesktopHome.className = 'px-4 py-2 text-sm font-semibold text-blue-600 border-b-2 border-blue-600 rounded-t-md transition-all';
-        if (navDesktopTutorials) navDesktopTutorials.className = 'px-4 py-2 text-sm font-medium text-gray-600 hover:text-blue-600 border-b-2 border-transparent rounded-md hover:bg-gray-50 transition-all cursor-pointer';
+        if (navDesktopHome) navDesktopHome.className = 'px-4 py-2 text-sm font-semibold bg-blue-600 text-white rounded-md shadow-sm transition-all';
+        if (navDesktopTutorials) navDesktopTutorials.className = 'px-4 py-2 text-sm font-medium text-gray-600 hover:text-blue-600 rounded-md hover:bg-gray-50 transition-all cursor-pointer';
         
         if (navMobileHome) navMobileHome.className = 'px-4 py-2 text-sm font-semibold text-blue-600 bg-blue-50 rounded-lg transition-colors';
         if (navMobileTutorials) navMobileTutorials.className = 'px-4 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors cursor-pointer';
     } else if (activeTab === 'tutorials') {
-        if (navDesktopHome) navDesktopHome.className = 'px-4 py-2 text-sm font-medium text-gray-600 hover:text-blue-600 border-b-2 border-transparent rounded-md hover:bg-gray-50 transition-all cursor-pointer';
-        if (navDesktopTutorials) navDesktopTutorials.className = 'px-4 py-2 text-sm font-semibold text-blue-600 border-b-2 border-blue-600 rounded-t-md transition-all';
+        if (navDesktopHome) navDesktopHome.className = 'px-4 py-2 text-sm font-medium text-gray-600 hover:text-blue-600 rounded-md hover:bg-gray-50 transition-all cursor-pointer';
+        if (navDesktopTutorials) navDesktopTutorials.className = 'px-4 py-2 text-sm font-semibold bg-blue-600 text-white rounded-md shadow-sm transition-all';
         
         if (navMobileHome) navMobileHome.className = 'px-4 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors cursor-pointer';
         if (navMobileTutorials) navMobileTutorials.className = 'px-4 py-2 text-sm font-semibold text-blue-600 bg-blue-50 rounded-lg transition-colors';
