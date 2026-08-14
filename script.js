@@ -70,27 +70,27 @@ async function loadTutorials() {
         
         // List of tutorial files (you'll add more as you create them)
         const tutorialFiles = [
-            // Bioinformatics Fundamentals
+            // Introduction to Bioinformatics
             'introduction-to-bioinformatics.md',
             'modern-bioinformatics-methods-2026.md',
             
-            // Linux Command Line Mastery
+            // Shell Command Basics
             'command-line-part1.md',
             'command-line-part2.md',
             'command-line-part3.md',
             
-            // Software Management
+            // Package Management
             'conda-mamba-part1.md',
             
-            // Workflow & Containerization
-            'reproducible-workflows-snakemake-nextflow.md',
-            'docker-singularity-bioinformatics.md',
-            
-            // High Performance Computing (HPC)
+            // High-Performance Computing (HPC)
             '1-Connection.md',
             '2-HPC_Basic_Commands.md',
             'hpc-submission-part1.md',
             '4-Support.md',
+            
+            // Workflow & Containerization
+            'reproducible-workflows-snakemake-nextflow.md',
+            'docker-singularity-bioinformatics.md',
             
             // Metagenomics
             '16s-rrna-prokka-annotation.md',
