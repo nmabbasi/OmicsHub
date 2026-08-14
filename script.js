@@ -105,8 +105,12 @@ async function loadTutorials() {
             'evolutionary-phylogeny-analysis.md',
             'phylogenomics-orthofinder.md',
             
+            // Genomics & Whole Exome Sequencing
+            'wes-variant-calling-pipeline.md',
+            
             // Single-Cell RNA-seq
             'scrna-seq-basics.md',
+            'scrna-seq-integration-strategies.md',
             'scrna-seq-downstream-analysis.md',
             'scrna-seq-trajectory-inference.md',
             'transcriptomics-differential-expression.md',
@@ -118,6 +122,7 @@ async function loadTutorials() {
             'advanced-ai-single-cell.md',
             'infercnv-copy-number-variation.md',
             'single-cell-deconvolution.md',
+            'cite-seq-wnn-multiomics.md',
             
             // Spatial Transcriptomics
             'spatial-transcriptomics-r-python.md',
