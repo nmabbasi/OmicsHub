@@ -518,7 +518,7 @@ async function showTutorial(tutorialId, addToHistory = true) {
             </div>
         `;
 
-        document.getElementById('content-area').innerHTML = htmlContent;
+        tutorialContentDiv.innerHTML = htmlContent;
         
         // Dynamically convert adjacent Python and R code blocks into interactive tabs
         const contentDiv = document.querySelector('.tutorial-content');
