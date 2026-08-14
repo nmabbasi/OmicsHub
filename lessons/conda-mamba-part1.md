@@ -1,5 +1,5 @@
 ---
-title: "Conda and Mamba: Managing Software Environments for Reproducible Bioinformatics"
+title: "Part 1: Conda, Mamba, and Micromamba"
 date: "2025-08-13"
 author: "OmicsHub Team"
 category: "Package Management"

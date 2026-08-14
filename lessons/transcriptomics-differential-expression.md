@@ -1,8 +1,8 @@
 ---
-title: "Transcriptomics: Bulk and Pseudobulk Differential Expression"
+title: "Part 4: Pseudobulk DE Analysis"
 date: "2026-08-14"
 author: "OmicsHub Team"
-category: "Bioinformatics"
+category: "Single-Cell RNA-seq"
 excerpt: "A comprehensive pipeline for performing differential gene expression (DGE) analysis using DESeq2 for bulk RNA-seq and adapting it for modern pseudobulk scRNA-seq approaches."
 image: "images/bioinformatics-intro.png"
 ---

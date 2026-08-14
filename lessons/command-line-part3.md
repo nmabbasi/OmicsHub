@@ -1,8 +1,8 @@
 ---
-title: "Command Line for Bioinformatics: Pipelines, Permissions, and Automation"
+title: "Part 3: Advanced Shell Scripting"
 date: "2025-08-14"
 author: "OmicsHub Team"
-category: "Shell Commands"
+category: "Shell Command Basics"
 excerpt: "Build reusable bioinformatics pipelines using awk, pipes, redirects, and shell scripting best practices for reproducible research."
 image: "images/command-line-terminal.png"
 ---

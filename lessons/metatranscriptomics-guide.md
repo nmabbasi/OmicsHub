@@ -1,5 +1,5 @@
 ---
-title: "Metatranscriptomics: Profiling Active Microbiomes"
+title: "Part 3: Metatranscriptomics"
 date: "2026-08-14"
 author: "OmicsHub Team"
 category: "Metagenomics & Phylogeny"

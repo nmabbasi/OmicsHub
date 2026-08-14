@@ -1,5 +1,5 @@
 ---
-title: "16S rRNA Profiling and Genome Annotation with PROKKA"
+title: "Part 1: 16S rRNA and PROKKA"
 date: "2026-08-14"
 author: "OmicsHub Team"
 category: "Metagenomics & Phylogeny"

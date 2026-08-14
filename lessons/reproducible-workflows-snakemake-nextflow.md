@@ -1,5 +1,5 @@
 ---
-title: "Reproducible Workflows: Snakemake and Nextflow"
+title: "Part 1: Snakemake & Nextflow"
 date: "2026-08-14"
 author: "OmicsHub Team"
 category: "Workflow & Containerization"

@@ -1,5 +1,5 @@
 ---
-title: "Evolutionary Bioinformatics: Alignment and Phylogeny"
+title: "Part 4: Evolutionary Phylogeny"
 date: "2026-08-14"
 author: "OmicsHub Team"
 category: "Metagenomics & Phylogeny"

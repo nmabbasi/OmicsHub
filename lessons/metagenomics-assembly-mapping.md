@@ -1,5 +1,5 @@
 ---
-title: "Metagenomics: Assembly, Human Mapping, and Visualization"
+title: "Part 2: Metagenomics Assembly"
 date: "2026-08-14"
 author: "OmicsHub Team"
 category: "Metagenomics & Phylogeny"

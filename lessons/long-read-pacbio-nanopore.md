@@ -1,8 +1,8 @@
 ---
-title: "Long-Read Sequencing: PacBio and Nanopore Analysis"
+title: "Part 2: Long-Read Sequencing"
 date: "2026-08-14"
 author: "OmicsHub Team"
-category: "Bioinformatics"
+category: "Spatial & Long-Read Omics"
 excerpt: "A guide to analyzing long-read sequencing data from Oxford Nanopore and PacBio platforms, focusing on isoform discovery and structural variant detection."
 image: "images/bioinformatics-intro.png"
 ---

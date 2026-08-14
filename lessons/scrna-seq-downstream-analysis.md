@@ -1,8 +1,8 @@
 ---
-title: "Advanced Downstream scRNA-seq: Communication, TFs, and Plotting"
+title: "Part 2: Downstream Analysis"
 date: "2026-08-13"
 author: "Bioinformatics Workflow Hub"
-category: "Single-cell RNA-seq"
+category: "Single-Cell RNA-seq"
 excerpt: "Explore foundational advanced downstream analyses: mapping cell-cell communication networks, inferring Transcription Factor (TF) activities, and generating publication-ready plots (SCpubr)."
 image: "images/scrna_metabolism.png"
 ---

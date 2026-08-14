@@ -1,8 +1,8 @@
 ---
-title: "HPC Job Submission: Writing Slurm Scripts on Linux Clusters"
+title: "Part 3: Writing Job Scripts"
 date: "2025-08-23"
 author: "OmicsHub Team"
-category: "High-Performance Computing"
+category: "High-Performance Computing (HPC)"
 excerpt: "Learn how to write and submit Slurm batch scripts on HPC clusters, allocate compute resources efficiently, and run parallel jobs at scale."
 image: "images/sc.png"
 ---

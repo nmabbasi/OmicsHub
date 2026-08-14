@@ -1,8 +1,8 @@
 ---
-title: "Immune Repertoire Analysis: TCR and BCR Profiling"
+title: "Part 1: Immune Repertoire Analysis"
 date: "2026-08-14"
 author: "OmicsHub Team"
-category: "Single-cell RNA-seq"
+category: "Advanced Single-Cell Analysis"
 excerpt: "A guide to analyzing T-cell and B-cell receptor (TCR/BCR) repertoires from single-cell data using scRepertoire to track clonal expansion in diseases like Sézary Syndrome."
 image: "images/single-cell-analysis.png"
 ---

@@ -1,8 +1,8 @@
 ---
-title: "Command Line for Bioinformatics: Text Processing and Data Manipulation"
+title: "Part 2: Text Processing"
 date: "2025-08-14"
 author: "OmicsHub Team"
-category: "Shell Commands"
+category: "Shell Command Basics"
 excerpt: "Master grep, sed, cut, and sort to filter, extract, and reshape biological data files directly from the command line."
 image: "images/command-line-terminal.png"
 ---

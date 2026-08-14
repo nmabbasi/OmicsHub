@@ -1,8 +1,8 @@
 ---
-title: "Single-cell RNA-seq Basics: End-to-End Analysis (Python & R)"
+title: "Part 1: scRNA-seq Basics"
 date: "2026-08-13"
 author: "Bioinformatics Workflow Hub"
-category: "Single-cell RNA-seq"
+category: "Single-Cell RNA-seq"
 excerpt: "A complete, production-ready single-cell RNA-seq pipeline demonstrating both Python (Scanpy) and R (Seurat) workflows. Covers standard QC, PCA, UMAP, and Leiden/Louvain clustering."
 image: "images/single-cell-analysis.png"
 ---

@@ -1,8 +1,8 @@
 ---
-title: "HPC Essentials: Modules, Partitions, and Job Monitoring on Linux Clusters"
+title: "Part 2: Basic Slurm Commands"
 date: "2025-08-23"
 author: "OmicsHub Team"
-category: "High-Performance Computing"
+category: "High-Performance Computing (HPC)"
 excerpt: "Learn to load software modules, inspect cluster partitions and nodes, monitor running jobs with squeue, and submit your first tasks on an HPC system."
 image: "images/hpc.png"
 ---

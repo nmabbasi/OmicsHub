@@ -1,8 +1,8 @@
 ---
-title: "Modern Bioinformatics Methods: A 2025-2026 Research Landscape"
+title: "Part 2: Modern Methods Landscape"
 date: "2026-08-13"
 author: "Bioinformatics Workflow Hub"
-category: "Bioinformatics"
+category: "Introduction to Bioinformatics"
 excerpt: "An evidence-based overview of the most impactful computational methods published in 2025-2026, covering single-cell foundation models, multi-omics integration, spatial transcriptomics, and long-read sequencing analysis."
 image: "images/bioinformatics-intro.png"
 ---

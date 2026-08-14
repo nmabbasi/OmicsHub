@@ -1,8 +1,8 @@
 ---
-title: "Spatial Transcriptomics: Analysis in R and Python"
+title: "Part 1: Spatial Transcriptomics"
 date: "2026-08-14"
 author: "OmicsHub Team"
-category: "Single-cell RNA-seq"
+category: "Spatial & Long-Read Omics"
 excerpt: "Learn how to analyze spatial transcriptomics data to map gene expression directly onto tissue architecture, with parallel code examples in both R (Seurat) and Python (Squidpy)."
 image: "images/single-cell-analysis.png"
 ---

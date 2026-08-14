@@ -97,15 +97,21 @@ async function loadTutorials() {
             'metagenomics-assembly-mapping.md',
             '16s-rrna-prokka-annotation.md',
             'metatranscriptomics-guide.md',
-            'long-read-pacbio-nanopore.md',
             
-            // Single-Cell & Spatial Transcriptomics
+            // Single-Cell RNA-seq
             'scrna-seq-basics.md',
             'scrna-seq-downstream-analysis.md',
             'scrna-seq-trajectory-inference.md',
             'transcriptomics-differential-expression.md',
+            
+            // Advanced Single-Cell Analysis
+            'tcr-bcr-repertoire-analysis.md',
+            'cell-cell-communication.md',
+            'advanced-ai-single-cell.md',
+            
+            // Spatial & Long-Read Omics
             'spatial-transcriptomics-r-python.md',
-            'tcr-bcr-repertoire-analysis.md'
+            'long-read-pacbio-nanopore.md'
         ];
         
         tutorials = [];
