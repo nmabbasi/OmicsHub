@@ -118,8 +118,10 @@ async function loadTutorials() {
             'infercnv-copy-number-variation.md',
             'single-cell-deconvolution.md',
             
-            // Spatial & Long-Read Omics
+            // Spatial Transcriptomics
             'spatial-transcriptomics-r-python.md',
+            
+            // Long-Read Sequencing
             'long-read-pacbio-nanopore.md'
         ];
         
