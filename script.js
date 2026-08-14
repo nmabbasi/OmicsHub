@@ -73,18 +73,33 @@ async function loadTutorials() {
             // Bioinformatics Fundamentals
             'introduction-to-bioinformatics.md',
             'modern-bioinformatics-methods-2026.md',
+            
             // Linux Command Line Mastery
             'command-line-part1.md',
             'command-line-part2.md',
             'command-line-part3.md',
+            
             // Software Management
+            'conda-bioinformatics-guide.md',
+            'mamba-micromamba-guide.md',
             'conda-mamba-part1.md',
+            
             // High Performance Computing (HPC)
             '1-Connection.md',
             '2-HPC_Basic_Commands.md',
             'hpc-submission-part1.md',
             '4-Support.md',
-            // Single-Cell RNA-seq (2026 Curriculum)
+            
+            // Genomics, Phylogeny & Metagenomics
+            'evolutionary-phylogeny-analysis.md',
+            'metagenomics-assembly-mapping.md',
+            '16s-rrna-prokka-annotation.md',
+            'metatranscriptomics-guide.md',
+            
+            // Single-Cell RNA-seq
+            'single-cell-rnaseq-part1.md',
+            'single-cell-rnaseq-part2.md',
+            'single-cell-rnaseq-part3.md',
             'scrna-seq-basics.md',
             'scrna-seq-downstream-analysis.md',
             'scrna-seq-trajectory-inference.md'
