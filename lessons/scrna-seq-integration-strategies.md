@@ -63,6 +63,18 @@ integrated_seurat <- IntegrateData(anchorset = anchors)
 **Pros:** Lightning-fast, scales to millions of cells effortlessly, and allows you to integrate across multiple variables simultaneously (e.g., integrating by `patient_id` AND `sequencing_run`). You can also fine-tune the strictness using the `theta` parameter.
 **Cons:** Requires the `harmony` package instead of native Seurat functions.
 
+```python
+import scanpy as sc
+import scanpy.external as sce
+
+# Assuming adata is already normalized and PCA has been calculated
+# Run Harmony integration using the 'patient_id' batch column
+sce.pp.harmony_integrate(adata, 'patient_id')
+
+# Run UMAP on the newly integrated harmony space
+sc.pp.neighbors(adata, use_rep='X_pca_harmony')
+sc.tl.umap(adata)
+```
 ```r
 library(harmony)
 
