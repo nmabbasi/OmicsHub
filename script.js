@@ -517,7 +517,7 @@ async function showTutorial(tutorialId, addToHistory = true) {
                             </button>
                         </div>
                         <div class="flex gap-3">
-                            <a href="https://paypal.me/nmabbasi12020?locale.x=en_US&country.x=FR" target="_blank" class="inline-flex items-center gap-2 px-6 py-2 bg-[#FFDD00] text-gray-900 font-bold rounded-lg hover:bg-[#FFCC00] transition-colors shadow-sm">
+                            <a href="https://paypal.me/nmabbasi12020?locale.x=en_US&country.x=FR" target="_blank" class="inline-flex items-center gap-2 px-6 py-2 bg-emerald-500 text-white font-bold rounded-lg hover:bg-emerald-600 transition-colors shadow-sm">
                                 <span class="text-base">☕</span> Buy me a coffee
                             </a>
                             <button onclick="showHome()" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium">
