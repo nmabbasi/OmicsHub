@@ -80,8 +80,6 @@ async function loadTutorials() {
             'command-line-part3.md',
             
             // Software Management
-            'conda-bioinformatics-guide.md',
-            'mamba-micromamba-guide.md',
             'conda-mamba-part1.md',
             
             // High Performance Computing (HPC)
@@ -95,14 +93,15 @@ async function loadTutorials() {
             'metagenomics-assembly-mapping.md',
             '16s-rrna-prokka-annotation.md',
             'metatranscriptomics-guide.md',
+            'long-read-pacbio-nanopore.md',
             
-            // Single-Cell RNA-seq
-            'single-cell-rnaseq-part1.md',
-            'single-cell-rnaseq-part2.md',
-            'single-cell-rnaseq-part3.md',
+            // Single-Cell & Spatial Transcriptomics
             'scrna-seq-basics.md',
             'scrna-seq-downstream-analysis.md',
-            'scrna-seq-trajectory-inference.md'
+            'scrna-seq-trajectory-inference.md',
+            'transcriptomics-differential-expression.md',
+            'spatial-transcriptomics-r-python.md',
+            'tcr-bcr-repertoire-analysis.md'
         ];
         
         tutorials = [];
