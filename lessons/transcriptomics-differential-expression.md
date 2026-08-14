@@ -136,8 +136,8 @@ library(Libra)
 # Run pseudobulk DE across all cell types automatically
 de_results <- run_de(seurat_obj, 
                      de_family = "pseudobulk", 
-                     de_method = "edgeR", # Can swap seamlessly to 'DESeq2' or 'limma'
-                     de_type = "LRT")     # Likelihood ratio test
+                     de_method = "DESeq2", # The gold-standard method for single-cell pseudobulks
+                     de_type = "LRT")      # Likelihood ratio test
 
 # View results for a specific cell type
 head(de_results$T_cell)
