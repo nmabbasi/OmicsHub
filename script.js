@@ -116,7 +116,8 @@ async function loadTutorials() {
             'transcriptomics-differential-expression.md',
             
             // Advanced Single-Cell Analysis
-            'advanced-visualization-qc.md',
+            'scrna-seq-quality-control.md',
+            'advanced-visualization-packages.md',
             'tcr-bcr-repertoire-analysis.md',
             'cell-cell-communication.md',
             'cell-type-annotation-methods.md',
