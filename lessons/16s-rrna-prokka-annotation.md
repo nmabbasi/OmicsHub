@@ -2,7 +2,7 @@
 title: "Part 1: 16S rRNA and PROKKA"
 date: "2026-08-14"
 author: "OmicsHub Team"
-category: "Metagenomics & Phylogeny"
+category: "Metagenomics"
 excerpt: "Learn the fundamentals of 16S rRNA amplicon sequencing techniques and how to perform rapid prokaryotic genome annotation using PROKKA."
 image: "images/bioinformatics-intro.png"
 ---

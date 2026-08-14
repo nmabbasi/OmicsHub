@@ -2,7 +2,7 @@
 title: "Part 2: Metagenomics Assembly"
 date: "2026-08-14"
 author: "OmicsHub Team"
-category: "Metagenomics & Phylogeny"
+category: "Metagenomics"
 excerpt: "A hands-on guide to metagenomic pipelines, covering de novo assembly with SPAdes, mapping reads with BWA, and visualizing genomic alignments in IGV."
 image: "images/bioinformatics-intro.png"
 ---

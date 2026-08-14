@@ -1,8 +1,8 @@
 ---
-title: "Part 4: Evolutionary Phylogeny"
+title: "Part 1: Evolutionary Phylogeny"
 date: "2026-08-14"
 author: "OmicsHub Team"
-category: "Metagenomics & Phylogeny"
+category: "Evolutionary Bioinformatics Analysis"
 excerpt: "A comprehensive guide to evolutionary analysis, covering multiple sequence alignment with Kalign, tree construction, and using MEGA via the command line."
 image: "images/bioinformatics-intro.png"
 ---

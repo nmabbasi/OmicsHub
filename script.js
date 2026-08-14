@@ -92,11 +92,18 @@ async function loadTutorials() {
             'hpc-submission-part1.md',
             '4-Support.md',
             
-            // Genomics, Phylogeny & Metagenomics
-            'evolutionary-phylogeny-analysis.md',
-            'metagenomics-assembly-mapping.md',
+            // Metagenomics
             '16s-rrna-prokka-annotation.md',
+            'metagenomics-assembly-mapping.md',
+            'metagenomics-kraken2-bracken.md',
+            
+            // Metatranscriptomics
             'metatranscriptomics-guide.md',
+            'metatranscriptomics-functional-pathways.md',
+            
+            // Evolutionary Bioinformatics Analysis
+            'evolutionary-phylogeny-analysis.md',
+            'phylogenomics-orthofinder.md',
             
             // Single-Cell RNA-seq
             'scrna-seq-basics.md',
@@ -108,6 +115,8 @@ async function loadTutorials() {
             'tcr-bcr-repertoire-analysis.md',
             'cell-cell-communication.md',
             'advanced-ai-single-cell.md',
+            'infercnv-copy-number-variation.md',
+            'single-cell-deconvolution.md',
             
             // Spatial & Long-Read Omics
             'spatial-transcriptomics-r-python.md',
