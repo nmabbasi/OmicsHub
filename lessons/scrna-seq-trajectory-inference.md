@@ -21,9 +21,6 @@ In this tutorial, we will explore the foundational tools for TI in both Python a
 
 **Partition-based Graph Abstraction (PAGA)** is integrated directly into the Scanpy ecosystem. It generates a coarse-grained map of cellular connectivity and provides a robust scaffold for embedding and pseudotime calculation.
 
-    
-    
-    
 ```python
 import scanpy as sc
 import scvelo as scv
@@ -53,7 +50,6 @@ sc.tl.dpt(adata)
 # Visualize pseudotime progression across the manifold
 sc.pl.umap(adata, color='dpt_pseudotime', cmap='viridis')
 ```
-    
 
 ---
 
@@ -61,10 +57,6 @@ sc.pl.umap(adata, color='dpt_pseudotime', cmap='viridis')
 
 In the R ecosystem, **Monocle3** and **Slingshot** are the leading frameworks for trajectory inference. Slingshot is highly favored for its simplicity and ability to handle branching trajectories effectively from existing Seurat objects.
 
-    
-        
-    
-    
 ```r
 library(Seurat)
 library(slingshot)
@@ -85,9 +77,7 @@ plotcol <- colors[cut(sce$slingPseudotime_1, breaks=100)]
 plot(reducedDims(sce)$UMAP, col = plotcol, pch=16, asp = 1)
 lines(SlingshotDataSet(sce), lwd=2, col='black')
 ```
-    
 
-    
 ```r
 library(monocle3)
 library(SeuratWrappers)
@@ -114,7 +104,6 @@ plot_cells(cds,
            label_branch_points=FALSE,
            graph_label_size=1.5)
 ```
-    
 
 ## Conclusion
 

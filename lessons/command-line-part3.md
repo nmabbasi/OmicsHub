@@ -285,19 +285,15 @@ mkdir -p $OUTPUT_DIR
 # Process each FASTQ file
 for file in $INPUT_DIR/*.fastq; do
     filename=$(basename "$file" .fastq)
-    
     # Count reads
     read_count=$(wc -l < "$file" | awk '{print $1/4}')
     echo "$filename: $read_count reads"
-    
     # Check for adapters
     adapter_count=$(grep -c "AGATCGGAAGAG" "$file")
     echo "$filename: $adapter_count potential adapter sequences"
-    
     # Calculate average read length
     avg_length=$(awk 'NR%4==2{sum+=length($0); count++} END{print sum/count}' "$file")
     echo "$filename: Average read length = $avg_length"
-    
     # Save summary
     echo -e "$filename\t$read_count\t$adapter_count\t$avg_length" >> $OUTPUT_DIR/summary.txt
 done

@@ -59,6 +59,9 @@ Analyzing entire genomes and gene expression patterns to understand how genes ar
 ### Systems Biology
 Taking a holistic approach to understand how biological components interact in complex networks and pathways.
 
+### Single-cell and Spatial Omics
+The newest frontier in bioinformatics. Instead of bulk tissue, we can now sequence individual cells (Single-cell RNA-seq) or map gene expression directly onto tissue slides (Spatial Transcriptomics). This allows us to discover rare cell types and understand the physical architecture of tumors and organs at a cellular resolution.
+
 ## Essential Skills for Bioinformatics
 
 To begin your bioinformatics journey, you'll need to develop skills in several key areas:
@@ -71,9 +74,22 @@ The command line is your primary interface for running bioinformatics tools. Ess
 
 ### 2. **Programming Languages**
 While you don't need to be a software engineer, programming skills are invaluable:
-- **Python**: Excellent for data manipulation and analysis
-- **R**: The gold standard for statistical analysis and visualization
-- **Bash**: Essential for automating workflows
+
+- **Python**: Excellent for data manipulation, machine learning, and writing scalable pipelines.
+  ```python
+  import pandas as pd
+  # Loading and filtering a biological dataset in Python
+  df = pd.read_csv("gene_expression.csv")
+  highly_expressed = df[df['expression_level'] > 100]
+  ```
+- **R**: The gold standard for statistical analysis, visualization, and single-cell analysis.
+  ```r
+  library(dplyr)
+  # Loading and filtering the same dataset in R
+  df <- read.csv("gene_expression.csv")
+  highly_expressed <- df %>% filter(expression_level > 100)
+  ```
+- **Bash**: Essential for automating workflows and running tools on remote HPC clusters.
 
 ### 3. **Statistics and Data Analysis**
 Understanding statistical concepts is crucial for:
@@ -124,8 +140,8 @@ Reconstructing evolutionary relationships between species or genes to understand
 
 ### Step 1: Master the Basics
 Start with our detailed tutorials on:
-- [Command line fundamentals](command-line-basics-detailed.md)
-- [Package management with Conda](conda-mamba-installation-guide.md)
+- [Command line fundamentals](command-line-part1.md)
+- [Package management with Conda](conda-mamba-part1.md)
 
 ### Step 2: Choose Your Focus Area
 Bioinformatics is broad: consider specializing in:
@@ -181,9 +197,9 @@ The journey may seem daunting at first, but remember: every expert was once a be
 
 Ready to dive deeper? Here's your roadmap:
 
-1. **Master the command line**: Check out our [detailed command line tutorial](command-line-basics-detailed.md)
-2. **Set up your environment**: Learn about [Conda and Mamba for package management](conda-mamba-installation-guide.md)
-3. **Explore single-cell analysis**: Discover the cutting-edge field of [single-cell RNA-seq](single-cell-rnaseq-introduction.md)
+1. **Master the command line**: Check out our [detailed command line tutorial](command-line-part1.md)
+2. **Set up your environment**: Learn about [Conda and Mamba for package management](conda-mamba-part1.md)
+3. **Explore single-cell analysis**: Discover the cutting-edge field of [single-cell RNA-seq](scrna-seq-basics.md)
 
 Remember, bioinformatics is not just about the tools: it's about asking the right biological questions and using computational approaches to find meaningful answers. Welcome to this exciting field where biology meets big data!
 

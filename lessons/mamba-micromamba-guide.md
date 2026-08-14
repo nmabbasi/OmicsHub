@@ -138,14 +138,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
       - name: Setup Micromamba
         uses: mamba-org/setup-micromamba@v1
         with:
           environment-file: environment.yml
           environment-name: test-env
           cache-environment: true
-          
       - name: Run Tests
         shell: bash -el {0}
         run: |

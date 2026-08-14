@@ -19,10 +19,6 @@ In this tutorial, we will walk through a standard end-to-end analysis on a 10x G
 
 We begin by loading the sparse matrix into our core data structures: `AnnData` in Python, or a `Seurat` object in R.
 
-    
-        
-    
-    
 ```python
 import scanpy as sc
 import pandas as pd
@@ -40,9 +36,6 @@ adata = sc.read_10x_mtx(
 
 adata.var_names_make_unique()
 ```
-    
-    
-    
 ```r
 library(Seurat)
 library(dplyr)
@@ -55,7 +48,6 @@ pbmc.data <- Read10X(data.dir = data_dir)
 # Initialize the Seurat object
 pbmc <- CreateSeuratObject(counts = pbmc.data, project = "pbmc3k", min.cells = 3, min.features = 200)
 ```
-    
 
 ---
 
@@ -63,10 +55,6 @@ pbmc <- CreateSeuratObject(counts = pbmc.data, project = "pbmc3k", min.cells = 3
 
 Empty droplets or dying cells can confound downstream analysis. A universal rule of thumb is to filter cells with excessively high mitochondrial gene expression (which indicates ruptured cell membranes) or unusually low gene counts.
 
-    
-        
-    
-    
 ```python
 # Identify mitochondrial genes
 adata.var['mt'] = adata.var_names.str.startswith('MT-')
@@ -80,9 +68,6 @@ adata = adata[adata.obs.pct_counts_mt < 5, :]
 
 print(f"Cells remaining after QC: {adata.n_obs}")
 ```
-    
-    
-    
 ```r
 # Calculate mitochondrial percentage
 pbmc[["percent.mt"]] <- PercentageFeatureSet(pbmc, pattern = "^MT-")
@@ -92,7 +77,6 @@ pbmc <- subset(pbmc, subset = nFeature_RNA > 200 & nFeature_RNA < 2500 & percent
 
 print(paste("Cells remaining after QC:", ncol(pbmc)))
 ```
-    
 
 ---
 
@@ -100,10 +84,6 @@ print(paste("Cells remaining after QC:", ncol(pbmc)))
 
 Because different droplets capture different total amounts of RNA, we must normalize the data to a common scale (usually 10,000 counts per cell), log-transform it, and extract the most highly variable genes for dimensionality reduction.
 
-    
-        
-    
-    
 ```python
 # Normalize and log transform
 sc.pp.normalize_total(adata, target_sum=1e4)
@@ -120,9 +100,6 @@ sc.pp.scale(adata, max_value=10)
 sc.tl.pca(adata, svd_solver='arpack')
 sc.pl.pca_variance_ratio(adata, log=True)
 ```
-    
-    
-    
 ```r
 # Normalize
 pbmc <- NormalizeData(pbmc, normalization.method = "LogNormalize", scale.factor = 10000)
@@ -138,7 +115,6 @@ pbmc <- ScaleData(pbmc, features = all.genes)
 pbmc <- RunPCA(pbmc, features = VariableFeatures(object = pbmc))
 ElbowPlot(pbmc)
 ```
-    
 
 ---
 
@@ -146,10 +122,6 @@ ElbowPlot(pbmc)
 
 We compute the k-nearest neighbors graph in PCA space, embed it into 2D space using UMAP, and cluster the cells to identify transcriptionally distinct subpopulations.
 
-    
-        
-    
-    
 ```python
 # Compute neighbors and UMAP
 sc.pp.neighbors(adata, n_neighbors=10, n_pcs=40)
@@ -161,9 +133,6 @@ sc.tl.leiden(adata, resolution=0.5)
 # Visualize
 sc.pl.umap(adata, color=['leiden'])
 ```
-    
-    
-    
 ```r
 # Compute neighbors
 pbmc <- FindNeighbors(pbmc, dims = 1:10)
@@ -177,7 +146,6 @@ pbmc <- RunUMAP(pbmc, dims = 1:10)
 # Visualize
 DimPlot(pbmc, reduction = "umap", label = TRUE)
 ```
-    
 
 ## Conclusion
 

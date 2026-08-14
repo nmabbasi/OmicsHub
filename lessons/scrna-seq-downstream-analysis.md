@@ -19,10 +19,6 @@ In this tutorial, we cover the foundational tools for these advanced downstream 
 
 To understand how populations (e.g., T-cells and Macrophages) interact, we can map the expression of known Ligand-Receptor pairs. **CellChat** (R) and **CellPhoneDB** (Python) are the industry standards.
 
-    
-        
-    
-    
 ```r
 library(CellChat)
 library(patchwork)
@@ -52,9 +48,6 @@ groupSize <- as.numeric(table(cellchat@idents))
 netVisual_circle(cellchat@net$count, vertex.weight = groupSize, 
                  weight.scale = T, label.edge= F, title.name = "Number of interactions")
 ```
-    
-    
-    
 ```python
 # In Python, CellPhoneDB is typically run via the command line on exported count matrices.
 # First, export your Scanpy AnnData object to raw counts and metadata.
@@ -81,7 +74,6 @@ cellphonedb method statistical_analysis meta.tsv counts.tsv \
     --output-path=out_cpdb \
     --threads=8
 ```
-    
 
 ---
 
@@ -89,10 +81,6 @@ cellphonedb method statistical_analysis meta.tsv counts.tsv \
 
 Gene expression alone doesn't prove a Transcription Factor is active. Using tools like **Decoupler** (Python) or **DoRothEA** (R), we can infer TF activity based on the expression of its known downstream target genes.
 
-    
-        
-    
-    
 ```python
 import decoupler as dc
 import scanpy as sc
@@ -107,9 +95,6 @@ dc.run_mlm(mat=adata, net=net, source='source', target='target', weight='weight'
 # The results are stored in obsm. We can visualize the activity of a specific TF (e.g., STAT1)
 sc.pl.umap(adata, color='STAT1', cmap='RdBu_r', vcenter=0)
 ```
-    
-    
-    
 ```r
 library(dorothea)
 library(Seurat)
@@ -128,7 +113,6 @@ pbmc <- run_viper(pbmc, regulon,
 DefaultAssay(pbmc) <- "dorothea"
 FeaturePlot(pbmc, features = "STAT1", cols = c("blue", "white", "red"))
 ```
-    
 
 ---
 
@@ -136,9 +120,6 @@ FeaturePlot(pbmc, features = "STAT1", cols = c("blue", "white", "red"))
 
 While Seurat's base plotting functions are good, the **SCpubr** package in R generates highly polished, publication-ready graphics automatically.
 
-    
-    
-    
 ```r
 library(SCpubr)
 
@@ -158,7 +139,6 @@ SCpubr::do_DotPlot(sample = pbmc,
                    group.by = "ident",
                    colors.use = c("lightgrey", "darkblue"))
 ```
-    
 
 ## Conclusion
 
