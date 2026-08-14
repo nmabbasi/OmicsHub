@@ -114,6 +114,7 @@ async function loadTutorials() {
             // Advanced Single-Cell Analysis
             'tcr-bcr-repertoire-analysis.md',
             'cell-cell-communication.md',
+            'cell-type-annotation-methods.md',
             'advanced-ai-single-cell.md',
             'infercnv-copy-number-variation.md',
             'single-cell-deconvolution.md',
