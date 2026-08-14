@@ -132,6 +132,15 @@ ggradar(pathway_data,
   labs(title = "Pathway Activity Radar Plot")
 ```
 
+## 8. Python (Scanpy) Equivalents
+
+While the highly specialized libraries above (`SCpubr`, `SeuratExtend`, `scplotter`) are built exclusively for R and Seurat, the Python ecosystem (`Scanpy` and `AnnData`) has its own powerful visualization equivalents:
+
+*   **Squidpy:** The Python equivalent to SCP for spatial and complex multi-omics visualizations.
+*   **scvi-tools:** Offers deep-learning-based latent space visualizations and highly customizable posterior checks.
+*   **Scanpy native plotting (`sc.pl.*`):** While not as automated for "publication themes" as `SCpubr`, `sc.pl.dotplot`, `sc.pl.matrixplot`, and `sc.pl.stacked_violin` provide incredibly robust, dense visual summaries comparable to `dittoSeq`.
+*   **CellRank / scVelo:** The absolute gold standards in Python for dynamic trajectory and vector field visualizations.
+
 ## Conclusion
 
 By mastering these 7 packages, you will never need to struggle with raw `ggplot2` code again. You can produce complex, publication-ready figures for high-impact journals in a matter of seconds.

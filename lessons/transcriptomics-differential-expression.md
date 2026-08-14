@@ -143,4 +143,26 @@ de_results <- run_de(seurat_obj,
 head(de_results$T_cell)
 ```
 
-By leveraging `Libra`, you ensure statistically rigorous, replicate-aware differential expression testing while completely avoiding the massive false-discovery rates of traditional cell-level tests.
+## A Note on Python (Scanpy) Equivalents
+
+The `Libra` framework is natively built for R and Seurat. If you are working in Python with an AnnData object (`Scanpy`), you can achieve the exact same rigorous pseudobulk DESeq2 workflow using **Decoupler** and **PyDESeq2**:
+
+```python
+import scanpy as sc
+import decoupler as dc
+from pydeseq2.dds import DeseqDataSet
+from pydeseq2.ds import DeseqStats
+
+# 1. Generate pseudobulk profiles from your AnnData object
+pdata = dc.get_pseudobulk(adata, sample_col='patient_id', groups_col='cell_type', mode='sum')
+
+# 2. Run PyDESeq2 (Python equivalent of DESeq2 LRT)
+dds = DeseqDataSet(counts=pdata.X, metadata=pdata.obs, design_factors="condition")
+dds.deseq2()
+stat_res = DeseqStats(dds, contrast=["condition", "Treated", "Control"])
+stat_res.summary()
+```
+
+## Conclusion
+
+By leveraging `Libra` in R or `PyDESeq2` in Python, you ensure statistically rigorous, replicate-aware differential expression testing while completely avoiding the massive false-discovery rates of traditional cell-level tests.
