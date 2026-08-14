@@ -2,7 +2,7 @@
 title: "16S rRNA Profiling and Genome Annotation with PROKKA"
 date: "2026-08-14"
 author: "OmicsHub Team"
-category: "Bioinformatics"
+category: "Metagenomics & Phylogeny"
 excerpt: "Learn the fundamentals of 16S rRNA amplicon sequencing techniques and how to perform rapid prokaryotic genome annotation using PROKKA."
 image: "images/bioinformatics-intro.png"
 ---

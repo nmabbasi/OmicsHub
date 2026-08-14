@@ -2,7 +2,7 @@
 title: "Metagenomics: Assembly, Human Mapping, and Visualization"
 date: "2026-08-14"
 author: "OmicsHub Team"
-category: "Bioinformatics"
+category: "Metagenomics & Phylogeny"
 excerpt: "A hands-on guide to metagenomic pipelines, covering de novo assembly with SPAdes, mapping reads with BWA, and visualizing genomic alignments in IGV."
 image: "images/bioinformatics-intro.png"
 ---

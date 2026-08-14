@@ -2,7 +2,7 @@
 title: "HPC Essentials: Modules, Partitions, and Job Monitoring on Linux Clusters"
 date: "2025-08-23"
 author: "OmicsHub Team"
-category: "HPC"
+category: "High-Performance Computing"
 excerpt: "Learn to load software modules, inspect cluster partitions and nodes, monitor running jobs with squeue, and submit your first tasks on an HPC system."
 image: "images/hpc.png"
 ---

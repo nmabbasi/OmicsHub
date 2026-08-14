@@ -2,7 +2,7 @@
 title: "Connecting to an HPC Cluster: SSH, MobaXterm, and Remote Access"
 date: "2025-08-23"
 author: "OmicsHub Team"
-category: "HPC"
+category: "High-Performance Computing"
 excerpt: "Set up secure SSH connections to remote HPC systems from Windows and macOS, configure MobaXterm for graphical access, and establish your working environment on the cluster."
 image: "images/connection.png"
 ---

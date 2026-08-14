@@ -2,7 +2,7 @@
 title: "Conda and Mamba: Managing Software Environments for Reproducible Bioinformatics"
 date: "2025-08-13"
 author: "OmicsHub Team"
-category: "Conda"
+category: "Package Management"
 excerpt: "A complete guide to installing Conda and Mamba, creating isolated environments, and managing bioinformatics software to ensure fully reproducible analyses."
 image: "images/conda-environment.png"
 ---

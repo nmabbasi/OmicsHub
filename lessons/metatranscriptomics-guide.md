@@ -2,7 +2,7 @@
 title: "Metatranscriptomics: Profiling Active Microbiomes"
 date: "2026-08-14"
 author: "OmicsHub Team"
-category: "Bioinformatics"
+category: "Metagenomics & Phylogeny"
 excerpt: "A guide to analyzing metatranscriptomic data, distinguishing active from dormant microbes, and using modern tools like HUMAnN3 and SAMSA2."
 image: "images/bioinformatics-intro.png"
 ---

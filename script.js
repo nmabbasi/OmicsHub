@@ -82,6 +82,10 @@ async function loadTutorials() {
             // Software Management
             'conda-mamba-part1.md',
             
+            // Workflow & Containerization
+            'reproducible-workflows-snakemake-nextflow.md',
+            'docker-singularity-bioinformatics.md',
+            
             // High Performance Computing (HPC)
             '1-Connection.md',
             '2-HPC_Basic_Commands.md',
