@@ -426,6 +426,7 @@ function filterTutorials(category) {
 
 // Show individual tutorial
 async function showTutorial(tutorialId, addToHistory = true) {
+    updateNavActiveState('tutorials');
     const tutorial = tutorials.find(t => t.id === tutorialId);
     if (!tutorial) {
         console.error('Tutorial not found:', tutorialId);
@@ -606,6 +607,7 @@ async function showTutorial(tutorialId, addToHistory = true) {
 
 // Show Home Page
 function showHome(addToHistory = true) {
+    updateNavActiveState('home');
     document.querySelectorAll('.page-content').forEach(page => page.classList.add('hidden'));
     document.getElementById('home-page').classList.remove('hidden');
     currentPage = 'home';
@@ -618,6 +620,7 @@ function showHome(addToHistory = true) {
 
 // Show Tutorials Page
 function showTutorials(addToHistory = true) {
+    updateNavActiveState('tutorials');
     document.querySelectorAll('.page-content').forEach(page => page.classList.add('hidden'));
     document.getElementById('tutorials-page').classList.remove('hidden');
     currentPage = 'tutorials';
@@ -833,3 +836,25 @@ document.addEventListener('click', function(e) {
         });
     }
 });
+
+// Update Navigation Active States
+function updateNavActiveState(activeTab) {
+    const navDesktopHome = document.getElementById('nav-desktop-home');
+    const navDesktopTutorials = document.getElementById('nav-desktop-tutorials');
+    const navMobileHome = document.getElementById('nav-mobile-home');
+    const navMobileTutorials = document.getElementById('nav-mobile-tutorials');
+
+    if (activeTab === 'home') {
+        if (navDesktopHome) navDesktopHome.className = 'px-4 py-2 text-sm font-semibold text-blue-600 border-b-2 border-blue-600 rounded-t-md transition-all';
+        if (navDesktopTutorials) navDesktopTutorials.className = 'px-4 py-2 text-sm font-medium text-gray-600 hover:text-blue-600 border-b-2 border-transparent rounded-md hover:bg-gray-50 transition-all cursor-pointer';
+        
+        if (navMobileHome) navMobileHome.className = 'px-4 py-2 text-sm font-semibold text-blue-600 bg-blue-50 rounded-lg transition-colors';
+        if (navMobileTutorials) navMobileTutorials.className = 'px-4 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors cursor-pointer';
+    } else if (activeTab === 'tutorials') {
+        if (navDesktopHome) navDesktopHome.className = 'px-4 py-2 text-sm font-medium text-gray-600 hover:text-blue-600 border-b-2 border-transparent rounded-md hover:bg-gray-50 transition-all cursor-pointer';
+        if (navDesktopTutorials) navDesktopTutorials.className = 'px-4 py-2 text-sm font-semibold text-blue-600 border-b-2 border-blue-600 rounded-t-md transition-all';
+        
+        if (navMobileHome) navMobileHome.className = 'px-4 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors cursor-pointer';
+        if (navMobileTutorials) navMobileTutorials.className = 'px-4 py-2 text-sm font-semibold text-blue-600 bg-blue-50 rounded-lg transition-colors';
+    }
+}
