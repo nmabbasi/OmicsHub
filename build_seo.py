@@ -18,6 +18,10 @@ header_html = header_split[0] + '<main class="min-h-screen">\n'
 
 # De-activate the "Home" link so tutorials don't highlight Home
 header_html = header_html.replace(
+    'id="nav-desktop-home" aria-current="page" class="px-4 py-2 text-sm font-semibold bg-blue-600 text-white rounded-md shadow-sm transition-all"',
+    'id="nav-desktop-home" class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-blue-600 rounded-md hover:bg-gray-50 transition-all"'
+)
+header_html = header_html.replace(
     'id="nav-desktop-home" class="px-4 py-2 text-sm font-semibold bg-blue-600 text-white rounded-md shadow-sm transition-all"',
     'id="nav-desktop-home" class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-blue-600 rounded-md hover:bg-gray-50 transition-all"'
 )

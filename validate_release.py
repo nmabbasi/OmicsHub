@@ -23,6 +23,8 @@ for p in html_files:
             if required not in text: fail(f'{p.name}: missing {required}')
         if not re.search(r'nav-desktop-tutorials"(?: aria-current="page")? class="px-4 py-2 text-sm font-semibold bg-blue-600', text):
             fail(f'{p.name}: Tutorials desktop tab not active')
+        if re.search(r'nav-desktop-home"(?: aria-current="page")? class="px-4 py-2 text-sm font-semibold bg-blue-600', text):
+            fail(f'{p.name}: Home incorrectly active')
         if 'nav-desktop-starthere" class="px-4 py-2 text-sm font-semibold bg-blue-600' in text:
             fail(f'{p.name}: Start Here incorrectly active')
     for href in re.findall(r'(?:href|src)=["\']([^"\']+)', text):
