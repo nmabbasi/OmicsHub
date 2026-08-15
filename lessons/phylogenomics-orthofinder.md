@@ -1,7 +1,7 @@
 ---
 title: "Phylogenomics with OrthoFinder"
 date: "2026-08-14"
-author: "OmicsHub Team"
+author: "Nasir Mahmood Abbasi, PhD"
 category: "Evolutionary Bioinformatics Analysis"
 excerpt: "Scale up from single-gene phylogeny to whole-genome phylogenomics by identifying orthogroups and constructing species trees using OrthoFinder."
 image: "images/bioinformatics-intro.png"

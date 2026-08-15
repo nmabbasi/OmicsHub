@@ -1,7 +1,7 @@
 ---
 title: "scRNA-seq Basics"
 date: "2026-08-13"
-author: "Bioinformatics Workflow Hub"
+author: "Nasir Mahmood Abbasi, PhD"
 category: "Single-Cell RNA-seq"
 excerpt: "A complete, production-ready single-cell RNA-seq pipeline demonstrating both Python (Scanpy) and R (Seurat) workflows. Covers standard QC, PCA, UMAP, and Leiden/Louvain clustering."
 image: "images/single-cell-analysis.png"

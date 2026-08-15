@@ -1,7 +1,7 @@
 ---
 title: "Taxonomic Profiling with Kraken2 and Bracken"
 date: "2026-08-14"
-author: "OmicsHub Team"
+author: "Nasir Mahmood Abbasi, PhD"
 category: "Metagenomics"
 excerpt: "Learn how to perform ultra-fast taxonomic classification of shotgun metagenomic reads using the k-mer based algorithms Kraken2 and Bracken."
 image: "images/bioinformatics-intro.png"

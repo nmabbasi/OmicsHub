@@ -1,7 +1,7 @@
 ---
 title: "Inferring Copy Number Variation (inferCNV)"
 date: "2026-08-14"
-author: "OmicsHub Team"
+author: "Nasir Mahmood Abbasi, PhD"
 category: "Advanced Single-Cell Analysis"
 excerpt: "Learn how to use inferCNV to detect large-scale chromosomal copy number alterations in single-cell RNA-seq data, essential for identifying malignant tumor cells."
 image: "images/single-cell-analysis.png"

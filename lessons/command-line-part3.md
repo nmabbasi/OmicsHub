@@ -1,7 +1,7 @@
 ---
 title: "Advanced Shell Scripting"
 date: "2025-08-14"
-author: "OmicsHub Team"
+author: "Nasir Mahmood Abbasi, PhD"
 category: "Shell Command Basics"
 excerpt: "Build reusable bioinformatics pipelines using awk, pipes, redirects, and shell scripting best practices for reproducible research."
 image: "images/shell-commands-part3.png"

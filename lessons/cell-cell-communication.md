@@ -1,7 +1,7 @@
 ---
 title: "Cell-Cell Communication"
 date: "2026-08-14"
-author: "OmicsHub Team"
+author: "Nasir Mahmood Abbasi, PhD"
 category: "Advanced Single-Cell Analysis"
 excerpt: "Learn how to infer cell-to-cell signaling networks from scRNA-seq data using state-of-the-art tools like LIANA and CellChat."
 image: "images/single-cell-analysis.png"

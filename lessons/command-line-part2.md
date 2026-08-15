@@ -1,7 +1,7 @@
 ---
 title: "Text Processing"
 date: "2025-08-14"
-author: "OmicsHub Team"
+author: "Nasir Mahmood Abbasi, PhD"
 category: "Shell Command Basics"
 excerpt: "Master grep, sed, cut, and sort to filter, extract, and reshape biological data files directly from the command line."
 image: "images/shell-commands-part2.png"

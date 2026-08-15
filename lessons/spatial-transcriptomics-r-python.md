@@ -1,7 +1,7 @@
 ---
 title: "Spatial Transcriptomics"
 date: "2026-08-14"
-author: "OmicsHub Team"
+author: "Nasir Mahmood Abbasi, PhD"
 category: "Spatial Transcriptomics"
 excerpt: "Learn how to analyze spatial transcriptomics data to map gene expression directly onto tissue architecture, with parallel code examples in both R (Seurat) and Python (Squidpy)."
 image: "images/single-cell-analysis.png"

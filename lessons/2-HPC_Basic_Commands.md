@@ -1,7 +1,7 @@
 ---
 title: "Basic Slurm Commands"
 date: "2025-08-23"
-author: "OmicsHub Team"
+author: "Nasir Mahmood Abbasi, PhD"
 category: "High-Performance Computing (HPC)"
 excerpt: "Learn to load software modules, inspect cluster partitions and nodes, monitor running jobs with squeue, and submit your first tasks on an HPC system."
 image: "images/hpc.png"

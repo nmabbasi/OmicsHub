@@ -1,7 +1,7 @@
 ---
 title: "Introduction to Bioinformatics"
 date: "2025-08-15"
-author: "OmicsHub Team"
+author: "Nasir Mahmood Abbasi, PhD"
 category: "Introduction to Bioinformatics"
 excerpt: "Learn the fundamentals of bioinformatics and discover how computational methods are revolutionizing biological research. This comprehensive tutorial covers basic concepts, essential tools, and practical workflows that every aspiring bioinformatician should know."
 image: "images/intro-bioinformatics.png"

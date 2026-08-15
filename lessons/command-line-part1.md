@@ -1,7 +1,7 @@
 ---
 title: "Basic Navigation"
 date: "2025-08-14"
-author: "OmicsHub Team"
+author: "Nasir Mahmood Abbasi, PhD"
 category: "Shell Command Basics"
 excerpt: "Learn essential Unix/Linux commands for navigating the file system, managing directories, and handling files, which form the foundation of every bioinformatics workflow."
 image: "images/shell-commands-part1.png"
