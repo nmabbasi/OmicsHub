@@ -4,7 +4,7 @@ date: "2026-08-14"
 author: "Nasir Mahmood Abbasi, PhD"
 category: "Advanced Single-Cell Analysis"
 excerpt: "A guide to analyzing T-cell and B-cell receptor (TCR/BCR) repertoires from single-cell data using scRepertoire to track clonal expansion in diseases like Sézary Syndrome."
-image: "images/single-cell-analysis.png"
+image: "images/cat_advanced_sc.png"
 ---
 
 <div class="p-6 bg-blue-50 border border-blue-100 rounded-xl mb-8">

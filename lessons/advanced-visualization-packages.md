@@ -4,7 +4,7 @@ date: "2026-08-14"
 author: "Nasir Mahmood Abbasi, PhD"
 category: "Advanced Single-Cell Analysis"
 excerpt: "A masterclass in transforming basic Seurat plots into premium, publication-ready figures using an arsenal of modern R packages including SCpubr, scplotter, scCustomize, SeuratExtend, dittoSeq, and SCP."
-image: "images/single-cell-analysis.png"
+image: "images/cat_advanced_sc.png"
 ---
 
 <div class="p-6 bg-blue-50 border border-blue-100 rounded-xl mb-8">

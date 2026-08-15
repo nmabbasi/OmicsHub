@@ -4,7 +4,7 @@ date: "2026-08-14"
 author: "Nasir Mahmood Abbasi, PhD"
 category: "Advanced Single-Cell Analysis"
 excerpt: "Learn how to process and integrate CITE-seq data, bridging the gap between RNA expression and surface protein abundance using Weighted Nearest Neighbor (WNN) analysis."
-image: "images/single-cell-analysis.png"
+image: "images/cat_advanced_sc.png"
 ---
 
 <div class="p-6 bg-blue-50 border border-blue-100 rounded-xl mb-8">
