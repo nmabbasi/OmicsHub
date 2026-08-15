@@ -4,7 +4,7 @@ date: "2025-08-15"
 author: "OmicsHub Team"
 category: "Introduction to Bioinformatics"
 excerpt: "Learn the fundamentals of bioinformatics and discover how computational methods are revolutionizing biological research. This comprehensive tutorial covers basic concepts, essential tools, and practical workflows that every aspiring bioinformatician should know."
-image: "images/bioinformatics-intro.png"
+image: "images/intro-bioinformatics.png"
 ---
 
 ## What is Bioinformatics?

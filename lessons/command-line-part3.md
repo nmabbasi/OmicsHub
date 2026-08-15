@@ -4,7 +4,7 @@ date: "2025-08-14"
 author: "OmicsHub Team"
 category: "Shell Command Basics"
 excerpt: "Build reusable bioinformatics pipelines using awk, pipes, redirects, and shell scripting best practices for reproducible research."
-image: "images/command-line-terminal.png"
+image: "images/shell-commands-part3.png"
 ---
 
 ## Advanced Text Processing with `awk`

@@ -4,7 +4,7 @@ date: "2025-08-13"
 author: "OmicsHub Team"
 category: "Package Management"
 excerpt: "A complete guide to installing Conda and Mamba, creating isolated environments, and managing bioinformatics software to ensure fully reproducible analyses."
-image: "images/conda-environment.png"
+image: "images/conda-mamba-part1.png"
 ---
 
 ## Why Package Management Matters in Bioinformatics

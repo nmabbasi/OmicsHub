@@ -4,7 +4,7 @@ date: "2025-08-14"
 author: "OmicsHub Team"
 category: "Shell Command Basics"
 excerpt: "Master grep, sed, cut, and sort to filter, extract, and reshape biological data files directly from the command line."
-image: "images/command-line-terminal.png"
+image: "images/shell-commands-part2.png"
 ---
 
 ## Text Processing: The Bioinformatician's Superpower
