@@ -52,8 +52,12 @@ def update_file(filepath, new_header, new_footer, depth=0):
         filename = os.path.basename(filepath)
         if filename == 'start-here.html':
             adj_header = adj_header.replace(
-                'href="start-here.html" class="px-4 py-2 text-sm font-bold text-blue-700 hover:text-blue-900 rounded-md hover:bg-blue-50 transition-all flex items-center gap-1"',
-                'href="start-here.html" class="px-4 py-2 text-sm font-bold bg-blue-600 text-white rounded-md shadow-sm transition-all flex items-center gap-1"'
+                'id="nav-desktop-starthere" class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-blue-600 rounded-md hover:bg-gray-50 transition-all flex items-center gap-1"',
+                'id="nav-desktop-starthere" class="px-4 py-2 text-sm font-semibold bg-blue-600 text-white rounded-md shadow-sm transition-all flex items-center gap-1"'
+            )
+            adj_header = adj_header.replace(
+                'id="nav-mobile-starthere" class="px-4 py-2 text-sm text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors"',
+                'id="nav-mobile-starthere" class="px-4 py-2 text-sm font-semibold text-blue-600 bg-blue-50 rounded-lg transition-colors"'
             )
         elif filename == 'services.html':
             adj_header = adj_header.replace(
@@ -96,6 +100,17 @@ def update_file(filepath, new_header, new_footer, depth=0):
                     '<div class="px-4 pt-2 pb-1 text-xs font-semibold text-gray-400 uppercase tracking-wide">Legal</div>',
                     '<div class="px-4 pt-2 pb-1 text-xs font-semibold text-blue-600 uppercase tracking-wide">Legal (Active)</div>'
                 )
+            else:
+                # It's a tutorial page in the root directory! Activate the 'Tutorials' tab.
+                if filename != 'index.html':
+                    adj_header = adj_header.replace(
+                        'id="nav-desktop-tutorials" class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-blue-600 rounded-md hover:bg-gray-50 transition-all cursor-pointer"',
+                        'id="nav-desktop-tutorials" class="px-4 py-2 text-sm font-semibold bg-blue-600 text-white rounded-md shadow-sm transition-all cursor-pointer"'
+                    )
+                    adj_header = adj_header.replace(
+                        'id="nav-mobile-tutorials" class="px-4 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors cursor-pointer"',
+                        'id="nav-mobile-tutorials" class="px-4 py-2 text-sm font-semibold text-blue-600 bg-blue-50 rounded-lg transition-colors cursor-pointer"'
+                    )
 
         if content.find(adj_header) == -1:
             content = content.replace(old_header, adj_header)
