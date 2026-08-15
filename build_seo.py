@@ -74,6 +74,36 @@ for filename in os.listdir(lessons_dir):
         custom_header
     )
 
+    # Build JSON-LD structured data for SEO
+    json_ld = f"""
+    <script type="application/ld+json">
+    {{
+      "@context": "https://schema.org",
+      "@type": "Article",
+      "headline": "{title}",
+      "description": "{excerpt}",
+      "author": {{
+        "@type": "Person",
+        "name": "Nasir Mahmood Abbasi, PhD",
+        "url": "https://theomicshub.com/about.html"
+      }},
+      "publisher": {{
+        "@type": "Organization",
+        "name": "Bioinformatics Workflow Hub",
+        "logo": {{
+          "@type": "ImageObject",
+          "url": "https://theomicshub.com/images/default-tutorial.png"
+        }}
+      }}
+    }}
+    </script>
+    """
+    
+    canonical_tag = f'<link rel="canonical" href="https://theomicshub.com/{tutorial_id}.html" />'
+    
+    # Inject canonical and JSON-LD before </head>
+    custom_header = custom_header.replace('</head>', f'{canonical_tag}\\n{json_ld}\\n</head>')
+
     # Build the page content
     page_content = f"""
     <!-- Tutorial Detail Page (Pre-rendered for SEO) -->

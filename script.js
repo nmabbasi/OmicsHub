@@ -218,7 +218,7 @@ function parseTutorial(content, filename) {
                 id: filename.replace('.md', ''),
                 title: filename.replace('.md', '').replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
                 date: new Date().toISOString().split('T')[0],
-                author: 'OmicsHub Team',
+                author: 'Nasir Mahmood Abbasi, PhD',
                 category: 'Bioinformatics',
                 excerpt: content.substring(0, 200) + '...', // Take first 200 chars as excerpt
                 content: content,
@@ -249,7 +249,7 @@ function parseTutorial(content, filename) {
             id: filename.replace('.md', ''),
             title: metadata.title || 'Untitled Tutorial',
             date: metadata.date || new Date().toISOString().split('T')[0],
-            author: metadata.author || 'OmicsHub Team',
+            author: metadata.author || 'Nasir Mahmood Abbasi, PhD',
             category: metadata.category || 'Bioinformatics',
             excerpt: excerpt,
             content: mainContent,
