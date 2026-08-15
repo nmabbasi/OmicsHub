@@ -141,11 +141,31 @@ home_cards_html = "".join(render_home_card(t) for t in tutorials)
 grid_cards_html = "".join(render_grid_card(t) for t in tutorials)
 
 # Categories
+ordered_categories = [
+    "Introduction to Bioinformatics",
+    "Shell Command Basics",
+    "Package Management",
+    "High-Performance Computing (HPC)",
+    "Workflow & Containerization",
+    "Metagenomics",
+    "Metatranscriptomics",
+    "Evolutionary Bioinformatics Analysis",
+    "Genomics & Whole Exome Sequencing",
+    "Single-Cell RNA-seq",
+    "Advanced Single-Cell Analysis",
+    "Spatial Transcriptomics",
+    "Long-Read Sequencing"
+]
+
 cat_html = ""
 filter_buttons_html = '<button class="category-btn px-4 py-2 rounded-full text-sm font-medium transition-colors bg-blue-600 text-white" data-category="all" onclick="filterTutorialsOnly(\'all\')">All Tutorials</button>\n'
-for c in sorted(list(categories_set)):
-    cat_html += f'<button class="sidebar-category w-full text-left px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-blue-600 transition-colors" onclick="filterTutorials(\'{c}\')">{c}</button>\n'
-    filter_buttons_html += f'<button class="category-btn px-4 py-2 rounded-full text-sm font-medium transition-colors bg-gray-200 text-gray-700 hover:bg-gray-300" data-category="{c}" onclick="filterTutorialsOnly(\'{c}\')">{c}</button>\n'
+
+# Only add categories that actually exist in the parsed tutorials to avoid empty buttons
+for c in ordered_categories:
+    if c in categories_set:
+        cat_html += f'<button class="sidebar-category w-full text-left px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-blue-600 transition-colors" onclick="filterTutorials(\'{c}\')">{c}</button>\n'
+        filter_buttons_html += f'<button class="category-btn px-4 py-2 rounded-full text-sm font-medium transition-colors bg-gray-200 text-gray-700 hover:bg-gray-300" data-category="{c}" onclick="filterTutorialsOnly(\'{c}\')">{c}</button>\n'
+
 
 # Recent posts
 recent_html = ""
