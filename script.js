@@ -49,8 +49,14 @@ function handleInitialRoute() {
         if (hash.startsWith('#tutorial-')) {
             const tutorialId = hash.substring(10); // Remove '#tutorial-'
             window.location.href = `${tutorialId}.html`; // Redirect to real page
-        } else if (hash === '#tutorials') {
+        } else if (hash === '#all-tutorials') {
             showTutorials();
+        } else if (hash === '#tutorials') {
+            showHome();
+            setTimeout(() => {
+                const el = document.getElementById('tutorials');
+                if (el) el.scrollIntoView();
+            }, 100);
         } else {
             showHome(); // Default to home if hash is not recognized
         }
@@ -77,8 +83,14 @@ function setupEventListeners() {
             if (hash.startsWith('#tutorial-')) {
                 const tutorialId = hash.substring(10);
                 showTutorial(tutorialId, false); // false to prevent adding to history again
-            } else if (hash === '#tutorials') {
+            } else if (hash === '#all-tutorials') {
                 showTutorials(false);
+            } else if (hash === '#tutorials') {
+                showHome(false);
+                setTimeout(() => {
+                    const el = document.getElementById('tutorials');
+                    if (el) el.scrollIntoView();
+                }, 100);
             } else {
                 showHome(false);
             }
@@ -764,7 +776,7 @@ function showTutorials(addToHistory = true) {
     currentPage = 'tutorials';
     currentTutorial = null;
     if (addToHistory) {
-        window.history.pushState(null, '', '#tutorials');
+        window.history.pushState(null, '', '#all-tutorials');
     }
     
     // Populate tutorials directly without calling filterTutorials to avoid recursion
