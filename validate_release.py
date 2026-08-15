@@ -21,7 +21,7 @@ for p in html_files:
         if text.count('application/ld+json') < 1: fail(f'{p.name}: missing JSON-LD')
         for required in ['Knowledge Check & Assessment','Concept Verification','Practical Execution','Troubleshooting']:
             if required not in text: fail(f'{p.name}: missing {required}')
-        if 'nav-desktop-tutorials" class="px-4 py-2 text-sm font-semibold bg-blue-600' not in text:
+        if not re.search(r'nav-desktop-tutorials"(?: aria-current="page")? class="px-4 py-2 text-sm font-semibold bg-blue-600', text):
             fail(f'{p.name}: Tutorials desktop tab not active')
         if 'nav-desktop-starthere" class="px-4 py-2 text-sm font-semibold bg-blue-600' in text:
             fail(f'{p.name}: Start Here incorrectly active')
@@ -34,8 +34,8 @@ for p in html_files:
         if not target.exists() and not clean.endswith(('.woff','.woff2')): fail(f'{p.name}: missing local resource {clean}')
 
 idx=(ROOT/'index.html').read_text(); start=(ROOT/'start-here.html').read_text()
-if 'nav-desktop-home" class="px-4 py-2 text-sm font-semibold bg-blue-600' not in idx: fail('index: Home tab not active')
-if 'nav-desktop-starthere" class="px-4 py-2 text-sm font-semibold bg-blue-600' not in start: fail('start-here: Start Here tab not active')
+if not re.search(r'nav-desktop-home"(?: aria-current="page")? class="px-4 py-2 text-sm font-semibold bg-blue-600', idx): fail('index: Home tab not active')
+if not re.search(r'nav-desktop-starthere"(?: aria-current="page")? class="px-4 py-2 text-sm font-semibold bg-blue-600', start): fail('start-here: Start Here tab not active')
 for slug in ['computer-data-fundamentals','biological-data-formats','quality-control-fundamentals','git-github-bioinformatics','python-fundamentals-bioinformatics','r-tidyverse-fundamentals','statistics-for-bioinformatics','experimental-design-batch-effects','reference-genomes-annotation','data-visualization-fundamentals','reproducible-project-structure','research-reporting-interpretation']:
     if f'href="{slug}.html"' not in start: fail(f'start-here: missing foundation link {slug}')
 if not (ROOT/'ads.txt').exists(): fail('missing ads.txt')

@@ -72,6 +72,33 @@ function setupEventListeners() {
     if (searchInput) {
         searchInput.addEventListener('input', debounce(handleSearch, 300));
     }
+
+    // Accessible Legal dropdown: support click, Escape, and outside-click dismissal.
+    const legalButton = document.getElementById('legal-menu-button');
+    const legalMenu = document.getElementById('legal-menu');
+    if (legalButton && legalMenu) {
+        legalButton.addEventListener('click', function(event) {
+            event.stopPropagation();
+            const expanded = legalButton.getAttribute('aria-expanded') === 'true';
+            legalButton.setAttribute('aria-expanded', String(!expanded));
+            legalMenu.classList.toggle('opacity-0', expanded);
+            legalMenu.classList.toggle('invisible', expanded);
+        });
+        legalMenu.querySelectorAll('a').forEach(link => link.setAttribute('role', 'menuitem'));
+        document.addEventListener('click', function(event) {
+            if (!legalButton.parentElement.contains(event.target)) {
+                legalButton.setAttribute('aria-expanded', 'false');
+                legalMenu.classList.add('opacity-0', 'invisible');
+            }
+        });
+        legalButton.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                legalButton.setAttribute('aria-expanded', 'false');
+                legalMenu.classList.add('opacity-0', 'invisible');
+                legalButton.focus();
+            }
+        });
+    }
     
     // Back to top button
     window.addEventListener('scroll', handleScroll);
