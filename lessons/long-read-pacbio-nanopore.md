@@ -7,6 +7,17 @@ excerpt: "A guide to analyzing long-read sequencing data from Oxford Nanopore an
 image: "images/bioinformatics-intro.png"
 ---
 
+<div class="p-6 bg-blue-50 border border-blue-100 rounded-xl mb-8">
+  <h4 class="text-lg font-bold text-blue-900 mb-2">Learning Objectives & Prerequisites</h4>
+  <ul class="list-disc list-inside text-blue-800 space-y-1 mb-4">
+    <li><strong>Prerequisites:</strong> Basic understanding of the Linux terminal and bioinformatics concepts. (See <a href="start-here.html" class="underline">Start Here</a>)</li>
+    <li><strong>Objective:</strong> Master the core concepts and practical commands of this topic.</li>
+    <li><strong>Expected Output:</strong> A reproducible workflow and a clear understanding of the methodology.</li>
+  </ul>
+</div>
+
+
+
 # Long-Read Sequencing Data Analysis
 
 ## Introduction
@@ -81,3 +92,12 @@ IsoQuant outputs a high-confidence set of both known and *novel* isoforms that w
 ## Conclusion
 
 Long-read sequencing is rapidly becoming the standard for genome assembly, structural variant detection, and full-length transcriptomics. By mastering tools like NanoPlot, Flye, and Minimap2, you can unlock biological insights that were previously hidden by the limitations of short-read technology.
+
+
+---
+
+<div class="mt-10 p-8 bg-gray-50 border border-gray-200 rounded-xl">
+  <h3 class="text-xl font-bold text-gray-900 mb-3">Knowledge Check & Next Steps</h3>
+  <p class="text-gray-700 mb-4"><strong>Exercise:</strong> Try running the code examples on a small subset of your own data. Did you encounter any errors? Check your syntax and ensure your input files are correctly formatted.</p>
+  <p class="text-gray-700"><strong>Next Step:</strong> Return to the <a href="start-here.html" class="text-blue-600 font-bold hover:underline">Start Here</a> curriculum to find the next logical tutorial in your learning path, or explore related topics in the <a href="index.html#tutorials" class="text-blue-600 hover:underline">Tutorial Library</a>.</p>
+</div>

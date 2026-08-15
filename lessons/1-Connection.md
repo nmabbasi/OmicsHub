@@ -7,6 +7,17 @@ excerpt: "Set up secure SSH connections to remote HPC systems from Windows and m
 image: "images/connection.png"
 ---
 
+<div class="p-6 bg-blue-50 border border-blue-100 rounded-xl mb-8">
+  <h4 class="text-lg font-bold text-blue-900 mb-2">Learning Objectives & Prerequisites</h4>
+  <ul class="list-disc list-inside text-blue-800 space-y-1 mb-4">
+    <li><strong>Prerequisites:</strong> Basic understanding of the Linux terminal and bioinformatics concepts. (See <a href="start-here.html" class="underline">Start Here</a>)</li>
+    <li><strong>Objective:</strong> Master the core concepts and practical commands of this topic.</li>
+    <li><strong>Expected Output:</strong> A reproducible workflow and a clear understanding of the methodology.</li>
+  </ul>
+</div>
+
+
+
 # Connecting with SSH (Windows)
 
 ## Windows
@@ -18,10 +29,10 @@ Download and install [MobaXterm](https://mobaxterm.mobatek.net/download.html).
 Run MobaXterm, click on `Start local terminal`, and execute the following command:
 
 ```bash
-ssh-keygen -t rsa -f esmeralda
+ssh-keygen -t rsa -f my_hpc_key
 ```
 
-This command will prompt you for a _passphrase_ twice and create two files: `esmeralda` (the private key) and `esmeralda.pub` (the public key). These two files must be located in the `C:\Users\XXX\Documents\MobaXterm\home\` folder (replace `XXX` with your user name).
+This command will prompt you for a _passphrase_ twice and create two files: `my_hpc_key` (the private key) and `my_hpc_key.pub` (the public key). These two files must be located in the `C:\Users\XXX\Documents\MobaXterm\home\` folder (replace `XXX` with your user name).
 
 ### What to do with the keys
 
@@ -36,7 +47,7 @@ If you want to run graphical applications from outside the university’s networ
 In the MobaXterm window:
 
 *   Click on `Session` (upper left corner), then `SSH`.
-*   Fill the `Remote Host` field with `10.195.17.215`.
+*   Fill the `Remote Host` field with `hpc.example.edu` (replace with your institution's HPC address).
 *   Tick the `Specify username` box and enter the login name provided by the administrator.
 *   In the `Advanced SSH settings` tab, tick the `Use private key` box and set its location to your private key file.
 *   Click `OK`.
@@ -60,38 +71,38 @@ If you want to run graphical applications from outside the university’s networ
 
 ### From inside the university’s network
 
-Add the following lines to your `~/.ssh/config` file. Replace `LOGIN` with the login name provided by the administrator:
+Add the following lines to your `~/.ssh/config` file. Replace `your_username` with the login name provided by the administrator:
 
 ```
-Host esmeralda
-        Hostname 10.195.17.215
-        User LOGIN
-        IdentityFile ~/.ssh/esmeralda
+Host hpc_alias
+        Hostname hpc.example.edu
+        User your_username
+        IdentityFile ~/.ssh/my_hpc_key
 ```
 
 **Explanation:**
-*   `Host esmeralda`: This line defines an alias (`esmeralda`). The options that follow this line will only be applied when `ssh` recognizes this alias.
-*   `Hostname 10.195.17.215`: Specifies the IP address of the remote host.
-*   `User LOGIN`: Defines the username to use for the connection.
-*   `IdentityFile ~/.ssh/esmeralda`: Tells `ssh` to use the specified private key for authentication.
+*   `Host hpc_alias`: This line defines an alias (`hpc_alias`). The options that follow this line will only be applied when `ssh` recognizes this alias.
+*   `Hostname hpc.example.edu`: Specifies the address of the remote host.
+*   `User your_username`: Defines the username to use for the connection.
+*   `IdentityFile ~/.ssh/my_hpc_key`: Tells `ssh` to use the specified private key for authentication.
 
 With this configuration, you can connect using:
 
 ```bash
-ssh esmeralda
+ssh hpc_alias
 ```
 
 **Important**: The following command will **not** work as expected because the `IdentityFile` option will not be used:
 
 ```bash
-ssh LOGIN@10.195.17.215
+ssh your_username@hpc.example.edu
 ```
 
-The alias `esmeralda` can be changed to any name you prefer.
+The alias `hpc_alias` can be changed to any name you prefer.
 
 ### From outside the university’s network
 
-To connect from outside the university’s network, you must first request VPN access from `administrator`. Once granted, follow the instructions provided by the administrator.
+To connect from outside the university’s network, you must first request VPN access from the network administrator. Once granted, follow the instructions provided by the administrator.
 
 Alternatively, if you prefer not to use a graphical VPN client (like `gnome` or `network-manager`), you can:
 
@@ -116,7 +127,7 @@ To set up a new session:
 
 *   Click on `Session`, then `New session…`.
 *   Optionally, change the `Session name`.
-*   Enter `10.195.17.215` in the `Host` field.
+*   Enter `hpc.example.edu` in the `Host` field.
 *   Fill in the `Login` field with your username.
 *   Set the location of your private key in the `Use RSA/DSA key for ssh connection` field.
 *   In the `Session type` box, choose either:
@@ -126,6 +137,15 @@ To set up a new session:
 
 ![X2GO](images/Nx.png)
 
-**Important**: If you are outside the university’s network, you must first connect to the VPN. Refer to the [Linux/Mac SSH connection tutorial](hpc_connect_ssh_linux_mac.md) or [Windows SSH connection tutorial](hpc_connect_ssh_windows.md) for VPN instructions.
+**Important**: If you are outside the university’s network, you must first connect to the VPN. Refer to the [From outside the university’s network](#from-outside-the-universitys-network) section above for VPN instructions.
 
 
+
+
+---
+
+<div class="mt-10 p-8 bg-gray-50 border border-gray-200 rounded-xl">
+  <h3 class="text-xl font-bold text-gray-900 mb-3">Knowledge Check & Next Steps</h3>
+  <p class="text-gray-700 mb-4"><strong>Exercise:</strong> Try running the code examples on a small subset of your own data. Did you encounter any errors? Check your syntax and ensure your input files are correctly formatted.</p>
+  <p class="text-gray-700"><strong>Next Step:</strong> Return to the <a href="start-here.html" class="text-blue-600 font-bold hover:underline">Start Here</a> curriculum to find the next logical tutorial in your learning path, or explore related topics in the <a href="index.html#tutorials" class="text-blue-600 hover:underline">Tutorial Library</a>.</p>
+</div>

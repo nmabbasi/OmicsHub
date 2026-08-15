@@ -7,6 +7,17 @@ excerpt: "A complete guide to automated cell type annotation, comparing 6 standa
 image: "images/single-cell-analysis.png"
 ---
 
+<div class="p-6 bg-blue-50 border border-blue-100 rounded-xl mb-8">
+  <h4 class="text-lg font-bold text-blue-900 mb-2">Learning Objectives & Prerequisites</h4>
+  <ul class="list-disc list-inside text-blue-800 space-y-1 mb-4">
+    <li><strong>Prerequisites:</strong> Basic understanding of the Linux terminal and bioinformatics concepts. (See <a href="start-here.html" class="underline">Start Here</a>)</li>
+    <li><strong>Objective:</strong> Master the core concepts and practical commands of this topic.</li>
+    <li><strong>Expected Output:</strong> A reproducible workflow and a clear understanding of the methodology.</li>
+  </ul>
+</div>
+
+
+
 # Automated Cell Type Annotation
 
 ## The Annotation Bottleneck
@@ -18,6 +29,8 @@ To solve this, the bioinformatics community (including standard frameworks taugh
 Here, we cover **6 standard algorithmic methods** followed by the newest advancement: **AI multi-agent frameworks (CyteTypeR)**.
 
 ---
+
+> **Critical Note on Marker Validation:** Computational cell type prediction should never be the only line of evidence. Marker genes are not definitively universal; their expression thresholds vary significantly depending on the tissue, disease state, and experimental protocol (e.g., 10x 3' vs 5'). Automated annotation (including AI frameworks) must always be validated biologically using orthogonal literature or experimental confirmation.
 
 ## 1. Reference-Based Methods
 
@@ -107,3 +120,12 @@ head(annotation_results)
 ## Conclusion
 
 When analyzing a novel dataset, relying on a single annotation method is risky. A highly robust workflow involves running 2 or 3 algorithmic methods (e.g., `SingleR` + `CellTypist`) and then utilizing an AI framework like `CyteTypeR` to confirm the findings and provide literature-backed biological reasoning.
+
+
+---
+
+<div class="mt-10 p-8 bg-gray-50 border border-gray-200 rounded-xl">
+  <h3 class="text-xl font-bold text-gray-900 mb-3">Knowledge Check & Next Steps</h3>
+  <p class="text-gray-700 mb-4"><strong>Exercise:</strong> Try running the code examples on a small subset of your own data. Did you encounter any errors? Check your syntax and ensure your input files are correctly formatted.</p>
+  <p class="text-gray-700"><strong>Next Step:</strong> Return to the <a href="start-here.html" class="text-blue-600 font-bold hover:underline">Start Here</a> curriculum to find the next logical tutorial in your learning path, or explore related topics in the <a href="index.html#tutorials" class="text-blue-600 hover:underline">Tutorial Library</a>.</p>
+</div>

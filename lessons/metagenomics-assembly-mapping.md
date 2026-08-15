@@ -7,6 +7,17 @@ excerpt: "A hands-on guide to metagenomic pipelines, covering de novo assembly w
 image: "images/bioinformatics-intro.png"
 ---
 
+<div class="p-6 bg-blue-50 border border-blue-100 rounded-xl mb-8">
+  <h4 class="text-lg font-bold text-blue-900 mb-2">Learning Objectives & Prerequisites</h4>
+  <ul class="list-disc list-inside text-blue-800 space-y-1 mb-4">
+    <li><strong>Prerequisites:</strong> Basic understanding of the Linux terminal and bioinformatics concepts. (See <a href="start-here.html" class="underline">Start Here</a>)</li>
+    <li><strong>Objective:</strong> Master the core concepts and practical commands of this topic.</li>
+    <li><strong>Expected Output:</strong> A reproducible workflow and a clear understanding of the methodology.</li>
+  </ul>
+</div>
+
+
+
 # Metagenomics: Assembly and Mapping
 
 ## Introduction to Metagenomics
@@ -55,9 +66,12 @@ We use **BWA (Burrows-Wheeler Aligner)**, specifically `bwa mem`, which is the s
 
 Before mapping, BWA requires an index of the reference genome.
 
+> **Privacy & Ethics Note:** When working with human microbiome samples, the reads will contain human DNA (host contamination). It is critical to remove these reads before assembly or uploading to public repositories to protect patient privacy.
+
 ```bash
-# Download the human reference genome (GRCh38)
-wget https://example.com/GRCh38.fasta
+# Example: Downloading the human reference genome from NCBI
+wget ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/001/405/GCF_000001405.39_GRCh38.p13/GCF_000001405.39_GRCh38.p13_genomic.fna.gz -O GRCh38.fasta.gz
+gunzip GRCh38.fasta.gz
 
 # Index the genome
 bwa index GRCh38.fasta
@@ -102,3 +116,12 @@ The **Integrative Genomics Viewer (IGV)** is an interactive tool for exploring l
 *   **Insertions/Deletions:** Look for purple `I` symbols (insertions) or black horizontal lines within a read (deletions).
 
 By mastering SPAdes, BWA, and IGV, you establish the foundation for any robust genomics or metagenomics pipeline.
+
+
+---
+
+<div class="mt-10 p-8 bg-gray-50 border border-gray-200 rounded-xl">
+  <h3 class="text-xl font-bold text-gray-900 mb-3">Knowledge Check & Next Steps</h3>
+  <p class="text-gray-700 mb-4"><strong>Exercise:</strong> Try running the code examples on a small subset of your own data. Did you encounter any errors? Check your syntax and ensure your input files are correctly formatted.</p>
+  <p class="text-gray-700"><strong>Next Step:</strong> Return to the <a href="start-here.html" class="text-blue-600 font-bold hover:underline">Start Here</a> curriculum to find the next logical tutorial in your learning path, or explore related topics in the <a href="index.html#tutorials" class="text-blue-600 hover:underline">Tutorial Library</a>.</p>
+</div>
