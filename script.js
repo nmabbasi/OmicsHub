@@ -32,7 +32,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     }
-    loadTutorials();
+    handleInitialRoute();
     setupEventListeners();
     createBackToTopButton();
 });
@@ -214,11 +214,7 @@ async function loadTutorials() {
         // The tutorials will render in the exact pedagogical order defined in the tutorialFiles array above,
         // ensuring beginners start with the Introduction and end with Advanced Single-Cell analysis.
         
-        // Update the UI
-        updateTutorialsList();
-        updateSidebar();
-        
-        // Handle routing now that tutorials are loaded
+        // Handle routing now that tutorials are loaded (deprecated)
         handleInitialRoute();
         
     } catch (error) {
@@ -447,10 +443,23 @@ function updateSidebar() {
     });
 }
 
-// Filter tutorials on home page by category
+// Filter tutorials on home page by category using DOM elements
 function filterTutorialsOnHomePage(category) {
-    const filteredTutorials = category === 'all' ? tutorials : tutorials.filter(t => t.category === category);
-    updateTutorialsList(filteredTutorials);
+    const homeTutorialsList = document.getElementById('tutorials-list');
+    if (homeTutorialsList) {
+        const cards = homeTutorialsList.querySelectorAll('.tutorial-card');
+        cards.forEach(card => {
+            // Check the category span inside the card
+            const catSpan = card.querySelector('span.bg-blue-100');
+            const cardCategory = catSpan ? catSpan.textContent.trim() : '';
+            if (category === 'all' || cardCategory === category) {
+                card.style.display = 'flex'; // It's technically display:block but we can just clear it
+                card.classList.remove('hidden');
+            } else {
+                card.classList.add('hidden');
+            }
+        });
+    }
     
     // Update active category button
     document.querySelectorAll('.category-btn').forEach(btn => {
@@ -781,39 +790,25 @@ function showTutorials(addToHistory = true) {
         window.history.pushState(null, '', '#all-tutorials');
     }
     
-    // Populate tutorials directly without calling filterTutorials to avoid recursion
-    const allTutorialsList = document.getElementById('all-tutorials-list');
-    const categoryFilter = document.getElementById('category-filter');
-    
-    if (!allTutorialsList || !categoryFilter) return;
-
-    // Populate category filter buttons if not already done
-    if (categoryFilter.children.length === 1) { // Only has "All Tutorials" button
-        const categories = [...new Set(tutorials.map(t => t.category))];
-        categories.forEach(cat => {
-            const button = document.createElement('button');
-            button.className = 'category-btn px-4 py-2 rounded-full text-sm font-medium transition-colors bg-gray-200 text-gray-700 hover:bg-gray-300';
-            button.dataset.category = cat;
-            button.textContent = cat;
-            button.onclick = () => filterTutorialsOnly(cat);
-            categoryFilter.appendChild(button);
-        });
-    }
-
-    // Display all tutorials
-    allTutorialsList.innerHTML = tutorials.map(tutorial => renderTutorialCard(tutorial)).join('');
+    // We no longer populate category filter buttons or render grid cards dynamically.
+    // They are fully baked into the static HTML by inject_html_cards.py.
     
     window.scrollTo(0, 0); // Scroll to top of page
 }
 
-// Filter tutorials by category (without calling showTutorials)
+// Filter tutorials by category using static HTML data-category attributes
 function filterTutorialsOnly(category) {
     const allTutorialsList = document.getElementById('all-tutorials-list');
     if (!allTutorialsList) return;
 
-    const filteredTutorials = category === 'all' ? tutorials : tutorials.filter(t => t.category === category);
-
-    allTutorialsList.innerHTML = filteredTutorials.map(tutorial => renderTutorialCard(tutorial)).join('');
+    const cards = allTutorialsList.querySelectorAll('.tutorial-grid-card');
+    cards.forEach(card => {
+        if (category === 'all' || card.getAttribute('data-category') === category) {
+            card.style.display = 'flex';
+        } else {
+            card.style.display = 'none';
+        }
+    });
 
     // Update active category button
     document.querySelectorAll('#category-filter .category-btn').forEach(btn => {
@@ -875,43 +870,45 @@ function debounce(func, delay) {
 }
 
 function handleSearch() {
-    const query = document.getElementById('search-input').value.toLowerCase();
-    const filteredTutorials = tutorials.filter(tutorial => 
-        tutorial.title.toLowerCase().includes(query) ||
-        tutorial.excerpt.toLowerCase().includes(query) ||
-        tutorial.content.toLowerCase().includes(query)
-    );
+    const searchInput = document.getElementById('search-input');
+    if (!searchInput) return;
     
-    const tutorialsList = document.getElementById('tutorials-list');
+    const query = searchInput.value.toLowerCase();
+    
+    const homeTutorialsList = document.getElementById('tutorials-list');
+    if (homeTutorialsList) {
+        const cards = homeTutorialsList.querySelectorAll('.tutorial-card');
+        cards.forEach(card => {
+            const title = card.querySelector('h3') ? card.querySelector('h3').textContent.toLowerCase() : '';
+            const cat = card.querySelector('span.bg-blue-100') ? card.querySelector('span.bg-blue-100').textContent.toLowerCase() : '';
+            const exc = card.querySelector('.excerpt') ? card.querySelector('.excerpt').textContent.toLowerCase() : '';
+            
+            if (query === '' || title.includes(query) || cat.includes(query) || exc.includes(query)) {
+                card.classList.remove('hidden');
+                card.style.display = '';
+            } else {
+                card.classList.add('hidden');
+                card.style.display = 'none';
+            }
+        });
+    }
+    
     const allTutorialsList = document.getElementById('all-tutorials-list');
-
-    if (currentPage === 'home' && tutorialsList) {
-        tutorialsList.innerHTML = filteredTutorials.map(tutorial => `
-            <article class="tutorial-card cursor-pointer" onclick="window.location.href=\'${tutorial.id}.html\'">
-                <div class="flex items-start justify-between mb-3">
-                    <span class="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">${tutorial.category}</span>
-                    <span class="text-sm text-gray-500">${formatDate(tutorial.date)}</span>
-                </div>
-                <h3 class="text-xl font-bold text-gray-900 mb-2">${tutorial.title}</h3>
-                <p class="text-gray-700 text-base mb-4">${tutorial.excerpt}</p>
-                <a href="${tutorial.id}.html" class="text-blue-600 hover:underline font-semibold">Read More →</a>
-            </article>
-        `).join('');
-    } else if (currentPage === 'tutorials' && allTutorialsList) {
-        allTutorialsList.innerHTML = filteredTutorials.map(tutorial => `
-            <article class="bg-white rounded-lg shadow-md overflow-hidden transform transition-transform hover:scale-105 duration-300">
-                <img src="${window.location.origin}/OmicsHub/${tutorial.image}" alt="${tutorial.title}" class="w-full h-48 object-cover">
-                <div class="p-6">
-                    <div class="flex items-center justify-between mb-3">
-                        <span class="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">${tutorial.category}</span>
-                        <span class="text-sm text-gray-500">${formatDate(tutorial.date)}</span>
-                    </div>
-                    <h3 class="text-xl font-bold text-gray-900 mb-2">${tutorial.title}</h3>
-                    <p class="text-gray-700 text-base mb-4">${tutorial.excerpt}</p>
-                    <a href="${tutorial.id}.html" class="text-blue-600 hover:underline font-semibold">Read More →</a>
-                </div>
-            </article>
-        `).join('');
+    if (allTutorialsList) {
+        const gridCards = allTutorialsList.querySelectorAll('.tutorial-grid-card');
+        gridCards.forEach(card => {
+            const title = card.querySelector('h3') ? card.querySelector('h3').textContent.toLowerCase() : '';
+            const cat = card.getAttribute('data-category') ? card.getAttribute('data-category').toLowerCase() : '';
+            const exc = card.querySelector('.line-clamp-3') ? card.querySelector('.line-clamp-3').textContent.toLowerCase() : '';
+            
+            if (query === '' || title.includes(query) || cat.includes(query) || exc.includes(query)) {
+                card.style.display = 'flex';
+                card.classList.remove('hidden');
+            } else {
+                card.style.display = 'none';
+                card.classList.add('hidden');
+            }
+        });
     }
 }
 

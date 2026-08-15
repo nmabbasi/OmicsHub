@@ -99,7 +99,7 @@ def render_home_card(t):
 
 def render_grid_card(t):
     return f'''
-        <article class="bg-white rounded-lg shadow-md overflow-hidden transform transition-transform hover:scale-105 duration-300 cursor-pointer" onclick="window.location.href='{t["id"]}.html'">
+        <article class="tutorial-grid-card bg-white rounded-lg shadow-md overflow-hidden transform transition-transform hover:scale-105 duration-300 cursor-pointer flex flex-col" data-category="{t["category"]}" onclick="window.location.href='{t["id"]}.html'">
             <img src="{t["image"]}" alt="{t["title"]}" class="w-full h-48 object-cover">
             <div class="p-6 flex flex-col flex-grow">
                 <div class="flex items-center justify-between mb-3">
@@ -117,8 +117,10 @@ grid_cards_html = "".join(render_grid_card(t) for t in tutorials)
 
 # Categories
 cat_html = ""
+filter_buttons_html = '<button class="category-btn px-4 py-2 rounded-full text-sm font-medium transition-colors bg-blue-600 text-white" data-category="all" onclick="filterTutorialsOnly(\'all\')">All Tutorials</button>\n'
 for c in sorted(list(categories_set)):
     cat_html += f'<button class="sidebar-category w-full text-left px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-blue-600 transition-colors" onclick="filterTutorials(\'{c}\')">{c}</button>\n'
+    filter_buttons_html += f'<button class="category-btn px-4 py-2 rounded-full text-sm font-medium transition-colors bg-gray-200 text-gray-700 hover:bg-gray-300" data-category="{c}" onclick="filterTutorialsOnly(\'{c}\')">{c}</button>\n'
 
 # Recent posts
 recent_html = ""
@@ -160,6 +162,14 @@ index_html = re.sub(
 index_html = re.sub(
     r'(<div class="space-y-2" id="recent-posts">).*?(</div>\s*</div>\s*</div>\s*</div>\s*</section>)',
     rf'\1\n{recent_html}\n\2',
+    index_html,
+    flags=re.DOTALL
+)
+
+# Replace category-filter buttons
+index_html = re.sub(
+    r'(<div class="flex flex-wrap justify-center gap-3 mb-8" id="category-filter">).*?(</div>\s*<!-- Tutorials Grid -->)',
+    rf'\1\n{filter_buttons_html}\n\2',
     index_html,
     flags=re.DOTALL
 )
