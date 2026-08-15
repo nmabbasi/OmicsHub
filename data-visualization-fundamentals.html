@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<meta content="Learn how to read QC plots, PCA, heatmaps, UMAPs, and avoid misleading visualizations." name="description"/>
+<meta content="bioinformatics, single-cell RNA-seq, shell commands, conda, computational biology, tutorials, data analysis" name="keywords"/>
+<meta content="Nasir Mahmood Abbasi, PhD" name="author"/>
+<meta content="index, follow" name="robots"/>
+<!-- Open Graph tags for social sharing -->
+<meta content="The Omics Hub - Learn Bioinformatics and Single-cell RNA-seq Step by Step" property="og:title"/>
+<meta content="Master computational biology with hands-on tutorials covering shell commands, conda environments, single-cell RNA-seq analysis, and essential bioinformatics tools." property="og:description"/>
+<meta content="https://theomicshub.com/data-visualization-fundamentals.html" property="og:url"/>
+<meta content="website" property="og:type"/>
+<meta content="https://theomicshub.com/images/omicshub-logo.png" property="og:image"/>
+<!-- Twitter Card tags -->
+<meta content="summary_large_image" name="twitter:card"/>
+<meta content="The Omics Hub - Learn Bioinformatics and Single-cell RNA-seq Step by Step" name="twitter:title"/>
+<meta content="Master computational biology with hands-on tutorials covering shell commands, conda environments, single-cell RNA-seq analysis, and essential bioinformatics tools." name="twitter:description"/>
+<meta content="https://theomicshub.com/images/omicshub-logo.png" name="twitter:image"/>
+<title>Data Visualization Fundamentals | The Omics Hub</title>
+<!-- Favicon -->
+<link href="images/favicon.ico" rel="icon" type="image/x-icon"/>
+<!-- Tailwind CSS CDN -->
+<link href="tailwind.min.css" rel="stylesheet">
+<!-- Prism.js for syntax highlighting -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+<!-- Custom CSS -->
+<link href="style.css" rel="stylesheet"/>
+<!-- Google AdSense (replace with your actual AdSense code) -->
+<script async="" crossorigin="anonymous" src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2910340533244599"></script>
+<!-- Google Analytics (add your tracking ID when ready) -->
+<!-- <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag("js", new Date());
+        gtag("config", "G-XXXXXXXXXX");
+    </script> -->
+<link rel="canonical" href="https://theomicshub.com/data-visualization-fundamentals.html" />
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Article",
+      "headline": "Data Visualization Fundamentals",
+      "description": "Learn how to read QC plots, PCA, heatmaps, UMAPs, and avoid misleading visualizations.",
+      "author": {
+        "@type": "Person",
+        "name": "Nasir Mahmood Abbasi, PhD",
+        "url": "https://theomicshub.com/about.html"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "The Omics Hub",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://theomicshub.com/images/default-tutorial.png"
+        }
+      }
+    }
+    </script>
+    
+</head>
+<body class="bg-white text-gray-900">
+<!-- Header -->
+<header class="bg-white border-b border-gray-200 sticky top-0 z-50">
+<nav class="container mx-auto px-6 py-4">
+<div class="flex items-center justify-between">
+<!-- Logo -->
+<div class="flex items-center space-x-3">
+<div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center shadow shadow-blue-500/30">
+<svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18"/></svg>
+</div>
+<span class="text-xl font-bold text-gray-900 tracking-tight">The Omics Hub</span>
+</div>
+<!-- Desktop Nav -->
+<div class="hidden md:flex items-center space-x-1">
+<a href="index.html" id="nav-desktop-home" class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-blue-600 rounded-md hover:bg-gray-50 transition-all">Home</a>
+<a href="start-here.html" id="nav-desktop-starthere" class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-blue-600 rounded-md hover:bg-gray-50 transition-all flex items-center gap-1">Start Here ✨</a>
+<a href="index.html#all-tutorials" id="nav-desktop-tutorials" class="px-4 py-2 text-sm font-semibold bg-blue-600 text-white rounded-md shadow-sm transition-all cursor-pointer">Tutorials</a>
+<a href="services.html" class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-blue-600 rounded-md hover:bg-gray-50 transition-all">Services</a>
+<a href="about.html" class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-blue-600 rounded-md hover:bg-gray-50 transition-all">About</a>
+<a href="contact.html" class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-blue-600 rounded-md hover:bg-gray-50 transition-all">Contact</a>
+<!-- Legal dropdown -->
+<div class="relative group ml-2">
+<button class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-blue-600 flex items-center gap-1 rounded-md hover:bg-gray-50 transition-all">
+Legal
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+</button>
+<div class="absolute right-0 top-full mt-1 w-52 bg-white border border-gray-100 rounded-xl shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 overflow-hidden">
+<a href="pages/privacy.html" class="block px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors">Privacy Policy</a>
+<a href="pages/terms.html" class="block px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors">Terms of Service</a>
+<a href="pages/disclaimer.html" class="block px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors">Disclaimer</a>
+<a href="pages/cookie.html" class="block px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors">Cookie Policy</a>
+</div>
+</div>
+</div>
+<!-- Mobile Button -->
+<button class="md:hidden p-2 rounded-md text-gray-600 hover:bg-gray-100" onclick="toggleMobileMenu()">
+<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+</button>
+</div>
+<!-- Mobile Nav -->
+<div id="mobile-menu" class="md:hidden hidden mt-4 pb-2 border-t border-gray-100">
+<div class="flex flex-col pt-3 space-y-1">
+<a href="index.html" id="nav-mobile-home" class="px-4 py-2 text-sm text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors">Home</a>
+<a href="start-here.html" id="nav-mobile-starthere" class="px-4 py-2 text-sm text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors">Start Here ✨</a>
+<a href="index.html#all-tutorials" id="nav-mobile-tutorials" class="px-4 py-2 text-sm font-semibold text-blue-600 bg-blue-50 rounded-lg transition-colors cursor-pointer">Tutorials</a>
+<a href="services.html" class="px-4 py-2 text-sm text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors">Services</a>
+<a href="about.html" class="px-4 py-2 text-sm text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors">About</a>
+<a href="contact.html" class="px-4 py-2 text-sm text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors">Contact</a>
+<div class="px-4 pt-2 pb-1 text-xs font-semibold text-gray-400 uppercase tracking-wide">Legal</div>
+<a href="pages/privacy.html" class="px-4 py-2 text-sm text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors">Privacy Policy</a>
+<a href="pages/terms.html" class="px-4 py-2 text-sm text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors">Terms of Service</a>
+<a href="pages/disclaimer.html" class="px-4 py-2 text-sm text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors">Disclaimer</a>
+<a href="pages/cookie.html" class="px-4 py-2 text-sm text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors">Cookie Policy</a>
+</div>
+</div>
+</nav>
+</header>
+<!-- Main Content -->
+<main class="min-h-screen">
+
+    <!-- Tutorial Detail Page (Pre-rendered for SEO and Instant Load) -->
+    <div class="page-content" id="tutorial-page">
+        <div class="container mx-auto px-4 py-8">
+            <div class="max-w-4xl mx-auto">
+                <!-- SEO Hidden Markdown Data for search/index -->
+                <div id="seo-markdown-data" style="display:none;">
+---
+title: "Data Visualization Fundamentals"
+category: "Foundations & Prerequisites"
+date: "2026-08-15"
+image: "images/data-visualization-fundamentals.jpg"
+excerpt: "Learn how to read QC plots, PCA, heatmaps, UMAPs, and avoid misleading visualizations."
+---
+
+<div class="mb-10 text-xl text-gray-600 leading-relaxed">
+  <p>This module provides the essential foundations required before advancing into hands-on command-line analysis or complex omics workflows.</p>
+</div>
+
+## Coming Soon
+
+This foundational module is currently in active development based on recent curriculum updates. It will include:
+
+*   **Core Concepts:** Detailed explanations of the underlying theory.
+*   **Practical Examples:** Concrete, reproducible code blocks and data samples.
+*   **Downloadable Assets:** Starter datasets and project templates to practice on your own machine.
+
+Check back soon as we roll out these critical preparatory modules for bioinformatics!
+
+<div class="mt-10 p-8 bg-gray-50 border border-gray-200 rounded-xl">
+  <h3 class="text-xl font-bold text-gray-900 mb-4">Knowledge Check & Assessment</h3>
+  <div class="space-y-4">
+    <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
+      <h4 class="font-bold text-gray-800 mb-2">1. Concept Verification</h4>
+      <p class="text-gray-600 text-sm">Explain the primary function of the core tools introduced in this lesson. What specific bioinformatics problem do they solve compared to alternative methods?</p>
+    </div>
+    <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
+      <h4 class="font-bold text-gray-800 mb-2">2. Practical Execution</h4>
+      <p class="text-gray-600 text-sm">Execute the main pipeline commands on your own subset of data. <strong>Pass Criteria:</strong> The commands complete without syntax errors and generate the expected output file formats.</p>
+    </div>
+    <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
+      <h4 class="font-bold text-gray-800 mb-2">3. Troubleshooting</h4>
+      <p class="text-gray-600 text-sm">If your output is empty or throws a memory error (OOM), what parameters should you adjust? (Hint: Check threads, memory allocation, or file paths).</p>
+    </div>
+  </div>
+</div>
+
+                </div>
+                <!-- PRE-RENDERED STATIC HTML -->
+                <div id="tutorial-content">
+                    
+            <div class="mb-12">
+                <div class="flex items-center gap-2 text-sm text-blue-600 font-medium mb-4">
+                    <span>Foundations & Prerequisites</span>
+                    <span>•</span>
+                    <span>2026-08-15</span>
+                </div>
+                <h1 class="text-4xl md:text-5xl font-black text-gray-900 mb-6 leading-tight">Data Visualization Fundamentals</h1>
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 font-bold text-lg">
+                        NM
+                    </div>
+                    <div>
+                        <p class="font-bold text-gray-900">Nasir Mahmood Abbasi, PhD</p>
+                        <p class="text-sm text-gray-500">Bioinformatics Educator</p>
+                    </div>
+                </div>
+            </div>
+            
+            
+            <div class="mb-12 rounded-2xl overflow-hidden shadow-lg border border-gray-100">
+                <img src="images/data-visualization-fundamentals.jpg" alt="Data Visualization Fundamentals" class="w-full h-auto object-cover aspect-video">
+            </div>
+    
+            
+            <div class="prose prose-blue prose-lg max-w-none">
+                <div class="mb-10 text-xl text-gray-600 leading-relaxed">
+  <p>This module provides the essential foundations required before advancing into hands-on command-line analysis or complex omics workflows.</p>
+</div>
+
+<h2>Coming Soon</h2>
+<p>This foundational module is currently in active development based on recent curriculum updates. It will include:</p>
+<ul>
+<li><strong>Core Concepts:</strong> Detailed explanations of the underlying theory.</li>
+<li><strong>Practical Examples:</strong> Concrete, reproducible code blocks and data samples.</li>
+<li><strong>Downloadable Assets:</strong> Starter datasets and project templates to practice on your own machine.</li>
+</ul>
+<p>Check back soon as we roll out these critical preparatory modules for bioinformatics!</p>
+<div class="mt-10 p-8 bg-gray-50 border border-gray-200 rounded-xl">
+  <h3 class="text-xl font-bold text-gray-900 mb-4">Knowledge Check & Assessment</h3>
+  <div class="space-y-4">
+    <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
+      <h4 class="font-bold text-gray-800 mb-2">1. Concept Verification</h4>
+      <p class="text-gray-600 text-sm">Explain the primary function of the core tools introduced in this lesson. What specific bioinformatics problem do they solve compared to alternative methods?</p>
+    </div>
+    <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
+      <h4 class="font-bold text-gray-800 mb-2">2. Practical Execution</h4>
+      <p class="text-gray-600 text-sm">Execute the main pipeline commands on your own subset of data. <strong>Pass Criteria:</strong> The commands complete without syntax errors and generate the expected output file formats.</p>
+    </div>
+    <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
+      <h4 class="font-bold text-gray-800 mb-2">3. Troubleshooting</h4>
+      <p class="text-gray-600 text-sm">If your output is empty or throws a memory error (OOM), what parameters should you adjust? (Hint: Check threads, memory allocation, or file paths).</p>
+    </div>
+  </div>
+</div>
+            </div>
+            
+            
+    <div class="mt-16 pt-10 border-t border-gray-100">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+            <h3 class="text-2xl font-black text-gray-900 tracking-tight">Continue Learning</h3>
+            <span class="inline-block bg-blue-50 text-blue-700 text-xs font-bold px-3 py-1.5 rounded-full uppercase tracking-wider">Course Sequence</span>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            
+        <a href="reference-genomes-annotation.html" class="group relative flex flex-col justify-center p-6 bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden text-left">
+            <div class="absolute inset-0 bg-gradient-to-r from-blue-50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            <div class="relative z-10 flex items-center gap-4">
+                <div class="w-12 h-12 flex-shrink-0 rounded-full bg-gray-50 flex items-center justify-center group-hover:bg-blue-600 transition-colors duration-300">
+                    <svg class="w-6 h-6 text-gray-400 group-hover:text-white transition-colors duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                </div>
+                <div>
+                    <span class="block text-xs font-bold tracking-widest text-gray-400 uppercase mb-1">Previous Lesson</span>
+                    <span class="block text-gray-900 font-bold group-hover:text-blue-700 transition-colors line-clamp-2 leading-snug">Reference Genomes and Annotation Databases</span>
+                </div>
+            </div>
+        </a>
+        
+            
+        <a href="reproducible-project-structure.html" class="group relative flex flex-col justify-center p-6 bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden text-right">
+            <div class="absolute inset-0 bg-gradient-to-l from-blue-50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            <div class="relative z-10 flex items-center justify-end gap-4">
+                <div>
+                    <span class="block text-xs font-bold tracking-widest text-gray-400 uppercase mb-1">Next Lesson</span>
+                    <span class="block text-gray-900 font-bold group-hover:text-blue-700 transition-colors line-clamp-2 leading-snug">Reproducible Project Structure</span>
+                </div>
+                <div class="w-12 h-12 flex-shrink-0 rounded-full bg-gray-50 flex items-center justify-center group-hover:bg-blue-600 transition-colors duration-300">
+                    <svg class="w-6 h-6 text-gray-400 group-hover:text-white transition-colors duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                </div>
+            </div>
+        </a>
+        
+        </div>
+    </div>
+    
+    
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Tell script.js to skip rendering because it is already done
+        window.STATIC_RENDERED = true;
+        window.PRELOADED_TUTORIAL_ID = "data-visualization-fundamentals";
+    </script>
+    
+</main>
+<!-- Footer (unchanged) -->
+<footer class="bg-gray-900 text-white mt-16">
+<div class="container mx-auto px-6 py-12">
+<div class="grid md:grid-cols-4 gap-8 mb-8">
+<div class="md:col-span-1">
+<div class="flex items-center space-x-3 mb-3">
+<div class="w-9 h-9 bg-blue-600 rounded-lg flex items-center justify-center">
+<svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18"/></svg>
+</div>
+<span class="font-bold text-white">The Omics Hub</span>
+</div>
+<p class="text-gray-400 text-sm leading-relaxed mb-4">Practical, hands-on tutorials for bioinformatics, HPC, and single-cell RNA-seq analysis.</p>
+          <a href="https://paypal.me/nmabbasi12020?locale.x=en_US&country.x=FR" target="_blank" class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500 text-white font-bold rounded-lg hover:bg-emerald-600 transition-colors text-sm shadow-sm">
+            <span class="text-base">☕</span>
+            Buy me a coffee
+          </a>
+</div>
+<div>
+<h4 class="font-semibold text-white mb-3 text-sm uppercase tracking-wide">Navigation</h4>
+<ul class="space-y-2 text-sm text-gray-400">
+<li><a href="index.html" class="hover:text-white transition-colors">Home</a></li>
+<li><a href="index.html#all-tutorials" class="hover:text-white transition-colors">Tutorials</a></li>
+<li><a href="services.html" class="hover:text-white transition-colors">Services</a></li>
+<li><a href="about.html" class="hover:text-white transition-colors">About</a></li>
+<li><a href="contact.html" class="hover:text-white transition-colors">Contact</a></li>
+</ul>
+</div>
+<div>
+<h4 class="font-semibold text-white mb-3 text-sm uppercase tracking-wide">Topics</h4>
+<ul class="space-y-2 text-sm text-gray-400">
+<li><a href="index.html#all-tutorials" class="hover:text-white transition-colors">Shell Commands &amp; HPC</a></li>
+<li><a href="index.html#all-tutorials" class="hover:text-white transition-colors">Conda</a></li>
+<li><a href="index.html#all-tutorials" class="hover:text-white transition-colors">Single-cell RNA-seq</a></li>
+<li><a href="index.html#all-tutorials" class="hover:text-white transition-colors">Bioinformatics</a></li>
+</ul>
+</div>
+<div>
+<h4 class="font-semibold text-white mb-3 text-sm uppercase tracking-wide">Legal</h4>
+<ul class="space-y-2 text-sm text-gray-400">
+<li><a href="pages/privacy.html" class="hover:text-white transition-colors">Privacy Policy</a></li>
+<li><a href="pages/terms.html" class="hover:text-white transition-colors">Terms of Service</a></li>
+<li><a href="pages/disclaimer.html" class="hover:text-white transition-colors">Disclaimer</a></li>
+<li><a href="pages/cookie.html" class="hover:text-white transition-colors">Cookie Policy</a></li>
+</ul>
+</div>
+</div>
+<div class="border-t border-gray-800 pt-6 text-center text-gray-500 text-sm">
+<p>&copy; 2026 The Omics Hub. All rights reserved.</p>
+</div>
+</div>
+</footer>
+<!-- Prism.js for syntax highlighting -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-r.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+<!-- Marked.js for markdown rendering -->
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<!-- Custom JS - loads tutorials from manifest -->
+<script src="script.js"></script>
+<script>
+function toggleMobileMenu() {
+const m = document.getElementById("mobile-menu");
+m.classList.toggle("hidden");
+}
+</script>
+</body>
+</html>

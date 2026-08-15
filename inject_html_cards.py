@@ -2,6 +2,20 @@ import os
 import re
 
 tutorial_files = [
+    # Foundations & Prerequisites
+    'computer-data-fundamentals.md',
+    'biological-data-formats.md',
+    'quality-control-fundamentals.md',
+    'git-github-bioinformatics.md',
+    'python-fundamentals-bioinformatics.md',
+    'r-tidyverse-fundamentals.md',
+    'statistics-for-bioinformatics.md',
+    'experimental-design-batch-effects.md',
+    'reference-genomes-annotation.md',
+    'data-visualization-fundamentals.md',
+    'reproducible-project-structure.md',
+    'research-reporting-interpretation.md',
+
     # Introduction
     'introduction-to-bioinformatics.md',
     'modern-bioinformatics-methods-2026.md',
@@ -142,6 +156,7 @@ grid_cards_html = "".join(render_grid_card(t) for t in tutorials)
 
 # Categories
 ordered_categories = [
+    "Foundations & Prerequisites",
     "Introduction to Bioinformatics",
     "Shell Command Basics",
     "Package Management",
