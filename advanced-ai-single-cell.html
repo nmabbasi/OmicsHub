@@ -10,9 +10,9 @@
 <meta content="Nasir Mahmood Abbasi, PhD" name="author"/>
 <meta content="index, follow" name="robots"/>
 <!-- Open Graph tags for social sharing -->
-<meta content="Advanced AI Cell Annotation | The Omics Hub" property="og:title"/>
+<meta content="The Omics Hub - Learn Bioinformatics and Single-cell RNA-seq Step by Step" property="og:title"/>
 <meta content="Master computational biology with hands-on tutorials covering shell commands, conda environments, single-cell RNA-seq analysis, and essential bioinformatics tools." property="og:description"/>
-<meta content="https://theomicshub.com" property="og:url"/>
+<meta content="https://theomicshub.com/advanced-ai-single-cell.html" property="og:url"/>
 <meta content="website" property="og:type"/>
 <meta content="https://theomicshub.com/images/omicshub-logo.png" property="og:image"/>
 <!-- Twitter Card tags -->
@@ -121,11 +121,11 @@ Legal
 <!-- Main Content -->
 <main class="min-h-screen">
 
-    <!-- Tutorial Detail Page (Pre-rendered for SEO) -->
+    <!-- Tutorial Detail Page (Pre-rendered for SEO and Instant Load) -->
     <div class="page-content" id="tutorial-page">
         <div class="container mx-auto px-4 py-8">
             <div class="max-w-4xl mx-auto">
-                <!-- SEO Hidden Markdown Data -->
+                <!-- SEO Hidden Markdown Data for search/index -->
                 <div id="seo-markdown-data" style="display:none;">
 ---
 title: "Advanced AI Cell Annotation"
@@ -238,19 +238,122 @@ The days of manually Googling gene names to annotate clusters are ending. By int
 </div>
 
                 </div>
-                <!-- Rendered content will be injected here by script.js -->
+                <!-- PRE-RENDERED STATIC HTML -->
                 <div id="tutorial-content">
-                    <div class="text-center py-20">
-                        <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mb-4"></div>
-                        <p class="text-gray-600 font-medium">Rendering tutorial...</p>
+                    
+            <div class="mb-12">
+                <div class="flex items-center gap-2 text-sm text-blue-600 font-medium mb-4">
+                    <span>Advanced Single-Cell Analysis</span>
+                    <span>•</span>
+                    <span>2026-08-14</span>
+                </div>
+                <h1 class="text-4xl md:text-5xl font-black text-gray-900 mb-6 leading-tight">Advanced AI Cell Annotation</h1>
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 font-bold text-lg">
+                        NM
                     </div>
+                    <div>
+                        <p class="font-bold text-gray-900">Nasir Mahmood Abbasi, PhD</p>
+                        <p class="text-sm text-gray-500">Bioinformatics Educator</p>
+                    </div>
+                </div>
+            </div>
+            
+            
+            <div class="mb-12 rounded-2xl overflow-hidden shadow-lg border border-gray-100">
+                <img src="images/cat_advanced_sc.png" alt="Advanced AI Cell Annotation" class="w-full h-auto object-cover aspect-video">
+            </div>
+    
+            
+            <div class="prose prose-blue prose-lg max-w-none">
+                <div class="flex flex-wrap items-center gap-4 text-xs font-mono text-gray-500 bg-gray-50 p-3 rounded-lg border border-gray-200 mb-6">
+  <div class="flex items-center gap-1">
+    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+    <span><strong>Tested on:</strong> Python 3.11, R 4.3.2, Ubuntu 24.04</span>
+  </div>
+  <div class="flex items-center gap-1">
+    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+    <span><strong>Last Review:</strong> 2026-08-15</span>
+  </div>
+</div>
+
+<div class="p-6 bg-blue-50 border border-blue-100 rounded-xl mb-8">
+  <h4 class="text-lg font-bold text-blue-900 mb-2">Learning Objectives & Prerequisites</h4>
+  <ul class="list-disc list-inside text-blue-800 space-y-1 mb-4">
+    <li><strong>Prerequisites:</strong> Basic understanding of the Linux terminal and bioinformatics concepts. (See <a href="start-here.html" class="underline">Start Here</a>)</li>
+    <li><strong>Objective:</strong> Master the core concepts and practical commands of this topic.</li>
+    <li><strong>Expected Output:</strong> A reproducible workflow and a clear understanding of the methodology.</li>
+  </ul>
+</div>
+
+<h1>Automated AI Cell Annotation</h1>
+<h2>The Bottleneck of Manual Annotation</h2>
+<p>Historically, after clustering scRNA-seq data, researchers had to manually inspect lists of differentially expressed genes and search through literature to assign identities like "CD8+ T Cell" or "Fibroblast" to each cluster. </p>
+<p>This process is slow, highly subjective, and error-prone. Today, <strong>Machine Learning and Artificial Intelligence</strong> are completely automating this process using massive reference atlases.</p>
+<hr />
+<h2>1. CellTypist: Logistic Regression Models</h2>
+<p><strong>CellTypist</strong> is an incredibly fast, lightweight python package that uses logistic regression models trained on massive, curated single-cell immune atlases. It is the gold standard for high-resolution immune cell annotation.</p>
+<h3>Running CellTypist (Python / Scanpy)</h3>
+<pre><code class="language-python">import scanpy as sc
+import celltypist
+from celltypist import models
+
+# Load your unannotated data
+adata = sc.read_h5ad(&quot;my_data.h5ad&quot;)
+
+# Download the comprehensive Immune atlas model
+models.download_models(force_update=True)
+model = models.Model.load(model = 'Immune_All_Low.pkl')
+
+# Run the automated prediction!
+predictions = celltypist.annotate(adata, model = model, majority_voting = True)
+
+# Convert predictions back to Scanpy object
+adata = predictions.to_adata()
+
+# Visualize the highly accurate, automated labels
+sc.pl.umap(adata, color='majority_voting')
+</code></pre>
+<p>CellTypist not only predicts the label but also provides a probability score, letting you identify transition states or ambiguous cells.</p>
+<hr />
+<h2>2. Cellama: Large Language Models for Omics</h2>
+<p>As AI advances, researchers are moving beyond simple regression towards <strong>Foundation Models</strong> and Large Language Models (LLMs) adapted specifically for biology. <strong>Cellama</strong> (and similar models like Geneformer or scGPT) represent the absolute bleeding edge.</p>
+<p>Instead of just looking at marker genes, these foundation models learn the fundamental "language" of the transcriptome.</p>
+<h3>Why Foundation Models Matter</h3>
+<ul>
+<li><strong>Zero-Shot Prediction:</strong> Because they have seen tens of millions of cells during pre-training, they can often annotate rare cell types in your data <em>without</em> needing a specific task-trained model.</li>
+<li><strong>Batch Effect Resilience:</strong> They understand biological states intrinsically, meaning they are far less distracted by technical artifacts (like 10x v2 vs v3 chemistry) compared to traditional integration algorithms.</li>
+</ul>
+<h3>Conceptual Workflow</h3>
+<p>While the exact API of these tools evolves rapidly, the general paradigm is:
+1.  <strong>Tokenization:</strong> Your cell's gene expression profile is converted into "tokens" (just like words in ChatGPT).
+2.  <strong>Embedding:</strong> The cell is passed through a transformer network, generating a highly dense mathematical representation of its biological state.
+3.  <strong>Downstream Task:</strong> This embedding is then used for flawless automated clustering, annotation, or even <em>in silico</em> perturbation (predicting what would happen if you knocked out a specific gene!).</p>
+<h2>Summary</h2>
+<p>The days of manually Googling gene names to annotate clusters are ending. By integrating tools like <strong>CellTypist</strong> for rapid immune annotation, and preparing for the adoption of <strong>Foundation Models (Cellama/scGPT)</strong>, you will future-proof your bioinformatics skill set.</p>
+<hr />
+<h2>References</h2>
+<ol>
+<li>Official tool documentation and package vignettes.</li>
+<li>Stuart, T., et al. (2019). Comprehensive Integration of Single-Cell Data. <em>Cell</em>, 177(7), 1888-1902.e21. (For Seurat-based workflows)</li>
+<li>Orchestrating Single-Cell Analysis with Bioconductor (OSCA) - A comprehensive guide to single-cell data analysis.</li>
+<li><a href="https://bioconductor.org/">Bioconductor</a> and <a href="https://cran.r-project.org/">CRAN</a> package manuals.</li>
+</ol>
+<div class="mt-10 p-8 bg-gray-50 border border-gray-200 rounded-xl">
+  <h3 class="text-xl font-bold text-gray-900 mb-3">Knowledge Check & Next Steps</h3>
+  <p class="text-gray-700 mb-4"><strong>Exercise:</strong> Try running the code examples on a small subset of your own data. Did you encounter any errors? Check your syntax and ensure your input files are correctly formatted.</p>
+  <p class="text-gray-700"><strong>Next Step:</strong> Return to the <a href="start-here.html" class="text-blue-600 font-bold hover:underline">Start Here</a> curriculum to find the next logical tutorial in your learning path, or explore related topics in the <a href="index.html#tutorials" class="text-blue-600 hover:underline">Tutorial Library</a>.</p>
+</div>
+            </div>
+    
                 </div>
             </div>
         </div>
     </div>
     
     <script>
-        // Tell script.js to render THIS specific page's hidden markdown on load
+        // Tell script.js to skip rendering because it is already done
+        window.STATIC_RENDERED = true;
         window.PRELOADED_TUTORIAL_ID = "advanced-ai-single-cell";
     </script>
     

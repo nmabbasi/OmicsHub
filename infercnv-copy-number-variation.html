@@ -10,9 +10,9 @@
 <meta content="Nasir Mahmood Abbasi, PhD" name="author"/>
 <meta content="index, follow" name="robots"/>
 <!-- Open Graph tags for social sharing -->
-<meta content="Inferring Copy Number Variation (inferCNV) | The Omics Hub" property="og:title"/>
+<meta content="The Omics Hub - Learn Bioinformatics and Single-cell RNA-seq Step by Step" property="og:title"/>
 <meta content="Master computational biology with hands-on tutorials covering shell commands, conda environments, single-cell RNA-seq analysis, and essential bioinformatics tools." property="og:description"/>
-<meta content="https://theomicshub.com" property="og:url"/>
+<meta content="https://theomicshub.com/infercnv-copy-number-variation.html" property="og:url"/>
 <meta content="website" property="og:type"/>
 <meta content="https://theomicshub.com/images/omicshub-logo.png" property="og:image"/>
 <!-- Twitter Card tags -->
@@ -121,11 +121,11 @@ Legal
 <!-- Main Content -->
 <main class="min-h-screen">
 
-    <!-- Tutorial Detail Page (Pre-rendered for SEO) -->
+    <!-- Tutorial Detail Page (Pre-rendered for SEO and Instant Load) -->
     <div class="page-content" id="tutorial-page">
         <div class="container mx-auto px-4 py-8">
             <div class="max-w-4xl mx-auto">
-                <!-- SEO Hidden Markdown Data -->
+                <!-- SEO Hidden Markdown Data for search/index -->
                 <div id="seo-markdown-data" style="display:none;">
 ---
 title: "Inferring Copy Number Variation (inferCNV)"
@@ -248,19 +248,131 @@ This technique is the absolute gold standard for computationally validating mali
 </div>
 
                 </div>
-                <!-- Rendered content will be injected here by script.js -->
+                <!-- PRE-RENDERED STATIC HTML -->
                 <div id="tutorial-content">
-                    <div class="text-center py-20">
-                        <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mb-4"></div>
-                        <p class="text-gray-600 font-medium">Rendering tutorial...</p>
+                    
+            <div class="mb-12">
+                <div class="flex items-center gap-2 text-sm text-blue-600 font-medium mb-4">
+                    <span>Advanced Single-Cell Analysis</span>
+                    <span>•</span>
+                    <span>2026-08-14</span>
+                </div>
+                <h1 class="text-4xl md:text-5xl font-black text-gray-900 mb-6 leading-tight">Inferring Copy Number Variation (inferCNV)</h1>
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 font-bold text-lg">
+                        NM
                     </div>
+                    <div>
+                        <p class="font-bold text-gray-900">Nasir Mahmood Abbasi, PhD</p>
+                        <p class="text-sm text-gray-500">Bioinformatics Educator</p>
+                    </div>
+                </div>
+            </div>
+            
+            
+            <div class="mb-12 rounded-2xl overflow-hidden shadow-lg border border-gray-100">
+                <img src="images/cat_advanced_sc.png" alt="Inferring Copy Number Variation (inferCNV)" class="w-full h-auto object-cover aspect-video">
+            </div>
+    
+            
+            <div class="prose prose-blue prose-lg max-w-none">
+                <div class="flex flex-wrap items-center gap-4 text-xs font-mono text-gray-500 bg-gray-50 p-3 rounded-lg border border-gray-200 mb-6">
+  <div class="flex items-center gap-1">
+    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+    <span><strong>Tested on:</strong> Python 3.11, R 4.3.2, Ubuntu 24.04</span>
+  </div>
+  <div class="flex items-center gap-1">
+    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+    <span><strong>Last Review:</strong> 2026-08-15</span>
+  </div>
+</div>
+
+<div class="p-6 bg-blue-50 border border-blue-100 rounded-xl mb-8">
+  <h4 class="text-lg font-bold text-blue-900 mb-2">Learning Objectives & Prerequisites</h4>
+  <ul class="list-disc list-inside text-blue-800 space-y-1 mb-4">
+    <li><strong>Prerequisites:</strong> Basic understanding of the Linux terminal and bioinformatics concepts. (See <a href="start-here.html" class="underline">Start Here</a>)</li>
+    <li><strong>Objective:</strong> Master the core concepts and practical commands of this topic.</li>
+    <li><strong>Expected Output:</strong> A reproducible workflow and a clear understanding of the methodology.</li>
+  </ul>
+</div>
+
+<h1>Inferring Copy Number Variation with inferCNV</h1>
+<h2>Introduction</h2>
+<p>In oncology and cancer single-cell RNA-seq, distinguishing malignant tumor cells from normal, healthy cells in the microenvironment is the most critical first step. Because cancer is fundamentally driven by genomic instability, malignant cells often have massive chromosomal amplifications or deletions.</p>
+<p><strong>inferCNV</strong> is a powerful R package that uses single-cell RNA expression as a proxy for DNA copy number variation (CNV). By comparing the expression of genes across the genome in a suspect cell against a known "normal" reference cell, it can identify these large-scale chromosomal alterations.</p>
+<hr />
+<h2>1. Preparing Data for inferCNV</h2>
+<p>You need three inputs for inferCNV:
+1. A raw count matrix.
+2. A metadata file mapping each cell to its annotation (e.g., "Tumor", "Normal_T_cell", "Normal_B_cell").
+3. A gene ordering file mapping each gene to its physical position on the chromosome.</p>
+<pre><code class="language-r">library(infercnv)
+
+# Assuming you have extracted counts from your Seurat object
+raw_counts &lt;- GetAssayData(seurat_obj, slot = &quot;counts&quot;)
+
+# Create the inferCNV object
+infercnv_obj &lt;- CreateInfercnvObject(
+  raw_counts_matrix = raw_counts,
+  annotations_file = &quot;cell_annotations.txt&quot;,
+  delim = &quot;\t&quot;,
+  gene_order_file = &quot;gene_ordering_hg38.txt&quot;,
+  ref_group_names = c(&quot;Normal_T_cell&quot;, &quot;Normal_B_cell&quot;) # Define the healthy reference!
+)
+</code></pre>
+<hr />
+<h2>2. Running the inferCNV Pipeline</h2>
+<p>inferCNV applies a series of smoothing steps, moving averages, and hidden Markov models (HMM) to denoise the RNA data and uncover the true DNA copy number signal.</p>
+<pre><code class="language-r"># Run the core inferCNV algorithm
+infercnv_obj &lt;- infercnv::run(
+  infercnv_obj,
+  cutoff = 0.1, # 0.1 for 10x Genomics, 1 for Smart-seq2
+  out_dir = &quot;infercnv_output/&quot;,
+  cluster_by_groups = TRUE,
+  denoise = TRUE,
+  HMM = TRUE,
+  num_threads = 8
+)
+</code></pre>
+<h3>Key Considerations</h3>
+<ul>
+<li><strong>Cutoff:</strong> Use <code>0.1</code> for sparse data like 10x Genomics, and <code>1.0</code> for full-length methods like Smart-seq2.</li>
+<li><strong>Denoising:</strong> Always use <code>denoise = TRUE</code> to remove background noise using the residual distributions.</li>
+<li><strong>HMM:</strong> The Hidden Markov Model predicts the actual integer copy number (e.g., 2 copies, 3 copies, or complete deletion).</li>
+</ul>
+<hr />
+<h2>3. Interpreting the Output</h2>
+<p>inferCNV automatically generates a heatmap in your output directory (<code>infercnv_output/infercnv.png</code>).</p>
+<ul>
+<li><strong>Rows</strong> are individual cells.</li>
+<li><strong>Columns</strong> are genes, ordered strictly by their physical location from Chromosome 1 to Chromosome X/Y.</li>
+<li><strong>Colors:</strong> Red indicates chromosomal amplification (e.g., Trisomy). Blue indicates chromosomal deletion.</li>
+</ul>
+<p>If a cluster of cells shows massive, coordinated blocks of red and blue across entire chromosome arms, those cells are undoubtedly malignant. The reference cells (which you provided) will show a flat, neutral color, confirming they have a standard diploid genome.</p>
+<p>This technique is the absolute gold standard for computationally validating malignant clusters before performing downstream differential expression.</p>
+<hr />
+<h2>References</h2>
+<ol>
+<li>Official tool documentation and package vignettes.</li>
+<li>Stuart, T., et al. (2019). Comprehensive Integration of Single-Cell Data. <em>Cell</em>, 177(7), 1888-1902.e21. (For Seurat-based workflows)</li>
+<li>Orchestrating Single-Cell Analysis with Bioconductor (OSCA) - A comprehensive guide to single-cell data analysis.</li>
+<li><a href="https://bioconductor.org/">Bioconductor</a> and <a href="https://cran.r-project.org/">CRAN</a> package manuals.</li>
+</ol>
+<div class="mt-10 p-8 bg-gray-50 border border-gray-200 rounded-xl">
+  <h3 class="text-xl font-bold text-gray-900 mb-3">Knowledge Check & Next Steps</h3>
+  <p class="text-gray-700 mb-4"><strong>Exercise:</strong> Try running the code examples on a small subset of your own data. Did you encounter any errors? Check your syntax and ensure your input files are correctly formatted.</p>
+  <p class="text-gray-700"><strong>Next Step:</strong> Return to the <a href="start-here.html" class="text-blue-600 font-bold hover:underline">Start Here</a> curriculum to find the next logical tutorial in your learning path, or explore related topics in the <a href="index.html#tutorials" class="text-blue-600 hover:underline">Tutorial Library</a>.</p>
+</div>
+            </div>
+    
                 </div>
             </div>
         </div>
     </div>
     
     <script>
-        // Tell script.js to render THIS specific page's hidden markdown on load
+        // Tell script.js to skip rendering because it is already done
+        window.STATIC_RENDERED = true;
         window.PRELOADED_TUTORIAL_ID = "infercnv-copy-number-variation";
     </script>
     

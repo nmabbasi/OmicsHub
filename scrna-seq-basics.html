@@ -10,9 +10,9 @@
 <meta content="Nasir Mahmood Abbasi, PhD" name="author"/>
 <meta content="index, follow" name="robots"/>
 <!-- Open Graph tags for social sharing -->
-<meta content="scRNA-seq Basics | The Omics Hub" property="og:title"/>
+<meta content="The Omics Hub - Learn Bioinformatics and Single-cell RNA-seq Step by Step" property="og:title"/>
 <meta content="Master computational biology with hands-on tutorials covering shell commands, conda environments, single-cell RNA-seq analysis, and essential bioinformatics tools." property="og:description"/>
-<meta content="https://theomicshub.com" property="og:url"/>
+<meta content="https://theomicshub.com/scrna-seq-basics.html" property="og:url"/>
 <meta content="website" property="og:type"/>
 <meta content="https://theomicshub.com/images/omicshub-logo.png" property="og:image"/>
 <!-- Twitter Card tags -->
@@ -121,11 +121,11 @@ Legal
 <!-- Main Content -->
 <main class="min-h-screen">
 
-    <!-- Tutorial Detail Page (Pre-rendered for SEO) -->
+    <!-- Tutorial Detail Page (Pre-rendered for SEO and Instant Load) -->
     <div class="page-content" id="tutorial-page">
         <div class="container mx-auto px-4 py-8">
             <div class="max-w-4xl mx-auto">
-                <!-- SEO Hidden Markdown Data -->
+                <!-- SEO Hidden Markdown Data for search/index -->
                 <div id="seo-markdown-data" style="display:none;">
 ---
 title: "scRNA-seq Basics"
@@ -321,19 +321,192 @@ Both Scanpy and Seurat offer extremely robust, highly-optimized pipelines for st
 </div>
 
                 </div>
-                <!-- Rendered content will be injected here by script.js -->
+                <!-- PRE-RENDERED STATIC HTML -->
                 <div id="tutorial-content">
-                    <div class="text-center py-20">
-                        <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mb-4"></div>
-                        <p class="text-gray-600 font-medium">Rendering tutorial...</p>
+                    
+            <div class="mb-12">
+                <div class="flex items-center gap-2 text-sm text-blue-600 font-medium mb-4">
+                    <span>Single-Cell RNA-seq</span>
+                    <span>•</span>
+                    <span>2026-08-13</span>
+                </div>
+                <h1 class="text-4xl md:text-5xl font-black text-gray-900 mb-6 leading-tight">scRNA-seq Basics</h1>
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 font-bold text-lg">
+                        NM
                     </div>
+                    <div>
+                        <p class="font-bold text-gray-900">Nasir Mahmood Abbasi, PhD</p>
+                        <p class="text-sm text-gray-500">Bioinformatics Educator</p>
+                    </div>
+                </div>
+            </div>
+            
+            
+            <div class="mb-12 rounded-2xl overflow-hidden shadow-lg border border-gray-100">
+                <img src="images/single-cell-analysis.png" alt="scRNA-seq Basics" class="w-full h-auto object-cover aspect-video">
+            </div>
+    
+            
+            <div class="prose prose-blue prose-lg max-w-none">
+                <div class="flex flex-wrap items-center gap-4 text-xs font-mono text-gray-500 bg-gray-50 p-3 rounded-lg border border-gray-200 mb-6">
+  <div class="flex items-center gap-1">
+    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+    <span><strong>Tested on:</strong> Python 3.11, R 4.3.2, Ubuntu 24.04</span>
+  </div>
+  <div class="flex items-center gap-1">
+    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+    <span><strong>Last Review:</strong> 2026-08-15</span>
+  </div>
+</div>
+
+<div class="p-6 bg-blue-50 border border-blue-100 rounded-xl mb-8">
+  <h4 class="text-lg font-bold text-blue-900 mb-2">Learning Objectives & Prerequisites</h4>
+  <ul class="list-disc list-inside text-blue-800 space-y-1 mb-4">
+    <li><strong>Prerequisites:</strong> Basic understanding of the Linux terminal and bioinformatics concepts. (See <a href="start-here.html" class="underline">Start Here</a>)</li>
+    <li><strong>Objective:</strong> Master the core concepts and practical commands of this topic.</li>
+    <li><strong>Expected Output:</strong> A reproducible workflow and a clear understanding of the methodology.</li>
+  </ul>
+</div>
+
+<h2>From Raw Counts to Biological Insights</h2>
+<p>Once the sequencing facility provides raw FASTQ files, the initial preprocessing step (using tools like Cell Ranger or STARsolo) maps the reads to a reference genome and generates a sparse count matrix. This matrix—where rows are genes and columns are cells—is the starting point for computational biologists.</p>
+<p>In this tutorial, we will walk through a standard end-to-end analysis on a 10x Genomics dataset. We provide parallel workflows in both <strong>Python (Scanpy)</strong> and <strong>R (Seurat)</strong> so you can choose the ecosystem that best fits your needs.</p>
+<hr />
+<h2>1. Loading the Data</h2>
+<p>We begin by loading the sparse matrix into our core data structures: <code>AnnData</code> in Python, or a <code>Seurat</code> object in R.</p>
+<pre><code class="language-python">import scanpy as sc
+import pandas as pd
+import numpy as np
+
+sc.settings.verbosity = 3
+sc.logging.print_header()
+
+# Load 10x data
+adata = sc.read_10x_mtx(
+    'data/filtered_feature_bc_matrix/', 
+    var_names='gene_symbols', 
+    cache=True
+)
+
+adata.var_names_make_unique()
+</code></pre>
+<pre><code class="language-r">library(Seurat)
+library(dplyr)
+library(patchwork)
+
+# Load 10x data
+data_dir &lt;- &quot;data/filtered_feature_bc_matrix/&quot;
+pbmc.data &lt;- Read10X(data.dir = data_dir)
+
+# Initialize the Seurat object
+pbmc &lt;- CreateSeuratObject(counts = pbmc.data, project = &quot;pbmc3k&quot;, min.cells = 3, min.features = 200)
+</code></pre>
+<hr />
+<h2>2. Quality Control (QC)</h2>
+<p>Empty droplets or dying cells can confound downstream analysis. A universal rule of thumb is to filter cells with excessively high mitochondrial gene expression (which indicates ruptured cell membranes) or unusually low gene counts.</p>
+<pre><code class="language-python"># Identify mitochondrial genes
+adata.var['mt'] = adata.var_names.str.startswith('MT-')
+
+# Calculate QC metrics
+sc.pp.calculate_qc_metrics(adata, qc_vars=['mt'], percent_top=None, log1p=False, inplace=True)
+
+# Filter cells
+adata = adata[adata.obs.n_genes_by_counts &lt; 2500, :]
+adata = adata[adata.obs.pct_counts_mt &lt; 5, :]
+
+print(f&quot;Cells remaining after QC: {adata.n_obs}&quot;)
+</code></pre>
+<pre><code class="language-r"># Calculate mitochondrial percentage
+pbmc[[&quot;percent.mt&quot;]] &lt;- PercentageFeatureSet(pbmc, pattern = &quot;^MT-&quot;)
+
+# Filter cells
+pbmc &lt;- subset(pbmc, subset = nFeature_RNA &gt; 200 &amp; nFeature_RNA &lt; 2500 &amp; percent.mt &lt; 5)
+
+print(paste(&quot;Cells remaining after QC:&quot;, ncol(pbmc)))
+</code></pre>
+<hr />
+<h2>3. Normalization, Scaling, and PCA</h2>
+<p>Because different droplets capture different total amounts of RNA, we must normalize the data to a common scale (usually 10,000 counts per cell), log-transform it, and extract the most highly variable genes for dimensionality reduction.</p>
+<pre><code class="language-python"># Normalize and log transform
+sc.pp.normalize_total(adata, target_sum=1e4)
+sc.pp.log1p(adata)
+
+# Find highly variable genes
+sc.pp.highly_variable_genes(adata, min_mean=0.0125, max_mean=3, min_disp=0.5)
+
+# Save the raw data before scaling
+adata.raw = adata
+
+# Scale data and run PCA
+sc.pp.scale(adata, max_value=10)
+sc.tl.pca(adata, svd_solver='arpack')
+sc.pl.pca_variance_ratio(adata, log=True)
+</code></pre>
+<pre><code class="language-r"># Normalize
+pbmc &lt;- NormalizeData(pbmc, normalization.method = &quot;LogNormalize&quot;, scale.factor = 10000)
+
+# Find highly variable genes
+pbmc &lt;- FindVariableFeatures(pbmc, selection.method = &quot;vst&quot;, nfeatures = 2000)
+
+# Scale data
+all.genes &lt;- rownames(pbmc)
+pbmc &lt;- ScaleData(pbmc, features = all.genes)
+
+# Run PCA
+pbmc &lt;- RunPCA(pbmc, features = VariableFeatures(object = pbmc))
+ElbowPlot(pbmc)
+</code></pre>
+<hr />
+<h2>4. Neighborhood Graph and Clustering</h2>
+<p>We compute the k-nearest neighbors graph in PCA space, embed it into 2D space using UMAP, and cluster the cells to identify transcriptionally distinct subpopulations.</p>
+<pre><code class="language-python"># Compute neighbors and UMAP
+sc.pp.neighbors(adata, n_neighbors=10, n_pcs=40)
+sc.tl.umap(adata)
+
+# Cluster using the Leiden algorithm
+sc.tl.leiden(adata, resolution=0.5)
+
+# Visualize
+sc.pl.umap(adata, color=['leiden'])
+</code></pre>
+<pre><code class="language-r"># Compute neighbors
+pbmc &lt;- FindNeighbors(pbmc, dims = 1:10)
+
+# Cluster using Louvain/Leiden
+pbmc &lt;- FindClusters(pbmc, resolution = 0.5)
+
+# Run UMAP
+pbmc &lt;- RunUMAP(pbmc, dims = 1:10)
+
+# Visualize
+DimPlot(pbmc, reduction = &quot;umap&quot;, label = TRUE)
+</code></pre>
+<h2>Conclusion</h2>
+<p>Both Scanpy and Seurat offer extremely robust, highly-optimized pipelines for standard scRNA-seq analysis. Transitioning between them is primarily a matter of syntax. With these clusters defined, we are ready to proceed to downstream analysis such as Trajectory Inference and Cell-Cell Communication.</p>
+<hr />
+<h2>References</h2>
+<ol>
+<li>Official tool documentation and package vignettes.</li>
+<li>Stuart, T., et al. (2019). Comprehensive Integration of Single-Cell Data. <em>Cell</em>, 177(7), 1888-1902.e21. (For Seurat-based workflows)</li>
+<li>Orchestrating Single-Cell Analysis with Bioconductor (OSCA) - A comprehensive guide to single-cell data analysis.</li>
+<li><a href="https://bioconductor.org/">Bioconductor</a> and <a href="https://cran.r-project.org/">CRAN</a> package manuals.</li>
+</ol>
+<div class="mt-10 p-8 bg-gray-50 border border-gray-200 rounded-xl">
+  <h3 class="text-xl font-bold text-gray-900 mb-3">Knowledge Check & Next Steps</h3>
+  <p class="text-gray-700 mb-4"><strong>Exercise:</strong> Try running the code examples on a small subset of your own data. Did you encounter any errors? Check your syntax and ensure your input files are correctly formatted.</p>
+  <p class="text-gray-700"><strong>Next Step:</strong> Return to the <a href="start-here.html" class="text-blue-600 font-bold hover:underline">Start Here</a> curriculum to find the next logical tutorial in your learning path, or explore related topics in the <a href="index.html#tutorials" class="text-blue-600 hover:underline">Tutorial Library</a>.</p>
+</div>
+            </div>
+    
                 </div>
             </div>
         </div>
     </div>
     
     <script>
-        // Tell script.js to render THIS specific page's hidden markdown on load
+        // Tell script.js to skip rendering because it is already done
+        window.STATIC_RENDERED = true;
         window.PRELOADED_TUTORIAL_ID = "scrna-seq-basics";
     </script>
     

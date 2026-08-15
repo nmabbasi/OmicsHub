@@ -10,9 +10,9 @@
 <meta content="Nasir Mahmood Abbasi, PhD" name="author"/>
 <meta content="index, follow" name="robots"/>
 <!-- Open Graph tags for social sharing -->
-<meta content="Basic Slurm Commands | The Omics Hub" property="og:title"/>
+<meta content="The Omics Hub - Learn Bioinformatics and Single-cell RNA-seq Step by Step" property="og:title"/>
 <meta content="Master computational biology with hands-on tutorials covering shell commands, conda environments, single-cell RNA-seq analysis, and essential bioinformatics tools." property="og:description"/>
-<meta content="https://theomicshub.com" property="og:url"/>
+<meta content="https://theomicshub.com/2-HPC_Basic_Commands.html" property="og:url"/>
 <meta content="website" property="og:type"/>
 <meta content="https://theomicshub.com/images/omicshub-logo.png" property="og:image"/>
 <!-- Twitter Card tags -->
@@ -121,11 +121,11 @@ Legal
 <!-- Main Content -->
 <main class="min-h-screen">
 
-    <!-- Tutorial Detail Page (Pre-rendered for SEO) -->
+    <!-- Tutorial Detail Page (Pre-rendered for SEO and Instant Load) -->
     <div class="page-content" id="tutorial-page">
         <div class="container mx-auto px-4 py-8">
             <div class="max-w-4xl mx-auto">
-                <!-- SEO Hidden Markdown Data -->
+                <!-- SEO Hidden Markdown Data for search/index -->
                 <div id="seo-markdown-data" style="display:none;">
 ---
 title: "Basic Slurm Commands"
@@ -366,19 +366,186 @@ Memory Efficiency: 80.00% of 10.00 GB
 </div>
 
                 </div>
-                <!-- Rendered content will be injected here by script.js -->
+                <!-- PRE-RENDERED STATIC HTML -->
                 <div id="tutorial-content">
-                    <div class="text-center py-20">
-                        <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mb-4"></div>
-                        <p class="text-gray-600 font-medium">Rendering tutorial...</p>
+                    
+            <div class="mb-12">
+                <div class="flex items-center gap-2 text-sm text-blue-600 font-medium mb-4">
+                    <span>High-Performance Computing (HPC)</span>
+                    <span>•</span>
+                    <span>2025-08-23</span>
+                </div>
+                <h1 class="text-4xl md:text-5xl font-black text-gray-900 mb-6 leading-tight">Basic Slurm Commands</h1>
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 font-bold text-lg">
+                        NM
                     </div>
+                    <div>
+                        <p class="font-bold text-gray-900">Nasir Mahmood Abbasi, PhD</p>
+                        <p class="text-sm text-gray-500">Bioinformatics Educator</p>
+                    </div>
+                </div>
+            </div>
+            
+            
+            <div class="mb-12 rounded-2xl overflow-hidden shadow-lg border border-gray-100">
+                <img src="images/hpc.png" alt="Basic Slurm Commands" class="w-full h-auto object-cover aspect-video">
+            </div>
+    
+            
+            <div class="prose prose-blue prose-lg max-w-none">
+                <div class="flex flex-wrap items-center gap-4 text-xs font-mono text-gray-500 bg-gray-50 p-3 rounded-lg border border-gray-200 mb-6">
+  <div class="flex items-center gap-1">
+    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+    <span><strong>Tested on:</strong> Python 3.11, R 4.3.2, Ubuntu 24.04</span>
+  </div>
+  <div class="flex items-center gap-1">
+    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+    <span><strong>Last Review:</strong> 2026-08-15</span>
+  </div>
+</div>
+
+<div class="p-6 bg-blue-50 border border-blue-100 rounded-xl mb-8">
+  <h4 class="text-lg font-bold text-blue-900 mb-2">Learning Objectives & Prerequisites</h4>
+  <ul class="list-disc list-inside text-blue-800 space-y-1 mb-4">
+    <li><strong>Prerequisites:</strong> Basic understanding of the Linux terminal and bioinformatics concepts. (See <a href="start-here.html" class="underline">Start Here</a>)</li>
+    <li><strong>Objective:</strong> Master the core concepts and practical commands of this topic.</li>
+    <li><strong>Expected Output:</strong> A reproducible workflow and a clear understanding of the methodology.</li>
+  </ul>
+</div>
+
+<h2>Modules</h2>
+<p>Some programs on the HPC cluster are only accessible by loading specific modules. For example, to compile MPI programs with <code>mpic++</code>, you would load the appropriate module:</p>
+<pre><code class="language-bash">module load mpi/openmpi-x86_64
+</code></pre>
+<p>For more options and commands, you can always consult the manual:</p>
+<pre><code class="language-bash">man module
+</code></pre>
+<p>Here are some of the most important <code>module</code> commands:</p>
+<ul>
+<li><code>module avail</code>: Lists all available modules.</li>
+<li><code>module list</code>: Lists all currently loaded modules.</li>
+<li><code>module load X</code>: Loads module <code>X</code>.</li>
+<li><code>module unload X</code>: Unloads module <code>X</code>.</li>
+<li><code>module purge</code>: Unloads all currently loaded modules.</li>
+</ul>
+<p><strong>Important</strong>: Remember to load the appropriate modules inside your job submission scripts (see <a href="">Writing a submission script</a>). These in-script module loads are usually preceded by <code>module purge</code> to ensure a clean environment.</p>
+<h2>Listing partitions and nodes</h2>
+<p>To view information about the cluster partitions and nodes, use the <code>sinfo</code> command:</p>
+<pre><code class="language-bash">sinfo
+</code></pre>
+<p>The <code>STATE</code> column indicates the status of the nodes listed in the <code>NODELIST</code> column. Common states include:</p>
+<ul>
+<li><code>idle</code>: No resources are allocated.</li>
+<li><code>mix</code>: Some resources are allocated, but not all.</li>
+<li><code>alloc</code>: At least one resource (CPU or memory) is fully allocated.</li>
+<li><code>drain</code>: The node will finish current jobs but will not accept new ones.</li>
+<li><code>down</code>: The node is shut down.</li>
+</ul>
+<p><img alt="partition" src="images/partitions.png" /></p>
+<p>For a comprehensive list of states and options, consult the manual:</p>
+<pre><code class="language-bash">man sinfo
+</code></pre>
+<p>To display the characteristics of each node, use:</p>
+<pre><code class="language-bash">sinfo --long --Node
+</code></pre>
+<p>The <code>--long</code> option provides detailed information. The important columns in the output are <code>CPUS</code> (maximum allocatable CPUs) and <code>Memory</code> (maximum available memory in Megabytes). You can restrict the output to a single partition using the <code>-p</code> option.</p>
+<h2>Listing submitted jobs</h2>
+<p>To view all submitted jobs, use:</p>
+<pre><code class="language-bash">squeue
+</code></pre>
+<p>To see only your own jobs, use:</p>
+<pre><code class="language-bash">squeue -u `whoami`
+</code></pre>
+<p>The <code>ST</code> column shows the job status, typically <code>R</code> for running or <code>PD</code> for pending.</p>
+<h2>Partitions, nodes and jobs in a GUI</h2>
+<p>If X forwarding is activated (see section <a href="">Running a GUI</a>), you can run a graphical interface to monitor the cluster:</p>
+<pre><code class="language-bash">sview&amp;
+</code></pre>
+<h2>Running tasks</h2>
+<p>There are two primary ways to execute tasks on the cluster nodes:</p>
+<ol>
+<li><strong>Submit a job</strong> (section <a href="">Submitting a job</a>).</li>
+<li><strong>Start an interactive session</strong> (section <a href="">Running an interactive session</a>).</li>
+</ol>
+<p>Interactive sessions should generally be reserved for specific cases:</p>
+<ul>
+<li>When you need to run a Graphical User Interface (GUI).</li>
+<li>When you are debugging your program.</li>
+</ul>
+<p>For all other scenarios, it is highly recommended to submit a job script. The reason is that interactive sessions require allocated resources, and there is often downtime (e.g., modifying scripts, waiting for tasks, or idle time if you forget the task has completed). During this downtime, resources remain allocated but unused, which is inefficient. Job scripts ensure resources are utilized effectively.</p>
+<h1>Custom Module</h1>
+<h3>Creating a custom module</h3>
+<p>If you have a program that you want to make available to others, you can create a custom module for it. This involves creating a module file that defines the environment variables and paths needed to run your program.</p>
+<p><strong>Example module file (<code>myprogram/1.0.lua</code>):</strong></p>
+<pre><code class="language-lua">help([[This module loads MyProgram version 1.0]])
+
+prepend_path(&quot;PATH&quot;, &quot;/path/to/myprogram/bin&quot;)
+prepend_path(&quot;LD_LIBRARY_PATH&quot;, &quot;/path/to/myprogram/lib&quot;)
+</code></pre>
+<p>Place this file in a directory that is part of the <code>MODULEPATH</code> environment variable. You can check your <code>MODULEPATH</code> with <code>module use</code>.</p>
+<h3>Using a custom module</h3>
+<p>Once your custom module is created and placed in the correct location, you can load it like any other module:</p>
+<pre><code class="language-bash">module load myprogram/1.0
+</code></pre>
+<hr />
+<h2>Debugging Failed Jobs (Error Diagnosis)</h2>
+<p>When a Slurm job fails, you need to diagnose <em>why</em>. HPC errors typically fall into three categories: OOM (Out of Memory), Timeout, or Syntax errors.</p>
+<h3>1. Reading the Slurm Logs</h3>
+<p>By default, Slurm writes output and errors to a file named <code>slurm-&lt;jobid&gt;.out</code>. Always check this file first.</p>
+<pre><code class="language-bash">cat slurm-123456.out
+</code></pre>
+<p><strong>Example Log - OOM Error:</strong></p>
+<pre><code class="language-text">slurmstepd: error: Detected 1 oom-kill event(s) in StepId=123456.batch.
+Some of your processes may have been killed by the cgroup out-of-memory handler.
+</code></pre>
+<p><em>Diagnosis:</em> Your job requested 10GB of RAM, but the process tried to use 12GB.
+<em>Fix:</em> Edit your submission script to request more memory (e.g., <code>#SBATCH --mem=20G</code>) and resubmit.</p>
+<p><strong>Example Log - Timeout Error:</strong></p>
+<pre><code class="language-text">slurmstepd: error: *** JOB 123457 ON node01 CANCELLED AT 2026-08-15T12:00:00 DUE TO TIME LIMIT ***
+</code></pre>
+<p><em>Diagnosis:</em> Your job requested 2 hours, but it took longer.
+<em>Fix:</em> Edit your submission script to request more time (e.g., <code>#SBATCH --time=12:00:00</code>) and resubmit.</p>
+<h3>2. Checking Job Efficiency</h3>
+<p>To prevent OOM errors and optimize resource usage, you should check how efficiently your past jobs ran using <code>seff</code>:</p>
+<pre><code class="language-bash">seff 123456
+</code></pre>
+<p><strong>Output:</strong></p>
+<pre><code class="language-text">Job ID: 123456
+Cluster: mycluster
+User/Group: user/group
+State: COMPLETED (exit code 0)
+Cores: 1
+CPU Utilized: 00:45:00
+CPU Efficiency: 90.00% of 00:50:00 core-walltime
+Job Wall-clock time: 00:50:00
+Memory Utilized: 8.00 GB
+Memory Efficiency: 80.00% of 10.00 GB
+</code></pre>
+<p><em>Interpretation:</em> This was a highly efficient job. It used 80% of requested RAM and 90% of requested CPU time.</p>
+<hr />
+<h2>References</h2>
+<ol>
+<li>Official tool documentation and package vignettes.</li>
+<li>Stuart, T., et al. (2019). Comprehensive Integration of Single-Cell Data. <em>Cell</em>, 177(7), 1888-1902.e21. (For Seurat-based workflows)</li>
+<li>Orchestrating Single-Cell Analysis with Bioconductor (OSCA) - A comprehensive guide to single-cell data analysis.</li>
+<li><a href="https://bioconductor.org/">Bioconductor</a> and <a href="https://cran.r-project.org/">CRAN</a> package manuals.</li>
+</ol>
+<div class="mt-10 p-8 bg-gray-50 border border-gray-200 rounded-xl">
+  <h3 class="text-xl font-bold text-gray-900 mb-3">Knowledge Check & Next Steps</h3>
+  <p class="text-gray-700 mb-4"><strong>Exercise:</strong> Try running the code examples on a small subset of your own data. Did you encounter any errors? Check your syntax and ensure your input files are correctly formatted.</p>
+  <p class="text-gray-700"><strong>Next Step:</strong> Return to the <a href="start-here.html" class="text-blue-600 font-bold hover:underline">Start Here</a> curriculum to find the next logical tutorial in your learning path, or explore related topics in the <a href="index.html#tutorials" class="text-blue-600 hover:underline">Tutorial Library</a>.</p>
+</div>
+            </div>
+    
                 </div>
             </div>
         </div>
     </div>
     
     <script>
-        // Tell script.js to render THIS specific page's hidden markdown on load
+        // Tell script.js to skip rendering because it is already done
+        window.STATIC_RENDERED = true;
         window.PRELOADED_TUTORIAL_ID = "2-HPC_Basic_Commands";
     </script>
     

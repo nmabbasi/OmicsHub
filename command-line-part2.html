@@ -10,9 +10,9 @@
 <meta content="Nasir Mahmood Abbasi, PhD" name="author"/>
 <meta content="index, follow" name="robots"/>
 <!-- Open Graph tags for social sharing -->
-<meta content="Text Processing | The Omics Hub" property="og:title"/>
+<meta content="The Omics Hub - Learn Bioinformatics and Single-cell RNA-seq Step by Step" property="og:title"/>
 <meta content="Master computational biology with hands-on tutorials covering shell commands, conda environments, single-cell RNA-seq analysis, and essential bioinformatics tools." property="og:description"/>
-<meta content="https://theomicshub.com" property="og:url"/>
+<meta content="https://theomicshub.com/command-line-part2.html" property="og:url"/>
 <meta content="website" property="og:type"/>
 <meta content="https://theomicshub.com/images/omicshub-logo.png" property="og:image"/>
 <!-- Twitter Card tags -->
@@ -121,11 +121,11 @@ Legal
 <!-- Main Content -->
 <main class="min-h-screen">
 
-    <!-- Tutorial Detail Page (Pre-rendered for SEO) -->
+    <!-- Tutorial Detail Page (Pre-rendered for SEO and Instant Load) -->
     <div class="page-content" id="tutorial-page">
         <div class="container mx-auto px-4 py-8">
             <div class="max-w-4xl mx-auto">
-                <!-- SEO Hidden Markdown Data -->
+                <!-- SEO Hidden Markdown Data for search/index -->
                 <div id="seo-markdown-data" style="display:none;">
 ---
 title: "Text Processing"
@@ -309,19 +309,162 @@ awk '$3 > 100' data.tsv         # Show rows where column 3 > 100
 </div>
 
                 </div>
-                <!-- Rendered content will be injected here by script.js -->
+                <!-- PRE-RENDERED STATIC HTML -->
                 <div id="tutorial-content">
-                    <div class="text-center py-20">
-                        <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mb-4"></div>
-                        <p class="text-gray-600 font-medium">Rendering tutorial...</p>
+                    
+            <div class="mb-12">
+                <div class="flex items-center gap-2 text-sm text-blue-600 font-medium mb-4">
+                    <span>Shell Command Basics</span>
+                    <span>•</span>
+                    <span>2025-08-14</span>
+                </div>
+                <h1 class="text-4xl md:text-5xl font-black text-gray-900 mb-6 leading-tight">Text Processing</h1>
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 font-bold text-lg">
+                        NM
                     </div>
+                    <div>
+                        <p class="font-bold text-gray-900">Nasir Mahmood Abbasi, PhD</p>
+                        <p class="text-sm text-gray-500">Bioinformatics Educator</p>
+                    </div>
+                </div>
+            </div>
+            
+            
+            <div class="mb-12 rounded-2xl overflow-hidden shadow-lg border border-gray-100">
+                <img src="images/shell-commands-part2.png" alt="Text Processing" class="w-full h-auto object-cover aspect-video">
+            </div>
+    
+            
+            <div class="prose prose-blue prose-lg max-w-none">
+                <div class="flex flex-wrap items-center gap-4 text-xs font-mono text-gray-500 bg-gray-50 p-3 rounded-lg border border-gray-200 mb-6">
+  <div class="flex items-center gap-1">
+    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+    <span><strong>Tested on:</strong> Python 3.11, R 4.3.2, Ubuntu 24.04</span>
+  </div>
+  <div class="flex items-center gap-1">
+    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+    <span><strong>Last Review:</strong> 2026-08-15</span>
+  </div>
+</div>
+
+<div class="p-6 bg-blue-50 border border-blue-100 rounded-xl mb-8">
+  <h4 class="text-lg font-bold text-blue-900 mb-2">Learning Objectives & Prerequisites</h4>
+  <ul class="list-disc list-inside text-blue-800 space-y-1 mb-4">
+    <li><strong>Prerequisites:</strong> Basic understanding of the Linux terminal and bioinformatics concepts. (See <a href="start-here.html" class="underline">Start Here</a>)</li>
+    <li><strong>Objective:</strong> Master the core concepts and practical commands of this topic.</li>
+    <li><strong>Expected Output:</strong> A reproducible workflow and a clear understanding of the methodology.</li>
+  </ul>
+</div>
+
+<h2>Text Processing: The Bioinformatician's Superpower</h2>
+<h3>Viewing File Contents</h3>
+<h4><code>cat</code> - Display entire file</h4>
+<pre><code class="language-bash">cat sequences.fasta             # Show entire file
+cat file1.txt file2.txt        # Concatenate files
+</code></pre>
+<h4><code>head</code> - Show beginning of file</h4>
+<pre><code class="language-bash">head sequences.fasta            # First 10 lines
+head -n 20 sequences.fasta      # First 20 lines
+head -n 5 *.txt                # First 5 lines of all text files
+</code></pre>
+<h4><code>tail</code> - Show end of file</h4>
+<pre><code class="language-bash">tail sequences.fasta            # Last 10 lines
+tail -n 20 sequences.fasta      # Last 20 lines
+tail -f logfile.txt            # Follow file as it grows
+</code></pre>
+<h4><code>less</code> - Interactive file viewer</h4>
+<pre><code class="language-bash">less sequences.fasta            # View file interactively
+</code></pre>
+<p><strong>Navigation in <code>less</code></strong>:
+- <code>Space</code>: Next page
+- <code>b</code>: Previous page
+- <code>/pattern</code>: Search forward
+- <code>q</code>: Quit</p>
+<h3>Searching and Filtering (<code>grep</code>)</h3>
+<p><code>grep</code> is your text-searching superhero:</p>
+<pre><code class="language-bash">grep &quot;ATCG&quot; sequences.fasta      # Find lines containing ATCG
+grep -c &quot;&gt;&quot; sequences.fasta      # Count sequence headers
+grep -v &quot;&gt;&quot; sequences.fasta      # Show lines NOT containing &gt;
+grep -i &quot;error&quot; logfile.txt      # Case-insensitive search
+grep -n &quot;pattern&quot; file.txt       # Show line numbers
+grep -A 3 -B 3 &quot;pattern&quot; file    # Show 3 lines after and before
+</code></pre>
+<h3>Counting Things (<code>wc</code>)</h3>
+<pre><code class="language-bash">wc file.txt                      # Lines, words, characters
+wc -l file.txt                   # Count lines only
+wc -w file.txt                   # Count words only
+wc -c file.txt                   # Count characters only
+</code></pre>
+<h3>Sorting and Uniqueness</h3>
+<h4><code>sort</code> - Sort lines</h4>
+<pre><code class="language-bash">sort file.txt                    # Sort alphabetically
+sort -n numbers.txt              # Sort numerically
+sort -r file.txt                 # Reverse sort
+sort -k 2 data.txt              # Sort by second column
+</code></pre>
+<h4><code>uniq</code> - Remove duplicates</h4>
+<pre><code class="language-bash">uniq file.txt                    # Remove adjacent duplicates
+sort file.txt | uniq             # Remove all duplicates
+uniq -c file.txt                 # Count occurrences
+</code></pre>
+<h2>Bioinformatics-Specific Examples</h2>
+<h3>Working with FASTA Files</h3>
+<h4>Count sequences in a FASTA file</h4>
+<pre><code class="language-bash">grep -c &quot;&gt;&quot; sequences.fasta
+</code></pre>
+<h4>Extract sequence headers</h4>
+<pre><code class="language-bash">grep &quot;&gt;&quot; sequences.fasta | head -10
+</code></pre>
+<h4>Remove the "&gt;" from headers</h4>
+<pre><code class="language-bash">grep &quot;&gt;&quot; sequences.fasta | sed 's/&gt;//'
+</code></pre>
+<h4>Find sequences with specific patterns</h4>
+<pre><code class="language-bash">grep -A 1 &quot;&gt;&quot; sequences.fasta | grep &quot;ATGC&quot;
+</code></pre>
+<h3>Working with FASTQ Files</h3>
+<h4>Count reads in a FASTQ file</h4>
+<pre><code class="language-bash">wc -l reads.fastq | awk '{print $1/4}'
+</code></pre>
+<h4>Extract quality scores</h4>
+<pre><code class="language-bash">awk 'NR%4==0' reads.fastq | head -10
+</code></pre>
+<h4>Convert FASTQ to FASTA</h4>
+<pre><code class="language-bash">awk 'NR%4==1{printf &quot;&gt;%s\n&quot;, substr($0,2)} NR%4==2{print}' reads.fastq &gt; sequences.fasta
+</code></pre>
+<h3>Working with Tab-Delimited Files</h3>
+<h4>View first few columns</h4>
+<pre><code class="language-bash">cut -f 1,2,3 data.tsv | head
+</code></pre>
+<h4>Sort by a specific column</h4>
+<pre><code class="language-bash">sort -k 3 -n data.tsv           # Sort by 3rd column numerically
+</code></pre>
+<h4>Filter rows based on column values</h4>
+<pre><code class="language-bash">awk '$3 &gt; 100' data.tsv         # Show rows where column 3 &gt; 100
+</code></pre>
+<hr />
+<h2>References</h2>
+<ol>
+<li>Official tool documentation and package vignettes.</li>
+<li>Stuart, T., et al. (2019). Comprehensive Integration of Single-Cell Data. <em>Cell</em>, 177(7), 1888-1902.e21. (For Seurat-based workflows)</li>
+<li>Orchestrating Single-Cell Analysis with Bioconductor (OSCA) - A comprehensive guide to single-cell data analysis.</li>
+<li><a href="https://bioconductor.org/">Bioconductor</a> and <a href="https://cran.r-project.org/">CRAN</a> package manuals.</li>
+</ol>
+<div class="mt-10 p-8 bg-gray-50 border border-gray-200 rounded-xl">
+  <h3 class="text-xl font-bold text-gray-900 mb-3">Knowledge Check & Next Steps</h3>
+  <p class="text-gray-700 mb-4"><strong>Exercise:</strong> Try running the code examples on a small subset of your own data. Did you encounter any errors? Check your syntax and ensure your input files are correctly formatted.</p>
+  <p class="text-gray-700"><strong>Next Step:</strong> Return to the <a href="start-here.html" class="text-blue-600 font-bold hover:underline">Start Here</a> curriculum to find the next logical tutorial in your learning path, or explore related topics in the <a href="index.html#tutorials" class="text-blue-600 hover:underline">Tutorial Library</a>.</p>
+</div>
+            </div>
+    
                 </div>
             </div>
         </div>
     </div>
     
     <script>
-        // Tell script.js to render THIS specific page's hidden markdown on load
+        // Tell script.js to skip rendering because it is already done
+        window.STATIC_RENDERED = true;
         window.PRELOADED_TUTORIAL_ID = "command-line-part2";
     </script>
     

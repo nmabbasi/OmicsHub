@@ -10,9 +10,9 @@
 <meta content="Nasir Mahmood Abbasi, PhD" name="author"/>
 <meta content="index, follow" name="robots"/>
 <!-- Open Graph tags for social sharing -->
-<meta content="Advanced Visualization Packages (SCpubr, SCP, dittoSeq) | The Omics Hub" property="og:title"/>
+<meta content="The Omics Hub - Learn Bioinformatics and Single-cell RNA-seq Step by Step" property="og:title"/>
 <meta content="Master computational biology with hands-on tutorials covering shell commands, conda environments, single-cell RNA-seq analysis, and essential bioinformatics tools." property="og:description"/>
-<meta content="https://theomicshub.com" property="og:url"/>
+<meta content="https://theomicshub.com/advanced-visualization-packages.html" property="og:url"/>
 <meta content="website" property="og:type"/>
 <meta content="https://theomicshub.com/images/omicshub-logo.png" property="og:image"/>
 <!-- Twitter Card tags -->
@@ -121,11 +121,11 @@ Legal
 <!-- Main Content -->
 <main class="min-h-screen">
 
-    <!-- Tutorial Detail Page (Pre-rendered for SEO) -->
+    <!-- Tutorial Detail Page (Pre-rendered for SEO and Instant Load) -->
     <div class="page-content" id="tutorial-page">
         <div class="container mx-auto px-4 py-8">
             <div class="max-w-4xl mx-auto">
-                <!-- SEO Hidden Markdown Data -->
+                <!-- SEO Hidden Markdown Data for search/index -->
                 <div id="seo-markdown-data" style="display:none;">
 ---
 title: "Advanced Visualization Packages (SCpubr, SCP, dittoSeq)"
@@ -315,19 +315,172 @@ By mastering these 7 packages, you will never need to struggle with raw `ggplot2
 </div>
 
                 </div>
-                <!-- Rendered content will be injected here by script.js -->
+                <!-- PRE-RENDERED STATIC HTML -->
                 <div id="tutorial-content">
-                    <div class="text-center py-20">
-                        <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mb-4"></div>
-                        <p class="text-gray-600 font-medium">Rendering tutorial...</p>
+                    
+            <div class="mb-12">
+                <div class="flex items-center gap-2 text-sm text-blue-600 font-medium mb-4">
+                    <span>Advanced Single-Cell Analysis</span>
+                    <span>•</span>
+                    <span>2026-08-14</span>
+                </div>
+                <h1 class="text-4xl md:text-5xl font-black text-gray-900 mb-6 leading-tight">Advanced Visualization Packages (SCpubr, SCP, dittoSeq)</h1>
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 font-bold text-lg">
+                        NM
                     </div>
+                    <div>
+                        <p class="font-bold text-gray-900">Nasir Mahmood Abbasi, PhD</p>
+                        <p class="text-sm text-gray-500">Bioinformatics Educator</p>
+                    </div>
+                </div>
+            </div>
+            
+            
+            <div class="mb-12 rounded-2xl overflow-hidden shadow-lg border border-gray-100">
+                <img src="images/cat_advanced_sc.png" alt="Advanced Visualization Packages (SCpubr, SCP, dittoSeq)" class="w-full h-auto object-cover aspect-video">
+            </div>
+    
+            
+            <div class="prose prose-blue prose-lg max-w-none">
+                <div class="flex flex-wrap items-center gap-4 text-xs font-mono text-gray-500 bg-gray-50 p-3 rounded-lg border border-gray-200 mb-6">
+  <div class="flex items-center gap-1">
+    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+    <span><strong>Tested on:</strong> Python 3.11, R 4.3.2, Ubuntu 24.04</span>
+  </div>
+  <div class="flex items-center gap-1">
+    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+    <span><strong>Last Review:</strong> 2026-08-15</span>
+  </div>
+</div>
+
+<div class="p-6 bg-blue-50 border border-blue-100 rounded-xl mb-8">
+  <h4 class="text-lg font-bold text-blue-900 mb-2">Learning Objectives & Prerequisites</h4>
+  <ul class="list-disc list-inside text-blue-800 space-y-1 mb-4">
+    <li><strong>Prerequisites:</strong> Basic understanding of the Linux terminal and bioinformatics concepts. (See <a href="start-here.html" class="underline">Start Here</a>)</li>
+    <li><strong>Objective:</strong> Master the core concepts and practical commands of this topic.</li>
+    <li><strong>Expected Output:</strong> A reproducible workflow and a clear understanding of the methodology.</li>
+  </ul>
+</div>
+
+<h1>Advanced Single-Cell Visualization Packages</h1>
+<h2>The Limitation of Base Seurat</h2>
+<p>While Seurat's built-in <code>DimPlot</code> and <code>FeaturePlot</code> are great for quick exploration, converting them into flawless, high-contrast, publication-ready figures requires hundreds of lines of complex <code>ggplot2</code> theme code.</p>
+<p>To solve this, the bioinformatics community has developed incredible "wrapper" packages that generate stunning graphics in a single line of code. This masterclass covers the absolute best libraries available.</p>
+<hr />
+<h2>1. SCpubr (Automated Publication Themes)</h2>
+<p><strong>SCpubr</strong> handles all the complex <code>ggplot2</code> configurations behind the scenes to generate high-contrast, perfectly scaled plots.</p>
+<pre><code class="language-r">library(SCpubr)
+
+# Generate a premium UMAP with a clean legend and high contrast
+SCpubr::do_DimPlot(sample = seurat_obj, 
+                   group.by = &quot;cell_type&quot;, 
+                   label = TRUE, 
+                   repel = TRUE, 
+                   font.size = 14)
+
+# Generate a premium FeaturePlot with a custom color gradient
+SCpubr::do_FeaturePlot(sample = seurat_obj, 
+                       features = &quot;GeneA&quot;, 
+                       colors.use = c(&quot;lightgrey&quot;, &quot;darkred&quot;))
+</code></pre>
+<hr />
+<h2>2. scCustomize (Extended Aesthetics)</h2>
+<p><strong>scCustomize</strong> is highly valued for automatically configuring intuitive color palettes, handling complex multi-gene overlays, and extending Seurat's native functions.</p>
+<pre><code class="language-r">library(scCustomize)
+
+# Create a customized FeaturePlot with a continuous viridis color scale
+FeaturePlot_scCustom(seurat_obj, features = &quot;GeneA&quot;, colors_use = viridis::viridis(50))
+
+# Create a clustered dot plot (hierarchically grouping both genes and cell types!)
+Clustered_DotPlot(seurat_obj, features = top_10_markers, group.by = &quot;cell_type&quot;)
+</code></pre>
+<hr />
+<h2>3. dittoSeq (Composition &amp; Heatmaps)</h2>
+<p><strong>dittoSeq</strong> is a universal visualization package highly regarded for its color-blind friendly default palettes and its ability to rapidly generate cellular composition barplots.</p>
+<pre><code class="language-r">library(dittoSeq)
+
+# Generate a color-blind friendly cellular composition barplot across samples
+dittoBarPlot(seurat_obj, var = &quot;cell_type&quot;, group.by = &quot;patient_id&quot;)
+
+# Generate a multi-annotation heatmap for top marker genes
+dittoHeatmap(seurat_obj, genes = top_10_markers, annot.by = c(&quot;cell_type&quot;, &quot;condition&quot;))
+</code></pre>
+<hr />
+<h2>4. scplotter (Repertoire &amp; Scatter Plots)</h2>
+<p><strong>scplotter</strong> provides an intuitive interface for creating multi-layered visualizations. It is especially powerful for Immune Repertoire (TCR/BCR) plotting and feature-rich scatter plots.</p>
+<pre><code class="language-r">library(scplotter)
+
+# Example: Generate a detailed scatter plot highlighting specific cellular subsets
+sc_scatter(seurat_obj, 
+           group.by = &quot;cell_type&quot;, 
+           split.by = &quot;condition&quot;,
+           palette = &quot;Set1&quot;)
+</code></pre>
+<hr />
+<h2>5. SeuratExtend (Pathways &amp; Enrichment)</h2>
+<p><strong>SeuratExtend</strong> bridges the gap between basic Seurat analysis and advanced pathway plotting. It excels at generating GSEA enrichment plots directly from the Seurat object.</p>
+<pre><code class="language-r">library(SeuratExtend)
+
+# Generate a complex Gene Set Enrichment Analysis (GSEA) waterfall plot directly
+Plot_GSEA(seurat_obj, pathway = &quot;HALLMARK_HYPOXIA&quot;, group.by = &quot;condition&quot;)
+</code></pre>
+<hr />
+<h2>6. SCP (SingleCellPlot) for Multi-Omics</h2>
+<p><strong>SCP</strong> provides a massive suite of high-level wrappers designed specifically for multi-omics and spatial transcriptomics visualization. </p>
+<pre><code class="language-r">library(SCP)
+
+# Generate a highly annotated, split violin plot for gene expression
+CellStatPlot(seurat_obj, 
+             stat.by = &quot;cell_type&quot;, 
+             group.by = &quot;condition&quot;, 
+             plot_type = &quot;violin&quot;)
+</code></pre>
+<hr />
+<h2>7. plot1cell &amp; Radar Plots (Complex State Mapping)</h2>
+<p>When comparing multidimensional signaling states (e.g., GSEA or PROGENy pathway scores across 10 different cell types), standard bar charts fail.</p>
+<p><strong>Radar Plots</strong> (Spider Plots) allow you to visualize these multi-dimensional states perfectly.</p>
+<pre><code class="language-r">library(ggradar)
+
+# Assuming 'pathway_data' is a data frame of normalized pathway scores per cluster
+ggradar(pathway_data,
+        grid.min = 0, grid.mid = 0.5, grid.max = 1,
+        group.line.width = 1, group.point.size = 3) +
+  labs(title = &quot;Pathway Activity Radar Plot&quot;)
+</code></pre>
+<h2>8. Python (Scanpy) Equivalents</h2>
+<p>While the highly specialized libraries above (<code>SCpubr</code>, <code>SeuratExtend</code>, <code>scplotter</code>) are built exclusively for R and Seurat, the Python ecosystem (<code>Scanpy</code> and <code>AnnData</code>) has its own powerful visualization equivalents:</p>
+<ul>
+<li><strong>Squidpy:</strong> The Python equivalent to SCP for spatial and complex multi-omics visualizations.</li>
+<li><strong>scvi-tools:</strong> Offers deep-learning-based latent space visualizations and highly customizable posterior checks.</li>
+<li><strong>Scanpy native plotting (<code>sc.pl.*</code>):</strong> While not as automated for "publication themes" as <code>SCpubr</code>, <code>sc.pl.dotplot</code>, <code>sc.pl.matrixplot</code>, and <code>sc.pl.stacked_violin</code> provide incredibly robust, dense visual summaries comparable to <code>dittoSeq</code>.</li>
+<li><strong>CellRank / scVelo:</strong> The absolute gold standards in Python for dynamic trajectory and vector field visualizations.</li>
+</ul>
+<h2>Conclusion</h2>
+<p>By mastering these 7 packages, you will never need to struggle with raw <code>ggplot2</code> code again. You can produce complex, publication-ready figures for high-impact journals in a matter of seconds.</p>
+<hr />
+<h2>References</h2>
+<ol>
+<li>Official tool documentation and package vignettes.</li>
+<li>Stuart, T., et al. (2019). Comprehensive Integration of Single-Cell Data. <em>Cell</em>, 177(7), 1888-1902.e21. (For Seurat-based workflows)</li>
+<li>Orchestrating Single-Cell Analysis with Bioconductor (OSCA) - A comprehensive guide to single-cell data analysis.</li>
+<li><a href="https://bioconductor.org/">Bioconductor</a> and <a href="https://cran.r-project.org/">CRAN</a> package manuals.</li>
+</ol>
+<div class="mt-10 p-8 bg-gray-50 border border-gray-200 rounded-xl">
+  <h3 class="text-xl font-bold text-gray-900 mb-3">Knowledge Check & Next Steps</h3>
+  <p class="text-gray-700 mb-4"><strong>Exercise:</strong> Try running the code examples on a small subset of your own data. Did you encounter any errors? Check your syntax and ensure your input files are correctly formatted.</p>
+  <p class="text-gray-700"><strong>Next Step:</strong> Return to the <a href="start-here.html" class="text-blue-600 font-bold hover:underline">Start Here</a> curriculum to find the next logical tutorial in your learning path, or explore related topics in the <a href="index.html#tutorials" class="text-blue-600 hover:underline">Tutorial Library</a>.</p>
+</div>
+            </div>
+    
                 </div>
             </div>
         </div>
     </div>
     
     <script>
-        // Tell script.js to render THIS specific page's hidden markdown on load
+        // Tell script.js to skip rendering because it is already done
+        window.STATIC_RENDERED = true;
         window.PRELOADED_TUTORIAL_ID = "advanced-visualization-packages";
     </script>
     

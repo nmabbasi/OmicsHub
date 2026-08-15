@@ -10,9 +10,9 @@
 <meta content="Nasir Mahmood Abbasi, PhD" name="author"/>
 <meta content="index, follow" name="robots"/>
 <!-- Open Graph tags for social sharing -->
-<meta content="Cell-Cell Communication | The Omics Hub" property="og:title"/>
+<meta content="The Omics Hub - Learn Bioinformatics and Single-cell RNA-seq Step by Step" property="og:title"/>
 <meta content="Master computational biology with hands-on tutorials covering shell commands, conda environments, single-cell RNA-seq analysis, and essential bioinformatics tools." property="og:description"/>
-<meta content="https://theomicshub.com" property="og:url"/>
+<meta content="https://theomicshub.com/cell-cell-communication.html" property="og:url"/>
 <meta content="website" property="og:type"/>
 <meta content="https://theomicshub.com/images/omicshub-logo.png" property="og:image"/>
 <!-- Twitter Card tags -->
@@ -121,11 +121,11 @@ Legal
 <!-- Main Content -->
 <main class="min-h-screen">
 
-    <!-- Tutorial Detail Page (Pre-rendered for SEO) -->
+    <!-- Tutorial Detail Page (Pre-rendered for SEO and Instant Load) -->
     <div class="page-content" id="tutorial-page">
         <div class="container mx-auto px-4 py-8">
             <div class="max-w-4xl mx-auto">
-                <!-- SEO Hidden Markdown Data -->
+                <!-- SEO Hidden Markdown Data for search/index -->
                 <div id="seo-markdown-data" style="display:none;">
 ---
 title: "Cell-Cell Communication"
@@ -276,19 +276,151 @@ Because scRNA-seq only provides a hypothesis, you **must** validate key findings
 </div>
 
                 </div>
-                <!-- Rendered content will be injected here by script.js -->
+                <!-- PRE-RENDERED STATIC HTML -->
                 <div id="tutorial-content">
-                    <div class="text-center py-20">
-                        <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mb-4"></div>
-                        <p class="text-gray-600 font-medium">Rendering tutorial...</p>
+                    
+            <div class="mb-12">
+                <div class="flex items-center gap-2 text-sm text-blue-600 font-medium mb-4">
+                    <span>Advanced Single-Cell Analysis</span>
+                    <span>•</span>
+                    <span>2026-08-14</span>
+                </div>
+                <h1 class="text-4xl md:text-5xl font-black text-gray-900 mb-6 leading-tight">Cell-Cell Communication</h1>
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 font-bold text-lg">
+                        NM
                     </div>
+                    <div>
+                        <p class="font-bold text-gray-900">Nasir Mahmood Abbasi, PhD</p>
+                        <p class="text-sm text-gray-500">Bioinformatics Educator</p>
+                    </div>
+                </div>
+            </div>
+            
+            
+            <div class="mb-12 rounded-2xl overflow-hidden shadow-lg border border-gray-100">
+                <img src="images/cat_advanced_sc.png" alt="Cell-Cell Communication" class="w-full h-auto object-cover aspect-video">
+            </div>
+    
+            
+            <div class="prose prose-blue prose-lg max-w-none">
+                <div class="flex flex-wrap items-center gap-4 text-xs font-mono text-gray-500 bg-gray-50 p-3 rounded-lg border border-gray-200 mb-6">
+  <div class="flex items-center gap-1">
+    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+    <span><strong>Tested on:</strong> Python 3.11, R 4.3.2, Ubuntu 24.04</span>
+  </div>
+  <div class="flex items-center gap-1">
+    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+    <span><strong>Last Review:</strong> 2026-08-15</span>
+  </div>
+</div>
+
+<div class="p-6 bg-blue-50 border border-blue-100 rounded-xl mb-8">
+  <h4 class="text-lg font-bold text-blue-900 mb-2">Learning Objectives & Prerequisites</h4>
+  <ul class="list-disc list-inside text-blue-800 space-y-1 mb-4">
+    <li><strong>Prerequisites:</strong> Basic understanding of the Linux terminal and bioinformatics concepts. (See <a href="start-here.html" class="underline">Start Here</a>)</li>
+    <li><strong>Objective:</strong> Master the core concepts and practical commands of this topic.</li>
+    <li><strong>Expected Output:</strong> A reproducible workflow and a clear understanding of the methodology.</li>
+  </ul>
+</div>
+
+<h1>Cell-Cell Communication Analysis</h1>
+<h2>Introduction</h2>
+<p>In multi-cellular organisms, cells do not exist in isolation. They constantly communicate through secreted ligands and membrane-bound receptors. Single-cell RNA-seq allows us to infer these communication networks by looking at the simultaneous expression of a ligand in one cell type and its cognate receptor in another cell type.</p>
+<p>Two of the most powerful tools in R for inferring these networks are <strong>LIANA</strong> and <strong>CellChat</strong>.</p>
+<hr />
+<h2>1. LIANA (Ligand-Receptor Analysis Framework)</h2>
+<p>LIANA is incredibly powerful because it is not just one method—it is a wrapper that runs <em>multiple</em> cell-cell communication methods (like CellPhoneDB, NATMI, Connectome, and SingleCellSignalR) simultaneously and aggregates the results, giving you a consensus ranking of the most likely interactions.</p>
+<h3>Running LIANA</h3>
+<pre><code class="language-r">library(liana)
+library(SCpubr)
+
+# Run the LIANA wrapper on your Seurat or SingleCellExperiment object
+liana_output &lt;- liana_wrap(seurat_obj)
+
+# Aggregate the results across all methods to get consensus rankings
+liana_aggregate &lt;- liana_aggregate(liana_output)
+
+# Save the results
+write.csv(liana_aggregate, &quot;liana_aggregate_results.csv&quot;, row.names = FALSE)
+</code></pre>
+<h3>Visualizing LIANA Results</h3>
+<p>The <code>SCpubr</code> package works seamlessly with LIANA to create publication-ready plots.</p>
+<pre><code class="language-r"># Create a DotPlot of the top Ligand-Receptor interactions
+p1 &lt;- SCpubr::do_LigandReceptorPlot(liana_output = liana_output,
+                                    top_interactions = 15)
+p1
+</code></pre>
+<hr />
+<h2>2. CellChat</h2>
+<p>While LIANA is great for getting a consensus list of interactions, <strong>CellChat</strong> shines at pathway-level analysis and visualizing the structural topology of the communication networks (e.g., Circle plots and Hierarchy plots).</p>
+<h3>Running CellChat</h3>
+<pre><code class="language-r">library(CellChat)
+
+# 1. Create the CellChat object from Seurat
+cellchat &lt;- createCellChat(object = seurat_obj, group.by = &quot;cell_type&quot;)
+
+# 2. Set the database (e.g., Human or Mouse)
+CellChatDB &lt;- CellChatDB.human
+cellchat@DB &lt;- CellChatDB
+
+# 3. Preprocess and infer communications
+cellchat &lt;- subsetData(cellchat)
+cellchat &lt;- identifyOverExpressedGenes(cellchat)
+cellchat &lt;- identifyOverExpressedInteractions(cellchat)
+cellchat &lt;- computeCommunProb(cellchat)
+cellchat &lt;- computeCommunProbPathway(cellchat)
+cellchat &lt;- aggregateNet(cellchat)
+</code></pre>
+<h3>Visualizing CellChat Networks</h3>
+<pre><code class="language-r"># Visualize the communication network as a Circle Plot
+netVisual_circle(cellchat@net$count, vertex.weight = groupSize, weight.scale = T, 
+                 label.edge= F, title.name = &quot;Number of interactions&quot;)
+</code></pre>
+<h2>Summary</h2>
+<ul>
+<li>Use <strong>LIANA</strong> when you want a highly robust, consensus-driven list of specific Ligand-Receptor pairs.</li>
+<li>Use <strong>CellChat</strong> when you want to visualize pathway-level communication networks and create beautiful network topologies.</li>
+</ul>
+<hr />
+<h2>3. Interpretation, Limitations &amp; Validation</h2>
+<h3>Interpretation Pitfalls</h3>
+<p>When interpreting LIANA or CellChat results, remember that these tools infer <em>potential</em> communication based on mRNA co-expression, <strong>not</strong> actual physical interaction.
+*   <strong>High probability != guaranteed interaction:</strong> The ligand and receptor might be transcribed, but the proteins could be degraded, trapped in the Golgi, or blocked by competitive inhibitors.
+*   <strong>Spatial context is missing:</strong> In standard scRNA-seq, a macrophage and a T-cell might show high communication probability, but in the actual tissue, they might be millimeters apart and unable to interact.</p>
+<h3>Validation Strategies</h3>
+<p>Because scRNA-seq only provides a hypothesis, you <strong>must</strong> validate key findings experimentally:
+1.  <strong>Spatial Transcriptomics (e.g., Visium, Xenium):</strong> Verify that the sender and receiver cells are physically co-localized in the tissue.
+2.  <strong>Multiplexed Immunofluorescence (mIF):</strong> Use antibodies to confirm the presence of both the ligand and receptor proteins at the tissue level.
+3.  <strong>In Vitro Co-culture Assays:</strong> Isolate the sender and receiver cells, co-culture them, and block the receptor using an antagonist to observe phenotypic changes.</p>
+<h3>Software Requirements</h3>
+<ul>
+<li><strong>LIANA:</strong> Tested on R 4.3.2. Requires Seurat v5 and <code>liana</code> (v0.1.12).</li>
+<li><strong>CellChat:</strong> Tested on R 4.3.2. Requires <code>CellChat</code> (v2.1.2) and <code>ComplexHeatmap</code>.</li>
+</ul>
+<hr />
+<h2>References</h2>
+<ol>
+<li>Official tool documentation and package vignettes.</li>
+<li>Stuart, T., et al. (2019). Comprehensive Integration of Single-Cell Data. <em>Cell</em>, 177(7), 1888-1902.e21. (For Seurat-based workflows)</li>
+<li>Orchestrating Single-Cell Analysis with Bioconductor (OSCA) - A comprehensive guide to single-cell data analysis.</li>
+<li><a href="https://bioconductor.org/">Bioconductor</a> and <a href="https://cran.r-project.org/">CRAN</a> package manuals.</li>
+</ol>
+<div class="mt-10 p-8 bg-gray-50 border border-gray-200 rounded-xl">
+  <h3 class="text-xl font-bold text-gray-900 mb-3">Knowledge Check & Next Steps</h3>
+  <p class="text-gray-700 mb-4"><strong>Exercise:</strong> Try running the code examples on a small subset of your own data. Did you encounter any errors? Check your syntax and ensure your input files are correctly formatted.</p>
+  <p class="text-gray-700"><strong>Next Step:</strong> Return to the <a href="start-here.html" class="text-blue-600 font-bold hover:underline">Start Here</a> curriculum to find the next logical tutorial in your learning path, or explore related topics in the <a href="index.html#tutorials" class="text-blue-600 hover:underline">Tutorial Library</a>.</p>
+</div>
+            </div>
+    
                 </div>
             </div>
         </div>
     </div>
     
     <script>
-        // Tell script.js to render THIS specific page's hidden markdown on load
+        // Tell script.js to skip rendering because it is already done
+        window.STATIC_RENDERED = true;
         window.PRELOADED_TUTORIAL_ID = "cell-cell-communication";
     </script>
     

@@ -97,13 +97,13 @@ for filename in os.listdir(lessons_dir):
 
     initials = "".join([n[0] for n in author_str.split(" ")]).upper()[:2]
     
-    img_html = f\'\'\'
+    img_html = f'''
             <div class="mb-12 rounded-2xl overflow-hidden shadow-lg border border-gray-100">
                 <img src="{img_str}" alt="{title}" class="w-full h-auto object-cover aspect-video">
             </div>
-    \'\'\' if img_str else ""
+    ''' if img_str else ""
 
-    static_content = f\'\'\'
+    static_content = f'''
             <div class="mb-12">
                 <div class="flex items-center gap-2 text-sm text-blue-600 font-medium mb-4">
                     <span>{cat_str}</span>
@@ -127,7 +127,7 @@ for filename in os.listdir(lessons_dir):
             <div class="prose prose-blue prose-lg max-w-none">
                 {rendered_html}
             </div>
-    \'\'\'
+    '''
 
     # Build JSON-LD structured data for SEO
     json_ld = f"""

@@ -10,9 +10,9 @@
 <meta content="Nasir Mahmood Abbasi, PhD" name="author"/>
 <meta content="index, follow" name="robots"/>
 <!-- Open Graph tags for social sharing -->
-<meta content="Writing Job Scripts | The Omics Hub" property="og:title"/>
+<meta content="The Omics Hub - Learn Bioinformatics and Single-cell RNA-seq Step by Step" property="og:title"/>
 <meta content="Master computational biology with hands-on tutorials covering shell commands, conda environments, single-cell RNA-seq analysis, and essential bioinformatics tools." property="og:description"/>
-<meta content="https://theomicshub.com" property="og:url"/>
+<meta content="https://theomicshub.com/hpc-submission-part1.html" property="og:url"/>
 <meta content="website" property="og:type"/>
 <meta content="https://theomicshub.com/images/omicshub-logo.png" property="og:image"/>
 <!-- Twitter Card tags -->
@@ -121,11 +121,11 @@ Legal
 <!-- Main Content -->
 <main class="min-h-screen">
 
-    <!-- Tutorial Detail Page (Pre-rendered for SEO) -->
+    <!-- Tutorial Detail Page (Pre-rendered for SEO and Instant Load) -->
     <div class="page-content" id="tutorial-page">
         <div class="container mx-auto px-4 py-8">
             <div class="max-w-4xl mx-auto">
-                <!-- SEO Hidden Markdown Data -->
+                <!-- SEO Hidden Markdown Data for search/index -->
                 <div id="seo-markdown-data" style="display:none;">
 ---
 title: "Writing Job Scripts"
@@ -574,19 +574,349 @@ Choose the compression method based on your needs for compression ratio versus s
 </div>
 
                 </div>
-                <!-- Rendered content will be injected here by script.js -->
+                <!-- PRE-RENDERED STATIC HTML -->
                 <div id="tutorial-content">
-                    <div class="text-center py-20">
-                        <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mb-4"></div>
-                        <p class="text-gray-600 font-medium">Rendering tutorial...</p>
+                    
+            <div class="mb-12">
+                <div class="flex items-center gap-2 text-sm text-blue-600 font-medium mb-4">
+                    <span>High-Performance Computing (HPC)</span>
+                    <span>•</span>
+                    <span>2025-08-23</span>
+                </div>
+                <h1 class="text-4xl md:text-5xl font-black text-gray-900 mb-6 leading-tight">Writing Job Scripts</h1>
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 font-bold text-lg">
+                        NM
                     </div>
+                    <div>
+                        <p class="font-bold text-gray-900">Nasir Mahmood Abbasi, PhD</p>
+                        <p class="text-sm text-gray-500">Bioinformatics Educator</p>
+                    </div>
+                </div>
+            </div>
+            
+            
+            <div class="mb-12 rounded-2xl overflow-hidden shadow-lg border border-gray-100">
+                <img src="images/sc.png" alt="Writing Job Scripts" class="w-full h-auto object-cover aspect-video">
+            </div>
+    
+            
+            <div class="prose prose-blue prose-lg max-w-none">
+                <div class="flex flex-wrap items-center gap-4 text-xs font-mono text-gray-500 bg-gray-50 p-3 rounded-lg border border-gray-200 mb-6">
+  <div class="flex items-center gap-1">
+    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+    <span><strong>Tested on:</strong> Python 3.11, R 4.3.2, Ubuntu 24.04</span>
+  </div>
+  <div class="flex items-center gap-1">
+    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+    <span><strong>Last Review:</strong> 2026-08-15</span>
+  </div>
+</div>
+
+<div class="p-6 bg-blue-50 border border-blue-100 rounded-xl mb-8">
+  <h4 class="text-lg font-bold text-blue-900 mb-2">Learning Objectives & Prerequisites</h4>
+  <ul class="list-disc list-inside text-blue-800 space-y-1 mb-4">
+    <li><strong>Prerequisites:</strong> Basic understanding of the Linux terminal and bioinformatics concepts. (See <a href="start-here.html" class="underline">Start Here</a>)</li>
+    <li><strong>Objective:</strong> Master the core concepts and practical commands of this topic.</li>
+    <li><strong>Expected Output:</strong> A reproducible workflow and a clear understanding of the methodology.</li>
+  </ul>
+</div>
+
+<h2>A basic script</h2>
+<p>All options actually have short versions (e.g., <code>--job-name</code> can be replaced by <code>-J</code>). The long names are used here for clarity. Not all options in this script are mandatory, but they represent the minimum recommended for clarity.</p>
+<p>I use a generic <code>program</code> in all scripts. Replace it with your actual executable. For testing, you can simply use <code>hostname</code> or <code>ls</code>.</p>
+<p>I use <code>ibrain</code> as the argument for <code>--partition</code>. You may not have access to it. Replace it with a partition available in the output of <code>sinfo</code>.</p>
+<pre><code class="language-bash">#!/bin/sh
+#SBATCH --job-name example_script
+
+#SBATCH --ntasks 1
+#SBATCH --cpus-per-task 1
+#SBATCH --mem 2G
+
+#SBATCH --partition ibrain
+#SBATCH --output %x-%j.out
+#SBATCH --error %x-%j.out
+#SBATCH --hint=nomultithread
+
+
+module purge
+module load gcc/7.3.1
+
+srun program
+</code></pre>
+<p>A few notes on the options:</p>
+<ul>
+<li>The value given to <code>--job-name</code> is used to identify the job when calling <code>squeue</code>.</li>
+<li>A standard Linux console output consists of the output stream and the error stream. When you use <code>sbatch</code>, neither will appear on the console. Instead, they will be redirected to the file(s) specified by the <code>--output</code> and <code>--error</code> options.</li>
+<li>Scripts have internal variables. Here <code>%x</code> will be replaced by the job name, and <code>%j</code> will be replaced by the job ID. The job ID is automatically assigned when calling <code>sbatch</code> and appears when calling <code>squeue</code>.</li>
+<li>The <code>--hint=nomultithread</code> option is discussed further in the <a href="#hyperthreading">Hyperthreading</a> section. If you don’t care about or understand hyperthreading, just leave it there.</li>
+</ul>
+<p>Most long versions of options have an associated variable obtained by:</p>
+<ul>
+<li>Capitalizing every letter.</li>
+<li>Replacing the leading <code>--</code> by <code>SLURM_</code>.</li>
+<li>Replacing the dashes by underscores.</li>
+</ul>
+<p>So, in the example above, the variables <code>$SLURM_JOB_NAME</code>, <code>$SLURM_NTASKS</code>, <code>$SLURM_CPUS_PER_TASK</code> (and more) will be defined right after their corresponding option line.</p>
+<h2>Decomposing the script</h2>
+<p>A submission script is composed of the following parts:</p>
+<ul>
+<li>A shebang.</li>
+<li>Options.</li>
+<li>Comments.</li>
+<li>Shell commands.</li>
+<li>Run commands.</li>
+</ul>
+<h3>Shebang</h3>
+<p>The shebang is always the first line of the script. It specifies which shell interpreter to use for shell commands. Replace <code>sh</code> with whatever shell you want in the following line.</p>
+<pre><code class="language-bash">#!/bin/sh
+</code></pre>
+<h3>Options</h3>
+<p>Options are lines that start with:</p>
+<pre><code class="language-bash">#SBATCH
+</code></pre>
+<p>They have two purposes:</p>
+<ul>
+<li>
+<p>The first is to specify resource allocation. In the example script, the combination of <code>--ntasks</code> and <code>--cpus-per-task</code> asks to allocate a single CPU, and the <code>--mem</code> option asks to allocate 2G.</p>
+<p><strong>Note:</strong> Allocating a lot of resources does not mean that all of them will be used. If you call a single program that does not run in parallel, a single CPU will be used whether you allocate 1 or more CPUs. Be mindful that if you allocate more resources than necessary, those unused resources will not be available to other users. Estimating the number of CPUs is usually not a problem as programs that run in parallel usually have an option specifying the number we want to use. It’s a bit harder to estimate memory. The best approach is to do some testing: either start with low memory and increase it until it runs, or start with high memory and monitor your program by SSHing to the node being used (<code>squeue</code> will tell you that) and executing <code>top</code>.</p>
+<p><strong>Other note:</strong> In the current configuration, asking for 1 CPU will actually allocate 2, because Slurm allocates by the core, and cores are hyperthreaded. More details in the <a href="#hyperthreading">Hyperthreading</a> section.</p>
+</li>
+<li>
+<p>The second purpose is to be passed to the <code>srun</code> command. Unless overwritten when calling <code>srun</code>, all options given with <code>#SBATCH</code> are assumed.</p>
+</li>
+</ul>
+<p>There are many more options:</p>
+<pre><code class="language-bash">man sbatch
+</code></pre>
+<p>Any line starting with <code>#</code> but not followed by <code>SBATCH</code> is a comment. If you want to comment an option, use more than one <code>#</code>:</p>
+<pre><code class="language-bash">##SBATCH
+</code></pre>
+<p>To avoid confusion between comment and option when using a single <code>#</code>, the comment in my example script uses two <code>#</code>, even though only one is required.</p>
+<h3>Shell commands</h3>
+<p>Shell commands are used to set up Linux environment variables. They should <strong>not</strong> be preceded by <code>srun</code>.</p>
+<h3>Run commands</h3>
+<p>Run commands are your actual computations. They should be preceded by <code>srun</code>. The reason is that, as mentioned above, the options given with <code>#SBATCH</code> apply to <code>srun</code>. In truth, when only one task is given with the <code>--ntasks</code> option, omitting <code>srun</code> will not change anything. Put it there anyway, for consistency.</p>
+<h2>Hyperthreading</h2>
+<p>Hyperthreading is activated on the nodes, meaning each core has two CPUs. However, this does not double computational power, as using two CPUs of the same core is less efficient than using two CPUs of different cores. With that in mind, here is how Slurm acts (with the number of CPUs you ask for being the product of <code>--ntasks</code> and <code>--cpus-per-task</code>):</p>
+<ul>
+<li>Without the <code>--hint=nomultithread</code> option, asking for an odd number <code>N</code> of CPUs or asking for <code>N+1</code> CPUs is the same: Slurm allocates the <code>N+1</code> CPUs of <code>(N+1)/2</code> cores.</li>
+<li>With the <code>--hint=nomultithread</code> option, asking for <code>N</code> CPUs will allocate the <code>2N</code> CPUs of <code>N</code> cores.</li>
+</ul>
+<p>Note that if you like to use the <code>--mem-per-cpu</code> option instead of the <code>--mem</code> option, the total allocated memory will be based on the number of CPUs actually allocated, not the number of CPUs you asked for. Examples:</p>
+<ul>
+<li>Without the <code>--hint=nomultithread</code> option, the combination of <code>--ntasks 1 --cpus-per-task 1 --mem-per-cpu 1G</code> will allocate 2G.</li>
+<li>The combination of <code>--ntasks 1 --cpus-per-task 2 --mem-per-cpu 1G --hint=nomultithread</code> will allocate 4G.</li>
+</ul>
+<p>There is really only one valid use of hyperthreading: when you want to ask for <strong>all</strong> the CPUs of a single node. In that case, remove the <code>--hint=nomultithread</code> option and allocate everything.</p>
+<p>The rest of this documentation assumes we don’t use hyperthreading.</p>
+<h2>Running things in parallel</h2>
+<h3>Calling the same program multiple times in parallel</h3>
+<pre><code class="language-bash">#!/bin/sh
+#SBATCH --job-name example_script
+
+#SBATCH --ntasks 3
+#SBATCH --cpus-per-task 1
+#SBATCH --mem 6G
+
+#SBATCH --partition ibrain
+#SBATCH --output %x-%j.out
+#SBATCH --error %x-%j.out
+#SBATCH --hint=nomultithread
+
+
+module purge
+module load gcc/7.3.1
+
+srun program
+</code></pre>
+<p>Recall that the options given with <code>#SBATCH</code> are passed to <code>srun</code>. In this case, a single call to <code>srun program</code> would be equivalent to <code>srun --ntasks 3 program</code>, which would call <code>program</code> three times.</p>
+<h3>Several steps in parallel</h3>
+<p>Here is the full script.</p>
+<pre><code class="language-bash">#!/bin/sh
+#SBATCH --job-name example_script
+
+#SBATCH --ntasks 3
+#SBATCH --cpus-per-task 1
+#SBATCH --mem 6G
+
+#SBATCH --partition ibrain
+#SBATCH --output %x-%j.out
+#SBATCH --error %x-%j.out
+#SBATCH --hint=nomultithread
+
+
+module purge
+module load gcc/7.3.1
+
+srun --ntasks=1 program0 &amp;
+srun --ntasks=1 program1 &amp;
+srun --ntasks=1 program2
+</code></pre>
+<p>Do not forget the <code>--ntasks 1</code> on the <code>srun</code> lines. If you do, <code>program0</code> will be called three times, and because three tasks are being run and you only allocated three, <code>program1</code> and <code>program2</code> will not be executed at the same time, and will have to wait for the previous tasks to end.</p>
+<h3>Arrays</h3>
+<p>This is useful when you want to use the same programs multiple times with various arguments. The requirement is that the arguments differ only by an integer number. Here is the script.</p>
+<pre><code class="language-bash">#!/bin/sh
+#SBATCH --job-name example_script
+
+#SBATCH --array=0-2
+
+#SBATCH --ntasks 1
+#SBATCH --cpus-per-task 1
+#SBATCH --mem 2G
+
+#SBATCH --partition ibrain
+#SBATCH --output %x-%A-%a.out
+#SBATCH --error %x-%A-%a.out
+#SBATCH --hint=nomultithread
+
+
+module purge
+module load gcc/7.3.1
+
+srun program --arg=$SLURM_ARRAY_TASK_ID
+</code></pre>
+<p>Here, the variable <code>$SLURM_ARRAY_TASK_ID</code> will take values from 0 to 2. The job ID will be <code>$SLURM_JOB_ID</code>, and the array job ID will be <code>$SLURM_ARRAY_JOB_ID</code>. The array task ID will be <code>$SLURM_ARRAY_TASK_ID</code>.</p>
+<h2>Running an interactive session</h2>
+<pre><code class="language-bash">srun --pty --job-name interactive --partition ibrain --mem 2G --cpus-per-task 1 bash
+</code></pre>
+<p>This will give you a shell on a compute node. The options are the same as for <code>sbatch</code>. The <code>--pty</code> option is needed to get a pseudo-terminal. The <code>bash</code> at the end specifies the shell to run. You can replace it with <code>sview</code> to get a graphical interface.</p>
+<h2>Running a GUI</h2>
+<pre><code class="language-bash">srun --pty --job-name gui --partition ibrain --mem 2G --cpus-per-task 1 --x11 bash
+</code></pre>
+<p>This will give you a shell on a compute node with X11 forwarding enabled. The <code>--x11</code> option is needed for X11 forwarding. You can then run graphical applications from this shell.</p>
+<h2>Custom Module</h2>
+<h3>Creating a custom module</h3>
+<p>If you have a program that you want to make available to others, you can create a custom module for it. This involves creating a module file that defines the environment variables and paths needed to run your program.</p>
+<p><strong>Example module file (<code>myprogram/1.0.lua</code>):</strong></p>
+<pre><code class="language-lua">help([[This module loads MyProgram version 1.0]])
+
+prepend_path(&quot;PATH&quot;, &quot;/path/to/myprogram/bin&quot;)
+prepend_path(&quot;LD_LIBRARY_PATH&quot;, &quot;/path/to/myprogram/lib&quot;)
+</code></pre>
+<p>Place this file in a directory that is part of the <code>MODULEPATH</code> environment variable. You can check your <code>MODULEPATH</code> with <code>module use</code>.</p>
+<h3>Using a custom module</h3>
+<p>Once your custom module is created and placed in the correct location, you can load it like any other module:</p>
+<pre><code class="language-bash">module load myprogram/1.0
+</code></pre>
+<h2>Conda on a Cluster</h2>
+<h3>Installing Conda</h3>
+<p>To install Conda on the cluster, you can download the Miniconda installer and run it. Choose a location in your home directory where you have write permissions.</p>
+<pre><code class="language-bash">wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
+bash Miniconda3-latest-Linux-x86_64.sh
+</code></pre>
+<p>Follow the prompts during installation. When asked about initializing Conda, you can choose <code>no</code> if you prefer to activate it manually.</p>
+<h3>Using Conda Environments</h3>
+<p>After installation, you can create and manage Conda environments. This allows you to isolate different projects and their dependencies.</p>
+<p><strong>Create an environment:</strong></p>
+<pre><code class="language-bash">conda create --name myenv python=3.8
+</code></pre>
+<p><strong>Activate an environment:</strong></p>
+<pre><code class="language-bash">conda activate myenv
+</code></pre>
+<p><strong>Install packages:</strong></p>
+<pre><code class="language-bash">conda install numpy pandas
+</code></pre>
+<p><strong>Deactivate an environment:</strong></p>
+<pre><code class="language-bash">conda deactivate
+</code></pre>
+<h3>Conda in Submission Scripts</h3>
+<p>To use Conda environments in your Slurm submission scripts, you need to activate the environment before running your program. Make sure to load the Conda module if necessary, or ensure Conda is in your PATH.</p>
+<pre><code class="language-bash">#!/bin/sh
+#SBATCH --job-name conda_job
+#SBATCH --ntasks 1
+#SBATCH --cpus-per-task 1
+#SBATCH --mem 4G
+#SBATCH --partition ibrain
+#SBATCH --output %x-%j.out
+#SBATCH --error %x-%j.out
+
+# Load Conda if not in PATH
+# module load conda
+
+# Activate your Conda environment
+source /path/to/your/miniconda3/bin/activate myenv
+
+# Run your Python script or program
+srun python my_script.py
+
+# Deactivate environment (optional, but good practice)
+conda deactivate
+</code></pre>
+<h2>Compression of files</h2>
+<p>This document will help you to compress your files on HPC as we see we have less space on cluster its better to compress our fastq files and other result files.</p>
+<h3>Using <code>gzip</code></h3>
+<p><code>gzip</code> is a common compression utility. It replaces the original file with a compressed version (<code>.gz</code> extension).</p>
+<p><strong>Compress a file:</strong></p>
+<pre><code class="language-bash">gzip my_file.txt
+</code></pre>
+<p>This will create <code>my_file.txt.gz</code> and remove <code>my_file.txt</code>.</p>
+<p><strong>Decompress a file:</strong></p>
+<pre><code class="language-bash">gunzip my_file.txt.gz
+</code></pre>
+<p>This will restore <code>my_file.txt</code> and remove <code>my_file.txt.gz</code>.</p>
+<h3>Using <code>tar</code> with <code>gzip</code> (for directories)</h3>
+<p>To compress entire directories, you typically use <code>tar</code> to archive the directory first, and then <code>gzip</code> to compress the archive. The <code>tar</code> command has options to do both simultaneously.</p>
+<p><strong>Compress a directory:</strong></p>
+<pre><code class="language-bash">tar -czvf my_directory.tar.gz my_directory/
+</code></pre>
+<ul>
+<li><code>-c</code>: Create a new archive.</li>
+<li><code>-z</code>: Compress the archive with <code>gzip</code>.</li>
+<li><code>-v</code>: Verbose output (show progress).</li>
+<li><code>-f</code>: Specify the archive filename.</li>
+</ul>
+<p><strong>Decompress a directory:</strong></p>
+<pre><code class="language-bash">tar -xzvf my_directory.tar.gz
+</code></pre>
+<ul>
+<li><code>-x</code>: Extract files from an archive.</li>
+<li><code>-z</code>: Decompress with <code>gzip</code>.</li>
+<li><code>-v</code>: Verbose output.</li>
+<li><code>-f</code>: Specify the archive filename.</li>
+</ul>
+<h3>Using <code>bzip2</code></h3>
+<p><code>bzip2</code> often provides better compression ratios than <code>gzip</code>, but is slower.</p>
+<p><strong>Compress a file:</strong></p>
+<pre><code class="language-bash">bzip2 my_file.txt
+</code></pre>
+<p>This creates <code>my_file.txt.bz2</code>.</p>
+<p><strong>Decompress a file:</strong></p>
+<pre><code class="language-bash">bunzip2 my_file.txt.bz2
+</code></pre>
+<h3>Using <code>xz</code></h3>
+<p><code>xz</code> provides even better compression than <code>bzip2</code> but is the slowest.</p>
+<p><strong>Compress a file:</strong></p>
+<pre><code class="language-bash">xz my_file.txt
+</code></pre>
+<p>This creates <code>my_file.txt.xz</code>.</p>
+<p><strong>Decompress a file:</strong></p>
+<pre><code class="language-bash">unxz my_file.txt.xz
+</code></pre>
+<p>Choose the compression method based on your needs for compression ratio versus speed. For large files like fastq, <code>gzip</code> is a common balance. For maximum compression, <code>xz</code> is preferred if time is not critical.</p>
+<hr />
+<h2>References</h2>
+<ol>
+<li>Official tool documentation and package vignettes.</li>
+<li>Stuart, T., et al. (2019). Comprehensive Integration of Single-Cell Data. <em>Cell</em>, 177(7), 1888-1902.e21. (For Seurat-based workflows)</li>
+<li>Orchestrating Single-Cell Analysis with Bioconductor (OSCA) - A comprehensive guide to single-cell data analysis.</li>
+<li><a href="https://bioconductor.org/">Bioconductor</a> and <a href="https://cran.r-project.org/">CRAN</a> package manuals.</li>
+</ol>
+<div class="mt-10 p-8 bg-gray-50 border border-gray-200 rounded-xl">
+  <h3 class="text-xl font-bold text-gray-900 mb-3">Knowledge Check & Next Steps</h3>
+  <p class="text-gray-700 mb-4"><strong>Exercise:</strong> Try running the code examples on a small subset of your own data. Did you encounter any errors? Check your syntax and ensure your input files are correctly formatted.</p>
+  <p class="text-gray-700"><strong>Next Step:</strong> Return to the <a href="start-here.html" class="text-blue-600 font-bold hover:underline">Start Here</a> curriculum to find the next logical tutorial in your learning path, or explore related topics in the <a href="index.html#tutorials" class="text-blue-600 hover:underline">Tutorial Library</a>.</p>
+</div>
+            </div>
+    
                 </div>
             </div>
         </div>
     </div>
     
     <script>
-        // Tell script.js to render THIS specific page's hidden markdown on load
+        // Tell script.js to skip rendering because it is already done
+        window.STATIC_RENDERED = true;
         window.PRELOADED_TUTORIAL_ID = "hpc-submission-part1";
     </script>
     

@@ -10,9 +10,9 @@
 <meta content="Nasir Mahmood Abbasi, PhD" name="author"/>
 <meta content="index, follow" name="robots"/>
 <!-- Open Graph tags for social sharing -->
-<meta content="Whole Exome Sequencing (WES): Variant Calling & VAF | The Omics Hub" property="og:title"/>
+<meta content="The Omics Hub - Learn Bioinformatics and Single-cell RNA-seq Step by Step" property="og:title"/>
 <meta content="Master computational biology with hands-on tutorials covering shell commands, conda environments, single-cell RNA-seq analysis, and essential bioinformatics tools." property="og:description"/>
-<meta content="https://theomicshub.com" property="og:url"/>
+<meta content="https://theomicshub.com/wes-variant-calling-pipeline.html" property="og:url"/>
 <meta content="website" property="og:type"/>
 <meta content="https://theomicshub.com/images/omicshub-logo.png" property="og:image"/>
 <!-- Twitter Card tags -->
@@ -121,11 +121,11 @@ Legal
 <!-- Main Content -->
 <main class="min-h-screen">
 
-    <!-- Tutorial Detail Page (Pre-rendered for SEO) -->
+    <!-- Tutorial Detail Page (Pre-rendered for SEO and Instant Load) -->
     <div class="page-content" id="tutorial-page">
         <div class="container mx-auto px-4 py-8">
             <div class="max-w-4xl mx-auto">
-                <!-- SEO Hidden Markdown Data -->
+                <!-- SEO Hidden Markdown Data for search/index -->
                 <div id="seo-markdown-data" style="display:none;">
 ---
 title: "Whole Exome Sequencing (WES): Variant Calling & VAF"
@@ -288,19 +288,156 @@ A robust WES pipeline requires careful alignment, stringent duplicate removal, a
 </div>
 
                 </div>
-                <!-- Rendered content will be injected here by script.js -->
+                <!-- PRE-RENDERED STATIC HTML -->
                 <div id="tutorial-content">
-                    <div class="text-center py-20">
-                        <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mb-4"></div>
-                        <p class="text-gray-600 font-medium">Rendering tutorial...</p>
+                    
+            <div class="mb-12">
+                <div class="flex items-center gap-2 text-sm text-blue-600 font-medium mb-4">
+                    <span>Genomics & Whole Exome Sequencing</span>
+                    <span>•</span>
+                    <span>2026-08-14</span>
+                </div>
+                <h1 class="text-4xl md:text-5xl font-black text-gray-900 mb-6 leading-tight">Whole Exome Sequencing (WES): Variant Calling & VAF</h1>
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 font-bold text-lg">
+                        NM
                     </div>
+                    <div>
+                        <p class="font-bold text-gray-900">Nasir Mahmood Abbasi, PhD</p>
+                        <p class="text-sm text-gray-500">Bioinformatics Educator</p>
+                    </div>
+                </div>
+            </div>
+            
+            
+            <div class="mb-12 rounded-2xl overflow-hidden shadow-lg border border-gray-100">
+                <img src="images/bioinformatics-intro.png" alt="Whole Exome Sequencing (WES): Variant Calling & VAF" class="w-full h-auto object-cover aspect-video">
+            </div>
+    
+            
+            <div class="prose prose-blue prose-lg max-w-none">
+                <div class="flex flex-wrap items-center gap-4 text-xs font-mono text-gray-500 bg-gray-50 p-3 rounded-lg border border-gray-200 mb-6">
+  <div class="flex items-center gap-1">
+    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+    <span><strong>Tested on:</strong> Python 3.11, R 4.3.2, Ubuntu 24.04</span>
+  </div>
+  <div class="flex items-center gap-1">
+    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+    <span><strong>Last Review:</strong> 2026-08-15</span>
+  </div>
+</div>
+
+<div class="p-6 bg-blue-50 border border-blue-100 rounded-xl mb-8">
+  <h4 class="text-lg font-bold text-blue-900 mb-2">Learning Objectives & Prerequisites</h4>
+  <ul class="list-disc list-inside text-blue-800 space-y-1 mb-4">
+    <li><strong>Prerequisites:</strong> Basic understanding of the Linux terminal and bioinformatics concepts. (See <a href="start-here.html" class="underline">Start Here</a>)</li>
+    <li><strong>Objective:</strong> Master the core concepts and practical commands of this topic.</li>
+    <li><strong>Expected Output:</strong> A reproducible workflow and a clear understanding of the methodology.</li>
+  </ul>
+</div>
+
+<h1>Whole Exome Sequencing (WES) Pipeline</h1>
+<h2>Introduction</h2>
+<p>While RNA sequencing (RNA-seq) tells us what genes are actively expressed, <strong>Whole Exome Sequencing (WES)</strong> reveals the underlying DNA mutations. WES specifically targets the protein-coding regions of the genome, making it a highly cost-effective method for identifying disease-causing variants in cancer and rare genetic disorders.</p>
+<p>This tutorial covers the standard bioinformatics pipeline for processing raw WES data, calculating Variant Allele Frequency (VAF), and managing genome assembly liftovers.</p>
+<hr />
+<h2>1. Raw Data Processing &amp; Alignment</h2>
+<p>The first step in any DNA-seq pipeline is aligning the raw FASTQ reads to a reference genome (e.g., GRCh38/hg38) and marking PCR duplicates.</p>
+<h3>BWA-MEM Alignment</h3>
+<p><code>BWA-MEM</code> is the gold standard for aligning DNA reads to a reference genome.</p>
+<pre><code class="language-bash"># Index the reference genome (only needed once)
+bwa index Homo_sapiens_assembly38.fasta
+
+# Align paired-end reads to the reference
+bwa mem -t 8 Homo_sapiens_assembly38.fasta sample_R1.fastq.gz sample_R2.fastq.gz &gt; aligned_reads.sam
+</code></pre>
+<h3>Sorting and Marking Duplicates (GATK / Picard)</h3>
+<p>We use <code>samtools</code> to convert to BAM, and <code>Picard</code> to remove PCR duplicates that arise during exome capture library preparation.</p>
+<pre><code class="language-bash"># Convert SAM to BAM and sort by coordinate
+samtools sort -@ 8 -o sorted_reads.bam aligned_reads.sam
+
+# Mark Duplicates
+java -jar picard.jar MarkDuplicates \
+      I=sorted_reads.bam \
+      O=dedup_reads.bam \
+      M=marked_dup_metrics.txt
+</code></pre>
+<hr />
+<h2>2. Variant Calling (GATK HaplotypeCaller)</h2>
+<p>Once the reads are aligned and deduplicated, we use the Broad Institute's <strong>GATK (Genome Analysis Toolkit)</strong> to identify SNPs (Single Nucleotide Polymorphisms) and Indels.</p>
+<pre><code class="language-bash"># Call variants using HaplotypeCaller
+gatk HaplotypeCaller \
+     -R Homo_sapiens_assembly38.fasta \
+     -I dedup_reads.bam \
+     -O raw_variants.vcf.gz
+</code></pre>
+<hr />
+<h2>3. Variant Allele Frequency (VAF) Analysis</h2>
+<p><strong>Variant Allele Frequency (VAF)</strong> is the percentage of sequencing reads matching a specific DNA variant divided by the total coverage at that locus. In cancer genomics, VAF is critical for determining whether a mutation is clonal (present in all tumor cells) or subclonal.</p>
+<h3>Calculating VAF in R</h3>
+<p>If you extract the allelic depths (AD) and total depth (DP) from your VCF into a data frame, you can analyze VAF in R:</p>
+<pre><code class="language-r">library(ggplot2)
+library(dplyr)
+
+# Example: Read extracted VCF data
+variant_data &lt;- read.csv(&quot;extracted_variants.csv&quot;)
+
+# Calculate VAF: Alternate Allele Depth (AD_alt) / Total Depth (DP)
+variant_data &lt;- variant_data %&gt;%
+  mutate(VAF = AD_alt / DP)
+
+# Visualize the VAF distribution to look for clonal peaks
+ggplot(variant_data, aes(x = VAF)) +
+  geom_histogram(binwidth = 0.02, fill = &quot;darkred&quot;, color = &quot;black&quot;, alpha = 0.7) +
+  theme_minimal() +
+  labs(title = &quot;Variant Allele Frequency (VAF) Distribution&quot;,
+       x = &quot;VAF&quot;,
+       y = &quot;Number of Mutations&quot;)
+</code></pre>
+<p><em>A distinct peak around VAF = 0.5 typically represents heterozygous germline mutations, while lower peaks often represent subclonal somatic mutations.</em></p>
+<hr />
+<h2>4. Genome LiftOver (e.g., hg19 to hg38)</h2>
+<p>Often, you may receive older variant data mapped to an outdated genome assembly (like <code>hg19</code>). You must "LiftOver" these coordinates to the modern <code>hg38</code> assembly before combining them with new data.</p>
+<pre><code class="language-r">library(rtracklayer)
+library(GenomicRanges)
+
+# Load the chain file downloaded from UCSC
+chain &lt;- import.chain(&quot;hg19ToHg38.over.chain&quot;)
+
+# Create a GRanges object of your hg19 variants
+hg19_variants &lt;- GRanges(seqnames = Rle(c(&quot;chr1&quot;, &quot;chr2&quot;)),
+                         ranges = IRanges(start = c(10000, 20000), width = 1))
+
+# Perform the LiftOver
+hg38_variants &lt;- liftOver(hg19_variants, chain)
+
+print(hg38_variants)
+</code></pre>
+<h2>Conclusion</h2>
+<p>A robust WES pipeline requires careful alignment, stringent duplicate removal, accurate variant calling, and deep interpretation of metrics like VAF. By mastering these steps, you can confidently identify pathogenic mutations in complex cohorts.</p>
+<hr />
+<h2>References</h2>
+<ol>
+<li>Official tool documentation and package vignettes.</li>
+<li>Stuart, T., et al. (2019). Comprehensive Integration of Single-Cell Data. <em>Cell</em>, 177(7), 1888-1902.e21. (For Seurat-based workflows)</li>
+<li>Orchestrating Single-Cell Analysis with Bioconductor (OSCA) - A comprehensive guide to single-cell data analysis.</li>
+<li><a href="https://bioconductor.org/">Bioconductor</a> and <a href="https://cran.r-project.org/">CRAN</a> package manuals.</li>
+</ol>
+<div class="mt-10 p-8 bg-gray-50 border border-gray-200 rounded-xl">
+  <h3 class="text-xl font-bold text-gray-900 mb-3">Knowledge Check & Next Steps</h3>
+  <p class="text-gray-700 mb-4"><strong>Exercise:</strong> Try running the code examples on a small subset of your own data. Did you encounter any errors? Check your syntax and ensure your input files are correctly formatted.</p>
+  <p class="text-gray-700"><strong>Next Step:</strong> Return to the <a href="start-here.html" class="text-blue-600 font-bold hover:underline">Start Here</a> curriculum to find the next logical tutorial in your learning path, or explore related topics in the <a href="index.html#tutorials" class="text-blue-600 hover:underline">Tutorial Library</a>.</p>
+</div>
+            </div>
+    
                 </div>
             </div>
         </div>
     </div>
     
     <script>
-        // Tell script.js to render THIS specific page's hidden markdown on load
+        // Tell script.js to skip rendering because it is already done
+        window.STATIC_RENDERED = true;
         window.PRELOADED_TUTORIAL_ID = "wes-variant-calling-pipeline";
     </script>
     

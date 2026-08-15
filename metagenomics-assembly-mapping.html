@@ -10,9 +10,9 @@
 <meta content="Nasir Mahmood Abbasi, PhD" name="author"/>
 <meta content="index, follow" name="robots"/>
 <!-- Open Graph tags for social sharing -->
-<meta content="Metagenomics Assembly | The Omics Hub" property="og:title"/>
+<meta content="The Omics Hub - Learn Bioinformatics and Single-cell RNA-seq Step by Step" property="og:title"/>
 <meta content="Master computational biology with hands-on tutorials covering shell commands, conda environments, single-cell RNA-seq analysis, and essential bioinformatics tools." property="og:description"/>
-<meta content="https://theomicshub.com" property="og:url"/>
+<meta content="https://theomicshub.com/metagenomics-assembly-mapping.html" property="og:url"/>
 <meta content="website" property="og:type"/>
 <meta content="https://theomicshub.com/images/omicshub-logo.png" property="og:image"/>
 <!-- Twitter Card tags -->
@@ -121,11 +121,11 @@ Legal
 <!-- Main Content -->
 <main class="min-h-screen">
 
-    <!-- Tutorial Detail Page (Pre-rendered for SEO) -->
+    <!-- Tutorial Detail Page (Pre-rendered for SEO and Instant Load) -->
     <div class="page-content" id="tutorial-page">
         <div class="container mx-auto px-4 py-8">
             <div class="max-w-4xl mx-auto">
-                <!-- SEO Hidden Markdown Data -->
+                <!-- SEO Hidden Markdown Data for search/index -->
                 <div id="seo-markdown-data" style="display:none;">
 ---
 title: "Metagenomics Assembly"
@@ -276,19 +276,148 @@ By mastering SPAdes, BWA, and IGV, you establish the foundation for any robust g
 </div>
 
                 </div>
-                <!-- Rendered content will be injected here by script.js -->
+                <!-- PRE-RENDERED STATIC HTML -->
                 <div id="tutorial-content">
-                    <div class="text-center py-20">
-                        <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mb-4"></div>
-                        <p class="text-gray-600 font-medium">Rendering tutorial...</p>
+                    
+            <div class="mb-12">
+                <div class="flex items-center gap-2 text-sm text-blue-600 font-medium mb-4">
+                    <span>Metagenomics</span>
+                    <span>•</span>
+                    <span>2026-08-14</span>
+                </div>
+                <h1 class="text-4xl md:text-5xl font-black text-gray-900 mb-6 leading-tight">Metagenomics Assembly</h1>
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 font-bold text-lg">
+                        NM
                     </div>
+                    <div>
+                        <p class="font-bold text-gray-900">Nasir Mahmood Abbasi, PhD</p>
+                        <p class="text-sm text-gray-500">Bioinformatics Educator</p>
+                    </div>
+                </div>
+            </div>
+            
+            
+            <div class="mb-12 rounded-2xl overflow-hidden shadow-lg border border-gray-100">
+                <img src="images/bioinformatics-intro.png" alt="Metagenomics Assembly" class="w-full h-auto object-cover aspect-video">
+            </div>
+    
+            
+            <div class="prose prose-blue prose-lg max-w-none">
+                <div class="flex flex-wrap items-center gap-4 text-xs font-mono text-gray-500 bg-gray-50 p-3 rounded-lg border border-gray-200 mb-6">
+  <div class="flex items-center gap-1">
+    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+    <span><strong>Tested on:</strong> Python 3.11, R 4.3.2, Ubuntu 24.04</span>
+  </div>
+  <div class="flex items-center gap-1">
+    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+    <span><strong>Last Review:</strong> 2026-08-15</span>
+  </div>
+</div>
+
+<div class="p-6 bg-blue-50 border border-blue-100 rounded-xl mb-8">
+  <h4 class="text-lg font-bold text-blue-900 mb-2">Learning Objectives & Prerequisites</h4>
+  <ul class="list-disc list-inside text-blue-800 space-y-1 mb-4">
+    <li><strong>Prerequisites:</strong> Basic understanding of the Linux terminal and bioinformatics concepts. (See <a href="start-here.html" class="underline">Start Here</a>)</li>
+    <li><strong>Objective:</strong> Master the core concepts and practical commands of this topic.</li>
+    <li><strong>Expected Output:</strong> A reproducible workflow and a clear understanding of the methodology.</li>
+  </ul>
+</div>
+
+<h1>Metagenomics: Assembly and Mapping</h1>
+<h2>Introduction to Metagenomics</h2>
+<p>Metagenomics is the study of genetic material recovered directly from environmental or clinical samples. Unlike traditional genomics, which sequences a single cultured organism, metagenomics sequences the entire community (the microbiome) simultaneously.</p>
+<p>This tutorial covers a standard shotgun metagenomics workflow: assembling short reads into longer contigs using <strong>SPAdes</strong>, mapping reads to a reference genome (such as Human) using <strong>BWA</strong>, and visualizing the alignment with <strong>IGV</strong>.</p>
+<hr />
+<h2>1. De Novo Assembly using SPAdes</h2>
+<p>When you sequence a metagenome, you get millions of short reads (e.g., 150bp from Illumina). <strong>De novo assembly</strong> pieces these short reads together into longer contiguous sequences (contigs) without needing a reference genome.</p>
+<p><strong>metaSPAdes</strong> is a specialized module within the SPAdes assembler designed specifically to handle the uneven coverage and complex strain variation found in metagenomic data.</p>
+<h3>Installation and Execution</h3>
+<pre><code class="language-bash"># Install SPAdes via Mamba
+mamba install -c bioconda spades
+
+# Run metaSPAdes with paired-end reads
+spades.py --meta \
+          -1 sample_R1.fastq.gz \
+          -2 sample_R2.fastq.gz \
+          -o spades_output/ \
+          -t 16 \
+          -m 64
+</code></pre>
+<ul>
+<li><code>--meta</code>: Activates the metagenome-specific algorithm.</li>
+<li><code>-t 16</code>: Uses 16 CPU threads.</li>
+<li><code>-m 64</code>: Allocates 64GB of RAM.</li>
+</ul>
+<p>The most important output file will be <code>spades_output/contigs.fasta</code>, which contains your assembled metagenome.</p>
+<hr />
+<h2>2. Mapping to the Human Genome with BWA</h2>
+<p>In clinical metagenomics (e.g., gut or skin microbiomes), the sample often contains massive amounts of "host contamination" (human DNA). A critical preprocessing step is mapping the reads to the human reference genome to identify and remove the human DNA, leaving only the microbial reads.</p>
+<p>We use <strong>BWA (Burrows-Wheeler Aligner)</strong>, specifically <code>bwa mem</code>, which is the standard for mapping high-quality short reads.</p>
+<h3>Step 2.1: Indexing the Reference Genome</h3>
+<p>Before mapping, BWA requires an index of the reference genome.</p>
+<blockquote>
+<p><strong>Privacy &amp; Ethics Note:</strong> When working with human microbiome samples, the reads will contain human DNA (host contamination). It is critical to remove these reads before assembly or uploading to public repositories to protect patient privacy.</p>
+</blockquote>
+<pre><code class="language-bash"># Example: Downloading the human reference genome from NCBI
+wget ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/001/405/GCF_000001405.39_GRCh38.p13/GCF_000001405.39_GRCh38.p13_genomic.fna.gz -O GRCh38.fasta.gz
+gunzip GRCh38.fasta.gz
+
+# Index the genome
+bwa index GRCh38.fasta
+</code></pre>
+<h3>Step 2.2: Mapping Reads</h3>
+<pre><code class="language-bash"># Map paired-end reads to the human genome
+bwa mem -t 8 GRCh38.fasta sample_R1.fastq.gz sample_R2.fastq.gz &gt; aligned_reads.sam
+</code></pre>
+<h3>Step 2.3: Processing with Samtools</h3>
+<p>The raw <code>.sam</code> file is large and plain text. We use <strong>Samtools</strong> to convert it to a compressed binary format (<code>.bam</code>), sort it, and index it for fast retrieval.</p>
+<pre><code class="language-bash"># Convert SAM to BAM, sort, and index
+samtools view -S -b aligned_reads.sam &gt; aligned_reads.bam
+samtools sort aligned_reads.bam -o aligned_reads_sorted.bam
+samtools index aligned_reads_sorted.bam
+</code></pre>
+<p><em>Note: To extract only the unmapped (non-human) reads for downstream microbial analysis, you would use <code>samtools view -b -f 4</code>.</em></p>
+<hr />
+<h2>3. Visualization with IGV</h2>
+<p>The <strong>Integrative Genomics Viewer (IGV)</strong> is an interactive tool for exploring large, integrated genomic datasets. It allows you to visually inspect how your reads aligned to the reference genome.</p>
+<h3>How to use IGV</h3>
+<ol>
+<li><strong>Download IGV:</strong> Install the desktop application from the Broad Institute website.</li>
+<li><strong>Load the Genome:</strong> Go to <code>Genomes &gt; Load Genome from File</code> and select your <code>GRCh38.fasta</code>.</li>
+<li><strong>Load the Data:</strong> Go to <code>File &gt; Load from File</code> and select your <code>aligned_reads_sorted.bam</code>. (Ensure the <code>.bam.bai</code> index file is in the same directory).</li>
+<li><strong>Explore:</strong> Type a gene name or genomic coordinate in the search bar.</li>
+</ol>
+<h3>What to Look For</h3>
+<ul>
+<li><strong>Coverage depth:</strong> The gray bar chart at the top shows how many reads cover a specific base.</li>
+<li><strong>SNPs/Variants:</strong> If a read differs from the reference genome, IGV highlights the mismatch in color (A=green, T=red, C=blue, G=orange).</li>
+<li><strong>Insertions/Deletions:</strong> Look for purple <code>I</code> symbols (insertions) or black horizontal lines within a read (deletions).</li>
+</ul>
+<p>By mastering SPAdes, BWA, and IGV, you establish the foundation for any robust genomics or metagenomics pipeline.</p>
+<hr />
+<h2>References</h2>
+<ol>
+<li>Official tool documentation and package vignettes.</li>
+<li>Stuart, T., et al. (2019). Comprehensive Integration of Single-Cell Data. <em>Cell</em>, 177(7), 1888-1902.e21. (For Seurat-based workflows)</li>
+<li>Orchestrating Single-Cell Analysis with Bioconductor (OSCA) - A comprehensive guide to single-cell data analysis.</li>
+<li><a href="https://bioconductor.org/">Bioconductor</a> and <a href="https://cran.r-project.org/">CRAN</a> package manuals.</li>
+</ol>
+<div class="mt-10 p-8 bg-gray-50 border border-gray-200 rounded-xl">
+  <h3 class="text-xl font-bold text-gray-900 mb-3">Knowledge Check & Next Steps</h3>
+  <p class="text-gray-700 mb-4"><strong>Exercise:</strong> Try running the code examples on a small subset of your own data. Did you encounter any errors? Check your syntax and ensure your input files are correctly formatted.</p>
+  <p class="text-gray-700"><strong>Next Step:</strong> Return to the <a href="start-here.html" class="text-blue-600 font-bold hover:underline">Start Here</a> curriculum to find the next logical tutorial in your learning path, or explore related topics in the <a href="index.html#tutorials" class="text-blue-600 hover:underline">Tutorial Library</a>.</p>
+</div>
+            </div>
+    
                 </div>
             </div>
         </div>
     </div>
     
     <script>
-        // Tell script.js to render THIS specific page's hidden markdown on load
+        // Tell script.js to skip rendering because it is already done
+        window.STATIC_RENDERED = true;
         window.PRELOADED_TUTORIAL_ID = "metagenomics-assembly-mapping";
     </script>
     

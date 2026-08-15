@@ -10,9 +10,9 @@
 <meta content="Nasir Mahmood Abbasi, PhD" name="author"/>
 <meta content="index, follow" name="robots"/>
 <!-- Open Graph tags for social sharing -->
-<meta content="Taxonomic Profiling with Kraken2 and Bracken | The Omics Hub" property="og:title"/>
+<meta content="The Omics Hub - Learn Bioinformatics and Single-cell RNA-seq Step by Step" property="og:title"/>
 <meta content="Master computational biology with hands-on tutorials covering shell commands, conda environments, single-cell RNA-seq analysis, and essential bioinformatics tools." property="og:description"/>
-<meta content="https://theomicshub.com" property="og:url"/>
+<meta content="https://theomicshub.com/metagenomics-kraken2-bracken.html" property="og:url"/>
 <meta content="website" property="og:type"/>
 <meta content="https://theomicshub.com/images/omicshub-logo.png" property="og:image"/>
 <!-- Twitter Card tags -->
@@ -121,11 +121,11 @@ Legal
 <!-- Main Content -->
 <main class="min-h-screen">
 
-    <!-- Tutorial Detail Page (Pre-rendered for SEO) -->
+    <!-- Tutorial Detail Page (Pre-rendered for SEO and Instant Load) -->
     <div class="page-content" id="tutorial-page">
         <div class="container mx-auto px-4 py-8">
             <div class="max-w-4xl mx-auto">
-                <!-- SEO Hidden Markdown Data -->
+                <!-- SEO Hidden Markdown Data for search/index -->
                 <div id="seo-markdown-data" style="display:none;">
 ---
 title: "Taxonomic Profiling with Kraken2 and Bracken"
@@ -250,19 +250,122 @@ By combining the blazing speed of Kraken2 with the statistical rigor of Bracken,
 </div>
 
                 </div>
-                <!-- Rendered content will be injected here by script.js -->
+                <!-- PRE-RENDERED STATIC HTML -->
                 <div id="tutorial-content">
-                    <div class="text-center py-20">
-                        <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mb-4"></div>
-                        <p class="text-gray-600 font-medium">Rendering tutorial...</p>
+                    
+            <div class="mb-12">
+                <div class="flex items-center gap-2 text-sm text-blue-600 font-medium mb-4">
+                    <span>Metagenomics</span>
+                    <span>•</span>
+                    <span>2026-08-14</span>
+                </div>
+                <h1 class="text-4xl md:text-5xl font-black text-gray-900 mb-6 leading-tight">Taxonomic Profiling with Kraken2 and Bracken</h1>
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 font-bold text-lg">
+                        NM
                     </div>
+                    <div>
+                        <p class="font-bold text-gray-900">Nasir Mahmood Abbasi, PhD</p>
+                        <p class="text-sm text-gray-500">Bioinformatics Educator</p>
+                    </div>
+                </div>
+            </div>
+            
+            
+            <div class="mb-12 rounded-2xl overflow-hidden shadow-lg border border-gray-100">
+                <img src="images/bioinformatics-intro.png" alt="Taxonomic Profiling with Kraken2 and Bracken" class="w-full h-auto object-cover aspect-video">
+            </div>
+    
+            
+            <div class="prose prose-blue prose-lg max-w-none">
+                <div class="flex flex-wrap items-center gap-4 text-xs font-mono text-gray-500 bg-gray-50 p-3 rounded-lg border border-gray-200 mb-6">
+  <div class="flex items-center gap-1">
+    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+    <span><strong>Tested on:</strong> Python 3.11, R 4.3.2, Ubuntu 24.04</span>
+  </div>
+  <div class="flex items-center gap-1">
+    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+    <span><strong>Last Review:</strong> 2026-08-15</span>
+  </div>
+</div>
+
+<div class="p-6 bg-blue-50 border border-blue-100 rounded-xl mb-8">
+  <h4 class="text-lg font-bold text-blue-900 mb-2">Learning Objectives & Prerequisites</h4>
+  <ul class="list-disc list-inside text-blue-800 space-y-1 mb-4">
+    <li><strong>Prerequisites:</strong> Basic understanding of the Linux terminal and bioinformatics concepts. (See <a href="start-here.html" class="underline">Start Here</a>)</li>
+    <li><strong>Objective:</strong> Master the core concepts and practical commands of this topic.</li>
+    <li><strong>Expected Output:</strong> A reproducible workflow and a clear understanding of the methodology.</li>
+  </ul>
+</div>
+
+<h1>Taxonomic Profiling with Kraken2 and Bracken</h1>
+<h2>Introduction</h2>
+<p>In shotgun metagenomics, one of the primary goals is answering: <strong>"Who is in this sample, and in what proportions?"</strong> </p>
+<p>Unlike 16S amplicon sequencing, shotgun data contains fragmented DNA from every organism present. To classify millions of these short reads efficiently, we cannot use traditional alignment tools like BLAST—it would take months. Instead, we use ultra-fast <strong>k-mer based classifiers</strong>, with the undisputed industry standard being <strong>Kraken2</strong>, followed by <strong>Bracken</strong> for abundance estimation.</p>
+<hr />
+<h2>1. How Kraken2 Works</h2>
+<p>Kraken2 breaks down your reads into short sequences called <em>k-mers</em> (typically 35-mers). It then compares these k-mers against a massive pre-built database of known genomes. </p>
+<p>Instead of full alignment, Kraken2 maps the k-mer to the Lowest Common Ancestor (LCA) in the taxonomic tree.</p>
+<h3>Running Kraken2</h3>
+<p>Kraken2 is heavily memory-bound. You need a machine with enough RAM to hold the database you choose (the standard PlusPFP database requires ~50GB of RAM).</p>
+<pre><code class="language-bash"># Run Kraken2 on paired-end Illumina reads
+kraken2 --db /path/to/kraken2_database/ \
+        --threads 16 \
+        --paired reads_1.fastq.gz reads_2.fastq.gz \
+        --report kraken2_report.txt \
+        --output kraken2_output.txt
+</code></pre>
+<p><strong>Key Outputs:</strong>
+*   <code>kraken2_output.txt</code>: Contains the classification for <em>every single read</em>.
+*   <code>kraken2_report.txt</code>: A human-readable summary of the percentage of reads assigned to each taxonomic level.</p>
+<hr />
+<h2>2. Correcting Abundances with Bracken</h2>
+<p>While Kraken2 is excellent at classification, its Lowest Common Ancestor (LCA) approach causes a problem: many reads are classified at higher taxonomic levels (like Genus or Family) because they match multiple species equally well. </p>
+<p>This means your raw Species-level counts in Kraken2 are mathematically underestimated.</p>
+<p><strong>Bracken</strong> (Bayesian Reestimation of Abundance with KrakEN) fixes this. It uses Bayesian probabilities to accurately push those Genus-level assignments down to the Species level, giving you highly accurate abundance estimations.</p>
+<h3>Running Bracken</h3>
+<pre><code class="language-bash"># Run Bracken using the Kraken2 report to estimate Species level (-l S) abundances
+bracken -d /path/to/kraken2_database/ \
+        -i kraken2_report.txt \
+        -o bracken_species_abundances.tsv \
+        -r 150 \
+        -l S 
+</code></pre>
+<p><em>(Note: <code>-r 150</code> should match your Illumina read length).</em></p>
+<hr />
+<h2>3. Visualization</h2>
+<p>Once you have your Bracken outputs across multiple samples, you can merge them and visualize the community composition.</p>
+<p>Tools like <strong>Krona</strong> create beautiful interactive HTML pie charts from Kraken2/Bracken reports.</p>
+<pre><code class="language-bash"># Install Krona tools
+mamba install -c bioconda krona
+
+# Generate an interactive Krona plot from the Kraken2 report
+ktImportText kraken2_report.txt -o krona_visualization.html
+</code></pre>
+<p>By combining the blazing speed of Kraken2 with the statistical rigor of Bracken, you can profile complex microbial communities in minutes rather than months.</p>
+<hr />
+<h2>References</h2>
+<ol>
+<li>Official tool documentation and package vignettes.</li>
+<li>Stuart, T., et al. (2019). Comprehensive Integration of Single-Cell Data. <em>Cell</em>, 177(7), 1888-1902.e21. (For Seurat-based workflows)</li>
+<li>Orchestrating Single-Cell Analysis with Bioconductor (OSCA) - A comprehensive guide to single-cell data analysis.</li>
+<li><a href="https://bioconductor.org/">Bioconductor</a> and <a href="https://cran.r-project.org/">CRAN</a> package manuals.</li>
+</ol>
+<div class="mt-10 p-8 bg-gray-50 border border-gray-200 rounded-xl">
+  <h3 class="text-xl font-bold text-gray-900 mb-3">Knowledge Check & Next Steps</h3>
+  <p class="text-gray-700 mb-4"><strong>Exercise:</strong> Try running the code examples on a small subset of your own data. Did you encounter any errors? Check your syntax and ensure your input files are correctly formatted.</p>
+  <p class="text-gray-700"><strong>Next Step:</strong> Return to the <a href="start-here.html" class="text-blue-600 font-bold hover:underline">Start Here</a> curriculum to find the next logical tutorial in your learning path, or explore related topics in the <a href="index.html#tutorials" class="text-blue-600 hover:underline">Tutorial Library</a>.</p>
+</div>
+            </div>
+    
                 </div>
             </div>
         </div>
     </div>
     
     <script>
-        // Tell script.js to render THIS specific page's hidden markdown on load
+        // Tell script.js to skip rendering because it is already done
+        window.STATIC_RENDERED = true;
         window.PRELOADED_TUTORIAL_ID = "metagenomics-kraken2-bracken";
     </script>
     

@@ -10,9 +10,9 @@
 <meta content="Nasir Mahmood Abbasi, PhD" name="author"/>
 <meta content="index, follow" name="robots"/>
 <!-- Open Graph tags for social sharing -->
-<meta content="Conda, Mamba, and Micromamba | The Omics Hub" property="og:title"/>
+<meta content="The Omics Hub - Learn Bioinformatics and Single-cell RNA-seq Step by Step" property="og:title"/>
 <meta content="Master computational biology with hands-on tutorials covering shell commands, conda environments, single-cell RNA-seq analysis, and essential bioinformatics tools." property="og:description"/>
-<meta content="https://theomicshub.com" property="og:url"/>
+<meta content="https://theomicshub.com/conda-mamba-part1.html" property="og:url"/>
 <meta content="website" property="og:type"/>
 <meta content="https://theomicshub.com/images/omicshub-logo.png" property="og:image"/>
 <!-- Twitter Card tags -->
@@ -121,11 +121,11 @@ Legal
 <!-- Main Content -->
 <main class="min-h-screen">
 
-    <!-- Tutorial Detail Page (Pre-rendered for SEO) -->
+    <!-- Tutorial Detail Page (Pre-rendered for SEO and Instant Load) -->
     <div class="page-content" id="tutorial-page">
         <div class="container mx-auto px-4 py-8">
             <div class="max-w-4xl mx-auto">
-                <!-- SEO Hidden Markdown Data -->
+                <!-- SEO Hidden Markdown Data for search/index -->
                 <div id="seo-markdown-data" style="display:none;">
 ---
 title: "Conda, Mamba, and Micromamba"
@@ -722,19 +722,490 @@ With proper package management under your belt, you'll never have to worry about
 </div>
 
                 </div>
-                <!-- Rendered content will be injected here by script.js -->
+                <!-- PRE-RENDERED STATIC HTML -->
                 <div id="tutorial-content">
-                    <div class="text-center py-20">
-                        <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mb-4"></div>
-                        <p class="text-gray-600 font-medium">Rendering tutorial...</p>
+                    
+            <div class="mb-12">
+                <div class="flex items-center gap-2 text-sm text-blue-600 font-medium mb-4">
+                    <span>Package Management</span>
+                    <span>•</span>
+                    <span>2025-08-13</span>
+                </div>
+                <h1 class="text-4xl md:text-5xl font-black text-gray-900 mb-6 leading-tight">Conda, Mamba, and Micromamba</h1>
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 font-bold text-lg">
+                        NM
                     </div>
+                    <div>
+                        <p class="font-bold text-gray-900">Nasir Mahmood Abbasi, PhD</p>
+                        <p class="text-sm text-gray-500">Bioinformatics Educator</p>
+                    </div>
+                </div>
+            </div>
+            
+            
+            <div class="mb-12 rounded-2xl overflow-hidden shadow-lg border border-gray-100">
+                <img src="images/conda-mamba-part1.png" alt="Conda, Mamba, and Micromamba" class="w-full h-auto object-cover aspect-video">
+            </div>
+    
+            
+            <div class="prose prose-blue prose-lg max-w-none">
+                <div class="flex flex-wrap items-center gap-4 text-xs font-mono text-gray-500 bg-gray-50 p-3 rounded-lg border border-gray-200 mb-6">
+  <div class="flex items-center gap-1">
+    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+    <span><strong>Tested on:</strong> Python 3.11, R 4.3.2, Ubuntu 24.04</span>
+  </div>
+  <div class="flex items-center gap-1">
+    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+    <span><strong>Last Review:</strong> 2026-08-15</span>
+  </div>
+</div>
+
+<div class="p-6 bg-blue-50 border border-blue-100 rounded-xl mb-8">
+  <h4 class="text-lg font-bold text-blue-900 mb-2">Learning Objectives & Prerequisites</h4>
+  <ul class="list-disc list-inside text-blue-800 space-y-1 mb-4">
+    <li><strong>Prerequisites:</strong> Basic understanding of the Linux terminal and bioinformatics concepts. (See <a href="start-here.html" class="underline">Start Here</a>)</li>
+    <li><strong>Objective:</strong> Master the core concepts and practical commands of this topic.</li>
+    <li><strong>Expected Output:</strong> A reproducible workflow and a clear understanding of the methodology.</li>
+  </ul>
+</div>
+
+<h2>Why Package Management Matters in Bioinformatics</h2>
+<p>If you've ever spent hours trying to install a bioinformatics tool only to run into dependency conflicts, version mismatches, or the dreaded "it works on my machine" problem: you're not alone. Package management is one of the biggest pain points for researchers entering computational biology.</p>
+<p>That's where Conda and Mamba come in. Think of them as your personal assistants for managing software installations: they handle all the messy details of dependencies, versions, and compatibility so you can focus on your research instead of wrestling with installation issues.</p>
+<h2>What Are Conda and Mamba?</h2>
+<h3>Conda: The Foundation</h3>
+<p><strong>Conda</strong> is a package manager and environment management system that was originally created for Python but has evolved to support packages from any language. It's like having a smart librarian who not only knows where every book is but also ensures that when you check out a book, all the related materials you need are available and compatible.</p>
+<p>Key features of Conda:
+- <strong>Cross-platform</strong>: Works on Windows, macOS, and Linux
+- <strong>Language-agnostic</strong>: Manages Python, R, C++, Java, and more
+- <strong>Environment isolation</strong>: Keeps different projects separate
+- <strong>Dependency resolution</strong>: Automatically handles complex dependencies</p>
+<h3>Mamba: The Speed Demon</h3>
+<p><strong>Mamba</strong> is a reimplementation of Conda that's significantly faster: we're talking about going from minutes to seconds for complex installations. It's essentially Conda with a turbo engine, using the same commands and configuration files but with dramatically improved performance.</p>
+<p>Why Mamba is faster:
+- <strong>Parallel processing</strong>: Downloads and installs packages simultaneously
+- <strong>Better algorithms</strong>: More efficient dependency resolution
+- <strong>Optimized codebase</strong>: Written in C++ instead of Python</p>
+<h2>Installation Guide</h2>
+<h3>Option 1: Miniconda (Recommended)</h3>
+<p>Miniconda is a minimal installer that includes only Conda and Python. It's perfect for bioinformatics work because you can install exactly what you need.</p>
+<h4>Linux Installation</h4>
+<pre><code class="language-bash"># Download Miniconda
+wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
+
+# Make it executable
+chmod +x Miniconda3-latest-Linux-x86_64.sh
+
+# Run the installer
+bash Miniconda3-latest-Linux-x86_64.sh
+
+# Follow the prompts and restart your terminal
+</code></pre>
+<h4>macOS Installation</h4>
+<pre><code class="language-bash"># Download Miniconda
+curl -O https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-x86_64.sh
+
+# Run the installer
+bash Miniconda3-latest-MacOSX-x86_64.sh
+
+# For Apple Silicon Macs, use:
+# curl -O https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-arm64.sh
+</code></pre>
+<h4>Windows Installation</h4>
+<ol>
+<li>Download the Windows installer from <a href="https://conda.io/miniconda.html">conda.io</a></li>
+<li>Run the <code>.exe</code> file and follow the installation wizard</li>
+<li>Use Anaconda Prompt for all conda commands</li>
+</ol>
+<h3>Option 2: Anaconda (Full Distribution)</h3>
+<p>Anaconda includes Conda plus 250+ pre-installed packages. It's convenient but takes up more space (3GB vs 400MB for Miniconda).</p>
+<p>Download from <a href="https://www.anaconda.com/products/distribution">anaconda.com</a> and follow the installation instructions.</p>
+<h3>Verifying Installation</h3>
+<p>After installation, verify that Conda is working:</p>
+<pre><code class="language-bash">conda --version
+# Should output something like: conda 23.7.4
+
+conda info
+# Shows detailed information about your Conda installation
+</code></pre>
+<h2>Installing Mamba</h2>
+<p>Once you have Conda installed, adding Mamba is straightforward:</p>
+<pre><code class="language-bash"># Install Mamba from conda-forge
+conda install -c conda-forge mamba
+
+# Verify installation
+mamba --version
+</code></pre>
+<p>From now on, you can use <code>mamba</code> instead of <code>conda</code> for most commands: it's faster and uses the same syntax!</p>
+<h2>Understanding Environments</h2>
+<h3>Why Use Environments?</h3>
+<p>Imagine you're working on three different projects:
+1. <strong>Project A</strong>: Requires Python 3.8 and pandas 1.2
+2. <strong>Project B</strong>: Requires Python 3.9 and pandas 1.5
+3. <strong>Project C</strong>: Requires R 4.1 and Bioconductor 3.14</p>
+<p>Without environments, these requirements would conflict. Environments solve this by creating isolated spaces where each project can have its own dependencies.</p>
+<h3>Creating Your First Environment</h3>
+<pre><code class="language-bash"># Create environment for single-cell analysis
+mamba create -n single-cell python=3.9
+
+# Create environment with specific packages
+mamba create -n rnaseq python=3.9 pandas numpy matplotlib
+
+# Create environment from a file (more on this later)
+mamba env create -f environment.yml
+</code></pre>
+<h3>Activating and Deactivating Environments</h3>
+<pre><code class="language-bash"># Activate environment
+conda activate single-cell
+
+# Your prompt should change to show the active environment:
+# (single-cell) username@computer:~$
+
+# Deactivate environment
+conda deactivate
+
+# List all environments
+conda env list
+</code></pre>
+<p><strong>Pro tip</strong>: Always activate the appropriate environment before starting work on a project!</p>
+<h2>Installing Bioinformatics Software</h2>
+<h3>Essential Channels</h3>
+<p>Channels are repositories where packages are stored. For bioinformatics, you'll primarily use:</p>
+<ul>
+<li><strong>conda-forge</strong>: Community-driven packages with high quality standards</li>
+<li><strong>bioconda</strong>: Specialized channel for bioinformatics software</li>
+<li><strong>defaults</strong>: Anaconda's default channel</li>
+</ul>
+<p>Set up your channels in the right priority order:</p>
+<pre><code class="language-bash"># Add channels (order matters!)
+conda config --add channels defaults
+conda config --add channels bioconda
+conda config --add channels conda-forge
+
+# Set channel priority to strict (recommended)
+conda config --set channel_priority strict
+</code></pre>
+<h3>Installing Common Bioinformatics Tools</h3>
+<h4>Sequence Analysis Tools</h4>
+<pre><code class="language-bash"># Activate your environment
+conda activate bioinformatics
+
+# Install BLAST
+mamba install blast
+
+# Install BWA and Bowtie2 for alignment
+mamba install bwa bowtie2
+
+# Install SAMtools for BAM file manipulation
+mamba install samtools
+
+# Install FastQC for quality control
+mamba install fastqc
+</code></pre>
+<h4>R and Bioconductor</h4>
+<pre><code class="language-bash"># Install R
+mamba install r-base
+
+# Install essential R packages
+mamba install r-ggplot2 r-dplyr r-tidyr r-readr
+
+# Install Seurat for single-cell analysis
+mamba install r-seurat
+
+# Install DESeq2 for differential expression
+mamba install bioconductor-deseq2
+</code></pre>
+<h4>Python Packages for Bioinformatics</h4>
+<pre><code class="language-bash"># Install scientific computing stack
+mamba install numpy pandas scipy matplotlib seaborn
+
+# Install Jupyter for interactive analysis
+mamba install jupyter
+
+# Install Biopython
+mamba install biopython
+
+# Install scanpy for single-cell analysis
+mamba install scanpy
+</code></pre>
+<h3>Installing from Different Channels</h3>
+<p>Sometimes you need to specify the channel explicitly:</p>
+<pre><code class="language-bash"># Install from specific channel
+mamba install -c bioconda gatk4
+
+# Install from multiple channels
+mamba install -c conda-forge -c bioconda snakemake
+
+# Search for packages
+mamba search blast
+mamba search -c bioconda &quot;*blast*&quot;
+</code></pre>
+<h2>Environment Management Best Practices</h2>
+<h3>1. One Environment Per Project</h3>
+<p>Create separate environments for different projects to avoid conflicts:</p>
+<pre><code class="language-bash"># Project-specific environments
+mamba create -n cancer-genomics python=3.9 pandas numpy
+mamba create -n microbiome-analysis python=3.8 qiime2
+mamba create -n phylogenetics python=3.9 biopython dendropy
+</code></pre>
+<h3>2. Document Your Environments</h3>
+<p>Export your environment specifications so others can reproduce your setup:</p>
+<pre><code class="language-bash"># Export environment to file
+conda env export &gt; environment.yml
+
+# Create environment from file
+mamba env create -f environment.yml
+</code></pre>
+<p>Example <code>environment.yml</code> file:</p>
+<pre><code class="language-yaml">name: single-cell-analysis
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - python=3.9
+  - pandas=1.5.3
+  - numpy=1.24.3
+  - matplotlib=3.7.1
+  - seaborn=0.12.2
+  - r-base=4.3.1
+  - r-seurat=4.3.0
+  - r-ggplot2=3.4.2
+  - jupyter=1.0.0
+  - pip
+  - pip:
+    - scanpy==1.9.3
+    - anndata==0.9.2
+</code></pre>
+<h3>3. Pin Important Versions</h3>
+<p>For reproducible research, pin versions of critical packages:</p>
+<pre><code class="language-bash"># Pin specific versions
+mamba install python=3.9.16 pandas=1.5.3 numpy=1.24.3
+
+# Allow patch updates but lock major.minor versions
+mamba install &quot;python&gt;=3.9,&lt;3.10&quot; &quot;pandas&gt;=1.5,&lt;1.6&quot;
+</code></pre>
+<h3>4. Regular Environment Maintenance</h3>
+<p>Keep your environments clean and up-to-date:</p>
+<pre><code class="language-bash"># Update all packages in current environment
+mamba update --all
+
+# Update specific package
+mamba update pandas
+
+# Remove unused packages
+mamba clean --all
+
+# Remove entire environment
+conda env remove -n old-project
+</code></pre>
+<h2>Advanced Usage Patterns</h2>
+<h3>Creating Environments for Specific Workflows</h3>
+<h4>Single-cell RNA-seq Environment</h4>
+<pre><code class="language-bash">mamba create -n scrna-seq python=3.9 \
+  pandas numpy matplotlib seaborn \
+  r-base r-seurat r-ggplot2 r-dplyr \
+  jupyter scanpy anndata \
+  -c conda-forge -c bioconda
+</code></pre>
+<h4>Genomics Pipeline Environment</h4>
+<pre><code class="language-bash">mamba create -n genomics python=3.9 \
+  bwa bowtie2 samtools bcftools \
+  gatk4 picard fastqc multiqc \
+  snakemake -c conda-forge -c bioconda
+</code></pre>
+<h4>Phylogenetics Environment</h4>
+<pre><code class="language-bash">mamba create -n phylo python=3.8 \
+  biopython dendropy ete3 \
+  muscle mafft iqtree raxml \
+  -c conda-forge -c bioconda
+</code></pre>
+<h3>Using Conda with Jupyter Notebooks</h3>
+<p>Make your environments available in Jupyter:</p>
+<pre><code class="language-bash"># Install ipykernel in your environment
+conda activate single-cell
+mamba install ipykernel
+
+# Register environment as Jupyter kernel
+python -m ipykernel install --user --name single-cell --display-name &quot;Single Cell Analysis&quot;
+
+# Start Jupyter and select your kernel
+jupyter notebook
+</code></pre>
+<h3>Environment Variables and Configuration</h3>
+<p>Set environment-specific variables:</p>
+<pre><code class="language-bash"># Set variables when activating environment
+conda activate myenv
+conda env config vars set CUDA_VISIBLE_DEVICES=0
+conda env config vars set OMP_NUM_THREADS=8
+
+# Reactivate to apply changes
+conda deactivate
+conda activate myenv
+</code></pre>
+<h2>Troubleshooting Common Issues</h2>
+<h3>Slow Package Resolution</h3>
+<p>If Conda is taking forever to resolve dependencies:</p>
+<pre><code class="language-bash"># Use Mamba instead (much faster)
+mamba install package-name
+
+# Use libmamba solver (Conda 22.11+)
+conda install --solver=libmamba package-name
+
+# Set libmamba as default solver
+conda config --set solver libmamba
+</code></pre>
+<h3>Conflicting Dependencies</h3>
+<p>When packages conflict:</p>
+<pre><code class="language-bash"># Try installing from different channels
+mamba install -c conda-forge package-name
+
+# Create a fresh environment
+mamba create -n fresh-env package-name
+
+# Use pip as fallback (in conda environment)
+conda activate myenv
+pip install package-name
+</code></pre>
+<h3>Environment Activation Issues</h3>
+<p>If <code>conda activate</code> doesn't work:</p>
+<pre><code class="language-bash"># Initialize conda for your shell
+conda init bash  # or zsh, fish, etc.
+
+# Restart your terminal or source your profile
+source ~/.bashrc
+
+# Alternative activation method
+source activate myenv
+</code></pre>
+<h3>Disk Space Issues</h3>
+<p>Conda can use lots of disk space:</p>
+<pre><code class="language-bash"># Clean package cache
+conda clean --all
+
+# Remove unused packages
+conda clean --packages
+
+# Check disk usage
+du -sh ~/miniconda3/
+</code></pre>
+<h2>Integration with Other Tools</h2>
+<h3>Using Conda with Docker</h3>
+<p>Create reproducible containers:</p>
+<pre><code class="language-dockerfile">FROM continuumio/miniconda3
+
+COPY environment.yml .
+RUN conda env create -f environment.yml
+
+SHELL [&quot;conda&quot;, &quot;run&quot;, &quot;-n&quot;, &quot;myenv&quot;, &quot;/bin/bash&quot;, &quot;-c&quot;]
+RUN echo &quot;Environment is ready!&quot;
+</code></pre>
+<h3>Using Conda with Snakemake</h3>
+<p>Snakemake can automatically manage Conda environments:</p>
+<pre><code class="language-python"># Snakefile
+rule quality_control:
+    input: &quot;data/sample.fastq&quot;
+    output: &quot;results/sample_fastqc.html&quot;
+    conda: &quot;envs/qc.yml&quot;
+    shell: &quot;fastqc {input} -o results/&quot;
+</code></pre>
+<h3>Using Conda with Singularity</h3>
+<p>Build containers with Conda environments:</p>
+<pre><code class="language-bash"># Build Singularity container with Conda
+singularity build mycontainer.sif docker://continuumio/miniconda3
+</code></pre>
+<h2>Best Practices Summary</h2>
+<h3>Do's ✅</h3>
+<ol>
+<li><strong>Use separate environments for different projects</strong></li>
+<li><strong>Document environments with <code>environment.yml</code> files</strong></li>
+<li><strong>Use Mamba for faster installations</strong></li>
+<li><strong>Pin versions for reproducible research</strong></li>
+<li><strong>Regularly clean up unused packages and environments</strong></li>
+<li><strong>Use conda-forge and bioconda channels</strong></li>
+<li><strong>Activate environments before starting work</strong></li>
+</ol>
+<h3>Don'ts ❌</h3>
+<ol>
+<li><strong>Don't install everything in the base environment</strong></li>
+<li><strong>Don't mix conda and pip carelessly</strong></li>
+<li><strong>Don't ignore version conflicts</strong></li>
+<li><strong>Don't forget to document your environments</strong></li>
+<li><strong>Don't use <code>sudo</code> with conda commands</strong></li>
+</ol>
+<h2>Real-World Example: Setting Up a Single-Cell Analysis Environment</h2>
+<p>Let's walk through setting up a complete environment for single-cell RNA-seq analysis:</p>
+<pre><code class="language-bash"># Step 1: Create the environment
+mamba create -n single-cell-analysis python=3.9
+
+# Step 2: Activate the environment
+conda activate single-cell-analysis
+
+# Step 3: Install R and essential packages
+mamba install -c conda-forge r-base=4.3.1
+
+# Step 4: Install Seurat and dependencies
+mamba install -c conda-forge r-seurat r-ggplot2 r-dplyr r-tidyr
+
+# Step 5: Install Python packages
+mamba install -c conda-forge pandas numpy matplotlib seaborn jupyter
+
+# Step 6: Install scanpy for Python-based analysis
+mamba install -c conda-forge scanpy
+
+# Step 7: Install additional tools
+mamba install -c bioconda samtools bcftools
+
+# Step 8: Export environment for reproducibility
+conda env export &gt; single-cell-environment.yml
+
+# Step 9: Test the installation
+python -c &quot;import scanpy; print('scanpy version:', scanpy.__version__)&quot;
+R --slave -e &quot;library(Seurat); cat('Seurat version:', as.character(packageVersion('Seurat')), '\n')&quot;
+</code></pre>
+<h2>Conclusion</h2>
+<p>Conda and Mamba are game-changers for bioinformatics research. They eliminate the frustration of dependency management and make it easy to create reproducible computational environments. With the skills covered in this tutorial, you can:</p>
+<ul>
+<li>Install complex bioinformatics software with confidence</li>
+<li>Create isolated environments for different projects</li>
+<li>Share your computational setup with collaborators</li>
+<li>Reproduce analyses months or years later</li>
+</ul>
+<p>Remember, good package management isn't just about convenience: it's about reproducible science. When you document your environments and pin your package versions, you're contributing to the reproducibility crisis solution in computational biology.</p>
+<h2>Next Steps</h2>
+<p>Now that you've mastered package management, you're ready to tackle more advanced bioinformatics topics:</p>
+<ol>
+<li><strong><a href="command-line-basics-detailed.md">Command Line Fundamentals</a></strong>: Master the terminal for bioinformatics</li>
+<li><strong><a href="single-cell-rnaseq-introduction.md">Single-cell RNA-seq Analysis</a></strong>: Apply your new environment to cutting-edge analysis</li>
+<li><strong><a href="introduction-to-bioinformatics.md">Introduction to Bioinformatics</a></strong>: Understand the broader context</li>
+</ol>
+<p>With proper package management under your belt, you'll never have to worry about "dependency hell" again. Welcome to the world of reproducible bioinformatics!</p>
+<hr />
+<p><em>Having trouble with package installations? Need help setting up a specific environment? <a href="contact.html">Contact us</a>: we're here to help you get your computational environment running smoothly!</em></p>
+<hr />
+<h2>References</h2>
+<ol>
+<li>Official tool documentation and package vignettes.</li>
+<li>Stuart, T., et al. (2019). Comprehensive Integration of Single-Cell Data. <em>Cell</em>, 177(7), 1888-1902.e21. (For Seurat-based workflows)</li>
+<li>Orchestrating Single-Cell Analysis with Bioconductor (OSCA) - A comprehensive guide to single-cell data analysis.</li>
+<li><a href="https://bioconductor.org/">Bioconductor</a> and <a href="https://cran.r-project.org/">CRAN</a> package manuals.</li>
+</ol>
+<div class="mt-10 p-8 bg-gray-50 border border-gray-200 rounded-xl">
+  <h3 class="text-xl font-bold text-gray-900 mb-3">Knowledge Check & Next Steps</h3>
+  <p class="text-gray-700 mb-4"><strong>Exercise:</strong> Try running the code examples on a small subset of your own data. Did you encounter any errors? Check your syntax and ensure your input files are correctly formatted.</p>
+  <p class="text-gray-700"><strong>Next Step:</strong> Return to the <a href="start-here.html" class="text-blue-600 font-bold hover:underline">Start Here</a> curriculum to find the next logical tutorial in your learning path, or explore related topics in the <a href="index.html#tutorials" class="text-blue-600 hover:underline">Tutorial Library</a>.</p>
+</div>
+            </div>
+    
                 </div>
             </div>
         </div>
     </div>
     
     <script>
-        // Tell script.js to render THIS specific page's hidden markdown on load
+        // Tell script.js to skip rendering because it is already done
+        window.STATIC_RENDERED = true;
         window.PRELOADED_TUTORIAL_ID = "conda-mamba-part1";
     </script>
     

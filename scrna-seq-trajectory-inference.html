@@ -10,9 +10,9 @@
 <meta content="Nasir Mahmood Abbasi, PhD" name="author"/>
 <meta content="index, follow" name="robots"/>
 <!-- Open Graph tags for social sharing -->
-<meta content="Trajectory Inference | The Omics Hub" property="og:title"/>
+<meta content="The Omics Hub - Learn Bioinformatics and Single-cell RNA-seq Step by Step" property="og:title"/>
 <meta content="Master computational biology with hands-on tutorials covering shell commands, conda environments, single-cell RNA-seq analysis, and essential bioinformatics tools." property="og:description"/>
-<meta content="https://theomicshub.com" property="og:url"/>
+<meta content="https://theomicshub.com/scrna-seq-trajectory-inference.html" property="og:url"/>
 <meta content="website" property="og:type"/>
 <meta content="https://theomicshub.com/images/omicshub-logo.png" property="og:image"/>
 <!-- Twitter Card tags -->
@@ -121,11 +121,11 @@ Legal
 <!-- Main Content -->
 <main class="min-h-screen">
 
-    <!-- Tutorial Detail Page (Pre-rendered for SEO) -->
+    <!-- Tutorial Detail Page (Pre-rendered for SEO and Instant Load) -->
     <div class="page-content" id="tutorial-page">
         <div class="container mx-auto px-4 py-8">
             <div class="max-w-4xl mx-auto">
-                <!-- SEO Hidden Markdown Data -->
+                <!-- SEO Hidden Markdown Data for search/index -->
                 <div id="seo-markdown-data" style="display:none;">
 ---
 title: "Trajectory Inference"
@@ -279,19 +279,161 @@ Trajectory inference shifts our perspective from discrete clusters to continuous
 </div>
 
                 </div>
-                <!-- Rendered content will be injected here by script.js -->
+                <!-- PRE-RENDERED STATIC HTML -->
                 <div id="tutorial-content">
-                    <div class="text-center py-20">
-                        <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mb-4"></div>
-                        <p class="text-gray-600 font-medium">Rendering tutorial...</p>
+                    
+            <div class="mb-12">
+                <div class="flex items-center gap-2 text-sm text-blue-600 font-medium mb-4">
+                    <span>Single-Cell RNA-seq</span>
+                    <span>•</span>
+                    <span>2026-08-13</span>
+                </div>
+                <h1 class="text-4xl md:text-5xl font-black text-gray-900 mb-6 leading-tight">Trajectory Inference</h1>
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 font-bold text-lg">
+                        NM
                     </div>
+                    <div>
+                        <p class="font-bold text-gray-900">Nasir Mahmood Abbasi, PhD</p>
+                        <p class="text-sm text-gray-500">Bioinformatics Educator</p>
+                    </div>
+                </div>
+            </div>
+            
+            
+            <div class="mb-12 rounded-2xl overflow-hidden shadow-lg border border-gray-100">
+                <img src="images/scrna_heterogeneity.png" alt="Trajectory Inference" class="w-full h-auto object-cover aspect-video">
+            </div>
+    
+            
+            <div class="prose prose-blue prose-lg max-w-none">
+                <div class="flex flex-wrap items-center gap-4 text-xs font-mono text-gray-500 bg-gray-50 p-3 rounded-lg border border-gray-200 mb-6">
+  <div class="flex items-center gap-1">
+    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+    <span><strong>Tested on:</strong> Python 3.11, R 4.3.2, Ubuntu 24.04</span>
+  </div>
+  <div class="flex items-center gap-1">
+    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+    <span><strong>Last Review:</strong> 2026-08-15</span>
+  </div>
+</div>
+
+<div class="p-6 bg-blue-50 border border-blue-100 rounded-xl mb-8">
+  <h4 class="text-lg font-bold text-blue-900 mb-2">Learning Objectives & Prerequisites</h4>
+  <ul class="list-disc list-inside text-blue-800 space-y-1 mb-4">
+    <li><strong>Prerequisites:</strong> Basic understanding of the Linux terminal and bioinformatics concepts. (See <a href="start-here.html" class="underline">Start Here</a>)</li>
+    <li><strong>Objective:</strong> Master the core concepts and practical commands of this topic.</li>
+    <li><strong>Expected Output:</strong> A reproducible workflow and a clear understanding of the methodology.</li>
+  </ul>
+</div>
+
+<h2>Understanding Trajectory Inference</h2>
+<p>Single-cell RNA sequencing provides static snapshots of cellular states. However, biology is highly dynamic. Processes like differentiation, immune activation, and cellular exhaustion are continuous transitions.</p>
+<p><strong>Trajectory inference (TI)</strong> algorithms attempt to order cells along a learned trajectory based on their transcriptional similarities, creating a "pseudotime" axis. This allows us to track gene expression changes as cells differentiate.</p>
+<p>In this tutorial, we will explore the foundational tools for TI in both Python and R.</p>
+<hr />
+<h2>1. PAGA (Python)</h2>
+<p><strong>Partition-based Graph Abstraction (PAGA)</strong> is integrated directly into the Scanpy ecosystem. It generates a coarse-grained map of cellular connectivity and provides a robust scaffold for embedding and pseudotime calculation.</p>
+<pre><code class="language-python">import scanpy as sc
+import scvelo as scv
+
+# Assuming `adata` is already preprocessed, clustered (e.g., 'leiden'), and has a UMAP
+# We must first re-compute the neighborhood graph if it's been altered
+sc.pp.neighbors(adata, n_neighbors=15, n_pcs=40)
+
+# 1. Run PAGA
+sc.tl.paga(adata, groups='leiden')
+
+# 2. Plot the coarse-grained PAGA graph
+sc.pl.paga(adata, plot=False)  
+
+# 3. Use PAGA initialization to recompute a more continuous UMAP
+sc.tl.umap(adata, init_pos='paga')
+sc.pl.umap(adata, color=['leiden'], legend_loc='on data')
+
+# 4. Calculate Diffusion Pseudotime (DPT)
+# First, identify a root cell (e.g., the stem cell or progenitor cluster)
+# Assuming cluster '0' is the known progenitor state
+adata.uns['iroot'] = np.flatnonzero(adata.obs['leiden']  == '0')[0]
+
+# Compute pseudotime
+sc.tl.dpt(adata)
+
+# Visualize pseudotime progression across the manifold
+sc.pl.umap(adata, color='dpt_pseudotime', cmap='viridis')
+</code></pre>
+<hr />
+<h2>2. Monocle3 &amp; Slingshot (R)</h2>
+<p>In the R ecosystem, <strong>Monocle3</strong> and <strong>Slingshot</strong> are the leading frameworks for trajectory inference. Slingshot is highly favored for its simplicity and ability to handle branching trajectories effectively from existing Seurat objects.</p>
+<pre><code class="language-r">library(Seurat)
+library(slingshot)
+library(SingleCellExperiment)
+library(RColorBrewer)
+
+# Convert Seurat object to SingleCellExperiment (SCE)
+sce &lt;- as.SingleCellExperiment(pbmc)
+
+# 1. Run Slingshot
+# We use the existing UMAP embedding and specify a starting cluster
+sce &lt;- slingshot(sce, clusterLabels = 'ident', reducedDim = 'UMAP', start.clus = '0')
+
+# 2. Extract pseudotime and plot
+colors &lt;- colorRampPalette(brewer.pal(11, 'Spectral'))[-11]
+plotcol &lt;- colors[cut(sce$slingPseudotime_1, breaks=100)]
+
+plot(reducedDims(sce)$UMAP, col = plotcol, pch=16, asp = 1)
+lines(SlingshotDataSet(sce), lwd=2, col='black')
+</code></pre>
+<pre><code class="language-r">library(monocle3)
+library(SeuratWrappers)
+
+# Convert Seurat to CellDataSet (CDS)
+cds &lt;- as.cell_data_set(pbmc)
+
+# 1. Calculate size factors and cluster cells within Monocle
+cds &lt;- estimate_size_factors(cds)
+cds &lt;- cluster_cells(cds)
+
+# 2. Learn the principal graph (trajectory)
+cds &lt;- learn_graph(cds)
+
+# 3. Order cells in pseudotime 
+# (This will open an interactive prompt to select the root nodes)
+cds &lt;- order_cells(cds)
+
+# 4. Visualize the trajectory and pseudotime
+plot_cells(cds,
+           color_cells_by = &quot;pseudotime&quot;,
+           label_cell_groups=FALSE,
+           label_leaves=FALSE,
+           label_branch_points=FALSE,
+           graph_label_size=1.5)
+</code></pre>
+<h2>Conclusion</h2>
+<p>Trajectory inference shifts our perspective from discrete clusters to continuous cellular development. Whether you rely on PAGA's graph abstractions in Python or Slingshot's branching lineage logic in R, establishing a solid pseudotime framework is the key to identifying the gene regulatory networks driving cellular transitions.</p>
+<hr />
+<h2>References</h2>
+<ol>
+<li>Official tool documentation and package vignettes.</li>
+<li>Stuart, T., et al. (2019). Comprehensive Integration of Single-Cell Data. <em>Cell</em>, 177(7), 1888-1902.e21. (For Seurat-based workflows)</li>
+<li>Orchestrating Single-Cell Analysis with Bioconductor (OSCA) - A comprehensive guide to single-cell data analysis.</li>
+<li><a href="https://bioconductor.org/">Bioconductor</a> and <a href="https://cran.r-project.org/">CRAN</a> package manuals.</li>
+</ol>
+<div class="mt-10 p-8 bg-gray-50 border border-gray-200 rounded-xl">
+  <h3 class="text-xl font-bold text-gray-900 mb-3">Knowledge Check & Next Steps</h3>
+  <p class="text-gray-700 mb-4"><strong>Exercise:</strong> Try running the code examples on a small subset of your own data. Did you encounter any errors? Check your syntax and ensure your input files are correctly formatted.</p>
+  <p class="text-gray-700"><strong>Next Step:</strong> Return to the <a href="start-here.html" class="text-blue-600 font-bold hover:underline">Start Here</a> curriculum to find the next logical tutorial in your learning path, or explore related topics in the <a href="index.html#tutorials" class="text-blue-600 hover:underline">Tutorial Library</a>.</p>
+</div>
+            </div>
+    
                 </div>
             </div>
         </div>
     </div>
     
     <script>
-        // Tell script.js to render THIS specific page's hidden markdown on load
+        // Tell script.js to skip rendering because it is already done
+        window.STATIC_RENDERED = true;
         window.PRELOADED_TUTORIAL_ID = "scrna-seq-trajectory-inference";
     </script>
     

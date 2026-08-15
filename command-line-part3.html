@@ -10,9 +10,9 @@
 <meta content="Nasir Mahmood Abbasi, PhD" name="author"/>
 <meta content="index, follow" name="robots"/>
 <!-- Open Graph tags for social sharing -->
-<meta content="Advanced Shell Scripting | The Omics Hub" property="og:title"/>
+<meta content="The Omics Hub - Learn Bioinformatics and Single-cell RNA-seq Step by Step" property="og:title"/>
 <meta content="Master computational biology with hands-on tutorials covering shell commands, conda environments, single-cell RNA-seq analysis, and essential bioinformatics tools." property="og:description"/>
-<meta content="https://theomicshub.com" property="og:url"/>
+<meta content="https://theomicshub.com/command-line-part3.html" property="og:url"/>
 <meta content="website" property="og:type"/>
 <meta content="https://theomicshub.com/images/omicshub-logo.png" property="og:image"/>
 <!-- Twitter Card tags -->
@@ -121,11 +121,11 @@ Legal
 <!-- Main Content -->
 <main class="min-h-screen">
 
-    <!-- Tutorial Detail Page (Pre-rendered for SEO) -->
+    <!-- Tutorial Detail Page (Pre-rendered for SEO and Instant Load) -->
     <div class="page-content" id="tutorial-page">
         <div class="container mx-auto px-4 py-8">
             <div class="max-w-4xl mx-auto">
-                <!-- SEO Hidden Markdown Data -->
+                <!-- SEO Hidden Markdown Data for search/index -->
                 <div id="seo-markdown-data" style="display:none;">
 ---
 title: "Advanced Shell Scripting"
@@ -506,19 +506,313 @@ Ready to level up your bioinformatics skills? Check out our other tutorials:
 </div>
 
                 </div>
-                <!-- Rendered content will be injected here by script.js -->
+                <!-- PRE-RENDERED STATIC HTML -->
                 <div id="tutorial-content">
-                    <div class="text-center py-20">
-                        <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mb-4"></div>
-                        <p class="text-gray-600 font-medium">Rendering tutorial...</p>
+                    
+            <div class="mb-12">
+                <div class="flex items-center gap-2 text-sm text-blue-600 font-medium mb-4">
+                    <span>Shell Command Basics</span>
+                    <span>•</span>
+                    <span>2025-08-14</span>
+                </div>
+                <h1 class="text-4xl md:text-5xl font-black text-gray-900 mb-6 leading-tight">Advanced Shell Scripting</h1>
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 font-bold text-lg">
+                        NM
                     </div>
+                    <div>
+                        <p class="font-bold text-gray-900">Nasir Mahmood Abbasi, PhD</p>
+                        <p class="text-sm text-gray-500">Bioinformatics Educator</p>
+                    </div>
+                </div>
+            </div>
+            
+            
+            <div class="mb-12 rounded-2xl overflow-hidden shadow-lg border border-gray-100">
+                <img src="images/shell-commands-part3.png" alt="Advanced Shell Scripting" class="w-full h-auto object-cover aspect-video">
+            </div>
+    
+            
+            <div class="prose prose-blue prose-lg max-w-none">
+                <div class="flex flex-wrap items-center gap-4 text-xs font-mono text-gray-500 bg-gray-50 p-3 rounded-lg border border-gray-200 mb-6">
+  <div class="flex items-center gap-1">
+    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+    <span><strong>Tested on:</strong> Python 3.11, R 4.3.2, Ubuntu 24.04</span>
+  </div>
+  <div class="flex items-center gap-1">
+    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+    <span><strong>Last Review:</strong> 2026-08-15</span>
+  </div>
+</div>
+
+<div class="p-6 bg-blue-50 border border-blue-100 rounded-xl mb-8">
+  <h4 class="text-lg font-bold text-blue-900 mb-2">Learning Objectives & Prerequisites</h4>
+  <ul class="list-disc list-inside text-blue-800 space-y-1 mb-4">
+    <li><strong>Prerequisites:</strong> Basic understanding of the Linux terminal and bioinformatics concepts. (See <a href="start-here.html" class="underline">Start Here</a>)</li>
+    <li><strong>Objective:</strong> Master the core concepts and practical commands of this topic.</li>
+    <li><strong>Expected Output:</strong> A reproducible workflow and a clear understanding of the methodology.</li>
+  </ul>
+</div>
+
+<h2>Advanced Text Processing with <code>awk</code></h2>
+<p><code>awk</code> is a powerful programming language built into Unix systems:</p>
+<h3>Basic <code>awk</code> Patterns</h3>
+<pre><code class="language-bash">awk '{print $1}' file.txt        # Print first column
+awk '{print $1, $3}' file.txt    # Print columns 1 and 3
+awk '{print NF}' file.txt        # Print number of fields
+awk '{print NR, $0}' file.txt    # Print line numbers
+</code></pre>
+<h3>Conditional Processing</h3>
+<pre><code class="language-bash">awk '$3 &gt; 50' data.txt           # Print lines where column 3 &gt; 50
+awk '$1 == &quot;gene&quot;' data.txt      # Print lines where column 1 equals &quot;gene&quot;
+awk 'length($0) &gt; 80' file.txt   # Print lines longer than 80 characters
+</code></pre>
+<h3>Mathematical Operations</h3>
+<pre><code class="language-bash">awk '{sum += $2} END {print sum}' numbers.txt    # Sum column 2
+awk '{print $1, $2*2}' data.txt                 # Multiply column 2 by 2
+awk '{avg = ($2+$3)/2; print $1, avg}' data.txt # Calculate average
+</code></pre>
+<h2>Pipes and Redirection: Connecting the Pieces</h2>
+<h3>Pipes (<code>|</code>)</h3>
+<p>Pipes connect the output of one command to the input of another:</p>
+<pre><code class="language-bash">cat sequences.fasta | grep &quot;&gt;&quot; | wc -l          # Count sequences
+ls -l | grep &quot;\.fastq&quot; | wc -l                  # Count FASTQ files
+sort data.txt | uniq -c | sort -nr              # Sort, count, sort by count
+</code></pre>
+<h3>Redirection</h3>
+<h4>Output redirection (<code>&gt;</code> and <code>&gt;&gt;</code>)</h4>
+<pre><code class="language-bash">ls &gt; file_list.txt               # Write output to file (overwrite)
+ls &gt;&gt; file_list.txt              # Append output to file
+grep &quot;error&quot; log.txt &gt; errors.txt # Save errors to file
+</code></pre>
+<h4>Input redirection (<code>&lt;</code>)</h4>
+<pre><code class="language-bash">sort &lt; unsorted.txt              # Use file as input
+wc -l &lt; sequences.fasta          # Count lines from file
+</code></pre>
+<h3>Combining Commands</h3>
+<pre><code class="language-bash"># Complex bioinformatics pipeline
+cat *.fastq | \
+grep -A 1 &quot;^@&quot; | \
+grep -v &quot;^@&quot; | \
+grep -v &quot;^--&quot; | \
+awk 'length($0) &gt; 50' | \
+wc -l
+</code></pre>
+<h2>File Permissions and Ownership</h2>
+<h3>Understanding Permissions</h3>
+<p>When you run <code>ls -l</code>, you see something like:</p>
+<pre><code>-rw-r--r-- 1 user group 1024 Jan 15 10:30 file.txt
+</code></pre>
+<p>This breaks down as:
+- <code>-</code>: File type (- for file, d for directory)
+- <code>rw-r--r--</code>: Permissions (owner, group, others)
+- <code>1</code>: Number of links
+- <code>user</code>: Owner
+- <code>group</code>: Group
+- <code>1024</code>: File size
+- <code>Jan 15 10:30</code>: Last modified
+- <code>file.txt</code>: Filename</p>
+<h3>Permission Types</h3>
+<ul>
+<li><code>r</code> (read): Can view file contents</li>
+<li><code>w</code> (write): Can modify file</li>
+<li><code>x</code> (execute): Can run file as program</li>
+</ul>
+<h3>Changing Permissions (<code>chmod</code>)</h3>
+<pre><code class="language-bash">chmod +x script.sh               # Make script executable
+chmod 755 script.sh              # rwxr-xr-x
+chmod 644 data.txt               # rw-r--r--
+chmod -R 755 directory/          # Apply to directory recursively
+</code></pre>
+<h2>Process Management</h2>
+<h3>Viewing Running Processes</h3>
+<pre><code class="language-bash">ps                               # Show your processes
+ps aux                           # Show all processes
+top                              # Interactive process viewer
+htop                             # Better interactive viewer (if installed)
+</code></pre>
+<h3>Background Processes</h3>
+<pre><code class="language-bash">long_command &amp;                   # Run in background
+nohup long_command &amp;             # Run in background, ignore hangup
+jobs                             # Show background jobs
+fg %1                            # Bring job 1 to foreground
+bg %1                            # Send job 1 to background
+</code></pre>
+<h3>Killing Processes</h3>
+<pre><code class="language-bash">kill PID                         # Kill process by ID
+kill -9 PID                      # Force kill process
+killall process_name             # Kill all processes by name
+</code></pre>
+<h2>Working with Compressed Files</h2>
+<h3>Compression and Decompression</h3>
+<pre><code class="language-bash">gzip file.txt                    # Compress file
+gunzip file.txt.gz               # Decompress file
+tar -czf archive.tar.gz files/   # Create compressed archive
+tar -xzf archive.tar.gz          # Extract compressed archive
+</code></pre>
+<h3>Working with Compressed Files Directly</h3>
+<pre><code class="language-bash">zcat file.txt.gz | head          # View compressed file
+zgrep &quot;pattern&quot; file.txt.gz      # Search in compressed file
+zless file.txt.gz                # View compressed file interactively
+</code></pre>
+<h2>Environment Variables and PATH</h2>
+<h3>Viewing Environment Variables</h3>
+<pre><code class="language-bash">echo $HOME                       # Show home directory
+echo $PATH                       # Show executable search path
+env                              # Show all environment variables
+</code></pre>
+<h3>Setting Environment Variables</h3>
+<pre><code class="language-bash">export MYVAR=&quot;value&quot;             # Set variable for session
+echo 'export MYVAR=&quot;value&quot;' &gt;&gt; ~/.bashrc  # Set permanently
+</code></pre>
+<h2>Command History and Shortcuts</h2>
+<h3>History Commands</h3>
+<pre><code class="language-bash">history                          # Show command history
+!123                             # Run command 123 from history
+!!                               # Run last command
+!grep                            # Run last command starting with grep
+</code></pre>
+<h3>Keyboard Shortcuts</h3>
+<ul>
+<li><code>Ctrl+C</code>: Cancel current command</li>
+<li><code>Ctrl+Z</code>: Suspend current command</li>
+<li><code>Ctrl+A</code>: Go to beginning of line</li>
+<li><code>Ctrl+E</code>: Go to end of line</li>
+<li><code>Ctrl+U</code>: Clear line before cursor</li>
+<li><code>Ctrl+K</code>: Clear line after cursor</li>
+<li><code>Tab</code>: Auto-complete</li>
+<li><code>↑/↓</code>: Navigate command history</li>
+</ul>
+<h2>Best Practices for Bioinformatics</h2>
+<h3>1. <strong>Organize Your Files</strong></h3>
+<pre><code class="language-bash">project/
+├── data/
+│   ├── raw/
+│   └── processed/
+├── scripts/
+├── results/
+└── docs/
+</code></pre>
+<h3>2. <strong>Use Descriptive Filenames</strong></h3>
+<pre><code class="language-bash"># Good
+sample_01_quality_filtered.fastq
+alignment_results_2024_01_15.sam
+
+# Bad
+file1.txt
+output.txt
+</code></pre>
+<h3>3. <strong>Document Your Commands</strong></h3>
+<pre><code class="language-bash"># Keep a log of important commands
+echo &quot;$(date): Started quality control&quot; &gt;&gt; analysis.log
+fastqc *.fastq &gt;&gt; analysis.log 2&gt;&amp;1
+</code></pre>
+<h3>4. <strong>Test Commands on Small Datasets</strong></h3>
+<pre><code class="language-bash"># Test on first 1000 lines
+head -n 1000 large_file.fastq | your_command
+</code></pre>
+<h3>5. <strong>Use Version Control</strong></h3>
+<pre><code class="language-bash">git init                         # Initialize repository
+git add script.sh                # Add file to staging
+git commit -m &quot;Added QC script&quot;  # Commit changes
+</code></pre>
+<h2>Troubleshooting Common Issues</h2>
+<h3>Command Not Found</h3>
+<pre><code class="language-bash">which command_name               # Check if command exists
+echo $PATH                       # Check search path
+</code></pre>
+<h3>Permission Denied</h3>
+<pre><code class="language-bash">ls -l file.txt                   # Check permissions
+chmod +x script.sh               # Make executable
+</code></pre>
+<h3>File Not Found</h3>
+<pre><code class="language-bash">ls -la                           # Check if file exists
+pwd                              # Verify current directory
+</code></pre>
+<h3>Out of Disk Space</h3>
+<pre><code class="language-bash">df -h                            # Check disk usage
+du -sh *                         # Check directory sizes
+</code></pre>
+<h2>Building Your First Bioinformatics Pipeline</h2>
+<p>Let's put it all together with a simple quality control pipeline:</p>
+<pre><code class="language-bash">#!/bin/bash
+
+# Quality control pipeline for FASTQ files
+# Usage: ./qc_pipeline.sh input_directory output_directory
+
+INPUT_DIR=$1
+OUTPUT_DIR=$2
+
+# Create output directory
+mkdir -p $OUTPUT_DIR
+
+# Process each FASTQ file
+for file in $INPUT_DIR/*.fastq; do
+    filename=$(basename &quot;$file&quot; .fastq)
+    # Count reads
+    read_count=$(wc -l &lt; &quot;$file&quot; | awk '{print $1/4}')
+    echo &quot;$filename: $read_count reads&quot;
+    # Check for adapters
+    adapter_count=$(grep -c &quot;AGATCGGAAGAG&quot; &quot;$file&quot;)
+    echo &quot;$filename: $adapter_count potential adapter sequences&quot;
+    # Calculate average read length
+    avg_length=$(awk 'NR%4==2{sum+=length($0); count++} END{print sum/count}' &quot;$file&quot;)
+    echo &quot;$filename: Average read length = $avg_length&quot;
+    # Save summary
+    echo -e &quot;$filename\t$read_count\t$adapter_count\t$avg_length&quot; &gt;&gt; $OUTPUT_DIR/summary.txt
+done
+
+echo &quot;Quality control complete. Results in $OUTPUT_DIR/summary.txt&quot;
+</code></pre>
+<h2>Advanced Topics to Explore Next</h2>
+<p>Once you're comfortable with these basics, consider learning:</p>
+<ul>
+<li><strong>Regular expressions</strong>: Pattern matching on steroids</li>
+<li><strong>Shell scripting</strong>: Automating complex workflows</li>
+<li><strong>SSH and remote computing</strong>: Working on clusters</li>
+<li><strong>Package managers</strong>: Installing bioinformatics software</li>
+<li><strong>Workflow managers</strong>: Snakemake, Nextflow, CWL</li>
+</ul>
+<h2>Conclusion</h2>
+<p>Mastering the command line is like learning a new language: it takes practice, but once you're fluent, it opens up a world of possibilities. The commands and concepts covered in this tutorial form the foundation of computational biology work.</p>
+<p>Remember:
+- <strong>Practice regularly</strong>: Use the command line for daily tasks
+- <strong>Start simple</strong>: Master basic commands before moving to complex pipelines
+- <strong>Read the manual</strong>: Use <code>man command_name</code> to learn more about any command
+- <strong>Don't be afraid to experiment</strong>: The best way to learn is by doing</p>
+<p>The command line is your gateway to powerful bioinformatics analysis. With these skills, you're ready to tackle real biological datasets and start uncovering the secrets hidden in genomic data.</p>
+<h2>Next Steps</h2>
+<p>Ready to level up your bioinformatics skills? Check out our other tutorials:</p>
+<ol>
+<li><strong><a href="conda-mamba-installation-guide.md">Package Management with Conda</a></strong>: Learn to install and manage bioinformatics software</li>
+<li><strong><a href="single-cell-rnaseq-introduction.md">Single-cell RNA-seq Analysis</a></strong>: Apply your command line skills to cutting-edge analysis</li>
+<li><strong><a href="introduction-to-bioinformatics.md">Introduction to Bioinformatics</a></strong>: Understand the bigger picture</li>
+</ol>
+<hr />
+<p><em>Questions about command line usage? Need help with a specific bioinformatics task? <a href="contact.html">Contact us</a>: we're here to help you master computational biology!</em></p>
+<hr />
+<h2>References</h2>
+<ol>
+<li>Official tool documentation and package vignettes.</li>
+<li>Stuart, T., et al. (2019). Comprehensive Integration of Single-Cell Data. <em>Cell</em>, 177(7), 1888-1902.e21. (For Seurat-based workflows)</li>
+<li>Orchestrating Single-Cell Analysis with Bioconductor (OSCA) - A comprehensive guide to single-cell data analysis.</li>
+<li><a href="https://bioconductor.org/">Bioconductor</a> and <a href="https://cran.r-project.org/">CRAN</a> package manuals.</li>
+</ol>
+<div class="mt-10 p-8 bg-gray-50 border border-gray-200 rounded-xl">
+  <h3 class="text-xl font-bold text-gray-900 mb-3">Knowledge Check & Next Steps</h3>
+  <p class="text-gray-700 mb-4"><strong>Exercise:</strong> Try running the code examples on a small subset of your own data. Did you encounter any errors? Check your syntax and ensure your input files are correctly formatted.</p>
+  <p class="text-gray-700"><strong>Next Step:</strong> Return to the <a href="start-here.html" class="text-blue-600 font-bold hover:underline">Start Here</a> curriculum to find the next logical tutorial in your learning path, or explore related topics in the <a href="index.html#tutorials" class="text-blue-600 hover:underline">Tutorial Library</a>.</p>
+</div>
+            </div>
+    
                 </div>
             </div>
         </div>
     </div>
     
     <script>
-        // Tell script.js to render THIS specific page's hidden markdown on load
+        // Tell script.js to skip rendering because it is already done
+        window.STATIC_RENDERED = true;
         window.PRELOADED_TUTORIAL_ID = "command-line-part3";
     </script>
     

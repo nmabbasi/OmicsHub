@@ -10,9 +10,9 @@
 <meta content="Nasir Mahmood Abbasi, PhD" name="author"/>
 <meta content="index, follow" name="robots"/>
 <!-- Open Graph tags for social sharing -->
-<meta content="Multi-Omics: CITE-seq & WNN Integration | The Omics Hub" property="og:title"/>
+<meta content="The Omics Hub - Learn Bioinformatics and Single-cell RNA-seq Step by Step" property="og:title"/>
 <meta content="Master computational biology with hands-on tutorials covering shell commands, conda environments, single-cell RNA-seq analysis, and essential bioinformatics tools." property="og:description"/>
-<meta content="https://theomicshub.com" property="og:url"/>
+<meta content="https://theomicshub.com/cite-seq-wnn-multiomics.html" property="og:url"/>
 <meta content="website" property="og:type"/>
 <meta content="https://theomicshub.com/images/omicshub-logo.png" property="og:image"/>
 <!-- Twitter Card tags -->
@@ -121,11 +121,11 @@ Legal
 <!-- Main Content -->
 <main class="min-h-screen">
 
-    <!-- Tutorial Detail Page (Pre-rendered for SEO) -->
+    <!-- Tutorial Detail Page (Pre-rendered for SEO and Instant Load) -->
     <div class="page-content" id="tutorial-page">
         <div class="container mx-auto px-4 py-8">
             <div class="max-w-4xl mx-auto">
-                <!-- SEO Hidden Markdown Data -->
+                <!-- SEO Hidden Markdown Data for search/index -->
                 <div id="seo-markdown-data" style="display:none;">
 ---
 title: "Multi-Omics: CITE-seq & WNN Integration"
@@ -271,19 +271,143 @@ By leveraging WNN integration, you unlock a much higher resolution of cellular h
 </div>
 
                 </div>
-                <!-- Rendered content will be injected here by script.js -->
+                <!-- PRE-RENDERED STATIC HTML -->
                 <div id="tutorial-content">
-                    <div class="text-center py-20">
-                        <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mb-4"></div>
-                        <p class="text-gray-600 font-medium">Rendering tutorial...</p>
+                    
+            <div class="mb-12">
+                <div class="flex items-center gap-2 text-sm text-blue-600 font-medium mb-4">
+                    <span>Advanced Single-Cell Analysis</span>
+                    <span>•</span>
+                    <span>2026-08-14</span>
+                </div>
+                <h1 class="text-4xl md:text-5xl font-black text-gray-900 mb-6 leading-tight">Multi-Omics: CITE-seq & WNN Integration</h1>
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 font-bold text-lg">
+                        NM
                     </div>
+                    <div>
+                        <p class="font-bold text-gray-900">Nasir Mahmood Abbasi, PhD</p>
+                        <p class="text-sm text-gray-500">Bioinformatics Educator</p>
+                    </div>
+                </div>
+            </div>
+            
+            
+            <div class="mb-12 rounded-2xl overflow-hidden shadow-lg border border-gray-100">
+                <img src="images/cat_advanced_sc.png" alt="Multi-Omics: CITE-seq & WNN Integration" class="w-full h-auto object-cover aspect-video">
+            </div>
+    
+            
+            <div class="prose prose-blue prose-lg max-w-none">
+                <div class="flex flex-wrap items-center gap-4 text-xs font-mono text-gray-500 bg-gray-50 p-3 rounded-lg border border-gray-200 mb-6">
+  <div class="flex items-center gap-1">
+    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+    <span><strong>Tested on:</strong> Python 3.11, R 4.3.2, Ubuntu 24.04</span>
+  </div>
+  <div class="flex items-center gap-1">
+    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+    <span><strong>Last Review:</strong> 2026-08-15</span>
+  </div>
+</div>
+
+<div class="p-6 bg-blue-50 border border-blue-100 rounded-xl mb-8">
+  <h4 class="text-lg font-bold text-blue-900 mb-2">Learning Objectives & Prerequisites</h4>
+  <ul class="list-disc list-inside text-blue-800 space-y-1 mb-4">
+    <li><strong>Prerequisites:</strong> Basic understanding of the Linux terminal and bioinformatics concepts. (See <a href="start-here.html" class="underline">Start Here</a>)</li>
+    <li><strong>Objective:</strong> Master the core concepts and practical commands of this topic.</li>
+    <li><strong>Expected Output:</strong> A reproducible workflow and a clear understanding of the methodology.</li>
+  </ul>
+</div>
+
+<h1>Multi-Omics: CITE-seq &amp; WNN Integration</h1>
+<h2>Introduction</h2>
+<p>Traditional scRNA-seq only measures the transcriptome. However, many critical biological processes are driven by cell surface proteins (e.g., CD4, CD8, PD-1) whose abundance does not always correlate perfectly with RNA levels. </p>
+<p><strong>CITE-seq</strong> (Cellular Indexing of Transcriptomes and Epitopes by Sequencing) solves this by using antibody-derived tags (ADTs) to simultaneously measure RNA and protein levels in the exact same cell. </p>
+<p>This tutorial covers the normalization of ADT data and the advanced <strong>Weighted Nearest Neighbor (WNN)</strong> integration method in Seurat to combine these two modalities.</p>
+<hr />
+<h2>1. Preparing the CITE-seq Object</h2>
+<p>A CITE-seq Seurat object contains two distinct "Assays": <code>RNA</code> (for transcripts) and <code>ADT</code> (for proteins).</p>
+<pre><code class="language-r">library(Seurat)
+library(ggplot2)
+
+# Assuming 'seurat_obj' has already been loaded with both matrices
+# Verify the assays
+Assays(seurat_obj)
+# Output should show: &quot;RNA&quot;, &quot;ADT&quot;
+</code></pre>
+<hr />
+<h2>2. ADT Normalization (Margin 1 vs Margin 2)</h2>
+<p>While RNA is usually normalized via LogNormalize or SCTransform, ADT data requires <strong>Centered Log-Ratio (CLR)</strong> normalization. </p>
+<p>There are two ways to apply CLR:
+*   <strong>Margin = 1 (Across cells):</strong> Normalizes the protein signal across all cells independently. Best when you want to compare the expression of a specific protein across different cell populations.
+*   <strong>Margin = 2 (Across proteins):</strong> Normalizes the signal across all proteins within a single cell. Best for reducing cell-to-cell technical variations.</p>
+<pre><code class="language-r"># Set Default Assay to ADT
+DefaultAssay(seurat_obj) &lt;- 'ADT'
+
+# Normalize using CLR (Margin 2 is standard for CITE-seq in Seurat v4+)
+seurat_obj &lt;- NormalizeData(seurat_obj, normalization.method = 'CLR', margin = 2)
+
+# Run PCA specifically on the protein data
+# (Unlike RNA, we do not find variable features; we use all ADT proteins)
+seurat_obj &lt;- ScaleData(seurat_obj)
+seurat_obj &lt;- RunPCA(seurat_obj, features = rownames(seurat_obj), reduction.name = 'apca')
+</code></pre>
+<hr />
+<h2>3. Weighted Nearest Neighbor (WNN) Integration</h2>
+<p>How do you combine RNA and Protein clustering? If you simply merge them, one modality will dominate the other. </p>
+<p>Seurat's <strong>WNN Analysis</strong> solves this by calculating a "weight" for each cell. If a cell has a very clear protein profile but a noisy RNA profile, WNN assigns higher weight to the protein data for that specific cell.</p>
+<pre><code class="language-r"># Ensure RNA has also been processed (SCTransform or LogNormalize + PCA)
+DefaultAssay(seurat_obj) &lt;- 'RNA'
+
+# Find the multi-modal neighbors using WNN
+seurat_obj &lt;- FindMultiModalNeighbors(
+  seurat_obj, 
+  reduction.list = list(&quot;pca&quot;, &quot;apca&quot;), # RNA PCA and ADT PCA
+  dims.list = list(1:30, 1:18),         # Dimensions to use for each
+  modality.weight.name = &quot;RNA.weight&quot;   # Name of the weight column
+)
+
+# Run UMAP and Clustering on the integrated WNN graph
+seurat_obj &lt;- RunUMAP(seurat_obj, nn.name = &quot;weighted.nn&quot;, reduction.name = &quot;wnn.umap&quot;, reduction.key = &quot;wnnUMAP_&quot;)
+seurat_obj &lt;- FindClusters(seurat_obj, graph.name = &quot;wsnn&quot;, algorithm = 3, resolution = 0.5)
+</code></pre>
+<hr />
+<h2>4. Visualizing Multi-Omics Data</h2>
+<p>Once WNN is complete, you can visualize both modalities side-by-side to see how surface proteins perfectly define clusters that RNA alone struggles to separate (such as CD4+ Memory vs Naive T-cells).</p>
+<pre><code class="language-r"># Visualize the WNN UMAP
+DimPlot(seurat_obj, reduction = 'wnn.umap', group.by = 'seurat_clusters', label = TRUE)
+
+# Compare RNA vs Protein expression directly
+FeaturePlot(seurat_obj, 
+            features = c(&quot;rna_CD4&quot;, &quot;adt_CD4&quot;), # Prefix determines the assay
+            reduction = 'wnn.umap',
+            min.cutoff = 'q10', 
+            max.cutoff = 'q90')
+</code></pre>
+<p>By leveraging WNN integration, you unlock a much higher resolution of cellular heterogeneity than standard scRNA-seq can provide.</p>
+<hr />
+<h2>References</h2>
+<ol>
+<li>Official tool documentation and package vignettes.</li>
+<li>Stuart, T., et al. (2019). Comprehensive Integration of Single-Cell Data. <em>Cell</em>, 177(7), 1888-1902.e21. (For Seurat-based workflows)</li>
+<li>Orchestrating Single-Cell Analysis with Bioconductor (OSCA) - A comprehensive guide to single-cell data analysis.</li>
+<li><a href="https://bioconductor.org/">Bioconductor</a> and <a href="https://cran.r-project.org/">CRAN</a> package manuals.</li>
+</ol>
+<div class="mt-10 p-8 bg-gray-50 border border-gray-200 rounded-xl">
+  <h3 class="text-xl font-bold text-gray-900 mb-3">Knowledge Check & Next Steps</h3>
+  <p class="text-gray-700 mb-4"><strong>Exercise:</strong> Try running the code examples on a small subset of your own data. Did you encounter any errors? Check your syntax and ensure your input files are correctly formatted.</p>
+  <p class="text-gray-700"><strong>Next Step:</strong> Return to the <a href="start-here.html" class="text-blue-600 font-bold hover:underline">Start Here</a> curriculum to find the next logical tutorial in your learning path, or explore related topics in the <a href="index.html#tutorials" class="text-blue-600 hover:underline">Tutorial Library</a>.</p>
+</div>
+            </div>
+    
                 </div>
             </div>
         </div>
     </div>
     
     <script>
-        // Tell script.js to render THIS specific page's hidden markdown on load
+        // Tell script.js to skip rendering because it is already done
+        window.STATIC_RENDERED = true;
         window.PRELOADED_TUTORIAL_ID = "cite-seq-wnn-multiomics";
     </script>
     

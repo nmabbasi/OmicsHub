@@ -10,9 +10,9 @@
 <meta content="Nasir Mahmood Abbasi, PhD" name="author"/>
 <meta content="index, follow" name="robots"/>
 <!-- Open Graph tags for social sharing -->
-<meta content="Spatial Transcriptomics | The Omics Hub" property="og:title"/>
+<meta content="The Omics Hub - Learn Bioinformatics and Single-cell RNA-seq Step by Step" property="og:title"/>
 <meta content="Master computational biology with hands-on tutorials covering shell commands, conda environments, single-cell RNA-seq analysis, and essential bioinformatics tools." property="og:description"/>
-<meta content="https://theomicshub.com" property="og:url"/>
+<meta content="https://theomicshub.com/spatial-transcriptomics-r-python.html" property="og:url"/>
 <meta content="website" property="og:type"/>
 <meta content="https://theomicshub.com/images/omicshub-logo.png" property="og:image"/>
 <!-- Twitter Card tags -->
@@ -121,11 +121,11 @@ Legal
 <!-- Main Content -->
 <main class="min-h-screen">
 
-    <!-- Tutorial Detail Page (Pre-rendered for SEO) -->
+    <!-- Tutorial Detail Page (Pre-rendered for SEO and Instant Load) -->
     <div class="page-content" id="tutorial-page">
         <div class="container mx-auto px-4 py-8">
             <div class="max-w-4xl mx-auto">
-                <!-- SEO Hidden Markdown Data -->
+                <!-- SEO Hidden Markdown Data for search/index -->
                 <div id="seo-markdown-data" style="display:none;">
 ---
 title: "Spatial Transcriptomics"
@@ -283,19 +283,149 @@ Both ecosystems are incredibly powerful. **Seurat (R)** provides an easy, out-of
 </div>
 
                 </div>
-                <!-- Rendered content will be injected here by script.js -->
+                <!-- PRE-RENDERED STATIC HTML -->
                 <div id="tutorial-content">
-                    <div class="text-center py-20">
-                        <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mb-4"></div>
-                        <p class="text-gray-600 font-medium">Rendering tutorial...</p>
+                    
+            <div class="mb-12">
+                <div class="flex items-center gap-2 text-sm text-blue-600 font-medium mb-4">
+                    <span>Spatial Transcriptomics</span>
+                    <span>•</span>
+                    <span>2026-08-14</span>
+                </div>
+                <h1 class="text-4xl md:text-5xl font-black text-gray-900 mb-6 leading-tight">Spatial Transcriptomics</h1>
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 font-bold text-lg">
+                        NM
                     </div>
+                    <div>
+                        <p class="font-bold text-gray-900">Nasir Mahmood Abbasi, PhD</p>
+                        <p class="text-sm text-gray-500">Bioinformatics Educator</p>
+                    </div>
+                </div>
+            </div>
+            
+            
+            <div class="mb-12 rounded-2xl overflow-hidden shadow-lg border border-gray-100">
+                <img src="images/single-cell-analysis.png" alt="Spatial Transcriptomics" class="w-full h-auto object-cover aspect-video">
+            </div>
+    
+            
+            <div class="prose prose-blue prose-lg max-w-none">
+                <div class="flex flex-wrap items-center gap-4 text-xs font-mono text-gray-500 bg-gray-50 p-3 rounded-lg border border-gray-200 mb-6">
+  <div class="flex items-center gap-1">
+    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+    <span><strong>Tested on:</strong> Python 3.11, R 4.3.2, Ubuntu 24.04</span>
+  </div>
+  <div class="flex items-center gap-1">
+    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+    <span><strong>Last Review:</strong> 2026-08-15</span>
+  </div>
+</div>
+
+<div class="p-6 bg-blue-50 border border-blue-100 rounded-xl mb-8">
+  <h4 class="text-lg font-bold text-blue-900 mb-2">Learning Objectives & Prerequisites</h4>
+  <ul class="list-disc list-inside text-blue-800 space-y-1 mb-4">
+    <li><strong>Prerequisites:</strong> Basic understanding of the Linux terminal and bioinformatics concepts. (See <a href="start-here.html" class="underline">Start Here</a>)</li>
+    <li><strong>Objective:</strong> Master the core concepts and practical commands of this topic.</li>
+    <li><strong>Expected Output:</strong> A reproducible workflow and a clear understanding of the methodology.</li>
+  </ul>
+</div>
+
+<h1>Spatial Transcriptomics: Bridging RNA and Anatomy</h1>
+<h2>Introduction to Spatial Biology</h2>
+<p>Traditional single-cell RNA-seq requires dissociating tissues, which destroys the physical architecture and context of the cells. <strong>Spatial Transcriptomics</strong> (such as 10x Genomics Visium or Xenium) solves this by mapping gene expression directly onto intact histological tissue slices (like H&amp;E stains).</p>
+<p>This tutorial provides the foundational workflows for processing spatial data in both R and Python.</p>
+<hr />
+<h2>1. Loading and Preprocessing Spatial Data</h2>
+<p>Spatial data objects are unique because they contain two distinct types of data: the gene expression matrix (counts) and the spatial coordinates/images.</p>
+<h3>R (Seurat) Approach</h3>
+<p>In R, the <code>Seurat</code> package has native spatial support.</p>
+<pre><code class="language-r">library(Seurat)
+library(ggplot2)
+
+# Load 10x Visium Data (points to the directory containing spatial/ and filtered_feature_bc_matrix.h5)
+spatial_data &lt;- Load10X_Spatial(data.dir = &quot;visium_brain_data/&quot;)
+
+# Normalize the data using SCTransform (recommended for spatial data)
+spatial_data &lt;- SCTransform(spatial_data, assay = &quot;Spatial&quot;, verbose = FALSE)
+</code></pre>
+<h3>Python (Squidpy / Scanpy) Approach</h3>
+<p>In Python, <code>Scanpy</code> handles the RNA, and <code>Squidpy</code> handles the spatial graphs.</p>
+<pre><code class="language-python">import scanpy as sc
+import squidpy as sq
+
+# Load 10x Visium Data
+adata = sq.read.visium(&quot;visium_brain_data/&quot;)
+
+# Normalize and log-transform
+sc.pp.normalize_total(adata, inplace=True)
+sc.pp.log1p(adata)
+sc.pp.highly_variable_genes(adata, flavor=&quot;seurat&quot;, n_top_genes=2000)
+</code></pre>
+<hr />
+<h2>2. Visualizing Gene Expression on Tissue</h2>
+<p>The power of spatial transcriptomics is seeing exactly <em>where</em> a gene is highly expressed across the physical tissue.</p>
+<h3>R (Seurat)</h3>
+<p>Use the <code>SpatialFeaturePlot</code> function to overlay gene expression onto the H&amp;E image.</p>
+<pre><code class="language-r"># Visualize a specific marker gene (e.g., a neuron marker in a brain slice)
+SpatialFeaturePlot(spatial_data, features = c(&quot;Snap25&quot;, &quot;Mbp&quot;)) +
+  theme(legend.position = &quot;right&quot;)
+</code></pre>
+<h3>Python (Squidpy)</h3>
+<p>Use the <code>sc.pl.spatial</code> function.</p>
+<pre><code class="language-python"># Visualize marker genes over the tissue image
+sc.pl.spatial(adata, color=[&quot;Snap25&quot;, &quot;Mbp&quot;], alpha_img=0.5, cmap=&quot;magma&quot;)
+</code></pre>
+<hr />
+<h2>3. Spatial Clustering</h2>
+<p>Just like scRNA-seq, we can cluster the "spots" based on their transcriptional profiles to find spatial domains (e.g., cortical layers in a brain, or tumor microenvironments).</p>
+<h3>R (Seurat)</h3>
+<pre><code class="language-r"># Standard clustering workflow
+spatial_data &lt;- RunPCA(spatial_data, assay = &quot;SCT&quot;, verbose = FALSE)
+spatial_data &lt;- FindNeighbors(spatial_data, reduction = &quot;pca&quot;, dims = 1:30)
+spatial_data &lt;- FindClusters(spatial_data, verbose = FALSE)
+
+# Plot the clusters onto the physical tissue
+SpatialDimPlot(spatial_data, label = TRUE, label.size = 3)
+</code></pre>
+<h3>Python (Squidpy)</h3>
+<p>Squidpy goes a step further by calculating a <strong>spatial neighbor graph</strong>, ensuring that clusters take physical proximity into account, not just transcriptional similarity.</p>
+<pre><code class="language-python"># Compute PCA and neighbors
+sc.tl.pca(adata)
+sc.pp.neighbors(adata)
+sc.tl.leiden(adata, key_added=&quot;clusters&quot;)
+
+# Compute the spatial graph
+sq.gr.spatial_neighbors(adata)
+
+# Plot the transcriptional clusters on the tissue
+sc.pl.spatial(adata, color=&quot;clusters&quot;, alpha_img=0.4)
+</code></pre>
+<h2>Summary</h2>
+<p>Both ecosystems are incredibly powerful. <strong>Seurat (R)</strong> provides an easy, out-of-the-box experience that is very familiar if you already do scRNA-seq. <strong>Squidpy (Python)</strong> provides superior tools for graph-based spatial statistics, such as testing if two cell types physically co-occur in the tissue.</p>
+<hr />
+<h2>References</h2>
+<ol>
+<li>Official tool documentation and package vignettes.</li>
+<li>Stuart, T., et al. (2019). Comprehensive Integration of Single-Cell Data. <em>Cell</em>, 177(7), 1888-1902.e21. (For Seurat-based workflows)</li>
+<li>Orchestrating Single-Cell Analysis with Bioconductor (OSCA) - A comprehensive guide to single-cell data analysis.</li>
+<li><a href="https://bioconductor.org/">Bioconductor</a> and <a href="https://cran.r-project.org/">CRAN</a> package manuals.</li>
+</ol>
+<div class="mt-10 p-8 bg-gray-50 border border-gray-200 rounded-xl">
+  <h3 class="text-xl font-bold text-gray-900 mb-3">Knowledge Check & Next Steps</h3>
+  <p class="text-gray-700 mb-4"><strong>Exercise:</strong> Try running the code examples on a small subset of your own data. Did you encounter any errors? Check your syntax and ensure your input files are correctly formatted.</p>
+  <p class="text-gray-700"><strong>Next Step:</strong> Return to the <a href="start-here.html" class="text-blue-600 font-bold hover:underline">Start Here</a> curriculum to find the next logical tutorial in your learning path, or explore related topics in the <a href="index.html#tutorials" class="text-blue-600 hover:underline">Tutorial Library</a>.</p>
+</div>
+            </div>
+    
                 </div>
             </div>
         </div>
     </div>
     
     <script>
-        // Tell script.js to render THIS specific page's hidden markdown on load
+        // Tell script.js to skip rendering because it is already done
+        window.STATIC_RENDERED = true;
         window.PRELOADED_TUTORIAL_ID = "spatial-transcriptomics-r-python";
     </script>
     
