@@ -7,6 +7,16 @@ let currentTutorial = null;
 
 // Initialize the website
 document.addEventListener('DOMContentLoaded', function() {
+    if (window.PRELOADED_TUTORIAL_ID) {
+        const seoData = document.getElementById('seo-markdown-data');
+        if (seoData && seoData.textContent.trim()) {
+            const tempTutorial = parseTutorial(seoData.textContent.trim(), window.PRELOADED_TUTORIAL_ID + '.md');
+            if (tempTutorial) {
+                tutorials = [tempTutorial];
+                showTutorial(window.PRELOADED_TUTORIAL_ID, false);
+            }
+        }
+    }
     loadTutorials();
     setupEventListeners();
     createBackToTopButton();
@@ -140,31 +150,37 @@ async function loadTutorials() {
         
         tutorials = [];
         
-        for (const file of tutorialFiles) {
+        const fetchPromises = tutorialFiles.map(async (file) => {
             try {
-                // GitHub Pages compatible path handling
-                let fetchPath;
-                if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-                    // Local development
-                    fetchPath = `lessons/${file}`;
-                } else {
-                    // GitHub Pages - use relative path from current location
-                    fetchPath = `lessons/${file}`;
-                }
+                let fetchPath = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+                    ? `lessons/${file}`
+                    : `lessons/${file}`;
                 
                 const response = await fetch(fetchPath);
                 if (response.ok) {
                     const content = await response.text();
-                    const tutorial = parseTutorial(content, file);
-                    if (tutorial) {
-                        tutorials.push(tutorial);
-                    }
+                    return parseTutorial(content, file);
                 } else {
                     console.warn(`Could not load tutorial: ${file}. Status: ${response.status}`);
+                    return null;
                 }
             } catch (error) {
                 console.warn(`Error fetching tutorial: ${file}`, error);
+                return null;
             }
+        });
+
+        const results = await Promise.all(fetchPromises);
+        
+        // Merge the instantly-rendered tutorial with the fully loaded set
+        const fullyLoadedTutorials = results.filter(t => t !== null);
+        
+        if (tutorials.length > 0 && window.PRELOADED_TUTORIAL_ID) {
+            // If we are currently viewing a preloaded tutorial, seamlessly swap in the full array 
+            // without interrupting the UI state.
+            tutorials = fullyLoadedTutorials;
+        } else {
+            tutorials = fullyLoadedTutorials;
         }
         
         // We intentionally DO NOT sort by date anymore.
@@ -478,6 +494,20 @@ async function showTutorial(tutorialId, addToHistory = true) {
     const tutorial = tutorials.find(t => t.id === tutorialId);
     if (!tutorial) {
         console.error('Tutorial not found:', tutorialId);
+        const tutorialContentDiv = document.getElementById('tutorial-content');
+        if (tutorialContentDiv) {
+            tutorialContentDiv.innerHTML = `
+                <div class="bg-red-50 border-l-4 border-red-500 p-8 rounded-lg shadow-sm text-center">
+                    <h2 class="text-2xl font-bold text-red-700 mb-4">Tutorial Not Found</h2>
+                    <p class="text-gray-700 mb-6">This tutorial could not be loaded. It may have been moved or the connection timed out.</p>
+                    <button onclick="showHome()" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium">
+                        Return to Tutorials
+                    </button>
+                </div>
+            `;
+            document.querySelectorAll('.page-content').forEach(page => page.classList.add('hidden'));
+            document.getElementById('tutorial-page').classList.remove('hidden');
+        }
         return;
     }
 
@@ -565,6 +595,19 @@ async function showTutorial(tutorialId, addToHistory = true) {
                     }
                     return '';
                 })()}
+
+                <!-- Services CTA -->
+                <div class="my-10 bg-gray-50 border border-gray-200 rounded-2xl p-8 text-center shadow-sm">
+                    <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                    </div>
+                    <h3 class="text-2xl font-bold text-gray-900 mb-3">Need help with your own dataset?</h3>
+                    <p class="text-gray-600 mb-6 max-w-2xl mx-auto">Get expert, 1-on-1 support for your bioinformatics analysis. Whether it's troubleshooting Conda environments, reviewing Scanpy/Seurat pipelines, or personalized mentoring, I can help you accelerate your research.</p>
+                    <div class="flex gap-4 justify-center flex-wrap">
+                        <a href="services.html" class="inline-block bg-blue-600 text-white font-bold px-8 py-3 rounded-xl hover:bg-blue-700 transition-colors shadow-md">View Consulting Services</a>
+                        <a href="services.html" class="inline-block bg-white text-gray-700 border border-gray-200 font-bold px-8 py-3 rounded-xl hover:bg-gray-50 transition-colors shadow-sm">Get Free Cheat Sheet</a>
+                    </div>
+                </div>
 
                 <!-- Tutorial Footer -->
                 <div class="border-t border-gray-200 pt-6 mt-8">
