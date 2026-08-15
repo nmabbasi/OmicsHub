@@ -9,7 +9,22 @@ let currentTutorial = null;
 document.addEventListener('DOMContentLoaded', function() {
     if (window.PRELOADED_TUTORIAL_ID) {
         const seoData = document.getElementById('seo-markdown-data');
-        if (seoData && seoData.textContent.trim()) {
+        if (window.STATIC_RENDERED) {
+            // Already rendered statically by Python! Just show it.
+            document.getElementById('tutorial-page').classList.remove('hidden');
+            document.getElementById('home-page').classList.add('hidden');
+            document.getElementById('services-page').classList.add('hidden');
+            document.getElementById('contact-page').classList.add('hidden');
+            document.getElementById('about-page').classList.add('hidden');
+            window.scrollTo(0, 0);
+            
+            // Highlight code blocks
+            if (window.hljs) {
+                document.querySelectorAll('#tutorial-content pre code').forEach((block) => {
+                    hljs.highlightElement(block);
+                });
+            }
+        } else if (seoData && seoData.textContent.trim()) {
             const tempTutorial = parseTutorial(seoData.textContent.trim(), window.PRELOADED_TUTORIAL_ID + '.md');
             if (tempTutorial) {
                 tutorials = [tempTutorial];
@@ -489,11 +504,14 @@ function filterTutorials(category) {
 }
 
 // Show individual tutorial
-async function showTutorial(tutorialId, addToHistory = true) {
-    updateNavActiveState('tutorials');
-    const tutorial = tutorials.find(t => t.id === tutorialId);
+async function showTutorial(id, addToHistory = true) {
+    if (window.STATIC_RENDERED && id === window.PRELOADED_TUTORIAL_ID) {
+        // Already shown correctly by the initial load handler
+        return;
+    }
+    const tutorial = tutorials.find(t => t.id === id);
     if (!tutorial) {
-        console.error('Tutorial not found:', tutorialId);
+        console.error('Tutorial not found:', id);
         const tutorialContentDiv = document.getElementById('tutorial-content');
         if (tutorialContentDiv) {
             tutorialContentDiv.innerHTML = `

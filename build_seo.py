@@ -1,5 +1,6 @@
 import os
 import re
+import markdown
 
 # Ensure tutorials directory exists
 os.makedirs('tutorials', exist_ok=True)
@@ -63,16 +64,70 @@ for filename in os.listdir(lessons_dir):
         
     # Also adjust the canonical URL for OpenGraph
     custom_header = re.sub(
-        r'<meta content="https://nmabbasi.github.io/OmicsHub" property="og:url"/>',
+        r'<meta content="https://theomicshub.com" property="og:url"/>',
         f'<meta content="https://theomicshub.com/{tutorial_id}.html" property="og:url"/>',
         custom_header
     )
     
     custom_header = re.sub(
-        r'<meta content="The Omics Hub - Learn Bioinformatics and Single-cell RNA-seq Step by Step" property="og:title"/>',
+        r'<meta content="The Omics Hub \| Learn Bioinformatics and Single-cell RNA-seq Step by Step" property="og:title"/>',
         f'<meta content="{title} | The Omics Hub" property="og:title"/>',
         custom_header
     )
+
+    # Convert markdown body to HTML
+    body_md = md_content.split('---', 2)[-1]
+    rendered_html = markdown.markdown(body_md, extensions=['fenced_code', 'tables'])
+    
+    date_str = ""
+    date_match = re.search(r'date:\s*"([^"]+)"', frontmatter)
+    if date_match: date_str = date_match.group(1)
+        
+    author_str = "Nasir Mahmood Abbasi, PhD"
+    author_match = re.search(r'author:\s*"([^"]+)"', frontmatter)
+    if author_match: author_str = author_match.group(1)
+        
+    cat_str = "Tutorial"
+    cat_match = re.search(r'category:\s*"([^"]+)"', frontmatter)
+    if cat_match: cat_str = cat_match.group(1)
+        
+    img_str = ""
+    img_match = re.search(r'image:\s*"([^"]+)"', frontmatter)
+    if img_match: img_str = img_match.group(1)
+
+    initials = "".join([n[0] for n in author_str.split(" ")]).upper()[:2]
+    
+    img_html = f\'\'\'
+            <div class="mb-12 rounded-2xl overflow-hidden shadow-lg border border-gray-100">
+                <img src="{img_str}" alt="{title}" class="w-full h-auto object-cover aspect-video">
+            </div>
+    \'\'\' if img_str else ""
+
+    static_content = f\'\'\'
+            <div class="mb-12">
+                <div class="flex items-center gap-2 text-sm text-blue-600 font-medium mb-4">
+                    <span>{cat_str}</span>
+                    <span>•</span>
+                    <span>{date_str}</span>
+                </div>
+                <h1 class="text-4xl md:text-5xl font-black text-gray-900 mb-6 leading-tight">{title}</h1>
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 font-bold text-lg">
+                        {initials}
+                    </div>
+                    <div>
+                        <p class="font-bold text-gray-900">{author_str}</p>
+                        <p class="text-sm text-gray-500">Bioinformatics Educator</p>
+                    </div>
+                </div>
+            </div>
+            
+            {img_html}
+            
+            <div class="prose prose-blue prose-lg max-w-none">
+                {rendered_html}
+            </div>
+    \'\'\'
 
     # Build JSON-LD structured data for SEO
     json_ld = f"""
@@ -106,27 +161,25 @@ for filename in os.listdir(lessons_dir):
 
     # Build the page content
     page_content = f"""
-    <!-- Tutorial Detail Page (Pre-rendered for SEO) -->
+    <!-- Tutorial Detail Page (Pre-rendered for SEO and Instant Load) -->
     <div class="page-content" id="tutorial-page">
         <div class="container mx-auto px-4 py-8">
             <div class="max-w-4xl mx-auto">
-                <!-- SEO Hidden Markdown Data -->
+                <!-- SEO Hidden Markdown Data for search/index -->
                 <div id="seo-markdown-data" style="display:none;">
 {md_content}
                 </div>
-                <!-- Rendered content will be injected here by script.js -->
+                <!-- PRE-RENDERED STATIC HTML -->
                 <div id="tutorial-content">
-                    <div class="text-center py-20">
-                        <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mb-4"></div>
-                        <p class="text-gray-600 font-medium">Rendering tutorial...</p>
-                    </div>
+                    {static_content}
                 </div>
             </div>
         </div>
     </div>
     
     <script>
-        // Tell script.js to render THIS specific page's hidden markdown on load
+        // Tell script.js to skip rendering because it is already done
+        window.STATIC_RENDERED = true;
         window.PRELOADED_TUTORIAL_ID = "{tutorial_id}";
     </script>
     """
