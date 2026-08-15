@@ -451,9 +451,9 @@ function renderTutorialCard(tutorial) {
             </div>
             ` : ''}
             <div style="padding: 1.6rem; display: flex; flex-direction: column; flex-grow: 1;">
-                <div class="flex items-center justify-between mb-3 gap-4 flex-wrap">
-                    <span class="badge ${getBadgeClass(tutorial.category)} whitespace-nowrap">${tutorial.category}</span>
-                    <span class="meta whitespace-nowrap" style="margin:0">${formatDate(tutorial.date)}</span>
+                <div class="flex flex-col items-start gap-2 mb-3">
+                    <span class="badge ${getBadgeClass(tutorial.category)}">${tutorial.category}</span>
+                    <span class="meta" style="margin:0">${formatDate(tutorial.date)}</span>
                 </div>
                 <h3 class="text-xl font-bold text-gray-900 mb-2">${tutorial.title}</h3>
                 <p class="excerpt text-gray-600 mb-4">${tutorial.excerpt}</p>
