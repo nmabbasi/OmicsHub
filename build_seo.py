@@ -50,8 +50,8 @@ for filename in os.listdir(lessons_dir):
     
     # Create customized header
     custom_header = header_html.replace(
-        '<title>Bioinformatics Workflow Hub | Learn Bioinformatics and Single-cell RNA-seq Step by Step</title>',
-        f'<title>{title} | Bioinformatics Workflow Hub</title>'
+        '<title>The Omics Hub | Learn Bioinformatics and Single-cell RNA-seq Step by Step</title>',
+        f'<title>{title} | The Omics Hub</title>'
     )
     
     if excerpt:
@@ -69,8 +69,8 @@ for filename in os.listdir(lessons_dir):
     )
     
     custom_header = re.sub(
-        r'<meta content="Bioinformatics Workflow Hub - Learn Bioinformatics and Single-cell RNA-seq Step by Step" property="og:title"/>',
-        f'<meta content="{title} | Bioinformatics Workflow Hub" property="og:title"/>',
+        r'<meta content="The Omics Hub - Learn Bioinformatics and Single-cell RNA-seq Step by Step" property="og:title"/>',
+        f'<meta content="{title} | The Omics Hub" property="og:title"/>',
         custom_header
     )
 
@@ -89,7 +89,7 @@ for filename in os.listdir(lessons_dir):
       }},
       "publisher": {{
         "@type": "Organization",
-        "name": "Bioinformatics Workflow Hub",
+        "name": "The Omics Hub",
         "logo": {{
           "@type": "ImageObject",
           "url": "https://theomicshub.com/images/default-tutorial.png"

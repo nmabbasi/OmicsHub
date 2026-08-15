@@ -6,9 +6,9 @@ def process_file(filepath):
         content = f.read()
     
     # 1. Update branding
-    content = content.replace("OmicsHub", "Bioinformatics Workflow Hub")
+    content = content.replace("OmicsHub", "The Omics Hub")
     content = content.replace(">S2R<", ">BioHub<")
-    content = content.replace("S2R: Shell to R Workflows", "Bioinformatics Workflow Hub")
+    content = content.replace("S2R: Shell to R Workflows", "The Omics Hub")
     content = content.replace("nmabbasi.github.io/OmicsHub", "nmabbasi.github.io/S2R")
     
     # 2. Visually improve the hero section and global elements (Tailwind classes)
