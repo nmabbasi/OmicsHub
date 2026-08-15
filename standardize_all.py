@@ -82,6 +82,20 @@ def update_file(filepath, new_header, new_footer, depth=0):
                 'href="contact.html" class="px-4 py-2 text-sm text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors"',
                 'href="contact.html" class="px-4 py-2 text-sm font-semibold text-blue-600 bg-blue-50 rounded-lg transition-colors"'
             )
+        else:
+            if depth > 0:
+                # We are in the pages/ directory (Legal pages)
+                # Activate the Legal dropdown button
+                adj_header = adj_header.replace(
+                    '<button class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-blue-600 flex items-center gap-1 rounded-md hover:bg-gray-50 transition-all">',
+                    '<button class="px-4 py-2 text-sm font-semibold bg-blue-600 text-white flex items-center gap-1 rounded-md shadow-sm transition-all">'
+                )
+                
+                # Activate the mobile Legal header section slightly to show it's active
+                adj_header = adj_header.replace(
+                    '<div class="px-4 pt-2 pb-1 text-xs font-semibold text-gray-400 uppercase tracking-wide">Legal</div>',
+                    '<div class="px-4 pt-2 pb-1 text-xs font-semibold text-blue-600 uppercase tracking-wide">Legal (Active)</div>'
+                )
 
         if content.find(adj_header) == -1:
             content = content.replace(old_header, adj_header)
