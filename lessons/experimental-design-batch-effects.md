@@ -2,7 +2,7 @@
 title: "Experimental Design and Batch Effects"
 category: "Foundations & Prerequisites"
 date: "2026-08-15"
-image: "images/experimental-design-batch-effects.jpg"
+image: "images/experimental-design-batch-effects.png"
 excerpt: "Plan biological replicates, record covariates, recognize confounding, and reduce batch effects before sequencing."
 author: "Nasir Mahmood Abbasi, PhD"
 ---

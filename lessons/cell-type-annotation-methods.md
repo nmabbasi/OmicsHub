@@ -4,7 +4,7 @@ date: "2026-08-14"
 author: "Nasir Mahmood Abbasi, PhD"
 category: "Advanced Single-Cell Analysis"
 excerpt: "A complete guide to automated cell type annotation, comparing 6 standard algorithmic methods (SingleR, scCATCH, scmap, etc.) with the cutting-edge AI multi-agent LLM framework CyteTypeR."
-image: "images/cat_advanced_sc.png"
+image: "images/cell-type-annotation-methods.png"
 ---
 
 

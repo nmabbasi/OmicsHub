@@ -2,7 +2,7 @@
 title: "Statistics for Bioinformatics"
 category: "Foundations & Prerequisites"
 date: "2026-08-15"
-image: "images/statistics-for-bioinformatics.jpg"
+image: "images/statistics-for-bioinformatics.png"
 excerpt: "Learn distributions, replicates, effect sizes, multiple testing, and statistical power for biological data analysis."
 author: "Nasir Mahmood Abbasi, PhD"
 ---

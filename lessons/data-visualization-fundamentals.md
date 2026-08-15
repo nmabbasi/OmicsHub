@@ -2,7 +2,7 @@
 title: "Data Visualization Fundamentals"
 category: "Foundations & Prerequisites"
 date: "2026-08-15"
-image: "images/data-visualization-fundamentals.jpg"
+image: "images/data-visualization-fundamentals.png"
 excerpt: "Read QC plots, PCA, heatmaps, UMAPs, and volcano plots without overstating biological conclusions."
 author: "Nasir Mahmood Abbasi, PhD"
 ---

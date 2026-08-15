@@ -4,7 +4,7 @@ date: "2026-08-13"
 author: "Nasir Mahmood Abbasi, PhD"
 category: "Single-Cell RNA-seq"
 excerpt: "Learn the basics of inferring cellular trajectories and pseudotime using industry-standard tools like PAGA in Python and Monocle3/Slingshot in R."
-image: "images/scrna_heterogeneity.png"
+image: "images/trajectory-inference.png"
 ---
 
 
