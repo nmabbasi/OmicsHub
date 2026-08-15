@@ -3,37 +3,89 @@ title: "Data Visualization Fundamentals"
 category: "Foundations & Prerequisites"
 date: "2026-08-15"
 image: "images/data-visualization-fundamentals.jpg"
-excerpt: "Learn how to read QC plots, PCA, heatmaps, UMAPs, and avoid misleading visualizations."
+excerpt: "Read QC plots, PCA, heatmaps, UMAPs, and volcano plots without overstating biological conclusions."
+author: "Nasir Mahmood Abbasi, PhD"
 ---
 
 <div class="mb-10 text-xl text-gray-600 leading-relaxed">
-  <p>This module provides the essential foundations required before advancing into hands-on command-line analysis or complex omics workflows.</p>
+  <p>A plot is an argument about data. Good visualization reveals uncertainty, sample structure, and potential artifacts while preserving units and context. This lesson gives learners a practical checklist for reading and creating bioinformatics figures.</p>
 </div>
 
-## Coming Soon
+## Learning Objectives & Prerequisites
 
-This foundational module is currently in active development based on recent curriculum updates. It will include:
+**By the end of this lesson, you should be able to:**
 
-*   **Core Concepts:** Detailed explanations of the underlying theory.
-*   **Practical Examples:** Concrete, reproducible code blocks and data samples.
-*   **Downloadable Assets:** Starter datasets and project templates to practice on your own machine.
+- Select plots that match a question and data type.
+- Read distributions, PCA, heatmaps, UMAPs, volcano plots, and coverage plots.
+- Use labels, scales, palettes, and legends responsibly.
+- Separate visual patterns from statistical and biological evidence.
 
-Check back soon as we roll out these critical preparatory modules for bioinformatics!
+**Prerequisites:**
 
-<div class="mt-10 p-8 bg-gray-50 border border-gray-200 rounded-xl">
-  <h3 class="text-xl font-bold text-gray-900 mb-4">Knowledge Check & Assessment</h3>
-  <div class="space-y-4">
-    <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-      <h4 class="font-bold text-gray-800 mb-2">1. Concept Verification</h4>
-      <p class="text-gray-600 text-sm">Explain the primary function of the core tools introduced in this lesson. What specific bioinformatics problem do they solve compared to alternative methods?</p>
-    </div>
-    <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-      <h4 class="font-bold text-gray-800 mb-2">2. Practical Execution</h4>
-      <p class="text-gray-600 text-sm">Execute the main pipeline commands on your own subset of data. <strong>Pass Criteria:</strong> The commands complete without syntax errors and generate the expected output file formats.</p>
-    </div>
-    <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-      <h4 class="font-bold text-gray-800 mb-2">3. Troubleshooting</h4>
-      <p class="text-gray-600 text-sm">If your output is empty or throws a memory error (OOM), what parameters should you adjust? (Hint: Check threads, memory allocation, or file paths).</p>
-    </div>
-  </div>
-</div>
+- Basic R or Python plotting.
+- Complete [Quality Control Fundamentals](quality-control-fundamentals.html).
+
+## 1. Start with the question
+
+Use a distribution to inspect spread, a scatter plot to compare measurements, PCA to summarize major variation, a heatmap to inspect patterns, and UMAP to visualize local neighborhoods. No plot proves a mechanism by itself.
+
+```r
+# Always label units and groups
+ggplot(df, aes(x = batch, y = pct_mt, color = condition)) +
+  geom_boxplot(outlier.shape = NA) + geom_jitter(width = .15) +
+  labs(x="Batch", y="Mitochondrial reads (%)")
+```
+
+## 2. PCA and UMAP
+
+PCA axes are linear summaries; UMAP is a neighborhood visualization whose geometry depends on parameters. Report preprocessing, dimensions, neighbors, metric, and random seed.
+
+```python
+sc.tl.pca(adata, n_comps=30, random_state=7)
+sc.pp.neighbors(adata, n_neighbors=15, n_pcs=20, random_state=7)
+sc.tl.umap(adata, random_state=7)
+```
+
+## 3. Heatmaps and volcano plots
+
+Cluster and scale deliberately. A volcano plot combines effect size and significance; a small p-value alone is not a large or meaningful biological effect.
+
+```text
+Figure checklist: title, units, n, group definition, preprocessing, color meaning, and scale.
+```
+
+## 4. Honest visual interpretation
+
+Use colorblind-safe palettes, avoid truncated axes when they mislead, show individual points when possible, and state limitations in the caption.
+
+```text
+Caption template: Dataset; preprocessing; n; statistic; software/version; interpretation; limitation.
+```
+
+## Practical Exercise
+
+Create one QC plot and one between-group plot using a small table. Add a caption that states n, units, preprocessing, and one limitation.
+
+**Pass criteria:** A reader can understand the axes, groups, sample count, and what the figure does not prove.
+
+## Troubleshooting
+
+If colors are indistinguishable, use a palette designed for color-vision accessibility and add shapes or labels rather than relying on color alone.
+
+## Knowledge Check & Assessment
+
+### 1. Concept Verification
+
+Write short answers explaining the main concepts, the assumptions behind them, and one way a careless workflow could produce a misleading result.
+
+### 2. Practical Execution
+
+Complete the practical exercise above and save the command, script, table, or figure in the project structure. **Pass Criteria:** A reader can understand the axes, groups, sample count, and what the figure does not prove.
+
+### 3. Troubleshooting
+
+Explain what you would inspect first if the output were empty, malformed, unexpectedly large, or failed because of a missing file, package, permission, memory, or metadata problem.
+
+## Next Steps
+
+Continue with [scRNA-seq Basics](scrna-seq-basics.html) and [Research Reporting and Interpretation](research-reporting-interpretation.html). Record the software versions, dataset or example inputs, and any decisions you made.

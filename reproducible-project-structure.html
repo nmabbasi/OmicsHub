@@ -4,7 +4,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<meta content="Organize your data, scripts, and results into a professional standard structure." name="description"/>
+<meta content="Organize data, scripts, results, logs, environments, and metadata into a reproducible bioinformatics project." name="description"/>
 <meta content="bioinformatics, single-cell RNA-seq, shell commands, conda, computational biology, tutorials, data analysis" name="keywords"/>
 <meta content="Nasir Mahmood Abbasi, PhD" name="author"/>
 <meta content="index, follow" name="robots"/>
@@ -13,15 +13,15 @@
 <meta content="Master computational biology with hands-on tutorials covering shell commands, conda environments, single-cell RNA-seq analysis, and essential bioinformatics tools." property="og:description"/>
 <meta content="https://theomicshub.com/reproducible-project-structure.html" property="og:url"/>
 <meta content="website" property="og:type"/>
-<meta content="https://theomicshub.com/images/omicshub-logo.png" property="og:image"/>
+<meta content="https://theomicshub.com/images/hero-image.png" property="og:image"/>
 <!-- Twitter Card tags -->
 <meta content="summary_large_image" name="twitter:card"/>
 <meta content="The Omics Hub - Learn Bioinformatics and Single-cell RNA-seq Step by Step" name="twitter:title"/>
 <meta content="Master computational biology with hands-on tutorials covering shell commands, conda environments, single-cell RNA-seq analysis, and essential bioinformatics tools." name="twitter:description"/>
-<meta content="https://theomicshub.com/images/omicshub-logo.png" name="twitter:image"/>
+<meta content="https://theomicshub.com/images/hero-image.png" name="twitter:image"/>
 <title>Reproducible Project Structure | The Omics Hub</title>
 <!-- Favicon -->
-<link href="images/favicon.ico" rel="icon" type="image/x-icon"/>
+<link href="images/favicon.svg" rel="icon" type="image/svg+xml"/>
 <!-- Tailwind CSS CDN -->
 <link href="tailwind.min.css" rel="stylesheet">
 <!-- Prism.js for syntax highlighting -->
@@ -45,7 +45,7 @@
       "@context": "https://schema.org",
       "@type": "Article",
       "headline": "Reproducible Project Structure",
-      "description": "Organize your data, scripts, and results into a professional standard structure.",
+      "description": "Organize data, scripts, results, logs, environments, and metadata into a reproducible bioinformatics project.",
       "author": {
         "@type": "Person",
         "name": "Nasir Mahmood Abbasi, PhD",
@@ -98,7 +98,7 @@ Legal
 </div>
 </div>
 <!-- Mobile Button -->
-<button class="md:hidden p-2 rounded-md text-gray-600 hover:bg-gray-100" onclick="toggleMobileMenu()">
+<button aria-label="Open navigation menu" aria-controls="mobile-menu" aria-expanded="false" class="md:hidden p-2 rounded-md text-gray-600 hover:bg-gray-100" onclick="toggleMobileMenu()">
 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
 </button>
 </div>
@@ -134,40 +134,104 @@ title: "Reproducible Project Structure"
 category: "Foundations & Prerequisites"
 date: "2026-08-15"
 image: "images/reproducible-project-structure.jpg"
-excerpt: "Organize your data, scripts, and results into a professional standard structure."
+excerpt: "Organize data, scripts, results, logs, environments, and metadata into a reproducible bioinformatics project."
+author: "Nasir Mahmood Abbasi, PhD"
 ---
 
 <div class="mb-10 text-xl text-gray-600 leading-relaxed">
-  <p>This module provides the essential foundations required before advancing into hands-on command-line analysis or complex omics workflows.</p>
+  <p>A reproducible analysis is easier to inspect, rerun, share, and repair. A consistent project structure prevents raw files from being overwritten and makes the path from input to figure visible to collaborators.</p>
 </div>
 
-## Coming Soon
+## Learning Objectives & Prerequisites
 
-This foundational module is currently in active development based on recent curriculum updates. It will include:
+**By the end of this lesson, you should be able to:**
 
-*   **Core Concepts:** Detailed explanations of the underlying theory.
-*   **Practical Examples:** Concrete, reproducible code blocks and data samples.
-*   **Downloadable Assets:** Starter datasets and project templates to practice on your own machine.
+- Create a safe directory structure for data, code, results, logs, and configuration.
+- Separate immutable raw data from derived files.
+- Record commands, software versions, references, and random seeds.
+- Write a README that lets another learner reproduce a result.
 
-Check back soon as we roll out these critical preparatory modules for bioinformatics!
+**Prerequisites:**
 
-<div class="mt-10 p-8 bg-gray-50 border border-gray-200 rounded-xl">
-  <h3 class="text-xl font-bold text-gray-900 mb-4">Knowledge Check & Assessment</h3>
-  <div class="space-y-4">
-    <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-      <h4 class="font-bold text-gray-800 mb-2">1. Concept Verification</h4>
-      <p class="text-gray-600 text-sm">Explain the primary function of the core tools introduced in this lesson. What specific bioinformatics problem do they solve compared to alternative methods?</p>
-    </div>
-    <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-      <h4 class="font-bold text-gray-800 mb-2">2. Practical Execution</h4>
-      <p class="text-gray-600 text-sm">Execute the main pipeline commands on your own subset of data. <strong>Pass Criteria:</strong> The commands complete without syntax errors and generate the expected output file formats.</p>
-    </div>
-    <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-      <h4 class="font-bold text-gray-800 mb-2">3. Troubleshooting</h4>
-      <p class="text-gray-600 text-sm">If your output is empty or throws a memory error (OOM), what parameters should you adjust? (Hint: Check threads, memory allocation, or file paths).</p>
-    </div>
-  </div>
-</div>
+- Complete [Git and GitHub for Bioinformatics](git-github-bioinformatics.html).
+- Know basic shell commands and one scripting language.
+
+## 1. A practical layout
+
+Use names that communicate role rather than personal computer paths.
+
+```text
+project/
+├── README.md
+├── config/
+├── data/raw/
+├── data/processed/
+├── envs/
+├── scripts/
+├── results/figures/
+├── results/tables/
+└── logs/
+```
+
+## 2. Provenance files
+
+Record input checksums, software versions, reference builds, commands, parameters, and the Git commit. Keep large or sensitive data outside public repositories.
+
+```bash
+find data/raw -type f -maxdepth 1 -print0 | xargs -0 sha256sum > config/raw_checksums.sha256
+python --version > config/versions.txt
+git rev-parse HEAD >> config/versions.txt
+```
+
+## 3. Configuration over hard-coding
+
+Put sample names, paths, thresholds, and resource settings in a configuration file. This lets the same script run on a second dataset without editing logic.
+
+```yaml
+threads: 4
+min_genes: 200
+reference: GRCh38
+input: data/raw/counts.tsv
+```
+
+## 4. README and results
+
+Explain setup, expected inputs, commands, outputs, and limitations. Name results by meaning and preserve logs beside them.
+
+```text
+1. Create environment
+2. Place validated input in data/raw
+3. Run scripts/run_qc.sh
+4. Inspect results/figures/qc.png
+```
+
+## Practical Exercise
+
+Create this structure for a small project, add a README with four reproducible steps, and record one version file and one checksum file.
+
+**Pass criteria:** A second learner can find the input, command, environment, output, log, and limitation without asking where files live.
+
+## Troubleshooting
+
+If a script depends on a personal path, replace it with a command-line argument or configuration value.
+
+## Knowledge Check & Assessment
+
+### 1. Concept Verification
+
+Write short answers explaining the main concepts, the assumptions behind them, and one way a careless workflow could produce a misleading result.
+
+### 2. Practical Execution
+
+Complete the practical exercise above and save the command, script, table, or figure in the project structure. **Pass Criteria:** A second learner can find the input, command, environment, output, log, and limitation without asking where files live.
+
+### 3. Troubleshooting
+
+Explain what you would inspect first if the output were empty, malformed, unexpectedly large, or failed because of a missing file, package, permission, memory, or metadata problem.
+
+## Next Steps
+
+Continue with [Snakemake & Nextflow](reproducible-workflows-snakemake-nextflow.html) and [Research Reporting](research-reporting-interpretation.html). Record the software versions, dataset or example inputs, and any decisions you made.
 
                 </div>
                 <!-- PRE-RENDERED STATIC HTML -->
@@ -199,34 +263,69 @@ Check back soon as we roll out these critical preparatory modules for bioinforma
             
             <div class="prose prose-blue prose-lg max-w-none">
                 <div class="mb-10 text-xl text-gray-600 leading-relaxed">
-  <p>This module provides the essential foundations required before advancing into hands-on command-line analysis or complex omics workflows.</p>
+  <p>A reproducible analysis is easier to inspect, rerun, share, and repair. A consistent project structure prevents raw files from being overwritten and makes the path from input to figure visible to collaborators.</p>
 </div>
 
-<h2>Coming Soon</h2>
-<p>This foundational module is currently in active development based on recent curriculum updates. It will include:</p>
+<h2>Learning Objectives &amp; Prerequisites</h2>
+<p><strong>By the end of this lesson, you should be able to:</strong></p>
 <ul>
-<li><strong>Core Concepts:</strong> Detailed explanations of the underlying theory.</li>
-<li><strong>Practical Examples:</strong> Concrete, reproducible code blocks and data samples.</li>
-<li><strong>Downloadable Assets:</strong> Starter datasets and project templates to practice on your own machine.</li>
+<li>Create a safe directory structure for data, code, results, logs, and configuration.</li>
+<li>Separate immutable raw data from derived files.</li>
+<li>Record commands, software versions, references, and random seeds.</li>
+<li>Write a README that lets another learner reproduce a result.</li>
 </ul>
-<p>Check back soon as we roll out these critical preparatory modules for bioinformatics!</p>
-<div class="mt-10 p-8 bg-gray-50 border border-gray-200 rounded-xl">
-  <h3 class="text-xl font-bold text-gray-900 mb-4">Knowledge Check & Assessment</h3>
-  <div class="space-y-4">
-    <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-      <h4 class="font-bold text-gray-800 mb-2">1. Concept Verification</h4>
-      <p class="text-gray-600 text-sm">Explain the primary function of the core tools introduced in this lesson. What specific bioinformatics problem do they solve compared to alternative methods?</p>
-    </div>
-    <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-      <h4 class="font-bold text-gray-800 mb-2">2. Practical Execution</h4>
-      <p class="text-gray-600 text-sm">Execute the main pipeline commands on your own subset of data. <strong>Pass Criteria:</strong> The commands complete without syntax errors and generate the expected output file formats.</p>
-    </div>
-    <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-      <h4 class="font-bold text-gray-800 mb-2">3. Troubleshooting</h4>
-      <p class="text-gray-600 text-sm">If your output is empty or throws a memory error (OOM), what parameters should you adjust? (Hint: Check threads, memory allocation, or file paths).</p>
-    </div>
-  </div>
-</div>
+<p><strong>Prerequisites:</strong></p>
+<ul>
+<li>Complete <a href="git-github-bioinformatics.html">Git and GitHub for Bioinformatics</a>.</li>
+<li>Know basic shell commands and one scripting language.</li>
+</ul>
+<h2>1. A practical layout</h2>
+<p>Use names that communicate role rather than personal computer paths.</p>
+<pre><code class="language-text">project/
+├── README.md
+├── config/
+├── data/raw/
+├── data/processed/
+├── envs/
+├── scripts/
+├── results/figures/
+├── results/tables/
+└── logs/
+</code></pre>
+<h2>2. Provenance files</h2>
+<p>Record input checksums, software versions, reference builds, commands, parameters, and the Git commit. Keep large or sensitive data outside public repositories.</p>
+<pre><code class="language-bash">find data/raw -type f -maxdepth 1 -print0 | xargs -0 sha256sum &gt; config/raw_checksums.sha256
+python --version &gt; config/versions.txt
+git rev-parse HEAD &gt;&gt; config/versions.txt
+</code></pre>
+<h2>3. Configuration over hard-coding</h2>
+<p>Put sample names, paths, thresholds, and resource settings in a configuration file. This lets the same script run on a second dataset without editing logic.</p>
+<pre><code class="language-yaml">threads: 4
+min_genes: 200
+reference: GRCh38
+input: data/raw/counts.tsv
+</code></pre>
+<h2>4. README and results</h2>
+<p>Explain setup, expected inputs, commands, outputs, and limitations. Name results by meaning and preserve logs beside them.</p>
+<pre><code class="language-text">1. Create environment
+2. Place validated input in data/raw
+3. Run scripts/run_qc.sh
+4. Inspect results/figures/qc.png
+</code></pre>
+<h2>Practical Exercise</h2>
+<p>Create this structure for a small project, add a README with four reproducible steps, and record one version file and one checksum file.</p>
+<p><strong>Pass criteria:</strong> A second learner can find the input, command, environment, output, log, and limitation without asking where files live.</p>
+<h2>Troubleshooting</h2>
+<p>If a script depends on a personal path, replace it with a command-line argument or configuration value.</p>
+<h2>Knowledge Check &amp; Assessment</h2>
+<h3>1. Concept Verification</h3>
+<p>Write short answers explaining the main concepts, the assumptions behind them, and one way a careless workflow could produce a misleading result.</p>
+<h3>2. Practical Execution</h3>
+<p>Complete the practical exercise above and save the command, script, table, or figure in the project structure. <strong>Pass Criteria:</strong> A second learner can find the input, command, environment, output, log, and limitation without asking where files live.</p>
+<h3>3. Troubleshooting</h3>
+<p>Explain what you would inspect first if the output were empty, malformed, unexpectedly large, or failed because of a missing file, package, permission, memory, or metadata problem.</p>
+<h2>Next Steps</h2>
+<p>Continue with <a href="reproducible-workflows-snakemake-nextflow.html">Snakemake &amp; Nextflow</a> and <a href="research-reporting-interpretation.html">Research Reporting</a>. Record the software versions, dataset or example inputs, and any decisions you made.</p>
             </div>
             
             
@@ -340,12 +439,6 @@ Check back soon as we roll out these critical preparatory modules for bioinforma
 <!-- Marked.js for markdown rendering -->
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <!-- Custom JS - loads tutorials from manifest -->
-<script src="script.js"></script>
-<script>
-function toggleMobileMenu() {
-const m = document.getElementById("mobile-menu");
-m.classList.toggle("hidden");
-}
-</script>
+<script src="script.js?v=20260815"></script>
 </body>
 </html>

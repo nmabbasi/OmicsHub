@@ -1,16 +1,15 @@
-# 🧬 OmicsHub: The Omics Hub 
+# The Omics Hub
 
 [![Language: HTML](https://img.shields.io/badge/Language-HTML-orange.svg)]()
 [![Status: Deployed](https://img.shields.io/badge/Status-Deployed-brightgreen.svg)]()
-[![Website: Live](https://img.shields.io/badge/Website-Live-blue.svg)](https://nmabbasi.github.io/OmicsHub)
+[![Website: Live](https://img.shields.io/badge/Website-Live-blue.svg)](https://theomicshub.com)
 
 ## 🌐 Live Website
-**Access the interactive portal here: [https://nmabbasi.github.io/OmicsHub/](https://nmabbasi.github.io/OmicsHub/)**
+**Access the interactive portal here: [https://theomicshub.com/](https://theomicshub.com/)**
 
-*(Note: Previously hosted at a custom domain, this project is now fully and permanently hosted on GitHub Pages).*
 
 ## 📋 Overview
-**OmicsHub** (The The Omics Hub) is a comprehensive educational documentation portal designed to bridge the technical gap between High-Performance Computing (HPC) Bash environments and R-based data analysis workflows. 
+**The Omics Hub** is a comprehensive educational documentation portal designed to bridge the technical gap between High-Performance Computing (HPC) Bash environments and R-based data analysis workflows.
 
 It specifically focuses on empowering researchers to master the end-to-end computational biology pipeline, heavily emphasizing **single-cell RNA-sequencing (scRNA-seq)** data analysis.
 

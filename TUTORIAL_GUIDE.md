@@ -76,9 +76,9 @@ YYYY-MM-DD-tutorial-slug.md
 ```
 
 **Examples**:
-- `2024-08-15-introduction-to-bioinformatics.md`
-- `2024-08-14-command-line-basics-detailed.md`
-- `2024-08-13-conda-mamba-installation-guide.md`
+- `2024-08-15-introduction-to-bioinformatics.html`
+- `2024-08-14-command-line-part1.html`
+- `2024-08-13-conda-mamba-part1.html`
 
 **Rules**:
 - Use hyphens (not underscores or spaces)
@@ -90,10 +90,10 @@ YYYY-MM-DD-tutorial-slug.md
 
 ```
 lessons/
-├── 2024-08-15-introduction-to-bioinformatics.md
-├── 2024-08-14-command-line-basics-detailed.md
-├── 2024-08-13-conda-mamba-installation-guide.md
-└── 2024-08-12-single-cell-rnaseq-introduction.md
+├── 2024-08-15-introduction-to-bioinformatics.html
+├── 2024-08-14-command-line-part1.html
+├── 2024-08-13-conda-mamba-part1.html
+└── 2024-08-12-scrna-seq-basics.html
 
 images/
 ├── bioinformatics-intro.png
@@ -312,7 +312,7 @@ drwxr-xr-x  3 user user 4096 Aug 15 10:29 ..
 #### 4. Internal Linking
 Link to related tutorials:
 ```markdown
-For more background on command line basics, see our [detailed command line tutorial](command-line-basics-detailed.md).
+For more background on command line basics, see our [detailed command line tutorial](command-line-part1.html).
 ```
 
 #### 5. External Linking

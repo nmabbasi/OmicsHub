@@ -4,7 +4,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<meta content="Learn how to read QC plots, PCA, heatmaps, UMAPs, and avoid misleading visualizations." name="description"/>
+<meta content="Read QC plots, PCA, heatmaps, UMAPs, and volcano plots without overstating biological conclusions." name="description"/>
 <meta content="bioinformatics, single-cell RNA-seq, shell commands, conda, computational biology, tutorials, data analysis" name="keywords"/>
 <meta content="Nasir Mahmood Abbasi, PhD" name="author"/>
 <meta content="index, follow" name="robots"/>
@@ -13,15 +13,15 @@
 <meta content="Master computational biology with hands-on tutorials covering shell commands, conda environments, single-cell RNA-seq analysis, and essential bioinformatics tools." property="og:description"/>
 <meta content="https://theomicshub.com/data-visualization-fundamentals.html" property="og:url"/>
 <meta content="website" property="og:type"/>
-<meta content="https://theomicshub.com/images/omicshub-logo.png" property="og:image"/>
+<meta content="https://theomicshub.com/images/hero-image.png" property="og:image"/>
 <!-- Twitter Card tags -->
 <meta content="summary_large_image" name="twitter:card"/>
 <meta content="The Omics Hub - Learn Bioinformatics and Single-cell RNA-seq Step by Step" name="twitter:title"/>
 <meta content="Master computational biology with hands-on tutorials covering shell commands, conda environments, single-cell RNA-seq analysis, and essential bioinformatics tools." name="twitter:description"/>
-<meta content="https://theomicshub.com/images/omicshub-logo.png" name="twitter:image"/>
+<meta content="https://theomicshub.com/images/hero-image.png" name="twitter:image"/>
 <title>Data Visualization Fundamentals | The Omics Hub</title>
 <!-- Favicon -->
-<link href="images/favicon.ico" rel="icon" type="image/x-icon"/>
+<link href="images/favicon.svg" rel="icon" type="image/svg+xml"/>
 <!-- Tailwind CSS CDN -->
 <link href="tailwind.min.css" rel="stylesheet">
 <!-- Prism.js for syntax highlighting -->
@@ -45,7 +45,7 @@
       "@context": "https://schema.org",
       "@type": "Article",
       "headline": "Data Visualization Fundamentals",
-      "description": "Learn how to read QC plots, PCA, heatmaps, UMAPs, and avoid misleading visualizations.",
+      "description": "Read QC plots, PCA, heatmaps, UMAPs, and volcano plots without overstating biological conclusions.",
       "author": {
         "@type": "Person",
         "name": "Nasir Mahmood Abbasi, PhD",
@@ -98,7 +98,7 @@ Legal
 </div>
 </div>
 <!-- Mobile Button -->
-<button class="md:hidden p-2 rounded-md text-gray-600 hover:bg-gray-100" onclick="toggleMobileMenu()">
+<button aria-label="Open navigation menu" aria-controls="mobile-menu" aria-expanded="false" class="md:hidden p-2 rounded-md text-gray-600 hover:bg-gray-100" onclick="toggleMobileMenu()">
 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
 </button>
 </div>
@@ -134,40 +134,92 @@ title: "Data Visualization Fundamentals"
 category: "Foundations & Prerequisites"
 date: "2026-08-15"
 image: "images/data-visualization-fundamentals.jpg"
-excerpt: "Learn how to read QC plots, PCA, heatmaps, UMAPs, and avoid misleading visualizations."
+excerpt: "Read QC plots, PCA, heatmaps, UMAPs, and volcano plots without overstating biological conclusions."
+author: "Nasir Mahmood Abbasi, PhD"
 ---
 
 <div class="mb-10 text-xl text-gray-600 leading-relaxed">
-  <p>This module provides the essential foundations required before advancing into hands-on command-line analysis or complex omics workflows.</p>
+  <p>A plot is an argument about data. Good visualization reveals uncertainty, sample structure, and potential artifacts while preserving units and context. This lesson gives learners a practical checklist for reading and creating bioinformatics figures.</p>
 </div>
 
-## Coming Soon
+## Learning Objectives & Prerequisites
 
-This foundational module is currently in active development based on recent curriculum updates. It will include:
+**By the end of this lesson, you should be able to:**
 
-*   **Core Concepts:** Detailed explanations of the underlying theory.
-*   **Practical Examples:** Concrete, reproducible code blocks and data samples.
-*   **Downloadable Assets:** Starter datasets and project templates to practice on your own machine.
+- Select plots that match a question and data type.
+- Read distributions, PCA, heatmaps, UMAPs, volcano plots, and coverage plots.
+- Use labels, scales, palettes, and legends responsibly.
+- Separate visual patterns from statistical and biological evidence.
 
-Check back soon as we roll out these critical preparatory modules for bioinformatics!
+**Prerequisites:**
 
-<div class="mt-10 p-8 bg-gray-50 border border-gray-200 rounded-xl">
-  <h3 class="text-xl font-bold text-gray-900 mb-4">Knowledge Check & Assessment</h3>
-  <div class="space-y-4">
-    <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-      <h4 class="font-bold text-gray-800 mb-2">1. Concept Verification</h4>
-      <p class="text-gray-600 text-sm">Explain the primary function of the core tools introduced in this lesson. What specific bioinformatics problem do they solve compared to alternative methods?</p>
-    </div>
-    <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-      <h4 class="font-bold text-gray-800 mb-2">2. Practical Execution</h4>
-      <p class="text-gray-600 text-sm">Execute the main pipeline commands on your own subset of data. <strong>Pass Criteria:</strong> The commands complete without syntax errors and generate the expected output file formats.</p>
-    </div>
-    <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-      <h4 class="font-bold text-gray-800 mb-2">3. Troubleshooting</h4>
-      <p class="text-gray-600 text-sm">If your output is empty or throws a memory error (OOM), what parameters should you adjust? (Hint: Check threads, memory allocation, or file paths).</p>
-    </div>
-  </div>
-</div>
+- Basic R or Python plotting.
+- Complete [Quality Control Fundamentals](quality-control-fundamentals.html).
+
+## 1. Start with the question
+
+Use a distribution to inspect spread, a scatter plot to compare measurements, PCA to summarize major variation, a heatmap to inspect patterns, and UMAP to visualize local neighborhoods. No plot proves a mechanism by itself.
+
+```r
+# Always label units and groups
+ggplot(df, aes(x = batch, y = pct_mt, color = condition)) +
+  geom_boxplot(outlier.shape = NA) + geom_jitter(width = .15) +
+  labs(x="Batch", y="Mitochondrial reads (%)")
+```
+
+## 2. PCA and UMAP
+
+PCA axes are linear summaries; UMAP is a neighborhood visualization whose geometry depends on parameters. Report preprocessing, dimensions, neighbors, metric, and random seed.
+
+```python
+sc.tl.pca(adata, n_comps=30, random_state=7)
+sc.pp.neighbors(adata, n_neighbors=15, n_pcs=20, random_state=7)
+sc.tl.umap(adata, random_state=7)
+```
+
+## 3. Heatmaps and volcano plots
+
+Cluster and scale deliberately. A volcano plot combines effect size and significance; a small p-value alone is not a large or meaningful biological effect.
+
+```text
+Figure checklist: title, units, n, group definition, preprocessing, color meaning, and scale.
+```
+
+## 4. Honest visual interpretation
+
+Use colorblind-safe palettes, avoid truncated axes when they mislead, show individual points when possible, and state limitations in the caption.
+
+```text
+Caption template: Dataset; preprocessing; n; statistic; software/version; interpretation; limitation.
+```
+
+## Practical Exercise
+
+Create one QC plot and one between-group plot using a small table. Add a caption that states n, units, preprocessing, and one limitation.
+
+**Pass criteria:** A reader can understand the axes, groups, sample count, and what the figure does not prove.
+
+## Troubleshooting
+
+If colors are indistinguishable, use a palette designed for color-vision accessibility and add shapes or labels rather than relying on color alone.
+
+## Knowledge Check & Assessment
+
+### 1. Concept Verification
+
+Write short answers explaining the main concepts, the assumptions behind them, and one way a careless workflow could produce a misleading result.
+
+### 2. Practical Execution
+
+Complete the practical exercise above and save the command, script, table, or figure in the project structure. **Pass Criteria:** A reader can understand the axes, groups, sample count, and what the figure does not prove.
+
+### 3. Troubleshooting
+
+Explain what you would inspect first if the output were empty, malformed, unexpectedly large, or failed because of a missing file, package, permission, memory, or metadata problem.
+
+## Next Steps
+
+Continue with [scRNA-seq Basics](scrna-seq-basics.html) and [Research Reporting and Interpretation](research-reporting-interpretation.html). Record the software versions, dataset or example inputs, and any decisions you made.
 
                 </div>
                 <!-- PRE-RENDERED STATIC HTML -->
@@ -199,34 +251,57 @@ Check back soon as we roll out these critical preparatory modules for bioinforma
             
             <div class="prose prose-blue prose-lg max-w-none">
                 <div class="mb-10 text-xl text-gray-600 leading-relaxed">
-  <p>This module provides the essential foundations required before advancing into hands-on command-line analysis or complex omics workflows.</p>
+  <p>A plot is an argument about data. Good visualization reveals uncertainty, sample structure, and potential artifacts while preserving units and context. This lesson gives learners a practical checklist for reading and creating bioinformatics figures.</p>
 </div>
 
-<h2>Coming Soon</h2>
-<p>This foundational module is currently in active development based on recent curriculum updates. It will include:</p>
+<h2>Learning Objectives &amp; Prerequisites</h2>
+<p><strong>By the end of this lesson, you should be able to:</strong></p>
 <ul>
-<li><strong>Core Concepts:</strong> Detailed explanations of the underlying theory.</li>
-<li><strong>Practical Examples:</strong> Concrete, reproducible code blocks and data samples.</li>
-<li><strong>Downloadable Assets:</strong> Starter datasets and project templates to practice on your own machine.</li>
+<li>Select plots that match a question and data type.</li>
+<li>Read distributions, PCA, heatmaps, UMAPs, volcano plots, and coverage plots.</li>
+<li>Use labels, scales, palettes, and legends responsibly.</li>
+<li>Separate visual patterns from statistical and biological evidence.</li>
 </ul>
-<p>Check back soon as we roll out these critical preparatory modules for bioinformatics!</p>
-<div class="mt-10 p-8 bg-gray-50 border border-gray-200 rounded-xl">
-  <h3 class="text-xl font-bold text-gray-900 mb-4">Knowledge Check & Assessment</h3>
-  <div class="space-y-4">
-    <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-      <h4 class="font-bold text-gray-800 mb-2">1. Concept Verification</h4>
-      <p class="text-gray-600 text-sm">Explain the primary function of the core tools introduced in this lesson. What specific bioinformatics problem do they solve compared to alternative methods?</p>
-    </div>
-    <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-      <h4 class="font-bold text-gray-800 mb-2">2. Practical Execution</h4>
-      <p class="text-gray-600 text-sm">Execute the main pipeline commands on your own subset of data. <strong>Pass Criteria:</strong> The commands complete without syntax errors and generate the expected output file formats.</p>
-    </div>
-    <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-      <h4 class="font-bold text-gray-800 mb-2">3. Troubleshooting</h4>
-      <p class="text-gray-600 text-sm">If your output is empty or throws a memory error (OOM), what parameters should you adjust? (Hint: Check threads, memory allocation, or file paths).</p>
-    </div>
-  </div>
-</div>
+<p><strong>Prerequisites:</strong></p>
+<ul>
+<li>Basic R or Python plotting.</li>
+<li>Complete <a href="quality-control-fundamentals.html">Quality Control Fundamentals</a>.</li>
+</ul>
+<h2>1. Start with the question</h2>
+<p>Use a distribution to inspect spread, a scatter plot to compare measurements, PCA to summarize major variation, a heatmap to inspect patterns, and UMAP to visualize local neighborhoods. No plot proves a mechanism by itself.</p>
+<pre><code class="language-r"># Always label units and groups
+ggplot(df, aes(x = batch, y = pct_mt, color = condition)) +
+  geom_boxplot(outlier.shape = NA) + geom_jitter(width = .15) +
+  labs(x=&quot;Batch&quot;, y=&quot;Mitochondrial reads (%)&quot;)
+</code></pre>
+<h2>2. PCA and UMAP</h2>
+<p>PCA axes are linear summaries; UMAP is a neighborhood visualization whose geometry depends on parameters. Report preprocessing, dimensions, neighbors, metric, and random seed.</p>
+<pre><code class="language-python">sc.tl.pca(adata, n_comps=30, random_state=7)
+sc.pp.neighbors(adata, n_neighbors=15, n_pcs=20, random_state=7)
+sc.tl.umap(adata, random_state=7)
+</code></pre>
+<h2>3. Heatmaps and volcano plots</h2>
+<p>Cluster and scale deliberately. A volcano plot combines effect size and significance; a small p-value alone is not a large or meaningful biological effect.</p>
+<pre><code class="language-text">Figure checklist: title, units, n, group definition, preprocessing, color meaning, and scale.
+</code></pre>
+<h2>4. Honest visual interpretation</h2>
+<p>Use colorblind-safe palettes, avoid truncated axes when they mislead, show individual points when possible, and state limitations in the caption.</p>
+<pre><code class="language-text">Caption template: Dataset; preprocessing; n; statistic; software/version; interpretation; limitation.
+</code></pre>
+<h2>Practical Exercise</h2>
+<p>Create one QC plot and one between-group plot using a small table. Add a caption that states n, units, preprocessing, and one limitation.</p>
+<p><strong>Pass criteria:</strong> A reader can understand the axes, groups, sample count, and what the figure does not prove.</p>
+<h2>Troubleshooting</h2>
+<p>If colors are indistinguishable, use a palette designed for color-vision accessibility and add shapes or labels rather than relying on color alone.</p>
+<h2>Knowledge Check &amp; Assessment</h2>
+<h3>1. Concept Verification</h3>
+<p>Write short answers explaining the main concepts, the assumptions behind them, and one way a careless workflow could produce a misleading result.</p>
+<h3>2. Practical Execution</h3>
+<p>Complete the practical exercise above and save the command, script, table, or figure in the project structure. <strong>Pass Criteria:</strong> A reader can understand the axes, groups, sample count, and what the figure does not prove.</p>
+<h3>3. Troubleshooting</h3>
+<p>Explain what you would inspect first if the output were empty, malformed, unexpectedly large, or failed because of a missing file, package, permission, memory, or metadata problem.</p>
+<h2>Next Steps</h2>
+<p>Continue with <a href="scrna-seq-basics.html">scRNA-seq Basics</a> and <a href="research-reporting-interpretation.html">Research Reporting and Interpretation</a>. Record the software versions, dataset or example inputs, and any decisions you made.</p>
             </div>
             
             
@@ -340,12 +415,6 @@ Check back soon as we roll out these critical preparatory modules for bioinforma
 <!-- Marked.js for markdown rendering -->
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <!-- Custom JS - loads tutorials from manifest -->
-<script src="script.js"></script>
-<script>
-function toggleMobileMenu() {
-const m = document.getElementById("mobile-menu");
-m.classList.toggle("hidden");
-}
-</script>
+<script src="script.js?v=20260815"></script>
 </body>
 </html>

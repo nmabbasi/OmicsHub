@@ -3,37 +3,101 @@ title: "Reproducible Project Structure"
 category: "Foundations & Prerequisites"
 date: "2026-08-15"
 image: "images/reproducible-project-structure.jpg"
-excerpt: "Organize your data, scripts, and results into a professional standard structure."
+excerpt: "Organize data, scripts, results, logs, environments, and metadata into a reproducible bioinformatics project."
+author: "Nasir Mahmood Abbasi, PhD"
 ---
 
 <div class="mb-10 text-xl text-gray-600 leading-relaxed">
-  <p>This module provides the essential foundations required before advancing into hands-on command-line analysis or complex omics workflows.</p>
+  <p>A reproducible analysis is easier to inspect, rerun, share, and repair. A consistent project structure prevents raw files from being overwritten and makes the path from input to figure visible to collaborators.</p>
 </div>
 
-## Coming Soon
+## Learning Objectives & Prerequisites
 
-This foundational module is currently in active development based on recent curriculum updates. It will include:
+**By the end of this lesson, you should be able to:**
 
-*   **Core Concepts:** Detailed explanations of the underlying theory.
-*   **Practical Examples:** Concrete, reproducible code blocks and data samples.
-*   **Downloadable Assets:** Starter datasets and project templates to practice on your own machine.
+- Create a safe directory structure for data, code, results, logs, and configuration.
+- Separate immutable raw data from derived files.
+- Record commands, software versions, references, and random seeds.
+- Write a README that lets another learner reproduce a result.
 
-Check back soon as we roll out these critical preparatory modules for bioinformatics!
+**Prerequisites:**
 
-<div class="mt-10 p-8 bg-gray-50 border border-gray-200 rounded-xl">
-  <h3 class="text-xl font-bold text-gray-900 mb-4">Knowledge Check & Assessment</h3>
-  <div class="space-y-4">
-    <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-      <h4 class="font-bold text-gray-800 mb-2">1. Concept Verification</h4>
-      <p class="text-gray-600 text-sm">Explain the primary function of the core tools introduced in this lesson. What specific bioinformatics problem do they solve compared to alternative methods?</p>
-    </div>
-    <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-      <h4 class="font-bold text-gray-800 mb-2">2. Practical Execution</h4>
-      <p class="text-gray-600 text-sm">Execute the main pipeline commands on your own subset of data. <strong>Pass Criteria:</strong> The commands complete without syntax errors and generate the expected output file formats.</p>
-    </div>
-    <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-      <h4 class="font-bold text-gray-800 mb-2">3. Troubleshooting</h4>
-      <p class="text-gray-600 text-sm">If your output is empty or throws a memory error (OOM), what parameters should you adjust? (Hint: Check threads, memory allocation, or file paths).</p>
-    </div>
-  </div>
-</div>
+- Complete [Git and GitHub for Bioinformatics](git-github-bioinformatics.html).
+- Know basic shell commands and one scripting language.
+
+## 1. A practical layout
+
+Use names that communicate role rather than personal computer paths.
+
+```text
+project/
+├── README.md
+├── config/
+├── data/raw/
+├── data/processed/
+├── envs/
+├── scripts/
+├── results/figures/
+├── results/tables/
+└── logs/
+```
+
+## 2. Provenance files
+
+Record input checksums, software versions, reference builds, commands, parameters, and the Git commit. Keep large or sensitive data outside public repositories.
+
+```bash
+find data/raw -type f -maxdepth 1 -print0 | xargs -0 sha256sum > config/raw_checksums.sha256
+python --version > config/versions.txt
+git rev-parse HEAD >> config/versions.txt
+```
+
+## 3. Configuration over hard-coding
+
+Put sample names, paths, thresholds, and resource settings in a configuration file. This lets the same script run on a second dataset without editing logic.
+
+```yaml
+threads: 4
+min_genes: 200
+reference: GRCh38
+input: data/raw/counts.tsv
+```
+
+## 4. README and results
+
+Explain setup, expected inputs, commands, outputs, and limitations. Name results by meaning and preserve logs beside them.
+
+```text
+1. Create environment
+2. Place validated input in data/raw
+3. Run scripts/run_qc.sh
+4. Inspect results/figures/qc.png
+```
+
+## Practical Exercise
+
+Create this structure for a small project, add a README with four reproducible steps, and record one version file and one checksum file.
+
+**Pass criteria:** A second learner can find the input, command, environment, output, log, and limitation without asking where files live.
+
+## Troubleshooting
+
+If a script depends on a personal path, replace it with a command-line argument or configuration value.
+
+## Knowledge Check & Assessment
+
+### 1. Concept Verification
+
+Write short answers explaining the main concepts, the assumptions behind them, and one way a careless workflow could produce a misleading result.
+
+### 2. Practical Execution
+
+Complete the practical exercise above and save the command, script, table, or figure in the project structure. **Pass Criteria:** A second learner can find the input, command, environment, output, log, and limitation without asking where files live.
+
+### 3. Troubleshooting
+
+Explain what you would inspect first if the output were empty, malformed, unexpectedly large, or failed because of a missing file, package, permission, memory, or metadata problem.
+
+## Next Steps
+
+Continue with [Snakemake & Nextflow](reproducible-workflows-snakemake-nextflow.html) and [Research Reporting](research-reporting-interpretation.html). Record the software versions, dataset or example inputs, and any decisions you made.

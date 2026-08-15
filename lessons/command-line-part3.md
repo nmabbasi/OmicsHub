@@ -350,9 +350,9 @@ The command line is your gateway to powerful bioinformatics analysis. With these
 
 Ready to level up your bioinformatics skills? Check out our other tutorials:
 
-1. **[Package Management with Conda](conda-mamba-installation-guide.md)**: Learn to install and manage bioinformatics software
-2. **[Single-cell RNA-seq Analysis](single-cell-rnaseq-introduction.md)**: Apply your command line skills to cutting-edge analysis
-3. **[Introduction to Bioinformatics](introduction-to-bioinformatics.md)**: Understand the bigger picture
+1. **[Package Management with Conda](conda-mamba-part1.html)**: Learn to install and manage bioinformatics software
+2. **[Single-cell RNA-seq Analysis](scrna-seq-basics.html)**: Apply your command line skills to cutting-edge analysis
+3. **[Introduction to Bioinformatics](introduction-to-bioinformatics.html)**: Understand the bigger picture
 
 ---
 

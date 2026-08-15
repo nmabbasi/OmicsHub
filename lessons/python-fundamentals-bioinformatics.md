@@ -3,37 +3,103 @@ title: "Python Fundamentals for Bioinformatics"
 category: "Foundations & Prerequisites"
 date: "2026-08-15"
 image: "images/python-fundamentals-bioinformatics.jpg"
-excerpt: "Learn the basics of Python: variables, lists, dictionaries, functions, and loops."
+excerpt: "Learn Python variables, collections, functions, files, and simple sequence processing for bioinformatics."
+author: "Nasir Mahmood Abbasi, PhD"
 ---
 
 <div class="mb-10 text-xl text-gray-600 leading-relaxed">
-  <p>This module provides the essential foundations required before advancing into hands-on command-line analysis or complex omics workflows.</p>
+  <p>Python becomes useful in bioinformatics when it turns repeated manual inspection into a testable program. This lesson teaches a small, practical subset of Python and applies it to sequence records and tabular data.</p>
 </div>
 
-## Coming Soon
+## Learning Objectives & Prerequisites
 
-This foundational module is currently in active development based on recent curriculum updates. It will include:
+**By the end of this lesson, you should be able to:**
 
-*   **Core Concepts:** Detailed explanations of the underlying theory.
-*   **Practical Examples:** Concrete, reproducible code blocks and data samples.
-*   **Downloadable Assets:** Starter datasets and project templates to practice on your own machine.
+- Use variables, lists, dictionaries, loops, functions, and conditions.
+- Read text files safely and count simple sequence statistics.
+- Use a virtual environment and record package versions.
+- Write a small script with a clear input and output.
 
-Check back soon as we roll out these critical preparatory modules for bioinformatics!
+**Prerequisites:**
 
-<div class="mt-10 p-8 bg-gray-50 border border-gray-200 rounded-xl">
-  <h3 class="text-xl font-bold text-gray-900 mb-4">Knowledge Check & Assessment</h3>
-  <div class="space-y-4">
-    <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-      <h4 class="font-bold text-gray-800 mb-2">1. Concept Verification</h4>
-      <p class="text-gray-600 text-sm">Explain the primary function of the core tools introduced in this lesson. What specific bioinformatics problem do they solve compared to alternative methods?</p>
-    </div>
-    <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-      <h4 class="font-bold text-gray-800 mb-2">2. Practical Execution</h4>
-      <p class="text-gray-600 text-sm">Execute the main pipeline commands on your own subset of data. <strong>Pass Criteria:</strong> The commands complete without syntax errors and generate the expected output file formats.</p>
-    </div>
-    <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-      <h4 class="font-bold text-gray-800 mb-2">3. Troubleshooting</h4>
-      <p class="text-gray-600 text-sm">If your output is empty or throws a memory error (OOM), what parameters should you adjust? (Hint: Check threads, memory allocation, or file paths).</p>
-    </div>
-  </div>
-</div>
+- Complete [Basic Navigation](command-line-part1.html).
+- Python 3.10 or newer and a text editor.
+
+## 1. Values and collections
+
+Use strings for sequences, lists for ordered records, and dictionaries for keyed metadata.
+
+```python
+sequence = "ACGTACGT"
+length = len(sequence)
+gc = (sequence.count("G") + sequence.count("C")) / length
+print(f"length={length}, gc={gc:.2%}")
+```
+
+## 2. Functions and validation
+
+Functions make repeated operations testable. Validate input before calculating a result.
+
+```python
+def gc_fraction(sequence):
+    seq = sequence.strip().upper()
+    if not seq or any(base not in "ACGTN" for base in seq):
+        raise ValueError("Expected a DNA sequence")
+    return (seq.count("G") + seq.count("C")) / len(seq)
+```
+
+## 3. Read a small FASTA file
+
+For production work use a tested parser such as Biopython, but a simple parser is useful for understanding the format.
+
+```python
+def fasta_records(path):
+    name, seq = None, []
+    with open(path) as handle:
+        for line in handle:
+            line=line.strip()
+            if line.startswith(">"):
+                if name is not None: yield name, "".join(seq)
+                name, seq = line[1:], []
+            else: seq.append(line)
+        if name is not None: yield name, "".join(seq)
+```
+
+## 4. Environments and tests
+
+Keep project dependencies isolated and test a function with a known sequence.
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+python -m pip install biopython
+python -c "import Bio; print(Bio.__version__)"
+```
+
+## Practical Exercise
+
+Write `fasta_gc.py` that prints each FASTA identifier, sequence length, and GC percentage. Test it on two records, including one containing `N`.
+
+**Pass criteria:** The script validates input, prints deterministic output for both records, and exits with a useful error for invalid characters.
+
+## Troubleshooting
+
+If imports fail, confirm the virtual environment is active. If a file is not found, print the current directory and use an explicit relative or absolute path.
+
+## Knowledge Check & Assessment
+
+### 1. Concept Verification
+
+Write short answers explaining the main concepts, the assumptions behind them, and one way a careless workflow could produce a misleading result.
+
+### 2. Practical Execution
+
+Complete the practical exercise above and save the command, script, table, or figure in the project structure. **Pass Criteria:** The script validates input, prints deterministic output for both records, and exits with a useful error for invalid characters.
+
+### 3. Troubleshooting
+
+Explain what you would inspect first if the output were empty, malformed, unexpectedly large, or failed because of a missing file, package, permission, memory, or metadata problem.
+
+## Next Steps
+
+Continue with [R and Tidyverse Fundamentals](r-tidyverse-fundamentals.html) and [Biological Data Formats](biological-data-formats.html). Record the software versions, dataset or example inputs, and any decisions you made.

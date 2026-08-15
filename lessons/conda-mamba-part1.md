@@ -564,9 +564,9 @@ Remember, good package management isn't just about convenience: it's about repro
 
 Now that you've mastered package management, you're ready to tackle more advanced bioinformatics topics:
 
-1. **[Command Line Fundamentals](command-line-basics-detailed.md)**: Master the terminal for bioinformatics
-2. **[Single-cell RNA-seq Analysis](single-cell-rnaseq-introduction.md)**: Apply your new environment to cutting-edge analysis
-3. **[Introduction to Bioinformatics](introduction-to-bioinformatics.md)**: Understand the broader context
+1. **[Command Line Fundamentals](command-line-part1.html)**: Master the terminal for bioinformatics
+2. **[Single-cell RNA-seq Analysis](scrna-seq-basics.html)**: Apply your new environment to cutting-edge analysis
+3. **[Introduction to Bioinformatics](introduction-to-bioinformatics.html)**: Understand the broader context
 
 With proper package management under your belt, you'll never have to worry about "dependency hell" again. Welcome to the world of reproducible bioinformatics!
 

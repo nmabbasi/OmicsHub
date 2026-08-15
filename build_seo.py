@@ -26,6 +26,16 @@ header_html = header_html.replace(
     'id="nav-mobile-home" class="px-4 py-2 text-sm text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors"'
 )
 
+# Mark Tutorials as the active section on every generated tutorial page.
+header_html = header_html.replace(
+    'id="nav-desktop-tutorials" class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-blue-600 rounded-md hover:bg-gray-50 transition-all cursor-pointer"',
+    'id="nav-desktop-tutorials" class="px-4 py-2 text-sm font-semibold bg-blue-600 text-white rounded-md shadow-sm transition-all cursor-pointer"'
+)
+header_html = header_html.replace(
+    'id="nav-mobile-tutorials" class="px-4 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors cursor-pointer"',
+    'id="nav-mobile-tutorials" class="px-4 py-2 text-sm font-semibold text-blue-600 bg-blue-50 rounded-lg transition-colors cursor-pointer"'
+)
+
 # Remove inherited homepage canonical tag to avoid duplicates
 header_html = header_html.replace('<link rel="canonical" href="https://theomicshub.com/" />\n', '')
 header_html = header_html.replace('<link rel="canonical" href="https://theomicshub.com/" />', '')

@@ -3,37 +3,88 @@ title: "Statistics for Bioinformatics"
 category: "Foundations & Prerequisites"
 date: "2026-08-15"
 image: "images/statistics-for-bioinformatics.jpg"
-excerpt: "Cover distributions, hypothesis tests, multiple testing, and statistical power."
+excerpt: "Learn distributions, replicates, effect sizes, multiple testing, and statistical power for biological data analysis."
+author: "Nasir Mahmood Abbasi, PhD"
 ---
 
 <div class="mb-10 text-xl text-gray-600 leading-relaxed">
-  <p>This module provides the essential foundations required before advancing into hands-on command-line analysis or complex omics workflows.</p>
+  <p>Statistics helps distinguish repeatable evidence from noise. In bioinformatics, the number of measurements can be enormous while the number of biological replicates remains small, so study design and effect size matter as much as a p-value.</p>
 </div>
 
-## Coming Soon
+## Learning Objectives & Prerequisites
 
-This foundational module is currently in active development based on recent curriculum updates. It will include:
+**By the end of this lesson, you should be able to:**
 
-*   **Core Concepts:** Detailed explanations of the underlying theory.
-*   **Practical Examples:** Concrete, reproducible code blocks and data samples.
-*   **Downloadable Assets:** Starter datasets and project templates to practice on your own machine.
+- Distinguish biological from technical replicates.
+- Explain effect size, uncertainty, p-values, and false discovery rate.
+- Choose a simple comparison without violating independence assumptions.
+- Interpret a result with limitations and not just a significance threshold.
 
-Check back soon as we roll out these critical preparatory modules for bioinformatics!
+**Prerequisites:**
 
-<div class="mt-10 p-8 bg-gray-50 border border-gray-200 rounded-xl">
-  <h3 class="text-xl font-bold text-gray-900 mb-4">Knowledge Check & Assessment</h3>
-  <div class="space-y-4">
-    <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-      <h4 class="font-bold text-gray-800 mb-2">1. Concept Verification</h4>
-      <p class="text-gray-600 text-sm">Explain the primary function of the core tools introduced in this lesson. What specific bioinformatics problem do they solve compared to alternative methods?</p>
-    </div>
-    <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-      <h4 class="font-bold text-gray-800 mb-2">2. Practical Execution</h4>
-      <p class="text-gray-600 text-sm">Execute the main pipeline commands on your own subset of data. <strong>Pass Criteria:</strong> The commands complete without syntax errors and generate the expected output file formats.</p>
-    </div>
-    <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-      <h4 class="font-bold text-gray-800 mb-2">3. Troubleshooting</h4>
-      <p class="text-gray-600 text-sm">If your output is empty or throws a memory error (OOM), what parameters should you adjust? (Hint: Check threads, memory allocation, or file paths).</p>
-    </div>
-  </div>
-</div>
+- Basic algebra and a data frame in R or Python.
+- Complete [Quality Control Fundamentals](quality-control-fundamentals.html).
+
+## 1. Replicates and distributions
+
+Biological replicates represent independent experimental units; technical replicates measure the same unit repeatedly. Plot the data before selecting a test.
+
+```r
+set.seed(7)
+x <- rnorm(12, mean=10, sd=2)
+summary(x)
+hist(x, main="Example distribution", xlab="Measurement")
+```
+
+## 2. Effect size and uncertainty
+
+A difference of 0.2 may be statistically significant in a huge dataset but scientifically unimportant. Report a difference or fold change with uncertainty and the scale used.
+
+```r
+mean_treated - mean_control
+log2(mean_treated / mean_control)
+```
+
+## 3. Multiple testing
+
+Testing thousands of genes creates many false positives. Control the false discovery rate with an appropriate correction and pre-specify the threshold.
+
+```r
+p.adjust(p_values, method = "BH")
+```
+
+## 4. Power and limitations
+
+Power depends on effect size, variability, sample size, and the decision threshold. A non-significant result is not proof of no effect; report the uncertainty and observed effect.
+
+```text
+Report: effect size, confidence interval, sample size, test, adjusted p-value, and biological limitation.
+```
+
+## Practical Exercise
+
+Take a small table with two conditions. Plot each group, report the mean difference, and explain why biological replicate count matters more than simply adding cells or reads.
+
+**Pass criteria:** The report includes replicate definitions, effect size, uncertainty, multiple-testing handling, and a limitation statement.
+
+## Troubleshooting
+
+If assumptions fail, do not automatically switch tests. Inspect distributions, dependence, batch, outliers, and the design before consulting a statistician.
+
+## Knowledge Check & Assessment
+
+### 1. Concept Verification
+
+Write short answers explaining the main concepts, the assumptions behind them, and one way a careless workflow could produce a misleading result.
+
+### 2. Practical Execution
+
+Complete the practical exercise above and save the command, script, table, or figure in the project structure. **Pass Criteria:** The report includes replicate definitions, effect size, uncertainty, multiple-testing handling, and a limitation statement.
+
+### 3. Troubleshooting
+
+Explain what you would inspect first if the output were empty, malformed, unexpectedly large, or failed because of a missing file, package, permission, memory, or metadata problem.
+
+## Next Steps
+
+Continue with [Experimental Design and Batch Effects](experimental-design-batch-effects.html) and [Pseudobulk DE Analysis](transcriptomics-differential-expression.html). Record the software versions, dataset or example inputs, and any decisions you made.

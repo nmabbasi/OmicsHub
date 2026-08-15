@@ -943,8 +943,28 @@ function handleScroll() {
 // Mobile menu toggle
 function toggleMobileMenu() {
     const mobileMenu = document.getElementById("mobile-menu");
-    mobileMenu.classList.toggle("hidden");
+    const toggle = document.querySelector('button[aria-controls="mobile-menu"]');
+    const isOpen = mobileMenu.classList.toggle("hidden") === false;
+    if (toggle) {
+        toggle.setAttribute("aria-expanded", String(isOpen));
+        toggle.setAttribute("aria-label", isOpen ? "Close navigation menu" : "Open navigation menu");
+    }
 }
+
+function closeMobileMenu() {
+    const mobileMenu = document.getElementById("mobile-menu");
+    const toggle = document.querySelector('button[aria-controls="mobile-menu"]');
+    if (mobileMenu) mobileMenu.classList.add("hidden");
+    if (toggle) {
+        toggle.setAttribute("aria-expanded", "false");
+        toggle.setAttribute("aria-label", "Open navigation menu");
+    }
+}
+
+document.addEventListener('click', function(event) {
+    const link = event.target.closest('#mobile-menu a');
+    if (link) closeMobileMenu();
+});
 
 
 

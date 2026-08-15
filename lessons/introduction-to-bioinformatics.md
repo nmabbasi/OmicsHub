@@ -163,8 +163,8 @@ Reconstructing evolutionary relationships between species or genes to understand
 
 ### Step 1: Master the Basics
 Start with our detailed tutorials on:
-- [Command line fundamentals](command-line-part1.md)
-- [Package management with Conda](conda-mamba-part1.md)
+- [Command line fundamentals](command-line-part1.html)
+- [Package management with Conda](conda-mamba-part1.html)
 
 ### Step 2: Choose Your Focus Area
 Bioinformatics is broad: consider specializing in:
@@ -220,9 +220,9 @@ The journey may seem daunting at first, but remember: every expert was once a be
 
 Ready to dive deeper? Here's your roadmap:
 
-1. **Master the command line**: Check out our [detailed command line tutorial](command-line-part1.md)
-2. **Set up your environment**: Learn about [Conda and Mamba for package management](conda-mamba-part1.md)
-3. **Explore single-cell analysis**: Discover the cutting-edge field of [single-cell RNA-seq](scrna-seq-basics.md)
+1. **Master the command line**: Check out our [detailed command line tutorial](command-line-part1.html)
+2. **Set up your environment**: Learn about [Conda and Mamba for package management](conda-mamba-part1.html)
+3. **Explore single-cell analysis**: Discover the cutting-edge field of [single-cell RNA-seq](scrna-seq-basics.html)
 
 Remember, bioinformatics is not just about the tools: it's about asking the right biological questions and using computational approaches to find meaningful answers. Welcome to this exciting field where biology meets big data!
 

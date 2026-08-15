@@ -3,37 +3,89 @@ title: "Quality Control Fundamentals"
 category: "Foundations & Prerequisites"
 date: "2026-08-15"
 image: "images/quality-control-fundamentals.jpg"
-excerpt: "Learn what read quality, mapping rate, duplication, and contamination mean across data types."
+excerpt: "Understand read quality, mapping, duplication, contamination, missing data, and QC decisions across omics workflows."
+author: "Nasir Mahmood Abbasi, PhD"
 ---
 
 <div class="mb-10 text-xl text-gray-600 leading-relaxed">
-  <p>This module provides the essential foundations required before advancing into hands-on command-line analysis or complex omics workflows.</p>
+  <p>Quality control is not a decorative report added at the end of an analysis. It is the evidence used to decide whether data can support the biological question. This lesson introduces common QC measurements and how to act on them without applying arbitrary thresholds.</p>
 </div>
 
-## Coming Soon
+## Learning Objectives & Prerequisites
 
-This foundational module is currently in active development based on recent curriculum updates. It will include:
+**By the end of this lesson, you should be able to:**
 
-*   **Core Concepts:** Detailed explanations of the underlying theory.
-*   **Practical Examples:** Concrete, reproducible code blocks and data samples.
-*   **Downloadable Assets:** Starter datasets and project templates to practice on your own machine.
+- Explain read quality, mapping rate, duplication, coverage, contamination, and missingness.
+- Separate technical failure from a genuine biological signal.
+- Choose QC plots and thresholds appropriate to the assay.
+- Document exclusions and retain the original data.
 
-Check back soon as we roll out these critical preparatory modules for bioinformatics!
+**Prerequisites:**
 
-<div class="mt-10 p-8 bg-gray-50 border border-gray-200 rounded-xl">
-  <h3 class="text-xl font-bold text-gray-900 mb-4">Knowledge Check & Assessment</h3>
-  <div class="space-y-4">
-    <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-      <h4 class="font-bold text-gray-800 mb-2">1. Concept Verification</h4>
-      <p class="text-gray-600 text-sm">Explain the primary function of the core tools introduced in this lesson. What specific bioinformatics problem do they solve compared to alternative methods?</p>
-    </div>
-    <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-      <h4 class="font-bold text-gray-800 mb-2">2. Practical Execution</h4>
-      <p class="text-gray-600 text-sm">Execute the main pipeline commands on your own subset of data. <strong>Pass Criteria:</strong> The commands complete without syntax errors and generate the expected output file formats.</p>
-    </div>
-    <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-      <h4 class="font-bold text-gray-800 mb-2">3. Troubleshooting</h4>
-      <p class="text-gray-600 text-sm">If your output is empty or throws a memory error (OOM), what parameters should you adjust? (Hint: Check threads, memory allocation, or file paths).</p>
-    </div>
-  </div>
-</div>
+- Complete [Biological Data Formats](biological-data-formats.html).
+- Understand that thresholds depend on protocol, organism, platform, and study design.
+
+## 1. Read-level QC
+
+For short reads, inspect per-base quality, adapter content, sequence length, GC distribution, overrepresented sequences, and duplication. A low-quality tail may be trimmed, but trimming should be justified and recorded.
+
+```bash
+fastqc sample_R1.fastq.gz sample_R2.fastq.gz
+multiqc .
+```
+
+## 2. Alignment and coverage QC
+
+Mapping rate, properly paired reads, insert size, coverage depth, duplicate fraction, and target enrichment describe different failure modes. A high mapping rate does not guarantee correct alignment if the reference is wrong or contamination is present.
+
+```bash
+samtools flagstat aligned.bam
+samtools idxstats aligned.bam | head
+samtools depth -a aligned.bam | awk "{sum+=\$3} END {print sum/NR}"
+```
+
+## 3. Single-cell QC
+
+For scRNA-seq, inspect genes per cell, counts per cell, mitochondrial proportion, ribosomal content, doublets, and cell-cycle or stress signals. Thresholds should be explored by tissue and protocol, not copied blindly from another dataset.
+
+```python
+adata.obs["n_genes_by_counts"].describe()
+adata.obs["pct_counts_mt"].describe()
+```
+
+## 4. Record decisions
+
+Create a QC report that states the metric, threshold, number removed, reason, and whether the decision was made before examining the biological outcome.
+
+```text
+metric,threshold,removed,reason
+pct_counts_mt,<20,143,high mitochondrial content
+```
+
+## Practical Exercise
+
+Choose one assay and create a one-page QC decision table with metric, plot, threshold rationale, records removed, and possible biological bias.
+
+**Pass criteria:** You can explain at least four QC metrics, state why each matters, and document an exclusion without claiming that one universal threshold is correct.
+
+## Troubleshooting
+
+If a sample fails every metric, do not rescue it by repeatedly changing cutoffs. Check sample identity, library preparation, contamination, sequencing depth, and batch before deciding.
+
+## Knowledge Check & Assessment
+
+### 1. Concept Verification
+
+Write short answers explaining the main concepts, the assumptions behind them, and one way a careless workflow could produce a misleading result.
+
+### 2. Practical Execution
+
+Complete the practical exercise above and save the command, script, table, or figure in the project structure. **Pass Criteria:** You can explain at least four QC metrics, state why each matters, and document an exclusion without claiming that one universal threshold is correct.
+
+### 3. Troubleshooting
+
+Explain what you would inspect first if the output were empty, malformed, unexpectedly large, or failed because of a missing file, package, permission, memory, or metadata problem.
+
+## Next Steps
+
+Continue with [Statistics for Bioinformatics](statistics-for-bioinformatics.html) and [scRNA-seq Basics](scrna-seq-basics.html). Record the software versions, dataset or example inputs, and any decisions you made.

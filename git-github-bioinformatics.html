@@ -4,7 +4,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<meta content="Master version control for reproducible bioinformatics research." name="description"/>
+<meta content="Use Git and GitHub to track code, document analyses, collaborate safely, and make bioinformatics projects reproducible." name="description"/>
 <meta content="bioinformatics, single-cell RNA-seq, shell commands, conda, computational biology, tutorials, data analysis" name="keywords"/>
 <meta content="Nasir Mahmood Abbasi, PhD" name="author"/>
 <meta content="index, follow" name="robots"/>
@@ -13,15 +13,15 @@
 <meta content="Master computational biology with hands-on tutorials covering shell commands, conda environments, single-cell RNA-seq analysis, and essential bioinformatics tools." property="og:description"/>
 <meta content="https://theomicshub.com/git-github-bioinformatics.html" property="og:url"/>
 <meta content="website" property="og:type"/>
-<meta content="https://theomicshub.com/images/omicshub-logo.png" property="og:image"/>
+<meta content="https://theomicshub.com/images/hero-image.png" property="og:image"/>
 <!-- Twitter Card tags -->
 <meta content="summary_large_image" name="twitter:card"/>
 <meta content="The Omics Hub - Learn Bioinformatics and Single-cell RNA-seq Step by Step" name="twitter:title"/>
 <meta content="Master computational biology with hands-on tutorials covering shell commands, conda environments, single-cell RNA-seq analysis, and essential bioinformatics tools." name="twitter:description"/>
-<meta content="https://theomicshub.com/images/omicshub-logo.png" name="twitter:image"/>
+<meta content="https://theomicshub.com/images/hero-image.png" name="twitter:image"/>
 <title>Git and GitHub for Bioinformatics | The Omics Hub</title>
 <!-- Favicon -->
-<link href="images/favicon.ico" rel="icon" type="image/x-icon"/>
+<link href="images/favicon.svg" rel="icon" type="image/svg+xml"/>
 <!-- Tailwind CSS CDN -->
 <link href="tailwind.min.css" rel="stylesheet">
 <!-- Prism.js for syntax highlighting -->
@@ -45,7 +45,7 @@
       "@context": "https://schema.org",
       "@type": "Article",
       "headline": "Git and GitHub for Bioinformatics",
-      "description": "Master version control for reproducible bioinformatics research.",
+      "description": "Use Git and GitHub to track code, document analyses, collaborate safely, and make bioinformatics projects reproducible.",
       "author": {
         "@type": "Person",
         "name": "Nasir Mahmood Abbasi, PhD",
@@ -98,7 +98,7 @@ Legal
 </div>
 </div>
 <!-- Mobile Button -->
-<button class="md:hidden p-2 rounded-md text-gray-600 hover:bg-gray-100" onclick="toggleMobileMenu()">
+<button aria-label="Open navigation menu" aria-controls="mobile-menu" aria-expanded="false" class="md:hidden p-2 rounded-md text-gray-600 hover:bg-gray-100" onclick="toggleMobileMenu()">
 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
 </button>
 </div>
@@ -134,40 +134,100 @@ title: "Git and GitHub for Bioinformatics"
 category: "Foundations & Prerequisites"
 date: "2026-08-15"
 image: "images/git-github-bioinformatics.jpg"
-excerpt: "Master version control for reproducible bioinformatics research."
+excerpt: "Use Git and GitHub to track code, document analyses, collaborate safely, and make bioinformatics projects reproducible."
+author: "Nasir Mahmood Abbasi, PhD"
 ---
 
 <div class="mb-10 text-xl text-gray-600 leading-relaxed">
-  <p>This module provides the essential foundations required before advancing into hands-on command-line analysis or complex omics workflows.</p>
+  <p>Git records how a project changes over time. GitHub provides a collaborative home for repositories, issues, releases, and documentation. Together they make it possible to identify the exact scripts and configuration used to produce a result. Never commit private patient data or credentials.</p>
 </div>
 
-## Coming Soon
+## Learning Objectives & Prerequisites
 
-This foundational module is currently in active development based on recent curriculum updates. It will include:
+**By the end of this lesson, you should be able to:**
 
-*   **Core Concepts:** Detailed explanations of the underlying theory.
-*   **Practical Examples:** Concrete, reproducible code blocks and data samples.
-*   **Downloadable Assets:** Starter datasets and project templates to practice on your own machine.
+- Create a repository, make commits, inspect history, and use branches.
+- Write a useful README and `.gitignore` for a bioinformatics project.
+- Push code without exposing raw data, passwords, tokens, or private identifiers.
+- Use issues and pull requests for review.
 
-Check back soon as we roll out these critical preparatory modules for bioinformatics!
+**Prerequisites:**
 
-<div class="mt-10 p-8 bg-gray-50 border border-gray-200 rounded-xl">
-  <h3 class="text-xl font-bold text-gray-900 mb-4">Knowledge Check & Assessment</h3>
-  <div class="space-y-4">
-    <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-      <h4 class="font-bold text-gray-800 mb-2">1. Concept Verification</h4>
-      <p class="text-gray-600 text-sm">Explain the primary function of the core tools introduced in this lesson. What specific bioinformatics problem do they solve compared to alternative methods?</p>
-    </div>
-    <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-      <h4 class="font-bold text-gray-800 mb-2">2. Practical Execution</h4>
-      <p class="text-gray-600 text-sm">Execute the main pipeline commands on your own subset of data. <strong>Pass Criteria:</strong> The commands complete without syntax errors and generate the expected output file formats.</p>
-    </div>
-    <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-      <h4 class="font-bold text-gray-800 mb-2">3. Troubleshooting</h4>
-      <p class="text-gray-600 text-sm">If your output is empty or throws a memory error (OOM), what parameters should you adjust? (Hint: Check threads, memory allocation, or file paths).</p>
-    </div>
-  </div>
-</div>
+- Complete [Computer and Data Fundamentals](computer-data-fundamentals.html).
+- Install Git and create a GitHub account if you want to push to a remote repository.
+
+## 1. Start a reproducible repository
+
+A repository should contain scripts, configuration, documentation, and small example data—not an uncontrolled dump of raw sequencing files.
+
+```bash
+mkdir omics-demo && cd omics-demo
+git init
+printf "# Omics demo\n" > README.md
+printf "*.fastq.gz\n.env\nresults/\n" > .gitignore
+git add README.md .gitignore
+git commit -m "Initialize reproducible project"
+```
+
+## 2. Record meaningful changes
+
+A commit should represent one understandable change. Use `git diff` before committing and write messages that explain what changed.
+
+```bash
+git status
+git diff
+git log --oneline --decorate -5
+git add scripts/
+git commit -m "Add read QC summary script"
+```
+
+## 3. Connect a remote safely
+
+Use SSH keys or a credential manager. Never put a personal access token in a URL, shell history, notebook, or script.
+
+```bash
+git remote add origin https://github.com/USER/REPO.git
+git branch -M main
+git push -u origin main
+```
+
+## 4. Reproducibility checklist
+
+Record software versions, environment files, reference versions, command parameters, and the commit hash associated with a result.
+
+```bash
+git rev-parse --short HEAD
+python --version
+conda env export --from-history > environment.yml
+```
+
+## Practical Exercise
+
+Create a small repository containing a README, `.gitignore`, one script, and an environment file. Make two commits and use `git log` to show the history.
+
+**Pass criteria:** The repository history contains two meaningful commits, no credentials or raw human data are tracked, and the README explains how to reproduce the example.
+
+## Troubleshooting
+
+If a push is rejected, pull and inspect the remote history before forcing anything. If a secret was committed, rotate it immediately; deleting the file is not enough because it remains in Git history.
+
+## Knowledge Check & Assessment
+
+### 1. Concept Verification
+
+Write short answers explaining the main concepts, the assumptions behind them, and one way a careless workflow could produce a misleading result.
+
+### 2. Practical Execution
+
+Complete the practical exercise above and save the command, script, table, or figure in the project structure. **Pass Criteria:** The repository history contains two meaningful commits, no credentials or raw human data are tracked, and the README explains how to reproduce the example.
+
+### 3. Troubleshooting
+
+Explain what you would inspect first if the output were empty, malformed, unexpectedly large, or failed because of a missing file, package, permission, memory, or metadata problem.
+
+## Next Steps
+
+Continue with [Reproducible Project Structure](reproducible-project-structure.html) and [Python Fundamentals](python-fundamentals-bioinformatics.html). Record the software versions, dataset or example inputs, and any decisions you made.
 
                 </div>
                 <!-- PRE-RENDERED STATIC HTML -->
@@ -199,34 +259,65 @@ Check back soon as we roll out these critical preparatory modules for bioinforma
             
             <div class="prose prose-blue prose-lg max-w-none">
                 <div class="mb-10 text-xl text-gray-600 leading-relaxed">
-  <p>This module provides the essential foundations required before advancing into hands-on command-line analysis or complex omics workflows.</p>
+  <p>Git records how a project changes over time. GitHub provides a collaborative home for repositories, issues, releases, and documentation. Together they make it possible to identify the exact scripts and configuration used to produce a result. Never commit private patient data or credentials.</p>
 </div>
 
-<h2>Coming Soon</h2>
-<p>This foundational module is currently in active development based on recent curriculum updates. It will include:</p>
+<h2>Learning Objectives &amp; Prerequisites</h2>
+<p><strong>By the end of this lesson, you should be able to:</strong></p>
 <ul>
-<li><strong>Core Concepts:</strong> Detailed explanations of the underlying theory.</li>
-<li><strong>Practical Examples:</strong> Concrete, reproducible code blocks and data samples.</li>
-<li><strong>Downloadable Assets:</strong> Starter datasets and project templates to practice on your own machine.</li>
+<li>Create a repository, make commits, inspect history, and use branches.</li>
+<li>Write a useful README and <code>.gitignore</code> for a bioinformatics project.</li>
+<li>Push code without exposing raw data, passwords, tokens, or private identifiers.</li>
+<li>Use issues and pull requests for review.</li>
 </ul>
-<p>Check back soon as we roll out these critical preparatory modules for bioinformatics!</p>
-<div class="mt-10 p-8 bg-gray-50 border border-gray-200 rounded-xl">
-  <h3 class="text-xl font-bold text-gray-900 mb-4">Knowledge Check & Assessment</h3>
-  <div class="space-y-4">
-    <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-      <h4 class="font-bold text-gray-800 mb-2">1. Concept Verification</h4>
-      <p class="text-gray-600 text-sm">Explain the primary function of the core tools introduced in this lesson. What specific bioinformatics problem do they solve compared to alternative methods?</p>
-    </div>
-    <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-      <h4 class="font-bold text-gray-800 mb-2">2. Practical Execution</h4>
-      <p class="text-gray-600 text-sm">Execute the main pipeline commands on your own subset of data. <strong>Pass Criteria:</strong> The commands complete without syntax errors and generate the expected output file formats.</p>
-    </div>
-    <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-      <h4 class="font-bold text-gray-800 mb-2">3. Troubleshooting</h4>
-      <p class="text-gray-600 text-sm">If your output is empty or throws a memory error (OOM), what parameters should you adjust? (Hint: Check threads, memory allocation, or file paths).</p>
-    </div>
-  </div>
-</div>
+<p><strong>Prerequisites:</strong></p>
+<ul>
+<li>Complete <a href="computer-data-fundamentals.html">Computer and Data Fundamentals</a>.</li>
+<li>Install Git and create a GitHub account if you want to push to a remote repository.</li>
+</ul>
+<h2>1. Start a reproducible repository</h2>
+<p>A repository should contain scripts, configuration, documentation, and small example data—not an uncontrolled dump of raw sequencing files.</p>
+<pre><code class="language-bash">mkdir omics-demo &amp;&amp; cd omics-demo
+git init
+printf &quot;# Omics demo\n&quot; &gt; README.md
+printf &quot;*.fastq.gz\n.env\nresults/\n&quot; &gt; .gitignore
+git add README.md .gitignore
+git commit -m &quot;Initialize reproducible project&quot;
+</code></pre>
+<h2>2. Record meaningful changes</h2>
+<p>A commit should represent one understandable change. Use <code>git diff</code> before committing and write messages that explain what changed.</p>
+<pre><code class="language-bash">git status
+git diff
+git log --oneline --decorate -5
+git add scripts/
+git commit -m &quot;Add read QC summary script&quot;
+</code></pre>
+<h2>3. Connect a remote safely</h2>
+<p>Use SSH keys or a credential manager. Never put a personal access token in a URL, shell history, notebook, or script.</p>
+<pre><code class="language-bash">git remote add origin https://github.com/USER/REPO.git
+git branch -M main
+git push -u origin main
+</code></pre>
+<h2>4. Reproducibility checklist</h2>
+<p>Record software versions, environment files, reference versions, command parameters, and the commit hash associated with a result.</p>
+<pre><code class="language-bash">git rev-parse --short HEAD
+python --version
+conda env export --from-history &gt; environment.yml
+</code></pre>
+<h2>Practical Exercise</h2>
+<p>Create a small repository containing a README, <code>.gitignore</code>, one script, and an environment file. Make two commits and use <code>git log</code> to show the history.</p>
+<p><strong>Pass criteria:</strong> The repository history contains two meaningful commits, no credentials or raw human data are tracked, and the README explains how to reproduce the example.</p>
+<h2>Troubleshooting</h2>
+<p>If a push is rejected, pull and inspect the remote history before forcing anything. If a secret was committed, rotate it immediately; deleting the file is not enough because it remains in Git history.</p>
+<h2>Knowledge Check &amp; Assessment</h2>
+<h3>1. Concept Verification</h3>
+<p>Write short answers explaining the main concepts, the assumptions behind them, and one way a careless workflow could produce a misleading result.</p>
+<h3>2. Practical Execution</h3>
+<p>Complete the practical exercise above and save the command, script, table, or figure in the project structure. <strong>Pass Criteria:</strong> The repository history contains two meaningful commits, no credentials or raw human data are tracked, and the README explains how to reproduce the example.</p>
+<h3>3. Troubleshooting</h3>
+<p>Explain what you would inspect first if the output were empty, malformed, unexpectedly large, or failed because of a missing file, package, permission, memory, or metadata problem.</p>
+<h2>Next Steps</h2>
+<p>Continue with <a href="reproducible-project-structure.html">Reproducible Project Structure</a> and <a href="python-fundamentals-bioinformatics.html">Python Fundamentals</a>. Record the software versions, dataset or example inputs, and any decisions you made.</p>
             </div>
             
             
@@ -340,12 +431,6 @@ Check back soon as we roll out these critical preparatory modules for bioinforma
 <!-- Marked.js for markdown rendering -->
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <!-- Custom JS - loads tutorials from manifest -->
-<script src="script.js"></script>
-<script>
-function toggleMobileMenu() {
-const m = document.getElementById("mobile-menu");
-m.classList.toggle("hidden");
-}
-</script>
+<script src="script.js?v=20260815"></script>
 </body>
 </html>
