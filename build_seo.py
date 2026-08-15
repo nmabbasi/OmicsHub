@@ -208,8 +208,7 @@ for index, tut in enumerate(tutorials):
     
     canonical_tag = f'<link rel="canonical" href="https://theomicshub.com/{tutorial_id}.html" />'
     
-    # Inject canonical and JSON-LD before </head>
-    custom_header = custom_header.replace('</head>', f'{canonical_tag}\\n{json_ld}\\n</head>')
+    custom_header = custom_header.replace('</head>', f'{canonical_tag}\n{json_ld}\n</head>')
 
     # Build the page content
     page_content = f"""
