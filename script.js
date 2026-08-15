@@ -52,7 +52,7 @@ function handleInitialRoute() {
         } else if (hash === '#all-tutorials') {
             showTutorials();
         } else if (hash === '#tutorials') {
-            showHome();
+            showHome(true, true); // Prevent scroll to top
             setTimeout(() => {
                 const el = document.getElementById('tutorials');
                 if (el) el.scrollIntoView();
@@ -86,7 +86,7 @@ function setupEventListeners() {
             } else if (hash === '#all-tutorials') {
                 showTutorials(false);
             } else if (hash === '#tutorials') {
-                showHome(false);
+                showHome(false, true); // Prevent scroll to top
                 setTimeout(() => {
                     const el = document.getElementById('tutorials');
                     if (el) el.scrollIntoView();
@@ -756,7 +756,7 @@ async function showTutorial(id, addToHistory = true) {
 }
 
 // Show Home Page
-function showHome(addToHistory = true) {
+function showHome(addToHistory = true, preventScroll = false) {
     updateNavActiveState('home');
     document.querySelectorAll('.page-content').forEach(page => page.classList.add('hidden'));
     document.getElementById('home-page').classList.remove('hidden');
@@ -765,7 +765,9 @@ function showHome(addToHistory = true) {
     if (addToHistory) {
         window.history.pushState(null, '', window.location.pathname); // Clear hash
     }
-    window.scrollTo(0, 0); // Scroll to top of page
+    if (!preventScroll) {
+        window.scrollTo(0, 0); // Scroll to top of page
+    }
 }
 
 // Show Tutorials Page
