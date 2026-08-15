@@ -21,14 +21,16 @@ footer_html = '\n</main>' + footer_split[1]
 # Actually, it's easier to put the HTML files in the root directory (e.g., tutorial_name.html)
 # That way, image paths (images/...) and css paths (style.css) remain perfectly intact!
 
-sitemap_urls = []
+from inject_html_cards import tutorial_files
 
+# Use the explicitly ordered list instead of os.listdir
+sitemap_urls = []
 lessons_dir = 'lessons'
-for filename in os.listdir(lessons_dir):
-    if not filename.endswith('.md'):
-        continue
-        
+
+for index, filename in enumerate(tutorial_files):
     filepath = os.path.join(lessons_dir, filename)
+    if not os.path.exists(filepath): continue
+    
     tutorial_id = filename.replace('.md', '')
     
     with open(filepath, 'r') as f:
@@ -103,6 +105,52 @@ for filename in os.listdir(lessons_dir):
             </div>
     ''' if img_str else ""
 
+    # --- Generate Previous/Next Navigation ---
+    prev_html = ""
+    next_html = ""
+    
+    def get_tutorial_title(file_name):
+        try:
+            with open(os.path.join(lessons_dir, file_name), 'r') as f:
+                c = f.read()
+            m = re.search(r'title:\s*"([^"]+)"', c)
+            if m: return m.group(1)
+        except Exception:
+            pass
+        return file_name.replace('.md', '').replace('-', ' ').title()
+
+    if index > 0:
+        prev_file = tutorial_files[index - 1]
+        prev_id = prev_file.replace('.md', '')
+        prev_title = get_tutorial_title(prev_file)
+        prev_html = f'''
+        <a href="{prev_id}.html" class="flex-1 flex flex-col p-4 border border-gray-200 rounded-xl hover:border-blue-300 hover:shadow-sm transition-all text-left group">
+            <span class="text-xs text-gray-500 font-bold tracking-wider uppercase mb-1 group-hover:text-blue-500">← Previous Tutorial</span>
+            <span class="text-gray-900 font-medium group-hover:text-blue-600 line-clamp-2">{prev_title}</span>
+        </a>
+        '''
+        
+    if index < len(tutorial_files) - 1:
+        next_file = tutorial_files[index + 1]
+        next_id = next_file.replace('.md', '')
+        next_title = get_tutorial_title(next_file)
+        next_html = f'''
+        <a href="{next_id}.html" class="flex-1 flex flex-col p-4 border border-gray-200 rounded-xl hover:border-blue-300 hover:shadow-sm transition-all text-right group">
+            <span class="text-xs text-gray-500 font-bold tracking-wider uppercase mb-1 group-hover:text-blue-500">Next Tutorial →</span>
+            <span class="text-gray-900 font-medium group-hover:text-blue-600 line-clamp-2">{next_title}</span>
+        </a>
+        '''
+        
+    nav_html = f'''
+    <div class="mt-16 pt-8 border-t border-gray-200">
+        <h3 class="text-xl font-bold text-gray-900 mb-6">Continue Learning</h3>
+        <div class="flex flex-col sm:flex-row gap-4">
+            {prev_html if prev_html else '<div class="flex-1"></div>'}
+            {next_html if next_html else '<div class="flex-1"></div>'}
+        </div>
+    </div>
+    '''
+
     static_content = f'''
             <div class="mb-12">
                 <div class="flex items-center gap-2 text-sm text-blue-600 font-medium mb-4">
@@ -127,6 +175,8 @@ for filename in os.listdir(lessons_dir):
             <div class="prose prose-blue prose-lg max-w-none">
                 {rendered_html}
             </div>
+            
+            {nav_html}
     '''
 
     # Build JSON-LD structured data for SEO

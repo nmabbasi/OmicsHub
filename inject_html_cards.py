@@ -2,31 +2,52 @@ import os
 import re
 
 tutorial_files = [
+    # Introduction
     'introduction-to-bioinformatics.md',
     'modern-bioinformatics-methods-2026.md',
-    'docker-singularity-bioinformatics.md',
-    'reproducible-workflows-snakemake-nextflow.md',
-    '1-Connection.md',
-    '2-HPC_Basic_Commands.md',
-    '4-Support.md',
+    
+    # Shell Command Basics
     'command-line-part1.md',
     'command-line-part2.md',
     'command-line-part3.md',
-    'hpc-submission-part1.md',
+    
+    # Package Management
     'conda-mamba-part1.md',
+    
+    # High-Performance Computing (HPC)
+    '1-Connection.md',
+    '2-HPC_Basic_Commands.md',
+    'hpc-submission-part1.md',
+    '4-Support.md',
+    
+    # Workflow & Containerization
+    'reproducible-workflows-snakemake-nextflow.md',
+    'docker-singularity-bioinformatics.md',
+    
+    # Metagenomics
     '16s-rrna-prokka-annotation.md',
-    'metagenomics-kraken2-bracken.md',
     'metagenomics-assembly-mapping.md',
+    'metagenomics-kraken2-bracken.md',
+    
+    # Metatranscriptomics
     'metatranscriptomics-guide.md',
     'metatranscriptomics-functional-pathways.md',
+    
+    # Evolutionary Bioinformatics Analysis
     'evolutionary-phylogeny-analysis.md',
     'phylogenomics-orthofinder.md',
+    
+    # Genomics & Whole Exome Sequencing
     'wes-variant-calling-pipeline.md',
+    
+    # Single-Cell RNA-seq
     'scrna-seq-basics.md',
     'scrna-seq-integration-strategies.md',
     'scrna-seq-downstream-analysis.md',
     'scrna-seq-trajectory-inference.md',
     'transcriptomics-differential-expression.md',
+    
+    # Advanced Single-Cell Analysis
     'scrna-seq-quality-control.md',
     'advanced-visualization-packages.md',
     'tcr-bcr-repertoire-analysis.md',
@@ -36,7 +57,11 @@ tutorial_files = [
     'infercnv-copy-number-variation.md',
     'single-cell-deconvolution.md',
     'cite-seq-wnn-multiomics.md',
+    
+    # Spatial Transcriptomics
     'spatial-transcriptomics-r-python.md',
+    
+    # Long-Read Sequencing
     'long-read-pacbio-nanopore.md'
 ]
 
