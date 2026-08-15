@@ -38,6 +38,51 @@ def update_file(filepath, new_header, new_footer, depth=0):
             adj_header = adj_header.replace('href="pages/', f'href="{prefix}pages/')
             adj_header = adj_header.replace('src="images/', f'src="{prefix}images/')
             
+        # De-activate "Home" link since we are not on index.html
+        adj_header = adj_header.replace(
+            'id="nav-desktop-home" class="px-4 py-2 text-sm font-semibold bg-blue-600 text-white rounded-md shadow-sm transition-all"',
+            'id="nav-desktop-home" class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-blue-600 rounded-md hover:bg-gray-50 transition-all"'
+        )
+        adj_header = adj_header.replace(
+            'id="nav-mobile-home" class="px-4 py-2 text-sm font-semibold text-blue-600 bg-blue-50 rounded-lg transition-colors"',
+            'id="nav-mobile-home" class="px-4 py-2 text-sm text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors"'
+        )
+        
+        # Activate correct link based on filename
+        filename = os.path.basename(filepath)
+        if filename == 'start-here.html':
+            adj_header = adj_header.replace(
+                'href="start-here.html" class="px-4 py-2 text-sm font-bold text-blue-700 hover:text-blue-900 rounded-md hover:bg-blue-50 transition-all flex items-center gap-1"',
+                'href="start-here.html" class="px-4 py-2 text-sm font-bold bg-blue-600 text-white rounded-md shadow-sm transition-all flex items-center gap-1"'
+            )
+        elif filename == 'services.html':
+            adj_header = adj_header.replace(
+                'href="services.html" class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-blue-600 rounded-md hover:bg-gray-50 transition-all"',
+                'href="services.html" class="px-4 py-2 text-sm font-semibold bg-blue-600 text-white rounded-md shadow-sm transition-all"'
+            )
+            adj_header = adj_header.replace(
+                'href="services.html" class="px-4 py-2 text-sm text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors"',
+                'href="services.html" class="px-4 py-2 text-sm font-semibold text-blue-600 bg-blue-50 rounded-lg transition-colors"'
+            )
+        elif filename == 'about.html':
+            adj_header = adj_header.replace(
+                'href="about.html" class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-blue-600 rounded-md hover:bg-gray-50 transition-all"',
+                'href="about.html" class="px-4 py-2 text-sm font-semibold bg-blue-600 text-white rounded-md shadow-sm transition-all"'
+            )
+            adj_header = adj_header.replace(
+                'href="about.html" class="px-4 py-2 text-sm text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors"',
+                'href="about.html" class="px-4 py-2 text-sm font-semibold text-blue-600 bg-blue-50 rounded-lg transition-colors"'
+            )
+        elif filename == 'contact.html':
+            adj_header = adj_header.replace(
+                'href="contact.html" class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-blue-600 rounded-md hover:bg-gray-50 transition-all"',
+                'href="contact.html" class="px-4 py-2 text-sm font-semibold bg-blue-600 text-white rounded-md shadow-sm transition-all"'
+            )
+            adj_header = adj_header.replace(
+                'href="contact.html" class="px-4 py-2 text-sm text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors"',
+                'href="contact.html" class="px-4 py-2 text-sm font-semibold text-blue-600 bg-blue-50 rounded-lg transition-colors"'
+            )
+
         if content.find(adj_header) == -1:
             content = content.replace(old_header, adj_header)
             changed = True
