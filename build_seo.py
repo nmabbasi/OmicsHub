@@ -15,6 +15,17 @@ header_split = base_html.split('<main class="min-h-screen">')
 footer_split = header_split[1].split('</main>')
 
 header_html = header_split[0] + '<main class="min-h-screen">\n'
+
+# De-activate the "Home" link so tutorials don't highlight Home
+header_html = header_html.replace(
+    'id="nav-desktop-home" class="px-4 py-2 text-sm font-semibold bg-blue-600 text-white rounded-md shadow-sm transition-all"',
+    'id="nav-desktop-home" class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-blue-600 rounded-md hover:bg-gray-50 transition-all"'
+)
+header_html = header_html.replace(
+    'id="nav-mobile-home" class="px-4 py-2 text-sm font-semibold text-blue-600 bg-blue-50 rounded-lg transition-colors"',
+    'id="nav-mobile-home" class="px-4 py-2 text-sm text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors"'
+)
+
 footer_html = '\n</main>' + footer_split[1]
 
 # Adjust paths in header and footer since these pages will be in /tutorials/ subfolder
