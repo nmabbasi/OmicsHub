@@ -7,6 +7,18 @@ excerpt: "Learn to load software modules, inspect cluster partitions and nodes, 
 image: "images/hpc.png"
 ---
 
+
+<div class="flex flex-wrap items-center gap-4 text-xs font-mono text-gray-500 bg-gray-50 p-3 rounded-lg border border-gray-200 mb-6">
+  <div class="flex items-center gap-1">
+    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+    <span><strong>Tested on:</strong> Python 3.11, R 4.3.2, Ubuntu 24.04</span>
+  </div>
+  <div class="flex items-center gap-1">
+    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+    <span><strong>Last Review:</strong> 2026-08-15</span>
+  </div>
+</div>
+
 <div class="p-6 bg-blue-50 border border-blue-100 rounded-xl mb-8">
   <h4 class="text-lg font-bold text-blue-900 mb-2">Learning Objectives & Prerequisites</h4>
   <ul class="list-disc list-inside text-blue-800 space-y-1 mb-4">
@@ -157,6 +169,66 @@ module load myprogram/1.0
 
 
 ---
+
+## Debugging Failed Jobs (Error Diagnosis)
+
+When a Slurm job fails, you need to diagnose *why*. HPC errors typically fall into three categories: OOM (Out of Memory), Timeout, or Syntax errors.
+
+### 1. Reading the Slurm Logs
+
+By default, Slurm writes output and errors to a file named `slurm-<jobid>.out`. Always check this file first.
+
+```bash
+cat slurm-123456.out
+```
+
+**Example Log - OOM Error:**
+```text
+slurmstepd: error: Detected 1 oom-kill event(s) in StepId=123456.batch.
+Some of your processes may have been killed by the cgroup out-of-memory handler.
+```
+*Diagnosis:* Your job requested 10GB of RAM, but the process tried to use 12GB.
+*Fix:* Edit your submission script to request more memory (e.g., `#SBATCH --mem=20G`) and resubmit.
+
+**Example Log - Timeout Error:**
+```text
+slurmstepd: error: *** JOB 123457 ON node01 CANCELLED AT 2026-08-15T12:00:00 DUE TO TIME LIMIT ***
+```
+*Diagnosis:* Your job requested 2 hours, but it took longer.
+*Fix:* Edit your submission script to request more time (e.g., `#SBATCH --time=12:00:00`) and resubmit.
+
+### 2. Checking Job Efficiency
+
+To prevent OOM errors and optimize resource usage, you should check how efficiently your past jobs ran using `seff`:
+
+```bash
+seff 123456
+```
+
+**Output:**
+```text
+Job ID: 123456
+Cluster: mycluster
+User/Group: user/group
+State: COMPLETED (exit code 0)
+Cores: 1
+CPU Utilized: 00:45:00
+CPU Efficiency: 90.00% of 00:50:00 core-walltime
+Job Wall-clock time: 00:50:00
+Memory Utilized: 8.00 GB
+Memory Efficiency: 80.00% of 10.00 GB
+```
+*Interpretation:* This was a highly efficient job. It used 80% of requested RAM and 90% of requested CPU time.
+
+---
+
+
+## References
+
+1. Official tool documentation and package vignettes.
+2. Stuart, T., et al. (2019). Comprehensive Integration of Single-Cell Data. *Cell*, 177(7), 1888-1902.e21. (For Seurat-based workflows)
+3. Orchestrating Single-Cell Analysis with Bioconductor (OSCA) - A comprehensive guide to single-cell data analysis.
+4. [Bioconductor](https://bioconductor.org/) and [CRAN](https://cran.r-project.org/) package manuals.
 
 <div class="mt-10 p-8 bg-gray-50 border border-gray-200 rounded-xl">
   <h3 class="text-xl font-bold text-gray-900 mb-3">Knowledge Check & Next Steps</h3>
