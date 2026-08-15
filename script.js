@@ -14,11 +14,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Handle initial routing after tutorials load
 function handleInitialRoute() {
+    if (window.PRELOADED_TUTORIAL_ID) {
+        showTutorial(window.PRELOADED_TUTORIAL_ID, false);
+        return;
+    }
+
     const hash = window.location.hash;
     if (hash) {
         if (hash.startsWith('#tutorial-')) {
             const tutorialId = hash.substring(10); // Remove '#tutorial-'
-            showTutorial(tutorialId);
+            window.location.href = `${tutorialId}.html`; // Redirect to real page
         } else if (hash === '#tutorials') {
             showTutorials();
         } else {
@@ -385,7 +390,7 @@ function updateSidebar() {
     const latestPosts = tutorials.slice(0, 5);
     latestPosts.forEach(tutorial => {
         const postLink = document.createElement('a');
-        postLink.href = `#tutorial-${tutorial.id}`;
+        postLink.href = `${tutorial.id}.html`;
         postLink.className = 'sidebar-link';
         postLink.innerHTML = `
             <div class="font-medium text-sm text-gray-900 mb-1">${tutorial.title}</div>
@@ -423,7 +428,7 @@ function filterTutorialsOnHomePage(category) {
 // Helper function to render a single tutorial card with cinematic image
 function renderTutorialCard(tutorial) {
     return `
-        <article class="tutorial-card" style="padding: 0; overflow: hidden; display: flex; flex-direction: column;" onclick="showTutorial('${tutorial.id}')">
+        <article class="tutorial-card" style="padding: 0; overflow: hidden; display: flex; flex-direction: column;" onclick="window.location.href='${tutorial.id}.html'">
             ${tutorial.image ? `
             <div class="w-full aspect-video relative overflow-hidden border-b border-gray-100 bg-gray-50">
                 <img src="${tutorial.image}" alt="${tutorial.title}" class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 hover:scale-105">
@@ -436,7 +441,7 @@ function renderTutorialCard(tutorial) {
                 </div>
                 <h3 class="text-xl font-bold text-gray-900 mb-2">${tutorial.title}</h3>
                 <p class="excerpt text-gray-600 mb-4">${tutorial.excerpt}</p>
-                <a href="#tutorial-${tutorial.id}" class="read-more mt-auto" onclick="event.stopPropagation(); showTutorial('${tutorial.id}')">
+                <a href="${tutorial.id}.html" class="read-more mt-auto">
                     Read article <svg style="width:14px;height:14px;display:inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                 </a>
             </div>
@@ -482,9 +487,9 @@ async function showTutorial(tutorialId, addToHistory = true) {
     currentPage = 'tutorial';
     currentTutorial = tutorial;
 
-    // Update URL hash
-    if (addToHistory) {
-        window.history.pushState(null, '', `#tutorial-${tutorialId}`);
+    // Update URL if we are dynamically navigating from within the same page
+    if (addToHistory && !window.PRELOADED_TUTORIAL_ID) {
+        window.history.pushState(null, '', `${tutorialId}.html`);
     }
 
     const tutorialContentDiv = document.getElementById('tutorial-content');
@@ -544,7 +549,7 @@ async function showTutorial(tutorialId, addToHistory = true) {
                         const nextTutorial = tutorials[currentIndex + 1];
                         if (nextTutorial.category === tutorial.category) {
                             return `
-                            <div class="mt-12 mb-4 p-8 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-100 flex items-center justify-between group cursor-pointer transition-all duration-300 hover:shadow-md hover:-translate-y-1" onclick="showTutorial('${nextTutorial.id}')">
+                            <div class="mt-12 mb-4 p-8 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-100 flex items-center justify-between group cursor-pointer transition-all duration-300 hover:shadow-md hover:-translate-y-1" onclick="window.location.href='${nextTutorial.id}.html'">
                                 <div>
                                     <span class="text-xs font-black tracking-widest text-blue-600 uppercase mb-2 block opacity-80">Next Step in ${tutorial.category}</span>
                                     <h4 class="text-2xl font-bold text-gray-900 group-hover:text-blue-800 transition-colors">${nextTutorial.title}</h4>
@@ -768,14 +773,14 @@ function estimateReadingTime(content) {
 }
 
 function shareOnTwitter(title, tutorialId) {
-    const url = `${window.location.origin}${window.location.pathname}#tutorial-${tutorialId}`;
+    const url = `${window.location.origin}${window.location.pathname.replace('index.html', '')}${tutorialId}.html`;
     const text = `Check out this tutorial: ${title}`;
     const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
     window.open(twitterUrl, '_blank');
 }
 
 function shareOnLinkedIn(title, tutorialId) {
-    const url = `${window.location.origin}${window.location.pathname}#tutorial-${tutorialId}`;
+    const url = `${window.location.origin}${window.location.pathname.replace('index.html', '')}${tutorialId}.html`;
     const linkedInUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`;
     window.open(linkedInUrl, '_blank');
 }
@@ -818,14 +823,14 @@ function handleSearch() {
 
     if (currentPage === 'home' && tutorialsList) {
         tutorialsList.innerHTML = filteredTutorials.map(tutorial => `
-            <article class="tutorial-card cursor-pointer" onclick="showTutorial(\'${tutorial.id}\')">
+            <article class="tutorial-card cursor-pointer" onclick="window.location.href=\'${tutorial.id}.html\'">
                 <div class="flex items-start justify-between mb-3">
                     <span class="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">${tutorial.category}</span>
                     <span class="text-sm text-gray-500">${formatDate(tutorial.date)}</span>
                 </div>
                 <h3 class="text-xl font-bold text-gray-900 mb-2">${tutorial.title}</h3>
                 <p class="text-gray-700 text-base mb-4">${tutorial.excerpt}</p>
-                <a href="#tutorial-${tutorial.id}" class="text-blue-600 hover:underline font-semibold" onclick="showTutorial(\'${tutorial.id}\')">Read More →</a>
+                <a href="${tutorial.id}.html" class="text-blue-600 hover:underline font-semibold">Read More →</a>
             </article>
         `).join('');
     } else if (currentPage === 'tutorials' && allTutorialsList) {
@@ -839,7 +844,7 @@ function handleSearch() {
                     </div>
                     <h3 class="text-xl font-bold text-gray-900 mb-2">${tutorial.title}</h3>
                     <p class="text-gray-700 text-base mb-4">${tutorial.excerpt}</p>
-                    <a href="#tutorial-${tutorial.id}" class="text-blue-600 hover:underline font-semibold" onclick="showTutorial(\'${tutorial.id}\')">Read More →</a>
+                    <a href="${tutorial.id}.html" class="text-blue-600 hover:underline font-semibold">Read More →</a>
                 </div>
             </article>
         `).join('');

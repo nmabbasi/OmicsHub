@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<meta content="A complete guide to installing Conda and Mamba, creating isolated environments, and managing bioinformatics software to ensure fully reproducible analyses." name="description"/>
+<meta content="bioinformatics, single-cell RNA-seq, shell commands, conda, computational biology, tutorials, data analysis" name="keywords"/>
+<meta content="Bioinformatics Workflow Hub Team" name="author"/>
+<meta content="index, follow" name="robots"/>
+<!-- Open Graph tags for social sharing -->
+<meta content="Conda, Mamba, and Micromamba | Bioinformatics Workflow Hub" property="og:title"/>
+<meta content="Master computational biology with hands-on tutorials covering shell commands, conda environments, single-cell RNA-seq analysis, and essential bioinformatics tools." property="og:description"/>
+<meta content="https://theomicshub.com/conda-mamba-part1.html" property="og:url"/>
+<meta content="website" property="og:type"/>
+<meta content="https://nmabbasi.github.io/OmicsHub/images/omicshub-logo.png" property="og:image"/>
+<!-- Twitter Card tags -->
+<meta content="summary_large_image" name="twitter:card"/>
+<meta content="Bioinformatics Workflow Hub - Learn Bioinformatics and Single-cell RNA-seq Step by Step" name="twitter:title"/>
+<meta content="Master computational biology with hands-on tutorials covering shell commands, conda environments, single-cell RNA-seq analysis, and essential bioinformatics tools." name="twitter:description"/>
+<meta content="https://nmabbasi.github.io/OmicsHub/images/omicshub-logo.png" name="twitter:image"/>
+<title>Conda, Mamba, and Micromamba | Bioinformatics Workflow Hub</title>
+<!-- Favicon -->
+<link href="images/favicon.ico" rel="icon" type="image/x-icon"/>
+<!-- Tailwind CSS CDN -->
+<script src="https://cdn.tailwindcss.com"></script>
+<!-- Prism.js for syntax highlighting -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+<!-- Custom CSS -->
+<link href="style.css" rel="stylesheet"/>
+<!-- Google AdSense (replace with your actual AdSense code) -->
+<script async="" crossorigin="anonymous" src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2910340533244599"></script>
+<!-- Google Analytics (add your tracking ID when ready) -->
+<!-- <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag("js", new Date());
+        gtag("config", "G-XXXXXXXXXX");
+    </script> -->
+</link></head>
+<body class="bg-white text-gray-900">
+<!-- Header -->
+<header class="bg-white border-b border-gray-200 sticky top-0 z-50">
+<nav class="container mx-auto px-6 py-4">
+<div class="flex items-center justify-between">
+<!-- Logo -->
+<div class="flex items-center space-x-3">
+<div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center shadow shadow-blue-500/30">
+<svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18"/></svg>
+</div>
+<span class="text-xl font-bold text-gray-900 tracking-tight">Bioinformatics Workflow Hub</span>
+</div>
+<!-- Desktop Nav -->
+<div class="hidden md:flex items-center space-x-1">
+<a href="index.html" id="nav-desktop-home" class="px-4 py-2 text-sm font-semibold bg-blue-600 text-white rounded-md shadow-sm transition-all">Home</a>
+<a href="index.html#tutorials" id="nav-desktop-tutorials" onclick="showHome(); setTimeout(() => document.getElementById('tutorials').scrollIntoView(), 100)" class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-blue-600 rounded-md hover:bg-gray-50 transition-all cursor-pointer">Tutorials</a>
+<a href="about.html" class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-blue-600 rounded-md hover:bg-gray-50 transition-all">About</a>
+<a href="contact.html" class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-blue-600 rounded-md hover:bg-gray-50 transition-all">Contact</a>
+<!-- Legal dropdown -->
+<div class="relative group ml-2">
+<button class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-blue-600 flex items-center gap-1 rounded-md hover:bg-gray-50 transition-all">
+Legal
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+</button>
+<div class="absolute right-0 top-full mt-1 w-52 bg-white border border-gray-100 rounded-xl shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 overflow-hidden">
+<a href="pages/privacy.html" class="block px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors">Privacy Policy</a>
+<a href="pages/terms.html" class="block px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors">Terms of Service</a>
+<a href="pages/disclaimer.html" class="block px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors">Disclaimer</a>
+<a href="pages/cookie.html" class="block px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors">Cookie Policy</a>
+</div>
+</div>
+</div>
+<!-- Mobile Button -->
+<button class="md:hidden p-2 rounded-md text-gray-600 hover:bg-gray-100" onclick="toggleMobileMenu()">
+<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+</button>
+</div>
+<!-- Mobile Nav -->
+<div id="mobile-menu" class="md:hidden hidden mt-4 pb-2 border-t border-gray-100">
+<div class="flex flex-col pt-3 space-y-1">
+<a href="index.html" id="nav-mobile-home" class="px-4 py-2 text-sm font-semibold text-blue-600 bg-blue-50 rounded-lg transition-colors">Home</a>
+<a href="index.html#tutorials" id="nav-mobile-tutorials" onclick="showHome(); setTimeout(() => document.getElementById('tutorials').scrollIntoView(), 100)" class="px-4 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors cursor-pointer">Tutorials</a>
+<a href="about.html" class="px-4 py-2 text-sm text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors">About</a>
+<a href="contact.html" class="px-4 py-2 text-sm text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors">Contact</a>
+<div class="px-4 pt-2 pb-1 text-xs font-semibold text-gray-400 uppercase tracking-wide">Legal</div>
+<a href="pages/privacy.html" class="px-4 py-2 text-sm text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors">Privacy Policy</a>
+<a href="pages/terms.html" class="px-4 py-2 text-sm text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors">Terms of Service</a>
+<a href="pages/disclaimer.html" class="px-4 py-2 text-sm text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors">Disclaimer</a>
+<a href="pages/cookie.html" class="px-4 py-2 text-sm text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors">Cookie Policy</a>
+</div>
+</div>
+</nav>
+</header>
+<!-- Main Content -->
+<main class="min-h-screen">
+
+    <!-- Tutorial Detail Page (Pre-rendered for SEO) -->
+    <div class="page-content" id="tutorial-page">
+        <div class="container mx-auto px-4 py-8">
+            <div class="max-w-4xl mx-auto">
+                <!-- SEO Hidden Markdown Data -->
+                <div id="seo-markdown-data" style="display:none;">
+---
+title: "Conda, Mamba, and Micromamba"
+date: "2025-08-13"
+author: "OmicsHub Team"
+category: "Package Management"
+excerpt: "A complete guide to installing Conda and Mamba, creating isolated environments, and managing bioinformatics software to ensure fully reproducible analyses."
+image: "images/conda-mamba-part1.png"
+---
+
+## Why Package Management Matters in Bioinformatics
+
+If you've ever spent hours trying to install a bioinformatics tool only to run into dependency conflicts, version mismatches, or the dreaded "it works on my machine" problem: you're not alone. Package management is one of the biggest pain points for researchers entering computational biology.
+
+That's where Conda and Mamba come in. Think of them as your personal assistants for managing software installations: they handle all the messy details of dependencies, versions, and compatibility so you can focus on your research instead of wrestling with installation issues.
+
+## What Are Conda and Mamba?
+
+### Conda: The Foundation
+
+**Conda** is a package manager and environment management system that was originally created for Python but has evolved to support packages from any language. It's like having a smart librarian who not only knows where every book is but also ensures that when you check out a book, all the related materials you need are available and compatible.
+
+Key features of Conda:
+- **Cross-platform**: Works on Windows, macOS, and Linux
+- **Language-agnostic**: Manages Python, R, C++, Java, and more
+- **Environment isolation**: Keeps different projects separate
+- **Dependency resolution**: Automatically handles complex dependencies
+
+### Mamba: The Speed Demon
+
+**Mamba** is a reimplementation of Conda that's significantly faster: we're talking about going from minutes to seconds for complex installations. It's essentially Conda with a turbo engine, using the same commands and configuration files but with dramatically improved performance.
+
+Why Mamba is faster:
+- **Parallel processing**: Downloads and installs packages simultaneously
+- **Better algorithms**: More efficient dependency resolution
+- **Optimized codebase**: Written in C++ instead of Python
+
+## Installation Guide
+
+### Option 1: Miniconda (Recommended)
+
+Miniconda is a minimal installer that includes only Conda and Python. It's perfect for bioinformatics work because you can install exactly what you need.
+
+#### Linux Installation
+```bash
+# Download Miniconda
+wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
+
+# Make it executable
+chmod +x Miniconda3-latest-Linux-x86_64.sh
+
+# Run the installer
+bash Miniconda3-latest-Linux-x86_64.sh
+
+# Follow the prompts and restart your terminal
+```
+
+#### macOS Installation
+```bash
+# Download Miniconda
+curl -O https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-x86_64.sh
+
+# Run the installer
+bash Miniconda3-latest-MacOSX-x86_64.sh
+
+# For Apple Silicon Macs, use:
+# curl -O https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-arm64.sh
+```
+
+#### Windows Installation
+1. Download the Windows installer from [conda.io](https://conda.io/miniconda.html)
+2. Run the `.exe` file and follow the installation wizard
+3. Use Anaconda Prompt for all conda commands
+
+### Option 2: Anaconda (Full Distribution)
+
+Anaconda includes Conda plus 250+ pre-installed packages. It's convenient but takes up more space (3GB vs 400MB for Miniconda).
+
+Download from [anaconda.com](https://www.anaconda.com/products/distribution) and follow the installation instructions.
+
+### Verifying Installation
+
+After installation, verify that Conda is working:
+
+```bash
+conda --version
+# Should output something like: conda 23.7.4
+
+conda info
+# Shows detailed information about your Conda installation
+```
+
+## Installing Mamba
+
+Once you have Conda installed, adding Mamba is straightforward:
+
+```bash
+# Install Mamba from conda-forge
+conda install -c conda-forge mamba
+
+# Verify installation
+mamba --version
+```
+
+From now on, you can use `mamba` instead of `conda` for most commands: it's faster and uses the same syntax!
+
+## Understanding Environments
+
+### Why Use Environments?
+
+Imagine you're working on three different projects:
+1. **Project A**: Requires Python 3.8 and pandas 1.2
+2. **Project B**: Requires Python 3.9 and pandas 1.5
+3. **Project C**: Requires R 4.1 and Bioconductor 3.14
+
+Without environments, these requirements would conflict. Environments solve this by creating isolated spaces where each project can have its own dependencies.
+
+### Creating Your First Environment
+
+```bash
+# Create environment for single-cell analysis
+mamba create -n single-cell python=3.9
+
+# Create environment with specific packages
+mamba create -n rnaseq python=3.9 pandas numpy matplotlib
+
+# Create environment from a file (more on this later)
+mamba env create -f environment.yml
+```
+
+### Activating and Deactivating Environments
+
+```bash
+# Activate environment
+conda activate single-cell
+
+# Your prompt should change to show the active environment:
+# (single-cell) username@computer:~$
+
+# Deactivate environment
+conda deactivate
+
+# List all environments
+conda env list
+```
+
+**Pro tip**: Always activate the appropriate environment before starting work on a project!
+
+## Installing Bioinformatics Software
+
+### Essential Channels
+
+Channels are repositories where packages are stored. For bioinformatics, you'll primarily use:
+
+- **conda-forge**: Community-driven packages with high quality standards
+- **bioconda**: Specialized channel for bioinformatics software
+- **defaults**: Anaconda's default channel
+
+Set up your channels in the right priority order:
+
+```bash
+# Add channels (order matters!)
+conda config --add channels defaults
+conda config --add channels bioconda
+conda config --add channels conda-forge
+
+# Set channel priority to strict (recommended)
+conda config --set channel_priority strict
+```
+
+### Installing Common Bioinformatics Tools
+
+#### Sequence Analysis Tools
+```bash
+# Activate your environment
+conda activate bioinformatics
+
+# Install BLAST
+mamba install blast
+
+# Install BWA and Bowtie2 for alignment
+mamba install bwa bowtie2
+
+# Install SAMtools for BAM file manipulation
+mamba install samtools
+
+# Install FastQC for quality control
+mamba install fastqc
+```
+
+#### R and Bioconductor
+```bash
+# Install R
+mamba install r-base
+
+# Install essential R packages
+mamba install r-ggplot2 r-dplyr r-tidyr r-readr
+
+# Install Seurat for single-cell analysis
+mamba install r-seurat
+
+# Install DESeq2 for differential expression
+mamba install bioconductor-deseq2
+```
+
+#### Python Packages for Bioinformatics
+```bash
+# Install scientific computing stack
+mamba install numpy pandas scipy matplotlib seaborn
+
+# Install Jupyter for interactive analysis
+mamba install jupyter
+
+# Install Biopython
+mamba install biopython
+
+# Install scanpy for single-cell analysis
+mamba install scanpy
+```
+
+### Installing from Different Channels
+
+Sometimes you need to specify the channel explicitly:
+
+```bash
+# Install from specific channel
+mamba install -c bioconda gatk4
+
+# Install from multiple channels
+mamba install -c conda-forge -c bioconda snakemake
+
+# Search for packages
+mamba search blast
+mamba search -c bioconda "*blast*"
+```
+
+## Environment Management Best Practices
+
+### 1. One Environment Per Project
+
+Create separate environments for different projects to avoid conflicts:
+
+```bash
+# Project-specific environments
+mamba create -n cancer-genomics python=3.9 pandas numpy
+mamba create -n microbiome-analysis python=3.8 qiime2
+mamba create -n phylogenetics python=3.9 biopython dendropy
+```
+
+### 2. Document Your Environments
+
+Export your environment specifications so others can reproduce your setup:
+
+```bash
+# Export environment to file
+conda env export > environment.yml
+
+# Create environment from file
+mamba env create -f environment.yml
+```
+
+Example `environment.yml` file:
+```yaml
+name: single-cell-analysis
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - python=3.9
+  - pandas=1.5.3
+  - numpy=1.24.3
+  - matplotlib=3.7.1
+  - seaborn=0.12.2
+  - r-base=4.3.1
+  - r-seurat=4.3.0
+  - r-ggplot2=3.4.2
+  - jupyter=1.0.0
+  - pip
+  - pip:
+    - scanpy==1.9.3
+    - anndata==0.9.2
+```
+
+### 3. Pin Important Versions
+
+For reproducible research, pin versions of critical packages:
+
+```bash
+# Pin specific versions
+mamba install python=3.9.16 pandas=1.5.3 numpy=1.24.3
+
+# Allow patch updates but lock major.minor versions
+mamba install "python>=3.9,<3.10" "pandas>=1.5,<1.6"
+```
+
+### 4. Regular Environment Maintenance
+
+Keep your environments clean and up-to-date:
+
+```bash
+# Update all packages in current environment
+mamba update --all
+
+# Update specific package
+mamba update pandas
+
+# Remove unused packages
+mamba clean --all
+
+# Remove entire environment
+conda env remove -n old-project
+```
+
+## Advanced Usage Patterns
+
+### Creating Environments for Specific Workflows
+
+#### Single-cell RNA-seq Environment
+```bash
+mamba create -n scrna-seq python=3.9 \
+  pandas numpy matplotlib seaborn \
+  r-base r-seurat r-ggplot2 r-dplyr \
+  jupyter scanpy anndata \
+  -c conda-forge -c bioconda
+```
+
+#### Genomics Pipeline Environment
+```bash
+mamba create -n genomics python=3.9 \
+  bwa bowtie2 samtools bcftools \
+  gatk4 picard fastqc multiqc \
+  snakemake -c conda-forge -c bioconda
+```
+
+#### Phylogenetics Environment
+```bash
+mamba create -n phylo python=3.8 \
+  biopython dendropy ete3 \
+  muscle mafft iqtree raxml \
+  -c conda-forge -c bioconda
+```
+
+### Using Conda with Jupyter Notebooks
+
+Make your environments available in Jupyter:
+
+```bash
+# Install ipykernel in your environment
+conda activate single-cell
+mamba install ipykernel
+
+# Register environment as Jupyter kernel
+python -m ipykernel install --user --name single-cell --display-name "Single Cell Analysis"
+
+# Start Jupyter and select your kernel
+jupyter notebook
+```
+
+### Environment Variables and Configuration
+
+Set environment-specific variables:
+
+```bash
+# Set variables when activating environment
+conda activate myenv
+conda env config vars set CUDA_VISIBLE_DEVICES=0
+conda env config vars set OMP_NUM_THREADS=8
+
+# Reactivate to apply changes
+conda deactivate
+conda activate myenv
+```
+
+## Troubleshooting Common Issues
+
+### Slow Package Resolution
+
+If Conda is taking forever to resolve dependencies:
+
+```bash
+# Use Mamba instead (much faster)
+mamba install package-name
+
+# Use libmamba solver (Conda 22.11+)
+conda install --solver=libmamba package-name
+
+# Set libmamba as default solver
+conda config --set solver libmamba
+```
+
+### Conflicting Dependencies
+
+When packages conflict:
+
+```bash
+# Try installing from different channels
+mamba install -c conda-forge package-name
+
+# Create a fresh environment
+mamba create -n fresh-env package-name
+
+# Use pip as fallback (in conda environment)
+conda activate myenv
+pip install package-name
+```
+
+### Environment Activation Issues
+
+If `conda activate` doesn't work:
+
+```bash
+# Initialize conda for your shell
+conda init bash  # or zsh, fish, etc.
+
+# Restart your terminal or source your profile
+source ~/.bashrc
+
+# Alternative activation method
+source activate myenv
+```
+
+### Disk Space Issues
+
+Conda can use lots of disk space:
+
+```bash
+# Clean package cache
+conda clean --all
+
+# Remove unused packages
+conda clean --packages
+
+# Check disk usage
+du -sh ~/miniconda3/
+```
+
+## Integration with Other Tools
+
+### Using Conda with Docker
+
+Create reproducible containers:
+
+```dockerfile
+FROM continuumio/miniconda3
+
+COPY environment.yml .
+RUN conda env create -f environment.yml
+
+SHELL ["conda", "run", "-n", "myenv", "/bin/bash", "-c"]
+RUN echo "Environment is ready!"
+```
+
+### Using Conda with Snakemake
+
+Snakemake can automatically manage Conda environments:
+
+```python
+# Snakefile
+rule quality_control:
+    input: "data/sample.fastq"
+    output: "results/sample_fastqc.html"
+    conda: "envs/qc.yml"
+    shell: "fastqc {input} -o results/"
+```
+
+### Using Conda with Singularity
+
+Build containers with Conda environments:
+
+```bash
+# Build Singularity container with Conda
+singularity build mycontainer.sif docker://continuumio/miniconda3
+```
+
+## Best Practices Summary
+
+### Do's ✅
+
+1. **Use separate environments for different projects**
+2. **Document environments with `environment.yml` files**
+3. **Use Mamba for faster installations**
+4. **Pin versions for reproducible research**
+5. **Regularly clean up unused packages and environments**
+6. **Use conda-forge and bioconda channels**
+7. **Activate environments before starting work**
+
+### Don'ts ❌
+
+1. **Don't install everything in the base environment**
+2. **Don't mix conda and pip carelessly**
+3. **Don't ignore version conflicts**
+4. **Don't forget to document your environments**
+5. **Don't use `sudo` with conda commands**
+
+## Real-World Example: Setting Up a Single-Cell Analysis Environment
+
+Let's walk through setting up a complete environment for single-cell RNA-seq analysis:
+
+```bash
+# Step 1: Create the environment
+mamba create -n single-cell-analysis python=3.9
+
+# Step 2: Activate the environment
+conda activate single-cell-analysis
+
+# Step 3: Install R and essential packages
+mamba install -c conda-forge r-base=4.3.1
+
+# Step 4: Install Seurat and dependencies
+mamba install -c conda-forge r-seurat r-ggplot2 r-dplyr r-tidyr
+
+# Step 5: Install Python packages
+mamba install -c conda-forge pandas numpy matplotlib seaborn jupyter
+
+# Step 6: Install scanpy for Python-based analysis
+mamba install -c conda-forge scanpy
+
+# Step 7: Install additional tools
+mamba install -c bioconda samtools bcftools
+
+# Step 8: Export environment for reproducibility
+conda env export > single-cell-environment.yml
+
+# Step 9: Test the installation
+python -c "import scanpy; print('scanpy version:', scanpy.__version__)"
+R --slave -e "library(Seurat); cat('Seurat version:', as.character(packageVersion('Seurat')), '\n')"
+```
+
+## Conclusion
+
+Conda and Mamba are game-changers for bioinformatics research. They eliminate the frustration of dependency management and make it easy to create reproducible computational environments. With the skills covered in this tutorial, you can:
+
+- Install complex bioinformatics software with confidence
+- Create isolated environments for different projects
+- Share your computational setup with collaborators
+- Reproduce analyses months or years later
+
+Remember, good package management isn't just about convenience: it's about reproducible science. When you document your environments and pin your package versions, you're contributing to the reproducibility crisis solution in computational biology.
+
+## Next Steps
+
+Now that you've mastered package management, you're ready to tackle more advanced bioinformatics topics:
+
+1. **[Command Line Fundamentals](command-line-basics-detailed.md)**: Master the terminal for bioinformatics
+2. **[Single-cell RNA-seq Analysis](single-cell-rnaseq-introduction.md)**: Apply your new environment to cutting-edge analysis
+3. **[Introduction to Bioinformatics](introduction-to-bioinformatics.md)**: Understand the broader context
+
+With proper package management under your belt, you'll never have to worry about "dependency hell" again. Welcome to the world of reproducible bioinformatics!
+
+---
+
+*Having trouble with package installations? Need help setting up a specific environment? [Contact us](contact.html): we're here to help you get your computational environment running smoothly!*
+
+
+                </div>
+                <!-- Rendered content will be injected here by script.js -->
+                <div id="tutorial-content">
+                    <div class="text-center py-20">
+                        <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mb-4"></div>
+                        <p class="text-gray-600 font-medium">Rendering tutorial...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Tell script.js to render THIS specific page's hidden markdown on load
+        window.PRELOADED_TUTORIAL_ID = "conda-mamba-part1";
+    </script>
+    
+</main>
+<!-- Footer (unchanged) -->
+<footer class="bg-gray-900 text-white mt-16">
+<div class="container mx-auto px-6 py-12">
+<div class="grid md:grid-cols-4 gap-8 mb-8">
+<div class="md:col-span-1">
+<div class="flex items-center space-x-3 mb-3">
+<div class="w-9 h-9 bg-blue-600 rounded-lg flex items-center justify-center">
+<svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18"/></svg>
+</div>
+<span class="font-bold text-white">Bioinformatics Workflow Hub</span>
+</div>
+<p class="text-gray-400 text-sm leading-relaxed mb-4">Practical, hands-on tutorials for bioinformatics, HPC, and single-cell RNA-seq analysis.</p>
+          <a href="https://paypal.me/nmabbasi12020?locale.x=en_US&country.x=FR" target="_blank" class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500 text-white font-bold rounded-lg hover:bg-emerald-600 transition-colors text-sm shadow-sm">
+            <span class="text-base">☕</span>
+            Buy me a coffee
+          </a>
+</div>
+<div>
+<h4 class="font-semibold text-white mb-3 text-sm uppercase tracking-wide">Navigation</h4>
+<ul class="space-y-2 text-sm text-gray-400">
+<li><a href="index.html" class="hover:text-white transition-colors">Home</a></li>
+<li><a href="index.html#tutorials" class="hover:text-white transition-colors">Tutorials</a></li>
+<li><a href="about.html" class="hover:text-white transition-colors">About</a></li>
+<li><a href="contact.html" class="hover:text-white transition-colors">Contact</a></li>
+</ul>
+</div>
+<div>
+<h4 class="font-semibold text-white mb-3 text-sm uppercase tracking-wide">Topics</h4>
+<ul class="space-y-2 text-sm text-gray-400">
+<li><a href="index.html#tutorials" class="hover:text-white transition-colors">Shell Commands &amp; HPC</a></li>
+<li><a href="index.html#tutorials" class="hover:text-white transition-colors">Conda</a></li>
+<li><a href="index.html#tutorials" class="hover:text-white transition-colors">Single-cell RNA-seq</a></li>
+<li><a href="index.html#tutorials" class="hover:text-white transition-colors">Bioinformatics</a></li>
+</ul>
+</div>
+<div>
+<h4 class="font-semibold text-white mb-3 text-sm uppercase tracking-wide">Legal</h4>
+<ul class="space-y-2 text-sm text-gray-400">
+<li><a href="pages/privacy.html" class="hover:text-white transition-colors">Privacy Policy</a></li>
+<li><a href="pages/terms.html" class="hover:text-white transition-colors">Terms of Service</a></li>
+<li><a href="pages/disclaimer.html" class="hover:text-white transition-colors">Disclaimer</a></li>
+<li><a href="pages/cookie.html" class="hover:text-white transition-colors">Cookie Policy</a></li>
+</ul>
+</div>
+</div>
+<div class="border-t border-gray-800 pt-6 text-center text-gray-500 text-sm">
+<p>&copy; 2026 Bioinformatics Workflow Hub. All rights reserved.</p>
+</div>
+</div>
+</footer>
+<!-- Prism.js for syntax highlighting -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-r.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+<!-- Marked.js for markdown rendering -->
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<!-- Custom JS - loads tutorials from manifest -->
+<script src="script.js"></script>
+<script>
+function toggleMobileMenu() {
+const m = document.getElementById("mobile-menu");
+m.classList.toggle("hidden");
+}
+</script>
+</body>
+</html>

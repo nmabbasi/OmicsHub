@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<meta content="A comprehensive pipeline for performing differential gene expression (DGE) analysis using DESeq2 for bulk RNA-seq and adapting it for modern pseudobulk scRNA-seq approaches." name="description"/>
+<meta content="bioinformatics, single-cell RNA-seq, shell commands, conda, computational biology, tutorials, data analysis" name="keywords"/>
+<meta content="Bioinformatics Workflow Hub Team" name="author"/>
+<meta content="index, follow" name="robots"/>
+<!-- Open Graph tags for social sharing -->
+<meta content="Pseudobulk DE Analysis | Bioinformatics Workflow Hub" property="og:title"/>
+<meta content="Master computational biology with hands-on tutorials covering shell commands, conda environments, single-cell RNA-seq analysis, and essential bioinformatics tools." property="og:description"/>
+<meta content="https://theomicshub.com/transcriptomics-differential-expression.html" property="og:url"/>
+<meta content="website" property="og:type"/>
+<meta content="https://nmabbasi.github.io/OmicsHub/images/omicshub-logo.png" property="og:image"/>
+<!-- Twitter Card tags -->
+<meta content="summary_large_image" name="twitter:card"/>
+<meta content="Bioinformatics Workflow Hub - Learn Bioinformatics and Single-cell RNA-seq Step by Step" name="twitter:title"/>
+<meta content="Master computational biology with hands-on tutorials covering shell commands, conda environments, single-cell RNA-seq analysis, and essential bioinformatics tools." name="twitter:description"/>
+<meta content="https://nmabbasi.github.io/OmicsHub/images/omicshub-logo.png" name="twitter:image"/>
+<title>Pseudobulk DE Analysis | Bioinformatics Workflow Hub</title>
+<!-- Favicon -->
+<link href="images/favicon.ico" rel="icon" type="image/x-icon"/>
+<!-- Tailwind CSS CDN -->
+<script src="https://cdn.tailwindcss.com"></script>
+<!-- Prism.js for syntax highlighting -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+<!-- Custom CSS -->
+<link href="style.css" rel="stylesheet"/>
+<!-- Google AdSense (replace with your actual AdSense code) -->
+<script async="" crossorigin="anonymous" src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2910340533244599"></script>
+<!-- Google Analytics (add your tracking ID when ready) -->
+<!-- <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag("js", new Date());
+        gtag("config", "G-XXXXXXXXXX");
+    </script> -->
+</link></head>
+<body class="bg-white text-gray-900">
+<!-- Header -->
+<header class="bg-white border-b border-gray-200 sticky top-0 z-50">
+<nav class="container mx-auto px-6 py-4">
+<div class="flex items-center justify-between">
+<!-- Logo -->
+<div class="flex items-center space-x-3">
+<div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center shadow shadow-blue-500/30">
+<svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18"/></svg>
+</div>
+<span class="text-xl font-bold text-gray-900 tracking-tight">Bioinformatics Workflow Hub</span>
+</div>
+<!-- Desktop Nav -->
+<div class="hidden md:flex items-center space-x-1">
+<a href="index.html" id="nav-desktop-home" class="px-4 py-2 text-sm font-semibold bg-blue-600 text-white rounded-md shadow-sm transition-all">Home</a>
+<a href="index.html#tutorials" id="nav-desktop-tutorials" onclick="showHome(); setTimeout(() => document.getElementById('tutorials').scrollIntoView(), 100)" class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-blue-600 rounded-md hover:bg-gray-50 transition-all cursor-pointer">Tutorials</a>
+<a href="about.html" class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-blue-600 rounded-md hover:bg-gray-50 transition-all">About</a>
+<a href="contact.html" class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-blue-600 rounded-md hover:bg-gray-50 transition-all">Contact</a>
+<!-- Legal dropdown -->
+<div class="relative group ml-2">
+<button class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-blue-600 flex items-center gap-1 rounded-md hover:bg-gray-50 transition-all">
+Legal
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+</button>
+<div class="absolute right-0 top-full mt-1 w-52 bg-white border border-gray-100 rounded-xl shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 overflow-hidden">
+<a href="pages/privacy.html" class="block px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors">Privacy Policy</a>
+<a href="pages/terms.html" class="block px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors">Terms of Service</a>
+<a href="pages/disclaimer.html" class="block px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors">Disclaimer</a>
+<a href="pages/cookie.html" class="block px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors">Cookie Policy</a>
+</div>
+</div>
+</div>
+<!-- Mobile Button -->
+<button class="md:hidden p-2 rounded-md text-gray-600 hover:bg-gray-100" onclick="toggleMobileMenu()">
+<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+</button>
+</div>
+<!-- Mobile Nav -->
+<div id="mobile-menu" class="md:hidden hidden mt-4 pb-2 border-t border-gray-100">
+<div class="flex flex-col pt-3 space-y-1">
+<a href="index.html" id="nav-mobile-home" class="px-4 py-2 text-sm font-semibold text-blue-600 bg-blue-50 rounded-lg transition-colors">Home</a>
+<a href="index.html#tutorials" id="nav-mobile-tutorials" onclick="showHome(); setTimeout(() => document.getElementById('tutorials').scrollIntoView(), 100)" class="px-4 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors cursor-pointer">Tutorials</a>
+<a href="about.html" class="px-4 py-2 text-sm text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors">About</a>
+<a href="contact.html" class="px-4 py-2 text-sm text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors">Contact</a>
+<div class="px-4 pt-2 pb-1 text-xs font-semibold text-gray-400 uppercase tracking-wide">Legal</div>
+<a href="pages/privacy.html" class="px-4 py-2 text-sm text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors">Privacy Policy</a>
+<a href="pages/terms.html" class="px-4 py-2 text-sm text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors">Terms of Service</a>
+<a href="pages/disclaimer.html" class="px-4 py-2 text-sm text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors">Disclaimer</a>
+<a href="pages/cookie.html" class="px-4 py-2 text-sm text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors">Cookie Policy</a>
+</div>
+</div>
+</nav>
+</header>
+<!-- Main Content -->
+<main class="min-h-screen">
+
+    <!-- Tutorial Detail Page (Pre-rendered for SEO) -->
+    <div class="page-content" id="tutorial-page">
+        <div class="container mx-auto px-4 py-8">
+            <div class="max-w-4xl mx-auto">
+                <!-- SEO Hidden Markdown Data -->
+                <div id="seo-markdown-data" style="display:none;">
+---
+title: "Pseudobulk DE Analysis"
+date: "2026-08-14"
+author: "OmicsHub Team"
+category: "Single-Cell RNA-seq"
+excerpt: "A comprehensive pipeline for performing differential gene expression (DGE) analysis using DESeq2 for bulk RNA-seq and adapting it for modern pseudobulk scRNA-seq approaches."
+image: "images/bioinformatics-intro.png"
+---
+
+# Transcriptomics: Differential Gene Expression Analysis
+
+## Introduction
+
+Whether you are analyzing traditional Bulk RNA-seq or performing state-of-the-art Single-Cell RNA-seq, the ultimate goal is often the same: identifying which genes are significantly upregulated or downregulated between two conditions (e.g., Healthy vs. Disease, or Control vs. Treated). 
+
+This is called **Differential Gene Expression (DGE)** analysis. This tutorial covers the gold-standard pipeline using **DESeq2** in R, which applies to both Bulk and Pseudobulk data.
+
+---
+
+## 1. Preparing the Count Matrix
+
+Differential expression requires raw, un-normalized counts. Do not use TPM, FPKM, or normalized data for DESeq2, as the mathematical model specifically relies on the raw integer counts to estimate variance.
+
+```r
+library(DESeq2)
+library(ggplot2)
+
+# Load your count matrix (genes in rows, samples in columns)
+counts_data <- read.csv("raw_counts.csv", row.names = 1)
+
+# Load sample metadata
+metadata <- read.csv("sample_metadata.csv", row.names = 1)
+
+# Ensure the column names in counts match the row names in metadata exactly
+all(colnames(counts_data) %in% rownames(metadata))
+```
+
+---
+
+## 2. Running the DESeq2 Pipeline
+
+DESeq2 normalizes the data (accounting for library size differences), estimates data dispersion, and fits a negative binomial generalized linear model to test for significance.
+
+```r
+# 1. Create the DESeq2 object
+dds <- DESeqDataSetFromMatrix(countData = counts_data,
+                              colData = metadata,
+                              design = ~ condition) # 'condition' is a column in metadata
+
+# 2. Filter out lowly expressed genes to improve statistical power
+keep <- rowSums(counts(dds)) >= 10
+dds <- dds[keep,]
+
+# 3. Set the reference level (Control) so log2FoldChanges are calculated relative to it
+dds$condition <- relevel(dds$condition, ref = "Control")
+
+# 4. Run the core DESeq2 pipeline
+dds <- DESeq(dds)
+```
+
+---
+
+## 3. Extracting and Visualizing Results
+
+Once the model is fit, we extract the results comparing the "Treated" group to the "Control" group.
+
+```r
+# Extract results
+res <- results(dds, contrast=c("condition", "Treated", "Control"))
+
+# Order by adjusted p-value
+resOrdered <- res[order(res$padj),]
+
+# View the top significant genes
+head(resOrdered)
+```
+
+### Visualizing with a Volcano Plot
+
+A Volcano Plot is the standard way to visualize DGE results, mapping statistical significance (-log10 p-value) against biological magnitude (log2FoldChange).
+
+```r
+# Convert results to a data frame
+res_df <- as.data.frame(res)
+
+# Create a basic Volcano Plot
+ggplot(res_df, aes(x = log2FoldChange, y = -log10(padj))) +
+  geom_point(aes(color = padj < 0.05 & abs(log2FoldChange) > 1), alpha=0.8) +
+  scale_color_manual(values = c("grey", "red")) +
+  theme_minimal() +
+  labs(title = "Volcano Plot: Treated vs Control",
+       x = "Log2 Fold Change",
+       y = "-Log10 Adjusted P-value") +
+  theme(legend.position = "none")
+```
+
+---
+
+## 4. Modern Adaptation: Pseudobulk for Single-Cell Data
+
+If you are working with single-cell RNA-seq data (scRNA-seq), performing DGE on individual cells is statistically flawed (it artificially inflates your sample size, creating massive false positives). 
+
+The modern best practice is **Pseudobulking**: aggregating all cells of a specific cell type from the same biological replicate into a single "bulk" sample, and then running DE analysis.
+
+There are two primary ways to do this:
+
+### Option A: Manual Aggregation (Seurat)
+
+```r
+# Example using Seurat
+library(Seurat)
+
+# Aggregate counts per cell type per patient
+pseudobulk_obj <- AggregateExpression(seurat_object, 
+                                      group.by = c("cell_type", "patient_id", "condition"),
+                                      return.seurat = TRUE)
+
+# Extract the raw aggregated counts for a specific cell type (e.g., T-cells)
+tcell_counts <- GetAssayData(subset(pseudobulk_obj, cell_type == "T_cell"), slot = "counts")
+
+# You can now feed 'tcell_counts' directly into DESeqDataSetFromMatrix!
+```
+
+### Option B: The Libra Framework (Recommended)
+
+To drastically simplify this workflow, the **Libra** R package (developed by the NeuroRestore group) provides a unified interface. Instead of manually extracting counts, building matrices, and managing metadata loops for every single cell type, `Libra` performs the aggregation and runs your preferred DE algorithm (edgeR, DESeq2, limma) across all cell types simultaneously in one line of code.
+
+```python
+import scanpy as sc
+import decoupler as dc
+from pydeseq2.dds import DeseqDataSet
+from pydeseq2.ds import DeseqStats
+
+# 1. Generate pseudobulk profiles from your AnnData object
+pdata = dc.get_pseudobulk(adata, sample_col='patient_id', groups_col='cell_type', mode='sum')
+
+# 2. Run PyDESeq2 (Python equivalent of DESeq2 LRT)
+dds = DeseqDataSet(counts=pdata.X, metadata=pdata.obs, design_factors="condition")
+dds.deseq2()
+stat_res = DeseqStats(dds, contrast=["condition", "Treated", "Control"])
+stat_res.summary()
+```
+```r
+library(Libra)
+
+# Ensure your Seurat object has standard metadata columns:
+# seurat_obj$cell_type (the clusters/identities)
+# seurat_obj$replicate (patient/sample ID)
+# seurat_obj$label (Condition: e.g., Treated vs Control)
+
+# Run pseudobulk DE across all cell types automatically
+de_results <- run_de(seurat_obj, 
+                     de_family = "pseudobulk", 
+                     de_method = "DESeq2", # The gold-standard method for single-cell pseudobulks
+                     de_type = "LRT")      # Likelihood ratio test
+
+# View results for a specific cell type
+head(de_results$T_cell)
+```
+
+By leveraging `Libra` in R or `PyDESeq2` in Python, you ensure statistically rigorous, replicate-aware differential expression testing while completely avoiding the massive false-discovery rates of traditional cell-level tests.
+
+                </div>
+                <!-- Rendered content will be injected here by script.js -->
+                <div id="tutorial-content">
+                    <div class="text-center py-20">
+                        <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mb-4"></div>
+                        <p class="text-gray-600 font-medium">Rendering tutorial...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Tell script.js to render THIS specific page's hidden markdown on load
+        window.PRELOADED_TUTORIAL_ID = "transcriptomics-differential-expression";
+    </script>
+    
+</main>
+<!-- Footer (unchanged) -->
+<footer class="bg-gray-900 text-white mt-16">
+<div class="container mx-auto px-6 py-12">
+<div class="grid md:grid-cols-4 gap-8 mb-8">
+<div class="md:col-span-1">
+<div class="flex items-center space-x-3 mb-3">
+<div class="w-9 h-9 bg-blue-600 rounded-lg flex items-center justify-center">
+<svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18"/></svg>
+</div>
+<span class="font-bold text-white">Bioinformatics Workflow Hub</span>
+</div>
+<p class="text-gray-400 text-sm leading-relaxed mb-4">Practical, hands-on tutorials for bioinformatics, HPC, and single-cell RNA-seq analysis.</p>
+          <a href="https://paypal.me/nmabbasi12020?locale.x=en_US&country.x=FR" target="_blank" class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500 text-white font-bold rounded-lg hover:bg-emerald-600 transition-colors text-sm shadow-sm">
+            <span class="text-base">☕</span>
+            Buy me a coffee
+          </a>
+</div>
+<div>
+<h4 class="font-semibold text-white mb-3 text-sm uppercase tracking-wide">Navigation</h4>
+<ul class="space-y-2 text-sm text-gray-400">
+<li><a href="index.html" class="hover:text-white transition-colors">Home</a></li>
+<li><a href="index.html#tutorials" class="hover:text-white transition-colors">Tutorials</a></li>
+<li><a href="about.html" class="hover:text-white transition-colors">About</a></li>
+<li><a href="contact.html" class="hover:text-white transition-colors">Contact</a></li>
+</ul>
+</div>
+<div>
+<h4 class="font-semibold text-white mb-3 text-sm uppercase tracking-wide">Topics</h4>
+<ul class="space-y-2 text-sm text-gray-400">
+<li><a href="index.html#tutorials" class="hover:text-white transition-colors">Shell Commands &amp; HPC</a></li>
+<li><a href="index.html#tutorials" class="hover:text-white transition-colors">Conda</a></li>
+<li><a href="index.html#tutorials" class="hover:text-white transition-colors">Single-cell RNA-seq</a></li>
+<li><a href="index.html#tutorials" class="hover:text-white transition-colors">Bioinformatics</a></li>
+</ul>
+</div>
+<div>
+<h4 class="font-semibold text-white mb-3 text-sm uppercase tracking-wide">Legal</h4>
+<ul class="space-y-2 text-sm text-gray-400">
+<li><a href="pages/privacy.html" class="hover:text-white transition-colors">Privacy Policy</a></li>
+<li><a href="pages/terms.html" class="hover:text-white transition-colors">Terms of Service</a></li>
+<li><a href="pages/disclaimer.html" class="hover:text-white transition-colors">Disclaimer</a></li>
+<li><a href="pages/cookie.html" class="hover:text-white transition-colors">Cookie Policy</a></li>
+</ul>
+</div>
+</div>
+<div class="border-t border-gray-800 pt-6 text-center text-gray-500 text-sm">
+<p>&copy; 2026 Bioinformatics Workflow Hub. All rights reserved.</p>
+</div>
+</div>
+</footer>
+<!-- Prism.js for syntax highlighting -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-r.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+<!-- Marked.js for markdown rendering -->
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<!-- Custom JS - loads tutorials from manifest -->
+<script src="script.js"></script>
+<script>
+function toggleMobileMenu() {
+const m = document.getElementById("mobile-menu");
+m.classList.toggle("hidden");
+}
+</script>
+</body>
+</html>

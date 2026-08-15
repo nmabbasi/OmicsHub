@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<meta content="Learn the fundamentals of 16S rRNA amplicon sequencing techniques and how to perform rapid prokaryotic genome annotation using PROKKA." name="description"/>
+<meta content="bioinformatics, single-cell RNA-seq, shell commands, conda, computational biology, tutorials, data analysis" name="keywords"/>
+<meta content="Bioinformatics Workflow Hub Team" name="author"/>
+<meta content="index, follow" name="robots"/>
+<!-- Open Graph tags for social sharing -->
+<meta content="16S rRNA and PROKKA | Bioinformatics Workflow Hub" property="og:title"/>
+<meta content="Master computational biology with hands-on tutorials covering shell commands, conda environments, single-cell RNA-seq analysis, and essential bioinformatics tools." property="og:description"/>
+<meta content="https://theomicshub.com/16s-rrna-prokka-annotation.html" property="og:url"/>
+<meta content="website" property="og:type"/>
+<meta content="https://nmabbasi.github.io/OmicsHub/images/omicshub-logo.png" property="og:image"/>
+<!-- Twitter Card tags -->
+<meta content="summary_large_image" name="twitter:card"/>
+<meta content="Bioinformatics Workflow Hub - Learn Bioinformatics and Single-cell RNA-seq Step by Step" name="twitter:title"/>
+<meta content="Master computational biology with hands-on tutorials covering shell commands, conda environments, single-cell RNA-seq analysis, and essential bioinformatics tools." name="twitter:description"/>
+<meta content="https://nmabbasi.github.io/OmicsHub/images/omicshub-logo.png" name="twitter:image"/>
+<title>16S rRNA and PROKKA | Bioinformatics Workflow Hub</title>
+<!-- Favicon -->
+<link href="images/favicon.ico" rel="icon" type="image/x-icon"/>
+<!-- Tailwind CSS CDN -->
+<script src="https://cdn.tailwindcss.com"></script>
+<!-- Prism.js for syntax highlighting -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+<!-- Custom CSS -->
+<link href="style.css" rel="stylesheet"/>
+<!-- Google AdSense (replace with your actual AdSense code) -->
+<script async="" crossorigin="anonymous" src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2910340533244599"></script>
+<!-- Google Analytics (add your tracking ID when ready) -->
+<!-- <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag("js", new Date());
+        gtag("config", "G-XXXXXXXXXX");
+    </script> -->
+</link></head>
+<body class="bg-white text-gray-900">
+<!-- Header -->
+<header class="bg-white border-b border-gray-200 sticky top-0 z-50">
+<nav class="container mx-auto px-6 py-4">
+<div class="flex items-center justify-between">
+<!-- Logo -->
+<div class="flex items-center space-x-3">
+<div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center shadow shadow-blue-500/30">
+<svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18"/></svg>
+</div>
+<span class="text-xl font-bold text-gray-900 tracking-tight">Bioinformatics Workflow Hub</span>
+</div>
+<!-- Desktop Nav -->
+<div class="hidden md:flex items-center space-x-1">
+<a href="index.html" id="nav-desktop-home" class="px-4 py-2 text-sm font-semibold bg-blue-600 text-white rounded-md shadow-sm transition-all">Home</a>
+<a href="index.html#tutorials" id="nav-desktop-tutorials" onclick="showHome(); setTimeout(() => document.getElementById('tutorials').scrollIntoView(), 100)" class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-blue-600 rounded-md hover:bg-gray-50 transition-all cursor-pointer">Tutorials</a>
+<a href="about.html" class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-blue-600 rounded-md hover:bg-gray-50 transition-all">About</a>
+<a href="contact.html" class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-blue-600 rounded-md hover:bg-gray-50 transition-all">Contact</a>
+<!-- Legal dropdown -->
+<div class="relative group ml-2">
+<button class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-blue-600 flex items-center gap-1 rounded-md hover:bg-gray-50 transition-all">
+Legal
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+</button>
+<div class="absolute right-0 top-full mt-1 w-52 bg-white border border-gray-100 rounded-xl shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 overflow-hidden">
+<a href="pages/privacy.html" class="block px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors">Privacy Policy</a>
+<a href="pages/terms.html" class="block px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors">Terms of Service</a>
+<a href="pages/disclaimer.html" class="block px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors">Disclaimer</a>
+<a href="pages/cookie.html" class="block px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors">Cookie Policy</a>
+</div>
+</div>
+</div>
+<!-- Mobile Button -->
+<button class="md:hidden p-2 rounded-md text-gray-600 hover:bg-gray-100" onclick="toggleMobileMenu()">
+<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+</button>
+</div>
+<!-- Mobile Nav -->
+<div id="mobile-menu" class="md:hidden hidden mt-4 pb-2 border-t border-gray-100">
+<div class="flex flex-col pt-3 space-y-1">
+<a href="index.html" id="nav-mobile-home" class="px-4 py-2 text-sm font-semibold text-blue-600 bg-blue-50 rounded-lg transition-colors">Home</a>
+<a href="index.html#tutorials" id="nav-mobile-tutorials" onclick="showHome(); setTimeout(() => document.getElementById('tutorials').scrollIntoView(), 100)" class="px-4 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors cursor-pointer">Tutorials</a>
+<a href="about.html" class="px-4 py-2 text-sm text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors">About</a>
+<a href="contact.html" class="px-4 py-2 text-sm text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors">Contact</a>
+<div class="px-4 pt-2 pb-1 text-xs font-semibold text-gray-400 uppercase tracking-wide">Legal</div>
+<a href="pages/privacy.html" class="px-4 py-2 text-sm text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors">Privacy Policy</a>
+<a href="pages/terms.html" class="px-4 py-2 text-sm text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors">Terms of Service</a>
+<a href="pages/disclaimer.html" class="px-4 py-2 text-sm text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors">Disclaimer</a>
+<a href="pages/cookie.html" class="px-4 py-2 text-sm text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors">Cookie Policy</a>
+</div>
+</div>
+</nav>
+</header>
+<!-- Main Content -->
+<main class="min-h-screen">
+
+    <!-- Tutorial Detail Page (Pre-rendered for SEO) -->
+    <div class="page-content" id="tutorial-page">
+        <div class="container mx-auto px-4 py-8">
+            <div class="max-w-4xl mx-auto">
+                <!-- SEO Hidden Markdown Data -->
+                <div id="seo-markdown-data" style="display:none;">
+---
+title: "16S rRNA and PROKKA"
+date: "2026-08-14"
+author: "OmicsHub Team"
+category: "Metagenomics"
+excerpt: "Learn the fundamentals of 16S rRNA amplicon sequencing techniques and how to perform rapid prokaryotic genome annotation using PROKKA."
+image: "images/bioinformatics-intro.png"
+---
+
+# 16S rRNA Profiling and PROKKA Annotation
+
+## 1. 16S rRNA Amplicon Sequencing
+
+While shotgun metagenomics sequences all DNA in a sample, **16S rRNA sequencing** is an amplicon-based method that targets a specific, highly conserved gene (the 16S ribosomal RNA gene) found in all bacteria and archaea.
+
+Because the 16S gene contains both highly conserved regions (used for primer binding) and hypervariable regions (V1-V9, used for species identification), it serves as a "molecular barcode" to profile "who is there" in a microbiome.
+
+### Key Tools and Techniques
+
+The standard workflow for 16S analysis involves moving from raw FASTQ reads to an Operational Taxonomic Unit (OTU) or Amplicon Sequence Variant (ASV) table.
+
+#### QIIME 2 (Quantitative Insights Into Microbial Ecology)
+QIIME 2 is the gold standard platform for microbiome analysis.
+
+```bash
+# Example QIIME 2 workflow for DADA2 denoising
+qiime dada2 denoise-paired \
+  --i-demultiplexed-seqs demux.qza \
+  --p-trunc-len-f 250 \
+  --p-trunc-len-r 250 \
+  --o-table table.qza \
+  --o-representative-sequences rep-seqs.qza \
+  --o-denoising-stats denoising-stats.qza
+```
+
+#### DADA2
+DADA2 replaces traditional OTU clustering (grouping sequences by 97% similarity) with ASVs, which provide single-nucleotide resolution by modeling Illumina sequencing errors.
+
+#### Taxonomy Assignment
+Once ASVs are identified, they are assigned to a taxonomy using databases like **SILVA**, **Greengenes**, or **RDP**.
+
+---
+
+## 2. Genome Annotation with PROKKA
+
+Once you have identified a bacteria of interest (via 16S) and assembled its genome (using tools like SPAdes), you have a long FASTA file of DNA bases. However, this DNA sequence is meaningless without knowing where the genes are and what they do.
+
+**PROKKA** is a software tool designed to rapidly annotate bacterial, archaeal, and viral genomes. It coordinates a suite of existing software tools to identify features like:
+*   Coding sequences (CDS)
+*   rRNA and tRNA
+*   Non-coding RNA
+
+### Installing PROKKA
+
+```bash
+# PROKKA is easily installed via Conda
+mamba create -n prokka_env prokka
+conda activate prokka_env
+```
+
+### Running PROKKA
+
+PROKKA is designed to be incredibly simple and fast, typically annotating a standard bacterial genome in under 10 minutes on a standard laptop.
+
+```bash
+# Run PROKKA on an assembled contig file
+prokka --outdir my_annotation --prefix Ecoli_K12 assembled_contigs.fasta
+```
+
+### Understanding PROKKA Outputs
+
+PROKKA generates multiple output files in the `my_annotation` directory:
+
+*   **`.gff`**: The master annotation file in GFF3 format, containing both sequences and annotations. This is the primary file loaded into genome viewers like IGV.
+*   **`.faa`**: Protein FASTA file of the translated coding genes.
+*   **`.ffn`**: Nucleotide FASTA file of all the transcript genes.
+*   **`.txt`**: A statistical summary of the features annotated.
+
+### Advanced Usage
+
+You can customize PROKKA by providing a trusted set of proteins. PROKKA will use these to annotate your genome before relying on its default databases.
+
+```bash
+# Force PROKKA to prioritize a specific reference database
+prokka --proteins trusted_reference.faa --outdir custom_annotation assembled_contigs.fasta
+```
+
+By combining 16S profiling for community structure and PROKKA for functional genome annotation, researchers can build a comprehensive understanding of microbial ecology.
+
+                </div>
+                <!-- Rendered content will be injected here by script.js -->
+                <div id="tutorial-content">
+                    <div class="text-center py-20">
+                        <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mb-4"></div>
+                        <p class="text-gray-600 font-medium">Rendering tutorial...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Tell script.js to render THIS specific page's hidden markdown on load
+        window.PRELOADED_TUTORIAL_ID = "16s-rrna-prokka-annotation";
+    </script>
+    
+</main>
+<!-- Footer (unchanged) -->
+<footer class="bg-gray-900 text-white mt-16">
+<div class="container mx-auto px-6 py-12">
+<div class="grid md:grid-cols-4 gap-8 mb-8">
+<div class="md:col-span-1">
+<div class="flex items-center space-x-3 mb-3">
+<div class="w-9 h-9 bg-blue-600 rounded-lg flex items-center justify-center">
+<svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18"/></svg>
+</div>
+<span class="font-bold text-white">Bioinformatics Workflow Hub</span>
+</div>
+<p class="text-gray-400 text-sm leading-relaxed mb-4">Practical, hands-on tutorials for bioinformatics, HPC, and single-cell RNA-seq analysis.</p>
+          <a href="https://paypal.me/nmabbasi12020?locale.x=en_US&country.x=FR" target="_blank" class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500 text-white font-bold rounded-lg hover:bg-emerald-600 transition-colors text-sm shadow-sm">
+            <span class="text-base">☕</span>
+            Buy me a coffee
+          </a>
+</div>
+<div>
+<h4 class="font-semibold text-white mb-3 text-sm uppercase tracking-wide">Navigation</h4>
+<ul class="space-y-2 text-sm text-gray-400">
+<li><a href="index.html" class="hover:text-white transition-colors">Home</a></li>
+<li><a href="index.html#tutorials" class="hover:text-white transition-colors">Tutorials</a></li>
+<li><a href="about.html" class="hover:text-white transition-colors">About</a></li>
+<li><a href="contact.html" class="hover:text-white transition-colors">Contact</a></li>
+</ul>
+</div>
+<div>
+<h4 class="font-semibold text-white mb-3 text-sm uppercase tracking-wide">Topics</h4>
+<ul class="space-y-2 text-sm text-gray-400">
+<li><a href="index.html#tutorials" class="hover:text-white transition-colors">Shell Commands &amp; HPC</a></li>
+<li><a href="index.html#tutorials" class="hover:text-white transition-colors">Conda</a></li>
+<li><a href="index.html#tutorials" class="hover:text-white transition-colors">Single-cell RNA-seq</a></li>
+<li><a href="index.html#tutorials" class="hover:text-white transition-colors">Bioinformatics</a></li>
+</ul>
+</div>
+<div>
+<h4 class="font-semibold text-white mb-3 text-sm uppercase tracking-wide">Legal</h4>
+<ul class="space-y-2 text-sm text-gray-400">
+<li><a href="pages/privacy.html" class="hover:text-white transition-colors">Privacy Policy</a></li>
+<li><a href="pages/terms.html" class="hover:text-white transition-colors">Terms of Service</a></li>
+<li><a href="pages/disclaimer.html" class="hover:text-white transition-colors">Disclaimer</a></li>
+<li><a href="pages/cookie.html" class="hover:text-white transition-colors">Cookie Policy</a></li>
+</ul>
+</div>
+</div>
+<div class="border-t border-gray-800 pt-6 text-center text-gray-500 text-sm">
+<p>&copy; 2026 Bioinformatics Workflow Hub. All rights reserved.</p>
+</div>
+</div>
+</footer>
+<!-- Prism.js for syntax highlighting -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-r.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+<!-- Marked.js for markdown rendering -->
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<!-- Custom JS - loads tutorials from manifest -->
+<script src="script.js"></script>
+<script>
+function toggleMobileMenu() {
+const m = document.getElementById("mobile-menu");
+m.classList.toggle("hidden");
+}
+</script>
+</body>
+</html>
