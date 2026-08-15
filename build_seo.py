@@ -83,7 +83,7 @@ for index, tut in enumerate(tutorials):
     
     # Create customized header
     custom_header = header_html.replace(
-        '<title>The Omics Hub | Learn Bioinformatics and Single-cell RNA-seq Step by Step</title>',
+        '<title>The Omics Hub | Bioinformatics Academy</title>',
         f'<title>{title} | The Omics Hub</title>'
     )
     
