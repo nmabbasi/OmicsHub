@@ -131,7 +131,7 @@ for file in tutorial_files:
     })
 
 def render_home_card(t):
-    img_html = f'<div class="w-full aspect-video relative overflow-hidden border-b border-gray-100 bg-gray-50"><img src="{t["image"]}" alt="{t["title"]}" class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 hover:scale-105"></div>' if t["image"] else ''
+    img_html = f'<div class="w-full aspect-video relative overflow-hidden border-b border-gray-100 bg-gray-50"><img src="{t["image"]}" alt="{t["title"]}" loading="lazy" decoding="async" class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 hover:scale-105"></div>' if t["image"] else ''
     return f'''
         <article class="tutorial-card cursor-pointer" onclick="window.location.href='{t["id"]}.html'">
             {img_html}
@@ -149,7 +149,7 @@ def render_home_card(t):
 def render_grid_card(t):
     return f'''
         <article class="tutorial-grid-card bg-white rounded-lg shadow-md overflow-hidden transform transition-transform hover:scale-105 duration-300 cursor-pointer flex flex-col" data-category="{t["category"]}" onclick="window.location.href='{t["id"]}.html'">
-            <img src="{t["image"]}" alt="{t["title"]}" class="w-full h-48 object-cover">
+            <img src="{t["image"]}" alt="{t["title"]}" loading="lazy" decoding="async" class="w-full h-48 object-cover">
             <div class="p-6 flex flex-col flex-grow">
                 <div class="flex items-center justify-between mb-3">
                     <span class="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">{t["category"]}</span>
