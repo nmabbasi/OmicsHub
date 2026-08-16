@@ -4,7 +4,7 @@ date: "2026-08-13"
 author: "Nasir Mahmood Abbasi, PhD"
 category: "Single-Cell RNA-seq"
 excerpt: "Explore foundational advanced downstream analyses: mapping cell-cell communication networks, inferring Transcription Factor (TF) activities, and generating publication-ready plots (SCpubr)."
-image: "images/scrna_metabolism.png"
+image: "images/scrna-downstream-analysis.png"
 ---
 
 

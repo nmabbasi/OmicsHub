@@ -4,7 +4,7 @@ date: "2026-08-14"
 author: "Nasir Mahmood Abbasi, PhD"
 category: "Single-Cell RNA-seq"
 excerpt: "A deep dive into resolving batch effects in single-cell data, comparing the mathematical approaches of Harmony, RPCA, and CCA for complex dataset integration."
-image: "images/bioinformatics-intro.png"
+image: "images/scrna-integration-strategies.png"
 ---
 
 

@@ -4,7 +4,7 @@ date: "2026-08-14"
 author: "Nasir Mahmood Abbasi, PhD"
 category: "Single-Cell RNA-seq"
 excerpt: "Learn how to mathematically prove that your batch integration worked and your clusters are robust using LISI and Silhouette scores, rather than relying on subjective UMAP visuals."
-image: "images/bioinformatics-intro.png"
+image: "images/scrna-quality-control.png"
 ---
 
 

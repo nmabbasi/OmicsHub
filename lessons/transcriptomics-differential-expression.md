@@ -4,7 +4,7 @@ date: "2026-08-14"
 author: "Nasir Mahmood Abbasi, PhD"
 category: "Single-Cell RNA-seq"
 excerpt: "A comprehensive pipeline for performing differential gene expression (DGE) analysis using DESeq2 for bulk RNA-seq and adapting it for modern pseudobulk scRNA-seq approaches."
-image: "images/bioinformatics-intro.png"
+image: "images/pseudobulk-de-analysis.png"
 ---
 
 
