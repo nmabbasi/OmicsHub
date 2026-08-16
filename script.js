@@ -837,15 +837,22 @@ function filterTutorialsOnly(category) {
         }
     });
 
-    // Update active category button
+    // Update active category button with a category-specific selected color.
     document.querySelectorAll('#category-filter .category-btn').forEach(btn => {
-        if (btn.dataset.category === category) {
-            btn.classList.add('bg-blue-600', 'text-white');
-            btn.classList.remove('bg-gray-200', 'text-gray-700');
-        } else {
-            btn.classList.remove('bg-blue-600', 'text-white');
-            btn.classList.add('bg-gray-200', 'text-gray-700');
-        }
+        const isSelected = btn.dataset.category === category;
+        btn.classList.toggle('is-selected', isSelected);
+        btn.classList.toggle('bg-blue-600', isSelected && category === 'all');
+        btn.classList.toggle('text-white', isSelected);
+        btn.classList.toggle('bg-gray-200', !isSelected);
+        btn.classList.toggle('text-gray-700', !isSelected);
+        btn.setAttribute('aria-pressed', isSelected ? 'true' : 'false');
+    });
+
+    document.querySelectorAll('#browse-categories .sidebar-category').forEach(btn => {
+        const isSelected = btn.dataset.category === category;
+        btn.classList.toggle('is-selected', isSelected);
+        btn.classList.toggle('text-gray-600', !isSelected);
+        btn.setAttribute('aria-pressed', isSelected ? 'true' : 'false');
     });
 }
 

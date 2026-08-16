@@ -182,15 +182,35 @@ ordered_categories = [
     "Long-Read Sequencing"
 ]
 
+def category_tone(category):
+    tones = {
+        "all": "all",
+        "Foundations & Prerequisites": "foundations",
+        "Introduction to Bioinformatics": "intro",
+        "Shell Command Basics": "shell",
+        "Package Management": "package",
+        "High-Performance Computing (HPC)": "hpc",
+        "Workflow & Containerization": "workflow",
+        "Metagenomics": "metagenomics",
+        "Metatranscriptomics": "metatranscriptomics",
+        "Evolutionary Bioinformatics Analysis": "evolutionary",
+        "Genomics & Whole Exome Sequencing": "genomics",
+        "Single-Cell RNA-seq": "single-cell",
+        "Advanced Single-Cell Analysis": "advanced-single-cell",
+        "Spatial Transcriptomics": "spatial",
+        "Long-Read Sequencing": "long-read",
+    }
+    return tones.get(category, "all")
+
 cat_html = ""
 category_counts = Counter(t["category"] for t in tutorials)
-filter_buttons_html = f'<button class="category-btn px-4 py-2 rounded-full text-sm font-medium transition-colors bg-blue-600 text-white" data-category="all" onclick="filterTutorialsOnly(\'all\')">All Tutorials<span class="category-count" aria-label="{len(tutorials)} tutorials">{len(tutorials)}</span></button>\n'
+filter_buttons_html = f'<button class="category-btn px-4 py-2 rounded-full text-sm font-medium transition-colors bg-blue-600 text-white" data-category="all" data-category-tone="all" onclick="filterTutorialsOnly(\'all\')">All Tutorials<span class="category-count" aria-label="{len(tutorials)} tutorials">{len(tutorials)}</span></button>\n'
 
 # Only add categories that actually exist in the parsed tutorials to avoid empty buttons
 for c in ordered_categories:
     if c in categories_set:
-        cat_html += f'<button class="sidebar-category w-full text-left px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-blue-600 transition-colors" onclick="filterTutorials(\'{c}\')">{c}<span class="category-count" aria-label="{category_counts[c]} tutorials">{category_counts[c]}</span></button>\n'
-        filter_buttons_html += f'<button class="category-btn px-4 py-2 rounded-full text-sm font-medium transition-colors bg-gray-200 text-gray-700 hover:bg-gray-300" data-category="{c}" onclick="filterTutorialsOnly(\'{c}\')">{c}<span class="category-count" aria-label="{category_counts[c]} tutorials">{category_counts[c]}</span></button>\n'
+        cat_html += f'<button class="sidebar-category w-full text-left px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-blue-600 transition-colors" data-category="{c}" data-category-tone="{category_tone(c)}" onclick="filterTutorials(\'{c}\')">{c}<span class="category-count" aria-label="{category_counts[c]} tutorials">{category_counts[c]}</span></button>\n'
+        filter_buttons_html += f'<button class="category-btn px-4 py-2 rounded-full text-sm font-medium transition-colors bg-gray-200 text-gray-700 hover:bg-gray-300" data-category="{c}" data-category-tone="{category_tone(c)}" onclick="filterTutorialsOnly(\'{c}\')">{c}<span class="category-count" aria-label="{category_counts[c]} tutorials">{category_counts[c]}</span></button>\n'
 
 
 # Recent posts
