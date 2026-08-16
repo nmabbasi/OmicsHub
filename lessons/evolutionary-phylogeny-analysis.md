@@ -4,7 +4,7 @@ date: "2026-08-14"
 author: "Nasir Mahmood Abbasi, PhD"
 category: "Evolutionary Bioinformatics Analysis"
 excerpt: "A comprehensive guide to evolutionary analysis, covering multiple sequence alignment with Kalign, tree construction, and using MEGA via the command line."
-image: "images/cat_evolutionary.png"
+image: "images/evolutionary-phylogeny.png"
 ---
 
 

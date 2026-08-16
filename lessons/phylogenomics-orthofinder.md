@@ -4,7 +4,7 @@ date: "2026-08-14"
 author: "Nasir Mahmood Abbasi, PhD"
 category: "Evolutionary Bioinformatics Analysis"
 excerpt: "Scale up from single-gene phylogeny to whole-genome phylogenomics by identifying orthogroups and constructing species trees using OrthoFinder."
-image: "images/cat_evolutionary.png"
+image: "images/phylogenomics-orthofinder.png"
 ---
 
 
