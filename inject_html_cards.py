@@ -80,6 +80,15 @@ tutorial_files = [
     'long-read-pacbio-nanopore.md'
 ]
 
+# Automatically include newly added lesson files while preserving the curated order above.
+# This keeps homepage cards, total counts, and category counts synchronized with lessons/.
+_existing_tutorial_files = set(tutorial_files)
+_dynamic_tutorial_files = sorted(
+    name for name in os.listdir('lessons')
+    if name.endswith('.md') and name not in _existing_tutorial_files
+)
+tutorial_files.extend(_dynamic_tutorial_files)
+
 tutorials = []
 categories_set = set()
 
