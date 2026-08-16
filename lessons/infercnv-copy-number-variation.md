@@ -26,7 +26,7 @@ image: "images/infercnv-copy-number-variation.png"
     <li><strong>Objective:</strong> Infer broad copy-number patterns from expression while understanding reference selection, smoothing, and the need for orthogonal validation.</li>
     <li><strong>Expected Output:</strong> A CNV inference figure with reference-cell rationale, genomic patterns, sample context, and an explicit non-diagnostic interpretation.</li>
   </ul>
-  <p class="text-sm text-blue-700"><strong>Suggested route:</strong> use the <a href="start-here.html" class="underline">Bioinformatics Academy Pathway</a> to review any prerequisite stage before continuing.</p>
+  <p class="text-sm text-blue-700"><strong>Suggested route:</strong> use the <a href="start-here.html" class="underline">Bioinformatics Learning Path</a> to review any prerequisite stage before continuing.</p>
 </div>
 
 

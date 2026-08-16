@@ -26,7 +26,7 @@ image: "images/cell-type-annotation-methods.png"
     <li><strong>Objective:</strong> Compare manual markers, reference mapping, automated classifiers, and consensus annotation while recording uncertainty.</li>
     <li><strong>Expected Output:</strong> An annotated cell-type table with evidence sources, confidence, discordant-method notes, and tissue/species context.</li>
   </ul>
-  <p class="text-sm text-blue-700"><strong>Suggested route:</strong> use the <a href="start-here.html" class="underline">Bioinformatics Academy Pathway</a> to review any prerequisite stage before continuing.</p>
+  <p class="text-sm text-blue-700"><strong>Suggested route:</strong> use the <a href="start-here.html" class="underline">Bioinformatics Learning Path</a> to review any prerequisite stage before continuing.</p>
 </div>
 
 

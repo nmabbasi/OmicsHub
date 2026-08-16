@@ -26,7 +26,7 @@ image: "images/modern-bioinformatics.png"
     <li><strong>Objective:</strong> Compare current single-cell, spatial, multi-omic, long-read, and foundation-model approaches by question, assumptions, and limitations.</li>
     <li><strong>Expected Output:</strong> A methods-selection matrix that matches a biological question to data modality, computational approach, and validation strategy.</li>
   </ul>
-  <p class="text-sm text-blue-700"><strong>Suggested route:</strong> use the <a href="start-here.html" class="underline">Bioinformatics Academy Pathway</a> to review any prerequisite stage before continuing.</p>
+  <p class="text-sm text-blue-700"><strong>Suggested route:</strong> use the <a href="start-here.html" class="underline">Bioinformatics Learning Path</a> to review any prerequisite stage before continuing.</p>
 </div>
 
 

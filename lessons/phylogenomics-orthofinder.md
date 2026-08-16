@@ -26,7 +26,7 @@ image: "images/cat_evolutionary.png"
     <li><strong>Objective:</strong> Use orthogroups and comparative genomics outputs to distinguish orthology, paralogy, gene-family change, and species-tree inference.</li>
     <li><strong>Expected Output:</strong> An annotated orthogroup summary that records input proteomes, software version, species set, and one cautiously interpreted result.</li>
   </ul>
-  <p class="text-sm text-blue-700"><strong>Suggested route:</strong> use the <a href="start-here.html" class="underline">Bioinformatics Academy Pathway</a> to review any prerequisite stage before continuing.</p>
+  <p class="text-sm text-blue-700"><strong>Suggested route:</strong> use the <a href="start-here.html" class="underline">Bioinformatics Learning Path</a> to review any prerequisite stage before continuing.</p>
 </div>
 
 

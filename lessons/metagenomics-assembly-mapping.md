@@ -26,7 +26,7 @@ image: "images/bioinformatics-intro.png"
     <li><strong>Objective:</strong> Plan a metagenomic assembly workflow, map reads back to contigs, and interpret coverage and assembly-quality evidence.</li>
     <li><strong>Expected Output:</strong> An assembly-and-mapping report that records input reads, assembler settings, mapping rate, coverage, and quality limitations.</li>
   </ul>
-  <p class="text-sm text-blue-700"><strong>Suggested route:</strong> use the <a href="start-here.html" class="underline">Bioinformatics Academy Pathway</a> to review any prerequisite stage before continuing.</p>
+  <p class="text-sm text-blue-700"><strong>Suggested route:</strong> use the <a href="start-here.html" class="underline">Bioinformatics Learning Path</a> to review any prerequisite stage before continuing.</p>
 </div>
 
 

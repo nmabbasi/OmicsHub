@@ -26,7 +26,7 @@ image: "images/shell-commands-part1.png"
     <li><strong>Objective:</strong> Navigate directories, inspect files, create folders, and use paths safely in a command-line bioinformatics project.</li>
     <li><strong>Expected Output:</strong> A small project directory created from the terminal with documented paths and correctly named files.</li>
   </ul>
-  <p class="text-sm text-blue-700"><strong>Suggested route:</strong> use the <a href="start-here.html" class="underline">Bioinformatics Academy Pathway</a> to review any prerequisite stage before continuing.</p>
+  <p class="text-sm text-blue-700"><strong>Suggested route:</strong> use the <a href="start-here.html" class="underline">Bioinformatics Learning Path</a> to review any prerequisite stage before continuing.</p>
 </div>
 
 

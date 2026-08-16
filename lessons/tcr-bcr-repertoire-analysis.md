@@ -26,7 +26,7 @@ image: "images/cat_advanced_sc.png"
     <li><strong>Objective:</strong> Analyze immune-receptor repertoire features while distinguishing clone abundance, diversity, expansion, and antigen specificity claims.</li>
     <li><strong>Expected Output:</strong> A repertoire summary with clonotype definition, chain handling, diversity metric, sample denominator, and cautious interpretation.</li>
   </ul>
-  <p class="text-sm text-blue-700"><strong>Suggested route:</strong> use the <a href="start-here.html" class="underline">Bioinformatics Academy Pathway</a> to review any prerequisite stage before continuing.</p>
+  <p class="text-sm text-blue-700"><strong>Suggested route:</strong> use the <a href="start-here.html" class="underline">Bioinformatics Learning Path</a> to review any prerequisite stage before continuing.</p>
 </div>
 
 

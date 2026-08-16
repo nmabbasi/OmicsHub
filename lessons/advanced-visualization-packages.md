@@ -26,7 +26,7 @@ image: "images/cat_advanced_sc.png"
     <li><strong>Objective:</strong> Create readable single-cell figures with SCpubr, SCP, or dittoSeq while selecting colors, comparisons, and labels that support the question.</li>
     <li><strong>Expected Output:</strong> A publication-ready figure with color-blind-aware choices, clear axes/legends, caption, and saved code.</li>
   </ul>
-  <p class="text-sm text-blue-700"><strong>Suggested route:</strong> use the <a href="start-here.html" class="underline">Bioinformatics Academy Pathway</a> to review any prerequisite stage before continuing.</p>
+  <p class="text-sm text-blue-700"><strong>Suggested route:</strong> use the <a href="start-here.html" class="underline">Bioinformatics Learning Path</a> to review any prerequisite stage before continuing.</p>
 </div>
 
 

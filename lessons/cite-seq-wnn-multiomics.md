@@ -26,7 +26,7 @@ image: "images/cat_advanced_sc.png"
     <li><strong>Objective:</strong> Integrate CITE-seq or multi-modal data with WNN while evaluating modality quality, weighting, and biological agreement.</li>
     <li><strong>Expected Output:</strong> A multi-modal object with modality-specific QC, WNN embedding, feature interpretation, and documented modality contributions.</li>
   </ul>
-  <p class="text-sm text-blue-700"><strong>Suggested route:</strong> use the <a href="start-here.html" class="underline">Bioinformatics Academy Pathway</a> to review any prerequisite stage before continuing.</p>
+  <p class="text-sm text-blue-700"><strong>Suggested route:</strong> use the <a href="start-here.html" class="underline">Bioinformatics Learning Path</a> to review any prerequisite stage before continuing.</p>
 </div>
 
 

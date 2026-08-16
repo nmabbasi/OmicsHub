@@ -26,7 +26,7 @@ image: "images/bioinformatics-intro.png"
     <li><strong>Objective:</strong> Compare Harmony, RPCA, and CCA integration approaches and evaluate whether technical variation is reduced without erasing biology.</li>
     <li><strong>Expected Output:</strong> An integration comparison with pre/post diagnostics, preserved biological labels, and a documented method choice.</li>
   </ul>
-  <p class="text-sm text-blue-700"><strong>Suggested route:</strong> use the <a href="start-here.html" class="underline">Bioinformatics Academy Pathway</a> to review any prerequisite stage before continuing.</p>
+  <p class="text-sm text-blue-700"><strong>Suggested route:</strong> use the <a href="start-here.html" class="underline">Bioinformatics Learning Path</a> to review any prerequisite stage before continuing.</p>
 </div>
 
 

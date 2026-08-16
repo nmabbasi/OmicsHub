@@ -26,7 +26,7 @@ image: "images/bioinformatics-intro.png"
     <li><strong>Objective:</strong> Classify shotgun metagenomic reads with Kraken2, estimate abundances with Bracken, and report database and contamination limitations.</li>
     <li><strong>Expected Output:</strong> A taxonomic abundance table paired with the exact database version, read-processing choices, and interpretation caveats.</li>
   </ul>
-  <p class="text-sm text-blue-700"><strong>Suggested route:</strong> use the <a href="start-here.html" class="underline">Bioinformatics Academy Pathway</a> to review any prerequisite stage before continuing.</p>
+  <p class="text-sm text-blue-700"><strong>Suggested route:</strong> use the <a href="start-here.html" class="underline">Bioinformatics Learning Path</a> to review any prerequisite stage before continuing.</p>
 </div>
 
 

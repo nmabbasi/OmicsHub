@@ -136,13 +136,13 @@ Legal
     <li><strong>Objective:</strong> Integrate CITE-seq or multi-modal data with WNN while evaluating modality quality, weighting, and biological agreement.</li>
     <li><strong>Expected Output:</strong> A multi-modal object with modality-specific QC, WNN embedding, feature interpretation, and documented modality contributions.</li>
   </ul>
-  <p class="text-sm text-blue-700"><strong>Suggested route:</strong> use the <a href="start-here.html" class="underline">Bioinformatics Academy Pathway</a> to review any prerequisite stage before continuing.</p>
+  <p class="text-sm text-blue-700"><strong>Suggested route:</strong> use the <a href="start-here.html" class="underline">Bioinformatics Learning Path</a> to review any prerequisite stage before continuing.</p>
 </div>
 
 <h2>Multi-Omics: CITE-seq &amp; WNN Integration</h2>
 <h2>Introduction</h2>
-<p>Traditional scRNA-seq only measures the transcriptome. However, many critical biological processes are driven by cell surface proteins (e.g., CD4, CD8, PD-1) whose abundance does not always correlate perfectly with RNA levels. </p>
-<p><strong>CITE-seq</strong> (Cellular Indexing of Transcriptomes and Epitopes by Sequencing) solves this by using antibody-derived tags (ADTs) to simultaneously measure RNA and protein levels in the exact same cell. </p>
+<p>Traditional scRNA-seq only measures the transcriptome. However, many critical biological processes are driven by cell surface proteins (e.g., CD4, CD8, PD-1) whose abundance does not always correlate perfectly with RNA levels.</p>
+<p><strong>CITE-seq</strong> (Cellular Indexing of Transcriptomes and Epitopes by Sequencing) solves this by using antibody-derived tags (ADTs) to simultaneously measure RNA and protein levels in the exact same cell.</p>
 <p>This tutorial covers the normalization of ADT data and the advanced <strong>Weighted Nearest Neighbor (WNN)</strong> integration method in Seurat to combine these two modalities.</p>
 <hr />
 <h2>1. Preparing the CITE-seq Object</h2>
@@ -157,7 +157,7 @@ Assays(seurat_obj)
 </code></pre>
 <hr />
 <h2>2. ADT Normalization (Margin 1 vs Margin 2)</h2>
-<p>While RNA is usually normalized via LogNormalize or SCTransform, ADT data requires <strong>Centered Log-Ratio (CLR)</strong> normalization. </p>
+<p>While RNA is usually normalized via LogNormalize or SCTransform, ADT data requires <strong>Centered Log-Ratio (CLR)</strong> normalization.</p>
 <p>There are two ways to apply CLR:
 *   <strong>Margin = 1 (Across cells):</strong> Normalizes the protein signal across all cells independently. Best when you want to compare the expression of a specific protein across different cell populations.
 *   <strong>Margin = 2 (Across proteins):</strong> Normalizes the signal across all proteins within a single cell. Best for reducing cell-to-cell technical variations.</p>
@@ -174,7 +174,7 @@ seurat_obj &lt;- RunPCA(seurat_obj, features = rownames(seurat_obj), reduction.n
 </code></pre>
 <hr />
 <h2>3. Weighted Nearest Neighbor (WNN) Integration</h2>
-<p>How do you combine RNA and Protein clustering? If you simply merge them, one modality will dominate the other. </p>
+<p>How do you combine RNA and Protein clustering? If you simply merge them, one modality will dominate the other.</p>
 <p>Seurat's <strong>WNN Analysis</strong> solves this by calculating a "weight" for each cell. If a cell has a very clear protein profile but a noisy RNA profile, WNN assigns higher weight to the protein data for that specific cell.</p>
 <pre><code class="language-r"># Ensure RNA has also been processed (SCTransform or LogNormalize + PCA)
 DefaultAssay(seurat_obj) &lt;- 'RNA'

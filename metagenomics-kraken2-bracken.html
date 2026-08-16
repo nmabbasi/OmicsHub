@@ -136,16 +136,16 @@ Legal
     <li><strong>Objective:</strong> Classify shotgun metagenomic reads with Kraken2, estimate abundances with Bracken, and report database and contamination limitations.</li>
     <li><strong>Expected Output:</strong> A taxonomic abundance table paired with the exact database version, read-processing choices, and interpretation caveats.</li>
   </ul>
-  <p class="text-sm text-blue-700"><strong>Suggested route:</strong> use the <a href="start-here.html" class="underline">Bioinformatics Academy Pathway</a> to review any prerequisite stage before continuing.</p>
+  <p class="text-sm text-blue-700"><strong>Suggested route:</strong> use the <a href="start-here.html" class="underline">Bioinformatics Learning Path</a> to review any prerequisite stage before continuing.</p>
 </div>
 
 <h2>Taxonomic Profiling with Kraken2 and Bracken</h2>
 <h2>Introduction</h2>
-<p>In shotgun metagenomics, one of the primary goals is answering: <strong>"Who is in this sample, and in what proportions?"</strong> </p>
+<p>In shotgun metagenomics, one of the primary goals is answering: <strong>"Who is in this sample, and in what proportions?"</strong></p>
 <p>Unlike 16S amplicon sequencing, shotgun data contains fragmented DNA from every organism present. To classify millions of these short reads efficiently, we cannot use traditional alignment tools like BLAST—it would take months. Instead, we use ultra-fast <strong>k-mer based classifiers</strong>, with the undisputed industry standard being <strong>Kraken2</strong>, followed by <strong>Bracken</strong> for abundance estimation.</p>
 <hr />
 <h2>1. How Kraken2 Works</h2>
-<p>Kraken2 breaks down your reads into short sequences called <em>k-mers</em> (typically 35-mers). It then compares these k-mers against a massive pre-built database of known genomes. </p>
+<p>Kraken2 breaks down your reads into short sequences called <em>k-mers</em> (typically 35-mers). It then compares these k-mers against a massive pre-built database of known genomes.</p>
 <p>Instead of full alignment, Kraken2 maps the k-mer to the Lowest Common Ancestor (LCA) in the taxonomic tree.</p>
 <h3>Running Kraken2</h3>
 <p>Kraken2 is heavily memory-bound. You need a machine with enough RAM to hold the database you choose (the standard PlusPFP database requires ~50GB of RAM).</p>
@@ -161,7 +161,7 @@ kraken2 --db /path/to/kraken2_database/ \
 *   <code>kraken2_report.txt</code>: A human-readable summary of the percentage of reads assigned to each taxonomic level.</p>
 <hr />
 <h2>2. Correcting Abundances with Bracken</h2>
-<p>While Kraken2 is excellent at classification, its Lowest Common Ancestor (LCA) approach causes a problem: many reads are classified at higher taxonomic levels (like Genus or Family) because they match multiple species equally well. </p>
+<p>While Kraken2 is excellent at classification, its Lowest Common Ancestor (LCA) approach causes a problem: many reads are classified at higher taxonomic levels (like Genus or Family) because they match multiple species equally well.</p>
 <p>This means your raw Species-level counts in Kraken2 are mathematically underestimated.</p>
 <p><strong>Bracken</strong> (Bayesian Reestimation of Abundance with KrakEN) fixes this. It uses Bayesian probabilities to accurately push those Genus-level assignments down to the Species level, giving you highly accurate abundance estimations.</p>
 <h3>Running Bracken</h3>

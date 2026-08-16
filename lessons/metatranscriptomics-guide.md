@@ -26,7 +26,7 @@ image: "images/bioinformatics-intro.png"
     <li><strong>Objective:</strong> Distinguish microbial community composition from gene-expression activity and outline a metatranscriptomic preprocessing workflow.</li>
     <li><strong>Expected Output:</strong> A workflow plan that records RNA QC, host/rRNA handling, reference choice, normalization, and an activity-oriented output.</li>
   </ul>
-  <p class="text-sm text-blue-700"><strong>Suggested route:</strong> use the <a href="start-here.html" class="underline">Bioinformatics Academy Pathway</a> to review any prerequisite stage before continuing.</p>
+  <p class="text-sm text-blue-700"><strong>Suggested route:</strong> use the <a href="start-here.html" class="underline">Bioinformatics Learning Path</a> to review any prerequisite stage before continuing.</p>
 </div>
 
 

@@ -26,7 +26,7 @@ image: "images/hpc.png"
     <li><strong>Objective:</strong> Inspect modules, partitions, nodes, queues, and job status before requesting cluster resources.</li>
     <li><strong>Expected Output:</strong> A short cluster-status report showing the selected partition, available modules, and the status of a test job.</li>
   </ul>
-  <p class="text-sm text-blue-700"><strong>Suggested route:</strong> use the <a href="start-here.html" class="underline">Bioinformatics Academy Pathway</a> to review any prerequisite stage before continuing.</p>
+  <p class="text-sm text-blue-700"><strong>Suggested route:</strong> use the <a href="start-here.html" class="underline">Bioinformatics Learning Path</a> to review any prerequisite stage before continuing.</p>
 </div>
 
 

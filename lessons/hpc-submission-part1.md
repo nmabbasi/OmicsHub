@@ -26,7 +26,7 @@ image: "images/sc.png"
     <li><strong>Objective:</strong> Write, submit, monitor, and interpret a Slurm batch script with appropriate CPU, memory, time, and log settings.</li>
     <li><strong>Expected Output:</strong> A completed test job with an annotated SBATCH script and saved stdout/stderr logs.</li>
   </ul>
-  <p class="text-sm text-blue-700"><strong>Suggested route:</strong> use the <a href="start-here.html" class="underline">Bioinformatics Academy Pathway</a> to review any prerequisite stage before continuing.</p>
+  <p class="text-sm text-blue-700"><strong>Suggested route:</strong> use the <a href="start-here.html" class="underline">Bioinformatics Learning Path</a> to review any prerequisite stage before continuing.</p>
 </div>
 
 

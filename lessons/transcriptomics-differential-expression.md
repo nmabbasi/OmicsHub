@@ -26,7 +26,7 @@ image: "images/bioinformatics-intro.png"
     <li><strong>Objective:</strong> Perform and interpret pseudobulk differential expression with a replicate-aware design, effect sizes, multiple testing, and transparent contrasts.</li>
     <li><strong>Expected Output:</strong> A differential-expression table and volcano/MA plot with model formula, replicate count, adjusted p-values, and effect-size interpretation.</li>
   </ul>
-  <p class="text-sm text-blue-700"><strong>Suggested route:</strong> use the <a href="start-here.html" class="underline">Bioinformatics Academy Pathway</a> to review any prerequisite stage before continuing.</p>
+  <p class="text-sm text-blue-700"><strong>Suggested route:</strong> use the <a href="start-here.html" class="underline">Bioinformatics Learning Path</a> to review any prerequisite stage before continuing.</p>
 </div>
 
 

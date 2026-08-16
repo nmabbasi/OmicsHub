@@ -26,7 +26,7 @@ image: "images/support.png"
     <li><strong>Objective:</strong> Diagnose common cluster problems, collect useful evidence, and write an effective support request without exposing sensitive data.</li>
     <li><strong>Expected Output:</strong> A support-ready issue report containing the job ID, command, resource request, relevant log excerpt, and steps already attempted.</li>
   </ul>
-  <p class="text-sm text-blue-700"><strong>Suggested route:</strong> use the <a href="start-here.html" class="underline">Bioinformatics Academy Pathway</a> to review any prerequisite stage before continuing.</p>
+  <p class="text-sm text-blue-700"><strong>Suggested route:</strong> use the <a href="start-here.html" class="underline">Bioinformatics Learning Path</a> to review any prerequisite stage before continuing.</p>
 </div>
 
 

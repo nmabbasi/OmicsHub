@@ -26,7 +26,7 @@ image: "images/command-line-terminal.png"
     <li><strong>Objective:</strong> Translate manual pipeline steps into a dependency-aware Snakemake or Nextflow workflow with reproducible inputs and outputs.</li>
     <li><strong>Expected Output:</strong> A minimal workflow that runs on test data, records software requirements, and produces a declared result file.</li>
   </ul>
-  <p class="text-sm text-blue-700"><strong>Suggested route:</strong> use the <a href="start-here.html" class="underline">Bioinformatics Academy Pathway</a> to review any prerequisite stage before continuing.</p>
+  <p class="text-sm text-blue-700"><strong>Suggested route:</strong> use the <a href="start-here.html" class="underline">Bioinformatics Learning Path</a> to review any prerequisite stage before continuing.</p>
 </div>
 
 

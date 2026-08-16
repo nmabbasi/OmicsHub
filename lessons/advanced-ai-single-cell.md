@@ -26,7 +26,7 @@ image: "images/cat_advanced_sc.png"
     <li><strong>Objective:</strong> Evaluate AI-assisted cell annotation as decision support, including confidence, reference coverage, uncertainty, and human review.</li>
     <li><strong>Expected Output:</strong> An annotation review table that compares model labels with marker evidence, reference context, and a documented acceptance or revision decision.</li>
   </ul>
-  <p class="text-sm text-blue-700"><strong>Suggested route:</strong> use the <a href="start-here.html" class="underline">Bioinformatics Academy Pathway</a> to review any prerequisite stage before continuing.</p>
+  <p class="text-sm text-blue-700"><strong>Suggested route:</strong> use the <a href="start-here.html" class="underline">Bioinformatics Learning Path</a> to review any prerequisite stage before continuing.</p>
 </div>
 
 

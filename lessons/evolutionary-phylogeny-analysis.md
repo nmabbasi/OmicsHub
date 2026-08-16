@@ -26,7 +26,7 @@ image: "images/cat_evolutionary.png"
     <li><strong>Objective:</strong> Build and interpret a phylogenetic tree while distinguishing tree topology, support, rooting, and evolutionary inference.</li>
     <li><strong>Expected Output:</strong> A reproducible tree-analysis record containing aligned input, model or method, root choice, support values, and figure caption.</li>
   </ul>
-  <p class="text-sm text-blue-700"><strong>Suggested route:</strong> use the <a href="start-here.html" class="underline">Bioinformatics Academy Pathway</a> to review any prerequisite stage before continuing.</p>
+  <p class="text-sm text-blue-700"><strong>Suggested route:</strong> use the <a href="start-here.html" class="underline">Bioinformatics Learning Path</a> to review any prerequisite stage before continuing.</p>
 </div>
 
 

@@ -26,7 +26,7 @@ image: "images/shell-commands-part3.png"
     <li><strong>Objective:</strong> Write robust shell commands with awk, redirection, permissions, process control, compression, and documented pipeline steps.</li>
     <li><strong>Expected Output:</strong> A commented Bash script that summarizes a small FASTQ or annotation file and writes a reproducible output table.</li>
   </ul>
-  <p class="text-sm text-blue-700"><strong>Suggested route:</strong> use the <a href="start-here.html" class="underline">Bioinformatics Academy Pathway</a> to review any prerequisite stage before continuing.</p>
+  <p class="text-sm text-blue-700"><strong>Suggested route:</strong> use the <a href="start-here.html" class="underline">Bioinformatics Learning Path</a> to review any prerequisite stage before continuing.</p>
 </div>
 
 

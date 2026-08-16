@@ -26,7 +26,7 @@ image: "images/conda-mamba-part1.png"
     <li><strong>Objective:</strong> Create, activate, export, clone, and troubleshoot isolated Conda or Mamba environments for bioinformatics software.</li>
     <li><strong>Expected Output:</strong> An environment YAML file that recreates a named environment containing one specified bioinformatics tool.</li>
   </ul>
-  <p class="text-sm text-blue-700"><strong>Suggested route:</strong> use the <a href="start-here.html" class="underline">Bioinformatics Academy Pathway</a> to review any prerequisite stage before continuing.</p>
+  <p class="text-sm text-blue-700"><strong>Suggested route:</strong> use the <a href="start-here.html" class="underline">Bioinformatics Learning Path</a> to review any prerequisite stage before continuing.</p>
 </div>
 
 

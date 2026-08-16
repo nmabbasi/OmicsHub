@@ -26,7 +26,7 @@ image: "images/bioinformatics-intro.png"
     <li><strong>Objective:</strong> Differentiate 16S rRNA profiling from prokaryotic genome annotation and select appropriate inputs, outputs, and validation checks for each.</li>
     <li><strong>Expected Output:</strong> A documented analysis plan that names the correct input type, reference/database choice, and expected output for 16S or PROKKA work.</li>
   </ul>
-  <p class="text-sm text-blue-700"><strong>Suggested route:</strong> use the <a href="start-here.html" class="underline">Bioinformatics Academy Pathway</a> to review any prerequisite stage before continuing.</p>
+  <p class="text-sm text-blue-700"><strong>Suggested route:</strong> use the <a href="start-here.html" class="underline">Bioinformatics Learning Path</a> to review any prerequisite stage before continuing.</p>
 </div>
 
 

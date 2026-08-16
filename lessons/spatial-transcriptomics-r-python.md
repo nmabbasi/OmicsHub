@@ -26,7 +26,7 @@ image: "images/spatial-transcriptomics.png"
     <li><strong>Objective:</strong> Load, QC, visualize, and interpret spatial transcriptomics data while separating spatial association from causal tissue mechanisms.</li>
     <li><strong>Expected Output:</strong> A spatial plot with tissue context, QC notes, coordinate system, feature choice, and a cautious biological interpretation.</li>
   </ul>
-  <p class="text-sm text-blue-700"><strong>Suggested route:</strong> use the <a href="start-here.html" class="underline">Bioinformatics Academy Pathway</a> to review any prerequisite stage before continuing.</p>
+  <p class="text-sm text-blue-700"><strong>Suggested route:</strong> use the <a href="start-here.html" class="underline">Bioinformatics Learning Path</a> to review any prerequisite stage before continuing.</p>
 </div>
 
 
