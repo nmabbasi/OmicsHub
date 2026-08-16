@@ -4,7 +4,7 @@ date: "2026-08-14"
 author: "Nasir Mahmood Abbasi, PhD"
 category: "Advanced Single-Cell Analysis"
 excerpt: "Move beyond manual marker gene checking. Discover how advanced AI and machine learning tools like CellTypist and Cellama are revolutionizing automated cell type annotation."
-image: "images/cat_advanced_sc.png"
+image: "images/advanced-ai-cell-annotation.png"
 ---
 
 

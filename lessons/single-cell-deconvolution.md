@@ -4,7 +4,7 @@ date: "2026-08-14"
 author: "Nasir Mahmood Abbasi, PhD"
 category: "Advanced Single-Cell Analysis"
 excerpt: "Learn how to use high-resolution single-cell data as a reference to mathematically deconvolute the cell type proportions in massive bulk RNA-seq clinical cohorts."
-image: "images/cat_advanced_sc.png"
+image: "images/bulk-rna-seq-deconvolution.png"
 ---
 
 
