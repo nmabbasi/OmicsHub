@@ -1,5 +1,6 @@
 import os
 import re
+from collections import Counter
 
 tutorial_files = [
     # Foundations & Prerequisites
@@ -173,13 +174,14 @@ ordered_categories = [
 ]
 
 cat_html = ""
-filter_buttons_html = '<button class="category-btn px-4 py-2 rounded-full text-sm font-medium transition-colors bg-blue-600 text-white" data-category="all" onclick="filterTutorialsOnly(\'all\')">All Tutorials</button>\n'
+category_counts = Counter(t["category"] for t in tutorials)
+filter_buttons_html = f'<button class="category-btn px-4 py-2 rounded-full text-sm font-medium transition-colors bg-blue-600 text-white" data-category="all" onclick="filterTutorialsOnly(\'all\')">All Tutorials<span class="category-count" aria-label="{len(tutorials)} tutorials">{len(tutorials)}</span></button>\n'
 
 # Only add categories that actually exist in the parsed tutorials to avoid empty buttons
 for c in ordered_categories:
     if c in categories_set:
-        cat_html += f'<button class="sidebar-category w-full text-left px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-blue-600 transition-colors" onclick="filterTutorials(\'{c}\')">{c}</button>\n'
-        filter_buttons_html += f'<button class="category-btn px-4 py-2 rounded-full text-sm font-medium transition-colors bg-gray-200 text-gray-700 hover:bg-gray-300" data-category="{c}" onclick="filterTutorialsOnly(\'{c}\')">{c}</button>\n'
+        cat_html += f'<button class="sidebar-category w-full text-left px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-blue-600 transition-colors" onclick="filterTutorials(\'{c}\')">{c}<span class="category-count" aria-label="{category_counts[c]} tutorials">{category_counts[c]}</span></button>\n'
+        filter_buttons_html += f'<button class="category-btn px-4 py-2 rounded-full text-sm font-medium transition-colors bg-gray-200 text-gray-700 hover:bg-gray-300" data-category="{c}" onclick="filterTutorialsOnly(\'{c}\')">{c}<span class="category-count" aria-label="{category_counts[c]} tutorials">{category_counts[c]}</span></button>\n'
 
 
 # Recent posts
