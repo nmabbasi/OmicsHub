@@ -4,7 +4,7 @@ date: "2026-08-14"
 author: "Nasir Mahmood Abbasi, PhD"
 category: "Long-Read Sequencing"
 excerpt: "A guide to analyzing long-read sequencing data from Oxford Nanopore and PacBio platforms, focusing on isoform discovery and structural variant detection."
-image: "images/bioinformatics-intro.png"
+image: "images/long-read-sequencing.png"
 ---
 
 
