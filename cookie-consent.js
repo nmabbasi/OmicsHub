@@ -10,9 +10,16 @@
     try { return window.localStorage.getItem(STORAGE_KEY); } catch (error) { return null; }
   }
 
+  window.omicsHubUpdateConsent = function (choice) {
+    if (typeof window.gtag !== 'function') return;
+    var granted = choice === 'accepted' ? 'granted' : 'denied';
+    window.gtag('consent', 'update', { ad_storage: granted, analytics_storage: granted, ad_user_data: granted, ad_personalization: granted });
+  };
+
   function saveChoice(choice) {
     try { window.localStorage.setItem(STORAGE_KEY, choice); } catch (error) { /* Continue without persistence. */ }
     document.documentElement.dataset.cookieChoice = choice;
+    if (typeof window.omicsHubUpdateConsent === 'function') window.omicsHubUpdateConsent(choice);
   }
 
   function hideBanner() {
