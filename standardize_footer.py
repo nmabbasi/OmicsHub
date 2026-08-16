@@ -3,10 +3,10 @@ import glob
 def extract_block(filepath, start_tag, end_tag):
     with open(filepath, 'r') as f:
         content = f.read()
-    
+
     start_idx = content.find(start_tag)
     end_idx = content.find(end_tag) + len(end_tag)
-    
+
     if start_idx != -1 and end_idx != -1:
         return content[start_idx:end_idx]
     return None
@@ -19,7 +19,7 @@ for filepath in files_to_update:
     try:
         with open(filepath, 'r') as f:
             content = f.read()
-            
+
         old_footer = extract_block(filepath, '<footer class="bg-gray-900 text-white mt-16">', '</footer>')
         # Some files might have slightly different footer tags, let's just search for '<footer' and '</footer>'
         if not old_footer:

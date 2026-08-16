@@ -12,12 +12,12 @@ adsense_code = """
 for filepath in html_files:
     with open(filepath, 'r') as f:
         content = f.read()
-        
+
     if 'pagead2.googlesyndication.com' not in content:
         # Insert before </head>
         content = content.replace('</head>', adsense_code + '</head>')
-        
+
         with open(filepath, 'w') as f:
             f.write(content)
-            
+
 print("AdSense scripts added to all HTML files.")

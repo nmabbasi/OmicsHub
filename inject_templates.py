@@ -33,21 +33,21 @@ for filename in os.listdir(lessons_dir):
         filepath = os.path.join(lessons_dir, filename)
         with open(filepath, "r") as f:
             content = f.read()
-        
+
         # Check if already injected
         if "Learning Objectives & Prerequisites" in content:
             continue
-            
+
         # The content has a YAML frontmatter starting and ending with ---
         # Find the second ---
         parts = content.split("---", 2)
         if len(parts) >= 3:
             # Reconstruct with top template right after frontmatter
             new_content = parts[0] + "---" + parts[1] + "---" + top_template + parts[2]
-            
+
             # Append bottom template
             new_content += bottom_template
-            
+
             with open(filepath, "w") as f:
                 f.write(new_content)
             print(f"Injected templates into {filename}")

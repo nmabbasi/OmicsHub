@@ -38,29 +38,29 @@ for filename, config in files_to_split.items():
     filepath = os.path.join(lessons_dir, filename)
     if not os.path.exists(filepath):
         continue
-        
+
     with open(filepath, 'r') as f:
         content = f.read()
-        
+
     # Extract frontmatter
     frontmatter_match = re.search(r"^---\s*\n(.*?)\n---\s*\n", content, re.DOTALL)
     if not frontmatter_match:
         continue
-        
+
     frontmatter_str = frontmatter_match.group(1)
     frontmatter = {}
     for line in frontmatter_str.split('\n'):
         m = re.match(r"^(\w+):\s*(.+)$", line)
         if m:
             frontmatter[m.group(1)] = m.group(2).strip('"\'')
-            
+
     body = content[frontmatter_match.end():]
-    
+
     # Split the body by the breakpoints
     parts = []
     current_part = []
     part_idx = 1
-    
+
     for line in body.split('\n'):
         if line in config["breakpoints"]:
             parts.append('\n'.join(current_part))
@@ -68,18 +68,18 @@ for filename, config in files_to_split.items():
             part_idx += 1
         else:
             current_part.append(line)
-            
+
     if current_part:
         parts.append('\n'.join(current_part))
-        
+
     # Write the new files
     for i, part_content in enumerate(parts):
         new_filename = f"{config['prefix']}-part{i+1}.md"
         new_filepath = os.path.join(lessons_dir, new_filename)
-        
+
         # Adjust title for parts
         part_title = f"{frontmatter.get('title', filename)} - Part {i+1}"
-        
+
         new_frontmatter = f"""---
 title: "{part_title}"
 date: "{frontmatter.get('date', '2025-08-12')}"
@@ -91,9 +91,9 @@ image: "{frontmatter.get('image', 'images/default.png')}"
 """
         with open(new_filepath, 'w') as f:
             f.write(new_frontmatter + "\n" + part_content)
-            
+
         new_tutorial_files.append(new_filename)
-        
+
     # Remove old file
     os.remove(filepath)
     print(f"Split {filename} into {len(parts)} parts.")

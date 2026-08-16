@@ -22,19 +22,20 @@ image: "images/bioinformatics-intro.png"
 <div class="p-6 bg-blue-50 border border-blue-100 rounded-xl mb-8">
   <h4 class="text-lg font-bold text-blue-900 mb-2">Learning Objectives & Prerequisites</h4>
   <ul class="list-disc list-inside text-blue-800 space-y-1 mb-4">
-    <li><strong>Prerequisites:</strong> Basic understanding of the Linux terminal and bioinformatics concepts. (See <a href="start-here.html" class="underline">Start Here</a>)</li>
-    <li><strong>Objective:</strong> Master the core concepts and practical commands of this topic.</li>
-    <li><strong>Expected Output:</strong> A reproducible workflow and a clear understanding of the methodology.</li>
+    <li><strong>Prerequisites:</strong> Complete Statistics for Bioinformatics and scRNA-seq Basics; have sample-level metadata and biological replicates where possible.</li>
+    <li><strong>Objective:</strong> Perform and interpret pseudobulk differential expression with a replicate-aware design, effect sizes, multiple testing, and transparent contrasts.</li>
+    <li><strong>Expected Output:</strong> A differential-expression table and volcano/MA plot with model formula, replicate count, adjusted p-values, and effect-size interpretation.</li>
   </ul>
+  <p class="text-sm text-blue-700"><strong>Suggested route:</strong> use the <a href="start-here.html" class="underline">Bioinformatics Academy Pathway</a> to review any prerequisite stage before continuing.</p>
 </div>
 
 
 
-# Transcriptomics: Differential Gene Expression Analysis
+## Transcriptomics: Differential Gene Expression Analysis
 
 ## Introduction
 
-Whether you are analyzing traditional Bulk RNA-seq or performing state-of-the-art Single-Cell RNA-seq, the ultimate goal is often the same: identifying which genes are significantly upregulated or downregulated between two conditions (e.g., Healthy vs. Disease, or Control vs. Treated). 
+Whether you are analyzing traditional Bulk RNA-seq or performing state-of-the-art Single-Cell RNA-seq, the ultimate goal is often the same: identifying which genes are significantly upregulated or downregulated between two conditions (e.g., Healthy vs. Disease, or Control vs. Treated).
 
 This is called **Differential Gene Expression (DGE)** analysis. This tutorial covers the gold-standard pipeline using **DESeq2** in R, which applies to both Bulk and Pseudobulk data.
 
@@ -121,7 +122,7 @@ ggplot(res_df, aes(x = log2FoldChange, y = -log10(padj))) +
 
 ## 4. Modern Adaptation: Pseudobulk for Single-Cell Data
 
-If you are working with single-cell RNA-seq data (scRNA-seq), performing DGE on individual cells is statistically flawed (it artificially inflates your sample size, creating massive false positives). 
+If you are working with single-cell RNA-seq data (scRNA-seq), performing DGE on individual cells is statistically flawed (it artificially inflates your sample size, creating massive false positives).
 
 The modern best practice is **Pseudobulking**: aggregating all cells of a specific cell type from the same biological replicate into a single "bulk" sample, and then running DE analysis.
 
@@ -134,7 +135,7 @@ There are two primary ways to do this:
 library(Seurat)
 
 # Aggregate counts per cell type per patient
-pseudobulk_obj <- AggregateExpression(seurat_object, 
+pseudobulk_obj <- AggregateExpression(seurat_object,
                                       group.by = c("cell_type", "patient_id", "condition"),
                                       return.seurat = TRUE)
 
@@ -172,8 +173,8 @@ library(Libra)
 # seurat_obj$label (Condition: e.g., Treated vs Control)
 
 # Run pseudobulk DE across all cell types automatically
-de_results <- run_de(seurat_obj, 
-                     de_family = "pseudobulk", 
+de_results <- run_de(seurat_obj,
+                     de_family = "pseudobulk",
                      de_method = "DESeq2", # The gold-standard method for single-cell pseudobulks
                      de_type = "LRT")      # Likelihood ratio test
 
@@ -189,15 +190,15 @@ By leveraging `Libra` in R or `PyDESeq2` in Python, you ensure statistically rig
   <div class="space-y-4">
     <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
       <h4 class="font-bold text-gray-800 mb-2">1. Concept Verification</h4>
-      <p class="text-gray-600 text-sm">Explain the primary function of the core tools introduced in this lesson. What specific bioinformatics problem do they solve compared to alternative methods?</p>
+      <p class="text-gray-600 text-sm">Why is pseudobulk often preferable to cell-level testing for a between-condition inference with biological replicates?</p>
     </div>
     <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
       <h4 class="font-bold text-gray-800 mb-2">2. Practical Execution</h4>
-      <p class="text-gray-600 text-sm">Execute the main pipeline commands on your own subset of data. <strong>Pass Criteria:</strong> The commands complete without syntax errors and generate the expected output file formats.</p>
+      <p class="text-gray-600 text-sm">Aggregate one cell type by sample, fit a simple contrast, and report an adjusted p-value and log fold change for a named gene. <strong>Pass Criteria:</strong> Record the command or analysis choice, keep the output, and explain why it answers the stated task.</p>
     </div>
     <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
       <h4 class="font-bold text-gray-800 mb-2">3. Troubleshooting</h4>
-      <p class="text-gray-600 text-sm">If your output is empty or throws a memory error (OOM), what parameters should you adjust? (Hint: Check threads, memory allocation, or file paths).</p>
+      <p class="text-gray-600 text-sm">If a significant result is driven by one donor or a cell type is absent from samples, how will you inspect replicate balance, aggregation, and model assumptions?</p>
     </div>
   </div>
 </div>

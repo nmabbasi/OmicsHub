@@ -90,18 +90,18 @@ with open('/home/nmabbasi/.gemini/antigravity/scratch/OmicsHub/start-here.html',
 # Loop through stages 1 to 9
 for i in range(1, 10):
     stage_str = f'<!-- Stage {i} -->'
-    
+
     # We want to insert the metadata right before <div class="flex flex-col gap-3 mt-4">
     # which follows the <p class="text-gray-600 mb-4"> description.
-    
+
     # Find the stage block
     stage_idx = content.find(stage_str)
     if stage_idx == -1:
         continue
-        
+
     insert_target = '<div class="flex flex-col gap-3 mt-4">'
     target_idx = content.find(insert_target, stage_idx)
-    
+
     if target_idx != -1:
         # Check if we already injected (prevent duplicate runs)
         if "⏱️ Est. Time" not in content[stage_idx:target_idx]:

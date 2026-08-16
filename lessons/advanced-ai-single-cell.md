@@ -22,19 +22,20 @@ image: "images/cat_advanced_sc.png"
 <div class="p-6 bg-blue-50 border border-blue-100 rounded-xl mb-8">
   <h4 class="text-lg font-bold text-blue-900 mb-2">Learning Objectives & Prerequisites</h4>
   <ul class="list-disc list-inside text-blue-800 space-y-1 mb-4">
-    <li><strong>Prerequisites:</strong> Basic understanding of the Linux terminal and bioinformatics concepts. (See <a href="start-here.html" class="underline">Start Here</a>)</li>
-    <li><strong>Objective:</strong> Master the core concepts and practical commands of this topic.</li>
-    <li><strong>Expected Output:</strong> A reproducible workflow and a clear understanding of the methodology.</li>
+    <li><strong>Prerequisites:</strong> Complete cell-type annotation methods and understand embeddings, reference data, and validation requirements.</li>
+    <li><strong>Objective:</strong> Evaluate AI-assisted cell annotation as decision support, including confidence, reference coverage, uncertainty, and human review.</li>
+    <li><strong>Expected Output:</strong> An annotation review table that compares model labels with marker evidence, reference context, and a documented acceptance or revision decision.</li>
   </ul>
+  <p class="text-sm text-blue-700"><strong>Suggested route:</strong> use the <a href="start-here.html" class="underline">Bioinformatics Academy Pathway</a> to review any prerequisite stage before continuing.</p>
 </div>
 
 
 
-# Automated AI Cell Annotation
+## Automated AI Cell Annotation
 
 ## The Bottleneck of Manual Annotation
 
-Historically, after clustering scRNA-seq data, researchers had to manually inspect lists of differentially expressed genes and search through literature to assign identities like "CD8+ T Cell" or "Fibroblast" to each cluster. 
+Historically, after clustering scRNA-seq data, researchers had to manually inspect lists of differentially expressed genes and search through literature to assign identities like "CD8+ T Cell" or "Fibroblast" to each cluster.
 
 This process is slow, highly subjective, and error-prone. Today, **Machine Learning and Artificial Intelligence** are completely automating this process using massive reference atlases.
 
@@ -97,15 +98,15 @@ The days of manually Googling gene names to annotate clusters are ending. By int
   <div class="space-y-4">
     <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
       <h4 class="font-bold text-gray-800 mb-2">1. Concept Verification</h4>
-      <p class="text-gray-600 text-sm">Explain the primary function of the core tools introduced in this lesson. What specific bioinformatics problem do they solve compared to alternative methods?</p>
+      <p class="text-gray-600 text-sm">Why can a high-confidence model prediction still be inappropriate for a novel tissue, species, perturbation, or diseased state?</p>
     </div>
     <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
       <h4 class="font-bold text-gray-800 mb-2">2. Practical Execution</h4>
-      <p class="text-gray-600 text-sm">Execute the main pipeline commands on your own subset of data. <strong>Pass Criteria:</strong> The commands complete without syntax errors and generate the expected output file formats.</p>
+      <p class="text-gray-600 text-sm">Run or inspect an AI annotation result for several clusters and compare it with known markers before accepting labels. <strong>Pass Criteria:</strong> Record the command or analysis choice, keep the output, and explain why it answers the stated task.</p>
     </div>
     <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
       <h4 class="font-bold text-gray-800 mb-2">3. Troubleshooting</h4>
-      <p class="text-gray-600 text-sm">If your output is empty or throws a memory error (OOM), what parameters should you adjust? (Hint: Check threads, memory allocation, or file paths).</p>
+      <p class="text-gray-600 text-sm">If a model makes implausible labels, how will you inspect reference mismatch, gene mapping, input preprocessing, confidence calibration, and out-of-distribution signals?</p>
     </div>
   </div>
 </div>

@@ -19,13 +19,13 @@ for i in range(5):
     # Plot points for this cluster
     mask = y == i
     ax.scatter(X[mask, 0], X[mask, 1], s=4, color=colors[i], alpha=0.6, edgecolors='none')
-    
+
     # Calculate center for annotation
     center_x, center_y = np.median(X[mask, 0]), np.median(X[mask, 1])
-    
+
     # Add annotation text with a slight white outline for readability
     import matplotlib.patheffects as pe
-    ax.text(center_x, center_y, cluster_names[i], 
+    ax.text(center_x, center_y, cluster_names[i],
             fontsize=24, fontweight='bold', color='black',
             ha='center', va='center',
             path_effects=[pe.withStroke(linewidth=4, foreground="white")])

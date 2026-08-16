@@ -9,17 +9,17 @@
 <meta content="Nasir Mahmood Abbasi, PhD" name="author"/>
 <meta content="index, follow" name="robots"/>
 <!-- Open Graph tags for social sharing -->
-<meta content="The Omics Hub | Bioinformatics Academy" property="og:title"/>
-<meta content="Master computational biology with hands-on tutorials covering shell commands, conda environments, single-cell RNA-seq analysis, and essential bioinformatics tools." property="og:description"/>
+<meta content="R and Tidyverse Fundamentals | The Omics Hub" property="og:title"/>
+<meta content="Learn R vectors, data frames, factors, plots, and tidy data operations for biological analysis." property="og:description"/>
 <meta content="https://theomicshub.com/r-tidyverse-fundamentals.html" property="og:url"/>
 <meta content="website" property="og:type"/>
-<meta content="https://theomicshub.com/images/hero-image.png" property="og:image"/>
+<meta content="https://theomicshub.com/images/r-tidyverse-fundamentals.png" property="og:image"/>
 <!-- Twitter Card tags -->
 <meta content="summary_large_image" name="twitter:card"/>
-<meta content="The Omics Hub | Bioinformatics Academy" name="twitter:title"/>
-<meta content="Master computational biology with hands-on tutorials covering shell commands, conda environments, single-cell RNA-seq analysis, and essential bioinformatics tools." name="twitter:description"/>
-<meta content="https://theomicshub.com/images/hero-image.png" name="twitter:image"/>
-<title>The Omics Hub</title>
+<meta content="R and Tidyverse Fundamentals | The Omics Hub" name="twitter:title"/>
+<meta content="Learn R vectors, data frames, factors, plots, and tidy data operations for biological analysis." name="twitter:description"/>
+<meta content="https://theomicshub.com/images/r-tidyverse-fundamentals.png" name="twitter:image"/>
+<title>R and Tidyverse Fundamentals | The Omics Hub</title>
 <!-- Favicon -->
 <link href="images/favicon.svg" rel="icon" type="image/svg+xml"/>
 <!-- Tailwind CSS CDN -->
@@ -38,30 +38,9 @@
         gtag("js", new Date());
         gtag("config", "G-XXXXXXXXXX");
     </script> -->
-<link rel="canonical" href="https://theomicshub.com/r-tidyverse-fundamentals.html" />
-
-    <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "Article",
-      "headline": "R and Tidyverse Fundamentals",
-      "description": "Learn R vectors, data frames, factors, plots, and tidy data operations for biological analysis.",
-      "author": {
-        "@type": "Person",
-        "name": "Nasir Mahmood Abbasi, PhD",
-        "url": "https://theomicshub.com/about.html"
-      },
-      "publisher": {
-        "@type": "Organization",
-        "name": "The Omics Hub",
-        "logo": {
-          "@type": "ImageObject",
-          "url": "https://theomicshub.com/images/default-tutorial.png"
-        }
-      }
-    }
-    </script>
-    
+  <meta name="robots" content="index, follow"/>
+  <link rel="canonical" href="https://theomicshub.com/r-tidyverse-fundamentals.html"/>
+  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "Article", "headline": "R and Tidyverse Fundamentals", "description": "Learn R vectors, data frames, factors, plots, and tidy data operations for biological analysis.", "mainEntityOfPage": {"@type": "WebPage", "@id": "https://theomicshub.com/r-tidyverse-fundamentals.html"}, "image": "https://theomicshub.com/images/r-tidyverse-fundamentals.png", "author": {"@type": "Person", "name": "Nasir Mahmood Abbasi, PhD", "url": "https://theomicshub.com/about.html"}, "publisher": {"@type": "Organization", "name": "The Omics Hub", "url": "https://theomicshub.com", "logo": {"@type": "ImageObject", "url": "https://theomicshub.com/images/favicon.svg"}}, "datePublished": "2026-08-15", "dateModified": "2026-08-15"}</script>
 </head>
 <body class="bg-white text-gray-900">
 <!-- Header -->
@@ -129,145 +108,17 @@ Legal
 </header>
 <!-- Main Content -->
 <main class="min-h-screen">
-
-    <!-- Tutorial Detail Page (Pre-rendered for SEO and Instant Load) -->
     <div class="page-content" id="tutorial-page">
-        <div class="container mx-auto px-4 py-8">
-            <div class="max-w-4xl mx-auto">
-                <!-- SEO Hidden Markdown Data for search/index -->
-                <div id="seo-markdown-data" style="display:none;">
----
-title: "R and Tidyverse Fundamentals"
-category: "Foundations & Prerequisites"
-date: "2026-08-15"
-image: "images/r-tidyverse-fundamentals.png"
-excerpt: "Learn R vectors, data frames, factors, plots, and tidy data operations for biological analysis."
-author: "Nasir Mahmood Abbasi, PhD"
----
-
-<div class="mb-10 text-xl text-gray-600 leading-relaxed">
-  <p>R is widely used for statistical analysis and visualization in bioinformatics. This lesson focuses on the data-frame operations and plots that learners will use later with RNA-seq and single-cell data.</p>
-</div>
-
-## Learning Objectives & Prerequisites
-
-**By the end of this lesson, you should be able to:**
-
-- Create vectors, data frames, and factors.
-- Filter, transform, group, and summarize tabular data with tidyverse.
-- Build a clear QC plot and save it reproducibly.
-- Distinguish missing values from zero measurements.
-
-**Prerequisites:**
-
-- Install R and RStudio or use an R terminal.
-- Complete [Biological Data Formats](biological-data-formats.html).
-
-## 1. Objects and data frames
-
-R stores columns as vectors. A data frame should have meaningful column names and explicit types.
-
-```r
-samples <- data.frame(
-  sample_id = c("S01", "S02", "S03"),
-  condition = factor(c("control", "treated", "treated")),
-  reads = c(1200000, 1450000, 1310000)
-)
-str(samples)
-```
-
-## 2. Tidy transformations
-
-The tidyverse makes transformations readable. Always inspect the result after filtering or joining.
-
-```r
-install.packages(c("tidyverse", "here"))
-library(tidyverse)
-samples |>
-  mutate(millions = reads / 1e6) |>
-  group_by(condition) |>
-  summarise(mean_reads = mean(millions), .groups = "drop")
-```
-
-## 3. Visualize a QC metric
-
-Plots should show units, labels, and the biological grouping used in the analysis.
-
-```r
-ggplot(samples, aes(condition, millions, color = condition)) +
-  geom_point(size = 3) +
-  labs(x = "Condition", y = "Reads (millions)") +
-  theme_minimal()
-ggsave("results/read_qc.png", width = 6, height = 4, dpi = 150)
-```
-
-## 4. Missing values and joins
-
-Use `is.na()` to identify missing data and verify identifiers before joining metadata to measurements. A silent many-to-many join can duplicate observations.
-
-```r
-samples |> summarise(across(everything(), ~sum(is.na(.x))))
-stopifnot(!anyDuplicated(samples$sample_id))
-```
-
-## Practical Exercise
-
-Create a table with sample ID, condition, and one QC metric. Produce one labeled plot, save it to `results/`, and write one sentence interpreting the pattern without overstating it.
-
-**Pass criteria:** The table has correct types, the plot has units and labels, and the learner can explain how missing values and duplicate IDs would affect analysis.
-
-## Troubleshooting
-
-If a package will not install, record the R version and use a project library. If a plot is empty, inspect factor levels and missing values before changing the code.
-
-## Knowledge Check & Assessment
-
-### 1. Concept Verification
-
-Write short answers explaining the main concepts, the assumptions behind them, and one way a careless workflow could produce a misleading result.
-
-### 2. Practical Execution
-
-Complete the practical exercise above and save the command, script, table, or figure in the project structure. **Pass Criteria:** The table has correct types, the plot has units and labels, and the learner can explain how missing values and duplicate IDs would affect analysis.
-
-### 3. Troubleshooting
-
-Explain what you would inspect first if the output were empty, malformed, unexpectedly large, or failed because of a missing file, package, permission, memory, or metadata problem.
-
-## Next Steps
-
-Continue with [Statistics for Bioinformatics](statistics-for-bioinformatics.html) and [Data Visualization Fundamentals](data-visualization-fundamentals.html). Record the software versions, dataset or example inputs, and any decisions you made.
-
-                </div>
-                <!-- PRE-RENDERED STATIC HTML -->
-                <div id="tutorial-content">
-                    
-            <div class="mb-12">
-                <div class="flex items-center gap-2 text-sm text-blue-600 font-medium mb-4">
-                    <span>Foundations & Prerequisites</span>
-                    <span>•</span>
-                    <span>2026-08-15</span>
-                </div>
+        <div class="container mx-auto px-4 py-8"><div class="max-w-4xl mx-auto"><div id="tutorial-content">
+            <section class="mb-12">
+                <div class="flex items-center gap-2 text-sm text-blue-600 font-medium mb-4"><span>Foundations &amp; Prerequisites</span><span>•</span><span>2026-08-15</span></div>
                 <h1 class="text-4xl md:text-5xl font-black text-gray-900 mb-6 leading-tight">R and Tidyverse Fundamentals</h1>
-                <div class="flex items-center gap-4">
-                    <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 font-bold text-lg">
-                        NM
-                    </div>
-                    <div>
-                        <p class="font-bold text-gray-900">Nasir Mahmood Abbasi, PhD</p>
-                        <p class="text-sm text-gray-500">Bioinformatics Educator</p>
-                    </div>
-                </div>
-            </div>
-            
-            
+                <div class="flex items-center gap-4"><div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 font-bold text-lg">NM</div><div><p class="font-bold text-gray-900">Nasir Mahmood Abbasi, PhD</p><p class="text-sm text-gray-500">Bioinformatics Educator</p></div></div>
+            </section>
             <div class="mb-12 rounded-2xl overflow-hidden shadow-lg border border-gray-100">
-                <img src="images/r-tidyverse-fundamentals.png" alt="R and Tidyverse Fundamentals" class="w-full h-auto object-cover aspect-video">
-            </div>
-    
-            
-            <div class="prose prose-blue prose-lg max-w-none">
-                <div class="mb-10 text-xl text-gray-600 leading-relaxed">
+<img src="images/r-tidyverse-fundamentals.png" alt="R and Tidyverse Fundamentals" class="w-full h-auto object-cover aspect-video">
+</div>
+            <article class="prose prose-blue prose-lg max-w-none" aria-labelledby="tutorial-title"><div class="mb-10 text-xl text-gray-600 leading-relaxed">
   <p>R is widely used for statistical analysis and visualization in bioinformatics. This lesson focuses on the data-frame operations and plots that learners will use later with RNA-seq and single-cell data.</p>
 </div>
 
@@ -328,59 +179,44 @@ stopifnot(!anyDuplicated(samples$sample_id))
 <h3>3. Troubleshooting</h3>
 <p>Explain what you would inspect first if the output were empty, malformed, unexpectedly large, or failed because of a missing file, package, permission, memory, or metadata problem.</p>
 <h2>Next Steps</h2>
-<p>Continue with <a href="statistics-for-bioinformatics.html">Statistics for Bioinformatics</a> and <a href="data-visualization-fundamentals.html">Data Visualization Fundamentals</a>. Record the software versions, dataset or example inputs, and any decisions you made.</p>
-            </div>
-            
-            
-    <div class="mt-16 pt-10 border-t border-gray-100">
+<p>Continue with <a href="statistics-for-bioinformatics.html">Statistics for Bioinformatics</a> and <a href="data-visualization-fundamentals.html">Data Visualization Fundamentals</a>. Record the software versions, dataset or example inputs, and any decisions you made.</p></article>
+
+    <section class="mt-16 pt-10 border-t border-gray-100" aria-label="Course sequence">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
-            <h3 class="text-2xl font-black text-gray-900 tracking-tight">Continue Learning</h3>
+            <h2 class="text-2xl font-black text-gray-900 tracking-tight">Continue Learning</h2>
             <span class="inline-block bg-blue-50 text-blue-700 text-xs font-bold px-3 py-1.5 rounded-full uppercase tracking-wider">Course Sequence</span>
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            
-        <a href="python-fundamentals-bioinformatics.html" class="group relative flex flex-col justify-center p-6 bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden text-left">
+            <a href="python-fundamentals-bioinformatics.html" class="group relative flex flex-col justify-center p-6 bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden text-left">
+
             <div class="absolute inset-0 bg-gradient-to-r from-blue-50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
             <div class="relative z-10 flex items-center gap-4">
-                <div class="w-12 h-12 flex-shrink-0 rounded-full bg-gray-50 flex items-center justify-center group-hover:bg-blue-600 transition-colors duration-300">
-                    <svg class="w-6 h-6 text-gray-400 group-hover:text-white transition-colors duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
-                </div>
-                <div>
+                <div class="w-12 h-12 flex-shrink-0 rounded-full bg-gray-50 flex items-center justify-center group-hover:bg-blue-600 transition-colors duration-300"><svg class="w-6 h-6 text-gray-400 group-hover:text-white transition-colors duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg></div>
+                <div class="text-left">
                     <span class="block text-xs font-bold tracking-widest text-gray-400 uppercase mb-1">Previous Lesson</span>
                     <span class="block text-gray-900 font-bold group-hover:text-blue-700 transition-colors line-clamp-2 leading-snug">Python Fundamentals for Bioinformatics</span>
                 </div>
+
             </div>
         </a>
-        
-            
-        <a href="statistics-for-bioinformatics.html" class="group relative flex flex-col justify-center p-6 bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden text-right">
+            <a href="statistics-for-bioinformatics.html" class="group relative flex flex-col justify-center p-6 bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden text-right">
+
             <div class="absolute inset-0 bg-gradient-to-l from-blue-50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
             <div class="relative z-10 flex items-center justify-end gap-4">
-                <div>
+
+                <div class="text-right">
                     <span class="block text-xs font-bold tracking-widest text-gray-400 uppercase mb-1">Next Lesson</span>
                     <span class="block text-gray-900 font-bold group-hover:text-blue-700 transition-colors line-clamp-2 leading-snug">Statistics for Bioinformatics</span>
                 </div>
-                <div class="w-12 h-12 flex-shrink-0 rounded-full bg-gray-50 flex items-center justify-center group-hover:bg-blue-600 transition-colors duration-300">
-                    <svg class="w-6 h-6 text-gray-400 group-hover:text-white transition-colors duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-                </div>
+                <div class="w-12 h-12 flex-shrink-0 rounded-full bg-gray-50 flex items-center justify-center group-hover:bg-blue-600 transition-colors duration-300"><svg class="w-6 h-6 text-gray-400 group-hover:text-white transition-colors duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></div>
             </div>
         </a>
-        
         </div>
+    </section>
+        </div></div></div>
     </div>
-    
-    
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <script>
-        // Tell script.js to skip rendering because it is already done
-        window.STATIC_RENDERED = true;
-        window.PRELOADED_TUTORIAL_ID = "r-tidyverse-fundamentals";
-    </script>
-    
+    <script>window.STATIC_RENDERED = true; window.PRELOADED_TUTORIAL_ID = "r-tidyverse-fundamentals";</script>
+
 </main>
 <!-- Footer (unchanged) -->
 <footer class="bg-gray-900 text-white mt-16">
@@ -401,7 +237,7 @@ stopifnot(!anyDuplicated(samples$sample_id))
 <span class="font-bold text-white">The Omics Hub</span>
 </div>
 <p class="text-gray-400 text-sm leading-relaxed mb-4">Practical, hands-on tutorials for bioinformatics, HPC, and single-cell RNA-seq analysis.</p>
-          <a href="https://paypal.me/nmabbasi12020?locale.x=en_US&country.x=FR" target="_blank" class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500 text-white font-bold rounded-lg hover:bg-emerald-600 transition-colors text-sm shadow-sm">
+          <a href="https://paypal.me/nmabbasi12020?locale.x=en_US&country.x=FR" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500 text-white font-bold rounded-lg hover:bg-emerald-600 transition-colors text-sm shadow-sm">
             <span class="text-base">☕</span>
             Buy me a coffee
           </a>
@@ -450,5 +286,51 @@ stopifnot(!anyDuplicated(samples$sample_id))
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <!-- Custom JS - loads tutorials from manifest -->
 <script src="script.js?v=20260815"></script>
+
+<script>
+function toggleMobileMenu() {
+  const menu = document.getElementById("mobile-menu");
+  const trigger = document.querySelector('[aria-controls="mobile-menu"]');
+  if (!menu) return;
+  const opening = menu.classList.contains("hidden");
+  menu.classList.toggle("hidden", !opening);
+  if (trigger) {
+    trigger.setAttribute("aria-expanded", String(opening));
+    trigger.setAttribute("aria-label", opening ? "Close navigation menu" : "Open navigation menu");
+  }
+}
+</script>
+
+<script id="navigation-accessibility">
+(function () {
+  const legalButton = document.getElementById("legal-menu-button");
+  const legalMenu = document.getElementById("legal-menu");
+  const setLegalState = (open) => {
+    if (!legalButton || !legalMenu) return;
+    legalButton.setAttribute("aria-expanded", String(open));
+    legalMenu.classList.toggle("opacity-100", open);
+    legalMenu.classList.toggle("visible", open);
+    legalMenu.classList.toggle("opacity-0", !open);
+    legalMenu.classList.toggle("invisible", !open);
+  };
+  if (legalButton && legalMenu) {
+    legalButton.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      setLegalState(legalButton.getAttribute("aria-expanded") !== "true");
+    });
+    document.addEventListener("click", (event) => {
+      if (!legalMenu.contains(event.target) && !legalButton.contains(event.target)) setLegalState(false);
+    });
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") {
+        setLegalState(false);
+        legalButton.focus();
+      }
+    });
+  }
+})();
+</script>
+
 </body>
 </html>

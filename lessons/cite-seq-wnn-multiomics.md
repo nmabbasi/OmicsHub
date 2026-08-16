@@ -22,21 +22,22 @@ image: "images/cat_advanced_sc.png"
 <div class="p-6 bg-blue-50 border border-blue-100 rounded-xl mb-8">
   <h4 class="text-lg font-bold text-blue-900 mb-2">Learning Objectives & Prerequisites</h4>
   <ul class="list-disc list-inside text-blue-800 space-y-1 mb-4">
-    <li><strong>Prerequisites:</strong> Basic understanding of the Linux terminal and bioinformatics concepts. (See <a href="start-here.html" class="underline">Start Here</a>)</li>
-    <li><strong>Objective:</strong> Master the core concepts and practical commands of this topic.</li>
-    <li><strong>Expected Output:</strong> A reproducible workflow and a clear understanding of the methodology.</li>
+    <li><strong>Prerequisites:</strong> Complete scRNA-seq Basics and have paired RNA/protein or multi-modal data with clearly documented feature names.</li>
+    <li><strong>Objective:</strong> Integrate CITE-seq or multi-modal data with WNN while evaluating modality quality, weighting, and biological agreement.</li>
+    <li><strong>Expected Output:</strong> A multi-modal object with modality-specific QC, WNN embedding, feature interpretation, and documented modality contributions.</li>
   </ul>
+  <p class="text-sm text-blue-700"><strong>Suggested route:</strong> use the <a href="start-here.html" class="underline">Bioinformatics Academy Pathway</a> to review any prerequisite stage before continuing.</p>
 </div>
 
 
 
-# Multi-Omics: CITE-seq & WNN Integration
+## Multi-Omics: CITE-seq & WNN Integration
 
 ## Introduction
 
-Traditional scRNA-seq only measures the transcriptome. However, many critical biological processes are driven by cell surface proteins (e.g., CD4, CD8, PD-1) whose abundance does not always correlate perfectly with RNA levels. 
+Traditional scRNA-seq only measures the transcriptome. However, many critical biological processes are driven by cell surface proteins (e.g., CD4, CD8, PD-1) whose abundance does not always correlate perfectly with RNA levels.
 
-**CITE-seq** (Cellular Indexing of Transcriptomes and Epitopes by Sequencing) solves this by using antibody-derived tags (ADTs) to simultaneously measure RNA and protein levels in the exact same cell. 
+**CITE-seq** (Cellular Indexing of Transcriptomes and Epitopes by Sequencing) solves this by using antibody-derived tags (ADTs) to simultaneously measure RNA and protein levels in the exact same cell.
 
 This tutorial covers the normalization of ADT data and the advanced **Weighted Nearest Neighbor (WNN)** integration method in Seurat to combine these two modalities.
 
@@ -60,7 +61,7 @@ Assays(seurat_obj)
 
 ## 2. ADT Normalization (Margin 1 vs Margin 2)
 
-While RNA is usually normalized via LogNormalize or SCTransform, ADT data requires **Centered Log-Ratio (CLR)** normalization. 
+While RNA is usually normalized via LogNormalize or SCTransform, ADT data requires **Centered Log-Ratio (CLR)** normalization.
 
 There are two ways to apply CLR:
 *   **Margin = 1 (Across cells):** Normalizes the protein signal across all cells independently. Best when you want to compare the expression of a specific protein across different cell populations.
@@ -83,7 +84,7 @@ seurat_obj <- RunPCA(seurat_obj, features = rownames(seurat_obj), reduction.name
 
 ## 3. Weighted Nearest Neighbor (WNN) Integration
 
-How do you combine RNA and Protein clustering? If you simply merge them, one modality will dominate the other. 
+How do you combine RNA and Protein clustering? If you simply merge them, one modality will dominate the other.
 
 Seurat's **WNN Analysis** solves this by calculating a "weight" for each cell. If a cell has a very clear protein profile but a noisy RNA profile, WNN assigns higher weight to the protein data for that specific cell.
 
@@ -93,7 +94,7 @@ DefaultAssay(seurat_obj) <- 'RNA'
 
 # Find the multi-modal neighbors using WNN
 seurat_obj <- FindMultiModalNeighbors(
-  seurat_obj, 
+  seurat_obj,
   reduction.list = list("pca", "apca"), # RNA PCA and ADT PCA
   dims.list = list(1:30, 1:18),         # Dimensions to use for each
   modality.weight.name = "RNA.weight"   # Name of the weight column
@@ -115,10 +116,10 @@ Once WNN is complete, you can visualize both modalities side-by-side to see how 
 DimPlot(seurat_obj, reduction = 'wnn.umap', group.by = 'seurat_clusters', label = TRUE)
 
 # Compare RNA vs Protein expression directly
-FeaturePlot(seurat_obj, 
+FeaturePlot(seurat_obj,
             features = c("rna_CD4", "adt_CD4"), # Prefix determines the assay
             reduction = 'wnn.umap',
-            min.cutoff = 'q10', 
+            min.cutoff = 'q10',
             max.cutoff = 'q90')
 ```
 
@@ -130,15 +131,15 @@ By leveraging WNN integration, you unlock a much higher resolution of cellular h
   <div class="space-y-4">
     <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
       <h4 class="font-bold text-gray-800 mb-2">1. Concept Verification</h4>
-      <p class="text-gray-600 text-sm">Explain the primary function of the core tools introduced in this lesson. What specific bioinformatics problem do they solve compared to alternative methods?</p>
+      <p class="text-gray-600 text-sm">Why should RNA and protein modalities be quality-controlled and interpreted separately before drawing conclusions from a joint embedding?</p>
     </div>
     <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
       <h4 class="font-bold text-gray-800 mb-2">2. Practical Execution</h4>
-      <p class="text-gray-600 text-sm">Execute the main pipeline commands on your own subset of data. <strong>Pass Criteria:</strong> The commands complete without syntax errors and generate the expected output file formats.</p>
+      <p class="text-gray-600 text-sm">Create or inspect a WNN analysis and compare an RNA marker, an antibody-derived tag, and the resulting joint neighborhood structure. <strong>Pass Criteria:</strong> Record the command or analysis choice, keep the output, and explain why it answers the stated task.</p>
     </div>
     <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
       <h4 class="font-bold text-gray-800 mb-2">3. Troubleshooting</h4>
-      <p class="text-gray-600 text-sm">If your output is empty or throws a memory error (OOM), what parameters should you adjust? (Hint: Check threads, memory allocation, or file paths).</p>
+      <p class="text-gray-600 text-sm">If RNA and protein disagree, how will you inspect antibody background, feature normalization, batch effects, doublets, and biology such as post-transcriptional regulation?</p>
     </div>
   </div>
 </div>

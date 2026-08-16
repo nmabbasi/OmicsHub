@@ -21,14 +21,14 @@ version_block = """
 for file_path in md_files:
     with open(file_path, 'r') as f:
         content = f.read()
-    
+
     # Check if already injected to prevent duplication
     if "Tested on:" in content and "Last Review:" in content:
         continue
-        
+
     # Inject right before the Learning Objectives block
     target = '<div class="p-6 bg-blue-50 border border-blue-100 rounded-xl mb-8">'
-    
+
     if target in content:
         new_content = content.replace(target, version_block + "\n" + target)
         with open(file_path, 'w') as f:

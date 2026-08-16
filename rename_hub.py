@@ -17,10 +17,10 @@ for filepath in files_to_process:
     if os.path.isfile(filepath):
         with open(filepath, 'r', encoding='utf-8') as f:
             content = f.read()
-        
+
         if search_text in content:
             new_content = content.replace(search_text, replace_text)
-            
+
             with open(filepath, 'w', encoding='utf-8') as f:
                 f.write(new_content)
             count += 1
@@ -34,10 +34,10 @@ for filepath in files_to_process:
     if os.path.isfile(filepath):
         with open(filepath, 'r', encoding='utf-8') as f:
             content = f.read()
-        
+
         if search_text_lower in content:
             new_content = content.replace(search_text_lower, replace_text_lower)
-            
+
             with open(filepath, 'w', encoding='utf-8') as f:
                 f.write(new_content)
             print(f"Updated lowercase: {filepath}")

@@ -22,10 +22,11 @@ image: "images/hpc.png"
 <div class="p-6 bg-blue-50 border border-blue-100 rounded-xl mb-8">
   <h4 class="text-lg font-bold text-blue-900 mb-2">Learning Objectives & Prerequisites</h4>
   <ul class="list-disc list-inside text-blue-800 space-y-1 mb-4">
-    <li><strong>Prerequisites:</strong> Basic understanding of the Linux terminal and bioinformatics concepts. (See <a href="start-here.html" class="underline">Start Here</a>)</li>
-    <li><strong>Objective:</strong> Master the core concepts and practical commands of this topic.</li>
-    <li><strong>Expected Output:</strong> A reproducible workflow and a clear understanding of the methodology.</li>
+    <li><strong>Prerequisites:</strong> Complete Connecting to HPC and have authorized access to a Slurm-based cluster.</li>
+    <li><strong>Objective:</strong> Inspect modules, partitions, nodes, queues, and job status before requesting cluster resources.</li>
+    <li><strong>Expected Output:</strong> A short cluster-status report showing the selected partition, available modules, and the status of a test job.</li>
   </ul>
+  <p class="text-sm text-blue-700"><strong>Suggested route:</strong> use the <a href="start-here.html" class="underline">Bioinformatics Academy Pathway</a> to review any prerequisite stage before continuing.</p>
 </div>
 
 
@@ -126,7 +127,7 @@ Interactive sessions should generally be reserved for specific cases:
 
 For all other scenarios, it is highly recommended to submit a job script. The reason is that interactive sessions require allocated resources, and there is often downtime (e.g., modifying scripts, waiting for tasks, or idle time if you forget the task has completed). During this downtime, resources remain allocated but unused, which is inefficient. Job scripts ensure resources are utilized effectively.
 
-# Custom Module
+## Custom Module
 
 ### Creating a custom module
 
@@ -225,15 +226,15 @@ Memory Efficiency: 80.00% of 10.00 GB
   <div class="space-y-4">
     <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
       <h4 class="font-bold text-gray-800 mb-2">1. Concept Verification</h4>
-      <p class="text-gray-600 text-sm">Explain the primary function of the core tools introduced in this lesson. What specific bioinformatics problem do they solve compared to alternative methods?</p>
+      <p class="text-gray-600 text-sm">What is the relationship between login nodes, compute nodes, modules, partitions, and Slurm jobs?</p>
     </div>
     <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
       <h4 class="font-bold text-gray-800 mb-2">2. Practical Execution</h4>
-      <p class="text-gray-600 text-sm">Execute the main pipeline commands on your own subset of data. <strong>Pass Criteria:</strong> The commands complete without syntax errors and generate the expected output file formats.</p>
+      <p class="text-gray-600 text-sm">Load a module, inspect a partition with sinfo, submit or observe a small test job, and interpret squeue output. <strong>Pass Criteria:</strong> Record the command or analysis choice, keep the output, and explain why it answers the stated task.</p>
     </div>
     <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
       <h4 class="font-bold text-gray-800 mb-2">3. Troubleshooting</h4>
-      <p class="text-gray-600 text-sm">If your output is empty or throws a memory error (OOM), what parameters should you adjust? (Hint: Check threads, memory allocation, or file paths).</p>
+      <p class="text-gray-600 text-sm">If a command is unavailable or a partition is inaccessible, what module, account, and site-policy checks should be made?</p>
     </div>
   </div>
 </div>

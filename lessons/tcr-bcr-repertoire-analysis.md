@@ -22,15 +22,16 @@ image: "images/cat_advanced_sc.png"
 <div class="p-6 bg-blue-50 border border-blue-100 rounded-xl mb-8">
   <h4 class="text-lg font-bold text-blue-900 mb-2">Learning Objectives & Prerequisites</h4>
   <ul class="list-disc list-inside text-blue-800 space-y-1 mb-4">
-    <li><strong>Prerequisites:</strong> Basic understanding of the Linux terminal and bioinformatics concepts. (See <a href="start-here.html" class="underline">Start Here</a>)</li>
-    <li><strong>Objective:</strong> Master the core concepts and practical commands of this topic.</li>
-    <li><strong>Expected Output:</strong> A reproducible workflow and a clear understanding of the methodology.</li>
+    <li><strong>Prerequisites:</strong> Complete scRNA-seq Basics and understand TCR/BCR clonotypes, paired chains, and appropriate study-design metadata.</li>
+    <li><strong>Objective:</strong> Analyze immune-receptor repertoire features while distinguishing clone abundance, diversity, expansion, and antigen specificity claims.</li>
+    <li><strong>Expected Output:</strong> A repertoire summary with clonotype definition, chain handling, diversity metric, sample denominator, and cautious interpretation.</li>
   </ul>
+  <p class="text-sm text-blue-700"><strong>Suggested route:</strong> use the <a href="start-here.html" class="underline">Bioinformatics Academy Pathway</a> to review any prerequisite stage before continuing.</p>
 </div>
 
 
 
-# Immune Repertoire Analysis
+## Immune Repertoire Analysis
 
 ## Introduction
 
@@ -54,9 +55,9 @@ library(Seurat)
 contig_data <- read.csv("filtered_contig_annotations.csv")
 
 # Convert the contig list into a combined TCR format for scRepertoire
-combined_tcr <- combineTCR(contig_data, 
-                           samples = "Patient1", 
-                           ID = "Timepoint1", 
+combined_tcr <- combineTCR(contig_data,
+                           samples = "Patient1",
+                           ID = "Timepoint1",
                            cells = "T-AB")
 ```
 
@@ -112,15 +113,15 @@ This workflow forms the bioinformatics foundation for identifying targetable bio
   <div class="space-y-4">
     <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
       <h4 class="font-bold text-gray-800 mb-2">1. Concept Verification</h4>
-      <p class="text-gray-600 text-sm">Explain the primary function of the core tools introduced in this lesson. What specific bioinformatics problem do they solve compared to alternative methods?</p>
+      <p class="text-gray-600 text-sm">Why does clonal expansion not by itself identify antigen specificity or functional state?</p>
     </div>
     <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
       <h4 class="font-bold text-gray-800 mb-2">2. Practical Execution</h4>
-      <p class="text-gray-600 text-sm">Execute the main pipeline commands on your own subset of data. <strong>Pass Criteria:</strong> The commands complete without syntax errors and generate the expected output file formats.</p>
+      <p class="text-gray-600 text-sm">Calculate or inspect clone-size distributions for two samples and report the clonotype definition and normalization used. <strong>Pass Criteria:</strong> Record the command or analysis choice, keep the output, and explain why it answers the stated task.</p>
     </div>
     <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
       <h4 class="font-bold text-gray-800 mb-2">3. Troubleshooting</h4>
-      <p class="text-gray-600 text-sm">If your output is empty or throws a memory error (OOM), what parameters should you adjust? (Hint: Check threads, memory allocation, or file paths).</p>
+      <p class="text-gray-600 text-sm">If one sample appears oligoclonal, how will you check sequencing depth, cell recovery, doublets, chain pairing, and technical batch effects?</p>
     </div>
   </div>
 </div>

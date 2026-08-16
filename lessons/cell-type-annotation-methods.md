@@ -22,21 +22,22 @@ image: "images/cell-type-annotation-methods.png"
 <div class="p-6 bg-blue-50 border border-blue-100 rounded-xl mb-8">
   <h4 class="text-lg font-bold text-blue-900 mb-2">Learning Objectives & Prerequisites</h4>
   <ul class="list-disc list-inside text-blue-800 space-y-1 mb-4">
-    <li><strong>Prerequisites:</strong> Basic understanding of the Linux terminal and bioinformatics concepts. (See <a href="start-here.html" class="underline">Start Here</a>)</li>
-    <li><strong>Objective:</strong> Master the core concepts and practical commands of this topic.</li>
-    <li><strong>Expected Output:</strong> A reproducible workflow and a clear understanding of the methodology.</li>
+    <li><strong>Prerequisites:</strong> Complete scRNA-seq Basics and have QC-reviewed clusters, marker genes, tissue context, and species information.</li>
+    <li><strong>Objective:</strong> Compare manual markers, reference mapping, automated classifiers, and consensus annotation while recording uncertainty.</li>
+    <li><strong>Expected Output:</strong> An annotated cell-type table with evidence sources, confidence, discordant-method notes, and tissue/species context.</li>
   </ul>
+  <p class="text-sm text-blue-700"><strong>Suggested route:</strong> use the <a href="start-here.html" class="underline">Bioinformatics Academy Pathway</a> to review any prerequisite stage before continuing.</p>
 </div>
 
 
 
-# Automated Cell Type Annotation
+## Automated Cell Type Annotation
 
 ## The Annotation Bottleneck
 
-Manual annotation—extracting differentially expressed genes and searching the literature—is the most significant bottleneck in single-cell RNA-seq. Furthermore, manual annotation is highly subjective and difficult to reproduce. 
+Manual annotation—extracting differentially expressed genes and searching the literature—is the most significant bottleneck in single-cell RNA-seq. Furthermore, manual annotation is highly subjective and difficult to reproduce.
 
-To solve this, the bioinformatics community (including standard frameworks taught by institutions like NBIS) recommends utilizing computational algorithms to automatically assign cell identities. 
+To solve this, the bioinformatics community (including standard frameworks taught by institutions like NBIS) recommends utilizing computational algorithms to automatically assign cell identities.
 
 Here, we cover **6 standard algorithmic methods** followed by the newest advancement: **AI multi-agent frameworks (CyteTypeR)**.
 
@@ -60,8 +61,8 @@ ref_data <- HumanPrimaryCellAtlasData()
 
 # Run SingleR on your Seurat object counts
 # IMPORTANT: Use generic object names in your scripts
-predictions <- SingleR(test = GetAssayData(seurat_obj), 
-                       ref = ref_data, 
+predictions <- SingleR(test = GetAssayData(seurat_obj),
+                       ref = ref_data,
                        labels = ref_data$label.main)
 
 # Add predictions to Seurat metadata
@@ -104,7 +105,7 @@ These tools train mathematical models (Random Forests, Logistic Regression) on l
 
 Standard algorithmic methods have a strict limitation: they are entirely restricted by their reference data. If your dataset contains a novel biological state, standard methods will either misclassify it or fail.
 
-**CyteTypeR** completely changes this paradigm by utilizing a multi-agent Large Language Model (LLM) framework. 
+**CyteTypeR** completely changes this paradigm by utilizing a multi-agent Large Language Model (LLM) framework.
 
 Rather than just matching numbers to a reference matrix, **CyteTypeR** acts like a panel of expert biologists:
 1.  **Extracts** the marker genes for your cluster.
@@ -139,15 +140,15 @@ When analyzing a novel dataset, relying on a single annotation method is risky. 
   <div class="space-y-4">
     <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
       <h4 class="font-bold text-gray-800 mb-2">1. Concept Verification</h4>
-      <p class="text-gray-600 text-sm">Explain the primary function of the core tools introduced in this lesson. What specific bioinformatics problem do they solve compared to alternative methods?</p>
+      <p class="text-gray-600 text-sm">Why should no single marker gene or automated label be treated as definitive without tissue and state context?</p>
     </div>
     <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
       <h4 class="font-bold text-gray-800 mb-2">2. Practical Execution</h4>
-      <p class="text-gray-600 text-sm">Execute the main pipeline commands on your own subset of data. <strong>Pass Criteria:</strong> The commands complete without syntax errors and generate the expected output file formats.</p>
+      <p class="text-gray-600 text-sm">Annotate three clusters using at least two evidence sources and record a confidence level and rationale for each. <strong>Pass Criteria:</strong> Record the command or analysis choice, keep the output, and explain why it answers the stated task.</p>
     </div>
     <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
       <h4 class="font-bold text-gray-800 mb-2">3. Troubleshooting</h4>
-      <p class="text-gray-600 text-sm">If your output is empty or throws a memory error (OOM), what parameters should you adjust? (Hint: Check threads, memory allocation, or file paths).</p>
+      <p class="text-gray-600 text-sm">If marker evidence and a reference classifier disagree, how will you check gene identifiers, species, tissue context, doublets, and state-dependent markers?</p>
     </div>
   </div>
 </div>

@@ -9,17 +9,17 @@
 <meta content="Nasir Mahmood Abbasi, PhD" name="author"/>
 <meta content="index, follow" name="robots"/>
 <!-- Open Graph tags for social sharing -->
-<meta content="The Omics Hub | Bioinformatics Academy" property="og:title"/>
-<meta content="Master computational biology with hands-on tutorials covering shell commands, conda environments, single-cell RNA-seq analysis, and essential bioinformatics tools." property="og:description"/>
+<meta content="Reproducible Project Structure | The Omics Hub" property="og:title"/>
+<meta content="Organize data, scripts, results, logs, environments, and metadata into a reproducible bioinformatics project." property="og:description"/>
 <meta content="https://theomicshub.com/reproducible-project-structure.html" property="og:url"/>
 <meta content="website" property="og:type"/>
-<meta content="https://theomicshub.com/images/hero-image.png" property="og:image"/>
+<meta content="https://theomicshub.com/images/reproducible-project-structure.jpg" property="og:image"/>
 <!-- Twitter Card tags -->
 <meta content="summary_large_image" name="twitter:card"/>
-<meta content="The Omics Hub | Bioinformatics Academy" name="twitter:title"/>
-<meta content="Master computational biology with hands-on tutorials covering shell commands, conda environments, single-cell RNA-seq analysis, and essential bioinformatics tools." name="twitter:description"/>
-<meta content="https://theomicshub.com/images/hero-image.png" name="twitter:image"/>
-<title>The Omics Hub</title>
+<meta content="Reproducible Project Structure | The Omics Hub" name="twitter:title"/>
+<meta content="Organize data, scripts, results, logs, environments, and metadata into a reproducible bioinformatics project." name="twitter:description"/>
+<meta content="https://theomicshub.com/images/reproducible-project-structure.jpg" name="twitter:image"/>
+<title>Reproducible Project Structure | The Omics Hub</title>
 <!-- Favicon -->
 <link href="images/favicon.svg" rel="icon" type="image/svg+xml"/>
 <!-- Tailwind CSS CDN -->
@@ -38,30 +38,9 @@
         gtag("js", new Date());
         gtag("config", "G-XXXXXXXXXX");
     </script> -->
-<link rel="canonical" href="https://theomicshub.com/reproducible-project-structure.html" />
-
-    <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "Article",
-      "headline": "Reproducible Project Structure",
-      "description": "Organize data, scripts, results, logs, environments, and metadata into a reproducible bioinformatics project.",
-      "author": {
-        "@type": "Person",
-        "name": "Nasir Mahmood Abbasi, PhD",
-        "url": "https://theomicshub.com/about.html"
-      },
-      "publisher": {
-        "@type": "Organization",
-        "name": "The Omics Hub",
-        "logo": {
-          "@type": "ImageObject",
-          "url": "https://theomicshub.com/images/default-tutorial.png"
-        }
-      }
-    }
-    </script>
-    
+  <meta name="robots" content="index, follow"/>
+  <link rel="canonical" href="https://theomicshub.com/reproducible-project-structure.html"/>
+  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "Article", "headline": "Reproducible Project Structure", "description": "Organize data, scripts, results, logs, environments, and metadata into a reproducible bioinformatics project.", "mainEntityOfPage": {"@type": "WebPage", "@id": "https://theomicshub.com/reproducible-project-structure.html"}, "image": "https://theomicshub.com/images/reproducible-project-structure.jpg", "author": {"@type": "Person", "name": "Nasir Mahmood Abbasi, PhD", "url": "https://theomicshub.com/about.html"}, "publisher": {"@type": "Organization", "name": "The Omics Hub", "url": "https://theomicshub.com", "logo": {"@type": "ImageObject", "url": "https://theomicshub.com/images/favicon.svg"}}, "datePublished": "2026-08-15", "dateModified": "2026-08-15"}</script>
 </head>
 <body class="bg-white text-gray-900">
 <!-- Header -->
@@ -129,147 +108,17 @@ Legal
 </header>
 <!-- Main Content -->
 <main class="min-h-screen">
-
-    <!-- Tutorial Detail Page (Pre-rendered for SEO and Instant Load) -->
     <div class="page-content" id="tutorial-page">
-        <div class="container mx-auto px-4 py-8">
-            <div class="max-w-4xl mx-auto">
-                <!-- SEO Hidden Markdown Data for search/index -->
-                <div id="seo-markdown-data" style="display:none;">
----
-title: "Reproducible Project Structure"
-category: "Foundations & Prerequisites"
-date: "2026-08-15"
-image: "images/reproducible-project-structure.jpg"
-excerpt: "Organize data, scripts, results, logs, environments, and metadata into a reproducible bioinformatics project."
-author: "Nasir Mahmood Abbasi, PhD"
----
-
-<div class="mb-10 text-xl text-gray-600 leading-relaxed">
-  <p>A reproducible analysis is easier to inspect, rerun, share, and repair. A consistent project structure prevents raw files from being overwritten and makes the path from input to figure visible to collaborators.</p>
-</div>
-
-## Learning Objectives & Prerequisites
-
-**By the end of this lesson, you should be able to:**
-
-- Create a safe directory structure for data, code, results, logs, and configuration.
-- Separate immutable raw data from derived files.
-- Record commands, software versions, references, and random seeds.
-- Write a README that lets another learner reproduce a result.
-
-**Prerequisites:**
-
-- Complete [Git and GitHub for Bioinformatics](git-github-bioinformatics.html).
-- Know basic shell commands and one scripting language.
-
-## 1. A practical layout
-
-Use names that communicate role rather than personal computer paths.
-
-```text
-project/
-├── README.md
-├── config/
-├── data/raw/
-├── data/processed/
-├── envs/
-├── scripts/
-├── results/figures/
-├── results/tables/
-└── logs/
-```
-
-## 2. Provenance files
-
-Record input checksums, software versions, reference builds, commands, parameters, and the Git commit. Keep large or sensitive data outside public repositories.
-
-```bash
-find data/raw -type f -maxdepth 1 -print0 | xargs -0 sha256sum > config/raw_checksums.sha256
-python --version > config/versions.txt
-git rev-parse HEAD >> config/versions.txt
-```
-
-## 3. Configuration over hard-coding
-
-Put sample names, paths, thresholds, and resource settings in a configuration file. This lets the same script run on a second dataset without editing logic.
-
-```yaml
-threads: 4
-min_genes: 200
-reference: GRCh38
-input: data/raw/counts.tsv
-```
-
-## 4. README and results
-
-Explain setup, expected inputs, commands, outputs, and limitations. Name results by meaning and preserve logs beside them.
-
-```text
-1. Create environment
-2. Place validated input in data/raw
-3. Run scripts/run_qc.sh
-4. Inspect results/figures/qc.png
-```
-
-## Practical Exercise
-
-Create this structure for a small project, add a README with four reproducible steps, and record one version file and one checksum file.
-
-**Pass criteria:** A second learner can find the input, command, environment, output, log, and limitation without asking where files live.
-
-## Troubleshooting
-
-If a script depends on a personal path, replace it with a command-line argument or configuration value.
-
-## Knowledge Check & Assessment
-
-### 1. Concept Verification
-
-Write short answers explaining the main concepts, the assumptions behind them, and one way a careless workflow could produce a misleading result.
-
-### 2. Practical Execution
-
-Complete the practical exercise above and save the command, script, table, or figure in the project structure. **Pass Criteria:** A second learner can find the input, command, environment, output, log, and limitation without asking where files live.
-
-### 3. Troubleshooting
-
-Explain what you would inspect first if the output were empty, malformed, unexpectedly large, or failed because of a missing file, package, permission, memory, or metadata problem.
-
-## Next Steps
-
-Continue with [Snakemake & Nextflow](reproducible-workflows-snakemake-nextflow.html) and [Research Reporting](research-reporting-interpretation.html). Record the software versions, dataset or example inputs, and any decisions you made.
-
-                </div>
-                <!-- PRE-RENDERED STATIC HTML -->
-                <div id="tutorial-content">
-                    
-            <div class="mb-12">
-                <div class="flex items-center gap-2 text-sm text-blue-600 font-medium mb-4">
-                    <span>Foundations & Prerequisites</span>
-                    <span>•</span>
-                    <span>2026-08-15</span>
-                </div>
+        <div class="container mx-auto px-4 py-8"><div class="max-w-4xl mx-auto"><div id="tutorial-content">
+            <section class="mb-12">
+                <div class="flex items-center gap-2 text-sm text-blue-600 font-medium mb-4"><span>Foundations &amp; Prerequisites</span><span>•</span><span>2026-08-15</span></div>
                 <h1 class="text-4xl md:text-5xl font-black text-gray-900 mb-6 leading-tight">Reproducible Project Structure</h1>
-                <div class="flex items-center gap-4">
-                    <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 font-bold text-lg">
-                        NM
-                    </div>
-                    <div>
-                        <p class="font-bold text-gray-900">Nasir Mahmood Abbasi, PhD</p>
-                        <p class="text-sm text-gray-500">Bioinformatics Educator</p>
-                    </div>
-                </div>
-            </div>
-            
-            
+                <div class="flex items-center gap-4"><div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 font-bold text-lg">NM</div><div><p class="font-bold text-gray-900">Nasir Mahmood Abbasi, PhD</p><p class="text-sm text-gray-500">Bioinformatics Educator</p></div></div>
+            </section>
             <div class="mb-12 rounded-2xl overflow-hidden shadow-lg border border-gray-100">
-                <img src="images/reproducible-project-structure.jpg" alt="Reproducible Project Structure" class="w-full h-auto object-cover aspect-video">
-            </div>
-    
-            
-            <div class="prose prose-blue prose-lg max-w-none">
-                <div class="mb-10 text-xl text-gray-600 leading-relaxed">
+<img src="images/reproducible-project-structure.jpg" alt="Reproducible Project Structure" class="w-full h-auto object-cover aspect-video">
+</div>
+            <article class="prose prose-blue prose-lg max-w-none" aria-labelledby="tutorial-title"><div class="mb-10 text-xl text-gray-600 leading-relaxed">
   <p>A reproducible analysis is easier to inspect, rerun, share, and repair. A consistent project structure prevents raw files from being overwritten and makes the path from input to figure visible to collaborators.</p>
 </div>
 
@@ -332,59 +181,44 @@ input: data/raw/counts.tsv
 <h3>3. Troubleshooting</h3>
 <p>Explain what you would inspect first if the output were empty, malformed, unexpectedly large, or failed because of a missing file, package, permission, memory, or metadata problem.</p>
 <h2>Next Steps</h2>
-<p>Continue with <a href="reproducible-workflows-snakemake-nextflow.html">Snakemake &amp; Nextflow</a> and <a href="research-reporting-interpretation.html">Research Reporting</a>. Record the software versions, dataset or example inputs, and any decisions you made.</p>
-            </div>
-            
-            
-    <div class="mt-16 pt-10 border-t border-gray-100">
+<p>Continue with <a href="reproducible-workflows-snakemake-nextflow.html">Snakemake &amp; Nextflow</a> and <a href="research-reporting-interpretation.html">Research Reporting</a>. Record the software versions, dataset or example inputs, and any decisions you made.</p></article>
+
+    <section class="mt-16 pt-10 border-t border-gray-100" aria-label="Course sequence">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
-            <h3 class="text-2xl font-black text-gray-900 tracking-tight">Continue Learning</h3>
+            <h2 class="text-2xl font-black text-gray-900 tracking-tight">Continue Learning</h2>
             <span class="inline-block bg-blue-50 text-blue-700 text-xs font-bold px-3 py-1.5 rounded-full uppercase tracking-wider">Course Sequence</span>
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            
-        <a href="data-visualization-fundamentals.html" class="group relative flex flex-col justify-center p-6 bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden text-left">
+            <a href="data-visualization-fundamentals.html" class="group relative flex flex-col justify-center p-6 bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden text-left">
+
             <div class="absolute inset-0 bg-gradient-to-r from-blue-50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
             <div class="relative z-10 flex items-center gap-4">
-                <div class="w-12 h-12 flex-shrink-0 rounded-full bg-gray-50 flex items-center justify-center group-hover:bg-blue-600 transition-colors duration-300">
-                    <svg class="w-6 h-6 text-gray-400 group-hover:text-white transition-colors duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
-                </div>
-                <div>
+                <div class="w-12 h-12 flex-shrink-0 rounded-full bg-gray-50 flex items-center justify-center group-hover:bg-blue-600 transition-colors duration-300"><svg class="w-6 h-6 text-gray-400 group-hover:text-white transition-colors duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg></div>
+                <div class="text-left">
                     <span class="block text-xs font-bold tracking-widest text-gray-400 uppercase mb-1">Previous Lesson</span>
                     <span class="block text-gray-900 font-bold group-hover:text-blue-700 transition-colors line-clamp-2 leading-snug">Data Visualization Fundamentals</span>
                 </div>
+
             </div>
         </a>
-        
-            
-        <a href="research-reporting-interpretation.html" class="group relative flex flex-col justify-center p-6 bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden text-right">
+            <a href="research-reporting-interpretation.html" class="group relative flex flex-col justify-center p-6 bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden text-right">
+
             <div class="absolute inset-0 bg-gradient-to-l from-blue-50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
             <div class="relative z-10 flex items-center justify-end gap-4">
-                <div>
+
+                <div class="text-right">
                     <span class="block text-xs font-bold tracking-widest text-gray-400 uppercase mb-1">Next Lesson</span>
                     <span class="block text-gray-900 font-bold group-hover:text-blue-700 transition-colors line-clamp-2 leading-snug">Research Reporting and Interpretation</span>
                 </div>
-                <div class="w-12 h-12 flex-shrink-0 rounded-full bg-gray-50 flex items-center justify-center group-hover:bg-blue-600 transition-colors duration-300">
-                    <svg class="w-6 h-6 text-gray-400 group-hover:text-white transition-colors duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-                </div>
+                <div class="w-12 h-12 flex-shrink-0 rounded-full bg-gray-50 flex items-center justify-center group-hover:bg-blue-600 transition-colors duration-300"><svg class="w-6 h-6 text-gray-400 group-hover:text-white transition-colors duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></div>
             </div>
         </a>
-        
         </div>
+    </section>
+        </div></div></div>
     </div>
-    
-    
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <script>
-        // Tell script.js to skip rendering because it is already done
-        window.STATIC_RENDERED = true;
-        window.PRELOADED_TUTORIAL_ID = "reproducible-project-structure";
-    </script>
-    
+    <script>window.STATIC_RENDERED = true; window.PRELOADED_TUTORIAL_ID = "reproducible-project-structure";</script>
+
 </main>
 <!-- Footer (unchanged) -->
 <footer class="bg-gray-900 text-white mt-16">
@@ -405,7 +239,7 @@ input: data/raw/counts.tsv
 <span class="font-bold text-white">The Omics Hub</span>
 </div>
 <p class="text-gray-400 text-sm leading-relaxed mb-4">Practical, hands-on tutorials for bioinformatics, HPC, and single-cell RNA-seq analysis.</p>
-          <a href="https://paypal.me/nmabbasi12020?locale.x=en_US&country.x=FR" target="_blank" class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500 text-white font-bold rounded-lg hover:bg-emerald-600 transition-colors text-sm shadow-sm">
+          <a href="https://paypal.me/nmabbasi12020?locale.x=en_US&country.x=FR" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500 text-white font-bold rounded-lg hover:bg-emerald-600 transition-colors text-sm shadow-sm">
             <span class="text-base">☕</span>
             Buy me a coffee
           </a>
@@ -454,5 +288,51 @@ input: data/raw/counts.tsv
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <!-- Custom JS - loads tutorials from manifest -->
 <script src="script.js?v=20260815"></script>
+
+<script>
+function toggleMobileMenu() {
+  const menu = document.getElementById("mobile-menu");
+  const trigger = document.querySelector('[aria-controls="mobile-menu"]');
+  if (!menu) return;
+  const opening = menu.classList.contains("hidden");
+  menu.classList.toggle("hidden", !opening);
+  if (trigger) {
+    trigger.setAttribute("aria-expanded", String(opening));
+    trigger.setAttribute("aria-label", opening ? "Close navigation menu" : "Open navigation menu");
+  }
+}
+</script>
+
+<script id="navigation-accessibility">
+(function () {
+  const legalButton = document.getElementById("legal-menu-button");
+  const legalMenu = document.getElementById("legal-menu");
+  const setLegalState = (open) => {
+    if (!legalButton || !legalMenu) return;
+    legalButton.setAttribute("aria-expanded", String(open));
+    legalMenu.classList.toggle("opacity-100", open);
+    legalMenu.classList.toggle("visible", open);
+    legalMenu.classList.toggle("opacity-0", !open);
+    legalMenu.classList.toggle("invisible", !open);
+  };
+  if (legalButton && legalMenu) {
+    legalButton.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      setLegalState(legalButton.getAttribute("aria-expanded") !== "true");
+    });
+    document.addEventListener("click", (event) => {
+      if (!legalMenu.contains(event.target) && !legalButton.contains(event.target)) setLegalState(false);
+    });
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") {
+        setLegalState(false);
+        legalButton.focus();
+      }
+    });
+  }
+})();
+</script>
+
 </body>
 </html>

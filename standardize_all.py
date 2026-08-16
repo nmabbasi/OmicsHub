@@ -7,10 +7,10 @@ def extract_block(filepath, start_tag, end_tag):
             content = f.read()
     except Exception:
         return None
-    
+
     start_idx = content.find(start_tag)
     end_idx = content.find(end_tag) + len(end_tag)
-    
+
     if start_idx != -1 and end_idx != -1:
         return content[start_idx:end_idx]
     return None
@@ -18,12 +18,12 @@ def extract_block(filepath, start_tag, end_tag):
 def update_file(filepath, new_header, new_footer, depth=0):
     with open(filepath, 'r') as f:
         content = f.read()
-        
+
     old_header = extract_block(filepath, '<header', '</header>')
     old_footer = extract_block(filepath, '<footer', '</footer>')
-    
+
     changed = False
-    
+
     if old_header and new_header:
         # adjust links if depth > 0
         adj_header = new_header
@@ -37,7 +37,7 @@ def update_file(filepath, new_header, new_footer, depth=0):
             adj_header = adj_header.replace('href="contact.html"', f'href="{prefix}contact.html"')
             adj_header = adj_header.replace('href="pages/', f'href="{prefix}pages/')
             adj_header = adj_header.replace('src="images/', f'src="{prefix}images/')
-            
+
         # De-activate "Home" link since we are not on index.html
         adj_header = adj_header.replace(
             'id="nav-desktop-home" class="px-4 py-2 text-sm font-semibold bg-blue-600 text-white rounded-md shadow-sm transition-all"',
@@ -47,7 +47,7 @@ def update_file(filepath, new_header, new_footer, depth=0):
             'id="nav-mobile-home" class="px-4 py-2 text-sm font-semibold text-blue-600 bg-blue-50 rounded-lg transition-colors"',
             'id="nav-mobile-home" class="px-4 py-2 text-sm text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors"'
         )
-        
+
         # Activate correct link based on filename
         filename = os.path.basename(filepath)
         if filename == 'start-here.html':
@@ -94,7 +94,7 @@ def update_file(filepath, new_header, new_footer, depth=0):
                     '<button class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-blue-600 flex items-center gap-1 rounded-md hover:bg-gray-50 transition-all">',
                     '<button class="px-4 py-2 text-sm font-semibold bg-blue-600 text-white flex items-center gap-1 rounded-md shadow-sm transition-all">'
                 )
-                
+
                 # Activate the mobile Legal header section slightly to show it's active
                 adj_header = adj_header.replace(
                     '<div class="px-4 pt-2 pb-1 text-xs font-semibold text-gray-400 uppercase tracking-wide">Legal</div>',
@@ -115,7 +115,7 @@ def update_file(filepath, new_header, new_footer, depth=0):
         if content.find(adj_header) == -1:
             content = content.replace(old_header, adj_header)
             changed = True
-            
+
     if old_footer and new_footer:
         adj_footer = new_footer
         if depth > 0:
@@ -124,11 +124,11 @@ def update_file(filepath, new_header, new_footer, depth=0):
             adj_footer = adj_footer.replace('href="about.html"', f'href="{prefix}about.html"')
             adj_footer = adj_footer.replace('href="contact.html"', f'href="{prefix}contact.html"')
             adj_footer = adj_footer.replace('href="pages/', f'href="{prefix}pages/')
-        
+
         if content.find(adj_footer) == -1:
             content = content.replace(old_footer, adj_footer)
             changed = True
-            
+
     if changed:
         with open(filepath, 'w') as f:
             f.write(content)

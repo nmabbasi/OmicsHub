@@ -7,7 +7,7 @@ for filename in os.listdir(lessons_dir):
         filepath = os.path.join(lessons_dir, filename)
         with open(filepath, "r") as f:
             content = f.read()
-        
+
         # Replace author in frontmatter
         new_content = re.sub(
             r'^author:\s*".*?"',
@@ -21,7 +21,7 @@ for filename in os.listdir(lessons_dir):
             new_content,
             flags=re.MULTILINE
         )
-        
+
         if new_content != content:
             with open(filepath, "w") as f:
                 f.write(new_content)

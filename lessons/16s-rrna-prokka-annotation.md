@@ -22,15 +22,16 @@ image: "images/bioinformatics-intro.png"
 <div class="p-6 bg-blue-50 border border-blue-100 rounded-xl mb-8">
   <h4 class="text-lg font-bold text-blue-900 mb-2">Learning Objectives & Prerequisites</h4>
   <ul class="list-disc list-inside text-blue-800 space-y-1 mb-4">
-    <li><strong>Prerequisites:</strong> Basic understanding of the Linux terminal and bioinformatics concepts. (See <a href="start-here.html" class="underline">Start Here</a>)</li>
-    <li><strong>Objective:</strong> Master the core concepts and practical commands of this topic.</li>
-    <li><strong>Expected Output:</strong> A reproducible workflow and a clear understanding of the methodology.</li>
+    <li><strong>Prerequisites:</strong> Complete Biological Data Formats and basic command-line navigation; understand the distinction between amplicon data and assembled genomes.</li>
+    <li><strong>Objective:</strong> Differentiate 16S rRNA profiling from prokaryotic genome annotation and select appropriate inputs, outputs, and validation checks for each.</li>
+    <li><strong>Expected Output:</strong> A documented analysis plan that names the correct input type, reference/database choice, and expected output for 16S or PROKKA work.</li>
   </ul>
+  <p class="text-sm text-blue-700"><strong>Suggested route:</strong> use the <a href="start-here.html" class="underline">Bioinformatics Academy Pathway</a> to review any prerequisite stage before continuing.</p>
 </div>
 
 
 
-# 16S rRNA Profiling and PROKKA Annotation
+## 16S rRNA Profiling and PROKKA Annotation
 
 ## 1. 16S rRNA Amplicon Sequencing
 
@@ -116,15 +117,15 @@ By combining 16S profiling for community structure and PROKKA for functional gen
   <div class="space-y-4">
     <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
       <h4 class="font-bold text-gray-800 mb-2">1. Concept Verification</h4>
-      <p class="text-gray-600 text-sm">Explain the primary function of the core tools introduced in this lesson. What specific bioinformatics problem do they solve compared to alternative methods?</p>
+      <p class="text-gray-600 text-sm">Why should 16S amplicon profiling and PROKKA annotation not be treated as interchangeable analyses?</p>
     </div>
     <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
       <h4 class="font-bold text-gray-800 mb-2">2. Practical Execution</h4>
-      <p class="text-gray-600 text-sm">Execute the main pipeline commands on your own subset of data. <strong>Pass Criteria:</strong> The commands complete without syntax errors and generate the expected output file formats.</p>
+      <p class="text-gray-600 text-sm">Inspect one 16S feature table and one bacterial assembly, then identify which downstream task is appropriate for each and why. <strong>Pass Criteria:</strong> Record the command or analysis choice, keep the output, and explain why it answers the stated task.</p>
     </div>
     <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
       <h4 class="font-bold text-gray-800 mb-2">3. Troubleshooting</h4>
-      <p class="text-gray-600 text-sm">If your output is empty or throws a memory error (OOM), what parameters should you adjust? (Hint: Check threads, memory allocation, or file paths).</p>
+      <p class="text-gray-600 text-sm">If taxonomic labels or annotations look implausible, how will you check database version, contamination, input quality, and the limits of marker-based assignment?</p>
     </div>
   </div>
 </div>

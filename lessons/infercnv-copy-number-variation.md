@@ -22,15 +22,16 @@ image: "images/infercnv-copy-number-variation.png"
 <div class="p-6 bg-blue-50 border border-blue-100 rounded-xl mb-8">
   <h4 class="text-lg font-bold text-blue-900 mb-2">Learning Objectives & Prerequisites</h4>
   <ul class="list-disc list-inside text-blue-800 space-y-1 mb-4">
-    <li><strong>Prerequisites:</strong> Basic understanding of the Linux terminal and bioinformatics concepts. (See <a href="start-here.html" class="underline">Start Here</a>)</li>
-    <li><strong>Objective:</strong> Master the core concepts and practical commands of this topic.</li>
-    <li><strong>Expected Output:</strong> A reproducible workflow and a clear understanding of the methodology.</li>
+    <li><strong>Prerequisites:</strong> Complete scRNA-seq Basics and cell-type annotation; use matched reference cells and non-clinical training data where appropriate.</li>
+    <li><strong>Objective:</strong> Infer broad copy-number patterns from expression while understanding reference selection, smoothing, and the need for orthogonal validation.</li>
+    <li><strong>Expected Output:</strong> A CNV inference figure with reference-cell rationale, genomic patterns, sample context, and an explicit non-diagnostic interpretation.</li>
   </ul>
+  <p class="text-sm text-blue-700"><strong>Suggested route:</strong> use the <a href="start-here.html" class="underline">Bioinformatics Academy Pathway</a> to review any prerequisite stage before continuing.</p>
 </div>
 
 
 
-# Inferring Copy Number Variation with inferCNV
+## Inferring Copy Number Variation with inferCNV
 
 ## Introduction
 
@@ -107,15 +108,15 @@ This technique is the absolute gold standard for computationally validating mali
   <div class="space-y-4">
     <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
       <h4 class="font-bold text-gray-800 mb-2">1. Concept Verification</h4>
-      <p class="text-gray-600 text-sm">Explain the primary function of the core tools introduced in this lesson. What specific bioinformatics problem do they solve compared to alternative methods?</p>
+      <p class="text-gray-600 text-sm">Why is expression-derived CNV inference not a substitute for validated DNA-based copy-number measurement?</p>
     </div>
     <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
       <h4 class="font-bold text-gray-800 mb-2">2. Practical Execution</h4>
-      <p class="text-gray-600 text-sm">Execute the main pipeline commands on your own subset of data. <strong>Pass Criteria:</strong> The commands complete without syntax errors and generate the expected output file formats.</p>
+      <p class="text-gray-600 text-sm">Run or inspect an inferCNV output, identify the reference population, and report one broad pattern with its limitations. <strong>Pass Criteria:</strong> Record the command or analysis choice, keep the output, and explain why it answers the stated task.</p>
     </div>
     <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
       <h4 class="font-bold text-gray-800 mb-2">3. Troubleshooting</h4>
-      <p class="text-gray-600 text-sm">If your output is empty or throws a memory error (OOM), what parameters should you adjust? (Hint: Check threads, memory allocation, or file paths).</p>
+      <p class="text-gray-600 text-sm">If a broad CNV signal appears in many cell types, how will you investigate reference quality, normalization, cell-cycle effects, and technical artifacts?</p>
     </div>
   </div>
 </div>

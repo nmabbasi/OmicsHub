@@ -22,19 +22,20 @@ image: "images/bioinformatics-intro.png"
 <div class="p-6 bg-blue-50 border border-blue-100 rounded-xl mb-8">
   <h4 class="text-lg font-bold text-blue-900 mb-2">Learning Objectives & Prerequisites</h4>
   <ul class="list-disc list-inside text-blue-800 space-y-1 mb-4">
-    <li><strong>Prerequisites:</strong> Basic understanding of the Linux terminal and bioinformatics concepts. (See <a href="start-here.html" class="underline">Start Here</a>)</li>
-    <li><strong>Objective:</strong> Master the core concepts and practical commands of this topic.</li>
-    <li><strong>Expected Output:</strong> A reproducible workflow and a clear understanding of the methodology.</li>
+    <li><strong>Prerequisites:</strong> Complete command-line basics and understand that taxonomic databases define the scope of possible classifications.</li>
+    <li><strong>Objective:</strong> Classify shotgun metagenomic reads with Kraken2, estimate abundances with Bracken, and report database and contamination limitations.</li>
+    <li><strong>Expected Output:</strong> A taxonomic abundance table paired with the exact database version, read-processing choices, and interpretation caveats.</li>
   </ul>
+  <p class="text-sm text-blue-700"><strong>Suggested route:</strong> use the <a href="start-here.html" class="underline">Bioinformatics Academy Pathway</a> to review any prerequisite stage before continuing.</p>
 </div>
 
 
 
-# Taxonomic Profiling with Kraken2 and Bracken
+## Taxonomic Profiling with Kraken2 and Bracken
 
 ## Introduction
 
-In shotgun metagenomics, one of the primary goals is answering: **"Who is in this sample, and in what proportions?"** 
+In shotgun metagenomics, one of the primary goals is answering: **"Who is in this sample, and in what proportions?"**
 
 Unlike 16S amplicon sequencing, shotgun data contains fragmented DNA from every organism present. To classify millions of these short reads efficiently, we cannot use traditional alignment tools like BLAST—it would take months. Instead, we use ultra-fast **k-mer based classifiers**, with the undisputed industry standard being **Kraken2**, followed by **Bracken** for abundance estimation.
 
@@ -42,7 +43,7 @@ Unlike 16S amplicon sequencing, shotgun data contains fragmented DNA from every 
 
 ## 1. How Kraken2 Works
 
-Kraken2 breaks down your reads into short sequences called *k-mers* (typically 35-mers). It then compares these k-mers against a massive pre-built database of known genomes. 
+Kraken2 breaks down your reads into short sequences called *k-mers* (typically 35-mers). It then compares these k-mers against a massive pre-built database of known genomes.
 
 Instead of full alignment, Kraken2 maps the k-mer to the Lowest Common Ancestor (LCA) in the taxonomic tree.
 
@@ -67,7 +68,7 @@ kraken2 --db /path/to/kraken2_database/ \
 
 ## 2. Correcting Abundances with Bracken
 
-While Kraken2 is excellent at classification, its Lowest Common Ancestor (LCA) approach causes a problem: many reads are classified at higher taxonomic levels (like Genus or Family) because they match multiple species equally well. 
+While Kraken2 is excellent at classification, its Lowest Common Ancestor (LCA) approach causes a problem: many reads are classified at higher taxonomic levels (like Genus or Family) because they match multiple species equally well.
 
 This means your raw Species-level counts in Kraken2 are mathematically underestimated.
 
@@ -81,7 +82,7 @@ bracken -d /path/to/kraken2_database/ \
         -i kraken2_report.txt \
         -o bracken_species_abundances.tsv \
         -r 150 \
-        -l S 
+        -l S
 ```
 *(Note: `-r 150` should match your Illumina read length).*
 
@@ -109,15 +110,15 @@ By combining the blazing speed of Kraken2 with the statistical rigor of Bracken,
   <div class="space-y-4">
     <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
       <h4 class="font-bold text-gray-800 mb-2">1. Concept Verification</h4>
-      <p class="text-gray-600 text-sm">Explain the primary function of the core tools introduced in this lesson. What specific bioinformatics problem do they solve compared to alternative methods?</p>
+      <p class="text-gray-600 text-sm">Why can a fast k-mer classification be confident yet still biologically wrong when the reference database is incomplete or contaminated?</p>
     </div>
     <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
       <h4 class="font-bold text-gray-800 mb-2">2. Practical Execution</h4>
-      <p class="text-gray-600 text-sm">Execute the main pipeline commands on your own subset of data. <strong>Pass Criteria:</strong> The commands complete without syntax errors and generate the expected output file formats.</p>
+      <p class="text-gray-600 text-sm">Run or inspect a Kraken2/Bracken result and identify the database version, assigned fraction, top taxa, and unclassified reads. <strong>Pass Criteria:</strong> Record the command or analysis choice, keep the output, and explain why it answers the stated task.</p>
     </div>
     <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
       <h4 class="font-bold text-gray-800 mb-2">3. Troubleshooting</h4>
-      <p class="text-gray-600 text-sm">If your output is empty or throws a memory error (OOM), what parameters should you adjust? (Hint: Check threads, memory allocation, or file paths).</p>
+      <p class="text-gray-600 text-sm">If unexpected taxa dominate a sample, how will you check negative controls, database composition, host contamination, and read quality?</p>
     </div>
   </div>
 </div>

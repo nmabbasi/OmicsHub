@@ -22,19 +22,20 @@ image: "images/bioinformatics-intro.png"
 <div class="p-6 bg-blue-50 border border-blue-100 rounded-xl mb-8">
   <h4 class="text-lg font-bold text-blue-900 mb-2">Learning Objectives & Prerequisites</h4>
   <ul class="list-disc list-inside text-blue-800 space-y-1 mb-4">
-    <li><strong>Prerequisites:</strong> Basic understanding of the Linux terminal and bioinformatics concepts. (See <a href="start-here.html" class="underline">Start Here</a>)</li>
-    <li><strong>Objective:</strong> Master the core concepts and practical commands of this topic.</li>
-    <li><strong>Expected Output:</strong> A reproducible workflow and a clear understanding of the methodology.</li>
+    <li><strong>Prerequisites:</strong> Complete scRNA-seq Basics and understand batches, normalization, PCA, and biological covariates.</li>
+    <li><strong>Objective:</strong> Compare Harmony, RPCA, and CCA integration approaches and evaluate whether technical variation is reduced without erasing biology.</li>
+    <li><strong>Expected Output:</strong> An integration comparison with pre/post diagnostics, preserved biological labels, and a documented method choice.</li>
   </ul>
+  <p class="text-sm text-blue-700"><strong>Suggested route:</strong> use the <a href="start-here.html" class="underline">Bioinformatics Academy Pathway</a> to review any prerequisite stage before continuing.</p>
 </div>
 
 
 
-# Single-Cell Integration Strategies
+## Single-Cell Integration Strategies
 
 ## The Batch Effect Problem
 
-When combining single-cell data from multiple patients, different sequencing runs, or different technologies (e.g., 10x Genomics vs. Drop-seq), massive technical variations occur. These are known as **batch effects**. 
+When combining single-cell data from multiple patients, different sequencing runs, or different technologies (e.g., 10x Genomics vs. Drop-seq), massive technical variations occur. These are known as **batch effects**.
 
 If you do not integrate your data, cells will cluster by *patient* or *batch* rather than by true *biology*. Here we cover the three most robust integration strategies.
 
@@ -125,15 +126,15 @@ integrated_seurat <- RunUMAP(integrated_seurat, reduction = "harmony", dims = 1:
   <div class="space-y-4">
     <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
       <h4 class="font-bold text-gray-800 mb-2">1. Concept Verification</h4>
-      <p class="text-gray-600 text-sm">Explain the primary function of the core tools introduced in this lesson. What specific bioinformatics problem do they solve compared to alternative methods?</p>
+      <p class="text-gray-600 text-sm">Why can an integration that visually mixes batches still be scientifically inappropriate?</p>
     </div>
     <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
       <h4 class="font-bold text-gray-800 mb-2">2. Practical Execution</h4>
-      <p class="text-gray-600 text-sm">Execute the main pipeline commands on your own subset of data. <strong>Pass Criteria:</strong> The commands complete without syntax errors and generate the expected output file formats.</p>
+      <p class="text-gray-600 text-sm">Run or inspect two integration diagnostics and justify which method best balances batch mixing with biological separation. <strong>Pass Criteria:</strong> Record the command or analysis choice, keep the output, and explain why it answers the stated task.</p>
     </div>
     <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
       <h4 class="font-bold text-gray-800 mb-2">3. Troubleshooting</h4>
-      <p class="text-gray-600 text-sm">If your output is empty or throws a memory error (OOM), what parameters should you adjust? (Hint: Check threads, memory allocation, or file paths).</p>
+      <p class="text-gray-600 text-sm">If integration merges known distinct cell states, how will you reassess covariates, reference choice, dimensions, and whether integration is needed at all?</p>
     </div>
   </div>
 </div>

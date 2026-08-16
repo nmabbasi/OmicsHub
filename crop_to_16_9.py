@@ -24,25 +24,25 @@ for src_path, target_filename in images_to_crop.items():
     if not os.path.exists(src_path):
         print(f"File not found: {src_path}")
         continue
-        
+
     try:
         img = Image.open(src_path)
         width, height = img.size
-        
+
         # Calculate cropping box
         left = 0
         top = (height - TARGET_HEIGHT) / 2
         right = width
         bottom = (height + TARGET_HEIGHT) / 2
-        
+
         # Crop to 16:9 center
         img_cropped = img.crop((left, top, right, bottom))
-        
+
         # Save to target location
         out_path = os.path.join(target_dir, target_filename)
         img_cropped.save(out_path)
         print(f"Successfully cropped and saved {target_filename}")
-        
+
     except Exception as e:
         print(f"Error processing {src_path}: {e}")
 

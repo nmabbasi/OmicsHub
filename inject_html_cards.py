@@ -20,48 +20,48 @@ tutorial_files = [
     # Introduction
     'introduction-to-bioinformatics.md',
     'modern-bioinformatics-methods-2026.md',
-    
+
     # Shell Command Basics
     'command-line-part1.md',
     'command-line-part2.md',
     'command-line-part3.md',
-    
+
     # Package Management
     'conda-mamba-part1.md',
-    
+
     # High-Performance Computing (HPC)
     '1-Connection.md',
     '2-HPC_Basic_Commands.md',
     'hpc-submission-part1.md',
     '4-Support.md',
-    
+
     # Workflow & Containerization
     'reproducible-workflows-snakemake-nextflow.md',
     'docker-singularity-bioinformatics.md',
-    
+
     # Metagenomics
     '16s-rrna-prokka-annotation.md',
     'metagenomics-assembly-mapping.md',
     'metagenomics-kraken2-bracken.md',
-    
+
     # Metatranscriptomics
     'metatranscriptomics-guide.md',
     'metatranscriptomics-functional-pathways.md',
-    
+
     # Evolutionary Bioinformatics Analysis
     'evolutionary-phylogeny-analysis.md',
     'phylogenomics-orthofinder.md',
-    
+
     # Genomics & Whole Exome Sequencing
     'wes-variant-calling-pipeline.md',
-    
+
     # Single-Cell RNA-seq
     'scrna-seq-basics.md',
     'scrna-seq-integration-strategies.md',
     'scrna-seq-downstream-analysis.md',
     'scrna-seq-trajectory-inference.md',
     'transcriptomics-differential-expression.md',
-    
+
     # Advanced Single-Cell Analysis
     'scrna-seq-quality-control.md',
     'advanced-visualization-packages.md',
@@ -72,10 +72,10 @@ tutorial_files = [
     'infercnv-copy-number-variation.md',
     'single-cell-deconvolution.md',
     'cite-seq-wnn-multiomics.md',
-    
+
     # Spatial Transcriptomics
     'spatial-transcriptomics-r-python.md',
-    
+
     # Long-Read Sequencing
     'long-read-pacbio-nanopore.md'
 ]
@@ -95,17 +95,17 @@ categories_set = set()
 for file in tutorial_files:
     path = os.path.join('lessons', file)
     if not os.path.exists(path): continue
-    
+
     with open(path, 'r') as f:
         content = f.read()
-        
+
     id_str = file.replace('.md', '')
     title = id_str.replace('-', ' ').title()
     category = "Uncategorized"
     date_str = "2026-08-15"
     image = ""
     excerpt = ""
-    
+
     match = re.search(r'^---\s*\n(.*?)\n---\s*\n', content, re.DOTALL)
     if match:
         fm = match.group(1)
@@ -119,7 +119,7 @@ for file in tutorial_files:
         if m_img: image = m_img.group(1)
         m_exc = re.search(r'excerpt:\s*"([^"]+)"', fm)
         if m_exc: excerpt = m_exc.group(1)
-        
+
     categories_set.add(category)
     tutorials.append({
         'id': id_str,
@@ -247,5 +247,5 @@ index_html = re.sub(
 
 with open('index.html', 'w') as f:
     f.write(index_html)
-    
+
 print("Successfully injected pre-rendered HTML cards into index.html")

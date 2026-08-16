@@ -22,15 +22,16 @@ image: "images/cat_advanced_sc.png"
 <div class="p-6 bg-blue-50 border border-blue-100 rounded-xl mb-8">
   <h4 class="text-lg font-bold text-blue-900 mb-2">Learning Objectives & Prerequisites</h4>
   <ul class="list-disc list-inside text-blue-800 space-y-1 mb-4">
-    <li><strong>Prerequisites:</strong> Basic understanding of the Linux terminal and bioinformatics concepts. (See <a href="start-here.html" class="underline">Start Here</a>)</li>
-    <li><strong>Objective:</strong> Master the core concepts and practical commands of this topic.</li>
-    <li><strong>Expected Output:</strong> A reproducible workflow and a clear understanding of the methodology.</li>
+    <li><strong>Prerequisites:</strong> Complete scRNA-seq Basics and have a QC-reviewed object with clusters, metadata, and marker results.</li>
+    <li><strong>Objective:</strong> Create readable single-cell figures with SCpubr, SCP, or dittoSeq while selecting colors, comparisons, and labels that support the question.</li>
+    <li><strong>Expected Output:</strong> A publication-ready figure with color-blind-aware choices, clear axes/legends, caption, and saved code.</li>
   </ul>
+  <p class="text-sm text-blue-700"><strong>Suggested route:</strong> use the <a href="start-here.html" class="underline">Bioinformatics Academy Pathway</a> to review any prerequisite stage before continuing.</p>
 </div>
 
 
 
-# Advanced Single-Cell Visualization Packages
+## Advanced Single-Cell Visualization Packages
 
 ## The Limitation of Base Seurat
 
@@ -48,15 +49,15 @@ To solve this, the bioinformatics community has developed incredible "wrapper" p
 library(SCpubr)
 
 # Generate a premium UMAP with a clean legend and high contrast
-SCpubr::do_DimPlot(sample = seurat_obj, 
-                   group.by = "cell_type", 
-                   label = TRUE, 
-                   repel = TRUE, 
+SCpubr::do_DimPlot(sample = seurat_obj,
+                   group.by = "cell_type",
+                   label = TRUE,
+                   repel = TRUE,
                    font.size = 14)
 
 # Generate a premium FeaturePlot with a custom color gradient
-SCpubr::do_FeaturePlot(sample = seurat_obj, 
-                       features = "GeneA", 
+SCpubr::do_FeaturePlot(sample = seurat_obj,
+                       features = "GeneA",
                        colors.use = c("lightgrey", "darkred"))
 ```
 
@@ -102,8 +103,8 @@ dittoHeatmap(seurat_obj, genes = top_10_markers, annot.by = c("cell_type", "cond
 library(scplotter)
 
 # Example: Generate a detailed scatter plot highlighting specific cellular subsets
-sc_scatter(seurat_obj, 
-           group.by = "cell_type", 
+sc_scatter(seurat_obj,
+           group.by = "cell_type",
            split.by = "condition",
            palette = "Set1")
 ```
@@ -125,15 +126,15 @@ Plot_GSEA(seurat_obj, pathway = "HALLMARK_HYPOXIA", group.by = "condition")
 
 ## 6. SCP (SingleCellPlot) for Multi-Omics
 
-**SCP** provides a massive suite of high-level wrappers designed specifically for multi-omics and spatial transcriptomics visualization. 
+**SCP** provides a massive suite of high-level wrappers designed specifically for multi-omics and spatial transcriptomics visualization.
 
 ```r
 library(SCP)
 
 # Generate a highly annotated, split violin plot for gene expression
-CellStatPlot(seurat_obj, 
-             stat.by = "cell_type", 
-             group.by = "condition", 
+CellStatPlot(seurat_obj,
+             stat.by = "cell_type",
+             group.by = "condition",
              plot_type = "violin")
 ```
 
@@ -174,15 +175,15 @@ By mastering these 7 packages, you will never need to struggle with raw `ggplot2
   <div class="space-y-4">
     <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
       <h4 class="font-bold text-gray-800 mb-2">1. Concept Verification</h4>
-      <p class="text-gray-600 text-sm">Explain the primary function of the core tools introduced in this lesson. What specific bioinformatics problem do they solve compared to alternative methods?</p>
+      <p class="text-gray-600 text-sm">What makes a single-cell visualization interpretable rather than merely attractive?</p>
     </div>
     <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
       <h4 class="font-bold text-gray-800 mb-2">2. Practical Execution</h4>
-      <p class="text-gray-600 text-sm">Execute the main pipeline commands on your own subset of data. <strong>Pass Criteria:</strong> The commands complete without syntax errors and generate the expected output file formats.</p>
+      <p class="text-gray-600 text-sm">Recreate one plot from the lesson, improve its labels and color scale, and write a caption that names the data and comparison. <strong>Pass Criteria:</strong> Record the command or analysis choice, keep the output, and explain why it answers the stated task.</p>
     </div>
     <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
       <h4 class="font-bold text-gray-800 mb-2">3. Troubleshooting</h4>
-      <p class="text-gray-600 text-sm">If your output is empty or throws a memory error (OOM), what parameters should you adjust? (Hint: Check threads, memory allocation, or file paths).</p>
+      <p class="text-gray-600 text-sm">If a plot is misleading or unreadable, how will you inspect scale transformations, color mappings, sample imbalance, and overplotting?</p>
     </div>
   </div>
 </div>

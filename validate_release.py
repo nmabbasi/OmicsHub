@@ -1,53 +1,182 @@
+#!/usr/bin/env python3
+"""Release QA for The Omics Hub static build, including non-image readiness standards."""
+from __future__ import annotations
+
+import json
+import re
 from pathlib import Path
+from xml.etree import ElementTree as ET
+
 from bs4 import BeautifulSoup
-import re, json
-ROOT=Path('/home/ubuntu/OmicsHub')
-errors=[]; warnings=[]
-html_files=sorted(ROOT.glob('*.html'))
-tutorial_ids={p.stem for p in html_files if p.name not in {'index.html','about.html','contact.html','services.html','start-here.html','success.html'}}
 
-def fail(msg): errors.append(msg)
-def warn(msg): warnings.append(msg)
+ROOT = Path(__file__).resolve().parent
+ERRORS: list[str] = []
+WARNINGS: list[str] = []
 
-for p in html_files:
-    text=p.read_text(errors='ignore'); soup=BeautifulSoup(text,'html.parser')
-    if 'Coming Soon' in text or 'currently in active development' in text:
-        fail(f'placeholder remains: {p.name}')
-    if p.name in tutorial_ids:
-        cans=soup.find_all('link',rel='canonical')
-        if len(cans)!=1: fail(f'{p.name}: canonical count {len(cans)}')
-        elif cans[0].get('href') != f'https://theomicshub.com/{p.stem}.html': fail(f'{p.name}: wrong canonical {cans[0].get("href")}')
-        if soup.find(string=re.compile(r'\\n\\n')): fail(f'{p.name}: literal newline artifact')
-        if text.count('application/ld+json') < 1: fail(f'{p.name}: missing JSON-LD')
-        for required in ['Knowledge Check & Assessment','Concept Verification','Practical Execution','Troubleshooting']:
-            if required not in text: fail(f'{p.name}: missing {required}')
-        if not re.search(r'nav-desktop-tutorials"(?: aria-current="page")? class="px-4 py-2 text-sm font-semibold bg-blue-600', text):
-            fail(f'{p.name}: Tutorials desktop tab not active')
-        if re.search(r'nav-desktop-home"(?: aria-current="page")? class="px-4 py-2 text-sm font-semibold bg-blue-600', text):
-            fail(f'{p.name}: Home incorrectly active')
-        if 'nav-desktop-starthere" class="px-4 py-2 text-sm font-semibold bg-blue-600' in text:
-            fail(f'{p.name}: Start Here incorrectly active')
-    for href in re.findall(r'(?:href|src)=["\']([^"\']+)', text):
-        if href.startswith(('http://','https://','mailto:','#','javascript:','data:')): continue
-        clean=href.split('#')[0].split('?')[0]
-        if not clean: continue
-        if clean.endswith('.md'): fail(f'{p.name}: stale markdown link {clean}')
-        target=ROOT/clean
-        if not target.exists() and not clean.endswith(('.woff','.woff2')): fail(f'{p.name}: missing local resource {clean}')
+STANDALONE = {
+    "index.html": ("https://theomicshub.com/", True),
+    "start-here.html": ("https://theomicshub.com/start-here.html", True),
+    "services.html": ("https://theomicshub.com/services.html", True),
+    "about.html": ("https://theomicshub.com/about.html", True),
+    "contact.html": ("https://theomicshub.com/contact.html", True),
+    "success.html": ("https://theomicshub.com/success.html", False),
+    "pages/privacy.html": ("https://theomicshub.com/pages/privacy.html", True),
+    "pages/terms.html": ("https://theomicshub.com/pages/terms.html", True),
+    "pages/disclaimer.html": ("https://theomicshub.com/pages/disclaimer.html", True),
+    "pages/cookie.html": ("https://theomicshub.com/pages/cookie.html", True),
+}
 
-idx=(ROOT/'index.html').read_text(); start=(ROOT/'start-here.html').read_text()
-if not re.search(r'nav-desktop-home"(?: aria-current="page")? class="px-4 py-2 text-sm font-semibold bg-blue-600', idx): fail('index: Home tab not active')
-if not re.search(r'nav-desktop-starthere"(?: aria-current="page")? class="px-4 py-2 text-sm font-semibold bg-blue-600', start): fail('start-here: Start Here tab not active')
-for slug in ['computer-data-fundamentals','biological-data-formats','quality-control-fundamentals','git-github-bioinformatics','python-fundamentals-bioinformatics','r-tidyverse-fundamentals','statistics-for-bioinformatics','experimental-design-batch-effects','reference-genomes-annotation','data-visualization-fundamentals','reproducible-project-structure','research-reporting-interpretation']:
-    if f'href="{slug}.html"' not in start: fail(f'start-here: missing foundation link {slug}')
-if not (ROOT/'ads.txt').exists(): fail('missing ads.txt')
-if not (ROOT/'images/favicon.svg').exists(): fail('missing favicon.svg')
-robots=(ROOT/'robots.txt').read_text()
-if 'Sitemap: https://theomicshub.com/sitemap.xml' not in robots: fail('robots: missing sitemap')
-# Source lessons should be clean too.
-for p in (ROOT/'lessons').glob('*.md'):
-    t=p.read_text(errors='ignore')
-    if 'Coming Soon' in t or '.md)' in t: fail(f'{p.name}: source placeholder/stale link')
 
-print(json.dumps({'html_pages':len(html_files),'tutorial_pages':len(tutorial_ids),'errors':errors,'warnings':warnings},indent=2))
-raise SystemExit(1 if errors else 0)
+def fail(message: str) -> None:
+    ERRORS.append(message)
+
+
+def warn(message: str) -> None:
+    WARNINGS.append(message)
+
+
+def local_target_exists(source: Path, href: str) -> bool:
+    if href.startswith(("http://", "https://", "mailto:", "#", "javascript:", "data:")):
+        return True
+    clean = href.split("#", 1)[0].split("?", 1)[0]
+    if not clean:
+        return True
+    return (source.parent / clean).exists()
+
+
+def canonical_values(soup: BeautifulSoup) -> list[str]:
+    return [tag.get("href", "") for tag in soup.find_all("link", rel="canonical")]
+
+
+html_files = sorted(ROOT.glob("*.html")) + sorted((ROOT / "pages").glob("*.html"))
+tutorial_paths = [path for path in ROOT.glob("*.html") if path.name not in {"index.html", "about.html", "contact.html", "services.html", "start-here.html", "success.html"}]
+
+for path in html_files:
+    text = path.read_text(encoding="utf-8", errors="ignore")
+    soup = BeautifulSoup(text, "html.parser")
+    relative = path.relative_to(ROOT).as_posix()
+
+    if "Coming Soon" in text or "currently in active development" in text:
+        fail(f"{relative}: placeholder remains")
+    if "The Omics Hub" not in (soup.title.get_text(" ", strip=True) if soup.title else ""):
+        fail(f"{relative}: site brand missing from title")
+    if not soup.find("meta", attrs={"name": "description"}):
+        fail(f"{relative}: missing meta description")
+    if not soup.html or soup.html.get("lang") != "en":
+        fail(f"{relative}: html language is not en")
+
+    for tag in soup.find_all(["a", "img", "link", "script"]):
+        attr = "href" if tag.name in {"a", "link"} else "src"
+        value = tag.get(attr)
+        if value and not local_target_exists(path, value):
+            fail(f"{relative}: missing local resource {value}")
+        if value and value.endswith(".md"):
+            fail(f"{relative}: stale markdown link {value}")
+
+    if 'aria-controls="mobile-menu"' not in text or 'aria-expanded="false"' not in text:
+        fail(f"{relative}: mobile navigation ARIA contract missing")
+    if 'function toggleMobileMenu()' not in text:
+        fail(f"{relative}: mobile navigation toggle function missing")
+    if 'id="navigation-accessibility"' not in text:
+        fail(f"{relative}: Legal menu accessibility script missing")
+    if 'id="legal-menu-button"' in text and 'aria-haspopup="true"' not in text:
+        fail(f"{relative}: Legal menu accessibility contract missing")
+
+    if relative in STANDALONE:
+        expected_canonical, should_index = STANDALONE[relative]
+        canonicals = canonical_values(soup)
+        if canonicals != [expected_canonical]:
+            fail(f"{relative}: canonical mismatch {canonicals}")
+        robots = soup.find("meta", attrs={"name": "robots"})
+        robots_value = robots.get("content", "") if robots else ""
+        if should_index and "index" not in robots_value:
+            fail(f"{relative}: expected indexable robots meta")
+        if not should_index and "noindex" not in robots_value:
+            fail(f"{relative}: success page must be noindex")
+        if not soup.find("script", attrs={"type": "application/ld+json"}):
+            fail(f"{relative}: missing standalone structured data")
+
+for path in tutorial_paths:
+    text = path.read_text(encoding="utf-8", errors="ignore")
+    soup = BeautifulSoup(text, "html.parser")
+    expected_canonical = f"https://theomicshub.com/{path.stem}.html"
+    canonicals = canonical_values(soup)
+    if canonicals != [expected_canonical]:
+        fail(f"{path.name}: canonical mismatch {canonicals}")
+    title = soup.title.get_text(" ", strip=True) if soup.title else ""
+    if title == "The Omics Hub" or not title.endswith("| The Omics Hub"):
+        fail(f"{path.name}: generic or malformed document title {title!r}")
+    if len(soup.find_all("h1")) != 1:
+        fail(f"{path.name}: expected exactly one H1, found {len(soup.find_all('h1'))}")
+    if text.count('application/ld+json') != 1:
+        fail(f"{path.name}: expected exactly one JSON-LD block")
+    if '"@type": "Article"' not in text or '"Nasir Mahmood Abbasi, PhD"' not in text:
+        fail(f"{path.name}: incomplete Article schema")
+    visible_text = soup.get_text(" ", strip=True)
+    if "Learning Objectives" not in visible_text or "Prerequisites" not in visible_text:
+        fail(f"{path.name}: missing learner objectives or prerequisites")
+    if "Knowledge Check & Assessment" not in visible_text or "Concept Verification" not in visible_text or "Troubleshooting" not in visible_text:
+        fail(f"{path.name}: incomplete knowledge check")
+    if "Practical Execution" not in visible_text and "Practical Exercise" not in visible_text:
+        fail(f"{path.name}: missing practical assessment")
+    for generic in ["Master the core concepts and practical commands of this topic.", "A reproducible workflow and a clear understanding of the methodology."]:
+        if generic in text:
+            fail(f"{path.name}: generic learning scaffold remains")
+    if not re.search(r'nav-desktop-tutorials" aria-current="page" class="px-4 py-2 text-sm font-semibold bg-blue-600', text):
+        fail(f"{path.name}: Tutorials desktop tab not active")
+    if re.search(r'nav-desktop-home" aria-current="page" class="px-4 py-2 text-sm font-semibold bg-blue-600', text):
+        fail(f"{path.name}: Home incorrectly active")
+
+# Sitemap should index strategic pages and tutorials, but never the transactional success page.
+sitemap_root = ET.fromstring((ROOT / "sitemap.xml").read_text(encoding="utf-8"))
+sitemap_urls = {node.text for node in sitemap_root.findall("{*}url/{*}loc") if node.text}
+for relative, (url, should_index) in STANDALONE.items():
+    if should_index and url not in sitemap_urls:
+        fail(f"sitemap: missing indexable page {relative}")
+    if not should_index and url in sitemap_urls:
+        fail(f"sitemap: non-indexable page included {relative}")
+for path in tutorial_paths:
+    expected = f"https://theomicshub.com/{path.name}"
+    if expected not in sitemap_urls:
+        fail(f"sitemap: missing tutorial {path.name}")
+
+# Form and trust controls.
+services = (ROOT / "services.html").read_text(encoding="utf-8")
+contact = (ROOT / "contact.html").read_text(encoding="utf-8")
+privacy = (ROOT / "pages" / "privacy.html").read_text(encoding="utf-8")
+about = (ROOT / "about.html").read_text(encoding="utf-8")
+success = (ROOT / "success.html").read_text(encoding="utf-8")
+if 'name="newsletter_consent" required' not in services or 'name="_honey"' not in services:
+    fail("services: newsletter consent or honeypot missing")
+if 'name="_honey"' not in contact or 'name="consent" required' not in contact:
+    fail("contact: privacy or anti-spam controls missing")
+if "Information You Submit" not in privacy or "FormSubmit" not in privacy:
+    fail("privacy: submitted-form processing disclosure missing")
+if "Editorial Standards &amp; Updates" not in about or "Professional Transparency" not in about:
+    fail("about: trust and editorial sections missing")
+if 'name="robots" content="noindex, follow"' not in success:
+    fail("success: noindex directive missing")
+if not (ROOT / "files" / "scRNA_seq_Marker_Cheat_Sheet.pdf").exists():
+    fail("lead magnet PDF missing")
+
+# Source lessons should remain clean and structured.
+for lesson in (ROOT / "lessons").glob("*.md"):
+    source = lesson.read_text(encoding="utf-8", errors="ignore")
+    if "Coming Soon" in source or ".md)" in source:
+        fail(f"{lesson.name}: source placeholder or stale link")
+    in_fence = False
+    for line in source.splitlines():
+        if line.lstrip().startswith("```"):
+            in_fence = not in_fence
+        if not in_fence and re.match(r"^#\s+", line):
+            fail(f"{lesson.name}: body Markdown H1 remains")
+            break
+
+print(json.dumps({
+    "html_pages": len(html_files),
+    "tutorial_pages": len(tutorial_paths),
+    "sitemap_urls": len(sitemap_urls),
+    "errors": ERRORS,
+    "warnings": WARNINGS,
+}, indent=2))
+raise SystemExit(1 if ERRORS else 0)

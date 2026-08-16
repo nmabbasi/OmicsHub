@@ -6,7 +6,7 @@ def replace_in_files(file_pattern, rel_path):
         if not os.path.isfile(filepath): continue
         with open(filepath, 'r') as f:
             content = f.read()
-        
+
         # Replace the Tailwind CDN tag with the minified CSS link
         import re
         new_content = re.sub(
@@ -14,7 +14,7 @@ def replace_in_files(file_pattern, rel_path):
             f'<link href="{rel_path}tailwind.min.css" rel="stylesheet">',
             content
         )
-        
+
         with open(filepath, 'w') as f:
             f.write(new_content)
         print(f"Updated {filepath}")

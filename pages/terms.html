@@ -4,12 +4,21 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Terms of Service | The Omics Hub</title>
-<meta name="description" content="Terms of Service for The Omics Hub, the rules and conditions governing your use of this educational website.">
-<meta name="robots" content="index, follow">
+<meta name="description" content="Read the Terms of Service governing tutorials, educational materials, consulting, and website use at The Omics Hub.">
+
 <link rel="stylesheet" href="../style.css">
 <link rel="stylesheet" href="../tailwind.min.css">
 <!-- Google AdSense -->
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2910340533244599" crossorigin="anonymous"></script>
+  <meta property="og:title" content="Terms of Service | The Omics Hub"/>
+  <meta property="og:description" content="Read the Terms of Service governing tutorials, educational materials, consulting, and website use at The Omics Hub."/>
+  <meta property="og:url" content="https://theomicshub.com/pages/terms.html"/>
+  <meta property="og:type" content="website"/>
+  <meta name="twitter:title" content="Terms of Service | The Omics Hub"/>
+  <meta name="twitter:description" content="Read the Terms of Service governing tutorials, educational materials, consulting, and website use at The Omics Hub."/>
+  <meta name="robots" content="index, follow"/>
+  <link rel="canonical" href="https://theomicshub.com/pages/terms.html"/>
+  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebPage", "name": "Terms of Service | The Omics Hub", "description": "Read the Terms of Service governing tutorials, educational materials, consulting, and website use at The Omics Hub.", "url": "https://theomicshub.com/pages/terms.html", "isPartOf": {"@type": "WebSite", "name": "The Omics Hub", "url": "https://theomicshub.com"}}</script>
 </head>
 <body class="legal-page bg-gray-50 text-gray-900 min-h-screen flex flex-col">
 
@@ -54,7 +63,7 @@ Legal
 </div>
 </div>
 <!-- Mobile Button -->
-<button class="md:hidden p-2 rounded-md text-gray-600 hover:bg-gray-100" onclick="toggleMobileMenu()">
+<button aria-label="Open navigation menu" aria-controls="mobile-menu" aria-expanded="false" class="md:hidden p-2 rounded-md text-gray-600 hover:bg-gray-100" onclick="toggleMobileMenu()">
 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
 </button>
 </div>
@@ -219,7 +228,7 @@ Legal
 <span class="font-bold text-white">The Omics Hub</span>
 </div>
 <p class="text-gray-400 text-sm leading-relaxed mb-4">Practical, hands-on tutorials for bioinformatics, HPC, and single-cell RNA-seq analysis.</p>
-          <a href="https://paypal.me/nmabbasi12020?locale.x=en_US&country.x=FR" target="_blank" class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500 text-white font-bold rounded-lg hover:bg-emerald-600 transition-colors text-sm shadow-sm">
+          <a href="https://paypal.me/nmabbasi12020?locale.x=en_US&country.x=FR" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500 text-white font-bold rounded-lg hover:bg-emerald-600 transition-colors text-sm shadow-sm">
             <span class="text-base">☕</span>
             Buy me a coffee
           </a>
@@ -261,8 +270,48 @@ Legal
 
 <script>
 function toggleMobileMenu() {
-  document.getElementById("mobile-menu").classList.toggle("hidden");
+  const menu = document.getElementById("mobile-menu");
+  const trigger = document.querySelector('[aria-controls="mobile-menu"]');
+  if (!menu) return;
+  const opening = menu.classList.contains("hidden");
+  menu.classList.toggle("hidden", !opening);
+  if (trigger) {
+    trigger.setAttribute("aria-expanded", String(opening));
+    trigger.setAttribute("aria-label", opening ? "Close navigation menu" : "Open navigation menu");
+  }
 }
 </script>
+
+<script id="navigation-accessibility">
+(function () {
+  const legalButton = document.getElementById("legal-menu-button");
+  const legalMenu = document.getElementById("legal-menu");
+  const setLegalState = (open) => {
+    if (!legalButton || !legalMenu) return;
+    legalButton.setAttribute("aria-expanded", String(open));
+    legalMenu.classList.toggle("opacity-100", open);
+    legalMenu.classList.toggle("visible", open);
+    legalMenu.classList.toggle("opacity-0", !open);
+    legalMenu.classList.toggle("invisible", !open);
+  };
+  if (legalButton && legalMenu) {
+    legalButton.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      setLegalState(legalButton.getAttribute("aria-expanded") !== "true");
+    });
+    document.addEventListener("click", (event) => {
+      if (!legalMenu.contains(event.target) && !legalButton.contains(event.target)) setLegalState(false);
+    });
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") {
+        setLegalState(false);
+        legalButton.focus();
+      }
+    });
+  }
+})();
+</script>
+
 </body>
 </html>

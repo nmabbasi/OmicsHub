@@ -22,10 +22,11 @@ image: "images/trajectory-inference.png"
 <div class="p-6 bg-blue-50 border border-blue-100 rounded-xl mb-8">
   <h4 class="text-lg font-bold text-blue-900 mb-2">Learning Objectives & Prerequisites</h4>
   <ul class="list-disc list-inside text-blue-800 space-y-1 mb-4">
-    <li><strong>Prerequisites:</strong> Basic understanding of the Linux terminal and bioinformatics concepts. (See <a href="start-here.html" class="underline">Start Here</a>)</li>
-    <li><strong>Objective:</strong> Master the core concepts and practical commands of this topic.</li>
-    <li><strong>Expected Output:</strong> A reproducible workflow and a clear understanding of the methodology.</li>
+    <li><strong>Prerequisites:</strong> Complete scRNA-seq Basics, including QC, clustering, and marker interpretation; use data with a plausible continuous process.</li>
+    <li><strong>Objective:</strong> Infer and interpret pseudotime or lineage trajectories while separating computational ordering from directly observed developmental time.</li>
+    <li><strong>Expected Output:</strong> A trajectory figure with root rationale, branch interpretation, gene trends, and explicit validation limits.</li>
   </ul>
+  <p class="text-sm text-blue-700"><strong>Suggested route:</strong> use the <a href="start-here.html" class="underline">Bioinformatics Academy Pathway</a> to review any prerequisite stage before continuing.</p>
 </div>
 
 
@@ -56,7 +57,7 @@ sc.pp.neighbors(adata, n_neighbors=15, n_pcs=40)
 sc.tl.paga(adata, groups='leiden')
 
 # 2. Plot the coarse-grained PAGA graph
-sc.pl.paga(adata, plot=False)  
+sc.pl.paga(adata, plot=False)
 
 # 3. Use PAGA initialization to recompute a more continuous UMAP
 sc.tl.umap(adata, init_pos='paga')
@@ -115,7 +116,7 @@ cds <- cluster_cells(cds)
 # 2. Learn the principal graph (trajectory)
 cds <- learn_graph(cds)
 
-# 3. Order cells in pseudotime 
+# 3. Order cells in pseudotime
 # (This will open an interactive prompt to select the root nodes)
 cds <- order_cells(cds)
 
@@ -138,15 +139,15 @@ Trajectory inference shifts our perspective from discrete clusters to continuous
   <div class="space-y-4">
     <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
       <h4 class="font-bold text-gray-800 mb-2">1. Concept Verification</h4>
-      <p class="text-gray-600 text-sm">Explain the primary function of the core tools introduced in this lesson. What specific bioinformatics problem do they solve compared to alternative methods?</p>
+      <p class="text-gray-600 text-sm">Why does pseudotime not prove that one observed cell literally becomes another?</p>
     </div>
     <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
       <h4 class="font-bold text-gray-800 mb-2">2. Practical Execution</h4>
-      <p class="text-gray-600 text-sm">Execute the main pipeline commands on your own subset of data. <strong>Pass Criteria:</strong> The commands complete without syntax errors and generate the expected output file formats.</p>
+      <p class="text-gray-600 text-sm">Run or inspect a trajectory analysis, state the root choice, identify one branch, and plot expression of a relevant dynamic gene. <strong>Pass Criteria:</strong> Record the command or analysis choice, keep the output, and explain why it answers the stated task.</p>
     </div>
     <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
       <h4 class="font-bold text-gray-800 mb-2">3. Troubleshooting</h4>
-      <p class="text-gray-600 text-sm">If your output is empty or throws a memory error (OOM), what parameters should you adjust? (Hint: Check threads, memory allocation, or file paths).</p>
+      <p class="text-gray-600 text-sm">If the inferred path contradicts known biology, how will you check rooting, cell selection, batch effects, doublets, and alternative trajectory methods?</p>
     </div>
   </div>
 </div>

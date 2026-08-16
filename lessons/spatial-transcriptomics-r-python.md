@@ -22,15 +22,16 @@ image: "images/spatial-transcriptomics.png"
 <div class="p-6 bg-blue-50 border border-blue-100 rounded-xl mb-8">
   <h4 class="text-lg font-bold text-blue-900 mb-2">Learning Objectives & Prerequisites</h4>
   <ul class="list-disc list-inside text-blue-800 space-y-1 mb-4">
-    <li><strong>Prerequisites:</strong> Basic understanding of the Linux terminal and bioinformatics concepts. (See <a href="start-here.html" class="underline">Start Here</a>)</li>
-    <li><strong>Objective:</strong> Master the core concepts and practical commands of this topic.</li>
-    <li><strong>Expected Output:</strong> A reproducible workflow and a clear understanding of the methodology.</li>
+    <li><strong>Prerequisites:</strong> Complete scRNA-seq Basics and understand tissue sections, spatial coordinates, counts, and histology-aware interpretation.</li>
+    <li><strong>Objective:</strong> Load, QC, visualize, and interpret spatial transcriptomics data while separating spatial association from causal tissue mechanisms.</li>
+    <li><strong>Expected Output:</strong> A spatial plot with tissue context, QC notes, coordinate system, feature choice, and a cautious biological interpretation.</li>
   </ul>
+  <p class="text-sm text-blue-700"><strong>Suggested route:</strong> use the <a href="start-here.html" class="underline">Bioinformatics Academy Pathway</a> to review any prerequisite stage before continuing.</p>
 </div>
 
 
 
-# Spatial Transcriptomics: Bridging RNA and Anatomy
+## Spatial Transcriptomics: Bridging RNA and Anatomy
 
 ## Introduction to Spatial Biology
 
@@ -142,15 +143,15 @@ Both ecosystems are incredibly powerful. **Seurat (R)** provides an easy, out-of
   <div class="space-y-4">
     <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
       <h4 class="font-bold text-gray-800 mb-2">1. Concept Verification</h4>
-      <p class="text-gray-600 text-sm">Explain the primary function of the core tools introduced in this lesson. What specific bioinformatics problem do they solve compared to alternative methods?</p>
+      <p class="text-gray-600 text-sm">Why does spatial co-localization support a hypothesis but not prove direct cellular interaction or lineage?</p>
     </div>
     <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
       <h4 class="font-bold text-gray-800 mb-2">2. Practical Execution</h4>
-      <p class="text-gray-600 text-sm">Execute the main pipeline commands on your own subset of data. <strong>Pass Criteria:</strong> The commands complete without syntax errors and generate the expected output file formats.</p>
+      <p class="text-gray-600 text-sm">Load a small spatial dataset, plot a quality metric and one marker, then describe the tissue region and uncertainty in the observed pattern. <strong>Pass Criteria:</strong> Record the command or analysis choice, keep the output, and explain why it answers the stated task.</p>
     </div>
     <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
       <h4 class="font-bold text-gray-800 mb-2">3. Troubleshooting</h4>
-      <p class="text-gray-600 text-sm">If your output is empty or throws a memory error (OOM), what parameters should you adjust? (Hint: Check threads, memory allocation, or file paths).</p>
+      <p class="text-gray-600 text-sm">If a spatial pattern follows low capture or tissue-edge regions, how will you inspect spot QC, histology alignment, sequencing depth, and segmentation assumptions?</p>
     </div>
   </div>
 </div>

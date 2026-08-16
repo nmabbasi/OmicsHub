@@ -9,17 +9,17 @@
 <meta content="Nasir Mahmood Abbasi, PhD" name="author"/>
 <meta content="index, follow" name="robots"/>
 <!-- Open Graph tags for social sharing -->
-<meta content="The Omics Hub | Bioinformatics Academy" property="og:title"/>
-<meta content="Master computational biology with hands-on tutorials covering shell commands, conda environments, single-cell RNA-seq analysis, and essential bioinformatics tools." property="og:description"/>
+<meta content="Git and GitHub for Bioinformatics | The Omics Hub" property="og:title"/>
+<meta content="Use Git and GitHub to track code, document analyses, collaborate safely, and make bioinformatics projects reproducible." property="og:description"/>
 <meta content="https://theomicshub.com/git-github-bioinformatics.html" property="og:url"/>
 <meta content="website" property="og:type"/>
-<meta content="https://theomicshub.com/images/hero-image.png" property="og:image"/>
+<meta content="https://theomicshub.com/images/git-github-bioinformatics.png" property="og:image"/>
 <!-- Twitter Card tags -->
 <meta content="summary_large_image" name="twitter:card"/>
-<meta content="The Omics Hub | Bioinformatics Academy" name="twitter:title"/>
-<meta content="Master computational biology with hands-on tutorials covering shell commands, conda environments, single-cell RNA-seq analysis, and essential bioinformatics tools." name="twitter:description"/>
-<meta content="https://theomicshub.com/images/hero-image.png" name="twitter:image"/>
-<title>The Omics Hub</title>
+<meta content="Git and GitHub for Bioinformatics | The Omics Hub" name="twitter:title"/>
+<meta content="Use Git and GitHub to track code, document analyses, collaborate safely, and make bioinformatics projects reproducible." name="twitter:description"/>
+<meta content="https://theomicshub.com/images/git-github-bioinformatics.png" name="twitter:image"/>
+<title>Git and GitHub for Bioinformatics | The Omics Hub</title>
 <!-- Favicon -->
 <link href="images/favicon.svg" rel="icon" type="image/svg+xml"/>
 <!-- Tailwind CSS CDN -->
@@ -38,30 +38,9 @@
         gtag("js", new Date());
         gtag("config", "G-XXXXXXXXXX");
     </script> -->
-<link rel="canonical" href="https://theomicshub.com/git-github-bioinformatics.html" />
-
-    <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "Article",
-      "headline": "Git and GitHub for Bioinformatics",
-      "description": "Use Git and GitHub to track code, document analyses, collaborate safely, and make bioinformatics projects reproducible.",
-      "author": {
-        "@type": "Person",
-        "name": "Nasir Mahmood Abbasi, PhD",
-        "url": "https://theomicshub.com/about.html"
-      },
-      "publisher": {
-        "@type": "Organization",
-        "name": "The Omics Hub",
-        "logo": {
-          "@type": "ImageObject",
-          "url": "https://theomicshub.com/images/default-tutorial.png"
-        }
-      }
-    }
-    </script>
-    
+  <meta name="robots" content="index, follow"/>
+  <link rel="canonical" href="https://theomicshub.com/git-github-bioinformatics.html"/>
+  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "Article", "headline": "Git and GitHub for Bioinformatics", "description": "Use Git and GitHub to track code, document analyses, collaborate safely, and make bioinformatics projects reproducible.", "mainEntityOfPage": {"@type": "WebPage", "@id": "https://theomicshub.com/git-github-bioinformatics.html"}, "image": "https://theomicshub.com/images/git-github-bioinformatics.png", "author": {"@type": "Person", "name": "Nasir Mahmood Abbasi, PhD", "url": "https://theomicshub.com/about.html"}, "publisher": {"@type": "Organization", "name": "The Omics Hub", "url": "https://theomicshub.com", "logo": {"@type": "ImageObject", "url": "https://theomicshub.com/images/favicon.svg"}}, "datePublished": "2026-08-15", "dateModified": "2026-08-15"}</script>
 </head>
 <body class="bg-white text-gray-900">
 <!-- Header -->
@@ -129,143 +108,17 @@ Legal
 </header>
 <!-- Main Content -->
 <main class="min-h-screen">
-
-    <!-- Tutorial Detail Page (Pre-rendered for SEO and Instant Load) -->
     <div class="page-content" id="tutorial-page">
-        <div class="container mx-auto px-4 py-8">
-            <div class="max-w-4xl mx-auto">
-                <!-- SEO Hidden Markdown Data for search/index -->
-                <div id="seo-markdown-data" style="display:none;">
----
-title: "Git and GitHub for Bioinformatics"
-category: "Foundations & Prerequisites"
-date: "2026-08-15"
-image: "images/git-github-bioinformatics.png"
-excerpt: "Use Git and GitHub to track code, document analyses, collaborate safely, and make bioinformatics projects reproducible."
-author: "Nasir Mahmood Abbasi, PhD"
----
-
-<div class="mb-10 text-xl text-gray-600 leading-relaxed">
-  <p>Git records how a project changes over time. GitHub provides a collaborative home for repositories, issues, releases, and documentation. Together they make it possible to identify the exact scripts and configuration used to produce a result. Never commit private patient data or credentials.</p>
-</div>
-
-## Learning Objectives & Prerequisites
-
-**By the end of this lesson, you should be able to:**
-
-- Create a repository, make commits, inspect history, and use branches.
-- Write a useful README and `.gitignore` for a bioinformatics project.
-- Push code without exposing raw data, passwords, tokens, or private identifiers.
-- Use issues and pull requests for review.
-
-**Prerequisites:**
-
-- Complete [Computer and Data Fundamentals](computer-data-fundamentals.html).
-- Install Git and create a GitHub account if you want to push to a remote repository.
-
-## 1. Start a reproducible repository
-
-A repository should contain scripts, configuration, documentation, and small example data—not an uncontrolled dump of raw sequencing files.
-
-```bash
-mkdir omics-demo && cd omics-demo
-git init
-printf "# Omics demo\n" > README.md
-printf "*.fastq.gz\n.env\nresults/\n" > .gitignore
-git add README.md .gitignore
-git commit -m "Initialize reproducible project"
-```
-
-## 2. Record meaningful changes
-
-A commit should represent one understandable change. Use `git diff` before committing and write messages that explain what changed.
-
-```bash
-git status
-git diff
-git log --oneline --decorate -5
-git add scripts/
-git commit -m "Add read QC summary script"
-```
-
-## 3. Connect a remote safely
-
-Use SSH keys or a credential manager. Never put a personal access token in a URL, shell history, notebook, or script.
-
-```bash
-git remote add origin https://github.com/USER/REPO.git
-git branch -M main
-git push -u origin main
-```
-
-## 4. Reproducibility checklist
-
-Record software versions, environment files, reference versions, command parameters, and the commit hash associated with a result.
-
-```bash
-git rev-parse --short HEAD
-python --version
-conda env export --from-history > environment.yml
-```
-
-## Practical Exercise
-
-Create a small repository containing a README, `.gitignore`, one script, and an environment file. Make two commits and use `git log` to show the history.
-
-**Pass criteria:** The repository history contains two meaningful commits, no credentials or raw human data are tracked, and the README explains how to reproduce the example.
-
-## Troubleshooting
-
-If a push is rejected, pull and inspect the remote history before forcing anything. If a secret was committed, rotate it immediately; deleting the file is not enough because it remains in Git history.
-
-## Knowledge Check & Assessment
-
-### 1. Concept Verification
-
-Write short answers explaining the main concepts, the assumptions behind them, and one way a careless workflow could produce a misleading result.
-
-### 2. Practical Execution
-
-Complete the practical exercise above and save the command, script, table, or figure in the project structure. **Pass Criteria:** The repository history contains two meaningful commits, no credentials or raw human data are tracked, and the README explains how to reproduce the example.
-
-### 3. Troubleshooting
-
-Explain what you would inspect first if the output were empty, malformed, unexpectedly large, or failed because of a missing file, package, permission, memory, or metadata problem.
-
-## Next Steps
-
-Continue with [Reproducible Project Structure](reproducible-project-structure.html) and [Python Fundamentals](python-fundamentals-bioinformatics.html). Record the software versions, dataset or example inputs, and any decisions you made.
-
-                </div>
-                <!-- PRE-RENDERED STATIC HTML -->
-                <div id="tutorial-content">
-                    
-            <div class="mb-12">
-                <div class="flex items-center gap-2 text-sm text-blue-600 font-medium mb-4">
-                    <span>Foundations & Prerequisites</span>
-                    <span>•</span>
-                    <span>2026-08-15</span>
-                </div>
+        <div class="container mx-auto px-4 py-8"><div class="max-w-4xl mx-auto"><div id="tutorial-content">
+            <section class="mb-12">
+                <div class="flex items-center gap-2 text-sm text-blue-600 font-medium mb-4"><span>Foundations &amp; Prerequisites</span><span>•</span><span>2026-08-15</span></div>
                 <h1 class="text-4xl md:text-5xl font-black text-gray-900 mb-6 leading-tight">Git and GitHub for Bioinformatics</h1>
-                <div class="flex items-center gap-4">
-                    <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 font-bold text-lg">
-                        NM
-                    </div>
-                    <div>
-                        <p class="font-bold text-gray-900">Nasir Mahmood Abbasi, PhD</p>
-                        <p class="text-sm text-gray-500">Bioinformatics Educator</p>
-                    </div>
-                </div>
-            </div>
-            
-            
+                <div class="flex items-center gap-4"><div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 font-bold text-lg">NM</div><div><p class="font-bold text-gray-900">Nasir Mahmood Abbasi, PhD</p><p class="text-sm text-gray-500">Bioinformatics Educator</p></div></div>
+            </section>
             <div class="mb-12 rounded-2xl overflow-hidden shadow-lg border border-gray-100">
-                <img src="images/git-github-bioinformatics.png" alt="Git and GitHub for Bioinformatics" class="w-full h-auto object-cover aspect-video">
-            </div>
-    
-            
-            <div class="prose prose-blue prose-lg max-w-none">
-                <div class="mb-10 text-xl text-gray-600 leading-relaxed">
+<img src="images/git-github-bioinformatics.png" alt="Git and GitHub for Bioinformatics" class="w-full h-auto object-cover aspect-video">
+</div>
+            <article class="prose prose-blue prose-lg max-w-none" aria-labelledby="tutorial-title"><div class="mb-10 text-xl text-gray-600 leading-relaxed">
   <p>Git records how a project changes over time. GitHub provides a collaborative home for repositories, issues, releases, and documentation. Together they make it possible to identify the exact scripts and configuration used to produce a result. Never commit private patient data or credentials.</p>
 </div>
 
@@ -324,59 +177,44 @@ conda env export --from-history &gt; environment.yml
 <h3>3. Troubleshooting</h3>
 <p>Explain what you would inspect first if the output were empty, malformed, unexpectedly large, or failed because of a missing file, package, permission, memory, or metadata problem.</p>
 <h2>Next Steps</h2>
-<p>Continue with <a href="reproducible-project-structure.html">Reproducible Project Structure</a> and <a href="python-fundamentals-bioinformatics.html">Python Fundamentals</a>. Record the software versions, dataset or example inputs, and any decisions you made.</p>
-            </div>
-            
-            
-    <div class="mt-16 pt-10 border-t border-gray-100">
+<p>Continue with <a href="reproducible-project-structure.html">Reproducible Project Structure</a> and <a href="python-fundamentals-bioinformatics.html">Python Fundamentals</a>. Record the software versions, dataset or example inputs, and any decisions you made.</p></article>
+
+    <section class="mt-16 pt-10 border-t border-gray-100" aria-label="Course sequence">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
-            <h3 class="text-2xl font-black text-gray-900 tracking-tight">Continue Learning</h3>
+            <h2 class="text-2xl font-black text-gray-900 tracking-tight">Continue Learning</h2>
             <span class="inline-block bg-blue-50 text-blue-700 text-xs font-bold px-3 py-1.5 rounded-full uppercase tracking-wider">Course Sequence</span>
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            
-        <a href="quality-control-fundamentals.html" class="group relative flex flex-col justify-center p-6 bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden text-left">
+            <a href="quality-control-fundamentals.html" class="group relative flex flex-col justify-center p-6 bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden text-left">
+
             <div class="absolute inset-0 bg-gradient-to-r from-blue-50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
             <div class="relative z-10 flex items-center gap-4">
-                <div class="w-12 h-12 flex-shrink-0 rounded-full bg-gray-50 flex items-center justify-center group-hover:bg-blue-600 transition-colors duration-300">
-                    <svg class="w-6 h-6 text-gray-400 group-hover:text-white transition-colors duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
-                </div>
-                <div>
+                <div class="w-12 h-12 flex-shrink-0 rounded-full bg-gray-50 flex items-center justify-center group-hover:bg-blue-600 transition-colors duration-300"><svg class="w-6 h-6 text-gray-400 group-hover:text-white transition-colors duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg></div>
+                <div class="text-left">
                     <span class="block text-xs font-bold tracking-widest text-gray-400 uppercase mb-1">Previous Lesson</span>
                     <span class="block text-gray-900 font-bold group-hover:text-blue-700 transition-colors line-clamp-2 leading-snug">Quality Control Fundamentals</span>
                 </div>
+
             </div>
         </a>
-        
-            
-        <a href="python-fundamentals-bioinformatics.html" class="group relative flex flex-col justify-center p-6 bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden text-right">
+            <a href="python-fundamentals-bioinformatics.html" class="group relative flex flex-col justify-center p-6 bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden text-right">
+
             <div class="absolute inset-0 bg-gradient-to-l from-blue-50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
             <div class="relative z-10 flex items-center justify-end gap-4">
-                <div>
+
+                <div class="text-right">
                     <span class="block text-xs font-bold tracking-widest text-gray-400 uppercase mb-1">Next Lesson</span>
                     <span class="block text-gray-900 font-bold group-hover:text-blue-700 transition-colors line-clamp-2 leading-snug">Python Fundamentals for Bioinformatics</span>
                 </div>
-                <div class="w-12 h-12 flex-shrink-0 rounded-full bg-gray-50 flex items-center justify-center group-hover:bg-blue-600 transition-colors duration-300">
-                    <svg class="w-6 h-6 text-gray-400 group-hover:text-white transition-colors duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-                </div>
+                <div class="w-12 h-12 flex-shrink-0 rounded-full bg-gray-50 flex items-center justify-center group-hover:bg-blue-600 transition-colors duration-300"><svg class="w-6 h-6 text-gray-400 group-hover:text-white transition-colors duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></div>
             </div>
         </a>
-        
         </div>
+    </section>
+        </div></div></div>
     </div>
-    
-    
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <script>
-        // Tell script.js to skip rendering because it is already done
-        window.STATIC_RENDERED = true;
-        window.PRELOADED_TUTORIAL_ID = "git-github-bioinformatics";
-    </script>
-    
+    <script>window.STATIC_RENDERED = true; window.PRELOADED_TUTORIAL_ID = "git-github-bioinformatics";</script>
+
 </main>
 <!-- Footer (unchanged) -->
 <footer class="bg-gray-900 text-white mt-16">
@@ -397,7 +235,7 @@ conda env export --from-history &gt; environment.yml
 <span class="font-bold text-white">The Omics Hub</span>
 </div>
 <p class="text-gray-400 text-sm leading-relaxed mb-4">Practical, hands-on tutorials for bioinformatics, HPC, and single-cell RNA-seq analysis.</p>
-          <a href="https://paypal.me/nmabbasi12020?locale.x=en_US&country.x=FR" target="_blank" class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500 text-white font-bold rounded-lg hover:bg-emerald-600 transition-colors text-sm shadow-sm">
+          <a href="https://paypal.me/nmabbasi12020?locale.x=en_US&country.x=FR" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500 text-white font-bold rounded-lg hover:bg-emerald-600 transition-colors text-sm shadow-sm">
             <span class="text-base">☕</span>
             Buy me a coffee
           </a>
@@ -446,5 +284,51 @@ conda env export --from-history &gt; environment.yml
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <!-- Custom JS - loads tutorials from manifest -->
 <script src="script.js?v=20260815"></script>
+
+<script>
+function toggleMobileMenu() {
+  const menu = document.getElementById("mobile-menu");
+  const trigger = document.querySelector('[aria-controls="mobile-menu"]');
+  if (!menu) return;
+  const opening = menu.classList.contains("hidden");
+  menu.classList.toggle("hidden", !opening);
+  if (trigger) {
+    trigger.setAttribute("aria-expanded", String(opening));
+    trigger.setAttribute("aria-label", opening ? "Close navigation menu" : "Open navigation menu");
+  }
+}
+</script>
+
+<script id="navigation-accessibility">
+(function () {
+  const legalButton = document.getElementById("legal-menu-button");
+  const legalMenu = document.getElementById("legal-menu");
+  const setLegalState = (open) => {
+    if (!legalButton || !legalMenu) return;
+    legalButton.setAttribute("aria-expanded", String(open));
+    legalMenu.classList.toggle("opacity-100", open);
+    legalMenu.classList.toggle("visible", open);
+    legalMenu.classList.toggle("opacity-0", !open);
+    legalMenu.classList.toggle("invisible", !open);
+  };
+  if (legalButton && legalMenu) {
+    legalButton.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      setLegalState(legalButton.getAttribute("aria-expanded") !== "true");
+    });
+    document.addEventListener("click", (event) => {
+      if (!legalMenu.contains(event.target) && !legalButton.contains(event.target)) setLegalState(false);
+    });
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") {
+        setLegalState(false);
+        legalButton.focus();
+      }
+    });
+  }
+})();
+</script>
+
 </body>
 </html>

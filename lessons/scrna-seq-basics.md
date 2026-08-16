@@ -22,10 +22,11 @@ image: "images/single-cell-analysis.png"
 <div class="p-6 bg-blue-50 border border-blue-100 rounded-xl mb-8">
   <h4 class="text-lg font-bold text-blue-900 mb-2">Learning Objectives & Prerequisites</h4>
   <ul class="list-disc list-inside text-blue-800 space-y-1 mb-4">
-    <li><strong>Prerequisites:</strong> Basic understanding of the Linux terminal and bioinformatics concepts. (See <a href="start-here.html" class="underline">Start Here</a>)</li>
-    <li><strong>Objective:</strong> Master the core concepts and practical commands of this topic.</li>
-    <li><strong>Expected Output:</strong> A reproducible workflow and a clear understanding of the methodology.</li>
+    <li><strong>Prerequisites:</strong> Complete Linux, biological data formats, and basic statistics; install current Scanpy or Seurat in an isolated environment.</li>
+    <li><strong>Objective:</strong> Load a 10x count matrix, inspect QC distributions, normalize, identify variable features, run PCA/UMAP, and cluster cells without treating fixed thresholds as universal.</li>
+    <li><strong>Expected Output:</strong> A reproducible AnnData or Seurat object with documented per-sample QC decisions, neighborhood graph, UMAP, and cluster labels.</li>
   </ul>
+  <p class="text-sm text-blue-700"><strong>Suggested route:</strong> use the <a href="start-here.html" class="underline">Bioinformatics Academy Pathway</a> to review any prerequisite stage before continuing.</p>
 </div>
 
 
@@ -52,8 +53,8 @@ sc.logging.print_header()
 
 # Load 10x data
 adata = sc.read_10x_mtx(
-    'data/filtered_feature_bc_matrix/', 
-    var_names='gene_symbols', 
+    'data/filtered_feature_bc_matrix/',
+    var_names='gene_symbols',
     cache=True
 )
 
@@ -76,7 +77,7 @@ pbmc <- CreateSeuratObject(counts = pbmc.data, project = "pbmc3k", min.cells = 3
 
 ## 2. Quality Control (QC)
 
-Empty droplets or dying cells can confound downstream analysis. A universal rule of thumb is to filter cells with excessively high mitochondrial gene expression (which indicates ruptured cell membranes) or unusually low gene counts.
+Empty droplets or dying cells can confound downstream analysis. High mitochondrial expression or unusually low gene counts can flag low-quality cells, but the distribution must be inspected for each dataset and batch. The thresholds below are training starting points, not universal biological rules; document and justify any filtering decision.
 
 ```python
 # Identify mitochondrial genes
@@ -172,7 +173,7 @@ DimPlot(pbmc, reduction = "umap", label = TRUE)
 
 ## Conclusion
 
-Both Scanpy and Seurat offer extremely robust, highly-optimized pipelines for standard scRNA-seq analysis. Transitioning between them is primarily a matter of syntax. With these clusters defined, we are ready to proceed to downstream analysis such as Trajectory Inference and Cell-Cell Communication.
+Both Scanpy and Seurat support robust standard scRNA-seq workflows, but they differ in data structures, defaults, ecosystem choices, and analysis decisions. Choose one deliberately and document versions and parameters. With these clusters defined, we are ready to proceed to downstream analysis such as Trajectory Inference and Cell-Cell Communication.
 
 
 <div class="mt-10 p-8 bg-gray-50 border border-gray-200 rounded-xl">
@@ -180,15 +181,15 @@ Both Scanpy and Seurat offer extremely robust, highly-optimized pipelines for st
   <div class="space-y-4">
     <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
       <h4 class="font-bold text-gray-800 mb-2">1. Concept Verification</h4>
-      <p class="text-gray-600 text-sm">Explain the primary function of the core tools introduced in this lesson. What specific bioinformatics problem do they solve compared to alternative methods?</p>
+      <p class="text-gray-600 text-sm">Why must QC thresholds be inspected per dataset or batch rather than copied unchanged from a tutorial?</p>
     </div>
     <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
       <h4 class="font-bold text-gray-800 mb-2">2. Practical Execution</h4>
-      <p class="text-gray-600 text-sm">Execute the main pipeline commands on your own subset of data. <strong>Pass Criteria:</strong> The commands complete without syntax errors and generate the expected output file formats.</p>
+      <p class="text-gray-600 text-sm">Run the workflow on a small 10x dataset, create QC plots before filtering, document chosen thresholds, and save a clustered UMAP. <strong>Pass Criteria:</strong> Record the command or analysis choice, keep the output, and explain why it answers the stated task.</p>
     </div>
     <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
       <h4 class="font-bold text-gray-800 mb-2">3. Troubleshooting</h4>
-      <p class="text-gray-600 text-sm">If your output is empty or throws a memory error (OOM), what parameters should you adjust? (Hint: Check threads, memory allocation, or file paths).</p>
+      <p class="text-gray-600 text-sm">If a cluster is driven by mitochondrial content, batch, or doublets, what QC, sample-stratification, and doublet-detection checks should precede interpretation?</p>
     </div>
   </div>
 </div>

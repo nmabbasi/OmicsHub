@@ -9,17 +9,17 @@
 <meta content="Nasir Mahmood Abbasi, PhD" name="author"/>
 <meta content="index, follow" name="robots"/>
 <!-- Open Graph tags for social sharing -->
-<meta content="The Omics Hub | Bioinformatics Academy" property="og:title"/>
-<meta content="Master computational biology with hands-on tutorials covering shell commands, conda environments, single-cell RNA-seq analysis, and essential bioinformatics tools." property="og:description"/>
+<meta content="Biological Data Formats | The Omics Hub" property="og:title"/>
+<meta content="Read FASTA, FASTQ, SAM/BAM, VCF, GTF/GFF, and count matrices with confidence before running analysis pipelines." property="og:description"/>
 <meta content="https://theomicshub.com/biological-data-formats.html" property="og:url"/>
 <meta content="website" property="og:type"/>
-<meta content="https://theomicshub.com/images/hero-image.png" property="og:image"/>
+<meta content="https://theomicshub.com/images/biological-data-formats.png" property="og:image"/>
 <!-- Twitter Card tags -->
 <meta content="summary_large_image" name="twitter:card"/>
-<meta content="The Omics Hub | Bioinformatics Academy" name="twitter:title"/>
-<meta content="Master computational biology with hands-on tutorials covering shell commands, conda environments, single-cell RNA-seq analysis, and essential bioinformatics tools." name="twitter:description"/>
-<meta content="https://theomicshub.com/images/hero-image.png" name="twitter:image"/>
-<title>The Omics Hub</title>
+<meta content="Biological Data Formats | The Omics Hub" name="twitter:title"/>
+<meta content="Read FASTA, FASTQ, SAM/BAM, VCF, GTF/GFF, and count matrices with confidence before running analysis pipelines." name="twitter:description"/>
+<meta content="https://theomicshub.com/images/biological-data-formats.png" name="twitter:image"/>
+<title>Biological Data Formats | The Omics Hub</title>
 <!-- Favicon -->
 <link href="images/favicon.svg" rel="icon" type="image/svg+xml"/>
 <!-- Tailwind CSS CDN -->
@@ -38,30 +38,9 @@
         gtag("js", new Date());
         gtag("config", "G-XXXXXXXXXX");
     </script> -->
-<link rel="canonical" href="https://theomicshub.com/biological-data-formats.html" />
-
-    <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "Article",
-      "headline": "Biological Data Formats",
-      "description": "Read FASTA, FASTQ, SAM/BAM, VCF, GTF/GFF, and count matrices with confidence before running analysis pipelines.",
-      "author": {
-        "@type": "Person",
-        "name": "Nasir Mahmood Abbasi, PhD",
-        "url": "https://theomicshub.com/about.html"
-      },
-      "publisher": {
-        "@type": "Organization",
-        "name": "The Omics Hub",
-        "logo": {
-          "@type": "ImageObject",
-          "url": "https://theomicshub.com/images/default-tutorial.png"
-        }
-      }
-    }
-    </script>
-    
+  <meta name="robots" content="index, follow"/>
+  <link rel="canonical" href="https://theomicshub.com/biological-data-formats.html"/>
+  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "Article", "headline": "Biological Data Formats", "description": "Read FASTA, FASTQ, SAM/BAM, VCF, GTF/GFF, and count matrices with confidence before running analysis pipelines.", "mainEntityOfPage": {"@type": "WebPage", "@id": "https://theomicshub.com/biological-data-formats.html"}, "image": "https://theomicshub.com/images/biological-data-formats.png", "author": {"@type": "Person", "name": "Nasir Mahmood Abbasi, PhD", "url": "https://theomicshub.com/about.html"}, "publisher": {"@type": "Organization", "name": "The Omics Hub", "url": "https://theomicshub.com", "logo": {"@type": "ImageObject", "url": "https://theomicshub.com/images/favicon.svg"}}, "datePublished": "2026-08-15", "dateModified": "2026-08-15"}</script>
 </head>
 <body class="bg-white text-gray-900">
 <!-- Header -->
@@ -129,136 +108,17 @@ Legal
 </header>
 <!-- Main Content -->
 <main class="min-h-screen">
-
-    <!-- Tutorial Detail Page (Pre-rendered for SEO and Instant Load) -->
     <div class="page-content" id="tutorial-page">
-        <div class="container mx-auto px-4 py-8">
-            <div class="max-w-4xl mx-auto">
-                <!-- SEO Hidden Markdown Data for search/index -->
-                <div id="seo-markdown-data" style="display:none;">
----
-title: "Biological Data Formats"
-category: "Foundations & Prerequisites"
-date: "2026-08-15"
-image: "images/biological-data-formats.png"
-excerpt: "Read FASTA, FASTQ, SAM/BAM, VCF, GTF/GFF, and count matrices with confidence before running analysis pipelines."
-author: "Nasir Mahmood Abbasi, PhD"
----
-
-<div class="mb-10 text-xl text-gray-600 leading-relaxed">
-  <p>Bioinformatics tools exchange information through standardized files. A learner who can inspect a file, identify its assumptions, and validate its contents is much less likely to run the right command on the wrong input.</p>
-</div>
-
-## Learning Objectives & Prerequisites
-
-**By the end of this lesson, you should be able to:**
-
-- Recognize the purpose and basic structure of FASTA, FASTQ, BAM, VCF, GTF/GFF, and count matrices.
-- Use shell commands to inspect headers, record counts, and delimiters.
-- Distinguish reference sequences, reads, alignments, variants, annotations, and expression matrices.
-- Identify metadata that must remain linked to samples.
-
-**Prerequisites:**
-
-- Complete [Computer and Data Fundamentals](computer-data-fundamentals.html).
-- Know basic `pwd`, `ls`, `head`, `grep`, and pipe syntax.
-
-## 1. Sequence and read files
-
-FASTA stores named sequences as a header beginning with `>` followed by sequence lines. FASTQ stores a read name, sequence, a plus line, and one quality string for every record. A FASTQ record therefore has four lines, although wrapped sequence files require more careful parsing.
-
-```bash
-head -n 8 sample.fastq
-grep -c "^@" sample.fastq
-grep -c "^>" reference.fasta
-```
-
-## 2. Alignments and variants
-
-SAM is text; BAM is its compressed binary equivalent. A BAM requires an index for many random-access operations. VCF stores variant records with a header, reference/alternate alleles, quality, filters, and sample genotype fields. Never interpret a VCF without checking the reference genome build.
-
-```bash
-samtools view -H aligned.bam | head
-samtools quickcheck aligned.bam
-bcftools view -h variants.vcf.gz | head
-```
-
-## 3. Annotation and expression tables
-
-GTF/GFF files describe genomic features such as genes and transcripts. Count matrices usually have genes in rows, samples or cells in columns, and an identifier column. Confirm whether values are raw counts, normalized values, or transformed values before choosing a statistical method.
-
-```bash
-head -n 3 annotation.gtf
-head -n 5 counts.tsv | cut -f1-5
-```
-
-## 4. Metadata is part of the experiment
-
-A sample sheet should link every file to sample ID, donor, condition, batch, library type, and other pre-specified variables. Do not infer experimental groups from filenames alone.
-
-```text
-sample_id,fastq_r1,condition,batch,donor
-S01,S01_R1.fastq.gz,control,1,D01
-```
-
-## Practical Exercise
-
-Inspect one small FASTA, FASTQ, GTF, or count table. Record its format, number of records or rows, identifier field, compression state, and the metadata required to interpret it.
-
-**Pass criteria:** You can identify the file type from its structure, report one validation command, and explain which reference build or sample metadata is required.
-
-## Troubleshooting
-
-If a count table appears shifted, inspect delimiters and quoted fields. If a BAM fails `samtools quickcheck`, re-download or regenerate it rather than continuing with corrupted data.
-
-## Knowledge Check & Assessment
-
-### 1. Concept Verification
-
-Write short answers explaining the main concepts, the assumptions behind them, and one way a careless workflow could produce a misleading result.
-
-### 2. Practical Execution
-
-Complete the practical exercise above and save the command, script, table, or figure in the project structure. **Pass Criteria:** You can identify the file type from its structure, report one validation command, and explain which reference build or sample metadata is required.
-
-### 3. Troubleshooting
-
-Explain what you would inspect first if the output were empty, malformed, unexpectedly large, or failed because of a missing file, package, permission, memory, or metadata problem.
-
-## Next Steps
-
-Continue with [Quality Control Fundamentals](quality-control-fundamentals.html) and [Reference Genomes and Annotation Databases](reference-genomes-annotation.html). Record the software versions, dataset or example inputs, and any decisions you made.
-
-                </div>
-                <!-- PRE-RENDERED STATIC HTML -->
-                <div id="tutorial-content">
-                    
-            <div class="mb-12">
-                <div class="flex items-center gap-2 text-sm text-blue-600 font-medium mb-4">
-                    <span>Foundations & Prerequisites</span>
-                    <span>•</span>
-                    <span>2026-08-15</span>
-                </div>
+        <div class="container mx-auto px-4 py-8"><div class="max-w-4xl mx-auto"><div id="tutorial-content">
+            <section class="mb-12">
+                <div class="flex items-center gap-2 text-sm text-blue-600 font-medium mb-4"><span>Foundations &amp; Prerequisites</span><span>•</span><span>2026-08-15</span></div>
                 <h1 class="text-4xl md:text-5xl font-black text-gray-900 mb-6 leading-tight">Biological Data Formats</h1>
-                <div class="flex items-center gap-4">
-                    <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 font-bold text-lg">
-                        NM
-                    </div>
-                    <div>
-                        <p class="font-bold text-gray-900">Nasir Mahmood Abbasi, PhD</p>
-                        <p class="text-sm text-gray-500">Bioinformatics Educator</p>
-                    </div>
-                </div>
-            </div>
-            
-            
+                <div class="flex items-center gap-4"><div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 font-bold text-lg">NM</div><div><p class="font-bold text-gray-900">Nasir Mahmood Abbasi, PhD</p><p class="text-sm text-gray-500">Bioinformatics Educator</p></div></div>
+            </section>
             <div class="mb-12 rounded-2xl overflow-hidden shadow-lg border border-gray-100">
-                <img src="images/biological-data-formats.png" alt="Biological Data Formats" class="w-full h-auto object-cover aspect-video">
-            </div>
-    
-            
-            <div class="prose prose-blue prose-lg max-w-none">
-                <div class="mb-10 text-xl text-gray-600 leading-relaxed">
+<img src="images/biological-data-formats.png" alt="Biological Data Formats" class="w-full h-auto object-cover aspect-video">
+</div>
+            <article class="prose prose-blue prose-lg max-w-none" aria-labelledby="tutorial-title"><div class="mb-10 text-xl text-gray-600 leading-relaxed">
   <p>Bioinformatics tools exchange information through standardized files. A learner who can inspect a file, identify its assumptions, and validate its contents is much less likely to run the right command on the wrong input.</p>
 </div>
 
@@ -310,59 +170,44 @@ S01,S01_R1.fastq.gz,control,1,D01
 <h3>3. Troubleshooting</h3>
 <p>Explain what you would inspect first if the output were empty, malformed, unexpectedly large, or failed because of a missing file, package, permission, memory, or metadata problem.</p>
 <h2>Next Steps</h2>
-<p>Continue with <a href="quality-control-fundamentals.html">Quality Control Fundamentals</a> and <a href="reference-genomes-annotation.html">Reference Genomes and Annotation Databases</a>. Record the software versions, dataset or example inputs, and any decisions you made.</p>
-            </div>
-            
-            
-    <div class="mt-16 pt-10 border-t border-gray-100">
+<p>Continue with <a href="quality-control-fundamentals.html">Quality Control Fundamentals</a> and <a href="reference-genomes-annotation.html">Reference Genomes and Annotation Databases</a>. Record the software versions, dataset or example inputs, and any decisions you made.</p></article>
+
+    <section class="mt-16 pt-10 border-t border-gray-100" aria-label="Course sequence">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
-            <h3 class="text-2xl font-black text-gray-900 tracking-tight">Continue Learning</h3>
+            <h2 class="text-2xl font-black text-gray-900 tracking-tight">Continue Learning</h2>
             <span class="inline-block bg-blue-50 text-blue-700 text-xs font-bold px-3 py-1.5 rounded-full uppercase tracking-wider">Course Sequence</span>
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            
-        <a href="computer-data-fundamentals.html" class="group relative flex flex-col justify-center p-6 bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden text-left">
+            <a href="computer-data-fundamentals.html" class="group relative flex flex-col justify-center p-6 bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden text-left">
+
             <div class="absolute inset-0 bg-gradient-to-r from-blue-50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
             <div class="relative z-10 flex items-center gap-4">
-                <div class="w-12 h-12 flex-shrink-0 rounded-full bg-gray-50 flex items-center justify-center group-hover:bg-blue-600 transition-colors duration-300">
-                    <svg class="w-6 h-6 text-gray-400 group-hover:text-white transition-colors duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
-                </div>
-                <div>
+                <div class="w-12 h-12 flex-shrink-0 rounded-full bg-gray-50 flex items-center justify-center group-hover:bg-blue-600 transition-colors duration-300"><svg class="w-6 h-6 text-gray-400 group-hover:text-white transition-colors duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg></div>
+                <div class="text-left">
                     <span class="block text-xs font-bold tracking-widest text-gray-400 uppercase mb-1">Previous Lesson</span>
                     <span class="block text-gray-900 font-bold group-hover:text-blue-700 transition-colors line-clamp-2 leading-snug">Computer and Data Fundamentals for Biologists</span>
                 </div>
+
             </div>
         </a>
-        
-            
-        <a href="quality-control-fundamentals.html" class="group relative flex flex-col justify-center p-6 bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden text-right">
+            <a href="quality-control-fundamentals.html" class="group relative flex flex-col justify-center p-6 bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden text-right">
+
             <div class="absolute inset-0 bg-gradient-to-l from-blue-50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
             <div class="relative z-10 flex items-center justify-end gap-4">
-                <div>
+
+                <div class="text-right">
                     <span class="block text-xs font-bold tracking-widest text-gray-400 uppercase mb-1">Next Lesson</span>
                     <span class="block text-gray-900 font-bold group-hover:text-blue-700 transition-colors line-clamp-2 leading-snug">Quality Control Fundamentals</span>
                 </div>
-                <div class="w-12 h-12 flex-shrink-0 rounded-full bg-gray-50 flex items-center justify-center group-hover:bg-blue-600 transition-colors duration-300">
-                    <svg class="w-6 h-6 text-gray-400 group-hover:text-white transition-colors duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-                </div>
+                <div class="w-12 h-12 flex-shrink-0 rounded-full bg-gray-50 flex items-center justify-center group-hover:bg-blue-600 transition-colors duration-300"><svg class="w-6 h-6 text-gray-400 group-hover:text-white transition-colors duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></div>
             </div>
         </a>
-        
         </div>
+    </section>
+        </div></div></div>
     </div>
-    
-    
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <script>
-        // Tell script.js to skip rendering because it is already done
-        window.STATIC_RENDERED = true;
-        window.PRELOADED_TUTORIAL_ID = "biological-data-formats";
-    </script>
-    
+    <script>window.STATIC_RENDERED = true; window.PRELOADED_TUTORIAL_ID = "biological-data-formats";</script>
+
 </main>
 <!-- Footer (unchanged) -->
 <footer class="bg-gray-900 text-white mt-16">
@@ -383,7 +228,7 @@ S01,S01_R1.fastq.gz,control,1,D01
 <span class="font-bold text-white">The Omics Hub</span>
 </div>
 <p class="text-gray-400 text-sm leading-relaxed mb-4">Practical, hands-on tutorials for bioinformatics, HPC, and single-cell RNA-seq analysis.</p>
-          <a href="https://paypal.me/nmabbasi12020?locale.x=en_US&country.x=FR" target="_blank" class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500 text-white font-bold rounded-lg hover:bg-emerald-600 transition-colors text-sm shadow-sm">
+          <a href="https://paypal.me/nmabbasi12020?locale.x=en_US&country.x=FR" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500 text-white font-bold rounded-lg hover:bg-emerald-600 transition-colors text-sm shadow-sm">
             <span class="text-base">☕</span>
             Buy me a coffee
           </a>
@@ -432,5 +277,51 @@ S01,S01_R1.fastq.gz,control,1,D01
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <!-- Custom JS - loads tutorials from manifest -->
 <script src="script.js?v=20260815"></script>
+
+<script>
+function toggleMobileMenu() {
+  const menu = document.getElementById("mobile-menu");
+  const trigger = document.querySelector('[aria-controls="mobile-menu"]');
+  if (!menu) return;
+  const opening = menu.classList.contains("hidden");
+  menu.classList.toggle("hidden", !opening);
+  if (trigger) {
+    trigger.setAttribute("aria-expanded", String(opening));
+    trigger.setAttribute("aria-label", opening ? "Close navigation menu" : "Open navigation menu");
+  }
+}
+</script>
+
+<script id="navigation-accessibility">
+(function () {
+  const legalButton = document.getElementById("legal-menu-button");
+  const legalMenu = document.getElementById("legal-menu");
+  const setLegalState = (open) => {
+    if (!legalButton || !legalMenu) return;
+    legalButton.setAttribute("aria-expanded", String(open));
+    legalMenu.classList.toggle("opacity-100", open);
+    legalMenu.classList.toggle("visible", open);
+    legalMenu.classList.toggle("opacity-0", !open);
+    legalMenu.classList.toggle("invisible", !open);
+  };
+  if (legalButton && legalMenu) {
+    legalButton.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      setLegalState(legalButton.getAttribute("aria-expanded") !== "true");
+    });
+    document.addEventListener("click", (event) => {
+      if (!legalMenu.contains(event.target) && !legalButton.contains(event.target)) setLegalState(false);
+    });
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") {
+        setLegalState(false);
+        legalButton.focus();
+      }
+    });
+  }
+})();
+</script>
+
 </body>
 </html>

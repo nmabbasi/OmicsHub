@@ -22,15 +22,16 @@ image: "images/cat_advanced_sc.png"
 <div class="p-6 bg-blue-50 border border-blue-100 rounded-xl mb-8">
   <h4 class="text-lg font-bold text-blue-900 mb-2">Learning Objectives & Prerequisites</h4>
   <ul class="list-disc list-inside text-blue-800 space-y-1 mb-4">
-    <li><strong>Prerequisites:</strong> Basic understanding of the Linux terminal and bioinformatics concepts. (See <a href="start-here.html" class="underline">Start Here</a>)</li>
-    <li><strong>Objective:</strong> Master the core concepts and practical commands of this topic.</li>
-    <li><strong>Expected Output:</strong> A reproducible workflow and a clear understanding of the methodology.</li>
+    <li><strong>Prerequisites:</strong> Complete scRNA-seq Basics, cell-type annotation, and sample-aware differential-expression concepts.</li>
+    <li><strong>Objective:</strong> Infer candidate ligand-receptor communication programs and separate computational scores from experimentally established cell signaling.</li>
+    <li><strong>Expected Output:</strong> A ranked interaction table with sender/receiver labels, database version, sample context, and validation hypothesis.</li>
   </ul>
+  <p class="text-sm text-blue-700"><strong>Suggested route:</strong> use the <a href="start-here.html" class="underline">Bioinformatics Academy Pathway</a> to review any prerequisite stage before continuing.</p>
 </div>
 
 
 
-# Cell-Cell Communication Analysis
+## Cell-Cell Communication Analysis
 
 ## Introduction
 
@@ -102,7 +103,7 @@ cellchat <- aggregateNet(cellchat)
 
 ```r
 # Visualize the communication network as a Circle Plot
-netVisual_circle(cellchat@net$count, vertex.weight = groupSize, weight.scale = T, 
+netVisual_circle(cellchat@net$count, vertex.weight = groupSize, weight.scale = T,
                  label.edge= F, title.name = "Number of interactions")
 ```
 
@@ -135,15 +136,15 @@ Because scRNA-seq only provides a hypothesis, you **must** validate key findings
   <div class="space-y-4">
     <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
       <h4 class="font-bold text-gray-800 mb-2">1. Concept Verification</h4>
-      <p class="text-gray-600 text-sm">Explain the primary function of the core tools introduced in this lesson. What specific bioinformatics problem do they solve compared to alternative methods?</p>
+      <p class="text-gray-600 text-sm">Why does coexpression of a ligand and receptor suggest a hypothesis rather than prove physical communication?</p>
     </div>
     <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
       <h4 class="font-bold text-gray-800 mb-2">2. Practical Execution</h4>
-      <p class="text-gray-600 text-sm">Execute the main pipeline commands on your own subset of data. <strong>Pass Criteria:</strong> The commands complete without syntax errors and generate the expected output file formats.</p>
+      <p class="text-gray-600 text-sm">Run or inspect one ligand-receptor analysis and report the sender, receiver, interaction database, score, and a proposed validation experiment. <strong>Pass Criteria:</strong> Record the command or analysis choice, keep the output, and explain why it answers the stated task.</p>
     </div>
     <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
       <h4 class="font-bold text-gray-800 mb-2">3. Troubleshooting</h4>
-      <p class="text-gray-600 text-sm">If your output is empty or throws a memory error (OOM), what parameters should you adjust? (Hint: Check threads, memory allocation, or file paths).</p>
+      <p class="text-gray-600 text-sm">If a strong interaction appears only in one sample or broad cell type, how will you inspect cell abundance, expression thresholds, replicates, and spatial context?</p>
     </div>
   </div>
 </div>

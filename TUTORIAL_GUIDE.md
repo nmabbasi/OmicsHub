@@ -343,7 +343,7 @@ Before publishing, verify:
    ```bash
    # Start local server
    python -m http.server 8000
-   
+
    # Test in browser
    open http://localhost:8000
    ```

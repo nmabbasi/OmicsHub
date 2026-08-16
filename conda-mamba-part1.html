@@ -9,17 +9,17 @@
 <meta content="Nasir Mahmood Abbasi, PhD" name="author"/>
 <meta content="index, follow" name="robots"/>
 <!-- Open Graph tags for social sharing -->
-<meta content="The Omics Hub | Bioinformatics Academy" property="og:title"/>
-<meta content="Master computational biology with hands-on tutorials covering shell commands, conda environments, single-cell RNA-seq analysis, and essential bioinformatics tools." property="og:description"/>
+<meta content="Conda, Mamba, and Micromamba | The Omics Hub" property="og:title"/>
+<meta content="A complete guide to installing Conda and Mamba, creating isolated environments, and managing bioinformatics software to ensure fully reproducible analyses." property="og:description"/>
 <meta content="https://theomicshub.com/conda-mamba-part1.html" property="og:url"/>
 <meta content="website" property="og:type"/>
-<meta content="https://theomicshub.com/images/hero-image.png" property="og:image"/>
+<meta content="https://theomicshub.com/images/conda-mamba-part1.png" property="og:image"/>
 <!-- Twitter Card tags -->
 <meta content="summary_large_image" name="twitter:card"/>
-<meta content="The Omics Hub | Bioinformatics Academy" name="twitter:title"/>
-<meta content="Master computational biology with hands-on tutorials covering shell commands, conda environments, single-cell RNA-seq analysis, and essential bioinformatics tools." name="twitter:description"/>
-<meta content="https://theomicshub.com/images/hero-image.png" name="twitter:image"/>
-<title>The Omics Hub</title>
+<meta content="Conda, Mamba, and Micromamba | The Omics Hub" name="twitter:title"/>
+<meta content="A complete guide to installing Conda and Mamba, creating isolated environments, and managing bioinformatics software to ensure fully reproducible analyses." name="twitter:description"/>
+<meta content="https://theomicshub.com/images/conda-mamba-part1.png" name="twitter:image"/>
+<title>Conda, Mamba, and Micromamba | The Omics Hub</title>
 <!-- Favicon -->
 <link href="images/favicon.svg" rel="icon" type="image/svg+xml"/>
 <!-- Tailwind CSS CDN -->
@@ -38,30 +38,9 @@
         gtag("js", new Date());
         gtag("config", "G-XXXXXXXXXX");
     </script> -->
-<link rel="canonical" href="https://theomicshub.com/conda-mamba-part1.html" />
-
-    <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "Article",
-      "headline": "Conda, Mamba, and Micromamba",
-      "description": "A complete guide to installing Conda and Mamba, creating isolated environments, and managing bioinformatics software to ensure fully reproducible analyses.",
-      "author": {
-        "@type": "Person",
-        "name": "Nasir Mahmood Abbasi, PhD",
-        "url": "https://theomicshub.com/about.html"
-      },
-      "publisher": {
-        "@type": "Organization",
-        "name": "The Omics Hub",
-        "logo": {
-          "@type": "ImageObject",
-          "url": "https://theomicshub.com/images/default-tutorial.png"
-        }
-      }
-    }
-    </script>
-    
+  <meta name="robots" content="index, follow"/>
+  <link rel="canonical" href="https://theomicshub.com/conda-mamba-part1.html"/>
+  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "Article", "headline": "Conda, Mamba, and Micromamba", "description": "A complete guide to installing Conda and Mamba, creating isolated environments, and managing bioinformatics software to ensure fully reproducible analyses.", "mainEntityOfPage": {"@type": "WebPage", "@id": "https://theomicshub.com/conda-mamba-part1.html"}, "image": "https://theomicshub.com/images/conda-mamba-part1.png", "author": {"@type": "Person", "name": "Nasir Mahmood Abbasi, PhD", "url": "https://theomicshub.com/about.html"}, "publisher": {"@type": "Organization", "name": "The Omics Hub", "url": "https://theomicshub.com", "logo": {"@type": "ImageObject", "url": "https://theomicshub.com/images/favicon.svg"}}, "datePublished": "2025-08-13", "dateModified": "2025-08-13"}</script>
 </head>
 <body class="bg-white text-gray-900">
 <!-- Header -->
@@ -129,639 +108,17 @@ Legal
 </header>
 <!-- Main Content -->
 <main class="min-h-screen">
-
-    <!-- Tutorial Detail Page (Pre-rendered for SEO and Instant Load) -->
     <div class="page-content" id="tutorial-page">
-        <div class="container mx-auto px-4 py-8">
-            <div class="max-w-4xl mx-auto">
-                <!-- SEO Hidden Markdown Data for search/index -->
-                <div id="seo-markdown-data" style="display:none;">
----
-title: "Conda, Mamba, and Micromamba"
-date: "2025-08-13"
-author: "Nasir Mahmood Abbasi, PhD"
-category: "Package Management"
-excerpt: "A complete guide to installing Conda and Mamba, creating isolated environments, and managing bioinformatics software to ensure fully reproducible analyses."
-image: "images/conda-mamba-part1.png"
----
-
-
-<div class="flex flex-wrap items-center gap-4 text-xs font-mono text-gray-500 bg-gray-50 p-3 rounded-lg border border-gray-200 mb-6">
-  <div class="flex items-center gap-1">
-    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-    <span><strong>Tested on:</strong> Python 3.11, R 4.3.2, Ubuntu 24.04</span>
-  </div>
-  <div class="flex items-center gap-1">
-    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-    <span><strong>Last Review:</strong> 2026-08-15</span>
-  </div>
-</div>
-
-<div class="p-6 bg-blue-50 border border-blue-100 rounded-xl mb-8">
-  <h4 class="text-lg font-bold text-blue-900 mb-2">Learning Objectives & Prerequisites</h4>
-  <ul class="list-disc list-inside text-blue-800 space-y-1 mb-4">
-    <li><strong>Prerequisites:</strong> Basic understanding of the Linux terminal and bioinformatics concepts. (See <a href="start-here.html" class="underline">Start Here</a>)</li>
-    <li><strong>Objective:</strong> Master the core concepts and practical commands of this topic.</li>
-    <li><strong>Expected Output:</strong> A reproducible workflow and a clear understanding of the methodology.</li>
-  </ul>
-</div>
-
-
-
-## Why Package Management Matters in Bioinformatics
-
-If you've ever spent hours trying to install a bioinformatics tool only to run into dependency conflicts, version mismatches, or the dreaded "it works on my machine" problem: you're not alone. Package management is one of the biggest pain points for researchers entering computational biology.
-
-That's where Conda and Mamba come in. Think of them as your personal assistants for managing software installations: they handle all the messy details of dependencies, versions, and compatibility so you can focus on your research instead of wrestling with installation issues.
-
-## What Are Conda and Mamba?
-
-### Conda: The Foundation
-
-**Conda** is a package manager and environment management system that was originally created for Python but has evolved to support packages from any language. It's like having a smart librarian who not only knows where every book is but also ensures that when you check out a book, all the related materials you need are available and compatible.
-
-Key features of Conda:
-- **Cross-platform**: Works on Windows, macOS, and Linux
-- **Language-agnostic**: Manages Python, R, C++, Java, and more
-- **Environment isolation**: Keeps different projects separate
-- **Dependency resolution**: Automatically handles complex dependencies
-
-### Mamba: The Speed Demon
-
-**Mamba** is a reimplementation of Conda that's significantly faster: we're talking about going from minutes to seconds for complex installations. It's essentially Conda with a turbo engine, using the same commands and configuration files but with dramatically improved performance.
-
-Why Mamba is faster:
-- **Parallel processing**: Downloads and installs packages simultaneously
-- **Better algorithms**: More efficient dependency resolution
-- **Optimized codebase**: Written in C++ instead of Python
-
-## Installation Guide
-
-### Option 1: Miniconda (Recommended)
-
-Miniconda is a minimal installer that includes only Conda and Python. It's perfect for bioinformatics work because you can install exactly what you need.
-
-#### Linux Installation
-```bash
-# Download Miniconda
-wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
-
-# Make it executable
-chmod +x Miniconda3-latest-Linux-x86_64.sh
-
-# Run the installer
-bash Miniconda3-latest-Linux-x86_64.sh
-
-# Follow the prompts and restart your terminal
-```
-
-#### macOS Installation
-```bash
-# Download Miniconda
-curl -O https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-x86_64.sh
-
-# Run the installer
-bash Miniconda3-latest-MacOSX-x86_64.sh
-
-# For Apple Silicon Macs, use:
-# curl -O https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-arm64.sh
-```
-
-#### Windows Installation
-1. Download the Windows installer from [conda.io](https://conda.io/miniconda.html)
-2. Run the `.exe` file and follow the installation wizard
-3. Use Anaconda Prompt for all conda commands
-
-### Option 2: Anaconda (Full Distribution)
-
-Anaconda includes Conda plus 250+ pre-installed packages. It's convenient but takes up more space (3GB vs 400MB for Miniconda).
-
-Download from [anaconda.com](https://www.anaconda.com/products/distribution) and follow the installation instructions.
-
-### Verifying Installation
-
-After installation, verify that Conda is working:
-
-```bash
-conda --version
-# Should output something like: conda 23.7.4
-
-conda info
-# Shows detailed information about your Conda installation
-```
-
-## Installing Mamba
-
-Once you have Conda installed, adding Mamba is straightforward:
-
-```bash
-# Install Mamba from conda-forge
-conda install -c conda-forge mamba
-
-# Verify installation
-mamba --version
-```
-
-From now on, you can use `mamba` instead of `conda` for most commands: it's faster and uses the same syntax!
-
-## Understanding Environments
-
-### Why Use Environments?
-
-Imagine you're working on three different projects:
-1. **Project A**: Requires Python 3.8 and pandas 1.2
-2. **Project B**: Requires Python 3.9 and pandas 1.5
-3. **Project C**: Requires R 4.1 and Bioconductor 3.14
-
-Without environments, these requirements would conflict. Environments solve this by creating isolated spaces where each project can have its own dependencies.
-
-### Creating Your First Environment
-
-```bash
-# Create environment for single-cell analysis
-mamba create -n single-cell python=3.9
-
-# Create environment with specific packages
-mamba create -n rnaseq python=3.9 pandas numpy matplotlib
-
-# Create environment from a file (more on this later)
-mamba env create -f environment.yml
-```
-
-### Activating and Deactivating Environments
-
-```bash
-# Activate environment
-conda activate single-cell
-
-# Your prompt should change to show the active environment:
-# (single-cell) username@computer:~$
-
-# Deactivate environment
-conda deactivate
-
-# List all environments
-conda env list
-```
-
-**Pro tip**: Always activate the appropriate environment before starting work on a project!
-
-## Installing Bioinformatics Software
-
-### Essential Channels
-
-Channels are repositories where packages are stored. For bioinformatics, you'll primarily use:
-
-- **conda-forge**: Community-driven packages with high quality standards
-- **bioconda**: Specialized channel for bioinformatics software
-- **defaults**: Anaconda's default channel
-
-Set up your channels in the right priority order:
-
-```bash
-# Add channels (order matters!)
-conda config --add channels defaults
-conda config --add channels bioconda
-conda config --add channels conda-forge
-
-# Set channel priority to strict (recommended)
-conda config --set channel_priority strict
-```
-
-### Installing Common Bioinformatics Tools
-
-#### Sequence Analysis Tools
-```bash
-# Activate your environment
-conda activate bioinformatics
-
-# Install BLAST
-mamba install blast
-
-# Install BWA and Bowtie2 for alignment
-mamba install bwa bowtie2
-
-# Install SAMtools for BAM file manipulation
-mamba install samtools
-
-# Install FastQC for quality control
-mamba install fastqc
-```
-
-#### R and Bioconductor
-```bash
-# Install R
-mamba install r-base
-
-# Install essential R packages
-mamba install r-ggplot2 r-dplyr r-tidyr r-readr
-
-# Install Seurat for single-cell analysis
-mamba install r-seurat
-
-# Install DESeq2 for differential expression
-mamba install bioconductor-deseq2
-```
-
-#### Python Packages for Bioinformatics
-```bash
-# Install scientific computing stack
-mamba install numpy pandas scipy matplotlib seaborn
-
-# Install Jupyter for interactive analysis
-mamba install jupyter
-
-# Install Biopython
-mamba install biopython
-
-# Install scanpy for single-cell analysis
-mamba install scanpy
-```
-
-### Installing from Different Channels
-
-Sometimes you need to specify the channel explicitly:
-
-```bash
-# Install from specific channel
-mamba install -c bioconda gatk4
-
-# Install from multiple channels
-mamba install -c conda-forge -c bioconda snakemake
-
-# Search for packages
-mamba search blast
-mamba search -c bioconda "*blast*"
-```
-
-## Environment Management Best Practices
-
-### 1. One Environment Per Project
-
-Create separate environments for different projects to avoid conflicts:
-
-```bash
-# Project-specific environments
-mamba create -n cancer-genomics python=3.9 pandas numpy
-mamba create -n microbiome-analysis python=3.8 qiime2
-mamba create -n phylogenetics python=3.9 biopython dendropy
-```
-
-### 2. Document Your Environments
-
-Export your environment specifications so others can reproduce your setup:
-
-```bash
-# Export environment to file
-conda env export > environment.yml
-
-# Create environment from file
-mamba env create -f environment.yml
-```
-
-Example `environment.yml` file:
-```yaml
-name: single-cell-analysis
-channels:
-  - conda-forge
-  - bioconda
-  - defaults
-dependencies:
-  - python=3.9
-  - pandas=1.5.3
-  - numpy=1.24.3
-  - matplotlib=3.7.1
-  - seaborn=0.12.2
-  - r-base=4.3.1
-  - r-seurat=4.3.0
-  - r-ggplot2=3.4.2
-  - jupyter=1.0.0
-  - pip
-  - pip:
-    - scanpy==1.9.3
-    - anndata==0.9.2
-```
-
-### 3. Pin Important Versions
-
-For reproducible research, pin versions of critical packages:
-
-```bash
-# Pin specific versions
-mamba install python=3.9.16 pandas=1.5.3 numpy=1.24.3
-
-# Allow patch updates but lock major.minor versions
-mamba install "python>=3.9,<3.10" "pandas>=1.5,<1.6"
-```
-
-### 4. Regular Environment Maintenance
-
-Keep your environments clean and up-to-date:
-
-```bash
-# Update all packages in current environment
-mamba update --all
-
-# Update specific package
-mamba update pandas
-
-# Remove unused packages
-mamba clean --all
-
-# Remove entire environment
-conda env remove -n old-project
-```
-
-## Advanced Usage Patterns
-
-### Creating Environments for Specific Workflows
-
-#### Single-cell RNA-seq Environment
-```bash
-mamba create -n scrna-seq python=3.9 \
-  pandas numpy matplotlib seaborn \
-  r-base r-seurat r-ggplot2 r-dplyr \
-  jupyter scanpy anndata \
-  -c conda-forge -c bioconda
-```
-
-#### Genomics Pipeline Environment
-```bash
-mamba create -n genomics python=3.9 \
-  bwa bowtie2 samtools bcftools \
-  gatk4 picard fastqc multiqc \
-  snakemake -c conda-forge -c bioconda
-```
-
-#### Phylogenetics Environment
-```bash
-mamba create -n phylo python=3.8 \
-  biopython dendropy ete3 \
-  muscle mafft iqtree raxml \
-  -c conda-forge -c bioconda
-```
-
-### Using Conda with Jupyter Notebooks
-
-Make your environments available in Jupyter:
-
-```bash
-# Install ipykernel in your environment
-conda activate single-cell
-mamba install ipykernel
-
-# Register environment as Jupyter kernel
-python -m ipykernel install --user --name single-cell --display-name "Single Cell Analysis"
-
-# Start Jupyter and select your kernel
-jupyter notebook
-```
-
-### Environment Variables and Configuration
-
-Set environment-specific variables:
-
-```bash
-# Set variables when activating environment
-conda activate myenv
-conda env config vars set CUDA_VISIBLE_DEVICES=0
-conda env config vars set OMP_NUM_THREADS=8
-
-# Reactivate to apply changes
-conda deactivate
-conda activate myenv
-```
-
-## Troubleshooting Common Issues
-
-### Slow Package Resolution
-
-If Conda is taking forever to resolve dependencies:
-
-```bash
-# Use Mamba instead (much faster)
-mamba install package-name
-
-# Use libmamba solver (Conda 22.11+)
-conda install --solver=libmamba package-name
-
-# Set libmamba as default solver
-conda config --set solver libmamba
-```
-
-### Conflicting Dependencies
-
-When packages conflict:
-
-```bash
-# Try installing from different channels
-mamba install -c conda-forge package-name
-
-# Create a fresh environment
-mamba create -n fresh-env package-name
-
-# Use pip as fallback (in conda environment)
-conda activate myenv
-pip install package-name
-```
-
-### Environment Activation Issues
-
-If `conda activate` doesn't work:
-
-```bash
-# Initialize conda for your shell
-conda init bash  # or zsh, fish, etc.
-
-# Restart your terminal or source your profile
-source ~/.bashrc
-
-# Alternative activation method
-source activate myenv
-```
-
-### Disk Space Issues
-
-Conda can use lots of disk space:
-
-```bash
-# Clean package cache
-conda clean --all
-
-# Remove unused packages
-conda clean --packages
-
-# Check disk usage
-du -sh ~/miniconda3/
-```
-
-## Integration with Other Tools
-
-### Using Conda with Docker
-
-Create reproducible containers:
-
-```dockerfile
-FROM continuumio/miniconda3
-
-COPY environment.yml .
-RUN conda env create -f environment.yml
-
-SHELL ["conda", "run", "-n", "myenv", "/bin/bash", "-c"]
-RUN echo "Environment is ready!"
-```
-
-### Using Conda with Snakemake
-
-Snakemake can automatically manage Conda environments:
-
-```python
-# Snakefile
-rule quality_control:
-    input: "data/sample.fastq"
-    output: "results/sample_fastqc.html"
-    conda: "envs/qc.yml"
-    shell: "fastqc {input} -o results/"
-```
-
-### Using Conda with Singularity
-
-Build containers with Conda environments:
-
-```bash
-# Build Singularity container with Conda
-singularity build mycontainer.sif docker://continuumio/miniconda3
-```
-
-## Best Practices Summary
-
-### Do's ✅
-
-1. **Use separate environments for different projects**
-2. **Document environments with `environment.yml` files**
-3. **Use Mamba for faster installations**
-4. **Pin versions for reproducible research**
-5. **Regularly clean up unused packages and environments**
-6. **Use conda-forge and bioconda channels**
-7. **Activate environments before starting work**
-
-### Don'ts ❌
-
-1. **Don't install everything in the base environment**
-2. **Don't mix conda and pip carelessly**
-3. **Don't ignore version conflicts**
-4. **Don't forget to document your environments**
-5. **Don't use `sudo` with conda commands**
-
-## Real-World Example: Setting Up a Single-Cell Analysis Environment
-
-Let's walk through setting up a complete environment for single-cell RNA-seq analysis:
-
-```bash
-# Step 1: Create the environment
-mamba create -n single-cell-analysis python=3.9
-
-# Step 2: Activate the environment
-conda activate single-cell-analysis
-
-# Step 3: Install R and essential packages
-mamba install -c conda-forge r-base=4.3.1
-
-# Step 4: Install Seurat and dependencies
-mamba install -c conda-forge r-seurat r-ggplot2 r-dplyr r-tidyr
-
-# Step 5: Install Python packages
-mamba install -c conda-forge pandas numpy matplotlib seaborn jupyter
-
-# Step 6: Install scanpy for Python-based analysis
-mamba install -c conda-forge scanpy
-
-# Step 7: Install additional tools
-mamba install -c bioconda samtools bcftools
-
-# Step 8: Export environment for reproducibility
-conda env export > single-cell-environment.yml
-
-# Step 9: Test the installation
-python -c "import scanpy; print('scanpy version:', scanpy.__version__)"
-R --slave -e "library(Seurat); cat('Seurat version:', as.character(packageVersion('Seurat')), '\n')"
-```
-
-## Conclusion
-
-Conda and Mamba are game-changers for bioinformatics research. They eliminate the frustration of dependency management and make it easy to create reproducible computational environments. With the skills covered in this tutorial, you can:
-
-- Install complex bioinformatics software with confidence
-- Create isolated environments for different projects
-- Share your computational setup with collaborators
-- Reproduce analyses months or years later
-
-Remember, good package management isn't just about convenience: it's about reproducible science. When you document your environments and pin your package versions, you're contributing to the reproducibility crisis solution in computational biology.
-
-## Next Steps
-
-Now that you've mastered package management, you're ready to tackle more advanced bioinformatics topics:
-
-1. **[Command Line Fundamentals](command-line-part1.html)**: Master the terminal for bioinformatics
-2. **[Single-cell RNA-seq Analysis](scrna-seq-basics.html)**: Apply your new environment to cutting-edge analysis
-3. **[Introduction to Bioinformatics](introduction-to-bioinformatics.html)**: Understand the broader context
-
-With proper package management under your belt, you'll never have to worry about "dependency hell" again. Welcome to the world of reproducible bioinformatics!
-
----
-
-*Having trouble with package installations? Need help setting up a specific environment? [Contact us](contact.html): we're here to help you get your computational environment running smoothly!*
-
-
-
-<div class="mt-10 p-8 bg-gray-50 border border-gray-200 rounded-xl">
-  <h3 class="text-xl font-bold text-gray-900 mb-4">Knowledge Check & Assessment</h3>
-  <div class="space-y-4">
-    <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-      <h4 class="font-bold text-gray-800 mb-2">1. Concept Verification</h4>
-      <p class="text-gray-600 text-sm">Explain the primary function of the core tools introduced in this lesson. What specific bioinformatics problem do they solve compared to alternative methods?</p>
-    </div>
-    <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-      <h4 class="font-bold text-gray-800 mb-2">2. Practical Execution</h4>
-      <p class="text-gray-600 text-sm">Execute the main pipeline commands on your own subset of data. <strong>Pass Criteria:</strong> The commands complete without syntax errors and generate the expected output file formats.</p>
-    </div>
-    <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-      <h4 class="font-bold text-gray-800 mb-2">3. Troubleshooting</h4>
-      <p class="text-gray-600 text-sm">If your output is empty or throws a memory error (OOM), what parameters should you adjust? (Hint: Check threads, memory allocation, or file paths).</p>
-    </div>
-  </div>
-</div>
-
-                </div>
-                <!-- PRE-RENDERED STATIC HTML -->
-                <div id="tutorial-content">
-                    
-            <div class="mb-12">
-                <div class="flex items-center gap-2 text-sm text-blue-600 font-medium mb-4">
-                    <span>Package Management</span>
-                    <span>•</span>
-                    <span>2025-08-13</span>
-                </div>
+        <div class="container mx-auto px-4 py-8"><div class="max-w-4xl mx-auto"><div id="tutorial-content">
+            <section class="mb-12">
+                <div class="flex items-center gap-2 text-sm text-blue-600 font-medium mb-4"><span>Package Management</span><span>•</span><span>2025-08-13</span></div>
                 <h1 class="text-4xl md:text-5xl font-black text-gray-900 mb-6 leading-tight">Conda, Mamba, and Micromamba</h1>
-                <div class="flex items-center gap-4">
-                    <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 font-bold text-lg">
-                        NM
-                    </div>
-                    <div>
-                        <p class="font-bold text-gray-900">Nasir Mahmood Abbasi, PhD</p>
-                        <p class="text-sm text-gray-500">Bioinformatics Educator</p>
-                    </div>
-                </div>
-            </div>
-            
-            
+                <div class="flex items-center gap-4"><div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 font-bold text-lg">NM</div><div><p class="font-bold text-gray-900">Nasir Mahmood Abbasi, PhD</p><p class="text-sm text-gray-500">Bioinformatics Educator</p></div></div>
+            </section>
             <div class="mb-12 rounded-2xl overflow-hidden shadow-lg border border-gray-100">
-                <img src="images/conda-mamba-part1.png" alt="Conda, Mamba, and Micromamba" class="w-full h-auto object-cover aspect-video">
-            </div>
-    
-            
-            <div class="prose prose-blue prose-lg max-w-none">
-                <div class="flex flex-wrap items-center gap-4 text-xs font-mono text-gray-500 bg-gray-50 p-3 rounded-lg border border-gray-200 mb-6">
+<img src="images/conda-mamba-part1.png" alt="Conda, Mamba, and Micromamba" class="w-full h-auto object-cover aspect-video">
+</div>
+            <article class="prose prose-blue prose-lg max-w-none" aria-labelledby="tutorial-title"><div class="flex flex-wrap items-center gap-4 text-xs font-mono text-gray-500 bg-gray-50 p-3 rounded-lg border border-gray-200 mb-6">
   <div class="flex items-center gap-1">
     <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
     <span><strong>Tested on:</strong> Python 3.11, R 4.3.2, Ubuntu 24.04</span>
@@ -775,10 +132,11 @@ With proper package management under your belt, you'll never have to worry about
 <div class="p-6 bg-blue-50 border border-blue-100 rounded-xl mb-8">
   <h4 class="text-lg font-bold text-blue-900 mb-2">Learning Objectives & Prerequisites</h4>
   <ul class="list-disc list-inside text-blue-800 space-y-1 mb-4">
-    <li><strong>Prerequisites:</strong> Basic understanding of the Linux terminal and bioinformatics concepts. (See <a href="start-here.html" class="underline">Start Here</a>)</li>
-    <li><strong>Objective:</strong> Master the core concepts and practical commands of this topic.</li>
-    <li><strong>Expected Output:</strong> A reproducible workflow and a clear understanding of the methodology.</li>
+    <li><strong>Prerequisites:</strong> Complete Basic Navigation and have a terminal with permission to install software in your home directory.</li>
+    <li><strong>Objective:</strong> Create, activate, export, clone, and troubleshoot isolated Conda or Mamba environments for bioinformatics software.</li>
+    <li><strong>Expected Output:</strong> An environment YAML file that recreates a named environment containing one specified bioinformatics tool.</li>
   </ul>
+  <p class="text-sm text-blue-700"><strong>Suggested route:</strong> use the <a href="start-here.html" class="underline">Bioinformatics Academy Pathway</a> to review any prerequisite stage before continuing.</p>
 </div>
 
 <h2>Why Package Management Matters in Bioinformatics</h2>
@@ -1199,70 +557,55 @@ R --slave -e &quot;library(Seurat); cat('Seurat version:', as.character(packageV
   <div class="space-y-4">
     <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
       <h4 class="font-bold text-gray-800 mb-2">1. Concept Verification</h4>
-      <p class="text-gray-600 text-sm">Explain the primary function of the core tools introduced in this lesson. What specific bioinformatics problem do they solve compared to alternative methods?</p>
+      <p class="text-gray-600 text-sm">Why is an isolated environment safer than installing packages into a system Python or shared default environment?</p>
     </div>
     <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
       <h4 class="font-bold text-gray-800 mb-2">2. Practical Execution</h4>
-      <p class="text-gray-600 text-sm">Execute the main pipeline commands on your own subset of data. <strong>Pass Criteria:</strong> The commands complete without syntax errors and generate the expected output file formats.</p>
+      <p class="text-gray-600 text-sm">Create an environment, install a named command-line tool, export the YAML, then recreate the environment from that file. <strong>Pass Criteria:</strong> Record the command or analysis choice, keep the output, and explain why it answers the stated task.</p>
     </div>
     <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
       <h4 class="font-bold text-gray-800 mb-2">3. Troubleshooting</h4>
-      <p class="text-gray-600 text-sm">If your output is empty or throws a memory error (OOM), what parameters should you adjust? (Hint: Check threads, memory allocation, or file paths).</p>
+      <p class="text-gray-600 text-sm">If dependency solving fails, how will you inspect channels, version pins, channel priority, and conflicting packages before deleting the environment?</p>
     </div>
   </div>
-</div>
-            </div>
-            
-            
-    <div class="mt-16 pt-10 border-t border-gray-100">
+</div></article>
+
+    <section class="mt-16 pt-10 border-t border-gray-100" aria-label="Course sequence">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
-            <h3 class="text-2xl font-black text-gray-900 tracking-tight">Continue Learning</h3>
+            <h2 class="text-2xl font-black text-gray-900 tracking-tight">Continue Learning</h2>
             <span class="inline-block bg-blue-50 text-blue-700 text-xs font-bold px-3 py-1.5 rounded-full uppercase tracking-wider">Course Sequence</span>
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            
-        <a href="command-line-part3.html" class="group relative flex flex-col justify-center p-6 bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden text-left">
+            <a href="command-line-part3.html" class="group relative flex flex-col justify-center p-6 bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden text-left">
+
             <div class="absolute inset-0 bg-gradient-to-r from-blue-50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
             <div class="relative z-10 flex items-center gap-4">
-                <div class="w-12 h-12 flex-shrink-0 rounded-full bg-gray-50 flex items-center justify-center group-hover:bg-blue-600 transition-colors duration-300">
-                    <svg class="w-6 h-6 text-gray-400 group-hover:text-white transition-colors duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
-                </div>
-                <div>
+                <div class="w-12 h-12 flex-shrink-0 rounded-full bg-gray-50 flex items-center justify-center group-hover:bg-blue-600 transition-colors duration-300"><svg class="w-6 h-6 text-gray-400 group-hover:text-white transition-colors duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg></div>
+                <div class="text-left">
                     <span class="block text-xs font-bold tracking-widest text-gray-400 uppercase mb-1">Previous Stage</span>
                     <span class="block text-gray-900 font-bold group-hover:text-blue-700 transition-colors line-clamp-2 leading-snug">Advanced Shell Scripting</span>
                 </div>
+
             </div>
         </a>
-        
-            
-        <a href="1-Connection.html" class="group relative flex flex-col justify-center p-6 bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden text-right">
+            <a href="1-Connection.html" class="group relative flex flex-col justify-center p-6 bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden text-right">
+
             <div class="absolute inset-0 bg-gradient-to-l from-blue-50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
             <div class="relative z-10 flex items-center justify-end gap-4">
-                <div>
+
+                <div class="text-right">
                     <span class="block text-xs font-bold tracking-widest text-gray-400 uppercase mb-1">Next Stage</span>
                     <span class="block text-gray-900 font-bold group-hover:text-blue-700 transition-colors line-clamp-2 leading-snug">Connecting to HPC</span>
                 </div>
-                <div class="w-12 h-12 flex-shrink-0 rounded-full bg-gray-50 flex items-center justify-center group-hover:bg-blue-600 transition-colors duration-300">
-                    <svg class="w-6 h-6 text-gray-400 group-hover:text-white transition-colors duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-                </div>
+                <div class="w-12 h-12 flex-shrink-0 rounded-full bg-gray-50 flex items-center justify-center group-hover:bg-blue-600 transition-colors duration-300"><svg class="w-6 h-6 text-gray-400 group-hover:text-white transition-colors duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></div>
             </div>
         </a>
-        
         </div>
+    </section>
+        </div></div></div>
     </div>
-    
-    
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <script>
-        // Tell script.js to skip rendering because it is already done
-        window.STATIC_RENDERED = true;
-        window.PRELOADED_TUTORIAL_ID = "conda-mamba-part1";
-    </script>
-    
+    <script>window.STATIC_RENDERED = true; window.PRELOADED_TUTORIAL_ID = "conda-mamba-part1";</script>
+
 </main>
 <!-- Footer (unchanged) -->
 <footer class="bg-gray-900 text-white mt-16">
@@ -1283,7 +626,7 @@ R --slave -e &quot;library(Seurat); cat('Seurat version:', as.character(packageV
 <span class="font-bold text-white">The Omics Hub</span>
 </div>
 <p class="text-gray-400 text-sm leading-relaxed mb-4">Practical, hands-on tutorials for bioinformatics, HPC, and single-cell RNA-seq analysis.</p>
-          <a href="https://paypal.me/nmabbasi12020?locale.x=en_US&country.x=FR" target="_blank" class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500 text-white font-bold rounded-lg hover:bg-emerald-600 transition-colors text-sm shadow-sm">
+          <a href="https://paypal.me/nmabbasi12020?locale.x=en_US&country.x=FR" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500 text-white font-bold rounded-lg hover:bg-emerald-600 transition-colors text-sm shadow-sm">
             <span class="text-base">☕</span>
             Buy me a coffee
           </a>
@@ -1332,5 +675,51 @@ R --slave -e &quot;library(Seurat); cat('Seurat version:', as.character(packageV
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <!-- Custom JS - loads tutorials from manifest -->
 <script src="script.js?v=20260815"></script>
+
+<script>
+function toggleMobileMenu() {
+  const menu = document.getElementById("mobile-menu");
+  const trigger = document.querySelector('[aria-controls="mobile-menu"]');
+  if (!menu) return;
+  const opening = menu.classList.contains("hidden");
+  menu.classList.toggle("hidden", !opening);
+  if (trigger) {
+    trigger.setAttribute("aria-expanded", String(opening));
+    trigger.setAttribute("aria-label", opening ? "Close navigation menu" : "Open navigation menu");
+  }
+}
+</script>
+
+<script id="navigation-accessibility">
+(function () {
+  const legalButton = document.getElementById("legal-menu-button");
+  const legalMenu = document.getElementById("legal-menu");
+  const setLegalState = (open) => {
+    if (!legalButton || !legalMenu) return;
+    legalButton.setAttribute("aria-expanded", String(open));
+    legalMenu.classList.toggle("opacity-100", open);
+    legalMenu.classList.toggle("visible", open);
+    legalMenu.classList.toggle("opacity-0", !open);
+    legalMenu.classList.toggle("invisible", !open);
+  };
+  if (legalButton && legalMenu) {
+    legalButton.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      setLegalState(legalButton.getAttribute("aria-expanded") !== "true");
+    });
+    document.addEventListener("click", (event) => {
+      if (!legalMenu.contains(event.target) && !legalButton.contains(event.target)) setLegalState(false);
+    });
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") {
+        setLegalState(false);
+        legalButton.focus();
+      }
+    });
+  }
+})();
+</script>
+
 </body>
 </html>

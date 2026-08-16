@@ -22,19 +22,20 @@ image: "images/support.png"
 <div class="p-6 bg-blue-50 border border-blue-100 rounded-xl mb-8">
   <h4 class="text-lg font-bold text-blue-900 mb-2">Learning Objectives & Prerequisites</h4>
   <ul class="list-disc list-inside text-blue-800 space-y-1 mb-4">
-    <li><strong>Prerequisites:</strong> Basic understanding of the Linux terminal and bioinformatics concepts. (See <a href="start-here.html" class="underline">Start Here</a>)</li>
-    <li><strong>Objective:</strong> Master the core concepts and practical commands of this topic.</li>
-    <li><strong>Expected Output:</strong> A reproducible workflow and a clear understanding of the methodology.</li>
+    <li><strong>Prerequisites:</strong> Complete the preceding HPC lessons and have access to your own job IDs and log files, where permitted.</li>
+    <li><strong>Objective:</strong> Diagnose common cluster problems, collect useful evidence, and write an effective support request without exposing sensitive data.</li>
+    <li><strong>Expected Output:</strong> A support-ready issue report containing the job ID, command, resource request, relevant log excerpt, and steps already attempted.</li>
   </ul>
+  <p class="text-sm text-blue-700"><strong>Suggested route:</strong> use the <a href="start-here.html" class="underline">Bioinformatics Academy Pathway</a> to review any prerequisite stage before continuing.</p>
 </div>
 
 
 
-# Linux/Unix Commands and Scripting
+## Linux/Unix Commands and Scripting
 
-## Linux
+### Core command-line support resources
 
-### Linux/Unix commands and scripting
+#### Linux/Unix commands and scripting
 
 **Text based tutorials**
 
@@ -42,13 +43,13 @@ image: "images/support.png"
 
 **Video tutorial**
 
-[LinkedIn Learning video tutorial on Linux.](https://www.linkedin.com/learning/learning-linux-command-line-2) Going through the full Linux tutorial on LinkedIn Learning is well worth the time and consists of less than 2.5 hours total of video instruction and setup. 
+[LinkedIn Learning video tutorial on Linux.](https://www.linkedin.com/learning/learning-linux-command-line-2) Going through the full Linux tutorial on LinkedIn Learning is well worth the time and consists of less than 2.5 hours total of video instruction and setup.
 
 See the video [Essential Linux Commands - Fluency Drill](https://www.youtube.com/watch?v=SYOANUvIg_A) for practice using the basic set of commands. It also explains file and directory permissions, and how to change them.
 
-# Command Line Text Editors
+### Command-line text editors
 
-### Command line text editors
+#### Command-line text editors
 
 **Vi/Vim**:
 
@@ -58,9 +59,19 @@ See the [full LinkedIn Learning video tutorial on Vim](https://www.linkedin.com/
 
 See the [full LinkedIn Learning video tutorial on nano](https://www.linkedin.com/learning/learning-nano) or a [short section on nano](https://www.linkedin.com/learning/learning-linux-command-line-2) from LinkedIn Learning Linux tutorial.
 
-# HPC Questions / Requests
+### Diagnose before escalating
 
-If you have any questions or requests regarding the HPC cluster, please send an email to `nmabbasi@gmail.com`.
+Run these safe status checks before opening a support request. They help separate scheduler, resource, and application-level failures.
+
+```bash
+# Replace JOB_ID with a job you are allowed to inspect
+squeue -j JOB_ID -o "%.18i %.9P %.12j %.8u %.2t %.10M %.6D %R"
+sacct -j JOB_ID --format=JobID,State,ExitCode,Elapsed,ReqMem,MaxRSS
+```
+
+### HPC questions and requests
+
+Include the job ID, exact command or script, requested resources, a short relevant log excerpt, and steps already attempted. Do not include passwords, private keys, participant identifiers, or restricted data. For general questions or requests, contact `nmabbasi@gmail.com`.
 
 
 
@@ -69,15 +80,15 @@ If you have any questions or requests regarding the HPC cluster, please send an 
   <div class="space-y-4">
     <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
       <h4 class="font-bold text-gray-800 mb-2">1. Concept Verification</h4>
-      <p class="text-gray-600 text-sm">Explain the primary function of the core tools introduced in this lesson. What specific bioinformatics problem do they solve compared to alternative methods?</p>
+      <p class="text-gray-600 text-sm">Why is a reproducible minimal example more useful to HPC support than a vague statement that “the cluster failed”?</p>
     </div>
     <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
       <h4 class="font-bold text-gray-800 mb-2">2. Practical Execution</h4>
-      <p class="text-gray-600 text-sm">Execute the main pipeline commands on your own subset of data. <strong>Pass Criteria:</strong> The commands complete without syntax errors and generate the expected output file formats.</p>
+      <p class="text-gray-600 text-sm">Run the diagnostic commands in this lesson for one completed or test job and assemble a concise troubleshooting note. <strong>Pass Criteria:</strong> Record the command or analysis choice, keep the output, and explain why it answers the stated task.</p>
     </div>
     <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
       <h4 class="font-bold text-gray-800 mb-2">3. Troubleshooting</h4>
-      <p class="text-gray-600 text-sm">If your output is empty or throws a memory error (OOM), what parameters should you adjust? (Hint: Check threads, memory allocation, or file paths).</p>
+      <p class="text-gray-600 text-sm">If a job fails, how will you separate scheduler state, resource limits, environment problems, input-path mistakes, and application errors?</p>
     </div>
   </div>
 </div>

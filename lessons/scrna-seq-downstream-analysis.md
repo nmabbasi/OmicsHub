@@ -22,10 +22,11 @@ image: "images/scrna_metabolism.png"
 <div class="p-6 bg-blue-50 border border-blue-100 rounded-xl mb-8">
   <h4 class="text-lg font-bold text-blue-900 mb-2">Learning Objectives & Prerequisites</h4>
   <ul class="list-disc list-inside text-blue-800 space-y-1 mb-4">
-    <li><strong>Prerequisites:</strong> Basic understanding of the Linux terminal and bioinformatics concepts. (See <a href="start-here.html" class="underline">Start Here</a>)</li>
-    <li><strong>Objective:</strong> Master the core concepts and practical commands of this topic.</li>
-    <li><strong>Expected Output:</strong> A reproducible workflow and a clear understanding of the methodology.</li>
+    <li><strong>Prerequisites:</strong> Complete scRNA-seq Basics and have a QC-reviewed, clustered object with sample-level metadata.</li>
+    <li><strong>Objective:</strong> Perform downstream cell-state analyses while distinguishing exploratory cluster comparisons from replicate-aware inference.</li>
+    <li><strong>Expected Output:</strong> A documented downstream-analysis plan with a chosen question, input layer, covariates, statistical unit, and validation step.</li>
   </ul>
+  <p class="text-sm text-blue-700"><strong>Suggested route:</strong> use the <a href="start-here.html" class="underline">Bioinformatics Academy Pathway</a> to review any prerequisite stage before continuing.</p>
 </div>
 
 
@@ -50,7 +51,7 @@ library(patchwork)
 cellchat <- createCellChat(object = pbmc, group.by = "ident")
 
 # 2. Set the ligand-receptor database
-CellChatDB <- CellChatDB.human 
+CellChatDB <- CellChatDB.human
 cellchat@DB <- CellChatDB
 
 # 3. Preprocessing and Network Inference
@@ -68,7 +69,7 @@ cellchat <- aggregateNet(cellchat)
 
 # 4. Visualization (Circle Plot)
 groupSize <- as.numeric(table(cellchat@idents))
-netVisual_circle(cellchat@net$count, vertex.weight = groupSize, 
+netVisual_circle(cellchat@net$count, vertex.weight = groupSize,
                  weight.scale = T, label.edge= F, title.name = "Number of interactions")
 ```
 ```python
@@ -129,7 +130,7 @@ regulon <- dorothea_regulon_human %>%
 
 # 2. Run VIPER algorithm to calculate TF activity
 pbmc <- run_viper(pbmc, regulon,
-                  options = list(method = "scale", minsize = 4, 
+                  options = list(method = "scale", minsize = 4,
                                  eset.filter = FALSE, cores = 1, verbose = FALSE))
 
 # 3. Visualize TF activity
@@ -147,7 +148,7 @@ While Seurat's base plotting functions are good, the **SCpubr** package in R gen
 library(SCpubr)
 
 # Generate a premium UMAP with custom labels, density contours, and refined aesthetics
-SCpubr::do_DimPlot(sample = pbmc, 
+SCpubr::do_DimPlot(sample = pbmc,
                    group.by = "ident",
                    label = TRUE,
                    label.box = TRUE,
@@ -173,15 +174,15 @@ Mastering these downstream analysis techniques allows you to graduate from simpl
   <div class="space-y-4">
     <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
       <h4 class="font-bold text-gray-800 mb-2">1. Concept Verification</h4>
-      <p class="text-gray-600 text-sm">Explain the primary function of the core tools introduced in this lesson. What specific bioinformatics problem do they solve compared to alternative methods?</p>
+      <p class="text-gray-600 text-sm">Why can treating cells as independent biological replicates exaggerate confidence in a differential-expression result?</p>
     </div>
     <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
       <h4 class="font-bold text-gray-800 mb-2">2. Practical Execution</h4>
-      <p class="text-gray-600 text-sm">Execute the main pipeline commands on your own subset of data. <strong>Pass Criteria:</strong> The commands complete without syntax errors and generate the expected output file formats.</p>
+      <p class="text-gray-600 text-sm">Select one downstream question, generate the appropriate plot or table, and state the biological replicate structure used for inference. <strong>Pass Criteria:</strong> Record the command or analysis choice, keep the output, and explain why it answers the stated task.</p>
     </div>
     <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
       <h4 class="font-bold text-gray-800 mb-2">3. Troubleshooting</h4>
-      <p class="text-gray-600 text-sm">If your output is empty or throws a memory error (OOM), what parameters should you adjust? (Hint: Check threads, memory allocation, or file paths).</p>
+      <p class="text-gray-600 text-sm">If a marker list changes after subsetting or changing resolution, how will you inspect cluster definition, sample representation, and multiple-testing choices?</p>
     </div>
   </div>
 </div>
