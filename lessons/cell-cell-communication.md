@@ -43,7 +43,7 @@ Two of the most powerful tools in R for inferring these networks are **LIANA** a
 
 ## 1. LIANA (Ligand-Receptor Analysis Framework)
 
-LIANA is incredibly powerful because it is not just one method—it is a wrapper that runs *multiple* cell-cell communication methods (like CellPhoneDB, NATMI, Connectome, and SingleCellSignalR) simultaneously and aggregates the results, giving you a consensus ranking of the most likely interactions.
+LIANA is incredibly powerful because it is not just one method - it is a wrapper that runs *multiple* cell-cell communication methods (like CellPhoneDB, NATMI, Connectome, and SingleCellSignalR) simultaneously and aggregates the results, giving you a consensus ranking of the most likely interactions.
 
 ### Running LIANA
 

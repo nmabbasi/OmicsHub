@@ -76,7 +76,7 @@ Once assembled, it is highly recommended to "polish" the genome using tools like
 
 ## 3. Transcriptomics: Full-Length Isoform Discovery
 
-One of the most powerful applications of long reads is identifying alternative splicing events. Since a single long read captures the entire transcript, you do not need to statistically infer isoforms—you simply read them directly.
+One of the most powerful applications of long reads is identifying alternative splicing events. Since a single long read captures the entire transcript, you do not need to statistically infer isoforms - you simply read them directly.
 
 ### Mapping Long RNA Reads
 **Minimap2** is the undisputed champion for aligning long reads. It is specifically designed to handle the high error rate and long insertions/deletions characteristic of long-read RNA-seq.

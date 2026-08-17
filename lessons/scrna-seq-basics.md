@@ -33,7 +33,7 @@ image: "images/scrna-seq-basics.png"
 
 ## From Raw Counts to Biological Insights
 
-Once the sequencing facility provides raw FASTQ files, the initial preprocessing step (using tools like Cell Ranger or STARsolo) maps the reads to a reference genome and generates a sparse count matrix. This matrix—where rows are genes and columns are cells—is the starting point for computational biologists.
+Once the sequencing facility provides raw FASTQ files, the initial preprocessing step (using tools like Cell Ranger or STARsolo) maps the reads to a reference genome and generates a sparse count matrix. This matrix - where rows are genes and columns are cells - is the starting point for computational biologists.
 
 In this tutorial, we will walk through a standard end-to-end analysis on a 10x Genomics dataset. We provide parallel workflows in both **Python (Scanpy)** and **R (Seurat)** so you can choose the ecosystem that best fits your needs.
 

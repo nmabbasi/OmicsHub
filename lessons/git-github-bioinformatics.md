@@ -27,7 +27,7 @@ author: "Nasir Mahmood Abbasi, PhD"
 
 ## 1. Start a reproducible repository
 
-A repository should contain scripts, configuration, documentation, and small example data—not an uncontrolled dump of raw sequencing files.
+A repository should contain scripts, configuration, documentation, and small example data - not an uncontrolled dump of raw sequencing files.
 
 ```bash
 mkdir omics-demo && cd omics-demo

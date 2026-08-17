@@ -126,7 +126,7 @@ FeaturePlot(seurat_obj,
 <figure class="lesson-figure">
   <img src="images/tutorial-figures/wnn-multimodal-embedding.webp" alt="WNN embedding comparison with cluster view on the left and predicted cell-type view on the right, illustrating joint RNA and antibody-derived tag analysis." loading="lazy" width="960" height="576">
   <figcaption>
-    <strong>Figure: A joint WNN embedding can connect clusters with multimodal cell-type interpretation.</strong> The left panel shows a joint neighborhood structure; the right panel illustrates how predicted identities can be compared against the same embedding. Treat predictions as evidence to verify with RNA markers, ADT signal, and biological context—not as final labels by themselves.
+    <strong>Figure: A joint WNN embedding can connect clusters with multimodal cell-type interpretation.</strong> The left panel shows a joint neighborhood structure; the right panel illustrates how predicted identities can be compared against the same embedding. Treat predictions as evidence to verify with RNA markers, ADT signal, and biological context - not as final labels by themselves.
     <span class="figure-source">Author-provided non-clinical teaching figure. This panel is included to demonstrate multi-modal interpretation rather than to report a disease-specific result.</span>
   </figcaption>
 </figure>

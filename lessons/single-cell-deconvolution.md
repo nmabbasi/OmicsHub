@@ -35,7 +35,7 @@ image: "images/bulk-rna-seq-deconvolution.png"
 
 ## Introduction
 
-Single-cell RNA-seq provides incredible resolution into cell states, but it is expensive and difficult to scale to hundreds or thousands of patients. Bulk RNA-seq is cheap and highly scalable, but the output is a "smoothie"—the gene expression is an average of all the thousands of cells in the tissue chunk.
+Single-cell RNA-seq provides incredible resolution into cell states, but it is expensive and difficult to scale to hundreds or thousands of patients. Bulk RNA-seq is cheap and highly scalable, but the output is a "smoothie" - the gene expression is an average of all the thousands of cells in the tissue chunk.
 
 **Deconvolution** is the mathematical process of taking a high-quality single-cell dataset (the reference "ingredients list") and using it to estimate the exact proportions of each cell type present in a bulk RNA-seq dataset (the "smoothie").
 

@@ -131,7 +131,7 @@ plot_cells(cds,
 
 ### Matched Python and R trajectory workflow
 
-The two ecosystems use different algorithms, but both require a justified biological root and should be interpreted as an inferred ordering—not observed time. Choose the implementation that fits the anticipated lineage topology and validate the result against known biology.
+The two ecosystems use different algorithms, but both require a justified biological root and should be interpreted as an inferred ordering - not observed time. Choose the implementation that fits the anticipated lineage topology and validate the result against known biology.
 
 <div class="code-tabs" data-code-tabs>
   <div class="code-tab-list" role="tablist" aria-label="Trajectory inference examples">

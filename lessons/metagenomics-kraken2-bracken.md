@@ -37,7 +37,7 @@ image: "images/metagenomics-kraken2-bracken.png"
 
 In shotgun metagenomics, one of the primary goals is answering: **"Who is in this sample, and in what proportions?"**
 
-Unlike 16S amplicon sequencing, shotgun data contains fragmented DNA from every organism present. To classify millions of these short reads efficiently, we cannot use traditional alignment tools like BLAST—it would take months. Instead, we use ultra-fast **k-mer based classifiers**, with the undisputed industry standard being **Kraken2**, followed by **Bracken** for abundance estimation.
+Unlike 16S amplicon sequencing, shotgun data contains fragmented DNA from every organism present. To classify millions of these short reads efficiently, we cannot use traditional alignment tools like BLAST - it would take months. Instead, we use ultra-fast **k-mer based classifiers**, with the undisputed industry standard being **Kraken2**, followed by **Bracken** for abundance estimation.
 
 ---
 

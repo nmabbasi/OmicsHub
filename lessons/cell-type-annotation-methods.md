@@ -35,7 +35,7 @@ image: "images/cell-type-annotation-methods.png"
 
 ## The Annotation Bottleneck
 
-Manual annotation—extracting differentially expressed genes and searching the literature—is the most significant bottleneck in single-cell RNA-seq. Furthermore, manual annotation is highly subjective and difficult to reproduce.
+Manual annotation - extracting differentially expressed genes and searching the literature - is the most significant bottleneck in single-cell RNA-seq. Furthermore, manual annotation is highly subjective and difficult to reproduce.
 
 To solve this, the bioinformatics community (including standard frameworks taught by institutions like NBIS) recommends utilizing computational algorithms to automatically assign cell identities.
 
