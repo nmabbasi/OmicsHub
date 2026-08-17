@@ -56,5 +56,9 @@
     button.addEventListener('click', closePreferences);
   });
 
-  if (getChoice()) hideBanner();
+  var existingChoice = getChoice();
+  if (existingChoice) {
+    saveChoice(existingChoice);
+    hideBanner();
+  }
 })();
