@@ -4,7 +4,7 @@ date: "2026-08-14"
 author: "Nasir Mahmood Abbasi, PhD"
 category: "Metagenomics"
 excerpt: "Learn the fundamentals of 16S rRNA amplicon sequencing techniques and how to perform rapid prokaryotic genome annotation using PROKKA."
-image: "images/bioinformatics-intro.png"
+image: "images/16s-rrna-prokka-annotation.png"
 ---
 
 

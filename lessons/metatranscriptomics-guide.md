@@ -4,7 +4,7 @@ date: "2026-08-14"
 author: "Nasir Mahmood Abbasi, PhD"
 category: "Metatranscriptomics"
 excerpt: "A guide to analyzing metatranscriptomic data, distinguishing active from dormant microbes, and using modern tools like HUMAnN3 and SAMSA2."
-image: "images/bioinformatics-intro.png"
+image: "images/metatranscriptomics-guide.png"
 ---
 
 

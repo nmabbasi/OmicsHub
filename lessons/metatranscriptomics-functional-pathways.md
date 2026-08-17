@@ -4,7 +4,7 @@ date: "2026-08-14"
 author: "Nasir Mahmood Abbasi, PhD"
 category: "Metatranscriptomics"
 excerpt: "Dive deep into metatranscriptomics by mapping active RNA transcripts to complete metabolic pathways using HUMAnN 3 and the MetaCyc database."
-image: "images/bioinformatics-intro.png"
+image: "images/metatranscriptomics-functional-pathways.png"
 ---
 
 

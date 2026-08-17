@@ -4,7 +4,7 @@ date: "2026-08-14"
 author: "Nasir Mahmood Abbasi, PhD"
 category: "Metagenomics"
 excerpt: "Learn how to perform ultra-fast taxonomic classification of shotgun metagenomic reads using the k-mer based algorithms Kraken2 and Bracken."
-image: "images/bioinformatics-intro.png"
+image: "images/metagenomics-kraken2-bracken.png"
 ---
 
 
