@@ -4,7 +4,7 @@ date: "2025-08-23"
 author: "Nasir Mahmood Abbasi, PhD"
 category: "High-Performance Computing (HPC)"
 excerpt: "Learn how to write and submit Slurm batch scripts on HPC clusters, allocate compute resources efficiently, and run parallel jobs at scale."
-image: "images/hpc-writing-job-scripts.png"
+image: "images/hpc-writing-job-scripts.webp"
 ---
 
 

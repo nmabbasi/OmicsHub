@@ -4,7 +4,7 @@ date: "2025-08-23"
 author: "Nasir Mahmood Abbasi, PhD"
 category: "High-Performance Computing (HPC)"
 excerpt: "Learn how to diagnose common errors on HPC systems, use man pages and help flags effectively, read error logs, and know when and how to contact cluster support."
-image: "images/hpc-managing-resources.png"
+image: "images/hpc-managing-resources.webp"
 ---
 
 
