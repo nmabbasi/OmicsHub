@@ -2,7 +2,7 @@
 title: "Python Fundamentals for Bioinformatics"
 category: "Foundations & Prerequisites"
 date: "2026-08-15"
-image: "images/python-fundamentals-bioinformatics.png"
+image: "images/python-bioinformatics-workstation.webp"
 excerpt: "Learn Python variables, collections, functions, files, and simple sequence processing for bioinformatics."
 author: "Nasir Mahmood Abbasi, PhD"
 ---

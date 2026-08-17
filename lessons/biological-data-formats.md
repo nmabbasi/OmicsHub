@@ -2,7 +2,7 @@
 title: "Biological Data Formats"
 category: "Foundations & Prerequisites"
 date: "2026-08-15"
-image: "images/biological-data-formats.png"
+image: "images/biological-data-formats-workstation.webp"
 excerpt: "Read FASTA, FASTQ, SAM/BAM, VCF, GTF/GFF, and count matrices with confidence before running analysis pipelines."
 author: "Nasir Mahmood Abbasi, PhD"
 ---

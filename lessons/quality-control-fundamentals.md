@@ -2,7 +2,7 @@
 title: "Quality Control Fundamentals"
 category: "Foundations & Prerequisites"
 date: "2026-08-15"
-image: "images/quality-control-fundamentals.png"
+image: "images/quality-control-fundamentals-workstation.webp"
 excerpt: "Understand read quality, mapping, duplication, contamination, missing data, and QC decisions across omics workflows."
 author: "Nasir Mahmood Abbasi, PhD"
 ---

@@ -2,7 +2,7 @@
 title: "R and Tidyverse Fundamentals"
 category: "Foundations & Prerequisites"
 date: "2026-08-15"
-image: "images/r-tidyverse-fundamentals.png"
+image: "images/r-tidyverse-bioinformatics-workstation.webp"
 excerpt: "Learn R vectors, data frames, factors, plots, and tidy data operations for biological analysis."
 author: "Nasir Mahmood Abbasi, PhD"
 ---

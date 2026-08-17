@@ -2,7 +2,7 @@
 title: "Git and GitHub for Bioinformatics"
 category: "Foundations & Prerequisites"
 date: "2026-08-15"
-image: "images/git-github-bioinformatics.png"
+image: "images/git-github-bioinformatics-workstation.webp"
 excerpt: "Use Git and GitHub to track code, document analyses, collaborate safely, and make bioinformatics projects reproducible."
 author: "Nasir Mahmood Abbasi, PhD"
 ---

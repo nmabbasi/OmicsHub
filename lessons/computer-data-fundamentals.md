@@ -2,7 +2,7 @@
 title: "Computer and Data Fundamentals for Biologists"
 category: "Foundations & Prerequisites"
 date: "2026-08-15"
-image: "images/computer-data-fundamentals.png"
+image: "images/computer-data-fundamentals-workstation.webp"
 excerpt: "Learn how computers store, process, and move biological data before using Linux, HPC, and omics workflows."
 author: "Nasir Mahmood Abbasi, PhD"
 ---
