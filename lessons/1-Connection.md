@@ -4,7 +4,7 @@ date: "2025-08-23"
 author: "Nasir Mahmood Abbasi, PhD"
 category: "High-Performance Computing (HPC)"
 excerpt: "Set up secure SSH connections to remote HPC systems from Windows and macOS, configure MobaXterm for graphical access, and establish your working environment on the cluster."
-image: "images/connection.png"
+image: "images/hpc-connecting-to-cluster.png"
 ---
 
 
