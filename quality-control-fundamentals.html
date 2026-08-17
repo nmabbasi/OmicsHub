@@ -153,6 +153,14 @@ samtools depth -a aligned.bam | awk &quot;{sum+=\$3} END {print sum/NR}&quot;
 <pre><code class="language-python">adata.obs[&quot;n_genes_by_counts&quot;].describe()
 adata.obs[&quot;pct_counts_mt&quot;].describe()
 </code></pre>
+<figure class="lesson-figure">
+  <img src="images/tutorial-figures/qc-metrics-distribution.webp" alt="Four high-resolution violin-style single-cell QC distributions showing detected genes, RNA counts, mitochondrial percentage, and ribosomal percentage across source groups." loading="lazy" width="1920" height="1152">
+  <figcaption>
+    <strong>Figure: Read QC distributions before choosing thresholds.</strong> This illustrative multi-batch panel shows detected genes, RNA counts, mitochondrial fraction, and ribosomal fraction. Look for unusually low-complexity groups, long high-count tails that can indicate doublets, and shifts that may reflect biology, chemistry, or library quality. The figure supports exploration; it does not justify one universal cutoff.
+    <span class="figure-source">Author-provided non-clinical teaching figure. Source-group labels are analysis identifiers, not cell-type annotations.</span>
+  </figcaption>
+</figure>
+
 <h2>4. Record decisions</h2>
 <p>Create a QC report that states the metric, threshold, number removed, reason, and whether the decision was made before examining the biological outcome.</p>
 <pre><code class="language-text">metric,threshold,removed,reason
