@@ -164,8 +164,11 @@ for lesson in (ROOT / "lessons").glob("*.md"):
     source = lesson.read_text(encoding="utf-8", errors="ignore")
     if "Coming Soon" in source or ".md)" in source:
         fail(f"{lesson.name}: source placeholder or stale link")
+    # Code-tab panels use HTML <pre><code> blocks, whose language comments can begin
+    # with '# '. Remove those blocks before testing actual Markdown headings.
+    source_without_html_code = re.sub(r"<pre\b[^>]*>.*?</pre>", "", source, flags=re.IGNORECASE | re.DOTALL)
     in_fence = False
-    for line in source.splitlines():
+    for line in source_without_html_code.splitlines():
         if line.lstrip().startswith("```"):
             in_fence = not in_fence
         if not in_fence and re.match(r"^#\s+", line):

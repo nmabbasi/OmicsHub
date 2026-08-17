@@ -48,16 +48,46 @@ samtools depth -a aligned.bam | awk "{sum+=\$3} END {print sum/NR}"
 
 For scRNA-seq, inspect genes per cell, counts per cell, mitochondrial proportion, ribosomal content, doublets, and cell-cycle or stress signals. Thresholds should be explored by tissue and protocol, not copied blindly from another dataset.
 
-```python
-adata.obs["n_genes_by_counts"].describe()
-adata.obs["pct_counts_mt"].describe()
-```
+<div class="code-tabs" data-code-tabs>
+  <div class="code-tab-list" role="tablist" aria-label="Single-cell QC code examples">
+    <button id="qc-python-tab" class="code-tab-button is-active" type="button" role="tab" aria-selected="true" aria-controls="qc-python-panel">Python · Scanpy</button>
+    <button id="qc-r-tab" class="code-tab-button" type="button" role="tab" aria-selected="false" aria-controls="qc-r-panel" tabindex="-1">R · Seurat</button>
+  </div>
+
+  <div id="qc-python-panel" class="code-tab-panel" role="tabpanel" aria-labelledby="qc-python-tab">
+    <pre><code class="language-python"># Inspect the distribution of core QC metrics
+qc_columns = ["n_genes_by_counts", "total_counts", "pct_counts_mt"]
+print(adata.obs[qc_columns].describe())
+
+# Visualize distributions and metric relationships before choosing thresholds
+sc.pl.violin(adata, ["n_genes_by_counts", "total_counts", "pct_counts_mt"], jitter=0.25, multi_panel=True)
+sc.pl.scatter(adata, x="total_counts", y="pct_counts_mt")
+</code></pre>
+    <p class="code-tab-note">Use the metric names created by your own preprocessing workflow. In Scanpy, mitochondrial percentage is commonly stored as <code>pct_counts_mt</code>.</p>
+  </div>
+
+  <div id="qc-r-panel" class="code-tab-panel" role="tabpanel" aria-labelledby="qc-r-tab" hidden>
+    <pre><code class="language-r">library(Seurat)
+
+# Add QC percentages; use ^mt- for many mouse annotations
+seurat_obj[["percent.mt"]] <- PercentageFeatureSet(seurat_obj, pattern = "^MT-")
+seurat_obj[["percent.rb"]] <- PercentageFeatureSet(seurat_obj, pattern = "^RP[SL]")
+
+# Inspect distributions before defining any filtering rule
+VlnPlot(seurat_obj,
+        features = c("nFeature_RNA", "nCount_RNA", "percent.mt", "percent.rb"),
+        ncol = 4, pt.size = 0.1)
+FeatureScatter(seurat_obj, feature1 = "nCount_RNA", feature2 = "percent.mt")
+</code></pre>
+    <p class="code-tab-note">Match the gene-pattern regular expression to the organism and annotation used in your dataset; QC variables should be inspected before setting thresholds.</p>
+  </div>
+</div>
 
 <figure class="lesson-figure">
-  <img src="images/tutorial-figures/qc-metrics-distribution.webp" alt="Four high-resolution violin-style single-cell QC distributions showing detected genes, RNA counts, mitochondrial percentage, and ribosomal percentage across source groups." loading="lazy" width="1920" height="1152">
+  <img src="images/tutorial-figures/qc-metrics-distribution.webp" alt="Four high-resolution single-cell QC distribution panels showing detected genes, RNA counts, mitochondrial percentage, and ribosomal percentage." loading="lazy" width="1920" height="930">
   <figcaption>
     <strong>Figure: Read QC distributions before choosing thresholds.</strong> This illustrative multi-batch panel shows detected genes, RNA counts, mitochondrial fraction, and ribosomal fraction. Look for unusually low-complexity groups, long high-count tails that can indicate doublets, and shifts that may reflect biology, chemistry, or library quality. The figure supports exploration; it does not justify one universal cutoff.
-    <span class="figure-source">Author-provided non-clinical teaching figure. Source-group labels are analysis identifiers, not cell-type annotations.</span>
+    <span class="figure-source">Author-provided, non-clinical teaching figure. Original source-group identifiers have been removed; the panel is used solely to illustrate QC-metric interpretation.</span>
   </figcaption>
 </figure>
 

@@ -40,10 +40,10 @@ In single-cell RNA-seq, it is very common to run an integration algorithm (like 
 This tutorial covers the two mathematical gold standards for validating integration and clustering.
 
 <figure class="lesson-figure">
-  <img src="images/tutorial-figures/harmony-batch-structure.webp" alt="High-resolution PCA embedding colored by source group identifiers, showing source-associated separation and overlap in a multi-batch single-cell object." loading="lazy" width="1920" height="1152">
+  <img src="images/tutorial-figures/harmony-batch-structure.webp" alt="High-resolution PCA embedding showing color-coded point structure, including separated and overlapping regions in a multi-batch single-cell dataset." loading="lazy" width="1920" height="1152">
   <figcaption>
-    <strong>Figure: Use embeddings to generate hypotheses, not to declare integration successful.</strong> A source-group view of a PCA embedding can reveal group-associated structure and motivate batch-correction work. It cannot establish that correction preserved biological signal; calculate iLISI, cLISI, and silhouette-style diagnostics on the appropriate high-dimensional representation.
-    <span class="figure-source">Author-provided non-clinical teaching figure. Source-group labels are analysis identifiers rather than biological or clinical annotations.</span>
+    <strong>Figure: Use embeddings to generate hypotheses, not to declare integration successful.</strong> A PCA embedding can reveal structured separation and overlap that motivate batch-correction work. It cannot establish that correction preserved biological signal; calculate iLISI, cLISI, and silhouette-style diagnostics on the appropriate high-dimensional representation.
+    <span class="figure-source">Author-provided, non-clinical teaching figure. Original source-group identifiers have been removed; the figure is used solely to illustrate batch-structure diagnostics.</span>
   </figcaption>
 </figure>
 
