@@ -108,6 +108,33 @@ head(malignant_markers)
 This workflow forms the bioinformatics foundation for identifying targetable biomarkers in cutaneous T-cell lymphomas and other immune-driven diseases.
 
 
+
+### Matched Python and R clonotype workflow
+
+Define clonotypes before calculating expansion. Record whether the definition uses nucleotide or amino-acid sequence, which receptor chains are required, and how dual chains are handled.
+
+```python
+import scirpy as ir
+
+ir.pp.index_chains(mdata)
+ir.tl.chain_qc(mdata)
+ir.pp.ir_dist(mdata)
+ir.tl.define_clonotypes(mdata, receptor_arms="all", dual_ir="primary_only")
+ir.tl.clonal_expansion(mdata)
+```
+```r
+library(scRepertoire)
+
+combined_tcr <- combineTCR(contig_list, samples = sample_ids, cells = "T-AB")
+combined_tcr <- combineExpression(
+  combined_tcr,
+  seurat_obj,
+  cloneCall = "aa",
+  group.by = "sample"
+)
+clonalProportion(combined_tcr, cloneCall = "aa", group.by = "sample")
+```
+
 <div class="mt-10 p-8 bg-gray-50 border border-gray-200 rounded-xl">
   <h3 class="text-xl font-bold text-gray-900 mb-4">Knowledge Check & Assessment</h3>
   <div class="space-y-4">

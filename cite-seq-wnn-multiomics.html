@@ -215,6 +215,28 @@ FeaturePlot(seurat_obj,
 </figure>
 
 <p>By leveraging WNN integration, you unlock a much higher resolution of cellular heterogeneity than standard scRNA-seq can provide.</p>
+<h3>Matched Python and R weighted-nearest-neighbour workflow</h3>
+<p>Preprocess RNA and protein modalities separately before computing a joint graph. Compare modality weights and marker evidence before interpreting the resulting clusters.</p>
+<pre><code class="language-python">import muon as mu
+import scanpy as sc
+
+sc.pp.neighbors(mdata[&quot;rna&quot;])
+sc.pp.neighbors(mdata[&quot;prot&quot;])
+mu.pp.neighbors(mdata, key_added=&quot;wnn&quot;)
+mu.tl.umap(mdata, neighbors_key=&quot;wnn&quot;)
+sc.tl.leiden(mdata, neighbors_key=&quot;wnn&quot;, key_added=&quot;leiden_wnn&quot;)
+</code></pre>
+<pre><code class="language-r">library(Seurat)
+
+seurat_obj &lt;- FindMultiModalNeighbors(
+  seurat_obj,
+  reduction.list = list(&quot;pca&quot;, &quot;apca&quot;),
+  dims.list = list(1:30, 1:18),
+  modality.weight.name = &quot;RNA.weight&quot;
+)
+seurat_obj &lt;- RunUMAP(seurat_obj, nn.name = &quot;weighted.nn&quot;, reduction.name = &quot;wnn.umap&quot;)
+seurat_obj &lt;- FindClusters(seurat_obj, graph.name = &quot;wsnn&quot;, resolution = 0.5)
+</code></pre>
 <div class="mt-10 p-8 bg-gray-50 border border-gray-200 rounded-xl">
   <h3 class="text-xl font-bold text-gray-900 mb-4">Knowledge Check & Assessment</h3>
   <div class="space-y-4">

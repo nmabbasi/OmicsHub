@@ -195,6 +195,35 @@ infercnv_obj &lt;- infercnv::run(
 </ul>
 <p>If a cluster of cells shows massive, coordinated blocks of red and blue across entire chromosome arms, those cells are undoubtedly malignant. The reference cells (which you provided) will show a flat, neutral color, confirming they have a standard diploid genome.</p>
 <p>This technique is the absolute gold standard for computationally validating malignant clusters before performing downstream differential expression.</p>
+<h3>Matched Python and R CNV-inference workflow</h3>
+<p>Define normal-reference cells before inference and interpret broad expression-derived CNV patterns cautiously. These methods do not replace DNA-based copy-number validation.</p>
+<pre><code class="language-python">import infercnvpy as cnv
+
+cnv.tl.infercnv(
+    adata,
+    reference_key=&quot;cell_type&quot;,
+    reference_cat=[&quot;B cell&quot;, &quot;T cell&quot;],
+    window_size=100,
+    key_added=&quot;cnv&quot;,
+)
+cnv_matrix = adata.obsm[&quot;X_cnv&quot;]
+</code></pre>
+<pre><code class="language-r">library(infercnv)
+
+infercnv_obj &lt;- CreateInfercnvObject(
+  raw_counts_matrix = counts_matrix,
+  annotations_file = &quot;cell_annotations.tsv&quot;,
+  delim = &quot;\t&quot;,
+  gene_order_file = &quot;gene_order.tsv&quot;,
+  ref_group_names = c(&quot;B cell&quot;, &quot;T cell&quot;)
+)
+infercnv_obj &lt;- infercnv::run(
+  infercnv_obj,
+  cutoff = 0.1,
+  out_dir = &quot;infercnv_output&quot;,
+  cluster_by_groups = TRUE
+)
+</code></pre>
 <div class="mt-10 p-8 bg-gray-50 border border-gray-200 rounded-xl">
   <h3 class="text-xl font-bold text-gray-900 mb-4">Knowledge Check & Assessment</h3>
   <div class="space-y-4">

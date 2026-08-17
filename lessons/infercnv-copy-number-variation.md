@@ -103,6 +103,41 @@ If a cluster of cells shows massive, coordinated blocks of red and blue across e
 This technique is the absolute gold standard for computationally validating malignant clusters before performing downstream differential expression.
 
 
+
+### Matched Python and R CNV-inference workflow
+
+Define normal-reference cells before inference and interpret broad expression-derived CNV patterns cautiously. These methods do not replace DNA-based copy-number validation.
+
+```python
+import infercnvpy as cnv
+
+cnv.tl.infercnv(
+    adata,
+    reference_key="cell_type",
+    reference_cat=["B cell", "T cell"],
+    window_size=100,
+    key_added="cnv",
+)
+cnv_matrix = adata.obsm["X_cnv"]
+```
+```r
+library(infercnv)
+
+infercnv_obj <- CreateInfercnvObject(
+  raw_counts_matrix = counts_matrix,
+  annotations_file = "cell_annotations.tsv",
+  delim = "\t",
+  gene_order_file = "gene_order.tsv",
+  ref_group_names = c("B cell", "T cell")
+)
+infercnv_obj <- infercnv::run(
+  infercnv_obj,
+  cutoff = 0.1,
+  out_dir = "infercnv_output",
+  cluster_by_groups = TRUE
+)
+```
+
 <div class="mt-10 p-8 bg-gray-50 border border-gray-200 rounded-xl">
   <h3 class="text-xl font-bold text-gray-900 mb-4">Knowledge Check & Assessment</h3>
   <div class="space-y-4">

@@ -89,6 +89,26 @@ You can instantly visualize this file using tools like **iTOL** (Interactive Tre
 OrthoFinder represents a massive leap forward from single-gene phylogeny. By leveraging the entire proteome to accurately identify orthogroups and automatically inferring a rooted species tree, you can resolve deep evolutionary relationships with unprecedented statistical confidence.
 
 
+
+### Matched Python and R OrthoFinder species-tree workflow
+
+The species tree is an OrthoFinder output. Inspect its topology and branch lengths after checking the orthogroup and single-copy-orthologue settings used to infer it.
+
+```python
+from Bio import Phylo
+
+species_tree = Phylo.read("Results_Example/Species_Tree/SpeciesTree_rooted.txt", "newick")
+print(species_tree.get_terminals())
+Phylo.draw(species_tree)
+```
+```r
+library(ape)
+
+species_tree <- read.tree("Results_Example/Species_Tree/SpeciesTree_rooted.txt")
+print(species_tree$tip.label)
+plot(species_tree, cex = 0.7)
+```
+
 <div class="mt-10 p-8 bg-gray-50 border border-gray-200 rounded-xl">
   <h3 class="text-xl font-bold text-gray-900 mb-4">Knowledge Check & Assessment</h3>
   <div class="space-y-4">

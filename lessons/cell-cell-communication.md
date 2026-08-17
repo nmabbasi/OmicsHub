@@ -131,6 +131,36 @@ Because scRNA-seq only provides a hypothesis, you **must** validate key findings
 *   **LIANA:** Tested on R 4.3.2. Requires Seurat v5 and `liana` (v0.1.12).
 *   **CellChat:** Tested on R 4.3.2. Requires `CellChat` (v2.1.2) and `ComplexHeatmap`.
 
+
+### Matched Python and R LIANA workflow
+
+Ligand–receptor rankings are hypotheses rather than direct evidence of signaling. Use a species-appropriate resource, set the grouping column deliberately, and validate prioritized interactions experimentally or with orthogonal evidence.
+
+```python
+import liana as li
+
+li.mt.rank_aggregate(
+    adata,
+    groupby="cell_type",
+    resource_name="consensus",
+    expr_prop=0.1,
+)
+results = adata.uns["liana_res"].query("specificity_rank <= 0.05")
+```
+```r
+library(liana)
+
+liana_res <- liana_wrap(
+  seurat_obj,
+  method = c("natmi", "sca"),
+  resource = "Consensus",
+  idents_col = "cell_type",
+  expr_prop = 0.1
+)
+results <- rank_aggregate(liana_res)
+head(results)
+```
+
 <div class="mt-10 p-8 bg-gray-50 border border-gray-200 rounded-xl">
   <h3 class="text-xl font-bold text-gray-900 mb-4">Knowledge Check & Assessment</h3>
   <div class="space-y-4">

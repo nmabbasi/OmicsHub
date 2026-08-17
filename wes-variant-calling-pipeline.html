@@ -220,6 +220,34 @@ print(hg38_variants)
 </code></pre>
 <h2>Conclusion</h2>
 <p>A robust WES pipeline requires careful alignment, stringent duplicate removal, accurate variant calling, and deep interpretation of metrics like VAF. By mastering these steps, you can confidently identify pathogenic mutations in complex cohorts.</p>
+<h3>Matched Python and R VAF calculation</h3>
+<p>Check the VCF header and sample order before calculating variant allele fraction. The simplified examples below use allele-depth fields and should be extended for multi-allelic sites, quality filters, tumor purity, and copy-number context.</p>
+<pre><code class="language-python">import pandas as pd
+from cyvcf2 import VCF
+
+rows = []
+for variant in VCF(&quot;sample.vcf.gz&quot;):
+    allele_depths = variant.format(&quot;AD&quot;)[0]
+    if allele_depths is None or len(allele_depths) &lt; 2:
+        continue
+    ref_depth, alt_depth = map(int, allele_depths[:2])
+    total_depth = ref_depth + alt_depth
+    rows.append({
+        &quot;chrom&quot;: variant.CHROM,
+        &quot;position&quot;: variant.POS,
+        &quot;vaf&quot;: alt_depth / total_depth if total_depth else float(&quot;nan&quot;),
+    })
+vaf_table = pd.DataFrame(rows)
+</code></pre>
+<pre><code class="language-r">library(VariantAnnotation)
+
+vcf &lt;- readVcf(&quot;sample.vcf.gz&quot;)
+allele_depths &lt;- geno(vcf)$AD
+ref_depth &lt;- allele_depths[1, 1, ]
+alt_depth &lt;- allele_depths[2, 1, ]
+vaf &lt;- alt_depth / (ref_depth + alt_depth)
+vaf_table &lt;- data.frame(position = start(rowRanges(vcf)), vaf = vaf)
+</code></pre>
 <div class="mt-10 p-8 bg-gray-50 border border-gray-200 rounded-xl">
   <h3 class="text-xl font-bold text-gray-900 mb-4">Knowledge Check & Assessment</h3>
   <div class="space-y-4">

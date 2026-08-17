@@ -215,6 +215,30 @@ netVisual_circle(cellchat@net$count, vertex.weight = groupSize, weight.scale = T
 <li><strong>LIANA:</strong> Tested on R 4.3.2. Requires Seurat v5 and <code>liana</code> (v0.1.12).</li>
 <li><strong>CellChat:</strong> Tested on R 4.3.2. Requires <code>CellChat</code> (v2.1.2) and <code>ComplexHeatmap</code>.</li>
 </ul>
+<h3>Matched Python and R LIANA workflow</h3>
+<p>Ligand–receptor rankings are hypotheses rather than direct evidence of signaling. Use a species-appropriate resource, set the grouping column deliberately, and validate prioritized interactions experimentally or with orthogonal evidence.</p>
+<pre><code class="language-python">import liana as li
+
+li.mt.rank_aggregate(
+    adata,
+    groupby=&quot;cell_type&quot;,
+    resource_name=&quot;consensus&quot;,
+    expr_prop=0.1,
+)
+results = adata.uns[&quot;liana_res&quot;].query(&quot;specificity_rank &lt;= 0.05&quot;)
+</code></pre>
+<pre><code class="language-r">library(liana)
+
+liana_res &lt;- liana_wrap(
+  seurat_obj,
+  method = c(&quot;natmi&quot;, &quot;sca&quot;),
+  resource = &quot;Consensus&quot;,
+  idents_col = &quot;cell_type&quot;,
+  expr_prop = 0.1
+)
+results &lt;- rank_aggregate(liana_res)
+head(results)
+</code></pre>
 <div class="mt-10 p-8 bg-gray-50 border border-gray-200 rounded-xl">
   <h3 class="text-xl font-bold text-gray-900 mb-4">Knowledge Check & Assessment</h3>
   <div class="space-y-4">

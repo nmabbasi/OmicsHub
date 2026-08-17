@@ -139,7 +139,19 @@ Legal
 </ul>
 <h2>1. Start with the question</h2>
 <p>Use a distribution to inspect spread, a scatter plot to compare measurements, PCA to summarize major variation, a heatmap to inspect patterns, and UMAP to visualize local neighborhoods. No plot proves a mechanism by itself.</p>
-<pre><code class="language-r"># Always label units and groups
+<pre><code class="language-python">import seaborn as sns
+import matplotlib.pyplot as plt
+
+# Always label units and groups
+sns.boxplot(data=df, x=&quot;batch&quot;, y=&quot;pct_mt&quot;, hue=&quot;condition&quot;, showfliers=False)
+sns.stripplot(data=df, x=&quot;batch&quot;, y=&quot;pct_mt&quot;, hue=&quot;condition&quot;, dodge=True, color=&quot;black&quot;, alpha=0.55)
+plt.xlabel(&quot;Batch&quot;)
+plt.ylabel(&quot;Mitochondrial reads (%)&quot;)
+plt.legend(title=&quot;Condition&quot;)
+</code></pre>
+<pre><code class="language-r">library(ggplot2)
+
+# Always label units and groups
 ggplot(df, aes(x = batch, y = pct_mt, color = condition)) +
   geom_boxplot(outlier.shape = NA) + geom_jitter(width = .15) +
   labs(x=&quot;Batch&quot;, y=&quot;Mitochondrial reads (%)&quot;)

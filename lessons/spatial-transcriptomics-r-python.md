@@ -45,35 +45,32 @@ This tutorial provides the foundational workflows for processing spatial data in
 
 Spatial data objects are unique because they contain two distinct types of data: the gene expression matrix (counts) and the spatial coordinates/images.
 
-### R (Seurat) Approach
-In R, the `Seurat` package has native spatial support.
+Both ecosystems load the same count matrix and spatial metadata, but store them in different object types.
 
-```r
-library(Seurat)
-library(ggplot2)
-
-# Load 10x Visium Data (points to the directory containing spatial/ and filtered_feature_bc_matrix.h5)
-spatial_data <- Load10X_Spatial(data.dir = "visium_brain_data/")
-
-# Normalize the data using SCTransform (recommended for spatial data)
-spatial_data <- SCTransform(spatial_data, assay = "Spatial", verbose = FALSE)
-```
-
-### Python (Squidpy / Scanpy) Approach
-In Python, `Scanpy` handles the RNA, and `Squidpy` handles the spatial graphs.
-
-```python
-import scanpy as sc
+<div class="code-tabs" data-code-tabs>
+  <div class="code-tab-list" role="tablist" aria-label="Spatial loading and preprocessing examples">
+    <button id="spatial-load-python-tab" class="code-tab-button is-active" type="button" role="tab" aria-selected="true" aria-controls="spatial-load-python-panel">Python · Scanpy / Squidpy</button>
+    <button id="spatial-load-r-tab" class="code-tab-button" type="button" role="tab" aria-selected="false" aria-controls="spatial-load-r-panel" tabindex="-1">R · Seurat</button>
+  </div>
+  <div id="spatial-load-python-panel" class="code-tab-panel" role="tabpanel" aria-labelledby="spatial-load-python-tab">
+    <pre><code class="language-python">import scanpy as sc
 import squidpy as sq
 
-# Load 10x Visium Data
 adata = sq.read.visium("visium_brain_data/")
-
-# Normalize and log-transform
 sc.pp.normalize_total(adata, inplace=True)
 sc.pp.log1p(adata)
 sc.pp.highly_variable_genes(adata, flavor="seurat", n_top_genes=2000)
-```
+</code></pre>
+  </div>
+  <div id="spatial-load-r-panel" class="code-tab-panel" role="tabpanel" aria-labelledby="spatial-load-r-tab" hidden>
+    <pre><code class="language-r">library(Seurat)
+library(ggplot2)
+
+spatial_data <- Load10X_Spatial(data.dir = "visium_brain_data/")
+spatial_data <- SCTransform(spatial_data, assay = "Spatial", verbose = FALSE)
+</code></pre>
+  </div>
+</div>
 
 ---
 
@@ -81,22 +78,23 @@ sc.pp.highly_variable_genes(adata, flavor="seurat", n_top_genes=2000)
 
 The power of spatial transcriptomics is seeing exactly *where* a gene is highly expressed across the physical tissue.
 
-### R (Seurat)
-Use the `SpatialFeaturePlot` function to overlay gene expression onto the H&E image.
+Use a feature plot to overlay a marker signal on the tissue image; report the gene symbol convention, image alignment, and color scale.
 
-```r
-# Visualize a specific marker gene (e.g., a neuron marker in a brain slice)
-SpatialFeaturePlot(spatial_data, features = c("Snap25", "Mbp")) +
+<div class="code-tabs" data-code-tabs>
+  <div class="code-tab-list" role="tablist" aria-label="Spatial feature-plot examples">
+    <button id="spatial-plot-python-tab" class="code-tab-button is-active" type="button" role="tab" aria-selected="true" aria-controls="spatial-plot-python-panel">Python · Scanpy</button>
+    <button id="spatial-plot-r-tab" class="code-tab-button" type="button" role="tab" aria-selected="false" aria-controls="spatial-plot-r-panel" tabindex="-1">R · Seurat</button>
+  </div>
+  <div id="spatial-plot-python-panel" class="code-tab-panel" role="tabpanel" aria-labelledby="spatial-plot-python-tab">
+    <pre><code class="language-python">sc.pl.spatial(adata, color=["Snap25", "Mbp"], alpha_img=0.5, cmap="magma")
+</code></pre>
+  </div>
+  <div id="spatial-plot-r-panel" class="code-tab-panel" role="tabpanel" aria-labelledby="spatial-plot-r-tab" hidden>
+    <pre><code class="language-r">SpatialFeaturePlot(spatial_data, features = c("Snap25", "Mbp")) +
   theme(legend.position = "right")
-```
-
-### Python (Squidpy)
-Use the `sc.pl.spatial` function.
-
-```python
-# Visualize marker genes over the tissue image
-sc.pl.spatial(adata, color=["Snap25", "Mbp"], alpha_img=0.5, cmap="magma")
-```
+</code></pre>
+  </div>
+</div>
 
 ---
 
@@ -104,34 +102,29 @@ sc.pl.spatial(adata, color=["Snap25", "Mbp"], alpha_img=0.5, cmap="magma")
 
 Just like scRNA-seq, we can cluster the "spots" based on their transcriptional profiles to find spatial domains (e.g., cortical layers in a brain, or tumor microenvironments).
 
-### R (Seurat)
+Spatial clustering should be compared with tissue morphology and QC patterns. In Python, construct the spatial graph explicitly before using spatial statistics.
 
-```r
-# Standard clustering workflow
-spatial_data <- RunPCA(spatial_data, assay = "SCT", verbose = FALSE)
-spatial_data <- FindNeighbors(spatial_data, reduction = "pca", dims = 1:30)
-spatial_data <- FindClusters(spatial_data, verbose = FALSE)
-
-# Plot the clusters onto the physical tissue
-SpatialDimPlot(spatial_data, label = TRUE, label.size = 3)
-```
-
-### Python (Squidpy)
-
-Squidpy goes a step further by calculating a **spatial neighbor graph**, ensuring that clusters take physical proximity into account, not just transcriptional similarity.
-
-```python
-# Compute PCA and neighbors
-sc.tl.pca(adata)
+<div class="code-tabs" data-code-tabs>
+  <div class="code-tab-list" role="tablist" aria-label="Spatial clustering examples">
+    <button id="spatial-cluster-python-tab" class="code-tab-button is-active" type="button" role="tab" aria-selected="true" aria-controls="spatial-cluster-python-panel">Python · Scanpy / Squidpy</button>
+    <button id="spatial-cluster-r-tab" class="code-tab-button" type="button" role="tab" aria-selected="false" aria-controls="spatial-cluster-r-panel" tabindex="-1">R · Seurat</button>
+  </div>
+  <div id="spatial-cluster-python-panel" class="code-tab-panel" role="tabpanel" aria-labelledby="spatial-cluster-python-tab">
+    <pre><code class="language-python">sc.tl.pca(adata)
 sc.pp.neighbors(adata)
 sc.tl.leiden(adata, key_added="clusters")
-
-# Compute the spatial graph
 sq.gr.spatial_neighbors(adata)
-
-# Plot the transcriptional clusters on the tissue
 sc.pl.spatial(adata, color="clusters", alpha_img=0.4)
-```
+</code></pre>
+  </div>
+  <div id="spatial-cluster-r-panel" class="code-tab-panel" role="tabpanel" aria-labelledby="spatial-cluster-r-tab" hidden>
+    <pre><code class="language-r">spatial_data <- RunPCA(spatial_data, assay = "SCT", verbose = FALSE)
+spatial_data <- FindNeighbors(spatial_data, reduction = "pca", dims = 1:30)
+spatial_data <- FindClusters(spatial_data, verbose = FALSE)
+SpatialDimPlot(spatial_data, label = TRUE, label.size = 3)
+</code></pre>
+  </div>
+</div>
 
 ## Summary
 

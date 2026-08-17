@@ -186,6 +186,28 @@ sc.pl.umap(adata, color='majority_voting')
 3.  <strong>Downstream Task:</strong> This embedding is then used for flawless automated clustering, annotation, or even <em>in silico</em> perturbation (predicting what would happen if you knocked out a specific gene!).</p>
 <h2>Summary</h2>
 <p>The days of manually Googling gene names to annotate clusters are ending. By integrating tools like <strong>CellTypist</strong> for rapid immune annotation, and preparing for the adoption of <strong>Foundation Models (Cellama/scGPT)</strong>, you will future-proof your bioinformatics skill set.</p>
+<h3>Matched Python and R reference-based annotation</h3>
+<p>Use automated labels as a reproducible starting point, then verify them with markers, tissue context, and a reference appropriate to the species and assay.</p>
+<pre><code class="language-python">import celltypist
+from celltypist import models
+
+models.download_models(force_update=False)
+predictions = celltypist.annotate(
+    adata,
+    model=&quot;Immune_All_Low.pkl&quot;,
+    majority_voting=True,
+)
+adata.obs[&quot;celltypist_label&quot;] = predictions.predicted_labels[&quot;majority_voting&quot;].to_numpy()
+</code></pre>
+<pre><code class="language-r">library(SingleR)
+library(celldex)
+library(SingleCellExperiment)
+
+reference &lt;- MonacoImmuneData()
+query &lt;- as.SingleCellExperiment(seurat_obj)
+predictions &lt;- SingleR(test = query, ref = reference, labels = reference$label.fine)
+seurat_obj$SingleR_label &lt;- predictions$labels
+</code></pre>
 <div class="mt-10 p-8 bg-gray-50 border border-gray-200 rounded-xl">
   <h3 class="text-xl font-bold text-gray-900 mb-4">Knowledge Check & Assessment</h3>
   <div class="space-y-4">

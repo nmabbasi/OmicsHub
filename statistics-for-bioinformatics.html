@@ -153,6 +153,26 @@ log2(mean_treated / mean_control)
 <p>Testing thousands of genes creates many false positives. Control the false discovery rate with an appropriate correction and pre-specify the threshold.</p>
 <pre><code class="language-r">p.adjust(p_values, method = &quot;BH&quot;)
 </code></pre>
+<h3>Matched Python and R example</h3>
+<p>Use the same biological-replicate vectors in either language. The code illustrates a simple independent-sample comparison and a Benjamini–Hochberg adjustment; it does not replace checking the design, assumptions, or effect size.</p>
+<pre><code class="language-python">import numpy as np
+from scipy import stats
+from statsmodels.stats.multitest import multipletests
+
+control = np.array([8.9, 9.8, 10.4, 9.5])
+treated = np.array([11.2, 10.7, 12.1, 11.4])
+result = stats.ttest_ind(treated, control, equal_var=False)
+print({&quot;mean_difference&quot;: treated.mean() - control.mean(), &quot;p_value&quot;: result.pvalue})
+
+adjusted_p = multipletests(p_values, method=&quot;fdr_bh&quot;)[1]
+</code></pre>
+<pre><code class="language-r">control &lt;- c(8.9, 9.8, 10.4, 9.5)
+treated &lt;- c(11.2, 10.7, 12.1, 11.4)
+result &lt;- t.test(treated, control, var.equal = FALSE)
+print(list(mean_difference = mean(treated) - mean(control), p_value = result$p.value))
+
+adjusted_p &lt;- p.adjust(p_values, method = &quot;BH&quot;)
+</code></pre>
 <h2>4. Power and limitations</h2>
 <p>Power depends on effect size, variability, sample size, and the decision threshold. A non-significant result is not proof of no effect; report the uncertainty and observed effect.</p>
 <pre><code class="language-text">Report: effect size, confidence interval, sample size, test, adjusted p-value, and biological limitation.

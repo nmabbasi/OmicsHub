@@ -57,6 +57,12 @@ assert meta.sample_id.is_unique
 assert meta.condition.notna().all()
 print(pd.crosstab(meta.batch, meta.condition))
 ```
+```r
+meta <- read.csv("metadata.csv", stringsAsFactors = FALSE)
+stopifnot(!anyDuplicated(meta$sample_id))
+stopifnot(all(!is.na(meta$condition)))
+with(meta, table(batch, condition))
+```
 
 ## 4. Analysis consequences
 

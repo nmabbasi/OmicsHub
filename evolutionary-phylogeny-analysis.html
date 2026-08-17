@@ -204,6 +204,20 @@ FastTree -gtr -nt &lt; aligned_sequences.fasta &gt; output.tree
 <li><strong>Build Tree:</strong> Use <code>megacc</code> or <code>iqtree</code> to compute evolutionary distances and infer the tree topology.</li>
 <li><strong>Visualize:</strong> Upload the resulting <code>.nwk</code> file to iTOL for publication-ready visualization.</li>
 </ol>
+<h3>Matched Python and R tree-inspection workflow</h3>
+<p>Use code to inspect and plot an already inferred Newick tree; it does not substitute for model selection, alignment review, or branch-support assessment during inference.</p>
+<pre><code class="language-python">from Bio import Phylo
+
+species_tree = Phylo.read(&quot;species_tree.nwk&quot;, &quot;newick&quot;)
+print({&quot;tips&quot;: species_tree.count_terminals(), &quot;total_branch_length&quot;: species_tree.total_branch_length()})
+Phylo.draw(species_tree)
+</code></pre>
+<pre><code class="language-r">library(ape)
+
+species_tree &lt;- read.tree(&quot;species_tree.nwk&quot;)
+print(list(tips = Ntip(species_tree), total_branch_length = sum(species_tree$edge.length)))
+plot(species_tree, cex = 0.7)
+</code></pre>
 <div class="mt-10 p-8 bg-gray-50 border border-gray-200 rounded-xl">
   <h3 class="text-xl font-bold text-gray-900 mb-4">Knowledge Check & Assessment</h3>
   <div class="space-y-4">

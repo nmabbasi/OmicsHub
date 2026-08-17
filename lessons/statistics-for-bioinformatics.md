@@ -53,6 +53,31 @@ Testing thousands of genes creates many false positives. Control the false disco
 p.adjust(p_values, method = "BH")
 ```
 
+### Matched Python and R example
+
+Use the same biological-replicate vectors in either language. The code illustrates a simple independent-sample comparison and a Benjamini–Hochberg adjustment; it does not replace checking the design, assumptions, or effect size.
+
+```python
+import numpy as np
+from scipy import stats
+from statsmodels.stats.multitest import multipletests
+
+control = np.array([8.9, 9.8, 10.4, 9.5])
+treated = np.array([11.2, 10.7, 12.1, 11.4])
+result = stats.ttest_ind(treated, control, equal_var=False)
+print({"mean_difference": treated.mean() - control.mean(), "p_value": result.pvalue})
+
+adjusted_p = multipletests(p_values, method="fdr_bh")[1]
+```
+```r
+control <- c(8.9, 9.8, 10.4, 9.5)
+treated <- c(11.2, 10.7, 12.1, 11.4)
+result <- t.test(treated, control, var.equal = FALSE)
+print(list(mean_difference = mean(treated) - mean(control), p_value = result$p.value))
+
+adjusted_p <- p.adjust(p_values, method = "BH")
+```
+
 ## 4. Power and limitations
 
 Power depends on effect size, variability, sample size, and the decision threshold. A non-significant result is not proof of no effect; report the uncertainty and observed effect.

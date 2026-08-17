@@ -93,6 +93,34 @@ While the exact API of these tools evolves rapidly, the general paradigm is:
 The days of manually Googling gene names to annotate clusters are ending. By integrating tools like **CellTypist** for rapid immune annotation, and preparing for the adoption of **Foundation Models (Cellama/scGPT)**, you will future-proof your bioinformatics skill set.
 
 
+
+### Matched Python and R reference-based annotation
+
+Use automated labels as a reproducible starting point, then verify them with markers, tissue context, and a reference appropriate to the species and assay.
+
+```python
+import celltypist
+from celltypist import models
+
+models.download_models(force_update=False)
+predictions = celltypist.annotate(
+    adata,
+    model="Immune_All_Low.pkl",
+    majority_voting=True,
+)
+adata.obs["celltypist_label"] = predictions.predicted_labels["majority_voting"].to_numpy()
+```
+```r
+library(SingleR)
+library(celldex)
+library(SingleCellExperiment)
+
+reference <- MonacoImmuneData()
+query <- as.SingleCellExperiment(seurat_obj)
+predictions <- SingleR(test = query, ref = reference, labels = reference$label.fine)
+seurat_obj$SingleR_label <- predictions$labels
+```
+
 <div class="mt-10 p-8 bg-gray-50 border border-gray-200 rounded-xl">
   <h3 class="text-xl font-bold text-gray-900 mb-4">Knowledge Check & Assessment</h3>
   <div class="space-y-4">

@@ -212,6 +212,26 @@ head(annotation_results)
 </code></pre>
 <h2>Conclusion</h2>
 <p>When analyzing a novel dataset, relying on a single annotation method is risky. A highly robust workflow involves running 2 or 3 algorithmic methods (e.g., <code>SingleR</code> + <code>CellTypist</code>) and then utilizing an AI framework like <code>CyteTypeR</code> to confirm the findings and provide literature-backed biological reasoning.</p>
+<h3>Matched Python and R reference-based annotation</h3>
+<p>Both workflows transfer labels from a chosen reference. Inspect confidence or score distributions and validate all labels against canonical marker genes before reporting cell identities.</p>
+<pre><code class="language-python">import celltypist
+
+predictions = celltypist.annotate(
+    adata,
+    model=&quot;Immune_All_Low.pkl&quot;,
+    majority_voting=True,
+)
+adata.obs[&quot;celltypist_label&quot;] = predictions.predicted_labels[&quot;majority_voting&quot;].to_numpy()
+</code></pre>
+<pre><code class="language-r">library(SingleR)
+library(celldex)
+library(SingleCellExperiment)
+
+reference &lt;- MonacoImmuneData()
+query &lt;- as.SingleCellExperiment(seurat_obj)
+predictions &lt;- SingleR(test = query, ref = reference, labels = reference$label.fine)
+seurat_obj$SingleR_label &lt;- predictions$labels
+</code></pre>
 <div class="mt-10 p-8 bg-gray-50 border border-gray-200 rounded-xl">
   <h3 class="text-xl font-bold text-gray-900 mb-4">Knowledge Check & Assessment</h3>
   <div class="space-y-4">

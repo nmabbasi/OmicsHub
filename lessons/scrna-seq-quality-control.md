@@ -112,6 +112,28 @@ plot(sil, border = NA, col = "darkblue", main = "Cluster Silhouette Plot")
 By calculating **iLISI**, **cLISI**, and **Silhouette Scores**, you bulletproof your analysis. Instead of saying "the cells appear to group together," you can objectively state in your manuscript: *"Integration successfully removed batch effects (median iLISI = 3.8/4.0) while preserving cell-type separation (median cLISI = 1.02)."*
 
 
+
+### Matched Python and R silhouette diagnostic
+
+Calculate silhouette values on a specified high-dimensional representation rather than on a two-dimensional UMAP. Compare the score distribution across clusters and investigate negative values before changing resolution.
+
+```python
+from sklearn.metrics import silhouette_samples, silhouette_score
+
+embedding = adata.obsm["X_pca"]
+labels = adata.obs["leiden"].astype(str)
+adata.obs["silhouette"] = silhouette_samples(embedding, labels)
+print(silhouette_score(embedding, labels))
+```
+```r
+library(cluster)
+
+embedding <- Embeddings(seurat_obj, reduction = "pca")
+labels <- as.numeric(factor(seurat_obj$seurat_clusters))
+sil <- silhouette(labels, dist(embedding))
+summary(sil[, "sil_width"])
+```
+
 <div class="mt-10 p-8 bg-gray-50 border border-gray-200 rounded-xl">
   <h3 class="text-xl font-bold text-gray-900 mb-4">Knowledge Check & Assessment</h3>
   <div class="space-y-4">

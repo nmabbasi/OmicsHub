@@ -192,6 +192,27 @@ malignant_markers &lt;- FindMarkers(seurat_obj, ident.1 = &quot;Hyperexpanded&qu
 head(malignant_markers)
 </code></pre>
 <p>This workflow forms the bioinformatics foundation for identifying targetable biomarkers in cutaneous T-cell lymphomas and other immune-driven diseases.</p>
+<h3>Matched Python and R clonotype workflow</h3>
+<p>Define clonotypes before calculating expansion. Record whether the definition uses nucleotide or amino-acid sequence, which receptor chains are required, and how dual chains are handled.</p>
+<pre><code class="language-python">import scirpy as ir
+
+ir.pp.index_chains(mdata)
+ir.tl.chain_qc(mdata)
+ir.pp.ir_dist(mdata)
+ir.tl.define_clonotypes(mdata, receptor_arms=&quot;all&quot;, dual_ir=&quot;primary_only&quot;)
+ir.tl.clonal_expansion(mdata)
+</code></pre>
+<pre><code class="language-r">library(scRepertoire)
+
+combined_tcr &lt;- combineTCR(contig_list, samples = sample_ids, cells = &quot;T-AB&quot;)
+combined_tcr &lt;- combineExpression(
+  combined_tcr,
+  seurat_obj,
+  cloneCall = &quot;aa&quot;,
+  group.by = &quot;sample&quot;
+)
+clonalProportion(combined_tcr, cloneCall = &quot;aa&quot;, group.by = &quot;sample&quot;)
+</code></pre>
 <div class="mt-10 p-8 bg-gray-50 border border-gray-200 rounded-xl">
   <h3 class="text-xl font-bold text-gray-900 mb-4">Knowledge Check & Assessment</h3>
   <div class="space-y-4">

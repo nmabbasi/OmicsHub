@@ -135,6 +135,26 @@ FastTree -gtr -nt < aligned_sequences.fasta > output.tree
 4.  **Visualize:** Upload the resulting `.nwk` file to iTOL for publication-ready visualization.
 
 
+
+### Matched Python and R tree-inspection workflow
+
+Use code to inspect and plot an already inferred Newick tree; it does not substitute for model selection, alignment review, or branch-support assessment during inference.
+
+```python
+from Bio import Phylo
+
+species_tree = Phylo.read("species_tree.nwk", "newick")
+print({"tips": species_tree.count_terminals(), "total_branch_length": species_tree.total_branch_length()})
+Phylo.draw(species_tree)
+```
+```r
+library(ape)
+
+species_tree <- read.tree("species_tree.nwk")
+print(list(tips = Ntip(species_tree), total_branch_length = sum(species_tree$edge.length)))
+plot(species_tree, cex = 0.7)
+```
+
 <div class="mt-10 p-8 bg-gray-50 border border-gray-200 rounded-xl">
   <h3 class="text-xl font-bold text-gray-900 mb-4">Knowledge Check & Assessment</h3>
   <div class="space-y-4">

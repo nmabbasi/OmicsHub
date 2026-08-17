@@ -158,6 +158,11 @@ assert meta.sample_id.is_unique
 assert meta.condition.notna().all()
 print(pd.crosstab(meta.batch, meta.condition))
 </code></pre>
+<pre><code class="language-r">meta &lt;- read.csv(&quot;metadata.csv&quot;, stringsAsFactors = FALSE)
+stopifnot(!anyDuplicated(meta$sample_id))
+stopifnot(all(!is.na(meta$condition)))
+with(meta, table(batch, condition))
+</code></pre>
 <h2>4. Analysis consequences</h2>
 <p>Include pre-specified covariates in the design, document exclusions, and distinguish biological correction from technical removal. Over-correction can erase real biology.</p>
 <pre><code class="language-text">Design formula example: ~ batch + condition
