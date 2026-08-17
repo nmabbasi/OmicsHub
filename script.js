@@ -11,11 +11,12 @@ document.addEventListener('DOMContentLoaded', function() {
         const seoData = document.getElementById('seo-markdown-data');
         if (window.STATIC_RENDERED) {
             // Already rendered statically by Python! Just show it.
-            document.getElementById('tutorial-page').classList.remove('hidden');
-            document.getElementById('home-page').classList.add('hidden');
-            document.getElementById('services-page').classList.add('hidden');
-            document.getElementById('contact-page').classList.add('hidden');
-            document.getElementById('about-page').classList.add('hidden');
+            const tutorialPage = document.getElementById('tutorial-page');
+            if (tutorialPage) tutorialPage.classList.remove('hidden');
+            ['home-page', 'services-page', 'contact-page', 'about-page'].forEach((pageId) => {
+                const page = document.getElementById(pageId);
+                if (page) page.classList.add('hidden');
+            });
             window.scrollTo(0, 0);
             
             // Highlight code blocks
