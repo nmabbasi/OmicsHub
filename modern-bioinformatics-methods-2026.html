@@ -360,6 +360,22 @@ scv.pl.velocity_embedding_stream(adata, basis='umap')
 <p>A major conceptual shift in 2023-2024 was the recognition that naive single-cell differential expression (DE) tests are massively anti-conservative due to pseudo-replication: treating each cell as an independent replicate when cells from the same donor are correlated.</p>
 <p><strong>The solution: pseudobulk DE analysis</strong></p>
 <p>Cells from each donor in each condition are aggregated (summed) into a single "pseudobulk" sample, and then bulk RNA-seq methods (DESeq2, edgeR) are applied. This is now the community standard for comparing conditions across donors.</p>
+<p>The Python and R implementations below both run DESeq2-style pseudobulk analysis. Aggregate raw counts by the biological replicate and cell population first; do not treat individual cells as independent replicates.</p>
+<pre><code class="language-python"># Pseudobulk DE with PyDESeq2
+from pydeseq2.dds import DeseqDataSet
+from pydeseq2.ds import DeseqStats
+
+# `counts_df` contains aggregated raw counts; `metadata_df` has one row per pseudobulk sample.
+dds = DeseqDataSet(
+    counts=counts_df,
+    metadata=metadata_df,
+    design_factors=&quot;condition&quot;,
+)
+dds.deseq2()
+stats = DeseqStats(dds, contrast=[&quot;condition&quot;, &quot;treated&quot;, &quot;control&quot;])
+stats.summary()
+results_df = stats.results_df
+</code></pre>
 <pre><code class="language-r"># Pseudobulk DE with DESeq2 in Seurat
 library(Seurat)
 library(DESeq2)

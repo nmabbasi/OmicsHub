@@ -129,6 +129,39 @@ plot_cells(cds,
            graph_label_size=1.5)
 ```
 
+### Matched Python and R trajectory workflow
+
+The two ecosystems use different algorithms, but both require a justified biological root and should be interpreted as an inferred ordering—not observed time. Choose the implementation that fits the anticipated lineage topology and validate the result against known biology.
+
+<div class="code-tabs" data-code-tabs>
+  <div class="code-tab-list" role="tablist" aria-label="Trajectory inference examples">
+    <button id="trajectory-python-tab" class="code-tab-button is-active" type="button" role="tab" aria-selected="true" aria-controls="trajectory-python-panel">Python · Scanpy PAGA / DPT</button>
+    <button id="trajectory-r-tab" class="code-tab-button" type="button" role="tab" aria-selected="false" aria-controls="trajectory-r-panel" tabindex="-1">R · Slingshot</button>
+  </div>
+  <div id="trajectory-python-panel" class="code-tab-panel" role="tabpanel" aria-labelledby="trajectory-python-tab">
+    <pre><code class="language-python">import numpy as np
+import scanpy as sc
+
+sc.pp.neighbors(adata, n_neighbors=15, n_pcs=40)
+sc.tl.paga(adata, groups="leiden")
+adata.uns["iroot"] = np.flatnonzero(adata.obs["leiden"] == "0")[0]
+sc.tl.dpt(adata)
+sc.pl.umap(adata, color="dpt_pseudotime", cmap="viridis")
+</code></pre>
+  </div>
+  <div id="trajectory-r-panel" class="code-tab-panel" role="tabpanel" aria-labelledby="trajectory-r-tab" hidden>
+    <pre><code class="language-r">library(slingshot)
+library(SingleCellExperiment)
+
+sce <- as.SingleCellExperiment(pbmc)
+sce <- slingshot(sce, clusterLabels = "ident", reducedDim = "UMAP", start.clus = "0")
+pseudotime <- slingPseudotime(sce)
+plot(reducedDims(sce)$UMAP, col = pseudotime[, 1], pch = 16, asp = 1)
+lines(SlingshotDataSet(sce), lwd = 2, col = "black")
+</code></pre>
+  </div>
+</div>
+
 ## Conclusion
 
 Trajectory inference shifts our perspective from discrete clusters to continuous cellular development. Whether you rely on PAGA's graph abstractions in Python or Slingshot's branching lineage logic in R, establishing a solid pseudotime framework is the key to identifying the gene regulatory networks driving cellular transitions.

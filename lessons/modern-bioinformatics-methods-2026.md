@@ -243,6 +243,24 @@ A major conceptual shift in 2023-2024 was the recognition that naive single-cell
 
 Cells from each donor in each condition are aggregated (summed) into a single "pseudobulk" sample, and then bulk RNA-seq methods (DESeq2, edgeR) are applied. This is now the community standard for comparing conditions across donors.
 
+The Python and R implementations below both run DESeq2-style pseudobulk analysis. Aggregate raw counts by the biological replicate and cell population first; do not treat individual cells as independent replicates.
+
+```python
+# Pseudobulk DE with PyDESeq2
+from pydeseq2.dds import DeseqDataSet
+from pydeseq2.ds import DeseqStats
+
+# `counts_df` contains aggregated raw counts; `metadata_df` has one row per pseudobulk sample.
+dds = DeseqDataSet(
+    counts=counts_df,
+    metadata=metadata_df,
+    design_factors="condition",
+)
+dds.deseq2()
+stats = DeseqStats(dds, contrast=["condition", "treated", "control"])
+stats.summary()
+results_df = stats.results_df
+```
 ```r
 # Pseudobulk DE with DESeq2 in Seurat
 library(Seurat)
