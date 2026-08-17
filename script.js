@@ -1047,6 +1047,22 @@ function updateNavActiveState(activeTab) {
     const navMobileHome = document.getElementById('nav-mobile-home');
     const navMobileTutorials = document.getElementById('nav-mobile-tutorials');
 
+    // Keep the visual and semantic active states in sync. The shared stylesheet
+    // uses aria-current to apply the near-black navy active-tab colour.
+    [
+        [navDesktopHome, activeTab === 'home'],
+        [navDesktopTutorials, activeTab === 'tutorials'],
+        [navMobileHome, activeTab === 'home'],
+        [navMobileTutorials, activeTab === 'tutorials']
+    ].forEach(([link, isActive]) => {
+        if (!link) return;
+        if (isActive) {
+            link.setAttribute('aria-current', 'page');
+        } else {
+            link.removeAttribute('aria-current');
+        }
+    });
+
     if (activeTab === 'home') {
         if (navDesktopHome) navDesktopHome.className = 'px-4 py-2 text-sm font-semibold bg-blue-600 text-white rounded-md shadow-sm transition-all';
         if (navDesktopTutorials) navDesktopTutorials.className = 'px-4 py-2 text-sm font-medium text-gray-600 hover:text-blue-600 rounded-md hover:bg-gray-50 transition-all cursor-pointer';
