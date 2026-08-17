@@ -25,6 +25,11 @@ author: "Nasir Mahmood Abbasi, PhD"
 - Complete [Basic Navigation](command-line-part1.html).
 - Python 3.10 or newer and a text editor.
 
+
+### Expected Output
+
+By the end of this lesson, you should have: **A small reproducible Python script or notebook that reads a biological table, performs one transparent transformation, and writes a named output file.**
+
 ## 1. Values and collections
 
 Use strings for sequences, lists for ordered records, and dictionaries for keyed metadata.

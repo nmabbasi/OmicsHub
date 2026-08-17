@@ -125,9 +125,21 @@ grep ">" sequences.fasta | sed 's/>//'
 ```
 
 #### Find sequences with specific patterns
+
+The quick `grep -A 1` approach works **only** when each sequence occupies exactly one line. Many FASTA files wrap long sequences over multiple lines, so inspect the file with `less sequences.fasta` before using line-based commands.
+
+For a wrapped or unknown FASTA layout, use a sequence-aware tool such as `seqkit`:
+
 ```bash
-grep -A 1 ">" sequences.fasta | grep "ATGC"
+# Install once in a bioinformatics environment
+mamba install -c conda-forge -c bioconda seqkit
+
+# Search sequence content, then preserve complete FASTA records
+seqkit grep -s -p "ATGC" sequences.fasta > matching_sequences.fasta
+seqkit stats matching_sequences.fasta
 ```
+
+The final `seqkit stats` command should report the number and lengths of the records retained.
 
 ### Working with FASTQ Files
 

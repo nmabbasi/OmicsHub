@@ -79,14 +79,18 @@ As AI advances, researchers are moving beyond simple regression towards **Founda
 Instead of just looking at marker genes, these foundation models learn the fundamental "language" of the transcriptome.
 
 ### Why Foundation Models Matter
-*   **Zero-Shot Prediction:** Because they have seen tens of millions of cells during pre-training, they can often annotate rare cell types in your data *without* needing a specific task-trained model.
-*   **Batch Effect Resilience:** They understand biological states intrinsically, meaning they are far less distracted by technical artifacts (like 10x v2 vs v3 chemistry) compared to traditional integration algorithms.
+*   **Zero-Shot Prediction:** Pretrained models may help prioritize plausible labels for rare or poorly represented cell types, but their performance depends on the species, assay, tissue, preprocessing, and coverage of the reference data.
+*   **Batch Effect Resilience:** Some models can reduce sensitivity to technical variation, but batch effects, out-of-distribution inputs, and protocol differences still require explicit diagnostics and biological validation.
 
 ### Conceptual Workflow
 While the exact API of these tools evolves rapidly, the general paradigm is:
 1.  **Tokenization:** Your cell's gene expression profile is converted into "tokens" (just like words in ChatGPT).
 2.  **Embedding:** The cell is passed through a transformer network, generating a highly dense mathematical representation of its biological state.
-3.  **Downstream Task:** This embedding is then used for flawless automated clustering, annotation, or even *in silico* perturbation (predicting what would happen if you knocked out a specific gene!).
+3.  **Downstream Task:** The embedding can support clustering, annotation, or exploratory *in silico* perturbation hypotheses. Treat each output as a model-assisted result to validate, not as a final biological conclusion.
+
+### Reproducible practice before using a large model
+
+Use a public, non-sensitive practice dataset before applying an AI workflow to study data. Record the model and package versions, whether a GPU was used, the input object format, the downloaded model identifier, and the exact command that produced each result. Test installation with a small public `.h5ad` or `.rds` object and compare output labels with known markers before interpreting novel biology. Do not upload patient-linked counts, metadata, or cell identifiers to external services unless your institution explicitly permits it.
 
 ## Summary
 

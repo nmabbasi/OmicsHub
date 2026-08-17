@@ -146,7 +146,29 @@ Legal
 <p>Metagenomics is the study of genetic material recovered directly from environmental or clinical samples. Unlike traditional genomics, which sequences a single cultured organism, metagenomics sequences the entire community (the microbiome) simultaneously.</p>
 <p>This tutorial covers a standard shotgun metagenomics workflow: assembling short reads into longer contigs using <strong>SPAdes</strong>, mapping reads to a reference genome (such as Human) using <strong>BWA</strong>, and visualizing the alignment with <strong>IGV</strong>.</p>
 <hr />
-<h2>1. De Novo Assembly using SPAdes</h2>
+<h2>1. Remove Host Reads Before Assembly</h2>
+<p>When a clinical or host-associated metagenome may contain human DNA, remove host-mapping read pairs <strong>before</strong> assembly. This protects privacy, reduces non-microbial assembly content, and keeps downstream interpretation focused on the microbial fraction. For environmental samples without a host component, document why this step is not required.</p>
+<blockquote>
+<p><strong>Privacy &amp; ethics note:</strong> Human-mapping reads should not be uploaded to public repositories or assembled as microbial contigs without the appropriate governance and institutional approvals.</p>
+</blockquote>
+<h3>Step 1.1: Prepare and index the host reference</h3>
+<pre><code class="language-bash"># Download a documented reference build, then preserve the URL and checksum in your project manifest.
+curl -L -o GRCh38.fa.gz &quot;https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/001/405/GCF_000001405.40_GRCh38.p14/GCF_000001405.40_GRCh38.p14_genomic.fna.gz&quot;
+gunzip GRCh38.fa.gz
+bwa index GRCh38.fa
+</code></pre>
+<h3>Step 1.2: Map reads and retain read pairs that do not map to the host</h3>
+<pre><code class="language-bash"># Keep the alignment for an auditable host-removal summary.
+bwa mem -t 8 GRCh38.fa sample_R1.fastq.gz sample_R2.fastq.gz   | samtools sort -o host_screened.bam
+samtools index host_screened.bam
+
+# Extract pairs for which both mates are unmapped, then convert them back to paired FASTQ.
+samtools view -b -f 12 -F 256 host_screened.bam   | samtools sort -n -o nonhost.name_sorted.bam
+samtools fastq -n   -1 microbial_R1.fastq.gz   -2 microbial_R2.fastq.gz   -0 /dev/null -s /dev/null   nonhost.name_sorted.bam
+</code></pre>
+<p>Record the total read pairs before and after host screening. A non-empty <code>microbial_R1.fastq.gz</code> and matching <code>microbial_R2.fastq.gz</code> are the inputs for the assembly step.</p>
+<hr />
+<h2>2. De Novo Assembly using metaSPAdes</h2>
 <p>When you sequence a metagenome, you get millions of short reads (e.g., 150bp from Illumina). <strong>De novo assembly</strong> pieces these short reads together into longer contiguous sequences (contigs) without needing a reference genome.</p>
 <p><strong>metaSPAdes</strong> is a specialized module within the SPAdes assembler designed specifically to handle the uneven coverage and complex strain variation found in metagenomic data.</p>
 <h3>Installation and Execution</h3>
@@ -168,35 +190,22 @@ spades.py --meta \
 </ul>
 <p>The most important output file will be <code>spades_output/contigs.fasta</code>, which contains your assembled metagenome.</p>
 <hr />
-<h2>2. Mapping to the Human Genome with BWA</h2>
-<p>In clinical metagenomics (e.g., gut or skin microbiomes), the sample often contains massive amounts of "host contamination" (human DNA). A critical preprocessing step is mapping the reads to the human reference genome to identify and remove the human DNA, leaving only the microbial reads.</p>
-<p>We use <strong>BWA (Burrows-Wheeler Aligner)</strong>, specifically <code>bwa mem</code>, which is the standard for mapping high-quality short reads.</p>
-<h3>Step 2.1: Indexing the Reference Genome</h3>
-<p>Before mapping, BWA requires an index of the reference genome.</p>
-<blockquote>
-<p><strong>Privacy &amp; Ethics Note:</strong> When working with human microbiome samples, the reads will contain human DNA (host contamination). It is critical to remove these reads before assembly or uploading to public repositories to protect patient privacy.</p>
-</blockquote>
-<pre><code class="language-bash"># Example: Downloading the human reference genome from NCBI
-wget ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/001/405/GCF_000001405.39_GRCh38.p13/GCF_000001405.39_GRCh38.p13_genomic.fna.gz -O GRCh38.fasta.gz
-gunzip GRCh38.fasta.gz
+<h2>3. Map the Microbial Reads Back to the Assembled Contigs</h2>
+<p>Mapping the screened reads back to <code>contigs.fasta</code> checks which contigs are supported by the observed reads and helps identify uneven coverage.</p>
+<pre><code class="language-bash"># Assemble only the non-host read pairs
+mamba install -c conda-forge -c bioconda spades samtools bwa
+spades.py --meta   -1 microbial_R1.fastq.gz   -2 microbial_R2.fastq.gz   -o spades_output/   -t 16   -m 64
 
-# Index the genome
-bwa index GRCh38.fasta
+# Map the microbial reads back to assembled contigs
+bwa index spades_output/contigs.fasta
+bwa mem -t 8 spades_output/contigs.fasta microbial_R1.fastq.gz microbial_R2.fastq.gz   | samtools sort -o reads_to_contigs.bam
+samtools index reads_to_contigs.bam
+samtools flagstat reads_to_contigs.bam
+samtools depth -a reads_to_contigs.bam &gt; contig_depth.tsv
 </code></pre>
-<h3>Step 2.2: Mapping Reads</h3>
-<pre><code class="language-bash"># Map paired-end reads to the human genome
-bwa mem -t 8 GRCh38.fasta sample_R1.fastq.gz sample_R2.fastq.gz &gt; aligned_reads.sam
-</code></pre>
-<h3>Step 2.3: Processing with Samtools</h3>
-<p>The raw <code>.sam</code> file is large and plain text. We use <strong>Samtools</strong> to convert it to a compressed binary format (<code>.bam</code>), sort it, and index it for fast retrieval.</p>
-<pre><code class="language-bash"># Convert SAM to BAM, sort, and index
-samtools view -S -b aligned_reads.sam &gt; aligned_reads.bam
-samtools sort aligned_reads.bam -o aligned_reads_sorted.bam
-samtools index aligned_reads_sorted.bam
-</code></pre>
-<p><em>Note: To extract only the unmapped (non-human) reads for downstream microbial analysis, you would use <code>samtools view -b -f 4</code>.</em></p>
+<p>The key deliverables are <code>spades_output/contigs.fasta</code>, the mapping summary from <code>samtools flagstat</code>, and <code>contig_depth.tsv</code>. Interpret low-support contigs cautiously, especially in uneven communities.</p>
 <hr />
-<h2>3. Visualization with IGV</h2>
+<h2>4. Visualization with IGV</h2>
 <p>The <strong>Integrative Genomics Viewer (IGV)</strong> is an interactive tool for exploring large, integrated genomic datasets. It allows you to visually inspect how your reads aligned to the reference genome.</p>
 <h3>How to use IGV</h3>
 <ol>
@@ -334,7 +343,7 @@ samtools index aligned_reads_sorted.bam
 <!-- Marked.js for markdown rendering -->
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <!-- Custom JS - loads tutorials from manifest -->
-<script src="script.js?v=20260815"></script>
+<script src="script.js?v=20260817-nav"></script>
 
 <script>
 function toggleMobileMenu() {

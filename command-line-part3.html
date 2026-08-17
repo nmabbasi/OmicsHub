@@ -322,35 +322,54 @@ du -sh *                         # Check directory sizes
 </code></pre>
 <h2>Building Your First Bioinformatics Pipeline</h2>
 <p>Let's put it all together with a simple quality control pipeline:</p>
-<pre><code class="language-bash">#!/bin/bash
+<pre><code class="language-bash">#!/usr/bin/env bash
+set -euo pipefail
 
-# Quality control pipeline for FASTQ files
+# Quality-control summary for uncompressed, four-line FASTQ files.
 # Usage: ./qc_pipeline.sh input_directory output_directory
+
+if [[ $# -ne 2 ]]; then
+  echo &quot;Usage: $0 input_directory output_directory&quot; &gt;&amp;2
+  exit 1
+fi
 
 INPUT_DIR=$1
 OUTPUT_DIR=$2
 
-# Create output directory
-mkdir -p $OUTPUT_DIR
+if [[ ! -d &quot;$INPUT_DIR&quot; ]]; then
+  echo &quot;Input directory does not exist: $INPUT_DIR&quot; &gt;&amp;2
+  exit 1
+fi
 
-# Process each FASTQ file
-for file in $INPUT_DIR/*.fastq; do
-    filename=$(basename &quot;$file&quot; .fastq)
-    # Count reads
-    read_count=$(wc -l &lt; &quot;$file&quot; | awk '{print $1/4}')
-    echo &quot;$filename: $read_count reads&quot;
-    # Check for adapters
-    adapter_count=$(grep -c &quot;AGATCGGAAGAG&quot; &quot;$file&quot;)
-    echo &quot;$filename: $adapter_count potential adapter sequences&quot;
-    # Calculate average read length
-    avg_length=$(awk 'NR%4==2{sum+=length($0); count++} END{print sum/count}' &quot;$file&quot;)
-    echo &quot;$filename: Average read length = $avg_length&quot;
-    # Save summary
-    echo -e &quot;$filename\t$read_count\t$adapter_count\t$avg_length&quot; &gt;&gt; $OUTPUT_DIR/summary.txt
+mkdir -p &quot;$OUTPUT_DIR&quot;
+summary=&quot;$OUTPUT_DIR/summary.tsv&quot;
+printf &quot;file\treads\tadapter_sequence_lines\tmean_read_length\n&quot; &gt; &quot;$summary&quot;
+
+shopt -s nullglob
+fastq_files=(&quot;$INPUT_DIR&quot;/*.fastq)
+if (( ${#fastq_files[@]} == 0 )); then
+  echo &quot;No .fastq files found in: $INPUT_DIR&quot; &gt;&amp;2
+  exit 1
+fi
+
+for file in &quot;${fastq_files[@]}&quot;; do
+  filename=$(basename &quot;$file&quot; .fastq)
+  line_count=$(wc -l &lt; &quot;$file&quot;)
+  if (( line_count == 0 || line_count % 4 != 0 )); then
+    echo &quot;Skipping malformed FASTQ file: $file&quot; &gt;&amp;2
+    continue
+  fi
+
+  read_count=$(( line_count / 4 ))
+  adapter_count=$(grep -c &quot;AGATCGGAAGAG&quot; &quot;$file&quot; || true)
+  avg_length=$(awk 'NR % 4 == 2 {sum += length($0); count++} END {if (count) printf &quot;%.1f&quot;, sum/count; else print &quot;NA&quot;}' &quot;$file&quot;)
+
+  printf &quot;%s\t%s\t%s\t%s\n&quot; &quot;$filename&quot; &quot;$read_count&quot; &quot;$adapter_count&quot; &quot;$avg_length&quot; &gt;&gt; &quot;$summary&quot;
 done
 
-echo &quot;Quality control complete. Results in $OUTPUT_DIR/summary.txt&quot;
+echo &quot;Quality control complete. Review: $summary&quot;
 </code></pre>
+<p>This is a small teaching script, not a replacement for FastQC or MultiQC. A successful run creates <code>summary.tsv</code> with one row per valid FASTQ file; inspect any skipped-file warning before interpreting results.</p>
 <h2>Advanced Topics to Explore Next</h2>
 <p>Once you're comfortable with these basics, consider learning:</p>
 <ul>
@@ -499,7 +518,7 @@ echo &quot;Quality control complete. Results in $OUTPUT_DIR/summary.txt&quot;
 <!-- Marked.js for markdown rendering -->
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <!-- Custom JS - loads tutorials from manifest -->
-<script src="script.js?v=20260815"></script>
+<script src="script.js?v=20260817-nav"></script>
 
 <script>
 function toggleMobileMenu() {

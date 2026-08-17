@@ -104,7 +104,15 @@ They have two purposes:
 
 *   The first is to specify resource allocation. In the example script, the combination of `--ntasks` and `--cpus-per-task` asks to allocate a single CPU, and the `--mem` option asks to allocate 2G.
 
-    **Note:** Allocating a lot of resources does not mean that all of them will be used. If you call a single program that does not run in parallel, a single CPU will be used whether you allocate 1 or more CPUs. Be mindful that if you allocate more resources than necessary, those unused resources will not be available to other users. Estimating the number of CPUs is usually not a problem as programs that run in parallel usually have an option specifying the number we want to use. It’s a bit harder to estimate memory. The best approach is to do some testing: either start with low memory and increase it until it runs, or start with high memory and monitor your program by SSHing to the node being used (`squeue` will tell you that) and executing `top`.
+    **Note:** Allocating a lot of resources does not mean that all of them will be used. If a program is not configured for parallel execution, it will use one CPU even when more are allocated. Start with a documented estimate, run a small test, then inspect actual resource use with the scheduler rather than logging directly into a compute node. For example:
+
+    ```bash
+    squeue -j <job_id>                 # queue state
+    sstat -j <job_id>.batch --format=JobID,MaxRSS,AveCPU
+    sacct -j <job_id> --format=JobID,State,Elapsed,MaxRSS,AllocCPUS
+    ```
+
+    If you need an interactive diagnostic session, request one through the scheduler, for example `srun --pty --cpus-per-task=2 --mem=8G --time=01:00:00 bash`. Only SSH to a compute node when your own cluster documentation explicitly permits it.
 
     **Other note:** In the current configuration, asking for 1 CPU will actually allocate 2, because Slurm allocates by the core, and cores are hyperthreaded. More details in the [Hyperthreading](#hyperthreading) section.
 

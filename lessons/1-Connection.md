@@ -45,11 +45,13 @@ Run MobaXterm, click on `Start local terminal`, and execute the following comman
 ssh-keygen -t rsa -f my_hpc_key
 ```
 
-This command will prompt you for a _passphrase_ twice and create two files: `my_hpc_key` (the private key) and `my_hpc_key.pub` (the public key). These two files must be located in the `C:\Users\XXX\Documents\MobaXterm\home\` folder (replace `XXX` with your user name).
+This command will prompt you for a _passphrase_ twice and create two files: `my_hpc_key` (the private key) and `my_hpc_key.pub` (the public key). Keep both files in a protected local folder such as `C:\Users\XXX\Documents\MobaXterm\home\` (replace `XXX` with your user name).
 
 ### What to do with the keys
 
-Note that every host you use to connect to the cluster will require this private key.
+> **Security rule:** Keep `my_hpc_key` on your local computer. Never email it, upload it to cloud storage, commit it to Git, or copy it to the cluster or another remote host. The cluster administrator authorizes the matching **public** key (`my_hpc_key.pub`) in your account, usually in `~/.ssh/authorized_keys`.
+
+When connecting from another trusted personal computer, create a separate local key pair for that device and ask the administrator to add that device's public key. Use the private key only in the SSH client running on the computer you control.
 
 ### Connecting with SSH
 

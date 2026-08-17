@@ -198,7 +198,12 @@ srun program
 <ul>
 <li>
 <p>The first is to specify resource allocation. In the example script, the combination of <code>--ntasks</code> and <code>--cpus-per-task</code> asks to allocate a single CPU, and the <code>--mem</code> option asks to allocate 2G.</p>
-<p><strong>Note:</strong> Allocating a lot of resources does not mean that all of them will be used. If you call a single program that does not run in parallel, a single CPU will be used whether you allocate 1 or more CPUs. Be mindful that if you allocate more resources than necessary, those unused resources will not be available to other users. Estimating the number of CPUs is usually not a problem as programs that run in parallel usually have an option specifying the number we want to use. It’s a bit harder to estimate memory. The best approach is to do some testing: either start with low memory and increase it until it runs, or start with high memory and monitor your program by SSHing to the node being used (<code>squeue</code> will tell you that) and executing <code>top</code>.</p>
+<p><strong>Note:</strong> Allocating a lot of resources does not mean that all of them will be used. If a program is not configured for parallel execution, it will use one CPU even when more are allocated. Start with a documented estimate, run a small test, then inspect actual resource use with the scheduler rather than logging directly into a compute node. For example:</p>
+<p><code>bash
+squeue -j &lt;job_id&gt;                 # queue state
+sstat -j &lt;job_id&gt;.batch --format=JobID,MaxRSS,AveCPU
+sacct -j &lt;job_id&gt; --format=JobID,State,Elapsed,MaxRSS,AllocCPUS</code></p>
+<p>If you need an interactive diagnostic session, request one through the scheduler, for example <code>srun --pty --cpus-per-task=2 --mem=8G --time=01:00:00 bash</code>. Only SSH to a compute node when your own cluster documentation explicitly permits it.</p>
 <p><strong>Other note:</strong> In the current configuration, asking for 1 CPU will actually allocate 2, because Slurm allocates by the core, and cores are hyperthreaded. More details in the <a href="#hyperthreading">Hyperthreading</a> section.</p>
 </li>
 <li>
@@ -535,7 +540,7 @@ conda deactivate
 <!-- Marked.js for markdown rendering -->
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <!-- Custom JS - loads tutorials from manifest -->
-<script src="script.js?v=20260815"></script>
+<script src="script.js?v=20260817-nav"></script>
 
 <script>
 function toggleMobileMenu() {

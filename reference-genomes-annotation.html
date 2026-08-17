@@ -137,6 +137,8 @@ Legal
 <li>Understand FASTA and GTF/GFF from <a href="biological-data-formats.html">Biological Data Formats</a>.</li>
 <li>Have <code>curl</code>, <code>wget</code>, and <code>sha256sum</code> available.</li>
 </ul>
+<h3>Expected Output</h3>
+<p>By the end of this lesson, you should have: <strong>A reference manifest containing the provider, accession or release, direct URL, checksum result, genome build, annotation version, and contig naming convention.</strong></p>
 <h2>1. Build and annotation are different</h2>
 <p>GRCh38 is an assembly; a GENCODE release is an annotation set for that assembly. A transcript identifier may change between releases. Keep the FASTA and GTF compatible.</p>
 <pre><code class="language-text">assembly: GRCh38
@@ -146,8 +148,14 @@ downloaded: 2026-08-15
 </code></pre>
 <h2>2. Download reproducibly</h2>
 <p>Prefer NCBI, Ensembl, GENCODE, or UCSC pages that document release versions. Save URLs, checksums, and commands in the project.</p>
-<pre><code class="language-bash">curl -L -o reference.fa.gz &quot;https://ftp.ncbi.nlm.nih.gov/genomes/&quot;
-sha256sum reference.fa.gz &gt; reference.fa.gz.sha256
+<pre><code class="language-bash"># Example direct file: record the assembly accession and release in your manifest.
+curl -L -o GRCh38.p14.fa.gz \
+  &quot;https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/001/405/GCF_000001405.40_GRCh38.p14/GCF_000001405.40_GRCh38.p14_genomic.fna.gz&quot;
+
+# Download the provider checksum when available, then verify before analysis.
+curl -L -o md5checksums.txt \
+  &quot;https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/001/405/GCF_000001405.40_GRCh38.p14/md5checksums.txt&quot;
+grep &quot;GCF_000001405.40_GRCh38.p14_genomic.fna.gz&quot; md5checksums.txt | md5sum -c -
 </code></pre>
 <h2>3. Validate compatibility</h2>
 <p>Check chromosome names, feature IDs, coordinate conventions, and whether the annotation includes the feature type your tool expects. Do not mix <code>chr1</code> with <code>1</code> without a documented conversion.</p>
@@ -277,7 +285,7 @@ awk &quot;$3==&quot;gene&quot; {print \$1}&quot; annotation.gtf | sort -u | head
 <!-- Marked.js for markdown rendering -->
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <!-- Custom JS - loads tutorials from manifest -->
-<script src="script.js?v=20260815"></script>
+<script src="script.js?v=20260817-nav"></script>
 
 <script>
 function toggleMobileMenu() {

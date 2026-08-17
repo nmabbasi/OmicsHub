@@ -25,6 +25,11 @@ author: "Nasir Mahmood Abbasi, PhD"
 - Install R and RStudio or use an R terminal.
 - Complete [Biological Data Formats](biological-data-formats.html).
 
+
+### Expected Output
+
+By the end of this lesson, you should have: **A small reproducible R script that imports a tidy biological table, performs one documented transformation, and saves a labeled table or plot.**
+
 ## 1. Objects and data frames
 
 R stores columns as vectors. A data frame should have meaningful column names and explicit types.

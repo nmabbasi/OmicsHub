@@ -173,23 +173,27 @@ conda env list
 
 ### Essential Channels
 
-Channels are repositories where packages are stored. For bioinformatics, you'll primarily use:
-
-- **conda-forge**: Community-driven packages with high quality standards
-- **bioconda**: Specialized channel for bioinformatics software
-- **defaults**: Anaconda's default channel
-
-Set up your channels in the right priority order:
+Channels are repositories where packages are stored. For most modern bioinformatics environments, use **conda-forge** and **bioconda** with strict priority. The current Bioconda guidance no longer includes `defaults` in the recommended configuration.
 
 ```bash
-# Add channels (order matters!)
-conda config --add channels defaults
+# conda config --add works from lower to higher priority.
+# Run these once to give conda-forge the highest priority.
 conda config --add channels bioconda
 conda config --add channels conda-forge
-
-# Set channel priority to strict (recommended)
 conda config --set channel_priority strict
+
+# Check the resulting configuration
+conda config --show channels
+conda config --show channel_priority
 ```
+
+For one command without changing `~/.condarc`, place command-line channels in decreasing priority:
+
+```bash
+mamba create -n bioinfo -c conda-forge -c bioconda samtools bwa
+```
+
+See the [Bioconda usage guidance](https://bioconda.github.io/) when a solver conflict appears or when maintaining an older environment.
 
 ### Installing Common Bioinformatics Tools
 
@@ -288,7 +292,6 @@ name: single-cell-analysis
 channels:
   - conda-forge
   - bioconda
-  - defaults
 dependencies:
   - python=3.9
   - pandas=1.5.3

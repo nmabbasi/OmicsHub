@@ -295,35 +295,55 @@ du -sh *                         # Check directory sizes
 Let's put it all together with a simple quality control pipeline:
 
 ```bash
-#!/bin/bash
+#!/usr/bin/env bash
+set -euo pipefail
 
-# Quality control pipeline for FASTQ files
+# Quality-control summary for uncompressed, four-line FASTQ files.
 # Usage: ./qc_pipeline.sh input_directory output_directory
+
+if [[ $# -ne 2 ]]; then
+  echo "Usage: $0 input_directory output_directory" >&2
+  exit 1
+fi
 
 INPUT_DIR=$1
 OUTPUT_DIR=$2
 
-# Create output directory
-mkdir -p $OUTPUT_DIR
+if [[ ! -d "$INPUT_DIR" ]]; then
+  echo "Input directory does not exist: $INPUT_DIR" >&2
+  exit 1
+fi
 
-# Process each FASTQ file
-for file in $INPUT_DIR/*.fastq; do
-    filename=$(basename "$file" .fastq)
-    # Count reads
-    read_count=$(wc -l < "$file" | awk '{print $1/4}')
-    echo "$filename: $read_count reads"
-    # Check for adapters
-    adapter_count=$(grep -c "AGATCGGAAGAG" "$file")
-    echo "$filename: $adapter_count potential adapter sequences"
-    # Calculate average read length
-    avg_length=$(awk 'NR%4==2{sum+=length($0); count++} END{print sum/count}' "$file")
-    echo "$filename: Average read length = $avg_length"
-    # Save summary
-    echo -e "$filename\t$read_count\t$adapter_count\t$avg_length" >> $OUTPUT_DIR/summary.txt
+mkdir -p "$OUTPUT_DIR"
+summary="$OUTPUT_DIR/summary.tsv"
+printf "file\treads\tadapter_sequence_lines\tmean_read_length\n" > "$summary"
+
+shopt -s nullglob
+fastq_files=("$INPUT_DIR"/*.fastq)
+if (( ${#fastq_files[@]} == 0 )); then
+  echo "No .fastq files found in: $INPUT_DIR" >&2
+  exit 1
+fi
+
+for file in "${fastq_files[@]}"; do
+  filename=$(basename "$file" .fastq)
+  line_count=$(wc -l < "$file")
+  if (( line_count == 0 || line_count % 4 != 0 )); then
+    echo "Skipping malformed FASTQ file: $file" >&2
+    continue
+  fi
+
+  read_count=$(( line_count / 4 ))
+  adapter_count=$(grep -c "AGATCGGAAGAG" "$file" || true)
+  avg_length=$(awk 'NR % 4 == 2 {sum += length($0); count++} END {if (count) printf "%.1f", sum/count; else print "NA"}' "$file")
+
+  printf "%s\t%s\t%s\t%s\n" "$filename" "$read_count" "$adapter_count" "$avg_length" >> "$summary"
 done
 
-echo "Quality control complete. Results in $OUTPUT_DIR/summary.txt"
+echo "Quality control complete. Review: $summary"
 ```
+
+This is a small teaching script, not a replacement for FastQC or MultiQC. A successful run creates `summary.tsv` with one row per valid FASTQ file; inspect any skipped-file warning before interpreting results.
 
 ## Advanced Topics to Explore Next
 

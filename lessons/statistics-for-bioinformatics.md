@@ -25,6 +25,11 @@ author: "Nasir Mahmood Abbasi, PhD"
 - Basic algebra and a data frame in R or Python.
 - Complete [Quality Control Fundamentals](quality-control-fundamentals.html).
 
+
+### Expected Output
+
+By the end of this lesson, you should have: **A short analysis plan that states the outcome, predictor, experimental unit, covariates, replicates, visual diagnostic, and the interpretation limits of the planned test.**
+
 ## 1. Replicates and distributions
 
 Biological replicates represent independent experimental units; technical replicates measure the same unit repeatedly. Plot the data before selecting a test.

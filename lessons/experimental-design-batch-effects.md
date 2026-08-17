@@ -25,6 +25,11 @@ author: "Nasir Mahmood Abbasi, PhD"
 - Complete [Statistics for Bioinformatics](statistics-for-bioinformatics.html).
 - Understand that batch correction cannot reliably recover information absent from the design.
 
+
+### Expected Output
+
+By the end of this lesson, you should have: **A design table that defines the biological question, experimental unit, covariates, replicates, randomization or blocking plan, and possible batch effects.**
+
 ## 1. Experimental units
 
 The experimental unit is the entity independently assigned to a condition, such as a donor, animal, or culture. Cells from one donor are not automatically independent biological replicates.

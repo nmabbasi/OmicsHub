@@ -84,7 +84,19 @@ Once sequences are aligned, the next step is calculating the evolutionary distan
 
 ### Generating a Configuration (.mao) File
 
-MEGA-CC requires an analysis options file (`.mao`). You typically generate this file using the MEGA GUI on your local computer by setting up your desired analysis (e.g., Maximum Likelihood tree with 1000 Bootstrap replicates) and clicking "Save Settings".
+MEGA-CC requires an analysis options file (`.mao`). You may create it in the MEGA GUI, but do not treat a GUI selection as the complete record of an analysis. Save the exact `.mao` file beside the alignment, record the MEGA-CC version, and commit both settings and command to the project repository.
+
+For an auditable exercise, create a project folder containing:
+
+```text
+phylogeny-project/
+├── aligned_sequences.fasta
+├── ML_Tree_Settings.mao
+├── command.txt
+└── results/
+```
+
+Write the exact `megacc` command into `command.txt`. If a learner cannot produce or inspect a `.mao` file, use the fully command-line IQ-TREE route below instead; it exposes model selection and bootstrap settings directly in the command.
 
 ### Running MEGA-CC
 

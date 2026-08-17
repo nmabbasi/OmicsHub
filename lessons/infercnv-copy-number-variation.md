@@ -98,9 +98,9 @@ inferCNV automatically generates a heatmap in your output directory (`infercnv_o
 *   **Columns** are genes, ordered strictly by their physical location from Chromosome 1 to Chromosome X/Y.
 *   **Colors:** Red indicates chromosomal amplification (e.g., Trisomy). Blue indicates chromosomal deletion.
 
-If a cluster of cells shows massive, coordinated blocks of red and blue across entire chromosome arms, those cells are undoubtedly malignant. The reference cells (which you provided) will show a flat, neutral color, confirming they have a standard diploid genome.
+Large, coordinated shifts across chromosome arms can be **consistent with** copy-number alteration and may help prioritize clusters for follow-up. They do not, by themselves, prove that cells are malignant: expression programs, technical effects, an unsuitable reference, or subclonal structure can all influence the pattern. A neutral-looking reference is useful, but it is not a guarantee of a diploid genome.
 
-This technique is the absolute gold standard for computationally validating malignant clusters before performing downstream differential expression.
+Treat expression-derived CNV inference as a screening and hypothesis-generation step. Before reporting a malignant population, validate the result with orthogonal DNA-based evidence when possible, such as matched bulk or single-cell DNA sequencing, shallow whole-genome sequencing, FISH, or clinically reviewed genomic data. Interpret the result together with pathology, sample context, QC, and canonical lineage markers.
 
 
 

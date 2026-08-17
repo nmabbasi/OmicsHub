@@ -179,14 +179,14 @@ humann --input sample_mRNA.fastq.gz \
 *   <code>Glycolysis|Bacteroides_fragilis</code> = 1000</p>
 <p>This allows you to confidently state not just <em>what</em> the community is doing, but exactly <em>which species</em> is responsible for doing it!</p>
 <hr />
-<h2>4. Normalizing the Data</h2>
-<p>Raw counts in metatranscriptomics are highly influenced by sequencing depth. Before doing statistical comparisons between a Healthy patient and a Sick patient, you must normalize the abundances to Copies Per Million (CPM).</p>
-<pre><code class="language-bash"># Normalize the pathway abundances
+<h2>4. Normalization and Differential Testing Are Different Steps</h2>
+<p>HUMAnN produces several abundance tables, and the correct statistical input depends on the question. CPM or relative-abundance tables can be useful for <strong>descriptive plots</strong>, but do not pass library-size-normalized CPM values directly to count-based differential-expression models such as DESeq2. DESeq2 expects un-normalized or estimated counts and computes its own size factors internally.</p>
+<pre><code class="language-bash"># Create a CPM table for visualization or exploratory comparisons.
 humann_renorm_table --input humann_out/sample_pathabundance.tsv \
                     --output sample_pathabundance_cpm.tsv \
                     --units cpm
 </code></pre>
-<p>With CPM-normalized tables across all your samples, you are ready to perform differential expression testing (e.g., using DESeq2) to find which metabolic pathways are uniquely activated in your disease state.</p>
+<p>Before differential testing, first determine whether your chosen HUMAnN output is a count-like table or a normalized abundance. Use raw or appropriately estimated counts with DESeq2, keep sample metadata and batch variables explicit, and record the transformation used only for visualization. If you only have compositional or normalized pathway abundances, choose a method whose assumptions match that input rather than treating it as a DESeq2 count matrix. Consult the <a href="https://bioconductor.org/packages/devel/bioc/vignettes/DESeq2/inst/doc/DESeq2.html">DESeq2 vignette</a> for its input requirements.</p>
 <div class="mt-10 p-8 bg-gray-50 border border-gray-200 rounded-xl">
   <h3 class="text-xl font-bold text-gray-900 mb-4">Knowledge Check & Assessment</h3>
   <div class="space-y-4">
@@ -309,7 +309,7 @@ humann_renorm_table --input humann_out/sample_pathabundance.tsv \
 <!-- Marked.js for markdown rendering -->
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <!-- Custom JS - loads tutorials from manifest -->
-<script src="script.js?v=20260815"></script>
+<script src="script.js?v=20260817-nav"></script>
 
 <script>
 function toggleMobileMenu() {

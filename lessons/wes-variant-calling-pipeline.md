@@ -46,7 +46,7 @@ This tutorial covers the standard bioinformatics pipeline for processing raw WES
 The first step in any DNA-seq pipeline is aligning the raw FASTQ reads to a reference genome (e.g., GRCh38/hg38) and marking PCR duplicates.
 
 ### BWA-MEM Alignment
-`BWA-MEM` is the gold standard for aligning DNA reads to a reference genome.
+`BWA-MEM` is a widely used aligner for short DNA reads; follow your laboratory or project standard if another validated workflow is required.
 
 ```bash
 # Index the reference genome (only needed once)
@@ -72,21 +72,60 @@ java -jar picard.jar MarkDuplicates \
 
 ---
 
-## 2. Variant Calling (GATK HaplotypeCaller)
+## 2. Validate GATK Inputs and Recalibrate When Appropriate
 
-Once the reads are aligned and deduplicated, we use the Broad Institute's **GATK (Genome Analysis Toolkit)** to identify SNPs (Single Nucleotide Polymorphisms) and Indels.
+Before calling variants, confirm that the reference build, aligned reads, known-sites resources, and metadata all refer to the same genome assembly. GATK requires key read-group fields, and missing metadata can cause failures or make technical interpretation unreliable.
 
 ```bash
-# Call variants using HaplotypeCaller
+# Reference prerequisites for GATK
+samtools faidx Homo_sapiens_assembly38.fasta
+gatk CreateSequenceDictionary -R Homo_sapiens_assembly38.fasta
+
+# Inspect existing read groups. You should see @RG lines with ID, SM, LB, and PL fields.
+samtools view -H dedup_reads.bam | grep '^@RG'
+
+# Only if read groups are absent or incorrect, add values supplied by your sequencing facility.
+gatk AddOrReplaceReadGroups \
+  -I dedup_reads.bam -O dedup_reads.rg.bam \
+  -RGID flowcell.lane -RGLB library1 -RGPL ILLUMINA -RGPU flowcell.lane.barcode -RGSM sample1
+```
+
+For human germline-style workflows with a compatible, trusted known-sites resource, use Base Quality Score Recalibration (BQSR) according to the current GATK Best Practices. Do not apply BQSR blindly when the required reference and known-sites assumptions are not met.
+
+```bash
+# Example only: use a known-sites VCF that matches exactly the same reference build.
+gatk BaseRecalibrator \
+  -R Homo_sapiens_assembly38.fasta \
+  -I dedup_reads.rg.bam \
+  --known-sites known_sites.vcf.gz \
+  -O recalibration.table
+
+gatk ApplyBQSR \
+  -R Homo_sapiens_assembly38.fasta \
+  -I dedup_reads.rg.bam \
+  --bqsr-recal-file recalibration.table \
+  -O recal_reads.bam
+```
+
+A successful preparation has a `.fai` file, a `.dict` file, readable `@RG` header lines, and a recalibration table when BQSR is used.
+
+---
+
+## 3. Variant Calling (GATK HaplotypeCaller)
+
+Once inputs are aligned, deduplicated, and validated, use the Broad Institute's **GATK (Genome Analysis Toolkit)** to identify SNPs and indels.
+
+```bash
+# Use the BQSR output when BQSR was appropriate for the selected workflow.
 gatk HaplotypeCaller \
      -R Homo_sapiens_assembly38.fasta \
-     -I dedup_reads.bam \
+     -I recal_reads.bam \
      -O raw_variants.vcf.gz
 ```
 
 ---
 
-## 3. Variant Allele Frequency (VAF) Analysis
+## 4. Variant Allele Frequency (VAF) Analysis
 
 **Variant Allele Frequency (VAF)** is the percentage of sequencing reads matching a specific DNA variant divided by the total coverage at that locus. In cancer genomics, VAF is critical for determining whether a mutation is clonal (present in all tumor cells) or subclonal.
 
@@ -113,11 +152,11 @@ ggplot(variant_data, aes(x = VAF)) +
        x = "VAF",
        y = "Number of Mutations")
 ```
-*A distinct peak around VAF = 0.5 typically represents heterozygous germline mutations, while lower peaks often represent subclonal somatic mutations.*
+*A peak near VAF = 0.5 can be consistent with heterozygous variants in an adequately covered diploid sample, but purity, copy-number change, allele-specific bias, and coverage alter observed VAF. Do not infer clonality or germline status from VAF alone.*
 
 ---
 
-## 4. Genome LiftOver (e.g., hg19 to hg38)
+## 5. Genome LiftOver (e.g., hg19 to hg38)
 
 Often, you may receive older variant data mapped to an outdated genome assembly (like `hg19`). You must "LiftOver" these coordinates to the modern `hg38` assembly before combining them with new data.
 

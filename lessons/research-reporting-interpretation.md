@@ -25,6 +25,11 @@ author: "Nasir Mahmood Abbasi, PhD"
 - Complete [Data Visualization Fundamentals](data-visualization-fundamentals.html).
 - Have one small analysis result or QC plot to describe.
 
+
+### Expected Output
+
+By the end of this lesson, you should have: **A concise analysis report that states the question, data provenance, methods and versions, results, limitations, and the distinction between observation and conclusion.**
+
 ## 1. Methods as a reproducibility record
 
 State data source and access date, sample design, preprocessing, software versions, parameters, reference versions, statistical model, and where scripts are available. Avoid vague phrases such as “standard pipeline.”

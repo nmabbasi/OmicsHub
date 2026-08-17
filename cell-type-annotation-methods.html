@@ -210,8 +210,11 @@ annotation_results &lt;- annotate_seurat(
 # The results contain both the predicted label and the biological reasoning!
 head(annotation_results)
 </code></pre>
+<h3>Responsible use of LLM-assisted annotation</h3>
+<p>Before sending any information to an external LLM service, check your institutional data-use agreement, ethics approval, and privacy rules. Prefer to send only de-identified, aggregate marker-gene lists rather than raw counts, cell barcodes, sample identifiers, clinical metadata, or patient-linked notes. Do not assume that an API is appropriate for protected or unpublished data. Record the model name, version, prompt template, date, cost limits, and any human review used in the final annotation.</p>
+<p>LLM-assisted labels are hypotheses. Validate them with canonical markers, reference-based methods, tissue context, and, where possible, orthogonal assays. If cloud use is not permitted, use approved local or institutional tools instead.</p>
 <h2>Conclusion</h2>
-<p>When analyzing a novel dataset, relying on a single annotation method is risky. A highly robust workflow involves running 2 or 3 algorithmic methods (e.g., <code>SingleR</code> + <code>CellTypist</code>) and then utilizing an AI framework like <code>CyteTypeR</code> to confirm the findings and provide literature-backed biological reasoning.</p>
+<p>When analyzing a novel dataset, relying on a single annotation method is risky. A robust workflow combines two or more reference or marker-based methods, treats any AI-generated interpretation as a hypothesis, and validates the final labels against biological evidence and study context.</p>
 <h3>Matched Python and R reference-based annotation</h3>
 <p>Both workflows transfer labels from a chosen reference. Inspect confidence or score distributions and validate all labels against canonical marker genes before reporting cell identities.</p>
 <pre><code class="language-python">import celltypist
@@ -354,7 +357,7 @@ seurat_obj$SingleR_label &lt;- predictions$labels
 <!-- Marked.js for markdown rendering -->
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <!-- Custom JS - loads tutorials from manifest -->
-<script src="script.js?v=20260815"></script>
+<script src="script.js?v=20260817-nav"></script>
 
 <script>
 function toggleMobileMenu() {

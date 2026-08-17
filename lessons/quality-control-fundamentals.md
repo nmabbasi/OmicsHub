@@ -25,6 +25,11 @@ author: "Nasir Mahmood Abbasi, PhD"
 - Complete [Biological Data Formats](biological-data-formats.html).
 - Understand that thresholds depend on protocol, organism, platform, and study design.
 
+
+### Expected Output
+
+By the end of this lesson, you should have: **A QC summary that records the tool and version, key quality metrics, a pass-or-review decision, and the next action for the data.**
+
 ## 1. Read-level QC
 
 For short reads, inspect per-base quality, adapter content, sequence length, GC distribution, overrepresented sequences, and duplication. A low-quality tail may be trimmed, but trimming should be justified and recorded.

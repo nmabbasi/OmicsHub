@@ -149,7 +149,7 @@ Legal
 <h2>1. Raw Data Processing &amp; Alignment</h2>
 <p>The first step in any DNA-seq pipeline is aligning the raw FASTQ reads to a reference genome (e.g., GRCh38/hg38) and marking PCR duplicates.</p>
 <h3>BWA-MEM Alignment</h3>
-<p><code>BWA-MEM</code> is the gold standard for aligning DNA reads to a reference genome.</p>
+<p><code>BWA-MEM</code> is a widely used aligner for short DNA reads; follow your laboratory or project standard if another validated workflow is required.</p>
 <pre><code class="language-bash"># Index the reference genome (only needed once)
 bwa index Homo_sapiens_assembly38.fasta
 
@@ -168,16 +168,46 @@ java -jar picard.jar MarkDuplicates \
       M=marked_dup_metrics.txt
 </code></pre>
 <hr />
-<h2>2. Variant Calling (GATK HaplotypeCaller)</h2>
-<p>Once the reads are aligned and deduplicated, we use the Broad Institute's <strong>GATK (Genome Analysis Toolkit)</strong> to identify SNPs (Single Nucleotide Polymorphisms) and Indels.</p>
-<pre><code class="language-bash"># Call variants using HaplotypeCaller
+<h2>2. Validate GATK Inputs and Recalibrate When Appropriate</h2>
+<p>Before calling variants, confirm that the reference build, aligned reads, known-sites resources, and metadata all refer to the same genome assembly. GATK requires key read-group fields, and missing metadata can cause failures or make technical interpretation unreliable.</p>
+<pre><code class="language-bash"># Reference prerequisites for GATK
+samtools faidx Homo_sapiens_assembly38.fasta
+gatk CreateSequenceDictionary -R Homo_sapiens_assembly38.fasta
+
+# Inspect existing read groups. You should see @RG lines with ID, SM, LB, and PL fields.
+samtools view -H dedup_reads.bam | grep '^@RG'
+
+# Only if read groups are absent or incorrect, add values supplied by your sequencing facility.
+gatk AddOrReplaceReadGroups \
+  -I dedup_reads.bam -O dedup_reads.rg.bam \
+  -RGID flowcell.lane -RGLB library1 -RGPL ILLUMINA -RGPU flowcell.lane.barcode -RGSM sample1
+</code></pre>
+<p>For human germline-style workflows with a compatible, trusted known-sites resource, use Base Quality Score Recalibration (BQSR) according to the current GATK Best Practices. Do not apply BQSR blindly when the required reference and known-sites assumptions are not met.</p>
+<pre><code class="language-bash"># Example only: use a known-sites VCF that matches exactly the same reference build.
+gatk BaseRecalibrator \
+  -R Homo_sapiens_assembly38.fasta \
+  -I dedup_reads.rg.bam \
+  --known-sites known_sites.vcf.gz \
+  -O recalibration.table
+
+gatk ApplyBQSR \
+  -R Homo_sapiens_assembly38.fasta \
+  -I dedup_reads.rg.bam \
+  --bqsr-recal-file recalibration.table \
+  -O recal_reads.bam
+</code></pre>
+<p>A successful preparation has a <code>.fai</code> file, a <code>.dict</code> file, readable <code>@RG</code> header lines, and a recalibration table when BQSR is used.</p>
+<hr />
+<h2>3. Variant Calling (GATK HaplotypeCaller)</h2>
+<p>Once inputs are aligned, deduplicated, and validated, use the Broad Institute's <strong>GATK (Genome Analysis Toolkit)</strong> to identify SNPs and indels.</p>
+<pre><code class="language-bash"># Use the BQSR output when BQSR was appropriate for the selected workflow.
 gatk HaplotypeCaller \
      -R Homo_sapiens_assembly38.fasta \
-     -I dedup_reads.bam \
+     -I recal_reads.bam \
      -O raw_variants.vcf.gz
 </code></pre>
 <hr />
-<h2>3. Variant Allele Frequency (VAF) Analysis</h2>
+<h2>4. Variant Allele Frequency (VAF) Analysis</h2>
 <p><strong>Variant Allele Frequency (VAF)</strong> is the percentage of sequencing reads matching a specific DNA variant divided by the total coverage at that locus. In cancer genomics, VAF is critical for determining whether a mutation is clonal (present in all tumor cells) or subclonal.</p>
 <h3>Calculating VAF in R</h3>
 <p>If you extract the allelic depths (AD) and total depth (DP) from your VCF into a data frame, you can analyze VAF in R:</p>
@@ -199,9 +229,9 @@ ggplot(variant_data, aes(x = VAF)) +
        x = &quot;VAF&quot;,
        y = &quot;Number of Mutations&quot;)
 </code></pre>
-<p><em>A distinct peak around VAF = 0.5 typically represents heterozygous germline mutations, while lower peaks often represent subclonal somatic mutations.</em></p>
+<p><em>A peak near VAF = 0.5 can be consistent with heterozygous variants in an adequately covered diploid sample, but purity, copy-number change, allele-specific bias, and coverage alter observed VAF. Do not infer clonality or germline status from VAF alone.</em></p>
 <hr />
-<h2>4. Genome LiftOver (e.g., hg19 to hg38)</h2>
+<h2>5. Genome LiftOver (e.g., hg19 to hg38)</h2>
 <p>Often, you may receive older variant data mapped to an outdated genome assembly (like <code>hg19</code>). You must "LiftOver" these coordinates to the modern <code>hg38</code> assembly before combining them with new data.</p>
 <pre><code class="language-r">library(rtracklayer)
 library(GenomicRanges)
@@ -370,7 +400,7 @@ vaf_table &lt;- data.frame(position = start(rowRanges(vcf)), vaf = vaf)
 <!-- Marked.js for markdown rendering -->
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <!-- Custom JS - loads tutorials from manifest -->
-<script src="script.js?v=20260815"></script>
+<script src="script.js?v=20260817-nav"></script>
 
 <script>
 function toggleMobileMenu() {

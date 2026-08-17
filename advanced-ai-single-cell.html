@@ -176,14 +176,16 @@ sc.pl.umap(adata, color='majority_voting')
 <p>Instead of just looking at marker genes, these foundation models learn the fundamental "language" of the transcriptome.</p>
 <h3>Why Foundation Models Matter</h3>
 <ul>
-<li><strong>Zero-Shot Prediction:</strong> Because they have seen tens of millions of cells during pre-training, they can often annotate rare cell types in your data <em>without</em> needing a specific task-trained model.</li>
-<li><strong>Batch Effect Resilience:</strong> They understand biological states intrinsically, meaning they are far less distracted by technical artifacts (like 10x v2 vs v3 chemistry) compared to traditional integration algorithms.</li>
+<li><strong>Zero-Shot Prediction:</strong> Pretrained models may help prioritize plausible labels for rare or poorly represented cell types, but their performance depends on the species, assay, tissue, preprocessing, and coverage of the reference data.</li>
+<li><strong>Batch Effect Resilience:</strong> Some models can reduce sensitivity to technical variation, but batch effects, out-of-distribution inputs, and protocol differences still require explicit diagnostics and biological validation.</li>
 </ul>
 <h3>Conceptual Workflow</h3>
 <p>While the exact API of these tools evolves rapidly, the general paradigm is:
 1.  <strong>Tokenization:</strong> Your cell's gene expression profile is converted into "tokens" (just like words in ChatGPT).
 2.  <strong>Embedding:</strong> The cell is passed through a transformer network, generating a highly dense mathematical representation of its biological state.
-3.  <strong>Downstream Task:</strong> This embedding is then used for flawless automated clustering, annotation, or even <em>in silico</em> perturbation (predicting what would happen if you knocked out a specific gene!).</p>
+3.  <strong>Downstream Task:</strong> The embedding can support clustering, annotation, or exploratory <em>in silico</em> perturbation hypotheses. Treat each output as a model-assisted result to validate, not as a final biological conclusion.</p>
+<h3>Reproducible practice before using a large model</h3>
+<p>Use a public, non-sensitive practice dataset before applying an AI workflow to study data. Record the model and package versions, whether a GPU was used, the input object format, the downloaded model identifier, and the exact command that produced each result. Test installation with a small public <code>.h5ad</code> or <code>.rds</code> object and compare output labels with known markers before interpreting novel biology. Do not upload patient-linked counts, metadata, or cell identifiers to external services unless your institution explicitly permits it.</p>
 <h2>Summary</h2>
 <p>The days of manually Googling gene names to annotate clusters are ending. By integrating tools like <strong>CellTypist</strong> for rapid immune annotation, and preparing for the adoption of <strong>Foundation Models (Cellama/scGPT)</strong>, you will future-proof your bioinformatics skill set.</p>
 <h3>Matched Python and R reference-based annotation</h3>
@@ -330,7 +332,7 @@ seurat_obj$SingleR_label &lt;- predictions$labels
 <!-- Marked.js for markdown rendering -->
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <!-- Custom JS - loads tutorials from manifest -->
-<script src="script.js?v=20260815"></script>
+<script src="script.js?v=20260817-nav"></script>
 
 <script>
 function toggleMobileMenu() {

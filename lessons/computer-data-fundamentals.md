@@ -25,6 +25,11 @@ author: "Nasir Mahmood Abbasi, PhD"
 - A web browser and a terminal such as macOS Terminal, Linux Terminal, or WSL.
 - No programming experience is required.
 
+
+### Expected Output
+
+By the end of this lesson, you should have: **A documented project folder with clear raw-data, processed-data, code, results, and notes locations, plus one verified file-transfer or checksum check.**
+
 ## 1. The four resources every workflow uses
 
 A CPU executes instructions, RAM holds actively used data, storage keeps files between sessions, and network bandwidth controls transfer speed. A workflow may be limited by any one of these resources. For example, a compressed FASTQ file can fit on disk but still require much more temporary space after decompression.

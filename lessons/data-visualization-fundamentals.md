@@ -25,6 +25,11 @@ author: "Nasir Mahmood Abbasi, PhD"
 - Basic R or Python plotting.
 - Complete [Quality Control Fundamentals](quality-control-fundamentals.html).
 
+
+### Expected Output
+
+By the end of this lesson, you should have: **One publication-ready exploratory plot with labeled axes, a stated colour choice, an interpretation note, and the code used to create it.**
+
 ## 1. Start with the question
 
 Use a distribution to inspect spread, a scatter plot to compare measurements, PCA to summarize major variation, a heatmap to inspect patterns, and UMAP to visualize local neighborhoods. No plot proves a mechanism by itself.

@@ -25,6 +25,11 @@ author: "Nasir Mahmood Abbasi, PhD"
 - Complete [Computer and Data Fundamentals](computer-data-fundamentals.html).
 - Install Git and create a GitHub account if you want to push to a remote repository.
 
+
+### Expected Output
+
+By the end of this lesson, you should have: **A local repository with a README, a meaningful first commit, a `.gitignore`, and a clean `git status` before publishing or sharing code.**
+
 ## 1. Start a reproducible repository
 
 A repository should contain scripts, configuration, documentation, and small example data - not an uncontrolled dump of raw sequencing files.

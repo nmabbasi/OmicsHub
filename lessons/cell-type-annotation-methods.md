@@ -130,9 +130,15 @@ annotation_results <- annotate_seurat(
 head(annotation_results)
 ```
 
+### Responsible use of LLM-assisted annotation
+
+Before sending any information to an external LLM service, check your institutional data-use agreement, ethics approval, and privacy rules. Prefer to send only de-identified, aggregate marker-gene lists rather than raw counts, cell barcodes, sample identifiers, clinical metadata, or patient-linked notes. Do not assume that an API is appropriate for protected or unpublished data. Record the model name, version, prompt template, date, cost limits, and any human review used in the final annotation.
+
+LLM-assisted labels are hypotheses. Validate them with canonical markers, reference-based methods, tissue context, and, where possible, orthogonal assays. If cloud use is not permitted, use approved local or institutional tools instead.
+
 ## Conclusion
 
-When analyzing a novel dataset, relying on a single annotation method is risky. A highly robust workflow involves running 2 or 3 algorithmic methods (e.g., `SingleR` + `CellTypist`) and then utilizing an AI framework like `CyteTypeR` to confirm the findings and provide literature-backed biological reasoning.
+When analyzing a novel dataset, relying on a single annotation method is risky. A robust workflow combines two or more reference or marker-based methods, treats any AI-generated interpretation as a hypothesis, and validates the final labels against biological evidence and study context.
 
 
 

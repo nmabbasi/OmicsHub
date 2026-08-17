@@ -25,6 +25,11 @@ author: "Nasir Mahmood Abbasi, PhD"
 - Complete [Git and GitHub for Bioinformatics](git-github-bioinformatics.html).
 - Know basic shell commands and one scripting language.
 
+
+### Expected Output
+
+By the end of this lesson, you should have: **A project directory with separated raw data, derived data, code, results, documentation, and an environment or dependency record.**
+
 ## 1. A practical layout
 
 Use names that communicate role rather than personal computer paths.

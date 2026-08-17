@@ -25,6 +25,11 @@ author: "Nasir Mahmood Abbasi, PhD"
 - Understand FASTA and GTF/GFF from [Biological Data Formats](biological-data-formats.html).
 - Have `curl`, `wget`, and `sha256sum` available.
 
+
+### Expected Output
+
+By the end of this lesson, you should have: **A reference manifest containing the provider, accession or release, direct URL, checksum result, genome build, annotation version, and contig naming convention.**
+
 ## 1. Build and annotation are different
 
 GRCh38 is an assembly; a GENCODE release is an annotation set for that assembly. A transcript identifier may change between releases. Keep the FASTA and GTF compatible.
@@ -41,8 +46,14 @@ downloaded: 2026-08-15
 Prefer NCBI, Ensembl, GENCODE, or UCSC pages that document release versions. Save URLs, checksums, and commands in the project.
 
 ```bash
-curl -L -o reference.fa.gz "https://ftp.ncbi.nlm.nih.gov/genomes/"
-sha256sum reference.fa.gz > reference.fa.gz.sha256
+# Example direct file: record the assembly accession and release in your manifest.
+curl -L -o GRCh38.p14.fa.gz \
+  "https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/001/405/GCF_000001405.40_GRCh38.p14/GCF_000001405.40_GRCh38.p14_genomic.fna.gz"
+
+# Download the provider checksum when available, then verify before analysis.
+curl -L -o md5checksums.txt \
+  "https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/001/405/GCF_000001405.40_GRCh38.p14/md5checksums.txt"
+grep "GCF_000001405.40_GRCh38.p14_genomic.fna.gz" md5checksums.txt | md5sum -c -
 ```
 
 ## 3. Validate compatibility

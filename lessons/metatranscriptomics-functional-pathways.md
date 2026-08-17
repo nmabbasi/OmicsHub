@@ -89,18 +89,18 @@ This allows you to confidently state not just *what* the community is doing, but
 
 ---
 
-## 4. Normalizing the Data
+## 4. Normalization and Differential Testing Are Different Steps
 
-Raw counts in metatranscriptomics are highly influenced by sequencing depth. Before doing statistical comparisons between a Healthy patient and a Sick patient, you must normalize the abundances to Copies Per Million (CPM).
+HUMAnN produces several abundance tables, and the correct statistical input depends on the question. CPM or relative-abundance tables can be useful for **descriptive plots**, but do not pass library-size-normalized CPM values directly to count-based differential-expression models such as DESeq2. DESeq2 expects un-normalized or estimated counts and computes its own size factors internally.
 
 ```bash
-# Normalize the pathway abundances
+# Create a CPM table for visualization or exploratory comparisons.
 humann_renorm_table --input humann_out/sample_pathabundance.tsv \
                     --output sample_pathabundance_cpm.tsv \
                     --units cpm
 ```
 
-With CPM-normalized tables across all your samples, you are ready to perform differential expression testing (e.g., using DESeq2) to find which metabolic pathways are uniquely activated in your disease state.
+Before differential testing, first determine whether your chosen HUMAnN output is a count-like table or a normalized abundance. Use raw or appropriately estimated counts with DESeq2, keep sample metadata and batch variables explicit, and record the transformation used only for visualization. If you only have compositional or normalized pathway abundances, choose a method whose assumptions match that input rather than treating it as a DESeq2 count matrix. Consult the [DESeq2 vignette](https://bioconductor.org/packages/devel/bioc/vignettes/DESeq2/inst/doc/DESeq2.html) for its input requirements.
 
 
 <div class="mt-10 p-8 bg-gray-50 border border-gray-200 rounded-xl">

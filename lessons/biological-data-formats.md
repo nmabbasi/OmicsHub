@@ -25,6 +25,11 @@ author: "Nasir Mahmood Abbasi, PhD"
 - Complete [Computer and Data Fundamentals](computer-data-fundamentals.html).
 - Know basic `pwd`, `ls`, `head`, `grep`, and pipe syntax.
 
+
+### Expected Output
+
+By the end of this lesson, you should have: **A small, validated set of FASTA, FASTQ, BAM/CRAM, VCF, GTF/GFF, and tabular-file examples with their purpose, structure, and safe inspection command recorded.**
+
 ## 1. Sequence and read files
 
 FASTA stores named sequences as a header beginning with `>` followed by sequence lines. FASTQ stores a read name, sequence, a plus line, and one quality string for every record. A FASTQ record therefore has four lines, although wrapped sequence files require more careful parsing.

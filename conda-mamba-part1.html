@@ -242,21 +242,21 @@ conda env list
 <p><strong>Pro tip</strong>: Always activate the appropriate environment before starting work on a project!</p>
 <h2>Installing Bioinformatics Software</h2>
 <h3>Essential Channels</h3>
-<p>Channels are repositories where packages are stored. For bioinformatics, you'll primarily use:</p>
-<ul>
-<li><strong>conda-forge</strong>: Community-driven packages with high quality standards</li>
-<li><strong>bioconda</strong>: Specialized channel for bioinformatics software</li>
-<li><strong>defaults</strong>: Anaconda's default channel</li>
-</ul>
-<p>Set up your channels in the right priority order:</p>
-<pre><code class="language-bash"># Add channels (order matters!)
-conda config --add channels defaults
+<p>Channels are repositories where packages are stored. For most modern bioinformatics environments, use <strong>conda-forge</strong> and <strong>bioconda</strong> with strict priority. The current Bioconda guidance no longer includes <code>defaults</code> in the recommended configuration.</p>
+<pre><code class="language-bash"># conda config --add works from lower to higher priority.
+# Run these once to give conda-forge the highest priority.
 conda config --add channels bioconda
 conda config --add channels conda-forge
-
-# Set channel priority to strict (recommended)
 conda config --set channel_priority strict
+
+# Check the resulting configuration
+conda config --show channels
+conda config --show channel_priority
 </code></pre>
+<p>For one command without changing <code>~/.condarc</code>, place command-line channels in decreasing priority:</p>
+<pre><code class="language-bash">mamba create -n bioinfo -c conda-forge -c bioconda samtools bwa
+</code></pre>
+<p>See the <a href="https://bioconda.github.io/">Bioconda usage guidance</a> when a solver conflict appears or when maintaining an older environment.</p>
 <h3>Installing Common Bioinformatics Tools</h3>
 <h4>Sequence Analysis Tools</h4>
 <pre><code class="language-bash"># Activate your environment
@@ -333,7 +333,6 @@ mamba env create -f environment.yml
 channels:
   - conda-forge
   - bioconda
-  - defaults
 dependencies:
   - python=3.9
   - pandas=1.5.3
@@ -676,7 +675,7 @@ R --slave -e &quot;library(Seurat); cat('Seurat version:', as.character(packageV
 <!-- Marked.js for markdown rendering -->
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <!-- Custom JS - loads tutorials from manifest -->
-<script src="script.js?v=20260815"></script>
+<script src="script.js?v=20260817-nav"></script>
 
 <script>
 function toggleMobileMenu() {
