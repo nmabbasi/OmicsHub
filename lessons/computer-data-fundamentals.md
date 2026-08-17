@@ -79,6 +79,29 @@ gzip -l reads.fastq.gz
 zcat reads.fastq.gz | head -n 8
 ```
 
+### Verify a FASTQ download before analysis
+
+After downloading a FASTQ file, compare it with the checksum published by the **same data provider**. This detects an incomplete or altered transfer before the file reaches a QC or alignment step. A checksum you calculate only after downloading is useful for future transfers, but it cannot prove that the original download was correct unless you compare it with the provider's manifest.
+
+Use the algorithm supplied by the provider. SHA-256 is preferred when available; MD5 remains common in sequencing archives for file-integrity checks.
+
+```bash
+# Example: download two read files and the provider's checksum manifest.
+curl -LO "https://provider.example.org/sample_R1.fastq.gz"
+curl -LO "https://provider.example.org/sample_R2.fastq.gz"
+curl -LO "https://provider.example.org/SHA256SUMS"
+
+# The manifest must contain hashes for the exact downloaded filenames.
+sha256sum -c SHA256SUMS | tee checksum_validation.log
+
+# Also test that each gzip stream can be read successfully.
+gzip -t sample_R1.fastq.gz sample_R2.fastq.gz
+```
+
+When an archive supplies an MD5 manifest instead, use the same pattern with `md5sum -c md5checksums.txt`. Continue only when every required file reports `OK` and `gzip -t` exits without an error. If a checksum fails, delete the affected file and download it again from the original provider; do not proceed by editing the manifest or accepting a mismatch.
+
+> **Important:** A checksum verifies file integrity, not whether a dataset is appropriate for your project or whether its metadata and consent conditions permit use. Keep the manifest and `checksum_validation.log` in your project records.
+
 ## Practical Exercise
 
 Create the project tree above, place a small text file in `data/raw`, record its size with `du -h`, and write a README sentence describing where raw data and results belong.

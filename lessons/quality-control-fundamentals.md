@@ -30,9 +30,25 @@ author: "Nasir Mahmood Abbasi, PhD"
 
 By the end of this lesson, you should have: **A QC summary that records the tool and version, key quality metrics, a pass-or-review decision, and the next action for the data.**
 
-## 1. Read-level QC
+## 1. Verify Download Integrity, Then Run Read-level QC
 
-For short reads, inspect per-base quality, adapter content, sequence length, GC distribution, overrepresented sequences, and duplication. A low-quality tail may be trimmed, but trimming should be justified and recorded.
+Before interpreting sequence quality, verify that each downloaded FASTQ file matches the checksum manifest provided by the archive or sequencing facility. A provider manifest contains the expected checksum for each exact filename. Do not use a checksum file you created only after an uncertain download as evidence that the original transfer was complete.
+
+```bash
+# Use the algorithm supplied by the data provider.
+# SHA-256 manifest example:
+sha256sum -c SHA256SUMS | tee checksum_validation.log
+
+# Common sequencing-archive MD5 manifest example:
+# md5sum -c md5checksums.txt | tee checksum_validation.log
+
+# Confirm each compressed FASTQ stream can be read.
+gzip -t sample_R1.fastq.gz sample_R2.fastq.gz
+```
+
+Proceed only when every required file reports `OK` and `gzip -t` returns no error. Save the provider manifest and `checksum_validation.log` under `logs/`; re-download any file that fails rather than editing the manifest.
+
+For short reads, then inspect per-base quality, adapter content, sequence length, GC distribution, overrepresented sequences, and duplication. A low-quality tail may be trimmed, but trimming should be justified and recorded.
 
 ```bash
 fastqc sample_R1.fastq.gz sample_R2.fastq.gz

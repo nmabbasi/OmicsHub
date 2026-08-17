@@ -198,6 +198,24 @@ printf &quot;# Project
 gzip -l reads.fastq.gz
 zcat reads.fastq.gz | head -n 8
 </code></pre>
+<h3>Verify a FASTQ download before analysis</h3>
+<p>After downloading a FASTQ file, compare it with the checksum published by the <strong>same data provider</strong>. This detects an incomplete or altered transfer before the file reaches a QC or alignment step. A checksum you calculate only after downloading is useful for future transfers, but it cannot prove that the original download was correct unless you compare it with the provider's manifest.</p>
+<p>Use the algorithm supplied by the provider. SHA-256 is preferred when available; MD5 remains common in sequencing archives for file-integrity checks.</p>
+<pre><code class="language-bash"># Example: download two read files and the provider's checksum manifest.
+curl -LO &quot;https://provider.example.org/sample_R1.fastq.gz&quot;
+curl -LO &quot;https://provider.example.org/sample_R2.fastq.gz&quot;
+curl -LO &quot;https://provider.example.org/SHA256SUMS&quot;
+
+# The manifest must contain hashes for the exact downloaded filenames.
+sha256sum -c SHA256SUMS | tee checksum_validation.log
+
+# Also test that each gzip stream can be read successfully.
+gzip -t sample_R1.fastq.gz sample_R2.fastq.gz
+</code></pre>
+<p>When an archive supplies an MD5 manifest instead, use the same pattern with <code>md5sum -c md5checksums.txt</code>. Continue only when every required file reports <code>OK</code> and <code>gzip -t</code> exits without an error. If a checksum fails, delete the affected file and download it again from the original provider; do not proceed by editing the manifest or accepting a mismatch.</p>
+<blockquote>
+<p><strong>Important:</strong> A checksum verifies file integrity, not whether a dataset is appropriate for your project or whether its metadata and consent conditions permit use. Keep the manifest and <code>checksum_validation.log</code> in your project records.</p>
+</blockquote>
 <h2>Practical Exercise</h2>
 <p>Create the project tree above, place a small text file in <code>data/raw</code>, record its size with <code>du -h</code>, and write a README sentence describing where raw data and results belong.</p>
 <p><strong>Pass criteria:</strong> The project contains the six named directories, the raw file is unchanged, and the README explains the raw/processed/results distinction.</p>
