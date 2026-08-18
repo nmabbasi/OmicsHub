@@ -919,19 +919,75 @@ function normalizeSearchText(value) {
         .trim();
 }
 
+const SEARCH_QUERY_ALIASES = {
+    'scrna': [['single', 'cell'], ['rna', 'seq']],
+    'scrnaseq': [['single', 'cell'], ['rna', 'seq']],
+    'rnaseq': [['rna', 'seq']],
+    'singlecell': [['single', 'cell']],
+    'celltype': [['cell', 'type']],
+    'hpc': [['high', 'performance', 'computing'], ['slurm'], ['cluster']],
+    'wes': [['whole', 'exome'], ['variant', 'calling']],
+    'qc': [['quality', 'control']],
+    'cna': [['copy', 'number']],
+    'de': [['differential', 'expression']]
+};
+
+function searchTextMatches(searchText, queryTerms) {
+    if (queryTerms.length === 0 || queryTerms.every(term => searchText.includes(term))) return true;
+    const aliasGroups = SEARCH_QUERY_ALIASES[queryTerms.join('')];
+    return Boolean(aliasGroups && aliasGroups.some(aliasTerms => aliasTerms.every(term => searchText.includes(term))));
+}
+
 function filterTutorialCards(selector, queryTerms, visibleDisplay) {
     const cards = [...document.querySelectorAll(selector)];
-    let matchCount = 0;
+    const matches = [];
 
     cards.forEach(card => {
         const searchText = normalizeSearchText(card.dataset.search || card.textContent);
-        const matches = queryTerms.length === 0 || queryTerms.every(term => searchText.includes(term));
-        card.classList.toggle('hidden', !matches);
-        card.style.display = matches ? visibleDisplay : 'none';
-        if (matches) matchCount += 1;
+        const isMatch = searchTextMatches(searchText, queryTerms);
+        card.classList.toggle('hidden', !isMatch);
+        card.style.display = isMatch ? visibleDisplay : 'none';
+        if (isMatch) matches.push(card);
     });
 
-    return { matchCount, total: cards.length };
+    return { matchCount: matches.length, total: cards.length, matches };
+}
+
+function renderSearchSuggestions(matches, rawQuery) {
+    const panel = document.getElementById('search-suggestions');
+    if (!panel) return;
+
+    panel.replaceChildren();
+    if (!rawQuery || matches.length === 0) {
+        panel.classList.add('hidden');
+        return;
+    }
+
+    const heading = document.createElement('div');
+    heading.className = 'px-4 py-2 text-xs font-bold uppercase tracking-wide text-slate-500 bg-slate-50 border-b border-slate-200';
+    heading.textContent = 'Top matching tutorials';
+    panel.appendChild(heading);
+
+    matches.slice(0, 3).forEach((card) => {
+        const link = document.createElement('a');
+        const sourceLink = card.querySelector('a[href$=".html"]');
+        const title = card.querySelector('h3')?.textContent.trim() || 'Tutorial';
+        const category = card.dataset.category || card.querySelector('span')?.textContent.trim() || 'Bioinformatics';
+        link.href = sourceLink?.getAttribute('href') || '#tutorials';
+        link.className = 'block px-4 py-3 border-b border-slate-100 last:border-b-0 transition-colors hover:bg-slate-50 focus:bg-slate-50 focus:outline-none';
+        link.innerHTML = `<span class="block text-sm font-bold text-slate-900">${title}</span><span class="mt-0.5 block text-xs font-medium text-blue-700">${category}</span>`;
+        link.addEventListener('click', () => panel.classList.add('hidden'));
+        panel.appendChild(link);
+    });
+
+    if (matches.length > 3) {
+        const more = document.createElement('div');
+        more.className = 'px-4 py-2 text-xs font-medium text-slate-500 bg-slate-50';
+        more.textContent = `${matches.length - 3} more matching tutorials below`;
+        panel.appendChild(more);
+    }
+
+    panel.classList.remove('hidden');
 }
 
 function handleSearch() {
@@ -943,6 +999,7 @@ function handleSearch() {
     const queryTerms = normalizeSearchText(rawQuery).split(' ').filter(Boolean);
     const homeResults = filterTutorialCards('#tutorials-list .tutorial-card', queryTerms, '');
     filterTutorialCards('#all-tutorials-list .tutorial-grid-card', queryTerms, 'flex');
+    renderSearchSuggestions(homeResults.matches, rawQuery);
 
     if (!status) return;
     if (queryTerms.length === 0) {
@@ -955,7 +1012,7 @@ function handleSearch() {
         status.textContent = `No tutorials match “${rawQuery}”. Try a broader term.`;
     } else {
         const label = homeResults.matchCount === 1 ? 'tutorial' : 'tutorials';
-        status.textContent = `${homeResults.matchCount} matching ${label}. Press Enter to view results.`;
+        status.textContent = `${homeResults.matchCount} matching ${label}. Choose a result or press Enter to view all.`;
     }
     status.classList.remove('hidden');
 }
