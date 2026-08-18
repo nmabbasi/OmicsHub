@@ -106,50 +106,6 @@ def lesson_navigation(current_idx: int, tutorial: dict[str, str]) -> str:
         </div>
     </section>'''
 
-<<<<<<< Updated upstream
-=======
-    static_content = f'''
-            <div class="mb-12">
-                <div class="flex items-center gap-2 text-sm text-blue-600 font-medium mb-4">
-                    <span>{cat_str}</span>
-                    <span>•</span>
-                    <span>{date_str}</span>
-                </div>
-                <h1 class="text-4xl md:text-5xl font-black text-gray-900 mb-6 leading-tight">{title}</h1>
-                <div class="flex items-center gap-4">
-                    <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 font-bold text-lg">
-                        {initials}
-                    </div>
-                    <div>
-                        <p class="font-bold text-gray-900">{author_str}</p>
-                        <p class="text-sm text-gray-500">Bioinformatics Educator</p>
-                    </div>
-                </div>
-            </div>
-            
-            {img_html}
-            
-            <div class="mb-10 p-6 bg-blue-50 border border-blue-100 rounded-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-                <div>
-                    <h3 class="text-lg font-bold text-blue-900 mb-1 flex items-center gap-2">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                        Reproducibility & Practice
-                    </h3>
-                    <p class="text-sm text-blue-700 m-0">All code blocks include one-click copying. For hands-on practice, download the starter dataset for this module.</p>
-                </div>
-                <a href="#" class="shrink-0 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-lg transition-colors shadow-sm flex items-center gap-2">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                    Download Dataset
-                </a>
-            </div>
-
-            <div class="prose prose-blue prose-lg max-w-none">
-                {rendered_html}
-            </div>
-            
-            {nav_html}
-    '''
->>>>>>> Stashed changes
 
 def tutorial_head(base_head: str, tutorial: dict[str, str], metadata: dict[str, str]) -> str:
     title = metadata["title"]
