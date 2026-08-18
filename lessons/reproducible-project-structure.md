@@ -2,7 +2,7 @@
 title: "Reproducible Project Structure"
 category: "Foundations & Prerequisites"
 date: "2026-08-15"
-image: "images/reproducible-project-structure.jpg"
+image: "images/reproducible-project-structure-workstation.webp"
 excerpt: "Organize data, scripts, results, logs, environments, and metadata into a reproducible bioinformatics project."
 author: "Nasir Mahmood Abbasi, PhD"
 ---

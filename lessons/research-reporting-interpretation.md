@@ -2,7 +2,7 @@
 title: "Research Reporting and Interpretation"
 category: "Foundations & Prerequisites"
 date: "2026-08-15"
-image: "images/research-reporting-interpretation.jpg"
+image: "images/research-reporting-interpretation-workstation.webp"
 excerpt: "Write reproducible methods, figure legends, limitations, and evidence-based biological interpretations."
 author: "Nasir Mahmood Abbasi, PhD"
 ---

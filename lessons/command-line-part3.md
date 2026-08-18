@@ -4,7 +4,7 @@ date: "2025-08-14"
 author: "Nasir Mahmood Abbasi, PhD"
 category: "Shell Command Basics"
 excerpt: "Build reusable bioinformatics pipelines using awk, pipes, redirects, and shell scripting best practices for reproducible research."
-image: "images/shell-commands-part3.png"
+image: "images/shell-commands-part3-workstation.webp"
 ---
 
 

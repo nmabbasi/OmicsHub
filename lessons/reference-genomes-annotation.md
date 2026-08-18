@@ -2,7 +2,7 @@
 title: "Reference Genomes and Annotation Databases"
 category: "Foundations & Prerequisites"
 date: "2026-08-15"
-image: "images/reference-genomes-annotation.png"
+image: "images/reference-genomes-annotation-workstation.webp"
 excerpt: "Choose genome builds, transcript versions, identifiers, and reproducible annotation sources for analysis."
 author: "Nasir Mahmood Abbasi, PhD"
 ---
