@@ -20,6 +20,7 @@
     try { window.localStorage.setItem(STORAGE_KEY, choice); } catch (error) { /* Continue without persistence. */ }
     document.documentElement.dataset.cookieChoice = choice;
     if (typeof window.omicsHubUpdateConsent === 'function') window.omicsHubUpdateConsent(choice);
+    if (choice === 'accepted' && typeof window.omicsHubLoadAnalytics === 'function') window.omicsHubLoadAnalytics();
   }
 
   function hideBanner() {
