@@ -1000,7 +1000,11 @@ function renderSearchSuggestions(matches, rawQuery, queryTerms) {
             categoryLine.className = 'mt-0.5 block text-xs font-medium text-blue-700';
             categoryLine.textContent = category;
             link.replaceChildren(titleLine, categoryLine);
-            link.addEventListener('click', () => panel.classList.add('hidden'));
+            link.addEventListener('click', (event) => {
+                event.preventDefault();
+                panel.classList.add('hidden');
+                window.location.assign(link.href);
+            });
             panel.appendChild(link);
         });
 

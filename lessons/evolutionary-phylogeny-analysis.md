@@ -2,7 +2,7 @@
 title: "Evolutionary Phylogeny"
 date: "2026-08-14"
 author: "Nasir Mahmood Abbasi, PhD"
-category: "Evolutionary Bioinformatics Analysis"
+category: "Evolutionary and Comparative Genomics"
 excerpt: "A comprehensive guide to evolutionary analysis, covering multiple sequence alignment with Kalign, tree construction, and using MEGA via the command line."
 image: "images/evolutionary-phylogeny.png"
 ---

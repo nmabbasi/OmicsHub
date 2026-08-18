@@ -2,7 +2,7 @@
 title: "Snakemake & Nextflow"
 date: "2026-08-14"
 author: "Nasir Mahmood Abbasi, PhD"
-category: "Workflow & Containerization"
+category: "Workflow Management and Containerization"
 excerpt: "Learn how to transition from messy bash scripts to highly scalable, reproducible bioinformatics pipelines using Snakemake and Nextflow."
 image: "images/reproducible-workflows-snakemake-nextflow.png"
 ---
