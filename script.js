@@ -953,7 +953,22 @@ function filterTutorialCards(selector, queryTerms, visibleDisplay) {
     return { matchCount: matches.length, total: cards.length, matches };
 }
 
-function renderSearchSuggestions(matches, rawQuery) {
+function scoreSearchResult(card, queryTerms) {
+    const title = normalizeSearchText(card.querySelector('h3')?.textContent);
+    const category = normalizeSearchText(card.dataset.category || card.querySelector('span')?.textContent);
+    const searchText = normalizeSearchText(card.dataset.search || card.textContent);
+    const phrase = queryTerms.join(' ');
+    let score = title.includes(phrase) ? 500 : 0;
+
+    queryTerms.forEach((term) => {
+        if (title.includes(term)) score += 100;
+        if (category.includes(term)) score += 40;
+        if (searchText.includes(term)) score += 5;
+    });
+    return score;
+}
+
+function renderSearchSuggestions(matches, rawQuery, queryTerms) {
     const panel = document.getElementById('search-suggestions');
     if (!panel) return;
 
@@ -965,27 +980,29 @@ function renderSearchSuggestions(matches, rawQuery) {
 
     const heading = document.createElement('div');
     heading.className = 'px-4 py-2 text-xs font-bold uppercase tracking-wide text-slate-500 bg-slate-50 border-b border-slate-200';
-    heading.textContent = 'Top matching tutorials';
+    heading.textContent = 'Best matches';
     panel.appendChild(heading);
 
-    matches.slice(0, 3).forEach((card) => {
-        const link = document.createElement('a');
-        const sourceLink = card.querySelector('a[href$=".html"]');
-        const title = card.querySelector('h3')?.textContent.trim() || 'Tutorial';
-        const category = card.dataset.category || card.querySelector('span')?.textContent.trim() || 'Bioinformatics';
-        link.href = sourceLink?.getAttribute('href') || '#tutorials';
-        link.className = 'block px-4 py-3 border-b border-slate-100 last:border-b-0 transition-colors hover:bg-slate-50 focus:bg-slate-50 focus:outline-none';
-        link.innerHTML = `<span class="block text-sm font-bold text-slate-900">${title}</span><span class="mt-0.5 block text-xs font-medium text-blue-700">${category}</span>`;
-        link.addEventListener('click', () => panel.classList.add('hidden'));
-        panel.appendChild(link);
-    });
-
-    if (matches.length > 3) {
-        const more = document.createElement('div');
-        more.className = 'px-4 py-2 text-xs font-medium text-slate-500 bg-slate-50';
-        more.textContent = `${matches.length - 3} more matching tutorials below`;
-        panel.appendChild(more);
-    }
+    [...matches]
+        .sort((a, b) => scoreSearchResult(b, queryTerms) - scoreSearchResult(a, queryTerms))
+        .slice(0, 2)
+        .forEach((card) => {
+            const link = document.createElement('a');
+            const sourceLink = card.querySelector('a[href$=".html"]');
+            const title = card.querySelector('h3')?.textContent.trim() || 'Tutorial';
+            const category = card.dataset.category || card.querySelector('span')?.textContent.trim() || 'Bioinformatics';
+            const titleLine = document.createElement('span');
+            const categoryLine = document.createElement('span');
+            link.href = sourceLink?.getAttribute('href') || '#tutorials';
+            link.className = 'block px-4 py-2.5 border-b border-slate-100 last:border-b-0 transition-colors hover:bg-slate-50 focus:bg-slate-50 focus:outline-none';
+            titleLine.className = 'block text-sm font-bold text-slate-900';
+            titleLine.textContent = title;
+            categoryLine.className = 'mt-0.5 block text-xs font-medium text-blue-700';
+            categoryLine.textContent = category;
+            link.replaceChildren(titleLine, categoryLine);
+            link.addEventListener('click', () => panel.classList.add('hidden'));
+            panel.appendChild(link);
+        });
 
     panel.classList.remove('hidden');
 }
@@ -999,7 +1016,7 @@ function handleSearch() {
     const queryTerms = normalizeSearchText(rawQuery).split(' ').filter(Boolean);
     const homeResults = filterTutorialCards('#tutorials-list .tutorial-card', queryTerms, '');
     filterTutorialCards('#all-tutorials-list .tutorial-grid-card', queryTerms, 'flex');
-    renderSearchSuggestions(homeResults.matches, rawQuery);
+    renderSearchSuggestions(homeResults.matches, rawQuery, queryTerms);
 
     if (!status) return;
     if (queryTerms.length === 0) {
