@@ -4,7 +4,7 @@ date: "2026-08-14"
 author: "Nasir Mahmood Abbasi, PhD"
 category: "Advanced Single-Cell Analysis"
 excerpt: "Learn how to use inferCNV to detect large-scale chromosomal copy number alterations in single-cell RNA-seq data, essential for identifying malignant tumor cells."
-image: "images/infercnv-copy-number-variation.png"
+image: "images/infercnv-copy-number-variation-workstation.webp"
 ---
 
 
