@@ -157,8 +157,8 @@ mamba env create -f environment.yml
 # Activate environment
 conda activate single-cell
 
-# Your prompt should change to show the active environment:
-# (single-cell) username@computer:~$
+# The prompt now shows the active environment:
+# (single-cell) TheOmicsHub@nmabbasi:~$
 
 # Deactivate environment
 conda deactivate

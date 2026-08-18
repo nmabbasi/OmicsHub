@@ -57,14 +57,14 @@ Think of the command line as your Swiss Army knife for biological data: once you
 
 When you open a terminal, you'll see something like:
 ```bash
-username@computer:~$
+TheOmicsHub@nmabbasi:~$
 ```
 
-This tells you:
-- `username`: Your current user
-- `computer`: The machine name
-- `~`: Your current location (home directory)
-- `$`: You're ready for a command
+This example prompt tells you:
+- `TheOmicsHub`: The workstation or host name
+- `nmabbasi`: The account name
+- `~`: The current location (home directory)
+- `$`: The terminal is ready for a command
 
 ## Essential Navigation Commands
 
@@ -74,7 +74,7 @@ The `pwd` command (print working directory) tells you exactly where you are in t
 
 ```bash
 pwd
-# Output: /home/username
+# Output: /home/nmabbasi
 ```
 
 Think of it as your GPS for the file system: you should always know where you are before you start moving around.
