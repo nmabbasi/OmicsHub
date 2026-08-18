@@ -156,6 +156,12 @@ def main() -> None:
         raise RuntimeError("Could not locate shared footer boundary in index.html")
     base_head = header_split[0]
     footer_html = "\n</main>" + footer_split[1]
+    tutorial_footer_html = re.sub(
+        r'\s*<div id="homepage-visitor-counter"[^>]*>.*?</div>\s*',
+        '\n',
+        footer_html,
+        flags=re.DOTALL,
+    )
 
     # Generated tutorials must activate Tutorials, not Home.
     base_head = base_head.replace(
@@ -204,7 +210,7 @@ def main() -> None:
     </div>
     <script>window.STATIC_RENDERED = true; window.PRELOADED_TUTORIAL_ID = "{html.escape(tutorial['id'])}";</script>
         '''
-        final_html = tutorial_head(base_head, tutorial, metadata) + '<main class="min-h-screen">' + page_content + footer_html
+        final_html = tutorial_head(base_head, tutorial, metadata) + '<main class="min-h-screen">' + page_content + tutorial_footer_html
         (ROOT / f"{tutorial['id']}.html").write_text(final_html, encoding="utf-8")
         tutorial_urls.append(f"{SITE_URL}/{tutorial['id']}.html")
         print(f"Generated {tutorial['id']}.html")
