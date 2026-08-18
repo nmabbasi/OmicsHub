@@ -8,6 +8,10 @@
   --blueprint-line: #D7E3ED;
   --blueprint-copy: #4D6478;
   --blueprint-muted: #71869A;
+  --blueprint-cyan: #22D3EE;
+  --blueprint-sky: #38BDF8;
+  --blueprint-violet: #A78BFA;
+  --blueprint-gold: #FBBF24;
 }
 
 /* Preserve the established active navigation state. */
@@ -141,10 +145,10 @@ header nav #mobile-menu a.start-here-nav-active .nav-network-mark {
   gap: .45rem;
   align-items: center;
   justify-content: center;
-  min-height: 2.75rem;
-  padding: .72rem 1rem;
-  border-radius: .6rem;
-  font-size: .88rem;
+  min-height: 3.1rem;
+  padding: .82rem 1.2rem;
+  border-radius: .7rem;
+  font-size: .96rem;
   font-weight: 800;
   line-height: 1.2;
   text-decoration: none;
@@ -217,8 +221,8 @@ header nav #mobile-menu a.start-here-nav-active .nav-network-mark {
 .blueprint-rail {
   position: relative;
   z-index: 2;
-  margin: clamp(1.2rem, 3vw, 2rem) clamp(.4rem, 5vw, 4rem) 0;
-  padding: clamp(1.2rem, 3.2vw, 2rem) clamp(1.1rem, 3.1vw, 2rem) 1.55rem;
+  margin: clamp(1.45rem, 3.5vw, 2.35rem) clamp(.4rem, 5vw, 4rem) 0;
+  padding: clamp(1.5rem, 3.8vw, 2.55rem) clamp(1.25rem, 3.4vw, 2.3rem) 2rem;
   border: 1px solid var(--blueprint-line);
   border-radius: 1rem;
   background: #FFFFFF;
@@ -230,13 +234,13 @@ header nav #mobile-menu a.start-here-nav-active .nav-network-mark {
   gap: 1.2rem;
   align-items: flex-end;
   justify-content: space-between;
-  margin-bottom: 1.75rem;
+  margin-bottom: 2.15rem;
 }
 
 .blueprint-rail-heading h2 {
   margin: .35rem 0 0;
   color: var(--blueprint-ink);
-  font-size: clamp(1.18rem, 2vw, 1.55rem);
+  font-size: clamp(1.48rem, 2.5vw, 2.05rem);
   font-weight: 830;
   letter-spacing: -.035em;
   line-height: 1.15;
@@ -246,25 +250,30 @@ header nav #mobile-menu a.start-here-nav-active .nav-network-mark {
   max-width: 23rem;
   margin: 0;
   color: var(--blueprint-muted);
-  font-size: .78rem;
-  line-height: 1.5;
+  font-size: .92rem;
+  line-height: 1.58;
   text-align: right;
 }
 
-.blueprint-rail-line {
-  position: absolute;
-  top: 7.55rem;
-  right: calc(10% + .5rem);
-  left: calc(10% + .5rem);
-  height: 2px;
-  background: linear-gradient(90deg, #123B5D 0%, #2563EB 70%, #60A5FA 100%);
-}
+.blueprint-rail-line { display: none; }
 
 .blueprint-rail-stops {
   position: relative;
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: .5rem;
+  gap: .7rem;
+  padding: 0 clamp(.4rem, 2vw, 1.25rem);
+}
+
+.blueprint-rail-stops::before {
+  position: absolute;
+  z-index: 0;
+  top: 1.75rem;
+  right: 10%;
+  left: 10%;
+  height: 3px;
+  background: linear-gradient(90deg, var(--blueprint-cyan) 0%, var(--blueprint-sky) 25%, var(--blueprint-blue) 50%, var(--blueprint-violet) 75%, var(--blueprint-gold) 100%);
+  content: "";
 }
 
 .blueprint-stop {
@@ -277,40 +286,42 @@ header nav #mobile-menu a.start-here-nav-active .nav-network-mark {
 
 .blueprint-stop-marker {
   display: inline-flex;
-  width: 2.7rem;
-  height: 2.7rem;
+  position: relative;
+  z-index: 1;
+  width: 3.5rem;
+  height: 3.5rem;
   align-items: center;
   justify-content: center;
-  border: .42rem solid #FFFFFF;
+  border: .5rem solid #FFFFFF;
   border-radius: 50%;
-  background: var(--blueprint-navy);
-  box-shadow: 0 0 0 2px var(--blueprint-navy);
-  color: #FFFFFF;
-  font-size: .67rem;
+  background: var(--blueprint-cyan);
+  box-shadow: 0 0 0 2px var(--blueprint-cyan), 0 8px 14px rgba(11, 39, 65, .10);
+  color: var(--blueprint-ink);
+  font-size: .78rem;
   font-weight: 850;
   letter-spacing: .04em;
 }
 
-.blueprint-stop:nth-child(2) .blueprint-stop-marker,
-.blueprint-stop:nth-child(4) .blueprint-stop-marker { background: #1C4F7A; box-shadow: 0 0 0 2px #1C4F7A; }
-.blueprint-stop:nth-child(3) .blueprint-stop-marker,
-.blueprint-stop:nth-child(5) .blueprint-stop-marker { background: var(--blueprint-blue); box-shadow: 0 0 0 2px var(--blueprint-blue); }
+.blueprint-stop:nth-child(2) .blueprint-stop-marker { background: var(--blueprint-sky); box-shadow: 0 0 0 2px var(--blueprint-sky), 0 8px 14px rgba(11, 39, 65, .10); }
+.blueprint-stop:nth-child(3) .blueprint-stop-marker { background: var(--blueprint-blue); box-shadow: 0 0 0 2px var(--blueprint-blue), 0 8px 14px rgba(11, 39, 65, .10); color: #FFFFFF; }
+.blueprint-stop:nth-child(4) .blueprint-stop-marker { background: var(--blueprint-violet); box-shadow: 0 0 0 2px var(--blueprint-violet), 0 8px 14px rgba(11, 39, 65, .10); }
+.blueprint-stop:nth-child(5) .blueprint-stop-marker { background: var(--blueprint-gold); box-shadow: 0 0 0 2px var(--blueprint-gold), 0 8px 14px rgba(11, 39, 65, .10); }
 
 .blueprint-stop strong {
-  margin-top: .75rem;
+  margin-top: .95rem;
   color: var(--blueprint-ink);
-  font-size: .82rem;
+  font-size: .98rem;
   font-weight: 800;
   letter-spacing: -.018em;
   line-height: 1.22;
 }
 
 .blueprint-stop span:last-child {
-  max-width: 9rem;
-  margin-top: .34rem;
+  max-width: 10.5rem;
+  margin-top: .42rem;
   color: var(--blueprint-copy);
-  font-size: .71rem;
-  line-height: 1.42;
+  font-size: .84rem;
+  line-height: 1.5;
 }
 
 .blueprint-content-section {
@@ -357,15 +368,15 @@ header nav #mobile-menu a.start-here-nav-active .nav-network-mark {
   grid-template-columns: 3.8rem minmax(0, 1fr) auto;
   gap: 1rem;
   align-items: center;
-  min-height: 7.6rem;
-  padding: 1.25rem 0;
+  min-height: 9rem;
+  padding: 1.5rem 0;
   border-bottom: 1px solid var(--blueprint-line);
 }
 
 .blueprint-agenda-number {
   color: var(--blueprint-blue);
   font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: .79rem;
+  font-size: .92rem;
   font-weight: 800;
   letter-spacing: .03em;
 }
@@ -373,7 +384,7 @@ header nav #mobile-menu a.start-here-nav-active .nav-network-mark {
 .blueprint-agenda-copy h3 {
   margin: 0 0 .3rem;
   color: var(--blueprint-ink);
-  font-size: 1.12rem;
+  font-size: 1.32rem;
   letter-spacing: -.025em;
   line-height: 1.2;
 }
@@ -382,18 +393,18 @@ header nav #mobile-menu a.start-here-nav-active .nav-network-mark {
   max-width: 38rem;
   margin: 0;
   color: var(--blueprint-copy);
-  font-size: .85rem;
-  line-height: 1.56;
+  font-size: .98rem;
+  line-height: 1.62;
 }
 
 .blueprint-agenda-link {
   flex: 0 0 auto;
-  min-height: auto;
-  padding: .55rem .68rem;
-  border: 1px solid #C5D8E9;
-  border-radius: .45rem;
+  min-height: 3rem;
+  padding: .72rem 1rem;
+  border: 1px solid #AFC9E1;
+  border-radius: .62rem;
   color: var(--blueprint-navy);
-  font-size: .76rem;
+  font-size: .9rem;
   white-space: nowrap;
 }
 
@@ -427,10 +438,10 @@ header nav #mobile-menu a.start-here-nav-active .nav-network-mark {
 
 .blueprint-route {
   display: grid;
-  grid-template-columns: 4.1rem minmax(0, 1fr) minmax(12rem, .38fr) 2rem;
-  gap: 1.1rem;
+  grid-template-columns: 4.7rem minmax(0, 1fr) minmax(15rem, .42fr) 2.45rem;
+  gap: 1.35rem;
   align-items: center;
-  min-height: 7.7rem;
+  min-height: 9.1rem;
   border-bottom: 1px solid var(--blueprint-line);
   color: inherit;
   text-decoration: none;
@@ -447,13 +458,13 @@ header nav #mobile-menu a.start-here-nav-active .nav-network-mark {
 .blueprint-route-code {
   color: var(--blueprint-blue);
   font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: .75rem;
+  font-size: .9rem;
 }
 
 .blueprint-route-copy strong {
   display: block;
   color: var(--blueprint-ink);
-  font-size: 1.04rem;
+  font-size: 1.26rem;
   letter-spacing: -.022em;
   line-height: 1.2;
 }
@@ -462,27 +473,27 @@ header nav #mobile-menu a.start-here-nav-active .nav-network-mark {
   display: block;
   margin-top: .32rem;
   color: var(--blueprint-copy);
-  font-size: .8rem;
-  line-height: 1.46;
+  font-size: .95rem;
+  line-height: 1.55;
 }
 
 .blueprint-route-start {
   color: var(--blueprint-blue);
-  font-size: .78rem;
+  font-size: .94rem;
   font-weight: 800;
   line-height: 1.4;
 }
 
 .blueprint-route-arrow {
   display: inline-flex;
-  width: 1.75rem;
-  height: 1.75rem;
+  width: 2.35rem;
+  height: 2.35rem;
   align-items: center;
   justify-content: center;
   border: 1px solid #B5CEE4;
   border-radius: 50%;
   color: var(--blueprint-blue);
-  font-size: 1.05rem;
+  font-size: 1.25rem;
   font-weight: 800;
 }
 
@@ -516,8 +527,8 @@ header nav #mobile-menu a.start-here-nav-active .nav-network-mark {
   max-width: 43rem;
   margin: 0;
   color: var(--blueprint-copy);
-  font-size: .91rem;
-  line-height: 1.6;
+  font-size: 1rem;
+  line-height: 1.65;
 }
 
 .blueprint-catalogue-link {
@@ -553,19 +564,19 @@ header nav #mobile-menu a.start-here-nav-active .nav-network-mark {
   .blueprint-brief { min-height: 0; padding: 1.4rem; border-radius: 1rem; }
   .blueprint-brief h1 { font-size: clamp(2.2rem, 12vw, 3.45rem); }
   .blueprint-network { position: relative; right: auto; bottom: auto; margin-top: 1.6rem; }
-  .blueprint-rail { margin: 1.1rem 0 0; padding: 1.15rem; }
-  .blueprint-rail-heading { align-items: flex-start; flex-direction: column; gap: .55rem; margin-bottom: 1.25rem; }
+  .blueprint-rail { margin: 1.1rem 0 0; padding: 1.35rem; }
+  .blueprint-rail-heading { align-items: flex-start; flex-direction: column; gap: .6rem; margin-bottom: 1.6rem; }
   .blueprint-rail-heading > p:last-child { text-align: left; }
-  .blueprint-rail-line { top: 8.3rem; bottom: 2.3rem; left: 1.95rem; width: 2px; height: auto; right: auto; background: linear-gradient(180deg, #123B5D 0%, #2563EB 75%, #60A5FA 100%); }
-  .blueprint-rail-stops { grid-template-columns: 1fr; gap: 1.1rem; }
-  .blueprint-stop { display: grid; grid-template-columns: 3.1rem minmax(0, 1fr); gap: .1rem .8rem; align-items: center; text-align: left; }
+  .blueprint-rail-stops { grid-template-columns: 1fr; gap: 1.4rem; padding: 0; }
+  .blueprint-rail-stops::before { top: 1.75rem; right: auto; bottom: 1.75rem; left: 1.75rem; width: 3px; height: auto; background: linear-gradient(180deg, var(--blueprint-cyan) 0%, var(--blueprint-sky) 25%, var(--blueprint-blue) 50%, var(--blueprint-violet) 75%, var(--blueprint-gold) 100%); }
+  .blueprint-stop { display: grid; grid-template-columns: 3.5rem minmax(0, 1fr); gap: .15rem 1rem; align-items: center; text-align: left; }
   .blueprint-stop-marker { grid-row: 1 / span 2; }
   .blueprint-stop strong { margin-top: 0; }
   .blueprint-stop span:last-child { max-width: none; margin-top: 0; }
   .blueprint-content-section { margin-top: 4.2rem; }
-  .blueprint-agenda-item { grid-template-columns: 2.75rem minmax(0, 1fr); gap: .55rem .8rem; min-height: 0; }
+  .blueprint-agenda-item { grid-template-columns: 3.25rem minmax(0, 1fr); gap: .65rem .95rem; min-height: 0; }
   .blueprint-agenda-link { grid-column: 2; justify-self: start; }
-  .blueprint-route { grid-template-columns: 3.25rem minmax(0, 1fr) 1.75rem; gap: .6rem; min-height: 0; padding: 1.1rem 0; }
+  .blueprint-route { grid-template-columns: 3.7rem minmax(0, 1fr) 2.35rem; gap: .8rem; min-height: 0; padding: 1.35rem 0; }
   .blueprint-route:hover,
   .blueprint-route:focus-visible { padding-right: .35rem; padding-left: .35rem; }
   .blueprint-route-start { grid-column: 2; }
