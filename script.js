@@ -71,7 +71,13 @@ function setupEventListeners() {
     // Search functionality
     const searchInput = document.getElementById('search-input');
     if (searchInput) {
-        searchInput.addEventListener('input', debounce(handleSearch, 300));
+        searchInput.addEventListener('input', debounce(handleSearch, 180));
+        searchInput.addEventListener('keydown', function(event) {
+            if (event.key === 'Enter' && searchInput.value.trim()) {
+                event.preventDefault();
+                document.getElementById('tutorials')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        });
     }
 
     // Accessible Legal dropdown: support click, Escape, and outside-click dismissal.
@@ -904,47 +910,54 @@ function debounce(func, delay) {
     };
 }
 
+function normalizeSearchText(value) {
+    return String(value || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, ' ')
+        .trim();
+}
+
+function filterTutorialCards(selector, queryTerms, visibleDisplay) {
+    const cards = [...document.querySelectorAll(selector)];
+    let matchCount = 0;
+
+    cards.forEach(card => {
+        const searchText = normalizeSearchText(card.dataset.search || card.textContent);
+        const matches = queryTerms.length === 0 || queryTerms.every(term => searchText.includes(term));
+        card.classList.toggle('hidden', !matches);
+        card.style.display = matches ? visibleDisplay : 'none';
+        if (matches) matchCount += 1;
+    });
+
+    return { matchCount, total: cards.length };
+}
+
 function handleSearch() {
     const searchInput = document.getElementById('search-input');
+    const status = document.getElementById('search-results-status');
     if (!searchInput) return;
-    
-    const query = searchInput.value.toLowerCase();
-    
-    const homeTutorialsList = document.getElementById('tutorials-list');
-    if (homeTutorialsList) {
-        const cards = homeTutorialsList.querySelectorAll('.tutorial-card');
-        cards.forEach(card => {
-            const title = card.querySelector('h3') ? card.querySelector('h3').textContent.toLowerCase() : '';
-            const cat = card.querySelector('span.bg-blue-100') ? card.querySelector('span.bg-blue-100').textContent.toLowerCase() : '';
-            const exc = card.querySelector('.excerpt') ? card.querySelector('.excerpt').textContent.toLowerCase() : '';
-            
-            if (query === '' || title.includes(query) || cat.includes(query) || exc.includes(query)) {
-                card.classList.remove('hidden');
-                card.style.display = '';
-            } else {
-                card.classList.add('hidden');
-                card.style.display = 'none';
-            }
-        });
+
+    const rawQuery = searchInput.value.trim();
+    const queryTerms = normalizeSearchText(rawQuery).split(' ').filter(Boolean);
+    const homeResults = filterTutorialCards('#tutorials-list .tutorial-card', queryTerms, '');
+    filterTutorialCards('#all-tutorials-list .tutorial-grid-card', queryTerms, 'flex');
+
+    if (!status) return;
+    if (queryTerms.length === 0) {
+        status.textContent = '';
+        status.classList.add('hidden');
+        return;
     }
-    
-    const allTutorialsList = document.getElementById('all-tutorials-list');
-    if (allTutorialsList) {
-        const gridCards = allTutorialsList.querySelectorAll('.tutorial-grid-card');
-        gridCards.forEach(card => {
-            const title = card.querySelector('h3') ? card.querySelector('h3').textContent.toLowerCase() : '';
-            const cat = card.getAttribute('data-category') ? card.getAttribute('data-category').toLowerCase() : '';
-            const exc = card.querySelector('.line-clamp-3') ? card.querySelector('.line-clamp-3').textContent.toLowerCase() : '';
-            
-            if (query === '' || title.includes(query) || cat.includes(query) || exc.includes(query)) {
-                card.style.display = 'flex';
-                card.classList.remove('hidden');
-            } else {
-                card.style.display = 'none';
-                card.classList.add('hidden');
-            }
-        });
+
+    if (homeResults.matchCount === 0) {
+        status.textContent = `No tutorials match “${rawQuery}”. Try a broader term.`;
+    } else {
+        const label = homeResults.matchCount === 1 ? 'tutorial' : 'tutorials';
+        status.textContent = `${homeResults.matchCount} matching ${label}. Press Enter to view results.`;
     }
+    status.classList.remove('hidden');
 }
 
 // Back to top button functionality

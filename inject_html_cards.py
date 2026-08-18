@@ -1,4 +1,5 @@
 import os
+import html
 import re
 from collections import Counter
 
@@ -120,6 +121,12 @@ for file in tutorial_files:
         m_exc = re.search(r'excerpt:\s*"([^"]+)"', fm)
         if m_exc: excerpt = m_exc.group(1)
 
+    markdown_headings = re.findall(r'^#{1,6}\s+(.+)$', content, re.MULTILINE)
+    html_headings = re.findall(r'<h[1-6][^>]*>(.*?)</h[1-6]>', content, re.IGNORECASE | re.DOTALL)
+    heading_text = ' '.join(markdown_headings + [re.sub(r'<[^>]+>', ' ', heading) for heading in html_headings])
+    search_text = re.sub(r'\s+', ' ', f'{id_str} {title} {category} {excerpt} {heading_text}').strip()
+    search_text = html.escape(search_text, quote=True)
+
     categories_set.add(category)
     tutorials.append({
         'id': id_str,
@@ -127,13 +134,14 @@ for file in tutorial_files:
         'category': category,
         'date': date_str,
         'image': image,
-        'excerpt': excerpt
+        'excerpt': excerpt,
+        'search': search_text
     })
 
 def render_home_card(t):
     img_html = f'<div class="w-full aspect-video relative overflow-hidden border-b border-gray-100 bg-gray-50"><img src="{t["image"]}" alt="{t["title"]}" loading="lazy" decoding="async" class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 hover:scale-105"></div>' if t["image"] else ''
     return f'''
-        <article class="tutorial-card cursor-pointer" onclick="window.location.href='{t["id"]}.html'">
+        <article class="tutorial-card cursor-pointer" data-search="{t["search"]}" onclick="window.location.href='{t["id"]}.html'">
             {img_html}
             <div class="p-6 flex flex-col flex-grow">
                 <div class="flex items-center justify-between mb-3">
@@ -148,7 +156,7 @@ def render_home_card(t):
 
 def render_grid_card(t):
     return f'''
-        <article class="tutorial-grid-card bg-white rounded-lg shadow-md overflow-hidden transform transition-transform hover:scale-105 duration-300 cursor-pointer flex flex-col" data-category="{t["category"]}" onclick="window.location.href='{t["id"]}.html'">
+        <article class="tutorial-grid-card bg-white rounded-lg shadow-md overflow-hidden transform transition-transform hover:scale-105 duration-300 cursor-pointer flex flex-col" data-category="{t["category"]}" data-search="{t["search"]}" onclick="window.location.href='{t["id"]}.html'">
             <img src="{t["image"]}" alt="{t["title"]}" loading="lazy" decoding="async" class="w-full h-48 object-cover">
             <div class="p-6 flex flex-col flex-grow">
                 <div class="flex items-center justify-between mb-3">
