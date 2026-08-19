@@ -31,6 +31,7 @@ def update_file(filepath, new_header, new_footer, depth=0):
             prefix = "../" * depth
             # just simple replacements for local links
             adj_header = adj_header.replace('href="index.html"', f'href="{prefix}index.html"')
+            adj_header = adj_header.replace('href="index.html#all-tutorials"', f'href="{prefix}index.html#all-tutorials"')
             adj_header = adj_header.replace('href="start-here.html"', f'href="{prefix}start-here.html"')
             adj_header = adj_header.replace('href="services.html"', f'href="{prefix}services.html"')
             adj_header = adj_header.replace('href="about.html"', f'href="{prefix}about.html"')
@@ -83,7 +84,10 @@ def update_file(filepath, new_header, new_footer, depth=0):
         adj_footer = new_footer
         if depth > 0:
             prefix = "../" * depth
-            adj_footer = adj_footer.replace('href="index.html', f'href="{prefix}index.html')
+            adj_footer = adj_footer.replace('href="index.html"', f'href="{prefix}index.html"')
+            adj_footer = adj_footer.replace('href="index.html#all-tutorials"', f'href="{prefix}index.html#all-tutorials"')
+            adj_footer = adj_footer.replace('href="start-here.html"', f'href="{prefix}start-here.html"')
+            adj_footer = adj_footer.replace('href="services.html"', f'href="{prefix}services.html"')
             adj_footer = adj_footer.replace('href="about.html"', f'href="{prefix}about.html"')
             adj_footer = adj_footer.replace('href="contact.html"', f'href="{prefix}contact.html"')
             adj_footer = adj_footer.replace('href="pages/', f'href="{prefix}pages/')
