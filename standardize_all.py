@@ -98,8 +98,8 @@ def update_file(filepath, new_header, new_footer, depth=0):
         print(f"Updated {filepath}")
 
 
-header = extract_block('index.html', '<header class="bg-white border-b border-gray-200 sticky top-0 z-50">', '</header>')
-footer = extract_block('index.html', '<footer class="bg-gray-900 text-white mt-16">', '</footer>')
+header = extract_block('index.html', '<header', '</header>')
+footer = extract_block('index.html', '<footer', '</footer>')
 
 if not header or not footer:
     print("Could not extract header/footer from index.html")
