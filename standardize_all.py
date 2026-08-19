@@ -38,62 +38,28 @@ def update_file(filepath, new_header, new_footer, depth=0):
             adj_header = adj_header.replace('href="pages/', f'href="{prefix}pages/')
             adj_header = adj_header.replace('src="images/', f'src="{prefix}images/')
 
-        # De-activate "Home" link since we are not on index.html
-        adj_header = adj_header.replace(
-            'id="nav-desktop-home" class="px-4 py-2 text-sm font-semibold bg-blue-600 text-white rounded-md shadow-sm transition-all"',
-            'id="nav-desktop-home" class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-blue-600 rounded-md hover:bg-gray-50 transition-all"'
-        )
-        adj_header = adj_header.replace(
-            'id="nav-mobile-home" class="px-4 py-2 text-sm font-semibold text-blue-600 bg-blue-50 rounded-lg transition-colors"',
-            'id="nav-mobile-home" class="px-4 py-2 text-sm text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors"'
-        )
+        # Remove aria-current="page" from everywhere to ensure clean slate
+        adj_header = adj_header.replace(' aria-current="page"', '')
 
         # Activate correct link based on filename
         filename = os.path.basename(filepath)
         if filename == 'start-here.html':
-            adj_header = adj_header.replace(
-                'id="nav-desktop-starthere" class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-blue-600 rounded-md hover:bg-gray-50 transition-all flex items-center gap-1"',
-                'id="nav-desktop-starthere" class="px-4 py-2 text-sm font-semibold bg-blue-600 text-white rounded-md shadow-sm transition-all flex items-center gap-1"'
-            )
-            adj_header = adj_header.replace(
-                'id="nav-mobile-starthere" class="px-4 py-2 text-sm text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors"',
-                'id="nav-mobile-starthere" class="px-4 py-2 text-sm font-semibold text-blue-600 bg-blue-50 rounded-lg transition-colors"'
-            )
+            adj_header = adj_header.replace('id="nav-desktop-starthere"', 'id="nav-desktop-starthere" aria-current="page"')
+            adj_header = adj_header.replace('id="nav-mobile-starthere"', 'id="nav-mobile-starthere" aria-current="page"')
         elif filename == 'services.html':
-            adj_header = adj_header.replace(
-                'href="services.html" class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-blue-600 rounded-md hover:bg-gray-50 transition-all"',
-                'href="services.html" class="px-4 py-2 text-sm font-semibold bg-blue-600 text-white rounded-md shadow-sm transition-all"'
-            )
-            adj_header = adj_header.replace(
-                'href="services.html" class="px-4 py-2 text-sm text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors"',
-                'href="services.html" class="px-4 py-2 text-sm font-semibold text-blue-600 bg-blue-50 rounded-lg transition-colors"'
-            )
+            adj_header = adj_header.replace('id="nav-desktop-services"', 'id="nav-desktop-services" aria-current="page"')
+            adj_header = adj_header.replace('id="nav-mobile-services"', 'id="nav-mobile-services" aria-current="page"')
         elif filename == 'about.html':
-            adj_header = adj_header.replace(
-                'href="about.html" class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-blue-600 rounded-md hover:bg-gray-50 transition-all"',
-                'href="about.html" class="px-4 py-2 text-sm font-semibold bg-blue-600 text-white rounded-md shadow-sm transition-all"'
-            )
-            adj_header = adj_header.replace(
-                'href="about.html" class="px-4 py-2 text-sm text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors"',
-                'href="about.html" class="px-4 py-2 text-sm font-semibold text-blue-600 bg-blue-50 rounded-lg transition-colors"'
-            )
+            adj_header = adj_header.replace('id="nav-desktop-about"', 'id="nav-desktop-about" aria-current="page"')
+            adj_header = adj_header.replace('id="nav-mobile-about"', 'id="nav-mobile-about" aria-current="page"')
         elif filename == 'contact.html':
-            adj_header = adj_header.replace(
-                'href="contact.html" class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-blue-600 rounded-md hover:bg-gray-50 transition-all"',
-                'href="contact.html" class="px-4 py-2 text-sm font-semibold bg-blue-600 text-white rounded-md shadow-sm transition-all"'
-            )
-            adj_header = adj_header.replace(
-                'href="contact.html" class="px-4 py-2 text-sm text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors"',
-                'href="contact.html" class="px-4 py-2 text-sm font-semibold text-blue-600 bg-blue-50 rounded-lg transition-colors"'
-            )
+            adj_header = adj_header.replace('id="nav-desktop-contact"', 'id="nav-desktop-contact" aria-current="page"')
+            adj_header = adj_header.replace('id="nav-mobile-contact"', 'id="nav-mobile-contact" aria-current="page"')
         else:
             if depth > 0:
                 # We are in the pages/ directory (Legal pages)
                 # Activate the Legal dropdown button
-                adj_header = adj_header.replace(
-                    '<button class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-blue-600 flex items-center gap-1 rounded-md hover:bg-gray-50 transition-all">',
-                    '<button class="px-4 py-2 text-sm font-semibold bg-blue-600 text-white flex items-center gap-1 rounded-md shadow-sm transition-all">'
-                )
+                adj_header = adj_header.replace('id="legal-menu-button"', 'id="legal-menu-button" aria-current="page"')
 
                 # Activate the mobile Legal header section slightly to show it's active
                 adj_header = adj_header.replace(
@@ -101,16 +67,13 @@ def update_file(filepath, new_header, new_footer, depth=0):
                     '<div class="px-4 pt-2 pb-1 text-xs font-semibold text-blue-600 uppercase tracking-wide">Legal (Active)</div>'
                 )
             else:
-                # It's a tutorial page in the root directory! Activate the 'Tutorials' tab.
+                # It's a tutorial page in the root directory or index
                 if filename != 'index.html':
-                    adj_header = adj_header.replace(
-                        'id="nav-desktop-tutorials" class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-blue-600 rounded-md hover:bg-gray-50 transition-all cursor-pointer"',
-                        'id="nav-desktop-tutorials" class="px-4 py-2 text-sm font-semibold bg-blue-600 text-white rounded-md shadow-sm transition-all cursor-pointer"'
-                    )
-                    adj_header = adj_header.replace(
-                        'id="nav-mobile-tutorials" class="px-4 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors cursor-pointer"',
-                        'id="nav-mobile-tutorials" class="px-4 py-2 text-sm font-semibold text-blue-600 bg-blue-50 rounded-lg transition-colors cursor-pointer"'
-                    )
+                    adj_header = adj_header.replace('id="nav-desktop-tutorials"', 'id="nav-desktop-tutorials" aria-current="page"')
+                    adj_header = adj_header.replace('id="nav-mobile-tutorials"', 'id="nav-mobile-tutorials" aria-current="page"')
+                else:
+                    adj_header = adj_header.replace('id="nav-desktop-home"', 'id="nav-desktop-home" aria-current="page"')
+                    adj_header = adj_header.replace('id="nav-mobile-home"', 'id="nav-mobile-home" aria-current="page"')
 
         if content.find(adj_header) == -1:
             content = content.replace(old_header, adj_header)
