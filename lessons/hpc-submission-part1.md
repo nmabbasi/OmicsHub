@@ -31,9 +31,9 @@ image: "images/hpc-writing-job-scripts.webp"
 
 <div class="p-5 bg-slate-50 border border-slate-200 rounded-xl mb-8">
   <p class="text-xs font-bold tracking-[0.14em] uppercase text-slate-500 mb-2">Detailed cluster reference</p>
-  <h4 class="text-lg font-bold text-slate-900 mb-2">Need a complete CNRS HPC walkthrough?</h4>
-  <p class="text-sm text-slate-700 mb-3">For expanded guidance on secure access, modules, Slurm submission scripts, Conda on a cluster, and local CNRS support routes, visit the dedicated CNRS HPC Portal.</p>
-  <a href="https://nmabbasi.github.io/cnrs.github.io/" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 px-4 py-2 bg-[#123B5D] text-white font-bold rounded-lg hover:bg-[#0B2741] transition-colors text-sm">Open the CNRS HPC Portal <span aria-hidden="true">→</span></a>
+  <h4 class="text-lg font-bold text-slate-900 mb-2">Need a complete HPC walkthrough?</h4>
+  <p class="text-sm text-slate-700 mb-3">For expanded guidance on secure access, modules, Slurm submission scripts, Conda on a cluster, and practical support routes, visit the dedicated HPC Guide.</p>
+  <a href="https://nmabbasi.github.io/HPC/" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 px-4 py-2 bg-[#123B5D] text-white font-bold rounded-lg hover:bg-[#0B2741] transition-colors text-sm">Open the HPC Guide <span aria-hidden="true">→</span></a>
 </div>
 
 
