@@ -247,7 +247,7 @@ sacct -j &lt;job_id&gt; --format=JobID,State,Elapsed,MaxRSS,AllocCPUS</code></p>
 <p>Shell commands are used to set up Linux environment variables. They should <strong>not</strong> be preceded by <code>srun</code>.</p>
 <h3>Run commands</h3>
 <p>Run commands are your actual computations. They should be preceded by <code>srun</code>. The reason is that, as mentioned above, the options given with <code>#SBATCH</code> apply to <code>srun</code>. In truth, when only one task is given with the <code>--ntasks</code> option, omitting <code>srun</code> will not change anything. Put it there anyway, for consistency.</p>
-<h2>Hyperthreading</h2>
+<h2 id="hyperthreading">Hyperthreading</h2>
 <p>Hyperthreading is activated on the nodes, meaning each core has two CPUs. However, this does not double computational power, as using two CPUs of the same core is less efficient than using two CPUs of different cores. With that in mind, here is how Slurm acts (with the number of CPUs you ask for being the product of <code>--ntasks</code> and <code>--cpus-per-task</code>):</p>
 <ul>
 <li>Without the <code>--hint=nomultithread</code> option, asking for an odd number <code>N</code> of CPUs or asking for <code>N+1</code> CPUs is the same: Slurm allocates the <code>N+1</code> CPUs of <code>(N+1)/2</code> cores.</li>
