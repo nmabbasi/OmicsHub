@@ -148,6 +148,17 @@ def sitemap_entry(url: str, priority: str, changefreq: str = "monthly") -> str:
 
 def main() -> None:
     base_html = (ROOT / "index.html").read_text(encoding="utf-8")
+    # Analytics is loaded only through analytics.js after consent. Keeping a second
+    # inline GA4 configuration would duplicate pageviews on generated tutorial pages.
+    base_html, inline_ga4_blocks = re.subn(
+        r'\s*<!-- Google Analytics -->\s*<script async src="https://www\.googletagmanager\.com/gtag/js\?id=G-MTD30PYWWH"></script>\s*<script>\s*window\.dataLayer = window\.dataLayer \|\| \[\];\s*function gtag\(\)\{dataLayer\.push\(arguments\);\}\s*gtag\("js", new Date\(\)\);\s*gtag\("config", "G-MTD30PYWWH"\);\s*</script>',
+        "\n",
+        base_html,
+        flags=re.DOTALL,
+    )
+    if inline_ga4_blocks != 1:
+        raise RuntimeError("Expected one inline GA4 block in index.html")
+    (ROOT / "index.html").write_text(base_html, encoding="utf-8")
     header_split = base_html.split('<main class="min-h-screen">', 1)
     if len(header_split) != 2:
         raise RuntimeError("Could not locate shared main wrapper in index.html")
@@ -214,6 +225,17 @@ def main() -> None:
         (ROOT / f"{tutorial['id']}.html").write_text(final_html, encoding="utf-8")
         tutorial_urls.append(f"{SITE_URL}/{tutorial['id']}.html")
         print(f"Generated {tutorial['id']}.html")
+
+    # The visitor counter is a homepage-only social-proof element. It must not appear
+    # in shared footers, where it can distract learners and count secondary page loads.
+    visitor_counter_pattern = r'\s*<div id="homepage-visitor-counter"[^>]*>.*?</div>\s*'
+    for page_path in ROOT.rglob("*.html"):
+        if page_path == ROOT / "index.html":
+            continue
+        page_html = page_path.read_text(encoding="utf-8")
+        without_counter = re.sub(visitor_counter_pattern, "\n", page_html, flags=re.DOTALL)
+        if page_html != without_counter:
+            page_path.write_text(without_counter, encoding="utf-8")
 
     standalone = [
         (SITE_URL + "/", "1.0", "weekly"),
