@@ -154,8 +154,8 @@ Legal
 </div>
 
 <h2>From Raw Counts to Biological Insights</h2>
-<p>Once the sequencing facility provides raw FASTQ files, the initial preprocessing step (using tools like Cell Ranger or STARsolo) maps the reads to a reference genome and generates a sparse count matrix. This matrix - where rows are genes and columns are cells - is the starting point for computational biologists.</p>
-<p>In this tutorial, we will walk through a standard end-to-end analysis on a 10x Genomics dataset. We provide parallel workflows in both <strong>Python (Scanpy)</strong> and <strong>R (Seurat)</strong> so you can choose the ecosystem that best fits your needs.</p>
+<p>Once the sequencing facility provides raw FASTQ files, the initial preprocessing step (using alignment tools like Cell Ranger, STARsolo, or pseudo-aligners like Alevin) maps the reads to a reference genome. This computationally intensive step generates a sparse count matrix, which serves as the foundational data structure for all downstream single-cell analysis. In this matrix, rows typically represent individual genes (features) and columns represent individual droplets (cells). Understanding how to manipulate this matrix is the core skill of any computational biologist working with single-cell transcriptomics.</p>
+<p>In this comprehensive tutorial, we will walk through a standard end-to-end analysis on a 10x Genomics dataset. Because the bioinformatics community is split between two incredibly powerful ecosystems, we provide parallel, step-by-step workflows in both <strong>Python (using the Scanpy framework)</strong> and <strong>R (using the Seurat package)</strong>. By seeing both side-by-side, you can choose the language that best fits your laboratory's needs while understanding the conceptual similarities between them.</p>
 <hr />
 <h2>1. Loading the Data</h2>
 <p>We begin by loading the sparse matrix into our core data structures: <code>AnnData</code> in Python, or a <code>Seurat</code> object in R.</p>
@@ -188,7 +188,8 @@ pbmc &lt;- CreateSeuratObject(counts = pbmc.data, project = &quot;pbmc3k&quot;, 
 </code></pre>
 <hr />
 <h2>2. Quality Control (QC)</h2>
-<p>Empty droplets or dying cells can confound downstream analysis. High mitochondrial expression or unusually low gene counts can flag low-quality cells, but the distribution must be inspected for each dataset and batch. The thresholds below are training starting points, not universal biological rules; document and justify any filtering decision.</p>
+<p>Before any meaningful biological interpretation can occur, we must rigorously clean our dataset. Empty droplets (droplets containing ambient RNA but no actual cell) or dying, ruptured cells can severely confound downstream clustering and differential expression analysis. When a cell ruptures during the isolation process, its cytoplasmic RNA leaks out, leaving behind a disproportionate amount of mitochondrial RNA. Therefore, high mitochondrial expression, combined with unusually low total gene counts, is a classic hallmark of low-quality or dead cells.</p>
+<p>However, it is critical to understand that Quality Control is not a one-size-fits-all process. The distribution of gene counts and mitochondrial percentages must be visualized and inspected for each individual dataset, tissue type, and sequencing batch. For instance, heart muscle cells naturally have higher mitochondrial content than blood cells. The thresholds provided in the code below are training starting points, not universal biological laws. You should always document and justify your filtering decisions in your research methodology.</p>
 <pre><code class="language-python"># Identify mitochondrial genes
 adata.var['mt'] = adata.var_names.str.startswith('MT-')
 
@@ -211,7 +212,8 @@ print(paste(&quot;Cells remaining after QC:&quot;, ncol(pbmc)))
 </code></pre>
 <hr />
 <h2>3. Normalization, Scaling, and PCA</h2>
-<p>Because different droplets capture different total amounts of RNA, we must normalize the data to a common scale (usually 10,000 counts per cell), log-transform it, and extract the most highly variable genes for dimensionality reduction.</p>
+<p>Due to technical variations in the droplet microfluidics process, different droplets capture vastly different total amounts of RNA, even if the cells are identical in size and type. To ensure that our downstream clustering groups cells by true biological differences rather than mere sequencing depth artifacts, we must normalize the data. A standard approach is global-scaling normalization, where we scale the feature expression measurements for each cell by the total expression, multiply this by a scale factor (usually 10,000 counts per cell), and log-transform the result.</p>
+<p>Following normalization, we identify features (genes) that exhibit high cell-to-cell variation in the dataset. Focusing on these highly variable genes (HVGs) highlights the biological signal and significantly reduces the computational burden. We then scale these genes so that highly expressed genes do not dominate the analysis, and apply Principal Component Analysis (PCA) to reduce the dimensionality of the dataset from thousands of genes down to a few dozen principal components.</p>
 <pre><code class="language-python"># Normalize and log transform
 sc.pp.normalize_total(adata, target_sum=1e4)
 sc.pp.log1p(adata)
@@ -243,7 +245,8 @@ ElbowPlot(pbmc)
 </code></pre>
 <hr />
 <h2>4. Neighborhood Graph and Clustering</h2>
-<p>We compute the k-nearest neighbors graph in PCA space, embed it into 2D space using UMAP, and cluster the cells to identify transcriptionally distinct subpopulations.</p>
+<p>With our data now compressed into principal components, the next step is to group similar cells together. We first construct a K-nearest neighbors (KNN) graph based on the Euclidean distance in PCA space. This graph maps out the local neighborhood of every single cell, connecting it to the cells with the most similar transcriptional profiles. To visualize this complex multi-dimensional network on a flat screen, we embed the graph into 2D space using non-linear dimensionality reduction techniques like UMAP (Uniform Manifold Approximation and Projection) or t-SNE.</p>
+<p>Finally, to formally define our cell populations, we apply a graph-based clustering algorithm (such as Louvain or Leiden) to the KNN graph. These algorithms iteratively group cells together based on their interconnectivity, resulting in transcriptionally distinct subpopulations that often correspond to true biological cell types or states.</p>
 <pre><code class="language-python"># Compute neighbors and UMAP
 sc.pp.neighbors(adata, n_neighbors=10, n_pcs=40)
 sc.tl.umap(adata)
@@ -266,8 +269,9 @@ pbmc &lt;- RunUMAP(pbmc, dims = 1:10)
 # Visualize
 DimPlot(pbmc, reduction = &quot;umap&quot;, label = TRUE)
 </code></pre>
-<h2>Conclusion</h2>
-<p>Both Scanpy and Seurat support robust standard scRNA-seq workflows, but they differ in data structures, defaults, ecosystem choices, and analysis decisions. Choose one deliberately and document versions and parameters. With these clusters defined, we are ready to proceed to downstream analysis such as Trajectory Inference and Cell-Cell Communication.</p>
+<h2>Conclusion and Next Steps</h2>
+<p>Both the Python (Scanpy) and R (Seurat) ecosystems support incredibly robust, production-ready scRNA-seq workflows. While they achieve similar end goals, they differ significantly in their underlying data structures, default algorithmic parameters, and community plugin ecosystems. Your choice between them should be deliberate, often dictated by your lab's existing codebase or specific downstream tools you wish to use. Regardless of the language you choose, the most important aspect of computational biology is reproducibility: always document your software versions, random seeds, and exact parameter choices.</p>
+<p>With our cells now cleaned, normalized, reduced, and clustered into distinct subpopulations, our foundational processing is complete. We are now perfectly positioned to tackle advanced downstream analyses, such as assigning biological identities to these clusters via marker genes, inferring developmental trajectories, or mapping cell-cell communication networks.</p>
 <div class="mt-10 p-8 bg-gray-50 border border-gray-200 rounded-xl">
   <h3 class="text-xl font-bold text-gray-900 mb-4">Knowledge Check & Assessment</h3>
   <div class="space-y-4">
