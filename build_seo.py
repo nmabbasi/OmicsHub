@@ -176,11 +176,11 @@ def main() -> None:
 
     # Generated tutorials must activate Tutorials, not Home.
     base_head = base_head.replace(
-        'id="nav-desktop-home" aria-current="page" class="px-4 py-2 text-sm font-semibold bg-blue-600 text-white rounded-md shadow-sm transition-all"',
+        'id="nav-desktop-home" aria-current="page" class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-blue-600 rounded-md hover:bg-gray-50 transition-all"',
         'id="nav-desktop-home" class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-blue-600 rounded-md hover:bg-gray-50 transition-all"',
     )
     base_head = base_head.replace(
-        'id="nav-mobile-home" class="px-4 py-2 text-sm font-semibold text-blue-600 bg-blue-50 rounded-lg transition-colors"',
+        'id="nav-mobile-home" aria-current="page" class="px-4 py-2 text-sm text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors"',
         'id="nav-mobile-home" class="px-4 py-2 text-sm text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors"',
     )
     base_head = base_head.replace(
@@ -188,7 +188,7 @@ def main() -> None:
         'id="nav-desktop-tutorials" aria-current="page" class="px-4 py-2 text-sm font-semibold bg-blue-600 text-white rounded-md shadow-sm transition-all cursor-pointer"',
     )
     base_head = base_head.replace(
-        'id="nav-mobile-tutorials" class="px-4 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors cursor-pointer"',
+        'id="nav-mobile-tutorials" class="px-4 py-2 text-sm text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors cursor-pointer"',
         'id="nav-mobile-tutorials" aria-current="page" class="px-4 py-2 text-sm font-semibold text-blue-600 bg-blue-50 rounded-lg transition-colors cursor-pointer"',
     )
 
