@@ -44,6 +44,19 @@
   <script type="application/ld+json">{"@context": "https://schema.org", "@type": "Article", "headline": "scRNA-seq Basics", "description": "A complete, production-ready single-cell RNA-seq pipeline demonstrating both Python (Scanpy) and R (Seurat) workflows. Covers standard QC, PCA, UMAP, and Leiden/Louvain clustering.", "mainEntityOfPage": {"@type": "WebPage", "@id": "https://theomicshub.com/scrna-seq-basics.html"}, "image": "https://theomicshub.com/images/scrna-seq-basics.png", "author": {"@type": "Person", "name": "Nasir Mahmood Abbasi, PhD", "url": "https://theomicshub.com/about.html"}, "publisher": {"@type": "Organization", "name": "The Omics Hub", "url": "https://theomicshub.com", "logo": {"@type": "ImageObject", "url": "https://theomicshub.com/images/favicon.svg"}}, "datePublished": "2026-08-13", "dateModified": "2026-08-13"}</script>
 </head>
 <body class="bg-white text-gray-900">
+<script>
+function toggleMobileMenu() {
+  const menu = document.getElementById("mobile-menu");
+  const trigger = document.querySelector('[aria-controls="mobile-menu"]');
+  if (!menu) return;
+  const opening = menu.classList.contains("hidden");
+  menu.classList.toggle("hidden", !opening);
+  if (trigger) {
+    trigger.setAttribute("aria-expanded", String(opening));
+    trigger.setAttribute("aria-label", opening ? "Close navigation menu" : "Open navigation menu");
+  }
+}
+</script>
 <!-- Header -->
 <header class="bg-white border-b border-gray-200 sticky top-0 z-50">
 <nav class="container mx-auto px-6 py-4">
@@ -154,8 +167,8 @@ Legal
 </div>
 
 <h2>From Raw Counts to Biological Insights</h2>
-<p>Once the sequencing facility provides raw FASTQ files, the initial preprocessing step (using alignment tools like Cell Ranger, STARsolo, or pseudo-aligners like Alevin) maps the reads to a reference genome. This computationally intensive step generates a sparse count matrix, which serves as the foundational data structure for all downstream single-cell analysis. In this matrix, rows typically represent individual genes (features) and columns represent individual droplets (cells). Understanding how to manipulate this matrix is the core skill of any computational biologist working with single-cell transcriptomics.</p>
-<p>In this comprehensive tutorial, we will walk through a standard end-to-end analysis on a 10x Genomics dataset. Because the bioinformatics community is split between two incredibly powerful ecosystems, we provide parallel, step-by-step workflows in both <strong>Python (using the Scanpy framework)</strong> and <strong>R (using the Seurat package)</strong>. By seeing both side-by-side, you can choose the language that best fits your laboratory's needs while understanding the conceptual similarities between them.</p>
+<p>Once the sequencing facility provides raw FASTQ files, the initial preprocessing step (using tools like Cell Ranger or STARsolo) maps the reads to a reference genome and generates a sparse count matrix. This matrix - where rows are genes and columns are cells - is the starting point for computational biologists.</p>
+<p>In this tutorial, we will walk through a standard end-to-end analysis on a 10x Genomics dataset. We provide parallel workflows in both <strong>Python (Scanpy)</strong> and <strong>R (Seurat)</strong> so you can choose the ecosystem that best fits your needs.</p>
 <hr />
 <h2>1. Loading the Data</h2>
 <p>We begin by loading the sparse matrix into our core data structures: <code>AnnData</code> in Python, or a <code>Seurat</code> object in R.</p>
@@ -188,8 +201,7 @@ pbmc &lt;- CreateSeuratObject(counts = pbmc.data, project = &quot;pbmc3k&quot;, 
 </code></pre>
 <hr />
 <h2>2. Quality Control (QC)</h2>
-<p>Before any meaningful biological interpretation can occur, we must rigorously clean our dataset. Empty droplets (droplets containing ambient RNA but no actual cell) or dying, ruptured cells can severely confound downstream clustering and differential expression analysis. When a cell ruptures during the isolation process, its cytoplasmic RNA leaks out, leaving behind a disproportionate amount of mitochondrial RNA. Therefore, high mitochondrial expression, combined with unusually low total gene counts, is a classic hallmark of low-quality or dead cells.</p>
-<p>However, it is critical to understand that Quality Control is not a one-size-fits-all process. The distribution of gene counts and mitochondrial percentages must be visualized and inspected for each individual dataset, tissue type, and sequencing batch. For instance, heart muscle cells naturally have higher mitochondrial content than blood cells. The thresholds provided in the code below are training starting points, not universal biological laws. You should always document and justify your filtering decisions in your research methodology.</p>
+<p>Empty droplets or dying cells can confound downstream analysis. High mitochondrial expression or unusually low gene counts can flag low-quality cells, but the distribution must be inspected for each dataset and batch. The thresholds below are training starting points, not universal biological rules; document and justify any filtering decision.</p>
 <pre><code class="language-python"># Identify mitochondrial genes
 adata.var['mt'] = adata.var_names.str.startswith('MT-')
 
@@ -212,8 +224,7 @@ print(paste(&quot;Cells remaining after QC:&quot;, ncol(pbmc)))
 </code></pre>
 <hr />
 <h2>3. Normalization, Scaling, and PCA</h2>
-<p>Due to technical variations in the droplet microfluidics process, different droplets capture vastly different total amounts of RNA, even if the cells are identical in size and type. To ensure that our downstream clustering groups cells by true biological differences rather than mere sequencing depth artifacts, we must normalize the data. A standard approach is global-scaling normalization, where we scale the feature expression measurements for each cell by the total expression, multiply this by a scale factor (usually 10,000 counts per cell), and log-transform the result.</p>
-<p>Following normalization, we identify features (genes) that exhibit high cell-to-cell variation in the dataset. Focusing on these highly variable genes (HVGs) highlights the biological signal and significantly reduces the computational burden. We then scale these genes so that highly expressed genes do not dominate the analysis, and apply Principal Component Analysis (PCA) to reduce the dimensionality of the dataset from thousands of genes down to a few dozen principal components.</p>
+<p>Because different droplets capture different total amounts of RNA, we must normalize the data to a common scale (usually 10,000 counts per cell), log-transform it, and extract the most highly variable genes for dimensionality reduction.</p>
 <pre><code class="language-python"># Normalize and log transform
 sc.pp.normalize_total(adata, target_sum=1e4)
 sc.pp.log1p(adata)
@@ -245,8 +256,7 @@ ElbowPlot(pbmc)
 </code></pre>
 <hr />
 <h2>4. Neighborhood Graph and Clustering</h2>
-<p>With our data now compressed into principal components, the next step is to group similar cells together. We first construct a K-nearest neighbors (KNN) graph based on the Euclidean distance in PCA space. This graph maps out the local neighborhood of every single cell, connecting it to the cells with the most similar transcriptional profiles. To visualize this complex multi-dimensional network on a flat screen, we embed the graph into 2D space using non-linear dimensionality reduction techniques like UMAP (Uniform Manifold Approximation and Projection) or t-SNE.</p>
-<p>Finally, to formally define our cell populations, we apply a graph-based clustering algorithm (such as Louvain or Leiden) to the KNN graph. These algorithms iteratively group cells together based on their interconnectivity, resulting in transcriptionally distinct subpopulations that often correspond to true biological cell types or states.</p>
+<p>We compute the k-nearest neighbors graph in PCA space, embed it into 2D space using UMAP, and cluster the cells to identify transcriptionally distinct subpopulations.</p>
 <pre><code class="language-python"># Compute neighbors and UMAP
 sc.pp.neighbors(adata, n_neighbors=10, n_pcs=40)
 sc.tl.umap(adata)
@@ -269,9 +279,8 @@ pbmc &lt;- RunUMAP(pbmc, dims = 1:10)
 # Visualize
 DimPlot(pbmc, reduction = &quot;umap&quot;, label = TRUE)
 </code></pre>
-<h2>Conclusion and Next Steps</h2>
-<p>Both the Python (Scanpy) and R (Seurat) ecosystems support incredibly robust, production-ready scRNA-seq workflows. While they achieve similar end goals, they differ significantly in their underlying data structures, default algorithmic parameters, and community plugin ecosystems. Your choice between them should be deliberate, often dictated by your lab's existing codebase or specific downstream tools you wish to use. Regardless of the language you choose, the most important aspect of computational biology is reproducibility: always document your software versions, random seeds, and exact parameter choices.</p>
-<p>With our cells now cleaned, normalized, reduced, and clustered into distinct subpopulations, our foundational processing is complete. We are now perfectly positioned to tackle advanced downstream analyses, such as assigning biological identities to these clusters via marker genes, inferring developmental trajectories, or mapping cell-cell communication networks.</p>
+<h2>Conclusion</h2>
+<p>Both Scanpy and Seurat support robust standard scRNA-seq workflows, but they differ in data structures, defaults, ecosystem choices, and analysis decisions. Choose one deliberately and document versions and parameters. With these clusters defined, we are ready to proceed to downstream analysis such as Trajectory Inference and Cell-Cell Communication.</p>
 <div class="mt-10 p-8 bg-gray-50 border border-gray-200 rounded-xl">
   <h3 class="text-xl font-bold text-gray-900 mb-4">Knowledge Check & Assessment</h3>
   <div class="space-y-4">
@@ -288,15 +297,7 @@ DimPlot(pbmc, reduction = &quot;umap&quot;, label = TRUE)
       <p class="text-gray-600 text-sm">If a cluster is driven by mitochondrial content, batch, or doublets, what QC, sample-stratification, and doublet-detection checks should precede interpretation?</p>
     </div>
   </div>
-</div>
-<div class="mt-12 pt-8 border-t border-gray-200" id="reproducibility-section">
-  <h3 class="text-2xl font-bold text-gray-900 mb-4">Methodology and Reproducibility Considerations</h3>
-  <p class="mb-4">In computational biology and bioinformatics, executing the code is only one part of the scientific process. Ensuring that your analysis is statistically sound, biologically meaningful, and strictly reproducible is paramount. When adapting this workflow for your own datasets, it is crucial to carefully evaluate the underlying assumptions of each algorithmic step. For instance, default parameters in tools like Seurat, Scanpy, or standard aligners are often optimized for specific tissue types (e.g., PBMCs) or sequencing technologies. Applying these defaults blindly to different biological contexts—such as highly heterogeneous solid tumors or non-model organisms—can lead to severe artifacts, false-positive discoveries, or the loss of rare cell populations.</p>
-  <p class="mb-4">Furthermore, we strongly recommend implementing strict environment management. The rapid evolution of bioinformatics software means that updating a single dependency (like NumPy, Pandas, or a Bioconductor package) can subtly alter downstream results. Always utilize package managers such as Conda or Mamba to isolate your project environments, and explicitly export your environment configurations (e.g., using <code>conda env export > environment.yml</code>). This practice not only safeguards your own longitudinal research but also ensures that peer reviewers and collaborative scientists can exactly replicate your computational findings years after publication.</p>
-  <p>Finally, always maintain a rigorous quality control (QC) mindset. Computational pipelines will almost always run to completion and produce a result, even if the input data is heavily contaminated or mathematically flawed. It is the responsibility of the bioinformatician to integrate negative controls, perform batch-effect evaluations, and visually inspect intermediate data distributions before proceeding to downstream biological interpretation.</p>
-</div>
-
-</article>
+</div></article>
             
     <section class="mt-16 pt-10 border-t border-gray-100" aria-label="Course sequence">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
@@ -365,8 +366,8 @@ DimPlot(pbmc, reduction = &quot;umap&quot;, label = TRUE)
 <ul class="space-y-2 text-sm text-gray-400"><li><a href="pages/privacy.html" class="hover:text-white transition-colors">Privacy Policy</a></li><li><a href="pages/terms.html" class="hover:text-white transition-colors">Terms of Service</a></li><li><a href="pages/disclaimer.html" class="hover:text-white transition-colors">Disclaimer</a></li><li><a href="pages/cookie.html" class="hover:text-white transition-colors">Cookie Policy</a></li></ul>
 </div>
 </div>
-<div class="flex justify-center md:justify-end mb-4 w-full">
-  <a href="services.html#newsletter-title" class="group inline-flex items-center gap-2 px-6 py-3 rounded-full bg-gradient-to-br from-blue-600 to-blue-800 text-white font-bold shadow-[0_4px_14px_rgba(37,99,235,0.4)] hover:shadow-[0_6px_20px_rgba(37,99,235,0.6)] transition-all duration-300 transform hover:-translate-y-1">
+<div class="flex flex-col md:flex-row justify-between items-center mb-4 w-full gap-4">
+<a href="services.html#newsletter-title" class="group inline-flex items-center gap-2 px-6 py-3 rounded-full bg-gradient-to-br from-blue-600 to-blue-800 text-white font-bold shadow-[0_4px_14px_rgba(37,99,235,0.4)] hover:shadow-[0_6px_20px_rgba(37,99,235,0.6)] transition-all duration-300 transform hover:-translate-y-1">
     <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
     <span>Subscribe &amp; Get Cheat Sheet</span>
   </a>
@@ -423,20 +424,6 @@ DimPlot(pbmc, reduction = &quot;umap&quot;, label = TRUE)
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <!-- Custom JS - loads tutorials from manifest -->
 <script src="script.js?v=20260818-search-clickable"></script>
-
-<script>
-function toggleMobileMenu() {
-  const menu = document.getElementById("mobile-menu");
-  const trigger = document.querySelector('[aria-controls="mobile-menu"]');
-  if (!menu) return;
-  const opening = menu.classList.contains("hidden");
-  menu.classList.toggle("hidden", !opening);
-  if (trigger) {
-    trigger.setAttribute("aria-expanded", String(opening));
-    trigger.setAttribute("aria-label", opening ? "Close navigation menu" : "Open navigation menu");
-  }
-}
-</script>
 
 <script id="navigation-accessibility">
 (function () {

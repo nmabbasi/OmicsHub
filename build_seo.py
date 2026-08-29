@@ -22,7 +22,7 @@ AUTHOR = "Nasir Mahmood Abbasi, PhD"
 def replace_meta_tag(head: str, attribute: str, name: str, value: str) -> str:
     """Update a meta tag regardless of whether its attributes were serialized in one order or another."""
     pattern = rf'(<meta\b(?=[^>]*\b{attribute}="{re.escape(name)}")[^>]*\bcontent=")[^"]*("[^>]*>)'
-    replacement = rf'\1{html.escape(value, quote=True)}\2'
+    replacement = rf'\g<1>{html.escape(value, quote=True)}\g<2>'
     updated, count = re.subn(pattern, replacement, head)
     if count:
         return updated
@@ -156,8 +156,8 @@ def main() -> None:
         base_html,
         flags=re.DOTALL,
     )
-    if inline_ga4_blocks != 1:
-        raise RuntimeError("Expected one inline GA4 block in index.html")
+    if inline_ga4_blocks > 1:
+        raise RuntimeError("Expected at most one inline GA4 block in index.html")
     (ROOT / "index.html").write_text(base_html, encoding="utf-8")
     header_split = base_html.split('<main class="min-h-screen">', 1)
     if len(header_split) != 2:
