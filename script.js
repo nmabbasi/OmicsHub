@@ -56,7 +56,7 @@ function handleInitialRoute() {
             showHome(true, true); // Prevent scroll to top
             setTimeout(() => {
                 const el = document.getElementById('tutorials');
-                if (el) el.scrollIntoView();
+                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }, 100);
         } else {
             showHome(); // Default to home if hash is not recognized
@@ -123,7 +123,7 @@ function setupEventListeners() {
                 showHome(false, true); // Prevent scroll to top
                 setTimeout(() => {
                     const el = document.getElementById('tutorials');
-                    if (el) el.scrollIntoView();
+                    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 }, 100);
             } else {
                 showHome(false);
@@ -1153,18 +1153,5 @@ function updateNavActiveState(activeTab) {
             link.removeAttribute('aria-current');
         }
     });
-
-    if (activeTab === 'home') {
-        if (navDesktopHome) navDesktopHome.className = 'px-4 py-2 text-sm font-semibold bg-blue-600 text-white rounded-md shadow-sm transition-all';
-        if (navDesktopTutorials) navDesktopTutorials.className = 'px-4 py-2 text-sm font-medium text-gray-600 hover:text-blue-600 rounded-md hover:bg-gray-50 transition-all cursor-pointer';
-        
-        if (navMobileHome) navMobileHome.className = 'px-4 py-2 text-sm font-semibold text-blue-600 bg-blue-50 rounded-lg transition-colors';
-        if (navMobileTutorials) navMobileTutorials.className = 'px-4 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors cursor-pointer';
-    } else if (activeTab === 'tutorials') {
-        if (navDesktopHome) navDesktopHome.className = 'px-4 py-2 text-sm font-medium text-gray-600 hover:text-blue-600 rounded-md hover:bg-gray-50 transition-all cursor-pointer';
-        if (navDesktopTutorials) navDesktopTutorials.className = 'px-4 py-2 text-sm font-semibold bg-blue-600 text-white rounded-md shadow-sm transition-all';
-        
-        if (navMobileHome) navMobileHome.className = 'px-4 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors cursor-pointer';
-        if (navMobileTutorials) navMobileTutorials.className = 'px-4 py-2 text-sm font-semibold text-blue-600 bg-blue-50 rounded-lg transition-colors';
-    }
+    });
 }
