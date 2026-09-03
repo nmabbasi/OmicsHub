@@ -165,6 +165,12 @@ Legal
   <p class="text-sm text-blue-700"><strong>Suggested route:</strong> use the <a href="start-here.html" class="underline">Bioinformatics Learning Path</a> to review any prerequisite stage before continuing.</p>
 </div>
 
+<div class="p-6 bg-amber-50 border border-amber-200 rounded-xl mb-8">
+  <h3 class="text-lg font-bold text-amber-900 mb-3">🔬 Why This Tutorial Matters</h3>
+  <p class="text-amber-800 mb-2">Nearly every modern single-cell experiment involves combining data from multiple samples, patients, or conditions. Without rigorous batch integration, downstream analyses will be dominated by technical artifacts rather than biological signal, potentially leading to incorrect conclusions about cell type composition, disease mechanisms, or treatment effects.</p>
+  <p class="text-amber-800">Understanding the mathematical principles behind Harmony, RPCA, and CCA empowers you to select the appropriate method for your specific experimental design and to critically evaluate whether integration has been successful or has introduced distortions.</p>
+</div>
+
 <h2>Single-Cell Integration Strategies</h2>
 <h2>The Batch Effect Problem</h2>
 <p>When combining single-cell data from multiple patients, different sequencing runs, or different technologies (e.g., 10x Genomics vs. Drop-seq), massive technical variations occur. These are known as <strong>batch effects</strong>.</p>
@@ -225,12 +231,25 @@ integrated_seurat &lt;- RunHarmony(merged_seurat, group.by.vars = &quot;patient_
 # Run UMAP on the Harmony reduction rather than standard PCA
 integrated_seurat &lt;- RunUMAP(integrated_seurat, reduction = &quot;harmony&quot;, dims = 1:30)
 </code></pre>
+<p>Single-cell analysis techniques have undergone rapid evolution since the first scRNA-seq protocols were published. Modern experimental platforms such as 10x Genomics Chromium, Parse Biosciences, and BD Rhapsody can profile tens of thousands to millions of cells in a single experiment, generating datasets of unprecedented scale and complexity. This explosion in data generation has driven parallel advances in computational methods, with the Scanpy and Seurat ecosystems continuously expanding to incorporate new algorithms for normalization, integration, clustering, and interpretation. Staying current with best practices in this field requires understanding not just the mechanics of running code, but the statistical and biological assumptions that underpin each analytical choice.</p>
 <h2>Conclusion</h2>
 <ul>
 <li>Use <strong>Harmony</strong> for large cohorts or when integrating across multiple nested batch variables.</li>
 <li>Use <strong>RPCA</strong> when you have massive datasets and want to conservatively preserve disease-state biological variance.</li>
 <li>Use <strong>CCA</strong> when integrating highly distinct datasets (like cross-species or different tissues) where you <em>must</em> force alignment to find shared biology.</li>
 </ul>
+<div class="p-6 bg-green-50 border border-green-200 rounded-xl mb-8">
+  <h3 class="text-lg font-bold text-green-900 mb-3">✅ Key Takeaways</h3>
+  <ul class="list-disc list-inside text-green-800 space-y-2">
+      <li>Batch effects can dominate biological signal if not properly addressed during integration</li>
+      <li>Harmony is fast and works well for most standard multi-sample experiments</li>
+      <li>RPCA is more conservative and better preserves condition-specific differences</li>
+      <li>CCA maximizes correlation and works well when datasets share cell types but differ technically</li>
+      <li>Always validate integration success using quantitative metrics like LISI scores, not just UMAP visuals</li>
+  </ul>
+</div>
+<p>Batch effects represent one of the most pervasive challenges in single-cell genomics. Whenever samples are processed on different days, sequenced on different lanes, or prepared using different reagent lots, systematic technical variation is introduced that can confound biological signal. Without proper correction, these batch effects can cause cells to cluster by sample origin rather than by cell type, leading to false biological conclusions.</p>
+<p>Harmony, RPCA, and CCA represent three fundamentally different mathematical philosophies for solving the integration problem. Harmony operates in PCA space and iteratively adjusts cell embeddings using soft k-means clustering and ridge regression, making it fast and memory-efficient for large datasets. Reciprocal PCA identifies shared biological variation by projecting each dataset into the other's PCA space and finding mutual nearest neighbors, which is more conservative and less likely to over-correct genuine biological differences. CCA identifies correlated gene programs across datasets by maximizing the correlation between shared canonical variates, making it powerful when datasets share cell types but have substantial technical differences.</p>
 <div class="mt-10 p-8 bg-gray-50 border border-gray-200 rounded-xl">
   <h3 class="text-xl font-bold text-gray-900 mb-4">Knowledge Check & Assessment</h3>
   <div class="space-y-4">

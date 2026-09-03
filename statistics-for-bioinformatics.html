@@ -148,6 +148,12 @@ Legal
   <p>Statistics helps distinguish repeatable evidence from noise. In bioinformatics, the number of measurements can be enormous while the number of biological replicates remains small, so study design and effect size matter as much as a p-value.</p>
 </div>
 
+<div class="p-6 bg-amber-50 border border-amber-200 rounded-xl mb-8">
+  <h3 class="text-lg font-bold text-amber-900 mb-3">📘 Why This Tutorial Matters</h3>
+  <p class="text-amber-800 mb-2">Bioinformatics is an inherently interdisciplinary field that requires combining biological domain knowledge with computational skills and statistical reasoning. Each tutorial in this series builds upon previous concepts while introducing new tools and analytical frameworks, creating a comprehensive learning path from fundamental skills to advanced research-grade analyses.</p>
+  <p class="text-amber-800">The techniques and best practices covered here reflect current community standards and are directly applicable to real research projects in genomics, transcriptomics, proteomics, and multi-omics integration.</p>
+</div>
+
 <h2>Learning Objectives &amp; Prerequisites</h2>
 <p><strong>By the end of this lesson, you should be able to:</strong></p>
 <ul>
@@ -165,6 +171,7 @@ Legal
 <p>By the end of this lesson, you should have: <strong>A short analysis plan that states the outcome, predictor, experimental unit, covariates, replicates, visual diagnostic, and the interpretation limits of the planned test.</strong></p>
 <h2>1. Replicates and distributions</h2>
 <p>Biological replicates represent independent experimental units; technical replicates measure the same unit repeatedly. Plot the data before selecting a test.</p>
+<p>Probability distributions provide the mathematical models that describe the expected behavior of biological measurements under null hypotheses. Gene expression count data from RNA-seq experiments typically follow negative binomial distributions, which account for both the Poisson sampling noise inherent in sequencing and the biological overdispersion observed across samples. Continuous measurements such as protein abundance or metabolite concentrations may approximate normal or log-normal distributions. Choosing an appropriate distributional model for the data type being analyzed is a prerequisite for valid statistical inference, as misspecified models can lead to inflated false positive rates or reduced statistical power.</p>
 <pre><code class="language-r">set.seed(7)
 x &lt;- rnorm(12, mean=10, sd=2)
 summary(x)
@@ -208,6 +215,9 @@ adjusted_p &lt;- p.adjust(p_values, method = &quot;BH&quot;)
 <p><strong>Pass criteria:</strong> The report includes replicate definitions, effect size, uncertainty, multiple-testing handling, and a limitation statement.</p>
 <h2>Troubleshooting</h2>
 <p>If assumptions fail, do not automatically switch tests. Inspect distributions, dependence, batch, outliers, and the design before consulting a statistician.</p>
+<p>Statistical reasoning is the framework that enables bioinformaticians to distinguish genuine biological signals from technical noise and random variation. Genomics datasets are characterized by high dimensionality, complex correlation structures, and heterogeneous noise profiles that violate the assumptions of many classical statistical tests.</p>
+<p>Probability distributions provide the mathematical models that describe the expected behavior of biological measurements under null hypotheses. Gene expression count data from RNA-seq experiments typically follow negative binomial distributions, which account for both the Poisson sampling noise inherent in sequencing and the biological overdispersion observed across samples.</p>
+<p>Multiple testing correction is perhaps the most important statistical concept for genomics researchers to internalize. When testing thousands of genes simultaneously for differential expression, the expected number of false positives under the null hypothesis scales linearly with the number of tests. Methods such as the Benjamini-Hochberg procedure control the false discovery rate by adjusting p-values to account for the multiplicity of comparisons.</p>
 <h2>Knowledge Check &amp; Assessment</h2>
 <h3>1. Concept Verification</h3>
 <p>Write short answers explaining the main concepts, the assumptions behind them, and one way a careless workflow could produce a misleading result.</p>

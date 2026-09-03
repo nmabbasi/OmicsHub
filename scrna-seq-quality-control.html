@@ -165,6 +165,12 @@ Legal
   <p class="text-sm text-blue-700"><strong>Suggested route:</strong> use the <a href="start-here.html" class="underline">Bioinformatics Learning Path</a> to review any prerequisite stage before continuing.</p>
 </div>
 
+<div class="p-6 bg-amber-50 border border-amber-200 rounded-xl mb-8">
+  <h3 class="text-lg font-bold text-amber-900 mb-3">🔬 Why This Tutorial Matters</h3>
+  <p class="text-amber-800 mb-2">Single-cell genomics is one of the fastest-evolving fields in computational biology, with new methods, tools, and best practices emerging regularly. Mastering the analytical techniques covered in this tutorial positions you at the forefront of a discipline that is reshaping our understanding of cellular biology, disease mechanisms, and therapeutic development.</p>
+  <p class="text-amber-800">The skills learned here directly transfer to real-world research applications including tumor microenvironment characterization, immune cell profiling, developmental biology, and drug discovery programs that increasingly rely on single-cell resolution data.</p>
+</div>
+
 <h2>Mathematical Quality Control for Integration &amp; Clustering</h2>
 <h2>The Problem with Subjective UMAPs</h2>
 <p>In single-cell RNA-seq, it is very common to run an integration algorithm (like Harmony or CCA) and assume it worked because the UMAP "looks mixed." However, high-impact journals require <strong>mathematical proof</strong> that batch effects were removed without destroying true biological variance.</p>
@@ -223,6 +229,7 @@ sil &lt;- silhouette(cluster_labels, dist_matrix)
 # A wide, positive silhouette for a cluster proves it is highly distinct
 plot(sil, border = NA, col = &quot;darkblue&quot;, main = &quot;Cluster Silhouette Plot&quot;)
 </code></pre>
+<p>Single-cell analysis techniques have undergone rapid evolution since the first scRNA-seq protocols were published. Modern experimental platforms such as 10x Genomics Chromium, Parse Biosciences, and BD Rhapsody can profile tens of thousands to millions of cells in a single experiment, generating datasets of unprecedented scale and complexity. This explosion in data generation has driven parallel advances in computational methods, with the Scanpy and Seurat ecosystems continuously expanding to incorporate new algorithms for normalization, integration, clustering, and interpretation. Staying current with best practices in this field requires understanding not just the mechanics of running code, but the statistical and biological assumptions that underpin each analytical choice.</p>
 <h2>Conclusion</h2>
 <p>By calculating <strong>iLISI</strong>, <strong>cLISI</strong>, and <strong>Silhouette Scores</strong>, you bulletproof your analysis. Instead of saying "the cells appear to group together," you can objectively state in your manuscript: <em>"Integration successfully removed batch effects (median iLISI = 3.8/4.0) while preserving cell-type separation (median cLISI = 1.02)."</em></p>
 <h3>Matched Python and R silhouette diagnostic</h3>
@@ -241,6 +248,18 @@ labels &lt;- as.numeric(factor(seurat_obj$seurat_clusters))
 sil &lt;- silhouette(labels, dist(embedding))
 summary(sil[, &quot;sil_width&quot;])
 </code></pre>
+<div class="p-6 bg-green-50 border border-green-200 rounded-xl mb-8">
+  <h3 class="text-lg font-bold text-green-900 mb-3">✅ Key Takeaways</h3>
+  <ul class="list-disc list-inside text-green-800 space-y-2">
+      <li>Single-cell methods reveal cellular heterogeneity invisible to bulk approaches</li>
+      <li>Parameter choices at each analysis step can significantly impact biological conclusions</li>
+      <li>Reproducibility requires documenting software versions, parameters, and filtering decisions</li>
+      <li>Visual validation should always complement quantitative assessment metrics</li>
+      <li>Understanding the mathematical foundations helps troubleshoot unexpected results</li>
+  </ul>
+</div>
+<p>Mathematical quality control provides objective, quantitative evidence that batch integration has succeeded and that identified clusters represent genuine biological entities rather than artifacts of the analytical pipeline. While UMAP visualizations are commonly used to assess integration quality, they are inherently unreliable for this purpose because the same high-dimensional data can produce visually different embeddings depending on random initialization and parameter settings. Quantitative metrics such as LISI (Local Inverse Simpson's Index) and Silhouette scores provide reproducible numerical assessments that can be compared across methods, parameters, and datasets.</p>
+<p>The LISI framework evaluates integration quality by measuring the local diversity of batch labels around each cell in the integrated embedding. Well-integrated data should show high batch mixing, meaning that each cell's local neighborhood contains cells from multiple batches in proportion to their overall representation. Simultaneously, cells should cluster by cell type rather than by batch, meaning that the biological labels should show low local diversity within clusters. The Silhouette score complements LISI by measuring how similar each cell is to other cells in its assigned cluster compared to cells in the nearest neighboring cluster, providing a direct assessment of cluster compactness and separation.</p>
 <div class="mt-10 p-8 bg-gray-50 border border-gray-200 rounded-xl">
   <h3 class="text-xl font-bold text-gray-900 mb-4">Knowledge Check & Assessment</h3>
   <div class="space-y-4">

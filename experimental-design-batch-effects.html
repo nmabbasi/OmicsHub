@@ -148,6 +148,12 @@ Legal
   <p>Many bioinformatics problems are created before the first command is run. A balanced design, enough biological replicates, and complete metadata protect the analysis from confounding and make downstream models interpretable.</p>
 </div>
 
+<div class="p-6 bg-amber-50 border border-amber-200 rounded-xl mb-8">
+  <h3 class="text-lg font-bold text-amber-900 mb-3">📘 Why This Tutorial Matters</h3>
+  <p class="text-amber-800 mb-2">Bioinformatics is an inherently interdisciplinary field that requires combining biological domain knowledge with computational skills and statistical reasoning. Each tutorial in this series builds upon previous concepts while introducing new tools and analytical frameworks, creating a comprehensive learning path from fundamental skills to advanced research-grade analyses.</p>
+  <p class="text-amber-800">The techniques and best practices covered here reflect current community standards and are directly applicable to real research projects in genomics, transcriptomics, proteomics, and multi-omics integration.</p>
+</div>
+
 <h2>Learning Objectives &amp; Prerequisites</h2>
 <p><strong>By the end of this lesson, you should be able to:</strong></p>
 <ul>
@@ -165,6 +171,7 @@ Legal
 <p>By the end of this lesson, you should have: <strong>A design table that defines the biological question, experimental unit, covariates, replicates, randomization or blocking plan, and possible batch effects.</strong></p>
 <h2>1. Experimental units</h2>
 <p>The experimental unit is the entity independently assigned to a condition, such as a donor, animal, or culture. Cells from one donor are not automatically independent biological replicates.</p>
+<p>Experimental design is arguably the most critical determinant of whether a genomics study will yield reliable and interpretable results. No amount of computational sophistication can rescue a poorly designed experiment, because confounding between biological variables of interest and technical batch effects renders the data fundamentally uninterpretable. Planning the allocation of biological replicates across sequencing batches, recording potential covariates, and anticipating sources of technical variation before generating data is far more efficient than attempting to correct for design flaws after the fact.</p>
 <pre><code class="language-text">donor,condition,batch,library_id
 D01,control,1,L01
 D02,control,2,L02
@@ -199,6 +206,8 @@ Only use it when the design contains enough information to estimate both terms.
 <p><strong>Pass criteria:</strong> IDs are unique, no required metadata is missing, both conditions occur in every batch, and the analysis design is written before inspecting results.</p>
 <h2>Troubleshooting</h2>
 <p>If condition and batch are perfectly confounded, report the limitation and avoid claiming a batch-corrected causal result.</p>
+<p>Biological replicates capture the natural variation between independent experimental units, such as individual patients, separate tissue samples, or independently cultured cell populations. This variation is essential for statistical inference because it defines the denominator of hypothesis tests and determines the generalizability of findings. Technical replicates, which measure the same biological sample multiple times, quantify measurement precision but do not contribute to estimating biological variability. Understanding this distinction is critical for correctly powering experiments.</p>
+<p>Batch effect mitigation strategies should be implemented at the experimental design stage rather than relying solely on computational correction methods. Balanced designs that distribute biological conditions evenly across processing batches ensure that batch effects and biological effects are orthogonal and therefore separable. When perfect balance is not achievable due to practical constraints, recording detailed metadata about sample processing enables post-hoc correction using methods such as ComBat or limma. The key principle is that batch effects can only be corrected if they are identifiable, which requires meticulous documentation of all processing variables.</p>
 <h2>Knowledge Check &amp; Assessment</h2>
 <h3>1. Concept Verification</h3>
 <p>Write short answers explaining the main concepts, the assumptions behind them, and one way a careless workflow could produce a misleading result.</p>

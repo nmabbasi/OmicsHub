@@ -165,6 +165,12 @@ Legal
   <p class="text-sm text-blue-700"><strong>Suggested route:</strong> use the <a href="start-here.html" class="underline">Bioinformatics Learning Path</a> to review any prerequisite stage before continuing.</p>
 </div>
 
+<div class="p-6 bg-amber-50 border border-amber-200 rounded-xl mb-8">
+  <h3 class="text-lg font-bold text-amber-900 mb-3">🦠 Why This Tutorial Matters</h3>
+  <p class="text-amber-800 mb-2">Metagenomics and metatranscriptomics have opened windows into microbial communities that were previously inaccessible through culture-based methods. Understanding the computational approaches for analyzing these complex, multi-organism datasets is increasingly important across fields ranging from environmental science to human health and precision medicine.</p>
+  <p class="text-amber-800">The analytical skills covered here are directly applicable to microbiome research, environmental monitoring, infectious disease surveillance, and agricultural biotechnology.</p>
+</div>
+
 <h2>Functional Pathway Analysis in Metatranscriptomics</h2>
 <h2>Introduction</h2>
 <p>In our previous metatranscriptomics guide, we discussed the critical first step: filtering out the massive abundance of ribosomal RNA (rRNA) using SortMeRNA to isolate the functional messenger RNA (mRNA).</p>
@@ -211,6 +217,19 @@ humann_renorm_table --input humann_out/sample_pathabundance.tsv \
                     --units cpm
 </code></pre>
 <p>Before differential testing, first determine whether your chosen HUMAnN output is a count-like table or a normalized abundance. Use raw or appropriately estimated counts with DESeq2, keep sample metadata and batch variables explicit, and record the transformation used only for visualization. If you only have compositional or normalized pathway abundances, choose a method whose assumptions match that input rather than treating it as a DESeq2 count matrix. Consult the <a href="https://bioconductor.org/packages/devel/bioc/vignettes/DESeq2/inst/doc/DESeq2.html">DESeq2 vignette</a> for its input requirements.</p>
+<p>Metagenomic and metatranscriptomic analyses present unique computational challenges compared to single-organism genomics. The data contains reads from potentially thousands of different species mixed together, with widely varying genome sizes, GC content, and abundance levels. Computational tools must handle this complexity while maintaining sensitivity for detecting low-abundance organisms and specificity for avoiding false taxonomic assignments. The choice of reference database, classification algorithm, and abundance estimation method can substantially influence biological conclusions, making it essential to understand the strengths and limitations of each approach rather than treating any single tool as a black box.</p>
+<div class="p-6 bg-green-50 border border-green-200 rounded-xl mb-8">
+  <h3 class="text-lg font-bold text-green-900 mb-3">✅ Key Takeaways</h3>
+  <ul class="list-disc list-inside text-green-800 space-y-2">
+      <li>Metagenomics reveals microbial community composition without requiring culture</li>
+      <li>Database choice significantly impacts taxonomic classification accuracy</li>
+      <li>Functional profiling complements taxonomic analysis for biological interpretation</li>
+      <li>Quality control must account for host contamination in clinical samples</li>
+      <li>Statistical frameworks designed for compositional data are essential for valid comparisons</li>
+  </ul>
+</div>
+<p>Functional pathway analysis of metatranscriptomic data reveals which metabolic processes are actively being performed by microbial communities, providing a layer of biological interpretation that goes beyond taxonomic composition alone. While metagenomics tells us which organisms are present and what functional potential they encode, metatranscriptomics captures the actual gene expression activity at the time of sampling, distinguishing between dormant and metabolically active community members. This distinction is particularly important in dynamic environments such as the human gut, soil ecosystems, and wastewater treatment systems where community activity can change rapidly in response to environmental perturbations.</p>
+<p>HUMAnN 3 provides an integrated framework for mapping metatranscriptomic reads to metabolic pathways defined in the MetaCyc database, producing quantitative profiles of pathway abundance and coverage. The algorithm employs a tiered search strategy that first maps reads against known pangenomes for rapid classification, then performs translated search against the UniRef protein database for reads that cannot be assigned by nucleotide-level mapping. This approach balances computational efficiency with sensitivity for detecting novel functional activities not represented in existing reference genomes.</p>
 <div class="mt-10 p-8 bg-gray-50 border border-gray-200 rounded-xl">
   <h3 class="text-xl font-bold text-gray-900 mb-4">Knowledge Check & Assessment</h3>
   <div class="space-y-4">

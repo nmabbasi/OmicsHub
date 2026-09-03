@@ -165,12 +165,21 @@ Legal
   <p class="text-sm text-blue-700"><strong>Suggested route:</strong> use the <a href="start-here.html" class="underline">Bioinformatics Learning Path</a> to review any prerequisite stage before continuing.</p>
 </div>
 
+<div class="p-6 bg-amber-50 border border-amber-200 rounded-xl mb-8">
+  <h3 class="text-lg font-bold text-amber-900 mb-3">🔬 Why This Tutorial Matters</h3>
+  <p class="text-amber-800 mb-2">Single-cell RNA sequencing is now the gold standard for dissecting cellular heterogeneity in virtually every area of biomedical research, from developmental biology to cancer immunology. Understanding the standard computational workflow is an essential skill for any bioinformatician or computational biologist entering this field.</p>
+  <p class="text-amber-800">This tutorial provides a complete, reproducible foundation that you will build upon in every subsequent single-cell analysis. The choices you make here regarding quality control thresholds, normalization strategy, and clustering resolution will propagate through all downstream analyses including trajectory inference, cell-cell communication, and differential expression testing.</p>
+</div>
+
 <h2>From Raw Counts to Biological Insights</h2>
 <p>Once the sequencing facility provides raw FASTQ files, the initial preprocessing step (using tools like Cell Ranger or STARsolo) maps the reads to a reference genome and generates a sparse count matrix. This matrix - where rows are genes and columns are cells - is the starting point for computational biologists.</p>
+<p>The computational workflow described in this tutorial follows a well-established analytical paradigm that has been refined over years of community development. The pipeline begins with quality control to remove technical artifacts such as empty droplets and damaged cells, then proceeds through normalization to correct for sequencing depth differences, dimensionality reduction to identify the most informative genes, and finally clustering to group cells with similar transcriptional profiles. Each step involves critical parameter choices that can significantly affect downstream biological interpretations, which is why understanding the rationale behind each step is just as important as knowing which function to call.</p>
+<p>Single-cell RNA sequencing has fundamentally transformed our ability to study cellular heterogeneity within complex tissues. Unlike traditional bulk RNA-seq, which averages gene expression across millions of cells and masks rare cell populations, scRNA-seq captures the transcriptome of each individual cell. This resolution is critical for understanding how distinct cell types contribute to tissue function, disease progression, and therapeutic response. Researchers working with tumor microenvironments, developing immune atlases, or studying stem cell differentiation all rely on scRNA-seq to reveal biological complexity that bulk methods simply cannot detect.</p>
 <p>In this tutorial, we will walk through a standard end-to-end analysis on a 10x Genomics dataset. We provide parallel workflows in both <strong>Python (Scanpy)</strong> and <strong>R (Seurat)</strong> so you can choose the ecosystem that best fits your needs.</p>
 <hr />
 <h2>1. Loading the Data</h2>
 <p>We begin by loading the sparse matrix into our core data structures: <code>AnnData</code> in Python, or a <code>Seurat</code> object in R.</p>
+<p>The 10x Genomics filtered feature-barcode matrix typically contains three files: <code>barcodes.tsv.gz</code> (cell identifiers), <code>features.tsv.gz</code> (gene names and IDs), and <code>matrix.mtx.gz</code> (the sparse count matrix in Market Exchange format). This sparse representation is essential because most gene-cell combinations have zero counts, and storing only the non-zero entries dramatically reduces memory usage. When working with datasets containing hundreds of thousands of cells, efficient data structures become a practical necessity rather than an optimization. The AnnData object in Python and the Seurat object in R both implement compressed sparse storage internally, enabling analyses that would otherwise require hundreds of gigabytes of RAM.</p>
 <pre><code class="language-python">import scanpy as sc
 import pandas as pd
 import numpy as np
@@ -201,6 +210,7 @@ pbmc &lt;- CreateSeuratObject(counts = pbmc.data, project = &quot;pbmc3k&quot;, 
 <hr />
 <h2>2. Quality Control (QC)</h2>
 <p>Empty droplets or dying cells can confound downstream analysis. High mitochondrial expression or unusually low gene counts can flag low-quality cells, but the distribution must be inspected for each dataset and batch. The thresholds below are training starting points, not universal biological rules; document and justify any filtering decision.</p>
+<p>Quality control in single-cell experiments is fundamentally different from bulk RNA-seq QC because the unit of analysis is an individual cell rather than a pooled sample. Each droplet in a 10x Chromium experiment may contain a healthy cell, a dying cell, an empty droplet with only ambient RNA, or even two cells captured together (a doublet). Mitochondrial gene percentage serves as a proxy for cell viability because damaged cells with compromised membranes lose cytoplasmic mRNA while retaining mitochondrial transcripts, leading to artificially elevated mitochondrial fractions. However, the appropriate threshold varies substantially between tissue types: metabolically active cells such as cardiomyocytes naturally express higher mitochondrial levels, so blindly applying a 5% cutoff would eliminate biologically relevant cells. Always visualize the distribution of QC metrics before setting thresholds, and consider using adaptive methods such as median absolute deviation filtering for unbiased cutoff selection.</p>
 <pre><code class="language-python"># Identify mitochondrial genes
 adata.var['mt'] = adata.var_names.str.startswith('MT-')
 
@@ -224,6 +234,7 @@ print(paste(&quot;Cells remaining after QC:&quot;, ncol(pbmc)))
 <hr />
 <h2>3. Normalization, Scaling, and PCA</h2>
 <p>Because different droplets capture different total amounts of RNA, we must normalize the data to a common scale (usually 10,000 counts per cell), log-transform it, and extract the most highly variable genes for dimensionality reduction.</p>
+<p>Library-size normalization addresses the technical reality that different droplets capture different quantities of mRNA molecules, making raw counts between cells incomparable. The standard approach of scaling each cell to a common total (typically 10,000 counts) followed by log transformation has proven robust across most experimental designs, though alternative methods such as scran pooling-based normalization or sctransform variance-stabilizing transformation may perform better in specific contexts. The log transformation serves dual purposes: it reduces the dynamic range of expression values so that highly expressed genes do not dominate the analysis, and it makes the data approximately normally distributed, which is an implicit assumption of many downstream statistical methods including PCA. Highly variable gene selection is a critical dimensionality reduction step that focuses the analysis on genes whose expression varies meaningfully across cells, filtering out both housekeeping genes with uniform expression and lowly detected genes dominated by technical noise.</p>
 <pre><code class="language-python"># Normalize and log transform
 sc.pp.normalize_total(adata, target_sum=1e4)
 sc.pp.log1p(adata)
@@ -256,6 +267,7 @@ ElbowPlot(pbmc)
 <hr />
 <h2>4. Neighborhood Graph and Clustering</h2>
 <p>We compute the k-nearest neighbors graph in PCA space, embed it into 2D space using UMAP, and cluster the cells to identify transcriptionally distinct subpopulations.</p>
+<p>The k-nearest neighbors graph is the mathematical foundation upon which both clustering and visualization depend. For each cell, the algorithm identifies its k most similar neighbors based on Euclidean distance in PCA space, then constructs a weighted graph where edge weights reflect the strength of similarity between connected cells. The Leiden algorithm (or its predecessor Louvain) then partitions this graph into communities of densely connected cells, which we interpret as biologically distinct cell types or states. The resolution parameter directly controls the granularity of clustering: lower values produce fewer, broader clusters, while higher values produce more fine-grained subdivisions. There is no universally correct resolution, and the appropriate choice depends on the biological question being asked. UMAP embedding provides a two-dimensional visualization of the high-dimensional graph structure, but it is important to remember that UMAP distances between clusters are not directly interpretable as biological distances, and the visualization should be used for qualitative assessment rather than quantitative comparison.</p>
 <pre><code class="language-python"># Compute neighbors and UMAP
 sc.pp.neighbors(adata, n_neighbors=10, n_pcs=40)
 sc.tl.umap(adata)
@@ -280,6 +292,17 @@ DimPlot(pbmc, reduction = &quot;umap&quot;, label = TRUE)
 </code></pre>
 <h2>Conclusion</h2>
 <p>Both Scanpy and Seurat support robust standard scRNA-seq workflows, but they differ in data structures, defaults, ecosystem choices, and analysis decisions. Choose one deliberately and document versions and parameters. With these clusters defined, we are ready to proceed to downstream analysis such as Trajectory Inference and Cell-Cell Communication.</p>
+<div class="p-6 bg-green-50 border border-green-200 rounded-xl mb-8">
+  <h3 class="text-lg font-bold text-green-900 mb-3">✅ Key Takeaways</h3>
+  <ul class="list-disc list-inside text-green-800 space-y-2">
+      <li>scRNA-seq captures individual cell transcriptomes, revealing heterogeneity invisible to bulk methods</li>
+      <li>QC thresholds must be adapted per dataset by inspecting metric distributions, not copied blindly</li>
+      <li>Library-size normalization and log transformation make cells comparable despite sequencing depth variation</li>
+      <li>The k-nearest neighbors graph is the core data structure driving both clustering and UMAP visualization</li>
+      <li>Resolution parameter tuning determines cluster granularity and should match your biological question</li>
+      <li>Always document software versions, parameter choices, and filtering decisions for reproducibility</li>
+  </ul>
+</div>
 <div class="mt-10 p-8 bg-gray-50 border border-gray-200 rounded-xl">
   <h3 class="text-xl font-bold text-gray-900 mb-4">Knowledge Check & Assessment</h3>
   <div class="space-y-4">

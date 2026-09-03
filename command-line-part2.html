@@ -165,6 +165,12 @@ Legal
   <p class="text-sm text-blue-700"><strong>Suggested route:</strong> use the <a href="start-here.html" class="underline">Bioinformatics Learning Path</a> to review any prerequisite stage before continuing.</p>
 </div>
 
+<div class="p-6 bg-amber-50 border border-amber-200 rounded-xl mb-8">
+  <h3 class="text-lg font-bold text-amber-900 mb-3">💻 Why This Tutorial Matters</h3>
+  <p class="text-amber-800 mb-2">Text processing commands are the Swiss Army knife of bioinformatics. The ability to quickly filter, extract, and transform biological data files directly from the terminal saves hours of work compared to loading files into R, Python, or spreadsheet applications.</p>
+  <p class="text-amber-800">These skills become especially valuable when working on HPC clusters where graphical tools are unavailable, when debugging pipeline failures by inspecting intermediate files, or when performing quick sanity checks on large datasets before committing to computationally expensive analyses.</p>
+</div>
+
 <h2>Text Processing: The Bioinformatician's Superpower</h2>
 <h3>Viewing File Contents</h3>
 <h4><code>cat</code> - Display entire file</h4>
@@ -258,6 +264,22 @@ seqkit stats matching_sequences.fasta
 <h4>Filter rows based on column values</h4>
 <pre><code class="language-bash">awk '$3 &gt; 100' data.tsv         # Show rows where column 3 &gt; 100
 </code></pre>
+<p>The Unix command line has remained the primary interface for bioinformatics work for decades, and its dominance shows no signs of waning. This longevity reflects fundamental advantages: shell commands are inherently scriptable and therefore reproducible, they can process data streams without loading entire files into memory, and they compose naturally through pipes and redirects. For biologists transitioning from graphical interfaces, the initial learning curve can feel steep, but the investment pays dividends almost immediately in terms of efficiency, scalability, and the ability to work on remote servers and high-performance computing clusters where graphical interfaces are typically unavailable.</p>
+<div class="p-6 bg-green-50 border border-green-200 rounded-xl mb-8">
+  <h3 class="text-lg font-bold text-green-900 mb-3">✅ Key Takeaways</h3>
+  <ul class="list-disc list-inside text-green-800 space-y-2">
+      <li>grep searches for patterns in text and is essential for filtering biological data files</li>
+      <li>sed performs stream-based text transformations without loading entire files into memory</li>
+      <li>cut extracts specific columns from tabular formats like BED, VCF, and TSV files</li>
+      <li>sort and uniq together enable frequency counting and deduplication operations</li>
+      <li>Combining these tools with pipes creates powerful one-liner data processing workflows</li>
+  </ul>
+</div>
+<p>Text processing constitutes one of the most practically valuable competencies in the bioinformatics command-line toolkit. Biological data files, including FASTA sequences, VCF variant calls, GTF gene annotations, and SAM alignment records, are structured text formats that can be efficiently queried, filtered, and transformed using standard Unix utilities. Rather than loading a multi-gigabyte file into a spreadsheet application or writing custom scripts for simple operations, experienced bioinformaticians routinely use grep, sed, cut, and sort to accomplish in seconds what might otherwise require minutes of manual effort.</p>
+<p>The grep command (Global Regular Expression Print) searches input for lines matching a specified pattern and prints them to standard output. In bioinformatics, grep is indispensable for tasks such as extracting all entries for a specific chromosome from a BED file, counting the number of reads mapping to a particular gene, or searching log files for error messages during pipeline debugging. Regular expressions extend grep beyond simple string matching by allowing pattern specifications with wildcards, character classes, and quantifiers. This enables sophisticated queries such as finding all gene symbols beginning with HOX followed by any combination of letters and digits. Understanding the difference between basic and extended regular expression syntax is important, as it affects which metacharacters require escaping.</p>
+<p>The stream editor sed performs text transformations on input streams without requiring an interactive editor session. Its most common application in bioinformatics involves search-and-replace operations across large files, such as converting chromosome naming conventions between UCSC and Ensembl formats, standardizing sample identifiers in metadata files, or removing header lines from data files before piping them into downstream analysis tools. The substitution command follows the pattern s/old/new/flags, where flags control whether replacement occurs globally on each line or only for the first match. Mastering sed syntax enables batch transformations that would be tedious and error-prone if performed manually across thousands of lines.</p>
+<p>The cut command extracts specific columns from tabular data, which is essential for working with the column-delimited file formats that dominate bioinformatics. When extracting gene names from a GTF annotation file, isolating specific INFO fields from a VCF variant file, or selecting sample columns from an expression matrix, cut provides a fast and memory-efficient solution that does not require loading the entire file into memory. When combined with sort for ordering and uniq for deduplication, these tools enable rapid frequency counting, duplicate identification, and basic data summarization entirely from the command line without invoking a programming language interpreter.</p>
+<p>Proficiency with text processing commands fundamentally changes how efficiently a bioinformatician can work with data. These tools are particularly valuable when working on high-performance computing clusters where graphical interfaces are unavailable, when debugging pipeline failures by inspecting intermediate output files, or when performing rapid sanity checks on large datasets before committing to computationally expensive downstream analyses. The composability of Unix commands through pipes means that individually simple tools can be combined into powerful data processing workflows that rival the functionality of dedicated scripting solutions.</p>
 <div class="mt-10 p-8 bg-gray-50 border border-gray-200 rounded-xl">
   <h3 class="text-xl font-bold text-gray-900 mb-4">Knowledge Check & Assessment</h3>
   <div class="space-y-4">
