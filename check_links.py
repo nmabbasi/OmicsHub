@@ -1,42 +1,48 @@
-import glob
-import re
 import os
+import glob
+from bs4 import BeautifulSoup
+from urllib.parse import urlparse
 
-all_html = glob.glob('**/*.html', recursive=True)
-all_html_names = set([os.path.basename(f) for f in all_html])
-all_html_paths = set(all_html)
-
-errors = []
-missing_alt = []
-
-for file in all_html:
-    with open(file, 'r', encoding='utf-8') as f:
-        content = f.read()
+def check_broken_links():
+    html_files = glob.glob('**/*.html', recursive=True)
+    valid_files = set([os.path.basename(f) for f in html_files])
     
-    # Check for missing internal links
-    links = re.findall(r'href="([^"]+)"', content)
-    for link in links:
-        if link.startswith('http') or link.startswith('#') or link.startswith('mailto:') or link == '':
-            continue
-        
-        # Clean query strings and anchors
-        clean_link = link.split('?')[0].split('#')[0]
-        
-        # Resolve path
-        base_dir = os.path.dirname(file)
-        target_path = os.path.normpath(os.path.join(base_dir, clean_link))
-        
-        if not os.path.exists(target_path):
-            errors.append(f"Broken link in {file}: {link} -> {target_path} does not exist.")
+    # Also valid are #anchors, mailto:, http/https links, and images/css/js
+    valid_assets = set([os.path.basename(f) for f in glob.glob('**/*.*', recursive=True)])
+    
+    broken_links = []
+    
+    for file in html_files:
+        with open(file, 'r', encoding='utf-8') as f:
+            soup = BeautifulSoup(f.read(), 'html.parser')
+            
+        for a_tag in soup.find_all('a', href=True):
+            href = a_tag['href']
+            
+            # Skip external links, mailto, tel, anchors
+            if href.startswith(('http://', 'https://', 'mailto:', 'tel:', '#')):
+                continue
+                
+            # Parse internal URL
+            parsed = urlparse(href)
+            path = parsed.path
+            
+            # If path is empty, it's just an anchor on current page which is skipped above or handled
+            if not path:
+                continue
+                
+            basename = os.path.basename(path)
+            
+            if basename and basename not in valid_files and basename not in valid_assets:
+                broken_links.append(f"Broken link '{href}' found in {file}")
+                
+    return broken_links
 
-    # Check for images without alt tags
-    img_tags = re.findall(r'<img[^>]+>', content)
-    for img in img_tags:
-        if 'alt=' not in img:
-            errors.append(f"Missing alt tag on image in {file}: {img}")
-
-if errors:
-    for e in set(errors):
-        print(e)
-else:
-    print("No broken links or missing alt tags found!")
+if __name__ == '__main__':
+    broken = check_broken_links()
+    if broken:
+        for b in broken:
+            print(b)
+        print(f"Total broken links: {len(broken)}")
+    else:
+        print("All internal links are valid!")

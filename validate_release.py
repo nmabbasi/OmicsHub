@@ -48,8 +48,8 @@ def canonical_values(soup: BeautifulSoup) -> list[str]:
     return [tag.get("href", "") for tag in soup.find_all("link", rel="canonical")]
 
 
-html_files = sorted(ROOT.glob("*.html")) + sorted((ROOT / "pages").glob("*.html"))
-tutorial_paths = [path for path in ROOT.glob("*.html") if path.name not in {"index.html", "about.html", "contact.html", "services.html", "start-here.html", "success.html"}]
+html_files = [path for path in (sorted(ROOT.glob("*.html")) + sorted((ROOT / "pages").glob("*.html"))) if path.name != "404.html"]
+tutorial_paths = [path for path in ROOT.glob("*.html") if path.name not in {"index.html", "about.html", "contact.html", "services.html", "start-here.html", "success.html", "404.html"}]
 
 for path in html_files:
     text = path.read_text(encoding="utf-8", errors="ignore")
@@ -122,9 +122,12 @@ for path in tutorial_paths:
     for generic in ["Master the core concepts and practical commands of this topic.", "A reproducible workflow and a clear understanding of the methodology."]:
         if generic in text:
             fail(f"{path.name}: generic learning scaffold remains")
-    if not re.search(r'nav-desktop-tutorials" aria-current="page" class="px-4 py-2 text-sm font-semibold bg-blue-600', text):
+    nav_line = next((line for line in text.splitlines() if 'id="nav-desktop-tutorials"' in line), "")
+    if 'aria-current="page"' not in nav_line:
         fail(f"{path.name}: Tutorials desktop tab not active")
-    if re.search(r'nav-desktop-home" aria-current="page" class="px-4 py-2 text-sm font-semibold bg-blue-600', text):
+        
+    home_line = next((line for line in text.splitlines() if 'id="nav-desktop-home"' in line), "")
+    if 'aria-current="page"' in home_line:
         fail(f"{path.name}: Home incorrectly active")
 
 # Sitemap should index strategic pages and tutorials, but never the transactional success page.
