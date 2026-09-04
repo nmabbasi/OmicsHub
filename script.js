@@ -1088,10 +1088,26 @@ function closeMobileMenu() {
 }
 
 document.addEventListener('click', function(event) {
+    const mobileMenu = document.getElementById("mobile-menu");
+    const toggleBtn = document.querySelector('button[aria-controls="mobile-menu"]');
+    
+    // Close if clicking a link inside the menu
     const link = event.target.closest('#mobile-menu a');
-    if (link) closeMobileMenu();
+    if (link) {
+        closeMobileMenu();
+        return;
+    }
+    
+    // Close if clicking outside the menu and toggle button
+    if (mobileMenu && !mobileMenu.classList.contains('hidden')) {
+        const clickedInsideMenu = mobileMenu.contains(event.target);
+        const clickedToggleButton = toggleBtn && toggleBtn.contains(event.target);
+        
+        if (!clickedInsideMenu && !clickedToggleButton) {
+            closeMobileMenu();
+        }
+    }
 });
-
 
 
 
