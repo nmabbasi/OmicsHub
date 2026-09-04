@@ -1153,5 +1153,4 @@ function updateNavActiveState(activeTab) {
             link.removeAttribute('aria-current');
         }
     });
-    });
 }
