@@ -72,7 +72,7 @@ function toggleMobileMenu() {
 <div class="page-content" id="tutorial-page">
 <div class="container mx-auto px-4 py-8"><div class="max-w-4xl mx-auto"><div id="tutorial-content">
 <section class="mb-12">
-<div class="flex items-center gap-2 text-sm text-blue-600 font-medium mb-4"><span>AI-Driven Research & Bioinformatics</span><span>•</span><span>2026-09-08</span></div>
+<div class="flex items-center gap-2 text-sm text-blue-600 font-medium mb-4"><span>AI-Driven Research & Agentic Bioinformatics</span><span>•</span><span>2026-09-08</span></div>
 <h1 class="text-4xl md:text-5xl font-black text-gray-900 mb-6 leading-tight">Mastering Prompt Engineering for Seurat & Scanpy</h1>
 <div class="flex items-center gap-4"><div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 font-bold text-lg">NM</div><div><p class="font-bold text-gray-900">Nasir Mahmood Abbasi, PhD</p><p class="text-sm text-gray-500">Bioinformatics Educator</p></div></div>
 </section>
@@ -98,22 +98,95 @@ function toggleMobileMenu() {
 </ul>
 </div>
 <div class="p-6 bg-amber-50 border border-amber-200 rounded-xl mb-8">
-<h3 class="text-lg font-bold text-amber-900 mb-3">📘 Intent-Based Prompting</h3>
+<h3 class="text-lg font-bold text-amber-900 mb-3">📘 Intent-Based Prompting (Vibe Coding)</h3>
 <p class="text-amber-800 mb-2">The key to effective AI code generation in bioinformatics is shifting from asking <em>"How do I use this function?"</em> to stating <em>"What is my biological goal?"</em> Provide context, specific constraints, and the desired output format.</p>
 </div>
 <h2>The Anatomy of a Great Bioinformatics Prompt</h2>
-<p>When asking Cursor or Aider to write analysis code, your prompt should contain three core elements:</p>
+<p>When asking Cursor or Aider to write analysis code, your prompt should contain three core elements to ensure the AI generates production-ready scripts rather than generic examples:</p>
 <ol>
 <li><strong>Context:</strong> What data are you working with? (e.g., "I have a Seurat object `pbmc` with 3,000 cells")</li>
 <li><strong>Intent:</strong> What is the biological goal? (e.g., "Identify marker genes for cluster 2 vs cluster 5")</li>
-<li><strong>Constraints:</strong> What statistical or technical thresholds apply? (e.g., "Use a Wilcoxon test, only return genes with an adjusted p-value &lt; 0.01 and a log2FC &gt; 1")</li>
+<li><strong>Constraints:</strong> What statistical or technical thresholds apply? What visualizations do you need? (e.g., "Use a Wilcoxon test, only return genes with an adjusted p-value &lt; 0.01 and a log2FC &gt; 1")</li>
 </ol>
-<h3>Example: Scanpy Quality Control</h3>
-<p><strong>Bad Prompt:</strong> <em>"Write code to filter my scanpy object."</em></p>
-<p><strong>Good Prompt:</strong> <em>"I have an AnnData object loaded as `adata`. Write Scanpy code to perform quality control. Filter out cells with fewer than 200 expressed genes, more than 8000 expressed genes, and higher than 5% mitochondrial reads. Then, filter out genes expressed in fewer than 3 cells. Plot the violin plots for these metrics before filtering."</em></p>
+
 <hr/>
-<h2>Conclusion</h2>
-<p>Mastering prompt engineering accelerates your workflow by allowing you to focus on the biological implications of your data rather than the programmatic syntax.</p>
+<h2>Practical Examples</h2>
+<h3>Example 1: Scanpy Quality Control</h3>
+<p><strong>Bad Prompt:</strong> <em>"Write code to filter my scanpy object."</em></p>
+<p>This prompt is too vague. The AI doesn't know your dataset name, your thresholds, or if you want visualizations.</p>
+
+<p><strong>Good Prompt:</strong> <em>"I have an AnnData object loaded as `adata`. Write Scanpy code to perform quality control. Filter out cells with fewer than 200 expressed genes, more than 8000 expressed genes, and higher than 5% mitochondrial reads. Then, filter out genes expressed in fewer than 3 cells. Plot the violin plots for these metrics before filtering, saving them as `qc_violins.png`."</em></p>
+<p><strong>Resulting AI Code:</strong></p>
+<pre><code class="language-python">import scanpy as sc
+import matplotlib.pyplot as plt
+
+# Calculate QC metrics
+adata.var['mt'] = adata.var_names.str.startswith('MT-')
+sc.pp.calculate_qc_metrics(adata, qc_vars=['mt'], percent_top=None, log1p=False, inplace=True)
+
+# Plot before filtering
+sc.pl.violin(adata, ['n_genes_by_counts', 'total_counts', 'pct_counts_mt'],
+             jitter=0.4, multi_panel=True, show=False)
+plt.savefig('qc_violins.png')
+
+# Filter cells and genes based on constraints
+sc.pp.filter_cells(adata, min_genes=200)
+sc.pp.filter_cells(adata, max_genes=8000)
+adata = adata[adata.obs.pct_counts_mt < 5, :]
+sc.pp.filter_genes(adata, min_cells=3)
+</code></pre>
+
+<h3>Example 2: Seurat Differential Expression</h3>
+<p><strong>Bad Prompt:</strong> <em>"Find markers for my seurat clusters."</em></p>
+
+<p><strong>Good Prompt:</strong> <em>"Using my Seurat object `seurat_obj`, find the differentially expressed genes for cluster 3 compared to all other clusters. Use the MAST test. Only keep genes with an adjusted p-value &lt; 0.05 and a logfc threshold of 0.5. Save the resulting dataframe to a CSV file named `cluster3_markers.csv`."</em></p>
+<p><strong>Resulting AI Code:</strong></p>
+<pre><code class="language-r">library(Seurat)
+
+# Find markers using MAST
+cluster3_markers <- FindMarkers(seurat_obj, 
+                               ident.1 = 3, 
+                               test.use = "MAST", 
+                               logfc.threshold = 0.5)
+
+# Filter by adjusted p-value
+significant_markers <- subset(cluster3_markers, p_val_adj < 0.05)
+
+# Save to CSV
+write.csv(significant_markers, file = "cluster3_markers.csv", row.names = TRUE)
+</code></pre>
+
+<hr/>
+<h2>Iterative Prompting (Conversational Refinement)</h2>
+<p>Do not expect perfect plots on the first try. Use conversational turns to refine the aesthetics.</p>
+<ul>
+<li><em>"Change the color palette of that UMAP to use viridis."</em></li>
+<li><em>"Add a title to the plot saying 'CD4 T Cell Subpopulations'."</em></li>
+<li><em>"The legend is overlapping the data. Move the legend to the right side outside the plot area."</em></li>
+</ul>
+
+<div class="p-6 bg-green-50 border border-green-200 rounded-xl mb-8 mt-8">
+<h3 class="text-lg font-bold text-green-900 mb-3">✅ Key Takeaways</h3>
+<ul class="list-disc list-inside text-green-800 space-y-2">
+<li><strong>Always provide variable names:</strong> Tell the AI what your AnnData or Seurat object is named.</li>
+<li><strong>Specify constraints explicitly:</strong> Don't leave p-values or logFC thresholds to chance.</li>
+<li><strong>Request file outputs:</strong> Tell the AI exactly what to name the output PNGs or CSVs.</li>
+<li><strong>Iterate on visuals:</strong> Use follow-up prompts to refine ggplot or matplotlib aesthetics.</li>
+</ul>
+</div>
+<div class="mt-10 p-8 bg-gray-50 border border-gray-200 rounded-xl">
+<h3 class="text-xl font-bold text-gray-900 mb-4">Knowledge Check &amp; Assessment</h3>
+<div class="space-y-4">
+<div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
+<h4 class="font-bold text-gray-800 mb-2">1. Concept Verification</h4>
+<p class="text-gray-600 text-sm">Why is "Write code to filter my scanpy object" considered a bad prompt?</p>
+</div>
+<div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
+<h4 class="font-bold text-gray-800 mb-2">2. Practical Execution</h4>
+<p class="text-gray-600 text-sm">Write a prompt asking Cursor to generate a FeaturePlot (Seurat) or umap plot (Scanpy) for the genes CD3E, CD4, and CD8A, specifying a custom color gradient.</p>
+</div>
+</div>
+</div>
 </article>
 <section aria-label="Course sequence" class="mt-16 pt-10 border-t border-gray-100">
 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">

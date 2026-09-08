@@ -72,21 +72,113 @@ function toggleMobileMenu() {
 <div class="page-content" id="tutorial-page">
 <div class="container mx-auto px-4 py-8"><div class="max-w-4xl mx-auto"><div id="tutorial-content">
 <section class="mb-12">
-<div class="flex items-center gap-2 text-sm text-blue-600 font-medium mb-4"><span>AI-Driven Research & Bioinformatics</span><span>•</span><span>2026-09-08</span></div>
+<div class="flex items-center gap-2 text-sm text-blue-600 font-medium mb-4"><span>AI-Driven Research & Agentic Bioinformatics</span><span>•</span><span>2026-09-08</span></div>
 <h1 class="text-4xl md:text-5xl font-black text-gray-900 mb-6 leading-tight">Advanced Orchestration: Agent Frameworks & Foundation Models</h1>
 <div class="flex items-center gap-4"><div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 font-bold text-lg">NM</div><div><p class="font-bold text-gray-900">Nasir Mahmood Abbasi, PhD</p><p class="text-sm text-gray-500">Bioinformatics Educator</p></div></div>
 </section>
 <div class="mb-12 rounded-2xl overflow-hidden shadow-lg border border-gray-100">
 <img alt="Advanced Orchestration with Agent Frameworks" class="w-full h-auto object-cover aspect-video" src="images/advanced-ai-orchestration.webp" onerror="this.src='https://placehold.co/1200x675/123B5D/FFF?text=Agent+Frameworks'"/>
 </div>
-<article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none">
+<article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none"><div class="flex flex-wrap items-center gap-4 text-xs font-mono text-gray-500 bg-gray-50 p-3 rounded-lg border border-gray-200 mb-6">
+<div class="flex items-center gap-1">
+<svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+<span><strong>Tested on:</strong> LangGraph, AutoGen, Python 3.10+</span>
+</div>
+<div class="flex items-center gap-1">
+<svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+<span><strong>Last Review:</strong> 2026-09-08</span>
+</div>
+</div>
+<div class="p-6 bg-blue-50 border border-blue-100 rounded-xl mb-8">
+<h4 class="text-lg font-bold text-blue-900 mb-2">Learning Objectives &amp; Prerequisites</h4>
+<ul class="list-disc list-inside text-blue-800 space-y-1 mb-4">
+<li><strong>Prerequisites:</strong> Proficiency in Python and a fundamental understanding of how LLM APIs (OpenAI, Anthropic) operate.</li>
+<li><strong>Objective:</strong> Learn to utilize agentic frameworks to orchestrate multi-step bioinformatics pipelines autonomously.</li>
+<li><strong>Expected Output:</strong> A conceptual and practical understanding of setting up a multi-agent system using LangGraph.</li>
+</ul>
+</div>
+<div class="p-6 bg-amber-50 border border-amber-200 rounded-xl mb-8">
+<h3 class="text-lg font-bold text-amber-900 mb-3">📘 The Shift to Multi-Agent Orchestration</h3>
+<p class="text-amber-800 mb-2">Single prompt LLMs are powerful, but they struggle with long-horizon, multi-step tasks like running a Nextflow pipeline, debugging the errors, and summarizing the results. Multi-agent orchestration solves this by assigning specific roles (e.g., Coder, Reviewer, Executor) to different agents that collaborate to achieve a goal.</p>
+</div>
 <h2>Biological Foundation Models</h2>
-<p>The next frontier in computational biology involves utilizing foundation models such as AlphaFold 3 or scGPT. These models require complex API orchestration to batch process sequences or single-cell data.</p>
+<p>The next frontier in computational biology involves utilizing foundation models such as ESM3 for protein design, scGPT for single-cell embeddings, and AlphaFold 3 for structural prediction. These models often require complex API orchestration to batch process sequences or single-cell data, making manual interaction tedious.</p>
+
+<hr/>
 <h2>Using Agent Frameworks (LangGraph & AutoGen)</h2>
-<p>Frameworks like LangGraph and AutoGen allow you to build multi-agent systems where one AI agent writes the code to query a foundation model, a second agent executes and debugs it, and a third agent analyzes the biological output.</p>
+<p>Frameworks like <strong>LangGraph</strong> and <strong>Microsoft AutoGen</strong> allow you to build multi-agent systems. Imagine a system where:</p>
+<ol>
+<li><strong>Agent 1 (The Planner):</strong> Reads a biological research question and plans the analysis steps.</li>
+<li><strong>Agent 2 (The Coder):</strong> Writes the Python/R script to execute the plan (e.g., querying the ESM API).</li>
+<li><strong>Agent 3 (The Executor):</strong> Runs the script in a secure sandbox and feeds errors back to the Coder.</li>
+</ol>
+
+<h3>Example: A Simple LangGraph Workflow</h3>
+<p>Here is a conceptual example of setting up a stateful graph using LangGraph to analyze protein sequences:</p>
+<pre><code class="language-python">from langgraph.graph import StateGraph, END
+from typing import TypedDict, List
+
+# Define the state of our graph
+class AgentState(TypedDict):
+    sequence: str
+    code_generated: str
+    execution_result: str
+    errors: List[str]
+
+def generate_analysis_code(state: AgentState):
+    # Call LLM to write code analyzing the sequence
+    code = llm.invoke(f"Write Python code to analyze this sequence: {state['sequence']}")
+    return {"code_generated": code}
+
+def execute_code(state: AgentState):
+    # Safely execute the code (e.g., using a Docker container or local subprocess)
+    try:
+        result = run_in_sandbox(state['code_generated'])
+        return {"execution_result": result, "errors": []}
+    except Exception as e:
+        return {"errors": [str(e)]}
+
+# Build the graph
+workflow = StateGraph(AgentState)
+workflow.add_node("coder", generate_analysis_code)
+workflow.add_node("executor", execute_code)
+
+workflow.set_entry_point("coder")
+workflow.add_edge("coder", "executor")
+# If there are errors, loop back to the coder; otherwise, end.
+workflow.add_conditional_edges(
+    "executor",
+    lambda state: "coder" if state.get("errors") else END
+)
+
+app = workflow.compile()
+</code></pre>
+<p>This graph ensures that if the generated code fails to execute, the error is passed back to the <code>coder</code> node for correction, creating a self-healing bioinformatics pipeline.</p>
 <hr/>
 <h2>Conclusion</h2>
-<p>Orchestrating foundation models through agentic frameworks represents the bleeding edge of bioinformatics research, drastically scaling the throughput of in-silico experiments.</p>
+<p>Orchestrating foundation models through agentic frameworks represents the bleeding edge of bioinformatics research. By shifting from manual scripting to building AI systems that script for you, you can drastically scale the throughput and complexity of in-silico experiments.</p>
+
+<div class="p-6 bg-green-50 border border-green-200 rounded-xl mb-8 mt-8">
+<h3 class="text-lg font-bold text-green-900 mb-3">✅ Key Takeaways</h3>
+<ul class="list-disc list-inside text-green-800 space-y-2">
+<li><strong>Multi-Agent Systems:</strong> Divide complex tasks into discrete roles (Planner, Coder, Executor) for better reliability.</li>
+<li><strong>Stateful Graphs:</strong> Tools like LangGraph allow you to manage state and create cyclic workflows (e.g., write -&gt; test -&gt; fix).</li>
+<li><strong>Scale:</strong> Orchestration allows for the high-throughput utilization of biological foundation models like ESM3 and scGPT.</li>
+</ul>
+</div>
+<div class="mt-10 p-8 bg-gray-50 border border-gray-200 rounded-xl">
+<h3 class="text-xl font-bold text-gray-900 mb-4">Knowledge Check &amp; Assessment</h3>
+<div class="space-y-4">
+<div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
+<h4 class="font-bold text-gray-800 mb-2">1. Concept Verification</h4>
+<p class="text-gray-600 text-sm">Why is a stateful, cyclic graph (like those built with LangGraph) superior to a simple linear chain when generating bioinformatics code?</p>
+</div>
+<div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
+<h4 class="font-bold text-gray-800 mb-2">2. Practical Execution</h4>
+<p class="text-gray-600 text-sm">Draft a simple architectural diagram (on paper or using a tool) outlining a 3-agent system designed to automatically download FASTQ files from the SRA, run FastQC, and summarize the results.</p>
+</div>
+</div>
+</div>
 </article>
 <section aria-label="Course sequence" class="mt-16 pt-10 border-t border-gray-100">
 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
