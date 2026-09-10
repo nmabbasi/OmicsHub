@@ -433,6 +433,25 @@ function getBadgeClass(category) {
 // (Removed duplicate updateTutorialsList)
 
 // Update sidebar with categories and recent posts
+const CATEGORY_TONES = {
+    'All Tutorials': 'all',
+    'Foundations & Prerequisites': 'foundations',
+    'Introduction to Bioinformatics': 'intro',
+    'Shell Command Basics': 'shell',
+    'Package Management': 'package',
+    'High-Performance Computing (HPC)': 'hpc',
+    'Workflow Management and Containerization': 'workflow',
+    'Metagenomics': 'metagenomics',
+    'Metatranscriptomics': 'metatranscriptomics',
+    'Evolutionary and Comparative Genomics': 'evolutionary',
+    'Genomics and Whole-Exome Sequencing': 'genomics',
+    'Single-Cell RNA-seq': 'single-cell',
+    'Advanced Single-Cell Analysis': 'advanced-single-cell',
+    'Spatial Transcriptomics': 'spatial',
+    'Long-Read Sequencing': 'long-read',
+    'AI-Driven Research & Agentic Bioinformatics': 'ai-driven'
+};
+
 function updateSidebar() {
     const categoriesList = document.getElementById('categories-list');
     const recentPosts = document.getElementById('recent-posts');
@@ -445,12 +464,19 @@ function updateSidebar() {
 
     // Populate Categories with counts
     const categories = [...new Set(tutorials.map(t => t.category))];
+    const categoryLabels = {
+        'AI-Driven Research & Agentic Bioinformatics': 'AI & Agentic Research'
+    };
     categories.forEach(category => {
         const count = tutorials.filter(t => t.category === category).length;
         const categoryButton = document.createElement('button');
-        categoryButton.className = 'category-btn w-full text-left px-3 py-2 rounded-md transition-colors hover:bg-blue-50 hover:text-blue-600 flex items-center justify-between';
+        const displayLabel = categoryLabels[category] || category;
+        categoryButton.dataset.category = category;
+        categoryButton.dataset.categoryTone = CATEGORY_TONES[category] || 'all';
+        categoryButton.setAttribute('aria-label', `${displayLabel}, ${count} tutorials`);
+        categoryButton.className = 'sidebar-category w-full text-left px-3 py-2 rounded-md transition-colors hover:bg-blue-50 hover:text-blue-600 flex items-center justify-between';
         categoryButton.innerHTML = `
-            <span class="font-medium">${category}</span>
+            <span class="font-medium">${displayLabel}</span>
             <span class="category-count text-xs bg-gray-200 text-gray-600 px-2 py-1 rounded-full">${count}</span>
         `;
         categoryButton.onclick = () => {
