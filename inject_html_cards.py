@@ -144,9 +144,9 @@ def render_home_card(t):
         <article class="tutorial-card cursor-pointer" data-search="{t["search"]}" onclick="window.location.href='{t["id"]}.html'">
             {img_html}
             <div class="p-6 flex flex-col flex-grow">
-                <div class="flex items-center justify-between mb-3">
-                    <span class="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">{t["category"]}</span>
-                    <span class="text-sm text-gray-500 font-medium">{t["date"]}</span>
+                <div class="flex flex-col items-start gap-1 mb-3">
+                    <span class="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded-full truncate max-w-full inline-block">{t["category"]}</span>
+                    <span class="text-sm text-gray-500 whitespace-nowrap flex-shrink-0 font-medium">{t["date"]}</span>
                 </div>
                 <h3 class="text-xl font-bold text-gray-900 mb-2">{t["title"]}</h3>
                 <p class="excerpt text-gray-600 mb-4">{t["excerpt"]}</p>
@@ -159,9 +159,9 @@ def render_grid_card(t):
         <article class="tutorial-grid-card bg-white rounded-lg shadow-md overflow-hidden transform transition-transform hover:scale-105 duration-300 cursor-pointer flex flex-col" data-category="{t["category"]}" data-search="{t["search"]}" onclick="window.location.href='{t["id"]}.html'">
             <img src="{t["image"]}" alt="{t["title"]}" loading="lazy" decoding="async" class="w-full h-48 object-cover">
             <div class="p-6 flex flex-col flex-grow">
-                <div class="flex items-center justify-between mb-3">
-                    <span class="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">{t["category"]}</span>
-                    <span class="text-sm text-gray-500">{t["date"]}</span>
+                <div class="flex flex-col items-start gap-1 mb-3">
+                    <span class="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded-full truncate max-w-full inline-block">{t["category"]}</span>
+                    <span class="text-sm text-gray-500 whitespace-nowrap flex-shrink-0">{t["date"]}</span>
                 </div>
                 <h3 class="text-xl font-bold text-gray-900 mb-2">{t["title"]}</h3>
                 <p class="text-gray-700 text-base mb-4 line-clamp-3">{t["excerpt"]}</p>
