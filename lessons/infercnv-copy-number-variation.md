@@ -92,7 +92,7 @@ infercnv_obj <- infercnv::run(
 
 ## 3. Interpreting the Output
 
-inferCNV automatically generates a heatmap in your output directory (`infercnv_output/infercnv.png`).
+inferCNV automatically generates a heatmap in your output directory (`infercnv_output/infercnv.webp`).
 
 *   **Rows** are individual cells.
 *   **Columns** are genes, ordered strictly by their physical location from Chromosome 1 to Chromosome X/Y.

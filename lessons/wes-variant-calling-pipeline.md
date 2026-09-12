@@ -4,7 +4,7 @@ date: "2026-08-14"
 author: "Nasir Mahmood Abbasi, PhD"
 category: "Genomics and Whole-Exome Sequencing"
 excerpt: "A comprehensive guide to Whole Exome Sequencing (WES) analysis, covering read alignment, variant calling, LiftOver, and Variant Allele Frequency (VAF) calculations."
-image: "images/wes-variant-calling.png"
+image: "images/wes-variant-calling.webp"
 ---
 
 

@@ -65,7 +65,7 @@ ggplot(samples, aes(condition, millions, color = condition)) +
   geom_point(size = 3) +
   labs(x = "Condition", y = "Reads (millions)") +
   theme_minimal()
-ggsave("results/read_qc.png", width = 6, height = 4, dpi = 150)
+ggsave("results/read_qc.webp", width = 6, height = 4, dpi = 150)
 ```
 
 ## 4. Missing values and joins

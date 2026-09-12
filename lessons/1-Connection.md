@@ -68,7 +68,7 @@ In the MobaXterm window:
 *   Click `OK`.
 *   A new session should appear in the left panel; double-click it to connect.
 
-![ssh](images/ssh.png)
+![ssh](images/ssh.webp)
 
 ####  From outside the university’s network
 
@@ -150,7 +150,7 @@ To set up a new session:
     *   `Single application`, then `Terminal` from the right drop-down menu for a terminal session.
 *   Click `Ok`. The session should appear in the right panel. Click on it to connect.
 
-![X2GO](images/Nx.png)
+![X2GO](images/Nx.webp)
 
 **Important**: If you are outside the university’s network, you must first connect to the VPN. Refer to the [From outside the university’s network](#from-outside-the-universitys-network) section above for VPN instructions.
 

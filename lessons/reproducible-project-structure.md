@@ -76,7 +76,7 @@ Explain setup, expected inputs, commands, outputs, and limitations. Name results
 1. Create environment
 2. Place validated input in data/raw
 3. Run scripts/run_qc.sh
-4. Inspect results/figures/qc.png
+4. Inspect results/figures/qc.webp
 ```
 
 ## Practical Exercise

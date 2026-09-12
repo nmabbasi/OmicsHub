@@ -4,7 +4,7 @@ date: "2026-08-14"
 author: "Nasir Mahmood Abbasi, PhD"
 category: "Workflow Management and Containerization"
 excerpt: "Understand how containerization solves the dependency hell of bioinformatics, focusing on Docker for local use and Singularity for HPC clusters."
-image: "images/docker-singularity-bioinformatics.png"
+image: "images/docker-singularity-bioinformatics.webp"
 ---
 
 

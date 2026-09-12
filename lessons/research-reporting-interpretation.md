@@ -67,7 +67,7 @@ Publish scripts, environment files, checksums, README, and a license where permi
 ```bash
  git status
  git log --oneline -1
- sha256sum results/figures/qc.png
+ sha256sum results/figures/qc.webp
 ```
 
 ## Practical Exercise

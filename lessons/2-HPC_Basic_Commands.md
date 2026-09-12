@@ -72,7 +72,7 @@ The `STATE` column indicates the status of the nodes listed in the `NODELIST` co
 *   `drain`: The node will finish current jobs but will not accept new ones.
 *   `down`: The node is shut down.
 
-![partition](images/partitions.png)
+![partition](images/partitions.webp)
 
 
 For a comprehensive list of states and options, consult the manual:
