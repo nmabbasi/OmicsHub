@@ -161,7 +161,7 @@ def render_grid_card(t):
             <div class="p-6 flex flex-col flex-grow">
                 <div class="flex flex-col items-start gap-1 mb-3">
                     <span class="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded-full truncate max-w-full inline-block text-left">{t["category"]}</span>
-                    <span class="text-sm text-gray-500 whitespace-nowrap flex-shrink-0">{t["date"]}</span>
+                    <span class="text-sm text-gray-500 whitespace-nowrap flex-shrink-0 font-medium text-left px-2.5">{t["date"]}</span>
                 </div>
                 <h3 class="text-xl font-bold text-gray-900 mb-2">{t["title"]}</h3>
                 <p class="text-gray-700 text-base mb-4 line-clamp-3">{t["excerpt"]}</p>
