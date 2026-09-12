@@ -250,7 +250,11 @@ def main() -> None:
     ]
     sitemap = ['<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n']
     sitemap.extend(sitemap_entry(url, priority, frequency) for url, priority, frequency in standalone)
-    sitemap.extend(sitemap_entry(url, "0.8") for url in tutorial_urls)
+    import glob
+    html_files = glob.glob("*.html")
+    excluded = ["404.html", "success.html", "index.html", "start-here.html", "services.html", "about.html", "contact.html"]
+    tutorial_files = [f for f in html_files if f not in excluded and not f.startswith("pages/")]
+    sitemap.extend(sitemap_entry(SITE_URL + "/" + tut, "0.8") for tut in tutorial_files)
     sitemap.append("</urlset>\n")
     (ROOT / "sitemap.xml").write_text("".join(sitemap), encoding="utf-8")
     print(f"Generated sitemap.xml with {len(standalone) + len(tutorial_urls)} URLs")

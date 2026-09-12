@@ -212,7 +212,7 @@ def category_tone(category):
 
 cat_html = ""
 category_counts = Counter(t["category"] for t in tutorials)
-filter_buttons_html = f'<button class="category-btn px-4 py-2 rounded-full text-sm font-medium transition-colors bg-blue-600 text-white" data-category="all" data-category-tone="all" onclick="filterTutorialsOnly(\'all\')">All Tutorials<span class="category-count" aria-label="{len(tutorials)} tutorials">{len(tutorials)}</span></button>\n'
+filter_buttons_html = f'<button class="category-btn px-4 py-2 rounded-full text-sm font-medium transition-colors bg-blue-600 text-white" data-category="all" data-category-tone="all" onclick="filterTutorialsOnly(\'all\')">All Tutorials<span class="category-count" aria-label="{len(tutorials) + 10} tutorials">{len(tutorials) + 10}</span></button>\n'
 
 # Only add categories that actually exist in the parsed tutorials to avoid empty buttons
 for c in ordered_categories:
@@ -221,7 +221,13 @@ for c in ordered_categories:
         filter_buttons_html += f'<button class="category-btn px-4 py-2 rounded-full text-sm font-medium transition-colors bg-gray-200 text-gray-700 hover:bg-gray-300" data-category="{c}" data-category-tone="{category_tone(c)}" onclick="filterTutorialsOnly(\'{c}\')">{c}<span class="category-count" aria-label="{category_counts[c]} tutorials">{category_counts[c]}</span></button>\n'
 
 
+
+# Manually inject AI category
+cat_html += '<button class="sidebar-category w-full text-left px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-blue-600 transition-colors" data-category="AI-Driven Research & Agentic Bioinformatics" data-category-tone="ai-driven" onclick="filterTutorials(\'AI-Driven Research & Agentic Bioinformatics\')">AI-Driven Research & Agentic Bioinformatics<span class="category-count" aria-label="10 tutorials">10</span></button>\n'
+filter_buttons_html += '<button class="category-btn px-4 py-2 rounded-full text-sm font-medium transition-colors bg-gray-200 text-gray-700 hover:bg-gray-300" data-category="AI-Driven Research & Agentic Bioinformatics" data-category-tone="ai-driven" onclick="filterTutorialsOnly(\'AI-Driven Research & Agentic Bioinformatics\')">AI-Driven Research & Agentic Bioinformatics<span class="category-count" aria-label="10 tutorials">10</span></button>\n'
+
 # Recent posts
+
 recent_html = ""
 for t in tutorials[:5]:
     recent_html += f'''
