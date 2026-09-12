@@ -11,11 +11,11 @@
 <meta content="Learn how to build an autonomous research orchestrator that manages multiple AI agents to conduct comprehensive bioinformatics literature reviews and data analysis." property="og:description"/>
 <meta content="https://theomicshub.com/autonomous-research-orchestrator.html" property="og:url"/>
 <meta content="website" property="og:type"/>
-<meta content="https://theomicshub.com/images/autonomous-orchestrator.png" property="og:image"/>
+<meta content="https://theomicshub.com/images/autonomous-research-orchestrator.png" property="og:image"/>
 <meta content="summary_large_image" name="twitter:card"/>
 <meta content="Autonomous Research Orchestrator | The Omics Hub" name="twitter:title"/>
 <meta content="Learn how to build an autonomous research orchestrator that manages multiple AI agents to conduct comprehensive bioinformatics literature reviews and data analysis." name="twitter:description"/>
-<meta content="https://theomicshub.com/images/autonomous-orchestrator.png" name="twitter:image"/>
+<meta content="https://theomicshub.com/images/autonomous-research-orchestrator.png" name="twitter:image"/>
 <title>Autonomous Research Orchestrator | The Omics Hub</title>
 <link href="images/favicon.svg" rel="icon" type="image/svg+xml"/>
 <link href="https://fonts.googleapis.com" rel="preconnect"/>
@@ -29,7 +29,7 @@
 <meta content="ca-pub-2910340533244599" name="google-adsense-account"/>
 <meta content="XioIUjAyO5PEAT-N6nLrowdiDe4ATl-vKdRGmmrDHZM" name="google-site-verification"/>
 <link href="https://theomicshub.com/autonomous-research-orchestrator.html" rel="canonical">
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "Article", "headline": "Autonomous Research Orchestrator", "description": "Learn how to build an autonomous research orchestrator that manages multiple AI agents to conduct comprehensive bioinformatics literature reviews and data analysis.", "mainEntityOfPage": {"@type": "WebPage", "@id": "https://theomicshub.com/autonomous-research-orchestrator.html"}, "image": "https://theomicshub.com/images/autonomous-orchestrator.png", "author": {"@type": "Person", "name": "Nasir Mahmood Abbasi, PhD", "url": "https://theomicshub.com/about.html"}, "publisher": {"@type": "Organization", "name": "The Omics Hub", "url": "https://theomicshub.com", "logo": {"@type": "ImageObject", "url": "https://theomicshub.com/images/favicon.svg"}}, "datePublished": "2026-09-08", "dateModified": "2026-09-08"}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "Article", "headline": "Autonomous Research Orchestrator", "description": "Learn how to build an autonomous research orchestrator that manages multiple AI agents to conduct comprehensive bioinformatics literature reviews and data analysis.", "mainEntityOfPage": {"@type": "WebPage", "@id": "https://theomicshub.com/autonomous-research-orchestrator.html"}, "image": "https://theomicshub.com/images/autonomous-research-orchestrator.png", "author": {"@type": "Person", "name": "Nasir Mahmood Abbasi, PhD", "url": "https://theomicshub.com/about.html"}, "publisher": {"@type": "Organization", "name": "The Omics Hub", "url": "https://theomicshub.com", "logo": {"@type": "ImageObject", "url": "https://theomicshub.com/images/favicon.svg"}}, "datePublished": "2026-09-08", "dateModified": "2026-09-08"}</script>
 </head>
 <body class="bg-white text-gray-900">
 <script>
@@ -129,7 +129,7 @@ Legal
 <div class="flex items-center gap-4"><div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 font-bold text-lg">NM</div><div><p class="font-bold text-gray-900">Nasir Mahmood Abbasi, PhD</p><p class="text-sm text-gray-500">Bioinformatics Educator</p></div></div>
 </section>
 <div class="mb-12 rounded-2xl overflow-hidden shadow-lg border border-gray-100">
-<img alt="Autonomous Research Orchestrator" class="w-full h-auto object-cover aspect-video" src="images/autonomous-orchestrator.png" onerror="this.src='https://placehold.co/1200x675/123B5D/FFF?text=Orchestrator'"/>
+<img alt="Autonomous Research Orchestrator" class="w-full h-auto object-cover aspect-video" src="images/autonomous-research-orchestrator.png" onerror="this.src='https://placehold.co/1200x675/123B5D/FFF?text=Orchestrator'"/>
 </div>
 <article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none"><div class="flex flex-wrap items-center gap-4 text-xs font-mono text-gray-500 bg-gray-50 p-3 rounded-lg border border-gray-200 mb-6">
 <div class="flex items-center gap-1">
@@ -153,6 +153,14 @@ Legal
 <h3 class="text-lg font-bold text-amber-900 mb-3">📘 The Multi-Agent Paradigm</h3>
 <p class="text-amber-800 mb-2">Rather than prompting a single LLM to "do everything," state-of-the-art agentic workflows use a team of specialized agents. An "Orchestrator" breaks down a high-level task into sub-tasks, assigns them to specialized agents (who have access to specific tools like Zotero or Python environments), and synthesizes the results.</p>
 </div>
+<h2>Before You Begin: Build a Bounded Prototype</h2>
+<p>An autonomous orchestrator should begin as a supervised workflow with a small task budget. Define the allowed tools, input and output schemas, maximum steps, timeout, retry policy, and human approval points before adding more agents.</p>
+<h3>Minimal project layout</h3>
+<pre><code class="language-bash">mkdir -p orchestrator/{agents,tools,tests,outputs}
+touch orchestrator/{agents,planner.py,tools/retrieval.py,tests/test_plan.py}
+echo "Keep credentials in environment variables, never in source." &gt; orchestrator/SECURITY.md</code></pre>
+<p>Run tools with least privilege and log every tool call, input summary, output status, and failure. Start with a dry-run mode that produces a plan without changing files or submitting jobs.</p>
+<p><strong>Success check:</strong> a failed tool call stops safely, the run can be replayed from logs, and a human can approve the final action.</p>
 <h2>Building the Orchestrator</h2>
 <p>In this tutorial, we will conceptualize how to build a basic autonomous orchestrator using a framework like AutoGen.</p>
 <h3>Step 1: Defining the Agents</h3>
