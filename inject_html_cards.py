@@ -230,7 +230,18 @@ for t in tutorials[:5]:
             <div class="text-xs text-gray-500">{t["category"]}</div>
         </a>'''
 
+
+# Appending the manually-added AI tutorials to the dynamic strings
+try:
+    with open('ai_home_cards.html', 'r', encoding='utf-8') as f:
+        home_cards_html += '\n' + f.read()
+    with open('ai_grid_cards.html', 'r', encoding='utf-8') as f:
+        grid_cards_html += '\n' + f.read()
+except FileNotFoundError:
+    print('Warning: AI tutorial snippets not found.')
+
 with open('index.html', 'r') as f:
+
     index_html = f.read()
 
 # Replace tutorials-list
