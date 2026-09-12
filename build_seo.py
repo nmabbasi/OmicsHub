@@ -252,7 +252,7 @@ def main() -> None:
     sitemap.extend(sitemap_entry(url, priority, frequency) for url, priority, frequency in standalone)
     import glob
     html_files = glob.glob("*.html")
-    excluded = ["404.html", "success.html", "index.html", "start-here.html", "services.html", "about.html", "contact.html"]
+    excluded = ["404.html", "success.html", "index.html", "start-here.html", "services.html", "about.html", "contact.html", "old_index.html", "ai_home_cards.html", "ai_grid_cards.html"]
     tutorial_files = [f for f in html_files if f not in excluded and not f.startswith("pages/")]
     sitemap.extend(sitemap_entry(SITE_URL + "/" + tut, "0.8") for tut in tutorial_files)
     sitemap.append("</urlset>\n")

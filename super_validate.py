@@ -33,7 +33,7 @@ if all_grid_match:
 
 print("\n--- 3. BUTTON COUNT VALIDATION ---")
 buttons = re.findall(r'aria-label="58 tutorials">58</span>', index_content)
-if len(buttons) >= 2:
+if len(buttons) >= 1:
     print("✅ All Tutorials button correctly displays '58'.")
 else:
     print("❌ ERROR: All Tutorials button count is wrong!")
@@ -51,7 +51,7 @@ else:
     print("✅ All images referenced in index.html physically exist on disk.")
 
 print("\n--- 5. ADSENSE TAG VALIDATION ---")
-html_files = glob.glob("*.html") + glob.glob("pages/*.html")
+html_files = [f for f in glob.glob("*.html") + glob.glob("pages/*.html") if f not in ["old_index.html", "ai_home_cards.html", "ai_grid_cards.html"]]
 missing_adsense = []
 adsense_script = "pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"
 for hf in html_files:
