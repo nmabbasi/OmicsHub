@@ -163,19 +163,24 @@ Legal
 <h2>Connecting NotebookLM for Deep Research</h2>
 <p>By bringing NotebookLM directly into your coding environment, you can avoid context switching and immediately pull reference material into your prompts.</p>
 <h3>Step 1: Installing the NotebookLM MCP Server</h3>
-<p>The NotebookLM MCP server is a Python package. We recommend installing it using <code>pipx</code> or into a global Python environment accessible by your IDE.</p>
-<ol>
-<li>Install the NotebookLM MCP server via the command line:</li>
-</ol>
-<pre><code class="language-bash">pip install mcp-notebooklm</code></pre>
-<ol start="2">
-<li><strong>Authentication:</strong> You must authenticate your Google account locally so the MCP server can access your notebooks. Run the following command in your terminal:</li>
-</ol>
-<pre><code class="language-bash">nlm login</code></pre>
-<p>This will open a browser window. Log into the Google account associated with your NotebookLM data. The credentials will be saved securely to your local machine.</p>
+<p>The NotebookLM MCP server is a Python package that bridges your IDE to Google's NotebookLM API. Install it using <code>pipx</code> for system-wide availability without polluting your project environments:</p>
+<pre><code class="language-bash"># Option 1: Install with pipx (recommended for CLI tools)
+pipx install mcp-notebooklm
 
-<h3>Step 2: Configuring NotebookLM in your IDE</h3>
-<p>In Cursor or Claude Desktop, add a new MCP server:</p>
+# Option 2: Install with pip
+pip install mcp-notebooklm
+
+# Verify installation
+mcp-notebooklm --version</code></pre>
+
+<h3>Step 2: Authentication</h3>
+<p>You must authenticate your Google account locally so the MCP server can access your notebooks. Run the following command in your terminal:</p>
+<pre><code class="language-bash">nlm login</code></pre>
+<p>This will open a browser window. Log into the Google account associated with your NotebookLM data. The credentials are saved as OAuth tokens to <code>~/.notebooklm-mcp-cli/</code> on your local machine. Tokens expire after approximately 7 days and need to be refreshed by running <code>nlm login</code> again.</p>
+
+<h3>Step 3: Configuring NotebookLM in Your IDE</h3>
+<p>In Cursor, Claude Desktop, or Antigravity, add a new MCP server. The configuration varies by IDE:</p>
+<p><strong>For Cursor:</strong></p>
 <ol>
 <li>Open Cursor Settings.</li>
 <li>Navigate to the <strong>Features</strong> &gt; <strong>MCP</strong> section.</li>
@@ -184,13 +189,63 @@ Legal
 <li>Type: <code>command</code></li>
 <li>Command: <code>mcp-notebooklm</code></li>
 </ol>
-<p>You can now instruct your agent: <em>"Review my NotebookLM 'Immunology Notes' notebook and extract the latest markers for exhausted CD8+ T cells. Format them as a Python list so I can use them in my Scanpy script."</em></p>
-<hr/>
-<h2>Troubleshooting Common MCP Issues</h2>
-<p>If you encounter issues getting the MCP servers to respond, check the following:</p>
+<p><strong>For Claude Desktop or other MCP clients</strong>, add the following to your <code>mcp_config.json</code>:</p>
+<pre><code class="language-json">{
+  "mcpServers": {
+    "notebooklm": {
+      "command": "mcp-notebooklm",
+      "args": []
+    }
+  }
+}</code></pre>
+
+<h3>Step 4: Building a Research Synthesis Workflow</h3>
+<p>Once connected, you can query your NotebookLM notebooks directly from your coding environment. Here is a practical workflow for a PhD student conducting a literature review:</p>
+<pre><code class="language-text"># Example prompts to use with your AI agent after MCP is configured:
+
+1. "List all my NotebookLM notebooks and show me which ones
+   contain sources about T cell exhaustion."
+
+2. "From my 'Immunology_Review' notebook, extract every mention
+   of PD-1 signaling pathways and format them as a markdown table
+   with the source document name and page reference."
+
+3. "Query my 'Methods_Comparison' notebook: What are the key
+   differences between CyTOF and spectral flow cytometry for
+   immune cell phenotyping? Include citations."
+
+4. "Cross-reference my 'Sezary_Syndrome' notebook with my
+   'Single_Cell_Methods' notebook to find overlapping gene
+   signatures mentioned in both."</code></pre>
+<p>The agent retrieves grounded answers (with source citations) from your uploaded PDFs and notes, and can immediately format the results into Python variables, R vectors, or LaTeX tables for your manuscript.</p>
+
+<h3>Organizing Notebooks for Maximum Effectiveness</h3>
+<p>NotebookLM works best when notebooks are focused on a single research question. Here is a recommended organization for PhD research:</p>
+<div class="overflow-x-auto mb-6">
+<table class="min-w-full text-sm border border-gray-200 rounded-lg">
+<thead class="bg-gray-100"><tr><th class="px-4 py-2 text-left">Notebook Name</th><th class="px-4 py-2 text-left">Sources (3 to 10)</th><th class="px-4 py-2 text-left">Purpose</th></tr></thead>
+<tbody>
+<tr class="border-t"><td class="px-4 py-2">Chapter_1_Background</td><td class="px-4 py-2">Key review articles</td><td class="px-4 py-2">Generate structured literature summaries</td></tr>
+<tr class="border-t"><td class="px-4 py-2">Methods_Comparison</td><td class="px-4 py-2">Protocol papers, benchmarks</td><td class="px-4 py-2">Compare experimental approaches</td></tr>
+<tr class="border-t"><td class="px-4 py-2">Discussion_Points</td><td class="px-4 py-2">Recent publications in your field</td><td class="px-4 py-2">Identify gaps and contradictions</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>Troubleshooting Common Issues</h3>
 <ul>
-<li><strong>Auth Errors (NotebookLM):</strong> If the AI complains about authentication, your local token may have expired. Open a terminal and run <code>nlm login</code> again to refresh the token.</li>
-<li><strong>Path Issues (pip):</strong> Ensure that <code>pip</code>/<code>mcp-notebooklm</code> (Python) is in your system's PATH. If Cursor cannot find the command, you may need to provide the absolute path to the executable (e.g., <code>/usr/local/bin/mcp-notebooklm</code>).</li>
+<li><strong>Auth errors:</strong> If the AI complains about authentication, your local token has expired. Open a terminal and run <code>nlm login</code> again to refresh the token.</li>
+<li><strong>Path issues:</strong> Ensure that <code>mcp-notebooklm</code> is in your system PATH. If Cursor cannot find the command, provide the absolute path (e.g., <code>/home/username/.local/bin/mcp-notebooklm</code>).</li>
+<li><strong>Empty responses:</strong> If queries return no results, verify that the notebook has finished processing all uploaded sources (look for the green checkmark next to each source in the NotebookLM web interface).</li>
+<li><strong>Source limits:</strong> Each NotebookLM notebook supports up to 50 sources and 500,000 words per source. Split large document collections across multiple focused notebooks.</li>
+</ul>
+
+<h3>Data Privacy Considerations</h3>
+<p>NotebookLM processes your documents on Google's servers. Before uploading any document, verify that:</p>
+<ul>
+<li>The document does not contain patient data or protected health information (PHI).</li>
+<li>The document's license permits cloud processing (some journal PDFs restrict this).</li>
+<li>Your institution's data governance policy allows the use of cloud AI tools for research.</li>
 </ul>
 
 <hr/>

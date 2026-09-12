@@ -166,30 +166,89 @@ EOF</code></pre>
 <h2>Predicting and Designing with AI</h2>
 <p>While standard LLMs help write the code, biological foundation models actually perform the heavy lifting of molecular biology.</p>
 <h3>Step 1: Leveraging AlphaFold for Structure Prediction</h3>
-<p>AlphaFold fundamentally solved the protein folding problem for single chains. While running AlphaFold locally requires significant GPU resources, you can interact with the AlphaFold Protein Structure Database or use cloud APIs.</p>
-<p>Instructing your agent to fetch a structure:</p>
-<blockquote class="border-l-4 border-blue-500 pl-4 py-2 bg-gray-50 italic text-gray-700">
-"Write a Python script that uses the requests library to download the AlphaFold predicted PDB file for UniProt ID P04637 (TP53) and saves it to the local directory."
-</blockquote>
+<p>AlphaFold fundamentally solved the protein folding problem for single chains. While running AlphaFold locally requires significant GPU resources (a full database installation needs approximately 2.2 TB of disk space), you can interact with the AlphaFold Protein Structure Database or use cloud APIs for quick predictions.</p>
+<p>Fetching a pre-computed structure from the AlphaFold database:</p>
+<pre><code class="language-python">import requests
 
-<h3>Step 2: Designing with ESM3</h3>
+uniprot_id = "P04637"  # TP53 (tumor protein p53)
+url = f"https://alphafold.ebi.ac.uk/files/AF-{uniprot_id}-F1-model_v4.pdb"
+
+response = requests.get(url)
+response.raise_for_status()
+
+with open(f"AF-{uniprot_id}.pdb", "w") as f:
+    f.write(response.text)
+
+print(f"Downloaded AlphaFold structure for {uniprot_id}")
+# Expected output: AF-P04637.pdb (~393 residues, ~2MB)</code></pre>
+<p><strong>Important:</strong> AlphaFold predictions include a per-residue confidence metric called pLDDT (predicted Local Distance Difference Test). Scores above 90 indicate high confidence, 70 to 90 is acceptable for backbone analysis, and scores below 50 suggest the region is likely disordered or poorly predicted. Do not interpret high pLDDT as evidence of biological function.</p>
+
+<h3>Step 2: Quick Predictions with ESMFold</h3>
+<p>ESMFold (by Meta AI) offers a faster alternative to AlphaFold that requires no multiple sequence alignment (MSA). This makes it ideal for rapid prototyping and sequences with limited homologs. You can run ESMFold directly from the Hugging Face API:</p>
+<pre><code class="language-python">import requests
+
+sequence = "MKTAYIAKQRQISFVKSHFSRQDILD"
+headers = {"Content-Type": "application/x-www-form-urlencoded"}
+
+response = requests.post(
+    "https://api.esmatlas.com/foldSequence/v1/pdb/",
+    data=sequence,
+    headers=headers
+)
+
+with open("esmfold_prediction.pdb", "w") as f:
+    f.write(response.text)
+
+print("ESMFold prediction saved to esmfold_prediction.pdb")</code></pre>
+
+<h3>AlphaFold vs. ESMFold vs. ESM3: When to Use What</h3>
+<div class="overflow-x-auto mb-6">
+<table class="min-w-full text-sm border border-gray-200 rounded-lg">
+<thead class="bg-gray-100"><tr><th class="px-4 py-2 text-left">Tool</th><th class="px-4 py-2 text-left">Task</th><th class="px-4 py-2 text-left">MSA Required</th><th class="px-4 py-2 text-left">GPU Needed</th></tr></thead>
+<tbody>
+<tr class="border-t"><td class="px-4 py-2">AlphaFold 2/3</td><td class="px-4 py-2">High-accuracy structure prediction</td><td class="px-4 py-2">Yes (2.2 TB databases)</td><td class="px-4 py-2">Yes (A100 recommended)</td></tr>
+<tr class="border-t"><td class="px-4 py-2">ESMFold</td><td class="px-4 py-2">Fast single-sequence prediction</td><td class="px-4 py-2">No</td><td class="px-4 py-2">Optional (API available)</td></tr>
+<tr class="border-t"><td class="px-4 py-2">ESM3</td><td class="px-4 py-2">De novo protein design and generation</td><td class="px-4 py-2">No</td><td class="px-4 py-2">Yes (API available)</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>Step 3: Designing with ESM3</h3>
 <p>ESM3 by EvolutionaryScale goes beyond prediction into generation. You can provide constraints (like a specific binding pocket) and ask ESM3 to generate a full sequence that folds into a structure meeting those constraints.</p>
-<p>Using the ESM API (requires an API key):</p>
-<pre><code class="language-python">from esm.api import ESM3Client
+<pre><code class="language-python">from esm.sdk import client
+from esm.sdk.api import ESMProtein, GenerationConfig
 
-client = ESM3Client(token="YOUR_API_KEY")
-# Example: Prompting with a sequence constraint
-prompt = "Generate a protein sequence that contains the motif 'G-X-G-X-X-G' and is approximately 150 amino acids long."
-# (Pseudo-code for conceptual illustration)
-result = client.generate(prompt_constraints=prompt)
-print(result.sequence)
-</code></pre>
+# Initialize the ESM3 client
+model = client(model="esm3-open", token="YOUR_API_KEY")
 
-<h3>Step 3: Visualizing the Results</h3>
-<p>Once you have a generated or predicted <code>.pdb</code> or <code>.cif</code> file, visualization is key. You can ask your AI coding assistant to write PyMOL or ChimeraX scripts to automate the rendering process.</p>
-<blockquote class="border-l-4 border-blue-500 pl-4 py-2 bg-gray-50 italic text-gray-700">
-"Write a PyMOL script (.pml) that loads 'predicted_protein.pdb', colors the structure by secondary structure (helices red, sheets yellow, loops green), and saves a high-resolution PNG image."
-</blockquote>
+# Create a protein prompt with a sequence motif constraint
+protein = ESMProtein(sequence="_" * 150)  # 150-residue scaffold
+
+# Generate a sequence that satisfies structural constraints
+config = GenerationConfig(track="sequence", num_steps=8)
+generated = model.generate(protein, config)
+print(f"Generated sequence: {generated.sequence[:50]}...")</code></pre>
+
+<h3>Step 4: Visualizing and Validating Results</h3>
+<p>Once you have a generated or predicted <code>.pdb</code> or <code>.cif</code> file, visualization is key. Use py3Dmol for quick inline visualization in Jupyter notebooks:</p>
+<pre><code class="language-python">import py3Dmol
+
+with open("esmfold_prediction.pdb", "r") as f:
+    pdb_data = f.read()
+
+view = py3Dmol.view(width=600, height=400)
+view.addModel(pdb_data, "pdb")
+view.setStyle({"cartoon": {"color": "spectrum"}})
+view.zoomTo()
+view.show()</code></pre>
+
+<h3>Limitations and Safety Considerations</h3>
+<ul>
+<li><strong>No function prediction:</strong> A high-confidence structure does not prove the protein has the desired function. Experimental validation (e.g., binding assays, enzymatic activity) remains essential.</li>
+<li><strong>Multi-chain complexes:</strong> AlphaFold 2 predicts single chains best. AlphaFold 3 and AlphaFold-Multimer handle complexes, but accuracy drops for large assemblies.</li>
+<li><strong>Disordered regions:</strong> Intrinsically disordered proteins (IDPs) will have low pLDDT scores. This is expected behavior, not a model failure.</li>
+<li><strong>Biosafety:</strong> Generative protein design tools like ESM3 can produce novel sequences. Ensure compliance with your institution's biosafety and dual-use research policies.</li>
+</ul>
 
 <hr/>
 <h2>Conclusion</h2>

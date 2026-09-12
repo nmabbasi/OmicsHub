@@ -166,29 +166,77 @@ python -c "import scanpy, anndata; print('single-cell environment: OK')"</code><
 <h2>Integrating Transformers into scRNA-seq</h2>
 <p>Traditional single-cell workflows rely heavily on statistical heuristics and manual parameter tuning (e.g., choosing PCA dimensions or clustering resolutions). Foundation models extract deep, contextualized embeddings directly from raw counts.</p>
 <h3>Step 1: Setting up the Environment</h3>
-<p>Foundation models are heavily reliant on PyTorch and the Hugging Face <code>transformers</code> ecosystem.</p>
-<blockquote class="border-l-4 border-blue-500 pl-4 py-2 bg-gray-50 italic text-gray-700">
-"Please help me set up a conda environment for running scGPT. I need scanpy, pytorch, and the scgpt package installed, along with jupyter."
-</blockquote>
+<p>Foundation models are heavily reliant on PyTorch and the Hugging Face <code>transformers</code> ecosystem. A GPU with at least 16 GB VRAM (e.g., NVIDIA A100, V100, or RTX 4090) is strongly recommended for inference. CPU-only inference is possible but may take 10 to 50 times longer depending on the dataset size.</p>
+<pre><code class="language-bash"># Create a dedicated conda environment with pinned versions
+conda create -n scfm python=3.10 -y
+conda activate scfm
+
+# Install PyTorch with CUDA 11.8 support
+pip install torch==2.1.0 torchvision==0.16.0 --index-url https://download.pytorch.org/whl/cu118
+
+# Install single-cell tools
+pip install scanpy==1.10.1 anndata==0.10.7 scgpt==0.2.1
+pip install geneformer  # Hugging Face-based, requires transformers>=4.30
+
+# Verify GPU availability
+python -c "import torch; print(f'CUDA available: {torch.cuda.is_available()}')"</code></pre>
+<p><strong>Common pitfall:</strong> If <code>torch.cuda.is_available()</code> returns <code>False</code>, verify your CUDA driver version with <code>nvidia-smi</code> and ensure the PyTorch CUDA version matches your system driver. On HPC clusters, you may need to <code>module load cuda/11.8</code> before activating the conda environment.</p>
 
 <h3>Step 2: Tokenization and Embedding</h3>
-<p>Just as LLMs tokenize words, scGPT tokenizes gene expression values. You pass your <code>AnnData</code> object into the model, and it returns a lower-dimensional embedding space that is often inherently batch-corrected.</p>
+<p>Just as LLMs tokenize words, scGPT tokenizes gene expression values. Each gene is mapped to a token, and its expression level is discretized into bins. You pass your <code>AnnData</code> object into the model, and it returns a lower-dimensional embedding space that is often inherently batch-corrected.</p>
 <pre><code class="language-python">import scgpt as scg
 import scanpy as sc
 
 # Load your standard AnnData
 adata = sc.read_h5ad("my_data.h5ad")
 
-# (Pseudo-code) Use a pre-trained scGPT model to embed cells
+# Ensure gene names are HGNC symbols (scGPT requirement)
+adata.var_names_make_unique()
+print(f"Cells: {adata.n_obs}, Genes: {adata.n_vars}")
+
+# Load the pre-trained scGPT checkpoint
 model = scg.model.load_pretrained("scGPT_human")
+
+# Encode cells into the foundation model embedding space
 adata.obsm["X_scGPT"] = model.encode(adata)
-</code></pre>
+print(f"Embedding shape: {adata.obsm['X_scGPT'].shape}")
+# Expected output: (n_cells, 512) for the default scGPT architecture</code></pre>
+<p><strong>Important:</strong> scGPT expects human HGNC gene symbols (e.g., <code>CD3D</code>, <code>MS4A1</code>). If your data uses Ensembl IDs, convert them first using <code>biomart</code> or the <code>gget</code> package covered in our deterministic retrieval tutorial.</p>
 
 <h3>Step 3: Zero-Shot Annotation</h3>
 <p>Because these models have seen millions of cells, you can perform zero-shot annotation by comparing your cell embeddings to the embeddings of reference cells or gene signatures, entirely skipping the manual marker-gene inspection step.</p>
-<blockquote class="border-l-4 border-blue-500 pl-4 py-2 bg-gray-50 italic text-gray-700">
-"I have an AnnData object with scGPT embeddings in `adata.obsm['X_scGPT']`. Please write a Python snippet to run UMAP on these embeddings and plot the results using scanpy."
-</blockquote>
+<pre><code class="language-python"># Compute UMAP from foundation model embeddings
+sc.pp.neighbors(adata, use_rep="X_scGPT", n_neighbors=15)
+sc.tl.umap(adata)
+sc.tl.leiden(adata, resolution=0.5)
+
+# Visualize the embedding space
+sc.pl.umap(adata, color=["leiden"], title="scGPT Embedding Clusters")</code></pre>
+<p>Compare these clusters against your conventional PCA-based workflow. Foundation model embeddings frequently separate rare cell populations (e.g., dendritic cell subsets or transitional progenitors) that PCA-based approaches merge into a single cluster.</p>
+
+<h3>scGPT vs. Geneformer: Choosing the Right Model</h3>
+<p>Both scGPT and Geneformer are transformer-based foundation models, but they differ in architecture, training data, and best use cases:</p>
+<div class="overflow-x-auto mb-6">
+<table class="min-w-full text-sm border border-gray-200 rounded-lg">
+<thead class="bg-gray-100"><tr><th class="px-4 py-2 text-left">Feature</th><th class="px-4 py-2 text-left">scGPT</th><th class="px-4 py-2 text-left">Geneformer</th></tr></thead>
+<tbody>
+<tr class="border-t"><td class="px-4 py-2">Architecture</td><td class="px-4 py-2">Generative pre-trained transformer</td><td class="px-4 py-2">BERT-style masked language model</td></tr>
+<tr class="border-t"><td class="px-4 py-2">Training data</td><td class="px-4 py-2">33 million human cells (CELLxGENE)</td><td class="px-4 py-2">30 million human cells (Genecorpus-30M)</td></tr>
+<tr class="border-t"><td class="px-4 py-2">Best for</td><td class="px-4 py-2">Batch integration, multi-omic tasks</td><td class="px-4 py-2">Gene network inference, disease modeling</td></tr>
+<tr class="border-t"><td class="px-4 py-2">GPU requirement</td><td class="px-4 py-2">16 GB+ VRAM recommended</td><td class="px-4 py-2">8 GB+ VRAM (smaller model)</td></tr>
+<tr class="border-t"><td class="px-4 py-2">Citation</td><td class="px-4 py-2">Cui et al., Nature Methods 2024</td><td class="px-4 py-2">Theodoris et al., Nature 2023</td></tr>
+</tbody>
+</table>
+</div>
+<p><strong>Practical recommendation:</strong> Start with Geneformer if you have limited GPU resources or are primarily interested in gene regulatory networks. Use scGPT if your primary goal is batch integration across large multi-sample datasets.</p>
+
+<h3>Limitations and Common Pitfalls</h3>
+<ul>
+<li><strong>Species limitation:</strong> Both scGPT and Geneformer are trained exclusively on human data. For mouse datasets, you must first map orthologs to human gene symbols, which introduces noise.</li>
+<li><strong>Hallucinated annotations:</strong> Zero-shot predictions can confidently assign incorrect labels when your tissue type was not well-represented in the training corpus. Always validate predictions against known marker genes.</li>
+<li><strong>Reproducibility:</strong> Model weights and tokenizer versions affect results. Pin your checkpoint version and record the exact commit hash in your analysis notebook.</li>
+<li><strong>Preprocessing sensitivity:</strong> Foundation models expect raw counts or lightly normalized data. Applying SCTransform or other heavy normalization before encoding can degrade embedding quality.</li>
+</ul>
 
 <hr/>
 <h2>Conclusion</h2>

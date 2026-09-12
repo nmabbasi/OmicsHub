@@ -165,24 +165,94 @@ mkdir -p retrieval-results</code></pre>
 <p><strong>Success check:</strong> a second run with the same query produces a saved response whose source, identifier, and retrieval date are recorded.</p>
 <h2>Introducing gget for Reliable Data Retrieval</h2>
 <p><code>gget</code> is a free, open-source command-line tool and Python package that efficiently queries large biological databases (Ensembl, UniProt, NCBI). By instructing your AI coding assistant to use <code>gget</code>, you ensure the data it relies on is 100% accurate.</p>
-<h3>Step 1: Installing gget</h3>
-<p>Install <code>gget</code> in the same environment where your AI agent executes code:</p>
-<pre><code class="language-bash">pip install gget</code></pre>
+<h3>Step 1: Installing and Verifying gget</h3>
+<p>Install <code>gget</code> in the same environment where your AI agent executes code. Pin the version to ensure reproducibility:</p>
+<pre><code class="language-bash">pip install gget==0.28.6
 
-<h3>Step 2: Prompting the AI to use gget</h3>
-<p>The key to this workflow is in the prompt. You must explicitly tell the AI to look up the information <em>first</em> using a bash command or Python script.</p>
-<p><strong>Example Prompt:</strong></p>
-<blockquote class="border-l-4 border-blue-500 pl-4 py-2 bg-gray-50 italic text-gray-700">
-"I need to write a script to analyze the expression of the gene FOXP3. Before writing the script, please run `gget info FOXP3` in the terminal to get the exact Ensembl ID and current aliases. Use that retrieved information in the final Python script."
-</blockquote>
+# Verify the installation and check available modules
+gget --help
+# Expected output: list of subcommands (info, seq, search, enrichr, archs4, ...)</code></pre>
 
-<p>The AI (like Cursor or Aider) will execute the command, read the standard output (which contains the precise database record), and then write your code using the verified Ensembl ID (e.g., ENSG00000049768).</p>
+<h3>gget Module Reference</h3>
+<p>The <code>gget</code> package provides multiple modules, each querying a different biological database:</p>
+<div class="overflow-x-auto mb-6">
+<table class="min-w-full text-sm border border-gray-200 rounded-lg">
+<thead class="bg-gray-100"><tr><th class="px-4 py-2 text-left">Module</th><th class="px-4 py-2 text-left">Database</th><th class="px-4 py-2 text-left">Use Case</th></tr></thead>
+<tbody>
+<tr class="border-t"><td class="px-4 py-2"><code>gget info</code></td><td class="px-4 py-2">Ensembl</td><td class="px-4 py-2">Gene metadata, Ensembl IDs, aliases, coordinates</td></tr>
+<tr class="border-t"><td class="px-4 py-2"><code>gget seq</code></td><td class="px-4 py-2">Ensembl</td><td class="px-4 py-2">Nucleotide/protein FASTA sequences</td></tr>
+<tr class="border-t"><td class="px-4 py-2"><code>gget search</code></td><td class="px-4 py-2">Ensembl</td><td class="px-4 py-2">Free-text gene search across species</td></tr>
+<tr class="border-t"><td class="px-4 py-2"><code>gget enrichr</code></td><td class="px-4 py-2">Enrichr</td><td class="px-4 py-2">Gene set enrichment analysis</td></tr>
+<tr class="border-t"><td class="px-4 py-2"><code>gget archs4</code></td><td class="px-4 py-2">ARCHS4</td><td class="px-4 py-2">Expression data across tissues and cell types</td></tr>
+<tr class="border-t"><td class="px-4 py-2"><code>gget alphafold</code></td><td class="px-4 py-2">AlphaFold DB</td><td class="px-4 py-2">Protein structure prediction</td></tr>
+</tbody>
+</table>
+</div>
 
-<h3>Step 3: Integrating with Data Analysis Workflows</h3>
-<p>You can use this pattern for more complex tasks. For example, retrieving sequences for alignment:</p>
-<blockquote class="border-l-4 border-blue-500 pl-4 py-2 bg-gray-50 italic text-gray-700">
-"Please write a Python script that downloads the FASTA sequence for human TP53 using the `gget seq` module in Python, and then calculates the GC content of that specific sequence."
-</blockquote>
+<h3>Step 2: Retrieving Gene Information Programmatically</h3>
+<p>The key to this workflow is using <code>gget</code> as a Python library to retrieve verified data before any AI-generated analysis begins:</p>
+<pre><code class="language-python">import gget
+import json
+
+# Retrieve gene information from Ensembl
+result = gget.info("FOXP3", species="human")
+print(result.to_json(indent=2))
+
+# Expected output includes:
+# - ensembl_id: "ENSG00000049768"
+# - uniprot_id: "Q9BZS1"
+# - chromosome: "X"
+# - biotype: "protein_coding"
+# - description: "forkhead box P3"
+
+# Save the verified result for reproducibility
+result.to_csv("retrieval-results/foxp3_info.csv", index=False)
+print(f"Retrieved Ensembl ID: {result.iloc[0]['ensembl_id']}")</code></pre>
+<p><strong>Why this matters:</strong> If you ask ChatGPT or Copilot "What is the Ensembl ID for FOXP3?", it may return an outdated ID or confuse it with a pseudogene. The <code>gget</code> call queries the live Ensembl API and returns the current, authoritative record.</p>
+
+<h3>Step 3: Retrieving Sequences for Downstream Analysis</h3>
+<p>Use <code>gget seq</code> to download FASTA sequences directly from Ensembl:</p>
+<pre><code class="language-python">import gget
+
+# Retrieve the protein sequence for TP53
+fasta = gget.seq("ENSG00000141510", translate=True)
+print(fasta[:200])  # Print first 200 characters
+
+# Save to file for alignment or structural prediction
+with open("retrieval-results/tp53_protein.fasta", "w") as f:
+    f.write(fasta)
+
+# Calculate basic sequence statistics
+from collections import Counter
+seq = fasta.split("\n", 1)[1].replace("\n", "")
+aa_counts = Counter(seq)
+print(f"Sequence length: {len(seq)} amino acids")
+print(f"Most common residues: {aa_counts.most_common(5)}")</code></pre>
+
+<h3>Step 4: Combining gget with Gene Set Enrichment</h3>
+<p>A common workflow is to take a list of differentially expressed genes and run enrichment analysis:</p>
+<pre><code class="language-python">import gget
+
+# Run enrichment analysis on a gene list from your DEG analysis
+deg_genes = ["FOXP3", "IL2RA", "CTLA4", "IKZF2", "TIGIT"]
+
+enrichment = gget.enrichr(
+    genes=deg_genes,
+    database="GO_Biological_Process_2023",
+    species="human"
+)
+
+# Display top 5 enriched pathways
+print(enrichment[["Term", "Adjusted P-value"]].head())
+enrichment.to_csv("retrieval-results/treg_enrichment.csv", index=False)</code></pre>
+
+<h3>Common Pitfalls and Troubleshooting</h3>
+<ul>
+<li><strong>Species mismatch:</strong> Always specify <code>species="human"</code> or <code>species="mouse"</code> explicitly. The default species may change between gget versions.</li>
+<li><strong>Gene symbol ambiguity:</strong> Some symbols map to multiple genes (e.g., "ACE" vs "ACE2"). Use Ensembl IDs when precision is critical.</li>
+<li><strong>API rate limits:</strong> If querying hundreds of genes in a loop, add a <code>time.sleep(0.5)</code> delay between calls to avoid being rate-limited by Ensembl.</li>
+<li><strong>Offline environments:</strong> <code>gget</code> requires internet access. On air-gapped HPC systems, download results on a login node and transfer the CSV files to compute nodes.</li>
+</ul>
 
 <hr/>
 <h2>Conclusion</h2>

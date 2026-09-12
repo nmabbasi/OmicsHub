@@ -164,33 +164,98 @@ Legal
 <p>Zotero is widely used for academic reference management. By integrating an MCP server, an AI assistant can search a permitted local database, retrieve available full-text records, and help draft formatted citations for markdown notes or LaTeX files. Always verify the retrieved paper, metadata, and citation before using it in a manuscript.</p>
 <h3>Step 1: Prerequisites for Zotero MCP</h3>
 <ol>
-<li>Ensure Zotero is running on your machine.</li>
+<li>Ensure Zotero 6 or 7 is installed and running on your machine.</li>
 <li>Install the <strong>Better BibTeX</strong> plugin for Zotero. This is required because the MCP server uses Better BibTeX's citation keys to reliably identify papers.</li>
-<li>Go to Zotero Preferences &gt; Better BibTeX and ensure your citation key format is configured (e.g., <code>[auth:lower][year]</code>).</li>
+<li>Go to Zotero Preferences &gt; Better BibTeX and configure your citation key format:</li>
 </ol>
+<pre><code class="language-text"># Recommended citation key format for Better BibTeX:
+[auth:lower][year]
 
-<h3>Step 2: Configuring the Zotero MCP Server</h3>
-<p>In Cursor or Claude Desktop, you need to add the server configuration. The exact method depends on your client, but it typically involves editing a <code>mcp.json</code> or using the settings UI.</p>
+# Example output for a paper by Smith et al. (2024):
+# Citation key: smith2024
 
+# Alternative format with title word:
+[auth:lower][year][shorttitle:lower]
+# Output: smith2024single</code></pre>
+<p><strong>Why Better BibTeX?</strong> Standard Zotero uses internal numeric IDs that change across library syncs. Better BibTeX generates stable, human-readable citation keys (like <code>abbasi2026</code>) that remain consistent across machines and are easier to reference in LaTeX, markdown, and AI prompts.</p>
+
+<h3>Step 2: Installing the Zotero MCP Server</h3>
+<p>The Zotero MCP server runs as a Node.js process. You have two installation options:</p>
+<pre><code class="language-bash"># Option 1: Run directly with npx (no permanent installation)
+npx -y @smithery/cli run @sckott/zotero-mcp-server
+
+# Option 2: Install globally for persistent use
+npm install -g @sckott/zotero-mcp-server</code></pre>
+
+<h3>Step 3: Configuring the MCP Server in Your IDE</h3>
+<p>In Cursor or Claude Desktop, add the server configuration:</p>
 <p><strong>For Cursor:</strong></p>
 <ol>
 <li>Open Cursor Settings.</li>
 <li>Navigate to the <strong>Features</strong> &gt; <strong>MCP</strong> section.</li>
 <li>Click <strong>+ Add New MCP Server</strong>.</li>
-<li>Name: <code>Zotero</code></li>
-<li>Type: <code>command</code></li>
-<li>Command:</li>
+<li>Name: <code>Zotero</code>, Type: <code>command</code></li>
+<li>Command: <code>npx -y @smithery/cli run @sckott/zotero-mcp-server</code></li>
 </ol>
-<pre><code class="language-bash">npx -y @smithery/cli run @sckott/zotero-mcp-server</code></pre>
-<p><em>Note: If your Zotero data directory is not in the default location, you may need to pass the <code>--config-path /path/to/zotero</code> argument.</em></p>
+<p><strong>For Claude Desktop or Antigravity</strong>, add to your <code>mcp_config.json</code>:</p>
+<pre><code class="language-json">{
+  "mcpServers": {
+    "zotero": {
+      "command": "npx",
+      "args": ["-y", "@smithery/cli", "run", "@sckott/zotero-mcp-server"]
+    }
+  }
+}</code></pre>
+<p><em>Note: If your Zotero data directory is not in the default location, pass <code>--config-path /path/to/zotero</code> as an additional argument.</em></p>
 
-<p>Once connected, you can ask your AI: <em>"Find the most recent papers in my library about single-cell ATAC-seq, summarize their methodology, and give me the citekeys."</em></p>
-<hr/>
-<h2>Troubleshooting Common MCP Issues</h2>
-<p>If you encounter issues getting the MCP servers to respond, check the following:</p>
+<h3>Step 4: Practical Research Queries</h3>
+<p>Once connected, you can query your Zotero library directly from your coding environment. Here are practical examples for PhD research:</p>
+<pre><code class="language-text"># Example prompts to use with your AI agent:
+
+1. "Search my Zotero library for papers about 'FOXP3 regulatory
+   T cells' and list them with authors, year, and citation keys."
+
+2. "From my Zotero collection 'Thesis_Chapter_3', extract all
+   papers published after 2022 and format their citations in
+   APA style for my manuscript."
+
+3. "Find the paper by Cui et al. 2024 about scGPT in my library.
+   Read its abstract and methods section, then summarize the
+   key computational pipeline they used."
+
+4. "Cross-reference my Zotero library with this gene list:
+   [FOXP3, IL2RA, CTLA4]. For each gene, find papers in my
+   library that mention it and create a citation matrix."</code></pre>
+
+<h3>Automating Citation Extraction for Manuscripts</h3>
+<p>A powerful workflow is to combine Zotero MCP with your writing process. You can ask the agent to automatically generate a bibliography section from your manuscript draft:</p>
+<pre><code class="language-python"># Example: Extract all cited papers from a markdown draft
+# and verify they exist in your Zotero library
+
+import re
+
+# Read your manuscript draft
+with open("thesis_chapter3.md", "r") as f:
+    text = f.read()
+
+# Extract all citation keys (e.g., @smith2024, @abbasi2026)
+citations = re.findall(r"@(\w+\d{4}\w*)", text)
+unique_citations = sorted(set(citations))
+
+print(f"Found {len(unique_citations)} unique citations:")
+for cite in unique_citations:
+    print(f"  - @{cite}")
+
+# The AI agent can then verify each citation exists in Zotero
+# and flag any that are missing or have incorrect metadata</code></pre>
+
+<h3>Troubleshooting Common Issues</h3>
 <ul>
-<li><strong>Connection Refused (Zotero):</strong> Ensure Zotero is actively running. The MCP server communicates with the Zotero desktop application via a local port. If Zotero is closed, the connection will fail.</li>
-<li><strong>Path Issues (npx):</strong> Ensure that <code>npx</code> (Node.js) is in your system's PATH. If Cursor cannot find the command, you may need to provide the absolute path to the executable (e.g., <code>/usr/local/bin/npx</code>).</li>
+<li><strong>Connection refused:</strong> Ensure Zotero is actively running. The MCP server communicates with the Zotero desktop application via a local HTTP port (default: 23119). If Zotero is closed, the connection will fail.</li>
+<li><strong>Better BibTeX not found:</strong> The server will report an error if Better BibTeX is not installed. Verify it appears in Zotero &gt; Tools &gt; Add-ons.</li>
+<li><strong>npx path issues:</strong> Ensure that <code>npx</code> (Node.js) is in your system PATH. On Linux, you may need to provide the absolute path (e.g., <code>/usr/local/bin/npx</code> or <code>~/.nvm/versions/node/v20.11.0/bin/npx</code>).</li>
+<li><strong>Large libraries:</strong> If your Zotero library contains thousands of items, searches may be slow. Use collection-scoped queries (e.g., "search in my 'Chapter_1' collection") instead of library-wide searches.</li>
+<li><strong>PDF access:</strong> The MCP server can read PDF full text only if the PDFs are stored locally (not linked). Verify your Zotero storage settings under Preferences &gt; Advanced &gt; Files and Folders.</li>
 </ul>
 
 <hr/>

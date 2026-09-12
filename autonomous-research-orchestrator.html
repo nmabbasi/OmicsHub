@@ -163,40 +163,126 @@ echo "Keep credentials in environment variables, never in source." &gt; orchestr
 <p><strong>Success check:</strong> a failed tool call stops safely, the run can be replayed from logs, and a human can approve the final action.</p>
 <h2>Building the Orchestrator</h2>
 <p>In this tutorial, we will conceptualize how to build a basic autonomous orchestrator using a framework like AutoGen.</p>
-<h3>Step 1: Defining the Agents</h3>
-<p>First, we define our specialist agents. Each agent gets a specific system prompt and access to tools.</p>
-<pre><code class="language-python"># Pseudo-code for defining agents in a multi-agent framework
-from autogen import AssistantAgent, UserProxyAgent
+<h3>Step 1: Setting Up the Environment</h3>
+<p>We will use Microsoft AutoGen, one of the most mature multi-agent frameworks. Install the required packages with pinned versions:</p>
+<pre><code class="language-bash"># Create a dedicated environment
+conda create -n orchestrator python=3.11 -y
+conda activate orchestrator
 
-# 1. The Literature Specialist (Has access to Zotero MCP / PubMed tools)
+# Install AutoGen and supporting tools
+pip install pyautogen==0.2.35 gget==0.28.6 biopython==1.83
+
+# Set your LLM API key (required for agent communication)
+export OPENAI_API_KEY="your-key-here"
+# Or for Anthropic models:
+export ANTHROPIC_API_KEY="your-key-here"</code></pre>
+
+<h3>Multi-Agent Framework Comparison</h3>
+<p>Several frameworks support multi-agent orchestration. Choose based on your complexity needs:</p>
+<div class="overflow-x-auto mb-6">
+<table class="min-w-full text-sm border border-gray-200 rounded-lg">
+<thead class="bg-gray-100"><tr><th class="px-4 py-2 text-left">Framework</th><th class="px-4 py-2 text-left">Complexity</th><th class="px-4 py-2 text-left">Best For</th><th class="px-4 py-2 text-left">MCP Support</th></tr></thead>
+<tbody>
+<tr class="border-t"><td class="px-4 py-2">AutoGen</td><td class="px-4 py-2">Medium</td><td class="px-4 py-2">Conversational multi-agent workflows</td><td class="px-4 py-2">Via custom tools</td></tr>
+<tr class="border-t"><td class="px-4 py-2">LangGraph</td><td class="px-4 py-2">High</td><td class="px-4 py-2">Complex, stateful agent graphs</td><td class="px-4 py-2">Native</td></tr>
+<tr class="border-t"><td class="px-4 py-2">CrewAI</td><td class="px-4 py-2">Low</td><td class="px-4 py-2">Quick prototyping with role-based agents</td><td class="px-4 py-2">Via plugins</td></tr>
+<tr class="border-t"><td class="px-4 py-2">Cursor / Antigravity</td><td class="px-4 py-2">Minimal</td><td class="px-4 py-2">Single-agent with built-in tool access</td><td class="px-4 py-2">Native</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>Step 2: Defining the Agents</h3>
+<p>Each agent receives a specific system prompt and access to designated tools. This separation of concerns prevents a single agent from becoming overwhelmed:</p>
+<pre><code class="language-python">from autogen import AssistantAgent, UserProxyAgent
+
+# Configuration for the LLM backend
+llm_config = {
+    "model": "gpt-4o",
+    "temperature": 0.1,  # Low temperature for reproducible results
+    "max_tokens": 4096
+}
+
+# 1. Literature Specialist (searches and summarizes papers)
 lit_agent = AssistantAgent(
     name="Literature_Specialist",
-    system_message="You search literature databases for relevant papers on a given gene or disease, summarize findings, and provide proper citations."
+    llm_config=llm_config,
+    system_message="""You search literature databases for relevant papers.
+    Always provide: (1) DOI, (2) first author, (3) year, (4) key finding.
+    Never fabricate a citation. If you cannot find a paper, say so."""
 )
 
-# 2. The Data Analyst (Has access to a Python execution environment and gget)
+# 2. Data Analyst (executes Python code for genomic analysis)
 data_agent = AssistantAgent(
     name="Data_Analyst",
-    system_message="You write and execute Python scripts to fetch genomic data (using gget), perform alignments, or analyze expression data."
+    llm_config=llm_config,
+    system_message="""You write and execute Python scripts for genomic
+    data retrieval (using gget) and analysis. Always include error
+    handling. Print intermediate results for verification."""
 )
 
-# 3. The Orchestrator / User Proxy (Manages the workflow)
+# 3. Orchestrator (manages the workflow and synthesizes results)
 orchestrator = UserProxyAgent(
     name="Orchestrator",
-    human_input_mode="NEVER",
+    human_input_mode="TERMINATE",  # Requires human approval at the end
     max_consecutive_auto_reply=10,
-    system_message="You break down the user's research request, assign tasks to the Literature Specialist or Data Analyst, and synthesize the final report."
+    code_execution_config={"work_dir": "outputs", "use_docker": False}
+)</code></pre>
+
+<h3>Step 3: Executing a Research Task</h3>
+<p>Initiate a complex task by sending a structured message to the orchestrator. The agents will communicate until the task is complete or the step limit is reached:</p>
+<pre><code class="language-python"># Launch a multi-agent research task
+orchestrator.initiate_chat(
+    lit_agent,
+    message="""Research the role of CLIC1 in Sezary Syndrome.
+    
+    Step 1: Find the top 5 recent papers (2020-2026) on CLIC1
+            and cutaneous T-cell lymphoma.
+    Step 2: For each paper, extract: the experimental model used,
+            the key finding about CLIC1, and whether CLIC1 was
+            identified as a therapeutic target.
+    Step 3: Compile a summary table in markdown format."""
 )
-</code></pre>
 
-<h3>Step 2: Task Execution</h3>
-<p>You can initiate a complex task by sending a message to the orchestrator. The orchestrator will converse with the specialists until the task is complete.</p>
-<blockquote class="border-l-4 border-blue-500 pl-4 py-2 bg-gray-50 italic text-gray-700">
-"Initiate research on the role of CLIC1 in Sézary Syndrome. First, have the Literature Specialist find the top 5 recent papers. Then, have the Data Analyst retrieve the CLIC1 gene sequence and identify its primary transcript variants. Finally, compile a summary."
-</blockquote>
+# The orchestrator logs all agent interactions to outputs/</code></pre>
 
-<h3>Step 3: Tool Integration (MCP)</h3>
-<p>The true power of this system comes from integrating Model Context Protocol (MCP) servers. By giving the <code>lit_agent</code> access to the <code>notebooklm</code> or <code>zotero</code> MCP server, it can pull from your curated library instead of the public web, ensuring high-quality, personalized research.</p>
+<h3>Step 4: Adding MCP Tool Integration</h3>
+<p>The true power of this system comes from integrating Model Context Protocol (MCP) servers. By giving agents access to your personal research tools, they can pull from curated sources instead of the public web:</p>
+<pre><code class="language-python"># Define custom tools that wrap MCP server calls
+def search_zotero(query: str) -> str:
+    """Search the user's Zotero library via MCP."""
+    import subprocess
+    result = subprocess.run(
+        ["mcp-zotero", "search", query],
+        capture_output=True, text=True
+    )
+    return result.stdout
+
+def query_notebooklm(notebook: str, question: str) -> str:
+    """Query a specific NotebookLM notebook via MCP."""
+    import subprocess
+    result = subprocess.run(
+        ["mcp-notebooklm", "query", notebook, question],
+        capture_output=True, text=True
+    )
+    return result.stdout
+
+# Register tools with the literature agent
+lit_agent.register_function(
+    function_map={
+        "search_zotero": search_zotero,
+        "query_notebooklm": query_notebooklm
+    }
+)</code></pre>
+
+<h3>Safety Guardrails for Autonomous Systems</h3>
+<p>Autonomous agents can cause harm if not properly constrained. Implement these guardrails:</p>
+<ul>
+<li><strong>Step budget:</strong> Set <code>max_consecutive_auto_reply</code> to prevent infinite loops. Start with 10 steps and increase only after testing.</li>
+<li><strong>Human-in-the-loop:</strong> Use <code>human_input_mode="TERMINATE"</code> so a human reviews the final output before it is saved or submitted.</li>
+<li><strong>Sandboxed execution:</strong> Run data analysis code in a Docker container or isolated directory to prevent accidental file deletion.</li>
+<li><strong>Credential isolation:</strong> Store API keys in environment variables, never in agent system prompts or source code.</li>
+<li><strong>Audit logging:</strong> Log every tool call, input, and output to a file for post-hoc review and reproducibility.</li>
+</ul>
 
 <hr/>
 <h2>Conclusion</h2>
