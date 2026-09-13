@@ -96,7 +96,7 @@ results/final_final_v3.png
 
 ## 6. Environment and Dependency Management
 
-Record the exact software environment alongside the project. This ensures that another researcher—or your future self—can recreate the same computational conditions.
+Record the exact software environment alongside the project. This ensures that another researcher – or your future self – can recreate the same computational conditions.
 
 ```bash
 # Conda: export a pinned environment

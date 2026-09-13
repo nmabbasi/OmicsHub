@@ -106,11 +106,11 @@ cut -f1 genome.fa.fai | sort > chrom_fasta.txt
 # Extract chromosome names from GTF
 awk '$3=="gene" {print $1}' annotation.gtf | sort -u > chrom_gtf.txt
 
-# Compare — any differences indicate a naming mismatch
+# Compare – any differences indicate a naming mismatch
 diff chrom_fasta.txt chrom_gtf.txt
 ```
 
-**Resolution:** Use a mapping file or sed to convert between conventions. Never manually edit a reference FASTA—always script the conversion and document it.
+**Resolution:** Use a mapping file or sed to convert between conventions. Never manually edit a reference FASTA – always script the conversion and document it.
 
 ## 7. Annotation File Formats Explained
 
@@ -124,7 +124,7 @@ diff chrom_fasta.txt chrom_gtf.txt
 
 ## 8. Version Pinning and Reproducibility
 
-Always record the exact version of your reference files. A GENCODE release number alone is not sufficient—record the full download URL, file checksum, and download date.
+Always record the exact version of your reference files. A GENCODE release number alone is not sufficient – record the full download URL, file checksum, and download date.
 
 ```bash
 # Create a reproducible reference manifest

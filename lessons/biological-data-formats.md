@@ -121,7 +121,7 @@ bcftools stats variants.vcf | head -20
 
 # Check FASTA index consistency
 samtools faidx reference.fa
-# Creates reference.fa.fai — verify chromosome count
+# Creates reference.fa.fai – verify chromosome count
 wc -l reference.fa.fai
 
 # Verify file checksums after transfer
@@ -162,7 +162,7 @@ gzip -t reads.fastq.gz && echo "OK" || echo "CORRUPTED"
 | File Type | Typical Size (human WGS) | Compressed Size | Compression Ratio |
 |---|---|---|---|
 | FASTQ (paired) | ~200 GB | ~60 GB (gzip) | 3:1 |
-| BAM (aligned) | ~80 GB | N/A (already binary) | — |
+| BAM (aligned) | ~80 GB | N/A (already binary) | – |
 | VCF (variants) | ~5 GB | ~500 MB (bgzip) | 10:1 |
 | BED (regions) | ~10 MB | ~2 MB (gzip) | 5:1 |
 

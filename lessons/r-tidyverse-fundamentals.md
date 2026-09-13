@@ -159,7 +159,7 @@ print(na_counts)
 
 # Assert no duplicate sample IDs
 if (anyDuplicated(samples$sample_id)) {
-  stop("Duplicate sample IDs detected — check your metadata file.")
+  stop("Duplicate sample IDs detected – check your metadata file.")
 }
 ```
 

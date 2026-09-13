@@ -99,7 +99,7 @@ Every statistical test in bioinformatics follows the same logical framework:
 1. **State the null hypothesis (H₀):** "There is no difference in gene expression between treated and control groups."
 2. **Choose a test:** Based on data distribution, sample size, and experimental design.
 3. **Calculate the test statistic and p-value.**
-4. **Apply multiple testing correction** (critical in genomics — you're testing thousands of genes).
+4. **Apply multiple testing correction** (critical in genomics – you're testing thousands of genes).
 5. **Interpret the result** in biological context, not just statistical significance.
 
 ## 6. A Worked Statistical Test

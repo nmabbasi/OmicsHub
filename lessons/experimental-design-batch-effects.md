@@ -91,11 +91,11 @@ Good experimental design prevents confounding before data generation. The key pr
 | **Balancing** | Equal sample sizes across groups | Same number of samples per condition per batch |
 
 ```text
-# GOOD: Balanced design — each batch processes both conditions
+# GOOD: Balanced design – each batch processes both conditions
 Batch 1: Control_1, Control_2, Treated_1, Treated_2
 Batch 2: Control_3, Control_4, Treated_3, Treated_4
 
-# BAD: Confounded design — batch = condition
+# BAD: Confounded design – batch = condition
 Batch 1: Control_1, Control_2, Control_3, Control_4
 Batch 2: Treated_1, Treated_2, Treated_3, Treated_4
 ```

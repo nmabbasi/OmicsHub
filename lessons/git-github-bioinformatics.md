@@ -89,7 +89,7 @@ git config user.email "your.email@institution.edu"
 
 # Create the standard bioinformatics .gitignore
 cat > .gitignore << 'EOF'
-# Large data files — track with DVC or external storage
+# Large data files – track with DVC or external storage
 data/raw/
 *.fastq.gz
 *.bam
@@ -143,12 +143,12 @@ git branch -d feature/add-deseq2-analysis
 Good commit messages are essential for understanding the history of an analysis. Follow the conventional commit format:
 
 ```text
-# Good commits — each captures one logical change
+# Good commits – each captures one logical change
 git commit -m "Add QC filtering step: remove genes with < 10 total counts"
 git commit -m "Fix chromosome naming mismatch between FASTA and GTF"
 git commit -m "Update DESeq2 from v1.40 to v1.42 for apeglm shrinkage"
 
-# Bad commits — vague, bundled, or meaningless
+# Bad commits – vague, bundled, or meaningless
 git commit -m "updates"
 git commit -m "fixed stuff"
 git commit -m "final version v3"
