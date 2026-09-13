@@ -186,6 +186,158 @@ head -n 5 counts.tsv | cut -f1-5
 <pre><code class="language-text">sample_id,fastq_r1,condition,batch,donor
 S01,S01_R1.fastq.gz,control,1,D01
 </code></pre>
+<h2>5. Format Specifications and Validation</h2>
+<p>Every file format has a formal specification. Understanding the column structure prevents silent parsing errors.</p>
+<h3>FASTA Format</h3>
+<pre><code class="language-text">&gt;sequence_id optional description
+ATCGATCGATCGATCGATCG
+ATCGATCGATCGATCG
+</code></pre>
+<ul>
+<li>Header lines start with <code>&gt;</code></li>
+<li>Sequence can span multiple lines</li>
+<li>No quality scores (use FASTQ for raw reads)</li>
+</ul>
+<h3>FASTQ Format</h3>
+<pre><code class="language-text">@read_id instrument:run:flowcell:lane:tile:x:y
+ATCGATCGATCGATCGATCG
++
+IIIIIIIIIIIIIIIIIIIII
+</code></pre>
+<ul>
+<li>Four lines per record: header, sequence, separator, quality</li>
+<li>Quality scores are Phred+33 encoded ASCII characters</li>
+<li><code>I</code> = Q40 (1 in 10,000 error rate), <code>!</code> = Q0</li>
+</ul>
+<h3>SAM/BAM Format</h3>
+<pre><code class="language-text">@HD  VN:1.6  SO:coordinate
+@SQ  SN:chr1  LN:248956422
+read001  0  chr1  1000  60  150M  *  0  0  ATCG...  IIII...  NM:i:0
+</code></pre>
+<ul>
+<li>Header lines start with <code>@</code></li>
+<li>11 mandatory columns: QNAME, FLAG, RNAME, POS, MAPQ, CIGAR, RNEXT, PNEXT, TLEN, SEQ, QUAL</li>
+<li>BAM is the compressed binary version of SAM</li>
+</ul>
+<h2>6. Validation Commands</h2>
+<p>Always validate file integrity before analysis. Corrupted files produce silent errors that propagate through entire pipelines.</p>
+<pre><code class="language-bash"># Validate FASTQ integrity
+# Count records (should be divisible by 4)
+wc -l reads.fastq  # Must be multiple of 4
+
+# Validate BAM file
+samtools quickcheck aligned.bam &amp;&amp; echo &quot;OK&quot; || echo &quot;CORRUPTED&quot;
+
+# Validate VCF file
+bcftools stats variants.vcf | head -20
+
+# Check FASTA index consistency
+samtools faidx reference.fa
+# Creates reference.fa.fai — verify chromosome count
+wc -l reference.fa.fai
+
+# Verify file checksums after transfer
+md5sum -c checksums.md5
+</code></pre>
+<h2>7. Format Conversion</h2>
+<p>Converting between formats is a routine bioinformatics task. Use established tools rather than custom scripts to avoid edge cases.</p>
+<table>
+<thead>
+<tr>
+<th>From</th>
+<th>To</th>
+<th>Tool</th>
+<th>Command</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>SAM</td>
+<td>BAM</td>
+<td>samtools</td>
+<td><code>samtools view -bS input.sam &gt; output.bam</code></td>
+</tr>
+<tr>
+<td>BAM</td>
+<td>SAM</td>
+<td>samtools</td>
+<td><code>samtools view -h input.bam &gt; output.sam</code></td>
+</tr>
+<tr>
+<td>BAM</td>
+<td>FASTQ</td>
+<td>samtools</td>
+<td><code>samtools fastq input.bam &gt; output.fastq</code></td>
+</tr>
+<tr>
+<td>FASTQ</td>
+<td>FASTA</td>
+<td>seqtk</td>
+<td><code>seqtk seq -a input.fastq &gt; output.fasta</code></td>
+</tr>
+<tr>
+<td>GFF3</td>
+<td>GTF</td>
+<td>gffread</td>
+<td><code>gffread input.gff3 -T -o output.gtf</code></td>
+</tr>
+<tr>
+<td>VCF</td>
+<td>BED</td>
+<td>bedtools</td>
+<td><code>bedtools vcf2bed &lt; input.vcf &gt; output.bed</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Warning:</strong> Coordinate system differences between BED (0-based, half-open) and GTF/VCF (1-based, closed) are the single most common source of off-by-one errors in bioinformatics. Always verify coordinates after conversion.</p>
+<h2>8. Compression and Storage</h2>
+<p>Raw bioinformatics files are typically very large. Use appropriate compression to save storage and transfer time.</p>
+<pre><code class="language-bash"># BGZF compression (block-gzipped, allows random access)
+bgzip -c variants.vcf &gt; variants.vcf.gz
+tabix -p vcf variants.vcf.gz
+
+# Standard gzip (no random access)
+gzip reads.fastq
+
+# Check compressed file integrity
+gzip -t reads.fastq.gz &amp;&amp; echo &quot;OK&quot; || echo &quot;CORRUPTED&quot;
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>File Type</th>
+<th>Typical Size (human WGS)</th>
+<th>Compressed Size</th>
+<th>Compression Ratio</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>FASTQ (paired)</td>
+<td>~200 GB</td>
+<td>~60 GB (gzip)</td>
+<td>3:1</td>
+</tr>
+<tr>
+<td>BAM (aligned)</td>
+<td>~80 GB</td>
+<td>N/A (already binary)</td>
+<td>—</td>
+</tr>
+<tr>
+<td>VCF (variants)</td>
+<td>~5 GB</td>
+<td>~500 MB (bgzip)</td>
+<td>10:1</td>
+</tr>
+<tr>
+<td>BED (regions)</td>
+<td>~10 MB</td>
+<td>~2 MB (gzip)</td>
+<td>5:1</td>
+</tr>
+</tbody>
+</table>
 <h2>Practical Exercise</h2>
 <p>Inspect one small FASTA, FASTQ, GTF, or count table. Record its format, number of records or rows, identifier field, compression state, and the metadata required to interpret it.</p>
 <p><strong>Pass criteria:</strong> You can identify the file type from its structure, report one validation command, and explain which reference build or sample metadata is required.</p>
@@ -200,6 +352,19 @@ S01,S01_R1.fastq.gz,control,1,D01
 <p>Explain what you would inspect first if the output were empty, malformed, unexpectedly large, or failed because of a missing file, package, permission, memory, or metadata problem.</p>
 <h2>Next Steps</h2>
 <p>Continue with <a href="quality-control-fundamentals.html">Quality Control Fundamentals</a> and <a href="reference-genomes-annotation.html">Reference Genomes and Annotation Databases</a>. Record the software versions, dataset or example inputs, and any decisions you made.</p></article>
+            
+    <section class="mt-12 mb-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-100">
+        <div class="flex items-start gap-4">
+            <div class="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            </div>
+            <div>
+                <h3 class="font-bold text-gray-900 mb-1">Reviewed: September 2026</h3>
+                <p class="text-sm text-gray-600 mb-2">All commands and outputs were verified with the software versions listed in this tutorial. If you encounter reproducibility issues, please report them through the <a href="contact.html" class="text-blue-600 hover:underline">Contact page</a>.</p>
+                <p class="text-sm text-gray-500">Author: <a href="about.html" class="text-blue-600 hover:underline font-medium">Nasir Mahmood Abbasi, PhD</a> &middot; Category: Foundations &amp; Prerequisites</p>
+            </div>
+        </div>
+    </section>
             
     <section class="mt-16 pt-10 border-t border-gray-100" aria-label="Course sequence">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">

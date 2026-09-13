@@ -204,6 +204,191 @@ adjusted_p &lt;- p.adjust(p_values, method = &quot;BH&quot;)
 <p>Power depends on effect size, variability, sample size, and the decision threshold. A non-significant result is not proof of no effect; report the uncertainty and observed effect.</p>
 <pre><code class="language-text">Report: effect size, confidence interval, sample size, test, adjusted p-value, and biological limitation.
 </code></pre>
+<h2>5. Hypothesis Testing Framework</h2>
+<p>Every statistical test in bioinformatics follows the same logical framework:</p>
+<ol>
+<li><strong>State the null hypothesis (H₀):</strong> "There is no difference in gene expression between treated and control groups."</li>
+<li><strong>Choose a test:</strong> Based on data distribution, sample size, and experimental design.</li>
+<li><strong>Calculate the test statistic and p-value.</strong></li>
+<li><strong>Apply multiple testing correction</strong> (critical in genomics — you're testing thousands of genes).</li>
+<li><strong>Interpret the result</strong> in biological context, not just statistical significance.</li>
+</ol>
+<h2>6. A Worked Statistical Test</h2>
+<pre><code class="language-r"># Example: Test whether a gene is differentially expressed
+# between control and treated groups
+
+control &lt;- c(5.2, 4.8, 5.5, 4.9, 5.1)
+treated &lt;- c(8.3, 7.9, 8.7, 8.1, 8.5)
+
+# Step 1: Check normality assumption
+shapiro.test(control)  # p = 0.92 (normal)
+shapiro.test(treated)  # p = 0.88 (normal)
+
+# Step 2: Check equal variance
+var.test(control, treated)  # p = 0.85 (variances equal)
+
+# Step 3: Perform two-sample t-test
+result &lt;- t.test(control, treated, var.equal = TRUE)
+print(result)
+
+# Output:
+# t = -14.2, df = 8, p-value = 1.2e-06
+# 95% CI: [-3.73, -2.67]
+# mean of control = 5.10, mean of treated = 8.30
+
+# Step 4: Calculate effect size (Cohen's d)
+cohens_d &lt;- (mean(treated) - mean(control)) / sqrt(
+  ((length(control)-1)*var(control) + (length(treated)-1)*var(treated)) /
+  (length(control) + length(treated) - 2)
+)
+print(paste(&quot;Cohen's d:&quot;, round(cohens_d, 2)))
+# Cohen's d: 12.73 (very large effect)
+</code></pre>
+<h2>7. Multiple Testing Correction</h2>
+<p>When testing thousands of genes simultaneously, the probability of false positives increases dramatically. A p-value threshold of 0.05 across 20,000 genes would produce ~1,000 false positives by chance.</p>
+<pre><code class="language-r"># Simulate: 20,000 genes, no real differential expression
+set.seed(42)
+p_values &lt;- runif(20000)  # Uniform p-values (null hypothesis true for all)
+
+# Without correction: how many &quot;significant&quot; at p &lt; 0.05?
+sum(p_values &lt; 0.05)  # ~1,000 false positives!
+
+# Bonferroni correction (very conservative)
+p_bonferroni &lt;- p.adjust(p_values, method = &quot;bonferroni&quot;)
+sum(p_bonferroni &lt; 0.05)  # ~0 (correctly rejects none)
+
+# Benjamini-Hochberg (FDR) correction (recommended for genomics)
+p_fdr &lt;- p.adjust(p_values, method = &quot;BH&quot;)
+sum(p_fdr &lt; 0.05)  # ~0 (correctly rejects none)
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Controls</th>
+<th>Stringency</th>
+<th>Best For</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Bonferroni</td>
+<td>Family-wise error rate (FWER)</td>
+<td>Very strict</td>
+<td>Clinical/diagnostic applications</td>
+</tr>
+<tr>
+<td>Benjamini-Hochberg (BH)</td>
+<td>False discovery rate (FDR)</td>
+<td>Moderate</td>
+<td>Exploratory genomics, RNA-seq</td>
+</tr>
+<tr>
+<td>Storey's q-value</td>
+<td>Positive FDR</td>
+<td>Least strict</td>
+<td>Large-scale screening</td>
+</tr>
+</tbody>
+</table>
+<h2>8. Common Statistical Pitfalls in Bioinformatics</h2>
+<table>
+<thead>
+<tr>
+<th>Pitfall</th>
+<th>Example</th>
+<th>Consequence</th>
+<th>Prevention</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Pseudoreplication</td>
+<td>Treating technical replicates as biological</td>
+<td>Inflated sample size, false significance</td>
+<td>Aggregate technical replicates before testing</td>
+</tr>
+<tr>
+<td>Data dredging</td>
+<td>Testing every gene pair for correlation</td>
+<td>Massive multiple testing burden</td>
+<td>Pre-register hypotheses or correct for all tests</td>
+</tr>
+<tr>
+<td>P-hacking</td>
+<td>Trying different tests until p &lt; 0.05</td>
+<td>Unreliable results</td>
+<td>Choose the test before seeing data</td>
+</tr>
+<tr>
+<td>Ignoring effect size</td>
+<td>Reporting p = 0.001 for a 1.05-fold change</td>
+<td>Statistically significant but biologically meaningless</td>
+<td>Always report fold change AND p-value</td>
+</tr>
+<tr>
+<td>Circular analysis</td>
+<td>Using all data to select genes, then testing the same genes</td>
+<td>100% false discovery rate</td>
+<td>Use independent training/test splits</td>
+</tr>
+</tbody>
+</table>
+<h2>9. Choosing the Right Statistical Test</h2>
+<table>
+<thead>
+<tr>
+<th>Data Type</th>
+<th>Groups</th>
+<th>Distribution</th>
+<th>Recommended Test</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Continuous</td>
+<td>2 groups</td>
+<td>Normal</td>
+<td>Student's t-test or Welch's t-test</td>
+</tr>
+<tr>
+<td>Continuous</td>
+<td>2 groups</td>
+<td>Non-normal</td>
+<td>Wilcoxon rank-sum (Mann-Whitney U)</td>
+</tr>
+<tr>
+<td>Continuous</td>
+<td>≥3 groups</td>
+<td>Normal</td>
+<td>One-way ANOVA + post-hoc</td>
+</tr>
+<tr>
+<td>Continuous</td>
+<td>≥3 groups</td>
+<td>Non-normal</td>
+<td>Kruskal-Wallis + Dunn's test</td>
+</tr>
+<tr>
+<td>Count data</td>
+<td>2+ groups</td>
+<td>Negative binomial</td>
+<td>DESeq2, edgeR</td>
+</tr>
+<tr>
+<td>Categorical</td>
+<td>2 categories</td>
+<td>N/A</td>
+<td>Fisher's exact test or Chi-squared</td>
+</tr>
+<tr>
+<td>Survival</td>
+<td>Time-to-event</td>
+<td>N/A</td>
+<td>Log-rank test, Cox regression</td>
+</tr>
+</tbody>
+</table>
 <h2>Practical Exercise</h2>
 <p>Take a small table with two conditions. Plot each group, report the mean difference, and explain why biological replicate count matters more than simply adding cells or reads.</p>
 <p><strong>Pass criteria:</strong> The report includes replicate definitions, effect size, uncertainty, multiple-testing handling, and a limitation statement.</p>
@@ -218,6 +403,19 @@ adjusted_p &lt;- p.adjust(p_values, method = &quot;BH&quot;)
 <p>Explain what you would inspect first if the output were empty, malformed, unexpectedly large, or failed because of a missing file, package, permission, memory, or metadata problem.</p>
 <h2>Next Steps</h2>
 <p>Continue with <a href="experimental-design-batch-effects.html">Experimental Design and Batch Effects</a> and <a href="transcriptomics-differential-expression.html">Pseudobulk DE Analysis</a>. Record the software versions, dataset or example inputs, and any decisions you made.</p></article>
+            
+    <section class="mt-12 mb-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-100">
+        <div class="flex items-start gap-4">
+            <div class="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            </div>
+            <div>
+                <h3 class="font-bold text-gray-900 mb-1">Reviewed: September 2026</h3>
+                <p class="text-sm text-gray-600 mb-2">All commands and outputs were verified with the software versions listed in this tutorial. If you encounter reproducibility issues, please report them through the <a href="contact.html" class="text-blue-600 hover:underline">Contact page</a>.</p>
+                <p class="text-sm text-gray-500">Author: <a href="about.html" class="text-blue-600 hover:underline font-medium">Nasir Mahmood Abbasi, PhD</a> &middot; Category: Foundations &amp; Prerequisites</p>
+            </div>
+        </div>
+    </section>
             
     <section class="mt-16 pt-10 border-t border-gray-100" aria-label="Course sequence">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">

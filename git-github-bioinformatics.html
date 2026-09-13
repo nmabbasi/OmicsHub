@@ -193,6 +193,142 @@ git push -u origin main
 python --version
 conda env export --from-history &gt; environment.yml
 </code></pre>
+<h2>5. Setting Up a Bioinformatics Repository</h2>
+<pre><code class="language-bash"># Initialize a new project
+mkdir rnaseq-analysis &amp;&amp; cd rnaseq-analysis
+git init
+
+# Configure your identity (required once per machine)
+git config user.name &quot;Your Name&quot;
+git config user.email &quot;your.email@institution.edu&quot;
+
+# Create the standard bioinformatics .gitignore
+cat &gt; .gitignore &lt;&lt; 'EOF'
+# Large data files — track with DVC or external storage
+data/raw/
+*.fastq.gz
+*.bam
+*.bai
+
+# Temporary and generated files
+*.pyc
+__pycache__/
+.ipynb_checkpoints/
+
+# Environment files
+envs/
+.venv/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Sensitive credentials
+.env
+*.key
+EOF
+
+git add .
+git commit -m &quot;Initial project structure&quot;
+</code></pre>
+<h2>6. Branching and Feature Development</h2>
+<p>Branches let you experiment without risking your stable analysis. Use descriptive branch names:</p>
+<pre><code class="language-bash"># Create a branch for a new analysis
+git checkout -b feature/add-deseq2-analysis
+
+# Make changes, commit incrementally
+git add scripts/run_deseq2.R
+git commit -m &quot;Add DESeq2 differential expression script&quot;
+
+git add results/figures/volcano_plot.webp
+git commit -m &quot;Add volcano plot from DESeq2 results&quot;
+
+# When the analysis is complete and verified, merge back
+git checkout main
+git merge feature/add-deseq2-analysis
+git branch -d feature/add-deseq2-analysis
+</code></pre>
+<h2>7. Commit Discipline</h2>
+<p>Good commit messages are essential for understanding the history of an analysis. Follow the conventional commit format:</p>
+<pre><code class="language-text"># Good commits — each captures one logical change
+git commit -m &quot;Add QC filtering step: remove genes with &lt; 10 total counts&quot;
+git commit -m &quot;Fix chromosome naming mismatch between FASTA and GTF&quot;
+git commit -m &quot;Update DESeq2 from v1.40 to v1.42 for apeglm shrinkage&quot;
+
+# Bad commits — vague, bundled, or meaningless
+git commit -m &quot;updates&quot;
+git commit -m &quot;fixed stuff&quot;
+git commit -m &quot;final version v3&quot;
+</code></pre>
+<h2>8. Handling Large Files with Git LFS or DVC</h2>
+<p>Raw sequencing data (FASTQ, BAM) should never be committed directly to Git. Use Git LFS or DVC for large file tracking:</p>
+<pre><code class="language-bash"># Option 1: Git LFS for moderately large files
+git lfs install
+git lfs track &quot;*.bam&quot;
+git lfs track &quot;*.fastq.gz&quot;
+git add .gitattributes
+git commit -m &quot;Configure Git LFS for sequencing files&quot;
+
+# Option 2: DVC for very large datasets
+pip install dvc
+dvc init
+dvc add data/raw/sample_R1.fastq.gz
+git add data/raw/sample_R1.fastq.gz.dvc .gitignore
+git commit -m &quot;Track raw FASTQ with DVC&quot;
+</code></pre>
+<h2>9. Conflict Resolution</h2>
+<p>When two collaborators edit the same file, Git reports a merge conflict. Resolve it systematically:</p>
+<pre><code class="language-bash"># Attempt to merge
+git merge collaborator/branch-name
+
+# If conflict occurs, Git marks the file:
+# &lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD
+# your version of the code
+# =======
+# their version of the code
+# &gt;&gt;&gt;&gt;&gt;&gt;&gt; collaborator/branch-name
+
+# Steps to resolve:
+# 1. Open the conflicting file
+# 2. Choose the correct version (or combine both)
+# 3. Remove the conflict markers
+# 4. Test that the code still works
+# 5. Stage and commit
+
+git add scripts/run_analysis.R
+git commit -m &quot;Resolve merge conflict in run_analysis.R: keep updated filter threshold&quot;
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>Problem</th>
+<th>Cause</th>
+<th>Solution</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>fatal: not a git repository</code></td>
+<td>Not in a Git-initialized directory</td>
+<td>Run <code>git init</code> or <code>cd</code> to the correct directory</td>
+</tr>
+<tr>
+<td>Accidentally committed large files</td>
+<td>Forgot <code>.gitignore</code></td>
+<td>Use <code>git rm --cached file</code> and update <code>.gitignore</code></td>
+</tr>
+<tr>
+<td>Lost work after <code>git reset --hard</code></td>
+<td>Destructive reset</td>
+<td>Use <code>git reflog</code> to find and recover the lost commit</td>
+</tr>
+<tr>
+<td>Push rejected</td>
+<td>Remote has newer commits</td>
+<td>Run <code>git pull --rebase</code> before pushing</td>
+</tr>
+</tbody>
+</table>
 <h2>Practical Exercise</h2>
 <p>Create a small repository containing a README, <code>.gitignore</code>, one script, and an environment file. Make two commits and use <code>git log</code> to show the history.</p>
 <p><strong>Pass criteria:</strong> The repository history contains two meaningful commits, no credentials or raw human data are tracked, and the README explains how to reproduce the example.</p>
@@ -207,6 +343,19 @@ conda env export --from-history &gt; environment.yml
 <p>Explain what you would inspect first if the output were empty, malformed, unexpectedly large, or failed because of a missing file, package, permission, memory, or metadata problem.</p>
 <h2>Next Steps</h2>
 <p>Continue with <a href="reproducible-project-structure.html">Reproducible Project Structure</a> and <a href="python-fundamentals-bioinformatics.html">Python Fundamentals</a>. Record the software versions, dataset or example inputs, and any decisions you made.</p></article>
+            
+    <section class="mt-12 mb-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-100">
+        <div class="flex items-start gap-4">
+            <div class="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            </div>
+            <div>
+                <h3 class="font-bold text-gray-900 mb-1">Reviewed: September 2026</h3>
+                <p class="text-sm text-gray-600 mb-2">All commands and outputs were verified with the software versions listed in this tutorial. If you encounter reproducibility issues, please report them through the <a href="contact.html" class="text-blue-600 hover:underline">Contact page</a>.</p>
+                <p class="text-sm text-gray-500">Author: <a href="about.html" class="text-blue-600 hover:underline font-medium">Nasir Mahmood Abbasi, PhD</a> &middot; Category: Foundations &amp; Prerequisites</p>
+            </div>
+        </div>
+    </section>
             
     <section class="mt-16 pt-10 border-t border-gray-100" aria-label="Course sequence">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">

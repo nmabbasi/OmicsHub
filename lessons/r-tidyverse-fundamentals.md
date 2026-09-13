@@ -77,6 +77,116 @@ samples |> summarise(across(everything(), ~sum(is.na(.x))))
 stopifnot(!anyDuplicated(samples$sample_id))
 ```
 
+
+## 5. Reading and Writing Data
+
+In bioinformatics, you will frequently import CSV, TSV, and Excel files. Use the `readr` package (part of tidyverse) for consistent parsing and explicit column type detection.
+
+```r
+# Read a tab-separated gene expression matrix
+expr <- read_tsv("data/raw/gene_counts.tsv", show_col_types = TRUE)
+
+# Inspect dimensions and first rows
+dim(expr)
+head(expr)
+
+# Write results with consistent formatting
+write_csv(expr, "data/processed/filtered_counts.csv")
+```
+
+**Common pitfall:** Excel silently converts gene names like `MARCH1` and `SEPT2` to dates. Always use plain-text formats (CSV/TSV) for bioinformatics data and verify gene name integrity after import.
+
+## 6. Reshaping Data: Wide vs. Long Format
+
+Many bioinformatics datasets arrive in wide format (one column per sample), but most R analysis and plotting functions expect long (tidy) format.
+
+```r
+# Wide format: each sample is a column
+wide_data <- data.frame(
+  gene = c("TP53", "BRCA1", "MYC"),
+  sample_A = c(150, 320, 890),
+  sample_B = c(175, 280, 920)
+)
+
+# Pivot to long format for ggplot and statistical testing
+long_data <- wide_data |>
+  pivot_longer(
+    cols = starts_with("sample_"),
+    names_to = "sample",
+    values_to = "expression"
+  )
+
+# Now each row is one gene-sample measurement
+print(long_data)
+# Output:
+# gene   sample    expression
+# TP53   sample_A  150
+# TP53   sample_B  175
+# BRCA1  sample_A  320
+# ...
+```
+
+## 7. Factors and Categorical Variables
+
+Factors are essential for controlling group order in plots and statistical models. Always set factor levels explicitly rather than relying on alphabetical order.
+
+```r
+# Without explicit levels, R uses alphabetical order
+samples$condition <- factor(samples$condition, levels = c("control", "treated"))
+
+# This ensures "control" appears first in plots and is the reference level in models
+levels(samples$condition)
+# [1] "control" "treated"
+```
+
+**Why this matters:** In differential expression analysis, the reference level of a factor determines the direction of fold-change calculations. If "treated" is accidentally set as the reference, all log2FC values will be inverted.
+
+## 8. Error Handling and Defensive Programming
+
+Before running an analysis pipeline, validate your inputs programmatically:
+
+```r
+# Check that required columns exist
+stopifnot(
+  "sample_id" %in% colnames(samples),
+  "condition" %in% colnames(samples),
+  nrow(samples) > 0
+)
+
+# Check for unexpected NA values in critical columns
+na_counts <- samples |> summarise(across(everything(), ~sum(is.na(.x))))
+print(na_counts)
+
+# Assert no duplicate sample IDs
+if (anyDuplicated(samples$sample_id)) {
+  stop("Duplicate sample IDs detected — check your metadata file.")
+}
+```
+
+## 9. Reproducible R Sessions
+
+Always record your R session information at the end of every analysis script. This captures the exact R version, loaded packages, and operating system.
+
+```r
+# At the end of your script
+sink("logs/session_info.txt")
+sessionInfo()
+sink()
+
+# Expected output includes:
+# R version 4.4.1 (2024-06-14)
+# Platform: x86_64-pc-linux-gnu
+# attached packages: tidyverse 2.0.0, ggplot2 3.5.1, dplyr 1.1.4 ...
+```
+
+| Troubleshooting Issue | Likely Cause | Solution |
+|---|---|---|
+| `Error: package 'X' is not available` | R version too old for the package | Update R or use BiocManager for Bioconductor packages |
+| Plot appears blank | Factor levels don't match data values | Check `levels()` and ensure data contains matching values |
+| `Joining, by = ...` warning | Implicit join columns | Specify `by = "column_name"` explicitly |
+| Gene names converted to dates | Excel auto-formatting | Re-import from original TSV; never open bioinformatics files in Excel |
+
+
 ## Practical Exercise
 
 Create a table with sample ID, condition, and one QC metric. Produce one labeled plot, save it to `results/`, and write one sentence interpreting the pattern without overstating it.

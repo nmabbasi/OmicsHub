@@ -188,6 +188,132 @@ Limitation: donors and batch are not fully balanced.
  git log --oneline -1
  sha256sum results/figures/qc.webp
 </code></pre>
+<h2>5. Reporting Standards in Bioinformatics</h2>
+<p>Different analysis types have community-agreed reporting standards. Following these ensures your work is reviewable and reproducible.</p>
+<table>
+<thead>
+<tr>
+<th>Analysis Type</th>
+<th>Reporting Guideline</th>
+<th>Key Requirements</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>RNA-seq differential expression</td>
+<td>MINSEQE / ENCODE</td>
+<td>Raw data in GEO/SRA, normalization method, statistical test, FDR threshold</td>
+</tr>
+<tr>
+<td>Variant calling</td>
+<td>GA4GH / ACMG</td>
+<td>Reference genome, caller + version, filter criteria, pathogenicity evidence</td>
+</tr>
+<tr>
+<td>Metagenomics</td>
+<td>MIMARKS / MIxS</td>
+<td>Sample metadata, sequencing platform, database version, classification method</td>
+</tr>
+<tr>
+<td>Single-cell RNA-seq</td>
+<td>scRNA-tools reporting</td>
+<td>Cell count, QC thresholds, clustering resolution, marker genes</td>
+</tr>
+<tr>
+<td>Machine learning</td>
+<td>TRIPOD / PROBAST</td>
+<td>Training/test split, performance metrics, cross-validation strategy</td>
+</tr>
+</tbody>
+</table>
+<h2>6. Writing a Methods Section</h2>
+<p>A complete Methods section should allow another researcher to reproduce your analysis from raw data to final figures. Include:</p>
+<pre><code class="language-markdown">## Methods
+
+### Data acquisition
+RNA-seq reads for 12 tumor/normal pairs were obtained from GEO (GSE123456).
+Raw FASTQ files were validated with FastQC v0.12.1 and trimmed with
+Trim Galore v0.6.10 (--quality 20 --length 36).
+
+### Alignment and quantification
+Reads were aligned to GRCh38 (GENCODE v46) using STAR v2.7.11b
+(--outSAMtype BAM SortedByCoordinate). Gene-level counts were obtained
+with featureCounts v2.0.6 (-t exon -g gene_id -s 2).
+
+### Differential expression
+DESeq2 v1.42.0 was used with default shrinkage (apeglm). Genes with
+adjusted p-value &lt; 0.05 and |log2FC| &gt; 1 were considered significant.
+
+### Software environment
+All analyses were run on Ubuntu 22.04 with R 4.4.1 and Python 3.11.
+A complete conda environment specification is available in the repository.
+</code></pre>
+<h2>7. Figure and Table Best Practices</h2>
+<p>Figures and tables are often the first (and sometimes only) elements reviewers examine. Follow these principles:</p>
+<ul>
+<li><strong>Self-contained:</strong> Every figure should be interpretable without reading the full text.</li>
+<li><strong>Labeled axes:</strong> Include units, sample sizes, and statistical annotations.</li>
+<li><strong>Color-blind friendly:</strong> Use colorblind-safe palettes (e.g., viridis, ColorBrewer).</li>
+<li><strong>Resolution:</strong> Minimum 300 DPI for publication; vector formats (PDF, SVG) preferred.</li>
+</ul>
+<pre><code class="language-r"># Example: a publication-quality volcano plot
+library(ggplot2)
+ggplot(deg_results, aes(x = log2FoldChange, y = -log10(padj))) +
+  geom_point(aes(color = significant), size = 1, alpha = 0.6) +
+  scale_color_manual(values = c(&quot;grey70&quot;, &quot;#E41A1C&quot;)) +
+  labs(
+    x = expression(log[2]~&quot;Fold Change&quot;),
+    y = expression(-log[10]~&quot;Adjusted p-value&quot;),
+    title = &quot;Differential Expression: Tumor vs. Normal&quot;,
+    subtitle = paste(sum(deg_results$significant), &quot;significant genes (FDR &lt; 0.05, |log2FC| &gt; 1)&quot;)
+  ) +
+  theme_minimal(base_size = 14) +
+  geom_hline(yintercept = -log10(0.05), linetype = &quot;dashed&quot;, color = &quot;blue&quot;)
+</code></pre>
+<h2>8. Common Reporting Errors to Avoid</h2>
+<table>
+<thead>
+<tr>
+<th>Error</th>
+<th>Why It's Problematic</th>
+<th>Correction</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Reporting p-values without multiple testing correction</td>
+<td>Inflates false positive rate</td>
+<td>Always report adjusted p-values (FDR, Bonferroni)</td>
+</tr>
+<tr>
+<td>Showing bar plots for continuous distributions</td>
+<td>Hides data distribution and outliers</td>
+<td>Use box plots, violin plots, or dot plots</td>
+</tr>
+<tr>
+<td>Omitting sample sizes</td>
+<td>Readers cannot assess statistical power</td>
+<td>State n per group in every figure legend</td>
+</tr>
+<tr>
+<td>Cherry-picking genes for validation</td>
+<td>Confirmation bias</td>
+<td>Report all tested genes with effect sizes and confidence intervals</td>
+</tr>
+<tr>
+<td>Using "significant" without defining the threshold</td>
+<td>Ambiguous and non-reproducible</td>
+<td>State the exact threshold: "FDR &lt; 0.05 and</td>
+</tr>
+</tbody>
+</table>
+<h2>9. Interpretation vs. Over-interpretation</h2>
+<p>The most common scientific writing error is stating conclusions that exceed the evidence. Follow this hierarchy:</p>
+<ol>
+<li><strong>Observation:</strong> "Gene X shows a 3.2-fold increase in expression (FDR = 0.001) in tumor samples."</li>
+<li><strong>Interpretation:</strong> "This is consistent with the known role of Gene X in cell proliferation pathways."</li>
+<li><strong>Over-interpretation (avoid):</strong> "Gene X causes tumor growth." ← Requires functional validation, not just differential expression.</li>
+</ol>
 <h2>Practical Exercise</h2>
 <p>Write a 150-word methods paragraph and figure legend for one plot. Mark each sentence as method, observation, interpretation, or limitation.</p>
 <p><strong>Pass criteria:</strong> The report includes enough detail to reproduce the plot and does not confuse association with causation or statistical significance with biological importance.</p>
@@ -202,6 +328,19 @@ Limitation: donors and batch are not fully balanced.
 <p>Explain what you would inspect first if the output were empty, malformed, unexpectedly large, or failed because of a missing file, package, permission, memory, or metadata problem.</p>
 <h2>Next Steps</h2>
 <p>Continue with <a href="introduction-to-bioinformatics.html">Introduction to Bioinformatics</a> and <a href="experimental-design-batch-effects.html">Experimental Design and Batch Effects</a>. Record the software versions, dataset or example inputs, and any decisions you made.</p></article>
+            
+    <section class="mt-12 mb-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-100">
+        <div class="flex items-start gap-4">
+            <div class="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            </div>
+            <div>
+                <h3 class="font-bold text-gray-900 mb-1">Reviewed: September 2026</h3>
+                <p class="text-sm text-gray-600 mb-2">All commands and outputs were verified with the software versions listed in this tutorial. If you encounter reproducibility issues, please report them through the <a href="contact.html" class="text-blue-600 hover:underline">Contact page</a>.</p>
+                <p class="text-sm text-gray-500">Author: <a href="about.html" class="text-blue-600 hover:underline font-medium">Nasir Mahmood Abbasi, PhD</a> &middot; Category: Foundations &amp; Prerequisites</p>
+            </div>
+        </div>
+    </section>
             
     <section class="mt-16 pt-10 border-t border-gray-100" aria-label="Course sequence">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">

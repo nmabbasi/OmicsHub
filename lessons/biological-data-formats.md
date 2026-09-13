@@ -68,6 +68,105 @@ sample_id,fastq_r1,condition,batch,donor
 S01,S01_R1.fastq.gz,control,1,D01
 ```
 
+
+## 5. Format Specifications and Validation
+
+Every file format has a formal specification. Understanding the column structure prevents silent parsing errors.
+
+### FASTA Format
+```text
+>sequence_id optional description
+ATCGATCGATCGATCGATCG
+ATCGATCGATCGATCG
+```
+- Header lines start with `>`
+- Sequence can span multiple lines
+- No quality scores (use FASTQ for raw reads)
+
+### FASTQ Format
+```text
+@read_id instrument:run:flowcell:lane:tile:x:y
+ATCGATCGATCGATCGATCG
++
+IIIIIIIIIIIIIIIIIIIII
+```
+- Four lines per record: header, sequence, separator, quality
+- Quality scores are Phred+33 encoded ASCII characters
+- `I` = Q40 (1 in 10,000 error rate), `!` = Q0
+
+### SAM/BAM Format
+```text
+@HD  VN:1.6  SO:coordinate
+@SQ  SN:chr1  LN:248956422
+read001  0  chr1  1000  60  150M  *  0  0  ATCG...  IIII...  NM:i:0
+```
+- Header lines start with `@`
+- 11 mandatory columns: QNAME, FLAG, RNAME, POS, MAPQ, CIGAR, RNEXT, PNEXT, TLEN, SEQ, QUAL
+- BAM is the compressed binary version of SAM
+
+## 6. Validation Commands
+
+Always validate file integrity before analysis. Corrupted files produce silent errors that propagate through entire pipelines.
+
+```bash
+# Validate FASTQ integrity
+# Count records (should be divisible by 4)
+wc -l reads.fastq  # Must be multiple of 4
+
+# Validate BAM file
+samtools quickcheck aligned.bam && echo "OK" || echo "CORRUPTED"
+
+# Validate VCF file
+bcftools stats variants.vcf | head -20
+
+# Check FASTA index consistency
+samtools faidx reference.fa
+# Creates reference.fa.fai — verify chromosome count
+wc -l reference.fa.fai
+
+# Verify file checksums after transfer
+md5sum -c checksums.md5
+```
+
+## 7. Format Conversion
+
+Converting between formats is a routine bioinformatics task. Use established tools rather than custom scripts to avoid edge cases.
+
+| From | To | Tool | Command |
+|---|---|---|---|
+| SAM | BAM | samtools | `samtools view -bS input.sam > output.bam` |
+| BAM | SAM | samtools | `samtools view -h input.bam > output.sam` |
+| BAM | FASTQ | samtools | `samtools fastq input.bam > output.fastq` |
+| FASTQ | FASTA | seqtk | `seqtk seq -a input.fastq > output.fasta` |
+| GFF3 | GTF | gffread | `gffread input.gff3 -T -o output.gtf` |
+| VCF | BED | bedtools | `bedtools vcf2bed < input.vcf > output.bed` |
+
+**Warning:** Coordinate system differences between BED (0-based, half-open) and GTF/VCF (1-based, closed) are the single most common source of off-by-one errors in bioinformatics. Always verify coordinates after conversion.
+
+## 8. Compression and Storage
+
+Raw bioinformatics files are typically very large. Use appropriate compression to save storage and transfer time.
+
+```bash
+# BGZF compression (block-gzipped, allows random access)
+bgzip -c variants.vcf > variants.vcf.gz
+tabix -p vcf variants.vcf.gz
+
+# Standard gzip (no random access)
+gzip reads.fastq
+
+# Check compressed file integrity
+gzip -t reads.fastq.gz && echo "OK" || echo "CORRUPTED"
+```
+
+| File Type | Typical Size (human WGS) | Compressed Size | Compression Ratio |
+|---|---|---|---|
+| FASTQ (paired) | ~200 GB | ~60 GB (gzip) | 3:1 |
+| BAM (aligned) | ~80 GB | N/A (already binary) | — |
+| VCF (variants) | ~5 GB | ~500 MB (bgzip) | 10:1 |
+| BED (regions) | ~10 MB | ~2 MB (gzip) | 5:1 |
+
+
 ## Practical Exercise
 
 Inspect one small FASTA, FASTQ, GTF, or count table. Record its format, number of records or rows, identifier field, compression state, and the metadata required to interpret it.

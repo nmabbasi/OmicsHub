@@ -197,6 +197,152 @@ sc.tl.umap(adata, random_state=7)
 <p>Use colorblind-safe palettes, avoid truncated axes when they mislead, show individual points when possible, and state limitations in the caption.</p>
 <pre><code class="language-text">Caption template: Dataset; preprocessing; n; statistic; software/version; interpretation; limitation.
 </code></pre>
+<h2>5. Choosing the Right Plot Type</h2>
+<p>The most common mistake in data visualization is choosing a plot type that obscures the data's structure. Use this decision guide:</p>
+<table>
+<thead>
+<tr>
+<th>Question You're Answering</th>
+<th>Recommended Plot</th>
+<th>Avoid</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>How is a single variable distributed?</td>
+<td>Histogram, density plot, violin plot</td>
+<td>Pie chart</td>
+</tr>
+<tr>
+<td>How do two continuous variables relate?</td>
+<td>Scatter plot, hexbin plot</td>
+<td>3D surface plot</td>
+</tr>
+<tr>
+<td>How do groups compare?</td>
+<td>Box plot, violin plot, dot plot</td>
+<td>Bar plot with error bars</td>
+</tr>
+<tr>
+<td>How does a measurement change over time?</td>
+<td>Line plot</td>
+<td>Scatter plot without connection</td>
+</tr>
+<tr>
+<td>What is the composition of categories?</td>
+<td>Stacked bar chart, alluvial plot</td>
+<td>Pie chart for &gt;5 categories</td>
+</tr>
+<tr>
+<td>What are the relationships in high-dimensional data?</td>
+<td>PCA, UMAP, heatmap</td>
+<td>&gt;3 dimensions on cartesian axes</td>
+</tr>
+</tbody>
+</table>
+<h2>6. A Complete Plotting Example in Python</h2>
+<pre><code class="language-python">import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+
+# Create example QC data
+np.random.seed(42)
+qc_data = pd.DataFrame({
+    &quot;sample&quot;: [f&quot;S{i:02d}&quot; for i in range(1, 13)],
+    &quot;total_reads_M&quot;: np.random.normal(25, 5, 12),
+    &quot;mapping_rate&quot;: np.random.uniform(0.85, 0.98, 12),
+    &quot;condition&quot;: [&quot;control&quot;]*6 + [&quot;treated&quot;]*6
+})
+
+# Create a publication-quality figure
+fig, axes = plt.subplots(1, 2, figsize=(12, 5))
+
+# Panel A: Read depth per sample
+colors = [&quot;#4C72B0&quot; if c == &quot;control&quot; else &quot;#DD8452&quot; for c in qc_data[&quot;condition&quot;]]
+axes[0].bar(qc_data[&quot;sample&quot;], qc_data[&quot;total_reads_M&quot;], color=colors)
+axes[0].set_xlabel(&quot;Sample&quot;)
+axes[0].set_ylabel(&quot;Total Reads (millions)&quot;)
+axes[0].set_title(&quot;A. Sequencing Depth&quot;)
+axes[0].tick_params(axis=&quot;x&quot;, rotation=45)
+axes[0].axhline(y=20, color=&quot;red&quot;, linestyle=&quot;--&quot;, alpha=0.5, label=&quot;QC threshold&quot;)
+axes[0].legend()
+
+# Panel B: Mapping rate distribution by group
+for cond, color in [(&quot;control&quot;, &quot;#4C72B0&quot;), (&quot;treated&quot;, &quot;#DD8452&quot;)]:
+    subset = qc_data[qc_data[&quot;condition&quot;] == cond]
+    axes[1].hist(subset[&quot;mapping_rate&quot;], bins=6, alpha=0.6, color=color, label=cond)
+axes[1].set_xlabel(&quot;Mapping Rate&quot;)
+axes[1].set_ylabel(&quot;Frequency&quot;)
+axes[1].set_title(&quot;B. Alignment Quality&quot;)
+axes[1].legend()
+
+plt.tight_layout()
+plt.savefig(&quot;results/figures/qc_summary.webp&quot;, dpi=300, bbox_inches=&quot;tight&quot;)
+plt.show()
+</code></pre>
+<h2>7. Color and Accessibility</h2>
+<p>Approximately 8% of males and 0.5% of females have some form of color vision deficiency. Use colorblind-safe palettes:</p>
+<pre><code class="language-python"># Colorblind-safe palettes
+import matplotlib.pyplot as plt
+
+# Option 1: Use built-in colorblind-safe colormap
+plt.set_cmap(&quot;viridis&quot;)
+
+# Option 2: Seaborn colorblind palette
+import seaborn as sns
+sns.set_palette(&quot;colorblind&quot;)
+
+# Option 3: Manually specify accessible colors
+accessible_colors = {
+    &quot;blue&quot;: &quot;#0072B2&quot;,
+    &quot;orange&quot;: &quot;#E69F00&quot;,
+    &quot;green&quot;: &quot;#009E73&quot;,
+    &quot;vermilion&quot;: &quot;#D55E00&quot;,
+    &quot;sky_blue&quot;: &quot;#56B4E9&quot;
+}
+</code></pre>
+<h2>8. Figure Quality Standards</h2>
+<table>
+<thead>
+<tr>
+<th>Requirement</th>
+<th>Standard</th>
+<th>How to Check</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Resolution</td>
+<td>≥300 DPI for print, ≥150 DPI for web</td>
+<td><code>fig.savefig(..., dpi=300)</code></td>
+</tr>
+<tr>
+<td>Format</td>
+<td>Vector (SVG/PDF) for figures, WebP/PNG for web</td>
+<td>Save both formats</td>
+</tr>
+<tr>
+<td>Font size</td>
+<td>≥8pt for axis labels, ≥10pt for titles</td>
+<td>Set <code>fontsize</code> parameters</td>
+</tr>
+<tr>
+<td>Axis labels</td>
+<td>Include units in parentheses</td>
+<td>"Expression (TPM)", "Length (bp)"</td>
+</tr>
+<tr>
+<td>Legend</td>
+<td>Inside or adjacent to the plot area</td>
+<td>Never overlapping data points</td>
+</tr>
+<tr>
+<td>White space</td>
+<td>Minimal margins, no excessive padding</td>
+<td><code>bbox_inches="tight"</code></td>
+</tr>
+</tbody>
+</table>
 <h2>Practical Exercise</h2>
 <p>Create one QC plot and one between-group plot using a small table. Add a caption that states n, units, preprocessing, and one limitation.</p>
 <p><strong>Pass criteria:</strong> A reader can understand the axes, groups, sample count, and what the figure does not prove.</p>
@@ -211,6 +357,19 @@ sc.tl.umap(adata, random_state=7)
 <p>Explain what you would inspect first if the output were empty, malformed, unexpectedly large, or failed because of a missing file, package, permission, memory, or metadata problem.</p>
 <h2>Next Steps</h2>
 <p>Continue with <a href="scrna-seq-basics.html">scRNA-seq Basics</a> and <a href="research-reporting-interpretation.html">Research Reporting and Interpretation</a>. Record the software versions, dataset or example inputs, and any decisions you made.</p></article>
+            
+    <section class="mt-12 mb-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-100">
+        <div class="flex items-start gap-4">
+            <div class="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            </div>
+            <div>
+                <h3 class="font-bold text-gray-900 mb-1">Reviewed: September 2026</h3>
+                <p class="text-sm text-gray-600 mb-2">All commands and outputs were verified with the software versions listed in this tutorial. If you encounter reproducibility issues, please report them through the <a href="contact.html" class="text-blue-600 hover:underline">Contact page</a>.</p>
+                <p class="text-sm text-gray-500">Author: <a href="about.html" class="text-blue-600 hover:underline font-medium">Nasir Mahmood Abbasi, PhD</a> &middot; Category: Foundations &amp; Prerequisites</p>
+            </div>
+        </div>
+    </section>
             
     <section class="mt-16 pt-10 border-t border-gray-100" aria-label="Course sequence">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">

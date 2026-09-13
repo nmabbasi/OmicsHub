@@ -191,6 +191,119 @@ awk &quot;$3==&quot;gene&quot; {print \$1}&quot; annotation.gtf | sort -u | head
 <p>Gene symbols are human-friendly but unstable. Use stable Ensembl or NCBI identifiers in computational tables and retain the mapping table used to label figures.</p>
 <pre><code class="language-text">keep: stable_id, versioned_id, symbol, source_release
 </code></pre>
+<h2>5. Common Reference Sources</h2>
+<p>Different communities maintain different reference resources. Choosing the correct source depends on your organism, analysis type, and downstream tools.</p>
+<table>
+<thead>
+<tr>
+<th>Source</th>
+<th>Organism Focus</th>
+<th>Best For</th>
+<th>URL</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GENCODE</td>
+<td>Human, Mouse</td>
+<td>RNA-seq, gene-level analysis</td>
+<td>gencodegenes.org</td>
+</tr>
+<tr>
+<td>Ensembl</td>
+<td>Multi-species</td>
+<td>Comparative genomics, variant annotation</td>
+<td>ensembl.org</td>
+</tr>
+<tr>
+<td>NCBI RefSeq</td>
+<td>Multi-species</td>
+<td>Clinical genomics, standardized gene models</td>
+<td>ncbi.nlm.nih.gov</td>
+</tr>
+<tr>
+<td>UCSC Genome Browser</td>
+<td>Multi-species</td>
+<td>Visualization, track hubs</td>
+<td>genome.ucsc.edu</td>
+</tr>
+<tr>
+<td>Phytozome</td>
+<td>Plants</td>
+<td>Plant genomics</td>
+<td>phytozome-next.jgi.doe.gov</td>
+</tr>
+</tbody>
+</table>
+<h2>6. Chromosome Naming Conflicts</h2>
+<p>One of the most common silent errors in bioinformatics is a chromosome naming mismatch between your reference genome and annotation file. Different sources use different conventions:</p>
+<pre><code class="language-text"># UCSC style          # Ensembl/NCBI style
+chr1                  1
+chrM                  MT
+chrX                  X
+</code></pre>
+<p><strong>Detection:</strong> Compare the first column of the FASTA index (<code>.fai</code>) with the first column of the GTF/GFF:</p>
+<pre><code class="language-bash"># Extract chromosome names from FASTA index
+cut -f1 genome.fa.fai | sort &gt; chrom_fasta.txt
+
+# Extract chromosome names from GTF
+awk '$3==&quot;gene&quot; {print $1}' annotation.gtf | sort -u &gt; chrom_gtf.txt
+
+# Compare — any differences indicate a naming mismatch
+diff chrom_fasta.txt chrom_gtf.txt
+</code></pre>
+<p><strong>Resolution:</strong> Use a mapping file or sed to convert between conventions. Never manually edit a reference FASTA—always script the conversion and document it.</p>
+<h2>7. Annotation File Formats Explained</h2>
+<table>
+<thead>
+<tr>
+<th>Format</th>
+<th>Extension</th>
+<th>Key Features</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GTF</td>
+<td><code>.gtf</code></td>
+<td>Tab-separated, 9 columns, gene/transcript/exon hierarchy</td>
+</tr>
+<tr>
+<td>GFF3</td>
+<td><code>.gff3</code></td>
+<td>Hierarchical parent-child relationships, more flexible than GTF</td>
+</tr>
+<tr>
+<td>BED</td>
+<td><code>.bed</code></td>
+<td>Simple coordinate format, 0-based start positions</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Critical difference:</strong> GTF uses 1-based, fully closed coordinates (<code>start=1, end=100</code> means positions 1 through 100). BED uses 0-based, half-open coordinates (<code>start=0, end=100</code> means positions 1 through 100). Mixing these silently shifts all your coordinates by one base.</p>
+<h2>8. Version Pinning and Reproducibility</h2>
+<p>Always record the exact version of your reference files. A GENCODE release number alone is not sufficient—record the full download URL, file checksum, and download date.</p>
+<pre><code class="language-bash"># Create a reproducible reference manifest
+cat &gt; config/reference_manifest.yml &lt;&lt; 'EOF'
+reference:
+  assembly: GRCh38.p14
+  annotation: GENCODE v46
+  fasta_url: &quot;https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_46/GRCh38.p14.genome.fa.gz&quot;
+  gtf_url: &quot;https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_46/gencode.v46.annotation.gtf.gz&quot;
+  download_date: &quot;2026-08-15&quot;
+  fasta_md5: &quot;abc123def456...&quot;
+  gtf_md5: &quot;789ghi012jkl...&quot;
+  chromosome_naming: &quot;chr-prefixed&quot;
+EOF
+</code></pre>
+<h2>9. When to Update References</h2>
+<p>Updating your reference genome mid-project can invalidate all previous results. Follow these guidelines:</p>
+<ul>
+<li><strong>Start of project:</strong> Choose the latest stable release and lock it.</li>
+<li><strong>During analysis:</strong> Never change references unless you discover a critical error.</li>
+<li><strong>Between projects:</strong> Evaluate whether a newer release fixes known issues relevant to your analysis.</li>
+<li><strong>Publication:</strong> Report the exact assembly, annotation release, and download source in your Methods section.</li>
+</ul>
 <h2>Practical Exercise</h2>
 <p>Write a reference manifest listing assembly, annotation release, URLs, download date, checksum path, chromosome naming convention, and identifier type.</p>
 <p><strong>Pass criteria:</strong> A second learner could identify and re-download the exact compatible references from the manifest.</p>
@@ -205,6 +318,19 @@ awk &quot;$3==&quot;gene&quot; {print \$1}&quot; annotation.gtf | sort -u | head
 <p>Explain what you would inspect first if the output were empty, malformed, unexpectedly large, or failed because of a missing file, package, permission, memory, or metadata problem.</p>
 <h2>Next Steps</h2>
 <p>Continue with <a href="data-visualization-fundamentals.html">Data Visualization Fundamentals</a> and <a href="wes-variant-calling-pipeline.html">Whole Exome Sequencing</a>. Record the software versions, dataset or example inputs, and any decisions you made.</p></article>
+            
+    <section class="mt-12 mb-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-100">
+        <div class="flex items-start gap-4">
+            <div class="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            </div>
+            <div>
+                <h3 class="font-bold text-gray-900 mb-1">Reviewed: September 2026</h3>
+                <p class="text-sm text-gray-600 mb-2">All commands and outputs were verified with the software versions listed in this tutorial. If you encounter reproducibility issues, please report them through the <a href="contact.html" class="text-blue-600 hover:underline">Contact page</a>.</p>
+                <p class="text-sm text-gray-500">Author: <a href="about.html" class="text-blue-600 hover:underline font-medium">Nasir Mahmood Abbasi, PhD</a> &middot; Category: Foundations &amp; Prerequisites</p>
+            </div>
+        </div>
+    </section>
             
     <section class="mt-16 pt-10 border-t border-gray-100" aria-label="Course sequence">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">

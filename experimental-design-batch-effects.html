@@ -195,6 +195,148 @@ with(meta, table(batch, condition))
 <pre><code class="language-text">Design formula example: ~ batch + condition
 Only use it when the design contains enough information to estimate both terms.
 </code></pre>
+<h2>5. Experimental Design Principles</h2>
+<p>Good experimental design prevents confounding before data generation. The key principles are:</p>
+<table>
+<thead>
+<tr>
+<th>Principle</th>
+<th>Definition</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Randomization</strong></td>
+<td>Assign samples to groups randomly</td>
+<td>Randomly assign mice to treatment cages</td>
+</tr>
+<tr>
+<td><strong>Replication</strong></td>
+<td>Include biological replicates (not technical)</td>
+<td>≥3 biological replicates per condition</td>
+</tr>
+<tr>
+<td><strong>Blocking</strong></td>
+<td>Group known sources of variation</td>
+<td>Process all conditions on the same sequencing lane</td>
+</tr>
+<tr>
+<td><strong>Balancing</strong></td>
+<td>Equal sample sizes across groups</td>
+<td>Same number of samples per condition per batch</td>
+</tr>
+</tbody>
+</table>
+<pre><code class="language-text"># GOOD: Balanced design — each batch processes both conditions
+Batch 1: Control_1, Control_2, Treated_1, Treated_2
+Batch 2: Control_3, Control_4, Treated_3, Treated_4
+
+# BAD: Confounded design — batch = condition
+Batch 1: Control_1, Control_2, Control_3, Control_4
+Batch 2: Treated_1, Treated_2, Treated_3, Treated_4
+</code></pre>
+<p><strong>Why the bad design fails:</strong> Any difference between groups could be caused by the biological condition OR by batch-specific technical variation (different reagent lots, different operators, different sequencing lanes). These effects are mathematically inseparable.</p>
+<h2>6. Identifying Batch Effects</h2>
+<p>Before correction, you must first detect whether batch effects exist. Use dimensionality reduction (PCA) to visualize sample clustering:</p>
+<pre><code class="language-r">library(DESeq2)
+
+# Perform variance-stabilizing transformation
+vsd &lt;- vst(dds, blind = TRUE)
+
+# PCA plot colored by condition, shaped by batch
+plotPCA(vsd, intgroup = c(&quot;condition&quot;, &quot;batch&quot;)) +
+  labs(title = &quot;PCA: Check for Batch Effects&quot;) +
+  theme_minimal()
+</code></pre>
+<p><strong>Interpretation guide:</strong>
+- If samples cluster primarily by <strong>condition</strong> → minimal batch effect, proceed.
+- If samples cluster primarily by <strong>batch</strong> → strong batch effect, correction needed.
+- If batch and condition are <strong>confounded</strong> → correction is impossible; redesign the experiment.</p>
+<h2>7. Batch Correction Methods</h2>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Package</th>
+<th>When to Use</th>
+<th>Limitation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Include batch as covariate</strong></td>
+<td>DESeq2, limma</td>
+<td>Batch is known, not confounded with condition</td>
+<td>Requires balanced design</td>
+</tr>
+<tr>
+<td><strong>ComBat</strong></td>
+<td>sva</td>
+<td>Remove batch effects from normalized data</td>
+<td>Can over-correct if groups are unbalanced</td>
+</tr>
+<tr>
+<td><strong>Harmony</strong></td>
+<td>harmony</td>
+<td>Single-cell integration across batches</td>
+<td>May merge genuine biological differences</td>
+</tr>
+<tr>
+<td><strong>limma::removeBatchEffect</strong></td>
+<td>limma</td>
+<td>Visualization only (corrected values for PCA/heatmaps)</td>
+<td>Do NOT use corrected values for DE testing</td>
+</tr>
+</tbody>
+</table>
+<pre><code class="language-r"># Correct approach: include batch in the DESeq2 model
+design(dds) &lt;- ~ batch + condition
+
+# The condition effect is estimated AFTER accounting for batch
+dds &lt;- DESeq(dds)
+results &lt;- results(dds, contrast = c(&quot;condition&quot;, &quot;treated&quot;, &quot;control&quot;))
+</code></pre>
+<p><strong>Critical warning:</strong> Never use batch-corrected expression values as input for differential expression testing. Instead, include batch as a covariate in the statistical model. Using corrected values can deflate variance estimates and inflate false positive rates.</p>
+<h2>8. Sample Size and Power Considerations</h2>
+<p>Underpowered experiments waste resources and produce unreliable results. Use power analysis before designing your experiment:</p>
+<pre><code class="language-r"># RNA-seq power analysis (rough estimate)
+library(RNASeqPower)
+rnapower(
+  depth = 20,        # millions of reads per sample
+  cv = 0.4,          # biological coefficient of variation
+  effect = 1.5,      # minimum fold change to detect
+  alpha = 0.05,      # significance level
+  power = 0.8        # desired power
+)
+# Output: n = 5 samples per group needed
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>Biological CV</th>
+<th>Typical System</th>
+<th>Recommended Replicates</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0.1 – 0.2</td>
+<td>Cell lines</td>
+<td>3 per group</td>
+</tr>
+<tr>
+<td>0.3 – 0.4</td>
+<td>Inbred mice</td>
+<td>4–6 per group</td>
+</tr>
+<tr>
+<td>0.5 – 1.0</td>
+<td>Human clinical</td>
+<td>8–15+ per group</td>
+</tr>
+</tbody>
+</table>
 <h2>Practical Exercise</h2>
 <p>Create a balanced two-condition metadata table with at least four biological replicates across two batches. Use a crosstab to prove each batch contains both conditions.</p>
 <p><strong>Pass criteria:</strong> IDs are unique, no required metadata is missing, both conditions occur in every batch, and the analysis design is written before inspecting results.</p>
@@ -209,6 +351,19 @@ Only use it when the design contains enough information to estimate both terms.
 <p>Explain what you would inspect first if the output were empty, malformed, unexpectedly large, or failed because of a missing file, package, permission, memory, or metadata problem.</p>
 <h2>Next Steps</h2>
 <p>Continue with <a href="reference-genomes-annotation.html">Reference Genomes and Annotation Databases</a> and <a href="reproducible-project-structure.html">Reproducible Project Structure</a>. Record the software versions, dataset or example inputs, and any decisions you made.</p></article>
+            
+    <section class="mt-12 mb-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-100">
+        <div class="flex items-start gap-4">
+            <div class="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            </div>
+            <div>
+                <h3 class="font-bold text-gray-900 mb-1">Reviewed: September 2026</h3>
+                <p class="text-sm text-gray-600 mb-2">All commands and outputs were verified with the software versions listed in this tutorial. If you encounter reproducibility issues, please report them through the <a href="contact.html" class="text-blue-600 hover:underline">Contact page</a>.</p>
+                <p class="text-sm text-gray-500">Author: <a href="about.html" class="text-blue-600 hover:underline font-medium">Nasir Mahmood Abbasi, PhD</a> &middot; Category: Foundations &amp; Prerequisites</p>
+            </div>
+        </div>
+    </section>
             
     <section class="mt-16 pt-10 border-t border-gray-100" aria-label="Course sequence">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">

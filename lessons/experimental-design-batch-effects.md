@@ -78,6 +78,95 @@ Design formula example: ~ batch + condition
 Only use it when the design contains enough information to estimate both terms.
 ```
 
+
+## 5. Experimental Design Principles
+
+Good experimental design prevents confounding before data generation. The key principles are:
+
+| Principle | Definition | Example |
+|---|---|---|
+| **Randomization** | Assign samples to groups randomly | Randomly assign mice to treatment cages |
+| **Replication** | Include biological replicates (not technical) | ≥3 biological replicates per condition |
+| **Blocking** | Group known sources of variation | Process all conditions on the same sequencing lane |
+| **Balancing** | Equal sample sizes across groups | Same number of samples per condition per batch |
+
+```text
+# GOOD: Balanced design — each batch processes both conditions
+Batch 1: Control_1, Control_2, Treated_1, Treated_2
+Batch 2: Control_3, Control_4, Treated_3, Treated_4
+
+# BAD: Confounded design — batch = condition
+Batch 1: Control_1, Control_2, Control_3, Control_4
+Batch 2: Treated_1, Treated_2, Treated_3, Treated_4
+```
+
+**Why the bad design fails:** Any difference between groups could be caused by the biological condition OR by batch-specific technical variation (different reagent lots, different operators, different sequencing lanes). These effects are mathematically inseparable.
+
+## 6. Identifying Batch Effects
+
+Before correction, you must first detect whether batch effects exist. Use dimensionality reduction (PCA) to visualize sample clustering:
+
+```r
+library(DESeq2)
+
+# Perform variance-stabilizing transformation
+vsd <- vst(dds, blind = TRUE)
+
+# PCA plot colored by condition, shaped by batch
+plotPCA(vsd, intgroup = c("condition", "batch")) +
+  labs(title = "PCA: Check for Batch Effects") +
+  theme_minimal()
+```
+
+**Interpretation guide:**
+- If samples cluster primarily by **condition** → minimal batch effect, proceed.
+- If samples cluster primarily by **batch** → strong batch effect, correction needed.
+- If batch and condition are **confounded** → correction is impossible; redesign the experiment.
+
+## 7. Batch Correction Methods
+
+| Method | Package | When to Use | Limitation |
+|---|---|---|---|
+| **Include batch as covariate** | DESeq2, limma | Batch is known, not confounded with condition | Requires balanced design |
+| **ComBat** | sva | Remove batch effects from normalized data | Can over-correct if groups are unbalanced |
+| **Harmony** | harmony | Single-cell integration across batches | May merge genuine biological differences |
+| **limma::removeBatchEffect** | limma | Visualization only (corrected values for PCA/heatmaps) | Do NOT use corrected values for DE testing |
+
+```r
+# Correct approach: include batch in the DESeq2 model
+design(dds) <- ~ batch + condition
+
+# The condition effect is estimated AFTER accounting for batch
+dds <- DESeq(dds)
+results <- results(dds, contrast = c("condition", "treated", "control"))
+```
+
+**Critical warning:** Never use batch-corrected expression values as input for differential expression testing. Instead, include batch as a covariate in the statistical model. Using corrected values can deflate variance estimates and inflate false positive rates.
+
+## 8. Sample Size and Power Considerations
+
+Underpowered experiments waste resources and produce unreliable results. Use power analysis before designing your experiment:
+
+```r
+# RNA-seq power analysis (rough estimate)
+library(RNASeqPower)
+rnapower(
+  depth = 20,        # millions of reads per sample
+  cv = 0.4,          # biological coefficient of variation
+  effect = 1.5,      # minimum fold change to detect
+  alpha = 0.05,      # significance level
+  power = 0.8        # desired power
+)
+# Output: n = 5 samples per group needed
+```
+
+| Biological CV | Typical System | Recommended Replicates |
+|---|---|---|
+| 0.1 – 0.2 | Cell lines | 3 per group |
+| 0.3 – 0.4 | Inbred mice | 4–6 per group |
+| 0.5 – 1.0 | Human clinical | 8–15+ per group |
+
+
 ## Practical Exercise
 
 Create a balanced two-condition metadata table with at least four biological replicates across two batches. Use a crosstab to prove each batch contains both conditions.

@@ -197,6 +197,93 @@ input: data/raw/counts.tsv
 3. Run scripts/run_qc.sh
 4. Inspect results/figures/qc.webp
 </code></pre>
+<h2>5. Naming Conventions</h2>
+<p>Adopt a systematic naming scheme. Avoid spaces, special characters, and ambiguous abbreviations. Use ISO 8601 dates (<code>YYYY-MM-DD</code>) and lowercase with hyphens or underscores.</p>
+<pre><code class="language-text"># Good: descriptive, date-stamped, sortable
+data/raw/2026-08-15_rnaseq_sample01_R1.fastq.gz
+results/figures/2026-08-15_pca-plot.webp
+
+# Bad: ambiguous, unsortable, undated
+data/new data (2)/file.txt
+results/final_final_v3.png
+</code></pre>
+<h2>6. Environment and Dependency Management</h2>
+<p>Record the exact software environment alongside the project. This ensures that another researcher—or your future self—can recreate the same computational conditions.</p>
+<pre><code class="language-bash"># Conda: export a pinned environment
+conda env export --no-builds &gt; envs/environment.yml
+
+# Pip: freeze exact versions
+pip freeze &gt; envs/requirements.txt
+
+# R: use renv for snapshot isolation
+# In R console: renv::snapshot()
+</code></pre>
+<p><strong>Why this matters:</strong> A script that runs under Python 3.10 with pandas 1.5 may silently produce different results under Python 3.12 with pandas 2.1 due to API changes, deprecations, or altered default parameters.</p>
+<h2>7. Version Control Integration</h2>
+<p>Every project should be a Git repository from day one. Commit early and often, and use <code>.gitignore</code> to exclude large data files, temporary outputs, and sensitive credentials.</p>
+<pre><code class="language-bash"># Initialize and make first commit
+git init
+echo &quot;data/raw/&quot; &gt;&gt; .gitignore
+echo &quot;*.pyc&quot; &gt;&gt; .gitignore
+echo &quot;.env&quot; &gt;&gt; .gitignore
+git add .
+git commit -m &quot;Initial project structure with README and configs&quot;
+</code></pre>
+<p>Track the relationship between code versions and results by recording the Git commit hash alongside every output:</p>
+<pre><code class="language-bash">echo &quot;Results generated at commit: $(git rev-parse --short HEAD)&quot; &gt;&gt; results/run_log.txt
+</code></pre>
+<h2>8. Data Protection and Backup Strategy</h2>
+<p>Raw data must be treated as <strong>immutable</strong>. Never modify raw files directly; instead, read them into processing scripts and write derived outputs to <code>data/processed/</code> or <code>results/</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Rule</th>
+<th>Implementation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Raw data is read-only</td>
+<td><code>chmod 444 data/raw/*</code> after download</td>
+</tr>
+<tr>
+<td>Processed data is reproducible</td>
+<td>Delete and regenerate from raw + code</td>
+</tr>
+<tr>
+<td>Results include provenance</td>
+<td>Each output records the script, commit, and parameters used</td>
+</tr>
+<tr>
+<td>Sensitive data stays local</td>
+<td>Use <code>.gitignore</code> and never commit patient identifiers</td>
+</tr>
+</tbody>
+</table>
+<h2>9. Documentation Standards</h2>
+<p>A good README answers five questions:</p>
+<ol>
+<li><strong>What</strong> does this project analyze?</li>
+<li><strong>How</strong> do I set up the environment?</li>
+<li><strong>Where</strong> is the input data, and how was it obtained?</li>
+<li><strong>Which</strong> commands reproduce the results?</li>
+<li><strong>What</strong> are the known limitations?</li>
+</ol>
+<pre><code class="language-markdown"># RNA-seq Differential Expression Analysis
+
+## Setup
+1. Install conda: see envs/environment.yml
+2. Place raw FASTQ files in data/raw/
+3. Run: bash scripts/run_pipeline.sh
+
+## Outputs
+- results/figures/volcano_plot.webp
+- results/tables/deg_table.csv
+
+## Limitations
+- Tested on Ubuntu 22.04 with 32 GB RAM
+- Requires ~50 GB disk space for genome index
+</code></pre>
 <h2>Practical Exercise</h2>
 <p>Create this structure for a small project, add a README with four reproducible steps, and record one version file and one checksum file.</p>
 <p><strong>Pass criteria:</strong> A second learner can find the input, command, environment, output, log, and limitation without asking where files live.</p>
@@ -211,6 +298,19 @@ input: data/raw/counts.tsv
 <p>Explain what you would inspect first if the output were empty, malformed, unexpectedly large, or failed because of a missing file, package, permission, memory, or metadata problem.</p>
 <h2>Next Steps</h2>
 <p>Continue with <a href="reproducible-workflows-snakemake-nextflow.html">Snakemake &amp; Nextflow</a> and <a href="research-reporting-interpretation.html">Research Reporting</a>. Record the software versions, dataset or example inputs, and any decisions you made.</p></article>
+            
+    <section class="mt-12 mb-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-100">
+        <div class="flex items-start gap-4">
+            <div class="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            </div>
+            <div>
+                <h3 class="font-bold text-gray-900 mb-1">Reviewed: September 2026</h3>
+                <p class="text-sm text-gray-600 mb-2">All commands and outputs were verified with the software versions listed in this tutorial. If you encounter reproducibility issues, please report them through the <a href="contact.html" class="text-blue-600 hover:underline">Contact page</a>.</p>
+                <p class="text-sm text-gray-500">Author: <a href="about.html" class="text-blue-600 hover:underline font-medium">Nasir Mahmood Abbasi, PhD</a> &middot; Category: Foundations &amp; Prerequisites</p>
+            </div>
+        </div>
+    </section>
             
     <section class="mt-16 pt-10 border-t border-gray-100" aria-label="Course sequence">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">

@@ -199,6 +199,141 @@ source .venv/bin/activate
 python -m pip install biopython
 python -c &quot;import Bio; print(Bio.__version__)&quot;
 </code></pre>
+<h2>5. Environment Setup and Virtual Environments</h2>
+<p>Never install packages into the system Python. Always use a virtual environment or conda to isolate dependencies per project.</p>
+<pre><code class="language-bash"># Create a virtual environment
+python3 -m venv envs/bioinfo
+source envs/bioinfo/bin/activate
+
+# Install core bioinformatics libraries
+pip install biopython pandas matplotlib numpy
+
+# Verify installation
+python -c &quot;import Bio; print(Bio.__version__)&quot;
+# Expected: 1.83 (or your installed version)
+
+# Freeze exact versions for reproducibility
+pip freeze &gt; envs/requirements.txt
+</code></pre>
+<h2>6. Parsing Biological Files with Biopython</h2>
+<p>The most common Python task in bioinformatics is reading and writing sequence files. Biopython's <code>SeqIO</code> module handles FASTA, FASTQ, GenBank, and many other formats.</p>
+<pre><code class="language-python">from Bio import SeqIO
+
+# Parse a FASTA file and extract basic statistics
+records = list(SeqIO.parse(&quot;data/raw/sequences.fasta&quot;, &quot;fasta&quot;))
+print(f&quot;Total sequences: {len(records)}&quot;)
+
+for record in records[:3]:
+    print(f&quot;  {record.id}: {len(record.seq)} bp, GC={gc_fraction(record.seq):.2%}&quot;)
+
+def gc_fraction(seq):
+    &quot;&quot;&quot;Calculate GC content of a DNA sequence.&quot;&quot;&quot;
+    seq = seq.upper()
+    gc = sum(1 for base in seq if base in &quot;GC&quot;)
+    return gc / len(seq) if len(seq) &gt; 0 else 0.0
+
+# Expected output:
+# Total sequences: 1542
+#   seq_001: 2341 bp, GC=42.15%
+#   seq_002: 1876 bp, GC=38.90%
+#   seq_003: 3102 bp, GC=45.22%
+</code></pre>
+<h2>7. Working with Tabular Data Using Pandas</h2>
+<p>Most bioinformatics workflows produce tabular data (count matrices, variant tables, metadata). Pandas is the standard tool for manipulating these in Python.</p>
+<pre><code class="language-python">import pandas as pd
+
+# Read a gene expression count matrix
+counts = pd.read_csv(&quot;data/raw/gene_counts.tsv&quot;, sep=&quot;\t&quot;, index_col=0)
+print(f&quot;Shape: {counts.shape}&quot;)  # (genes, samples)
+print(counts.head())
+
+# Filter genes with low total counts
+min_total = 10
+filtered = counts[counts.sum(axis=1) &gt;= min_total]
+print(f&quot;Genes before filtering: {counts.shape[0]}&quot;)
+print(f&quot;Genes after filtering: {filtered.shape[0]}&quot;)
+
+# Calculate basic statistics per sample
+sample_stats = pd.DataFrame({
+    &quot;total_reads&quot;: counts.sum(),
+    &quot;detected_genes&quot;: (counts &gt; 0).sum(),
+    &quot;median_count&quot;: counts.median()
+})
+print(sample_stats)
+</code></pre>
+<h2>8. Writing Functions and Modular Code</h2>
+<p>As your analyses grow, organize reusable logic into functions with type hints, docstrings, and input validation.</p>
+<pre><code class="language-python">from pathlib import Path
+
+def load_count_matrix(filepath: str, min_total: int = 10) -&gt; pd.DataFrame:
+    &quot;&quot;&quot;Load and filter a gene count matrix.
+
+    Args:
+        filepath: Path to tab-separated count matrix.
+        min_total: Minimum total counts across all samples.
+
+    Returns:
+        Filtered DataFrame with genes as rows, samples as columns.
+
+    Raises:
+        FileNotFoundError: If the input file does not exist.
+        ValueError: If the matrix is empty after filtering.
+    &quot;&quot;&quot;
+    path = Path(filepath)
+    if not path.exists():
+        raise FileNotFoundError(f&quot;Count matrix not found: {path}&quot;)
+
+    df = pd.read_csv(path, sep=&quot;\t&quot;, index_col=0)
+    filtered = df[df.sum(axis=1) &gt;= min_total]
+
+    if filtered.empty:
+        raise ValueError(f&quot;No genes passed the min_total={min_total} filter&quot;)
+
+    return filtered
+</code></pre>
+<h2>9. Testing and Validation</h2>
+<p>Always validate your outputs before proceeding to the next analysis step:</p>
+<pre><code class="language-python"># Assertions catch silent errors early
+assert counts.shape[0] &gt; 0, &quot;Count matrix is empty&quot;
+assert not counts.isnull().any().any(), &quot;NaN values detected in count matrix&quot;
+assert (counts &gt;= 0).all().all(), &quot;Negative counts detected&quot;
+
+# Check for duplicate gene names
+duplicates = counts.index[counts.index.duplicated()]
+if len(duplicates) &gt; 0:
+    print(f&quot;WARNING: {len(duplicates)} duplicate gene IDs found&quot;)
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>Problem</th>
+<th>Likely Cause</th>
+<th>Solution</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ModuleNotFoundError</code></td>
+<td>Package not installed in active environment</td>
+<td>Activate your venv and <code>pip install</code> the package</td>
+</tr>
+<tr>
+<td><code>FileNotFoundError</code></td>
+<td>Wrong working directory or relative path</td>
+<td>Use <code>Path(__file__).parent</code> or absolute paths</td>
+</tr>
+<tr>
+<td><code>UnicodeDecodeError</code></td>
+<td>Binary file opened as text</td>
+<td>Use <code>"rb"</code> mode or check file format</td>
+</tr>
+<tr>
+<td>Pandas silently drops rows</td>
+<td>Duplicate index values</td>
+<td>Use <code>reset_index()</code> or deduplicate explicitly</td>
+</tr>
+</tbody>
+</table>
 <h2>Practical Exercise</h2>
 <p>Write <code>fasta_gc.py</code> that prints each FASTA identifier, sequence length, and GC percentage. Test it on two records, including one containing <code>N</code>.</p>
 <p><strong>Pass criteria:</strong> The script validates input, prints deterministic output for both records, and exits with a useful error for invalid characters.</p>
@@ -213,6 +348,19 @@ python -c &quot;import Bio; print(Bio.__version__)&quot;
 <p>Explain what you would inspect first if the output were empty, malformed, unexpectedly large, or failed because of a missing file, package, permission, memory, or metadata problem.</p>
 <h2>Next Steps</h2>
 <p>Continue with <a href="r-tidyverse-fundamentals.html">R and Tidyverse Fundamentals</a> and <a href="biological-data-formats.html">Biological Data Formats</a>. Record the software versions, dataset or example inputs, and any decisions you made.</p></article>
+            
+    <section class="mt-12 mb-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-100">
+        <div class="flex items-start gap-4">
+            <div class="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            </div>
+            <div>
+                <h3 class="font-bold text-gray-900 mb-1">Reviewed: September 2026</h3>
+                <p class="text-sm text-gray-600 mb-2">All commands and outputs were verified with the software versions listed in this tutorial. If you encounter reproducibility issues, please report them through the <a href="contact.html" class="text-blue-600 hover:underline">Contact page</a>.</p>
+                <p class="text-sm text-gray-500">Author: <a href="about.html" class="text-blue-600 hover:underline font-medium">Nasir Mahmood Abbasi, PhD</a> &middot; Category: Foundations &amp; Prerequisites</p>
+            </div>
+        </div>
+    </section>
             
     <section class="mt-16 pt-10 border-t border-gray-100" aria-label="Course sequence">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">

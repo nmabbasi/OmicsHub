@@ -75,6 +75,139 @@ python --version
 conda env export --from-history > environment.yml
 ```
 
+
+## 5. Setting Up a Bioinformatics Repository
+
+```bash
+# Initialize a new project
+mkdir rnaseq-analysis && cd rnaseq-analysis
+git init
+
+# Configure your identity (required once per machine)
+git config user.name "Your Name"
+git config user.email "your.email@institution.edu"
+
+# Create the standard bioinformatics .gitignore
+cat > .gitignore << 'EOF'
+# Large data files — track with DVC or external storage
+data/raw/
+*.fastq.gz
+*.bam
+*.bai
+
+# Temporary and generated files
+*.pyc
+__pycache__/
+.ipynb_checkpoints/
+
+# Environment files
+envs/
+.venv/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Sensitive credentials
+.env
+*.key
+EOF
+
+git add .
+git commit -m "Initial project structure"
+```
+
+## 6. Branching and Feature Development
+
+Branches let you experiment without risking your stable analysis. Use descriptive branch names:
+
+```bash
+# Create a branch for a new analysis
+git checkout -b feature/add-deseq2-analysis
+
+# Make changes, commit incrementally
+git add scripts/run_deseq2.R
+git commit -m "Add DESeq2 differential expression script"
+
+git add results/figures/volcano_plot.webp
+git commit -m "Add volcano plot from DESeq2 results"
+
+# When the analysis is complete and verified, merge back
+git checkout main
+git merge feature/add-deseq2-analysis
+git branch -d feature/add-deseq2-analysis
+```
+
+## 7. Commit Discipline
+
+Good commit messages are essential for understanding the history of an analysis. Follow the conventional commit format:
+
+```text
+# Good commits — each captures one logical change
+git commit -m "Add QC filtering step: remove genes with < 10 total counts"
+git commit -m "Fix chromosome naming mismatch between FASTA and GTF"
+git commit -m "Update DESeq2 from v1.40 to v1.42 for apeglm shrinkage"
+
+# Bad commits — vague, bundled, or meaningless
+git commit -m "updates"
+git commit -m "fixed stuff"
+git commit -m "final version v3"
+```
+
+## 8. Handling Large Files with Git LFS or DVC
+
+Raw sequencing data (FASTQ, BAM) should never be committed directly to Git. Use Git LFS or DVC for large file tracking:
+
+```bash
+# Option 1: Git LFS for moderately large files
+git lfs install
+git lfs track "*.bam"
+git lfs track "*.fastq.gz"
+git add .gitattributes
+git commit -m "Configure Git LFS for sequencing files"
+
+# Option 2: DVC for very large datasets
+pip install dvc
+dvc init
+dvc add data/raw/sample_R1.fastq.gz
+git add data/raw/sample_R1.fastq.gz.dvc .gitignore
+git commit -m "Track raw FASTQ with DVC"
+```
+
+## 9. Conflict Resolution
+
+When two collaborators edit the same file, Git reports a merge conflict. Resolve it systematically:
+
+```bash
+# Attempt to merge
+git merge collaborator/branch-name
+
+# If conflict occurs, Git marks the file:
+# <<<<<<< HEAD
+# your version of the code
+# =======
+# their version of the code
+# >>>>>>> collaborator/branch-name
+
+# Steps to resolve:
+# 1. Open the conflicting file
+# 2. Choose the correct version (or combine both)
+# 3. Remove the conflict markers
+# 4. Test that the code still works
+# 5. Stage and commit
+
+git add scripts/run_analysis.R
+git commit -m "Resolve merge conflict in run_analysis.R: keep updated filter threshold"
+```
+
+| Problem | Cause | Solution |
+|---|---|---|
+| `fatal: not a git repository` | Not in a Git-initialized directory | Run `git init` or `cd` to the correct directory |
+| Accidentally committed large files | Forgot `.gitignore` | Use `git rm --cached file` and update `.gitignore` |
+| Lost work after `git reset --hard` | Destructive reset | Use `git reflog` to find and recover the lost commit |
+| Push rejected | Remote has newer commits | Run `git pull --rebase` before pushing |
+
+
 ## Practical Exercise
 
 Create a small repository containing a README, `.gitignore`, one script, and an environment file. Make two commits and use `git log` to show the history.

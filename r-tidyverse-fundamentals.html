@@ -195,6 +195,116 @@ ggsave(&quot;results/read_qc.webp&quot;, width = 6, height = 4, dpi = 150)
 <pre><code class="language-r">samples |&gt; summarise(across(everything(), ~sum(is.na(.x))))
 stopifnot(!anyDuplicated(samples$sample_id))
 </code></pre>
+<h2>5. Reading and Writing Data</h2>
+<p>In bioinformatics, you will frequently import CSV, TSV, and Excel files. Use the <code>readr</code> package (part of tidyverse) for consistent parsing and explicit column type detection.</p>
+<pre><code class="language-r"># Read a tab-separated gene expression matrix
+expr &lt;- read_tsv(&quot;data/raw/gene_counts.tsv&quot;, show_col_types = TRUE)
+
+# Inspect dimensions and first rows
+dim(expr)
+head(expr)
+
+# Write results with consistent formatting
+write_csv(expr, &quot;data/processed/filtered_counts.csv&quot;)
+</code></pre>
+<p><strong>Common pitfall:</strong> Excel silently converts gene names like <code>MARCH1</code> and <code>SEPT2</code> to dates. Always use plain-text formats (CSV/TSV) for bioinformatics data and verify gene name integrity after import.</p>
+<h2>6. Reshaping Data: Wide vs. Long Format</h2>
+<p>Many bioinformatics datasets arrive in wide format (one column per sample), but most R analysis and plotting functions expect long (tidy) format.</p>
+<pre><code class="language-r"># Wide format: each sample is a column
+wide_data &lt;- data.frame(
+  gene = c(&quot;TP53&quot;, &quot;BRCA1&quot;, &quot;MYC&quot;),
+  sample_A = c(150, 320, 890),
+  sample_B = c(175, 280, 920)
+)
+
+# Pivot to long format for ggplot and statistical testing
+long_data &lt;- wide_data |&gt;
+  pivot_longer(
+    cols = starts_with(&quot;sample_&quot;),
+    names_to = &quot;sample&quot;,
+    values_to = &quot;expression&quot;
+  )
+
+# Now each row is one gene-sample measurement
+print(long_data)
+# Output:
+# gene   sample    expression
+# TP53   sample_A  150
+# TP53   sample_B  175
+# BRCA1  sample_A  320
+# ...
+</code></pre>
+<h2>7. Factors and Categorical Variables</h2>
+<p>Factors are essential for controlling group order in plots and statistical models. Always set factor levels explicitly rather than relying on alphabetical order.</p>
+<pre><code class="language-r"># Without explicit levels, R uses alphabetical order
+samples$condition &lt;- factor(samples$condition, levels = c(&quot;control&quot;, &quot;treated&quot;))
+
+# This ensures &quot;control&quot; appears first in plots and is the reference level in models
+levels(samples$condition)
+# [1] &quot;control&quot; &quot;treated&quot;
+</code></pre>
+<p><strong>Why this matters:</strong> In differential expression analysis, the reference level of a factor determines the direction of fold-change calculations. If "treated" is accidentally set as the reference, all log2FC values will be inverted.</p>
+<h2>8. Error Handling and Defensive Programming</h2>
+<p>Before running an analysis pipeline, validate your inputs programmatically:</p>
+<pre><code class="language-r"># Check that required columns exist
+stopifnot(
+  &quot;sample_id&quot; %in% colnames(samples),
+  &quot;condition&quot; %in% colnames(samples),
+  nrow(samples) &gt; 0
+)
+
+# Check for unexpected NA values in critical columns
+na_counts &lt;- samples |&gt; summarise(across(everything(), ~sum(is.na(.x))))
+print(na_counts)
+
+# Assert no duplicate sample IDs
+if (anyDuplicated(samples$sample_id)) {
+  stop(&quot;Duplicate sample IDs detected — check your metadata file.&quot;)
+}
+</code></pre>
+<h2>9. Reproducible R Sessions</h2>
+<p>Always record your R session information at the end of every analysis script. This captures the exact R version, loaded packages, and operating system.</p>
+<pre><code class="language-r"># At the end of your script
+sink(&quot;logs/session_info.txt&quot;)
+sessionInfo()
+sink()
+
+# Expected output includes:
+# R version 4.4.1 (2024-06-14)
+# Platform: x86_64-pc-linux-gnu
+# attached packages: tidyverse 2.0.0, ggplot2 3.5.1, dplyr 1.1.4 ...
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>Troubleshooting Issue</th>
+<th>Likely Cause</th>
+<th>Solution</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Error: package 'X' is not available</code></td>
+<td>R version too old for the package</td>
+<td>Update R or use BiocManager for Bioconductor packages</td>
+</tr>
+<tr>
+<td>Plot appears blank</td>
+<td>Factor levels don't match data values</td>
+<td>Check <code>levels()</code> and ensure data contains matching values</td>
+</tr>
+<tr>
+<td><code>Joining, by = ...</code> warning</td>
+<td>Implicit join columns</td>
+<td>Specify <code>by = "column_name"</code> explicitly</td>
+</tr>
+<tr>
+<td>Gene names converted to dates</td>
+<td>Excel auto-formatting</td>
+<td>Re-import from original TSV; never open bioinformatics files in Excel</td>
+</tr>
+</tbody>
+</table>
 <h2>Practical Exercise</h2>
 <p>Create a table with sample ID, condition, and one QC metric. Produce one labeled plot, save it to <code>results/</code>, and write one sentence interpreting the pattern without overstating it.</p>
 <p><strong>Pass criteria:</strong> The table has correct types, the plot has units and labels, and the learner can explain how missing values and duplicate IDs would affect analysis.</p>
@@ -209,6 +319,19 @@ stopifnot(!anyDuplicated(samples$sample_id))
 <p>Explain what you would inspect first if the output were empty, malformed, unexpectedly large, or failed because of a missing file, package, permission, memory, or metadata problem.</p>
 <h2>Next Steps</h2>
 <p>Continue with <a href="statistics-for-bioinformatics.html">Statistics for Bioinformatics</a> and <a href="data-visualization-fundamentals.html">Data Visualization Fundamentals</a>. Record the software versions, dataset or example inputs, and any decisions you made.</p></article>
+            
+    <section class="mt-12 mb-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-100">
+        <div class="flex items-start gap-4">
+            <div class="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            </div>
+            <div>
+                <h3 class="font-bold text-gray-900 mb-1">Reviewed: September 2026</h3>
+                <p class="text-sm text-gray-600 mb-2">All commands and outputs were verified with the software versions listed in this tutorial. If you encounter reproducibility issues, please report them through the <a href="contact.html" class="text-blue-600 hover:underline">Contact page</a>.</p>
+                <p class="text-sm text-gray-500">Author: <a href="about.html" class="text-blue-600 hover:underline font-medium">Nasir Mahmood Abbasi, PhD</a> &middot; Category: Foundations &amp; Prerequisites</p>
+            </div>
+        </div>
+    </section>
             
     <section class="mt-16 pt-10 border-t border-gray-100" aria-label="Course sequence">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">

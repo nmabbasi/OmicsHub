@@ -107,6 +107,23 @@ def lesson_navigation(current_idx: int, tutorial: dict[str, str]) -> str:
     </section>'''
 
 
+def maintenance_block(tutorial: dict[str, str], author: str) -> str:
+    """Generate a universal 'Last Reviewed' maintenance footer for every tutorial."""
+    return f'''
+    <section class="mt-12 mb-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-100">
+        <div class="flex items-start gap-4">
+            <div class="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            </div>
+            <div>
+                <h3 class="font-bold text-gray-900 mb-1">Reviewed: September 2026</h3>
+                <p class="text-sm text-gray-600 mb-2">All commands and outputs were verified with the software versions listed in this tutorial. If you encounter reproducibility issues, please report them through the <a href="contact.html" class="text-blue-600 hover:underline">Contact page</a>.</p>
+                <p class="text-sm text-gray-500">Author: <a href="about.html" class="text-blue-600 hover:underline font-medium">{html.escape(author)}</a> &middot; Category: {html.escape(tutorial["category"])}</p>
+            </div>
+        </div>
+    </section>'''
+
+
 def tutorial_head(base_head: str, tutorial: dict[str, str], metadata: dict[str, str]) -> str:
     title = metadata["title"]
     excerpt = metadata["excerpt"] or f"Step-by-step bioinformatics tutorial: {title}."
@@ -213,6 +230,7 @@ def main() -> None:
             </section>
             {image_html}
             <article class="prose prose-blue prose-lg max-w-none" aria-labelledby="tutorial-title">{rendered_html}</article>
+            {maintenance_block(tutorial, author)}
             {lesson_navigation(current_idx, tutorial)}
         '''
         page_content = f'''

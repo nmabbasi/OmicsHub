@@ -81,6 +81,139 @@ python -m pip install biopython
 python -c "import Bio; print(Bio.__version__)"
 ```
 
+
+## 5. Environment Setup and Virtual Environments
+
+Never install packages into the system Python. Always use a virtual environment or conda to isolate dependencies per project.
+
+```bash
+# Create a virtual environment
+python3 -m venv envs/bioinfo
+source envs/bioinfo/bin/activate
+
+# Install core bioinformatics libraries
+pip install biopython pandas matplotlib numpy
+
+# Verify installation
+python -c "import Bio; print(Bio.__version__)"
+# Expected: 1.83 (or your installed version)
+
+# Freeze exact versions for reproducibility
+pip freeze > envs/requirements.txt
+```
+
+## 6. Parsing Biological Files with Biopython
+
+The most common Python task in bioinformatics is reading and writing sequence files. Biopython's `SeqIO` module handles FASTA, FASTQ, GenBank, and many other formats.
+
+```python
+from Bio import SeqIO
+
+# Parse a FASTA file and extract basic statistics
+records = list(SeqIO.parse("data/raw/sequences.fasta", "fasta"))
+print(f"Total sequences: {len(records)}")
+
+for record in records[:3]:
+    print(f"  {record.id}: {len(record.seq)} bp, GC={gc_fraction(record.seq):.2%}")
+
+def gc_fraction(seq):
+    """Calculate GC content of a DNA sequence."""
+    seq = seq.upper()
+    gc = sum(1 for base in seq if base in "GC")
+    return gc / len(seq) if len(seq) > 0 else 0.0
+
+# Expected output:
+# Total sequences: 1542
+#   seq_001: 2341 bp, GC=42.15%
+#   seq_002: 1876 bp, GC=38.90%
+#   seq_003: 3102 bp, GC=45.22%
+```
+
+## 7. Working with Tabular Data Using Pandas
+
+Most bioinformatics workflows produce tabular data (count matrices, variant tables, metadata). Pandas is the standard tool for manipulating these in Python.
+
+```python
+import pandas as pd
+
+# Read a gene expression count matrix
+counts = pd.read_csv("data/raw/gene_counts.tsv", sep="\t", index_col=0)
+print(f"Shape: {counts.shape}")  # (genes, samples)
+print(counts.head())
+
+# Filter genes with low total counts
+min_total = 10
+filtered = counts[counts.sum(axis=1) >= min_total]
+print(f"Genes before filtering: {counts.shape[0]}")
+print(f"Genes after filtering: {filtered.shape[0]}")
+
+# Calculate basic statistics per sample
+sample_stats = pd.DataFrame({
+    "total_reads": counts.sum(),
+    "detected_genes": (counts > 0).sum(),
+    "median_count": counts.median()
+})
+print(sample_stats)
+```
+
+## 8. Writing Functions and Modular Code
+
+As your analyses grow, organize reusable logic into functions with type hints, docstrings, and input validation.
+
+```python
+from pathlib import Path
+
+def load_count_matrix(filepath: str, min_total: int = 10) -> pd.DataFrame:
+    """Load and filter a gene count matrix.
+    
+    Args:
+        filepath: Path to tab-separated count matrix.
+        min_total: Minimum total counts across all samples.
+    
+    Returns:
+        Filtered DataFrame with genes as rows, samples as columns.
+    
+    Raises:
+        FileNotFoundError: If the input file does not exist.
+        ValueError: If the matrix is empty after filtering.
+    """
+    path = Path(filepath)
+    if not path.exists():
+        raise FileNotFoundError(f"Count matrix not found: {path}")
+    
+    df = pd.read_csv(path, sep="\t", index_col=0)
+    filtered = df[df.sum(axis=1) >= min_total]
+    
+    if filtered.empty:
+        raise ValueError(f"No genes passed the min_total={min_total} filter")
+    
+    return filtered
+```
+
+## 9. Testing and Validation
+
+Always validate your outputs before proceeding to the next analysis step:
+
+```python
+# Assertions catch silent errors early
+assert counts.shape[0] > 0, "Count matrix is empty"
+assert not counts.isnull().any().any(), "NaN values detected in count matrix"
+assert (counts >= 0).all().all(), "Negative counts detected"
+
+# Check for duplicate gene names
+duplicates = counts.index[counts.index.duplicated()]
+if len(duplicates) > 0:
+    print(f"WARNING: {len(duplicates)} duplicate gene IDs found")
+```
+
+| Problem | Likely Cause | Solution |
+|---|---|---|
+| `ModuleNotFoundError` | Package not installed in active environment | Activate your venv and `pip install` the package |
+| `FileNotFoundError` | Wrong working directory or relative path | Use `Path(__file__).parent` or absolute paths |
+| `UnicodeDecodeError` | Binary file opened as text | Use `"rb"` mode or check file format |
+| Pandas silently drops rows | Duplicate index values | Use `reset_index()` or deduplicate explicitly |
+
+
 ## Practical Exercise
 
 Write `fasta_gc.py` that prints each FASTA identifier, sequence length, and GC percentage. Test it on two records, including one containing `N`.
