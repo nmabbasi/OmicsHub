@@ -31,10 +31,10 @@ tutorial_files = [
     'conda-mamba-part1.md',
 
     # High-Performance Computing (HPC)
-    '1-Connection.md',
-    '2-HPC_Basic_Commands.md',
+    'hpc-connection.md',
+    'hpc-basic-commands.md',
     'hpc-submission-part1.md',
-    '4-Support.md',
+    'hpc-support.md',
 
     # Workflow & Containerization
     'reproducible-workflows-snakemake-nextflow.md',

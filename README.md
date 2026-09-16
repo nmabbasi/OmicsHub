@@ -21,6 +21,6 @@ This repository hosts the source code for the interactive web portal, featuring 
 
 ## 📧 Contact & Author
 
-**Nasir Mahmood Abbasi**  
+**Nasir Mahmood Abbasi, PhD**  
 💻 GitHub: [@nmabbasi](https://github.com/nmabbasi)  
 📧 Email: [nmabbasi@gmail.com](mailto:nmabbasi@gmail.com)
