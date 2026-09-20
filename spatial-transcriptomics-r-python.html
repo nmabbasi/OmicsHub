@@ -41,7 +41,7 @@
 <meta name="google-adsense-account" content="ca-pub-2910340533244599"/>
   <meta name="google-site-verification" content="XioIUjAyO5PEAT-N6nLrowdiDe4ATl-vKdRGmmrDHZM"/>
   <link rel="canonical" href="https://theomicshub.com/spatial-transcriptomics-r-python.html"/>
-  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "Article", "headline": "Spatial Transcriptomics", "description": "Learn how to analyze spatial transcriptomics data to map gene expression directly onto tissue architecture, with parallel code examples in both R (Seurat) and Python (Squidpy).", "mainEntityOfPage": {"@type": "WebPage", "@id": "https://theomicshub.com/spatial-transcriptomics-r-python.html"}, "image": "https://theomicshub.com/images/spatial-transcriptomics-workstation.webp", "author": {"@type": "Person", "name": "Nasir Mahmood Abbasi, PhD", "url": "https://theomicshub.com/about.html"}, "publisher": {"@type": "Organization", "name": "The Omics Hub", "url": "https://theomicshub.com", "logo": {"@type": "ImageObject", "url": "https://theomicshub.com/images/favicon.svg"}}, "datePublished": "2026-08-14", "dateModified": "2026-08-14"}</script>
+  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "Article", "headline": "Spatial Transcriptomics", "description": "Learn how to analyze spatial transcriptomics data to map gene expression directly onto tissue architecture, with parallel code examples in both R (Seurat) and Python (Squidpy).", "mainEntityOfPage": {"@type": "WebPage", "@id": "https://theomicshub.com/spatial-transcriptomics-r-python.html"}, "image": "https://theomicshub.com/images/spatial-transcriptomics-workstation.webp", "author": {"@type": "Person", "name": "Nasir Mahmood Abbasi, PhD", "url": "https://theomicshub.com/about.html"}, "publisher": {"@type": "Organization", "name": "The Omics Hub", "url": "https://theomicshub.com", "logo": {"@type": "ImageObject", "url": "https://theomicshub.com/images/favicon.svg"}}, "datePublished": "2026-08-26", "dateModified": "2026-08-14"}</script>
 </head>
 <body class="bg-white text-gray-900">
 <script>
@@ -248,7 +248,49 @@ SpatialDimPlot(spatial_data, label = TRUE, label.size = 3)
 <h2>Summary</h2>
 <p>Both ecosystems are incredibly powerful. <strong>Seurat (R)</strong> provides an easy, out-of-the-box experience that is very familiar if you already do scRNA-seq. <strong>Squidpy (Python)</strong> provides superior tools for graph-based spatial statistics, such as testing if two cell types physically co-occur in the tissue.</p>
 <div class="mt-10 p-8 bg-gray-50 border border-gray-200 rounded-xl">
-  <h3 class="text-xl font-bold text-gray-900 mb-4">Knowledge Check & Assessment</h3>
+  
+<section class="prose-expansion bg-white border-t border-gray-100 mt-10 pt-10 pb-4">
+  <div class="max-w-3xl mx-auto px-2">
+    <h2 class="text-2xl font-bold text-slate-900 mb-4">Why Spatial Context Changes Everything</h2>
+    <p class="text-slate-700 text-base leading-relaxed mb-4">
+      Standard single-cell RNA sequencing dissolves tissue into a suspension of individual cells. You recover transcriptomic profiles for thousands of cells, but you lose the one thing that is often biologically decisive: where each cell sat in the original tissue. Spatial transcriptomics restores that coordinate information. Each spot or bead in a Visium slide, or each pixel in a MERFISH experiment, carries both a gene expression vector and a physical position on the tissue section.
+    </p>
+    <p class="text-slate-700 text-base leading-relaxed mb-4">
+      This matters enormously in cancer biology, neuroscience, and developmental biology. A macrophage sitting at the invasive front of a tumor behaves differently from a macrophage in the necrotic core, even if their bulk transcriptomes look similar. A neuron in layer II of the cortex expresses a different set of markers than a morphologically identical neuron in layer VI. Spatial methods let you ask which genes are enriched at tissue boundaries, which cell types co-localise with others, and whether a ligand-receptor interaction inferred from scRNA-seq data actually occurs between cells that are physically adjacent.
+    </p>
+    <h3 class="text-xl font-semibold text-slate-900 mb-3 mt-8">Choosing the Right Platform</h3>
+    <p class="text-slate-700 text-base leading-relaxed mb-4">
+      The two most common approaches in 2026 are capture-based methods like 10x Genomics Visium and imaging-based methods like MERFISH, seqFISH, and Xenium. Visium captures all polyadenylated RNA across the transcriptome, but each spot averages roughly 5 to 15 cells. MERFISH and Xenium measure a curated panel of a few hundred to a few thousand genes at single-cell or subcellular resolution. The choice depends on your question: if you want transcriptome-wide discovery, use Visium; if you want to resolve individual cells with a targeted panel, use an imaging platform.
+    </p>
+    <p class="text-slate-700 text-base leading-relaxed mb-4">
+      For Visium data, the standard analysis stack uses Seurat in R or Squidpy and Scanpy in Python. Both load the tissue image alongside the spot-by-gene count matrix, allowing you to overlay expression patterns directly onto the histological image. The key difference from scRNA-seq is that you must decide early whether to treat spots as pseudo-cells or to deconvolve them into constituent cell types using a reference single-cell atlas.
+    </p>
+    <h3 class="text-xl font-semibold text-slate-900 mb-3 mt-8">Deconvolution: Recovering Cell-Type Proportions from Spots</h3>
+    <p class="text-slate-700 text-base leading-relaxed mb-4">
+      Because each Visium spot contains multiple cells, spatially variable genes are not necessarily cell-type-specific genes. A gene may appear enriched in a particular region simply because that region contains more of a given cell type, not because that gene is upregulated in those cells. Tools like RCTD, Spotlight, and NNLS deconvolution use a reference single-cell dataset to estimate the mixture of cell types in each spot. The result is a proportion matrix: for each spot, you obtain an estimate of how much of the signal comes from each cell type.
+    </p>
+    <p class="text-slate-700 text-base leading-relaxed mb-4">
+      Once you have cell-type proportions, you can ask spatially resolved questions: do T cells and tumour cells co-localise? Do fibroblasts cluster near the stromal boundary? Which regions are predominantly composed of which cell types? These questions are not answerable from single-cell data alone, and they are what make spatial transcriptomics genuinely complementary rather than redundant with scRNA-seq.
+    </p>
+    <h3 class="text-xl font-semibold text-slate-900 mb-3 mt-8">Common Pitfalls and How to Avoid Them</h3>
+    <p class="text-slate-700 text-base leading-relaxed mb-4">
+      One frequent mistake is treating spatially variable genes as differentially expressed genes without accounting for spatial autocorrelation. Standard differential expression tests assume independence between observations; adjacent spots share signal because they share cells at their edges. Tools like SpatialDE and NNSVG test for spatial variability directly, using statistical models that account for this autocorrelation.
+    </p>
+    <p class="text-slate-700 text-base leading-relaxed mb-4">
+      Another pitfall is neglecting tissue quality. RNA degrades rapidly after tissue removal, and sections with high background fluorescence or poor morphology will produce noisy data regardless of the analysis method. Always inspect the histological image alongside QC metrics before committing to a dataset. A saturated or compressed tissue section will introduce artefacts that no computational method can fully correct.
+    </p>
+    <div class="bg-blue-50 border border-blue-200 rounded-xl p-5 mt-6 mb-2">
+      <p class="text-blue-900 font-semibold mb-2">When to Use Spatial Transcriptomics vs Standard scRNA-seq</p>
+      <ul class="list-disc list-inside text-blue-800 space-y-1 text-sm">
+        <li>Use spatial transcriptomics when tissue architecture is central to your hypothesis.</li>
+        <li>Use scRNA-seq when you need transcriptome-wide profiling at true single-cell resolution with high cell numbers.</li>
+        <li>Combine both when you want to annotate cell types from scRNA-seq and then map them back onto tissue using spatial data.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<h3 class="text-xl font-bold text-gray-900 mb-4">Knowledge Check & Assessment</h3>
   <div class="space-y-4">
     <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
       <h4 class="font-bold text-gray-800 mb-2">1. Concept Verification</h4>
@@ -271,7 +313,7 @@ SpatialDimPlot(spatial_data, label = TRUE, label.size = 3)
                 <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
             </div>
             <div>
-                <h3 class="font-bold text-gray-900 mb-1">Reviewed: September 2026</h3>
+                <h3 class="font-bold text-gray-900 mb-1">Reviewed: August 2026</h3>
                 <p class="text-sm text-gray-600 mb-2">All commands and outputs were verified with the software versions listed in this tutorial. If you encounter reproducibility issues, please report them through the <a href="contact.html" class="text-blue-600 hover:underline">Contact page</a>.</p>
                 <p class="text-sm text-gray-500">Author: <a href="about.html" class="text-blue-600 hover:underline font-medium">Nasir Mahmood Abbasi, PhD</a> &middot; Category: Spatial Transcriptomics</p>
             </div>

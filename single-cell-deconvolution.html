@@ -41,7 +41,7 @@
 <meta name="google-adsense-account" content="ca-pub-2910340533244599"/>
   <meta name="google-site-verification" content="XioIUjAyO5PEAT-N6nLrowdiDe4ATl-vKdRGmmrDHZM"/>
   <link rel="canonical" href="https://theomicshub.com/single-cell-deconvolution.html"/>
-  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "Article", "headline": "Bulk RNA-seq Deconvolution using scRNA-seq", "description": "Learn how to use high-resolution single-cell data as a reference to mathematically deconvolute the cell type proportions in massive bulk RNA-seq clinical cohorts.", "mainEntityOfPage": {"@type": "WebPage", "@id": "https://theomicshub.com/single-cell-deconvolution.html"}, "image": "https://theomicshub.com/images/bulk-rna-seq-deconvolution.webp", "author": {"@type": "Person", "name": "Nasir Mahmood Abbasi, PhD", "url": "https://theomicshub.com/about.html"}, "publisher": {"@type": "Organization", "name": "The Omics Hub", "url": "https://theomicshub.com", "logo": {"@type": "ImageObject", "url": "https://theomicshub.com/images/favicon.svg"}}, "datePublished": "2026-08-14", "dateModified": "2026-08-14"}</script>
+  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "Article", "headline": "Bulk RNA-seq Deconvolution using scRNA-seq", "description": "Learn how to use high-resolution single-cell data as a reference to mathematically deconvolute the cell type proportions in massive bulk RNA-seq clinical cohorts.", "mainEntityOfPage": {"@type": "WebPage", "@id": "https://theomicshub.com/single-cell-deconvolution.html"}, "image": "https://theomicshub.com/images/bulk-rna-seq-deconvolution.webp", "author": {"@type": "Person", "name": "Nasir Mahmood Abbasi, PhD", "url": "https://theomicshub.com/about.html"}, "publisher": {"@type": "Organization", "name": "The Omics Hub", "url": "https://theomicshub.com", "logo": {"@type": "ImageObject", "url": "https://theomicshub.com/images/favicon.svg"}}, "datePublished": "2026-08-29", "dateModified": "2026-08-14"}</script>
 </head>
 <body class="bg-white text-gray-900">
 <script>
@@ -222,7 +222,41 @@ ggplot(plot_data, aes(x = Bulk_Sample, y = Proportion, fill = Cell_Type)) +
 <h2>Conclusion</h2>
 <p>Deconvolution is arguably the most powerful translational bioinformatics technique today. It allows you to take a 5-patient single-cell experiment, extract the signatures of a novel disease-driving cell state, and immediately scan for that state across historical 1,000-patient bulk RNA-seq clinical trials to test for survival outcomes.</p>
 <div class="mt-10 p-8 bg-gray-50 border border-gray-200 rounded-xl">
-  <h3 class="text-xl font-bold text-gray-900 mb-4">Knowledge Check & Assessment</h3>
+  
+<section class="prose-expansion bg-white border-t border-gray-100 mt-10 pt-10 pb-4">
+  <div class="max-w-3xl mx-auto px-2">
+    <h2 class="text-2xl font-bold text-slate-900 mb-4">What Deconvolution Is and Why It Matters</h2>
+    <p class="text-slate-700 text-base leading-relaxed mb-4">
+      Bulk RNA sequencing measures the average gene expression across all cells in a sample. If your tumour sample contains 60 percent cancer cells, 20 percent T cells, and 20 percent fibroblasts, your bulk RNA-seq profile is a weighted average of the gene expression profiles of those three populations. A gene that is highly expressed in T cells but not in cancer cells will appear at moderate expression in the bulk profile, and without additional information you cannot distinguish this from a gene that is expressed at moderate levels in every cell.
+    </p>
+    <p class="text-slate-700 text-base leading-relaxed mb-4">
+      Deconvolution attempts to reverse this mixing process, estimating the cellular composition of a bulk sample using a reference that specifies the gene expression signature of each cell type. The input is the bulk expression matrix and the reference signature matrix; the output is a proportion estimate for each cell type in each sample. This allows you to ask questions that bulk RNA-seq cannot answer on its own: does the fraction of cytotoxic T cells correlate with treatment response? Is the tumour macrophage proportion associated with prognosis?
+    </p>
+    <h3 class="text-xl font-semibold text-slate-900 mb-3 mt-8">Reference-Based vs Reference-Free Deconvolution</h3>
+    <p class="text-slate-700 text-base leading-relaxed mb-4">
+      Reference-based methods like CIBERSORT, MuSiC, and DWLS require a signature matrix that specifies the expected expression of each marker gene in each cell type. This signature matrix can come from a published reference built from isolated cell populations, or from your own single-cell RNA-seq data from the same tissue type. The quality of the deconvolution result depends heavily on the quality and relevance of the signature matrix. A signature built from peripheral blood mononuclear cells will perform poorly when applied to tumour-infiltrating lymphocytes, which can have very different transcriptional states from their circulating counterparts.
+    </p>
+    <p class="text-slate-700 text-base leading-relaxed mb-4">
+      Reference-free methods like NMF-based approaches do not require a pre-specified signature and instead learn the cell-type components directly from the data. They are useful when no appropriate reference exists, but the learned components are not labelled and must be interpreted post-hoc by examining which marker genes load strongly onto each component. This adds an interpretation step that can be subjective and requires domain knowledge.
+    </p>
+    <h3 class="text-xl font-semibold text-slate-900 mb-3 mt-8">Using Single-Cell Data as a Deconvolution Reference</h3>
+    <p class="text-slate-700 text-base leading-relaxed mb-4">
+      The most principled approach in 2026 is to use single-cell RNA-seq data from the same tissue type as your deconvolution reference. Tools like MuSiC and SCDC can estimate cell-type proportions in bulk samples using a matched or closely related single-cell atlas as the reference. The single-cell data provides both the cell type labels and the per-cell-type expression profiles needed to build the signature matrix.
+    </p>
+    <p class="text-slate-700 text-base leading-relaxed mb-4">
+      A critical practical consideration is that the single-cell reference should capture the same cellular states present in your bulk samples. If your bulk samples are from a disease condition and your single-cell reference was generated from healthy tissue, the disease-specific transcriptional states of infiltrating immune cells may not be well represented in the reference. In this situation, the deconvolution will estimate proportions that reflect the closest healthy cell type, potentially misclassifying activated or exhausted cells.
+    </p>
+    <h3 class="text-xl font-semibold text-slate-900 mb-3 mt-8">Validating Deconvolution Results</h3>
+    <p class="text-slate-700 text-base leading-relaxed mb-4">
+      Deconvolution estimates should always be validated against an independent measurement where possible. Flow cytometry data from the same samples is the gold standard for immune cell proportions. If flow cytometry data is available for a subset of your samples, correlating the deconvolution estimates against the flow cytometry proportions for the same cell types tells you how accurate the deconvolution is in your specific data context. Correlation coefficients of 0.7 or higher between deconvolution estimates and flow cytometry across samples are generally considered acceptable.
+    </p>
+    <p class="text-slate-700 text-base leading-relaxed mb-4">
+      When independent validation data is unavailable, assess internal consistency: do the estimated proportions sum to approximately one across cell types? Do biologically expected correlations hold, such as a negative correlation between tumour cell fraction and immune cell fraction? Do samples that are clinically annotated as T-cell-rich show high T cell deconvolution estimates? These sanity checks do not confirm accuracy but can detect gross failures of the deconvolution model.
+    </p>
+  </div>
+</section>
+
+<h3 class="text-xl font-bold text-gray-900 mb-4">Knowledge Check & Assessment</h3>
   <div class="space-y-4">
     <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
       <h4 class="font-bold text-gray-800 mb-2">1. Concept Verification</h4>
@@ -245,7 +279,7 @@ ggplot(plot_data, aes(x = Bulk_Sample, y = Proportion, fill = Cell_Type)) +
                 <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
             </div>
             <div>
-                <h3 class="font-bold text-gray-900 mb-1">Reviewed: September 2026</h3>
+                <h3 class="font-bold text-gray-900 mb-1">Reviewed: August 2026</h3>
                 <p class="text-sm text-gray-600 mb-2">All commands and outputs were verified with the software versions listed in this tutorial. If you encounter reproducibility issues, please report them through the <a href="contact.html" class="text-blue-600 hover:underline">Contact page</a>.</p>
                 <p class="text-sm text-gray-500">Author: <a href="about.html" class="text-blue-600 hover:underline font-medium">Nasir Mahmood Abbasi, PhD</a> &middot; Category: Advanced Single-Cell Analysis</p>
             </div>

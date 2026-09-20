@@ -41,7 +41,7 @@
 <meta name="google-adsense-account" content="ca-pub-2910340533244599"/>
   <meta name="google-site-verification" content="XioIUjAyO5PEAT-N6nLrowdiDe4ATl-vKdRGmmrDHZM"/>
   <link rel="canonical" href="https://theomicshub.com/tcr-bcr-repertoire-analysis.html"/>
-  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "Article", "headline": "Immune Repertoire Analysis", "description": "A guide to analyzing T-cell and B-cell receptor (TCR/BCR) repertoires from single-cell data using scRepertoire to track clonal expansion in diseases like Sézary Syndrome.", "mainEntityOfPage": {"@type": "WebPage", "@id": "https://theomicshub.com/tcr-bcr-repertoire-analysis.html"}, "image": "https://theomicshub.com/images/immune-repertoire-analysis.webp", "author": {"@type": "Person", "name": "Nasir Mahmood Abbasi, PhD", "url": "https://theomicshub.com/about.html"}, "publisher": {"@type": "Organization", "name": "The Omics Hub", "url": "https://theomicshub.com", "logo": {"@type": "ImageObject", "url": "https://theomicshub.com/images/favicon.svg"}}, "datePublished": "2026-08-14", "dateModified": "2026-08-14"}</script>
+  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "Article", "headline": "Immune Repertoire Analysis", "description": "A guide to analyzing T-cell and B-cell receptor (TCR/BCR) repertoires from single-cell data using scRepertoire to track clonal expansion in diseases like Sézary Syndrome.", "mainEntityOfPage": {"@type": "WebPage", "@id": "https://theomicshub.com/tcr-bcr-repertoire-analysis.html"}, "image": "https://theomicshub.com/images/immune-repertoire-analysis.webp", "author": {"@type": "Person", "name": "Nasir Mahmood Abbasi, PhD", "url": "https://theomicshub.com/about.html"}, "publisher": {"@type": "Organization", "name": "The Omics Hub", "url": "https://theomicshub.com", "logo": {"@type": "ImageObject", "url": "https://theomicshub.com/images/favicon.svg"}}, "datePublished": "2026-08-25", "dateModified": "2026-08-14"}</script>
 </head>
 <body class="bg-white text-gray-900">
 <script>
@@ -239,7 +239,41 @@ combined_tcr &lt;- combineExpression(
 clonalProportion(combined_tcr, cloneCall = &quot;aa&quot;, group.by = &quot;sample&quot;)
 </code></pre>
 <div class="mt-10 p-8 bg-gray-50 border border-gray-200 rounded-xl">
-  <h3 class="text-xl font-bold text-gray-900 mb-4">Knowledge Check & Assessment</h3>
+  
+<section class="prose-expansion bg-white border-t border-gray-100 mt-10 pt-10 pb-4">
+  <div class="max-w-3xl mx-auto px-2">
+    <h2 class="text-2xl font-bold text-slate-900 mb-4">The Biology Behind T Cell and B Cell Receptor Diversity</h2>
+    <p class="text-slate-700 text-base leading-relaxed mb-4">
+      The adaptive immune system's ability to recognise virtually any antigen depends on the extraordinary diversity of T cell receptors and B cell receptors. This diversity is generated during lymphocyte development through V(D)J recombination, a somatic process in which gene segments are randomly joined with additional nucleotide insertions and deletions at the junctions. The result is that each lymphocyte carries a unique receptor sequence, and the total number of possible TCR or BCR sequences in a single individual exceeds 10 to the power of 15.
+    </p>
+    <p class="text-slate-700 text-base leading-relaxed mb-4">
+      In practice, the circulating repertoire of any individual contains between 10 million and 100 million distinct clonotypes, each representing a unique receptor sequence present on one or more cells. When an antigen is encountered, cells with receptors that bind that antigen proliferate through clonal expansion, producing a large population of identical cells from the same precursor. Repertoire analysis measures the frequency of each clonotype in a sample, allowing you to detect clonal expansion, track antigen-specific responses, and compare repertoire diversity across conditions or time points.
+    </p>
+    <h3 class="text-xl font-semibold text-slate-900 mb-3 mt-8">Sequencing Strategies: Bulk vs Single-Cell</h3>
+    <p class="text-slate-700 text-base leading-relaxed mb-4">
+      Bulk repertoire sequencing using targeted amplification of V(D)J gene segments provides deep coverage of clonotype frequencies at relatively low cost per sample. Tools like MiXCR, TRUST4, and VDJtools assemble clonotypes from bulk reads and estimate their frequencies. The limitation is that you cannot link a TCR sequence to a cell's full transcriptome or to a BCR sequence in the same cell.
+    </p>
+    <p class="text-slate-700 text-base leading-relaxed mb-4">
+      Single-cell V(D)J sequencing, available through the 10x Genomics Chromium platform and others, sequences the full receptor chain sequences from individual cells alongside their whole-transcriptome gene expression profiles. This allows you to ask which transcriptional states are enriched in expanded clones, whether clonally related cells have diverged in their transcriptional programs, and whether paired heavy and light chain sequences or paired alpha and beta chain sequences share features across related clones. The cost is much higher per cell than bulk sequencing, and the clonotype depth is lower, but the paired information is unique.
+    </p>
+    <h3 class="text-xl font-semibold text-slate-900 mb-3 mt-8">Diversity Metrics: What They Measure and What They Do Not</h3>
+    <p class="text-slate-700 text-base leading-relaxed mb-4">
+      Repertoire diversity is typically summarised using metrics borrowed from ecology, including Shannon entropy, Simpson's index, and the Chao1 estimator. Shannon entropy captures both richness (number of distinct clonotypes) and evenness (how uniformly they are distributed). A sample dominated by one or two expanded clones will have low Shannon entropy even if the total number of distinct clonotypes is large. This is the expected pattern in a strong antigen-specific response.
+    </p>
+    <p class="text-slate-700 text-base leading-relaxed mb-4">
+      A critical technical consideration is sequencing depth. Diversity estimates from shallow sequencing are strongly influenced by sampling artefacts: rare clonotypes that are present in the repertoire may simply not be sequenced, leading to underestimated richness. Rarefaction, which involves subsampling all samples to the same number of reads before calculating diversity metrics, is mandatory for fair comparisons across samples with different sequencing depths. Never compare Shannon entropy values calculated from samples with 10-fold differences in read depth without rarefaction.
+    </p>
+    <h3 class="text-xl font-semibold text-slate-900 mb-3 mt-8">Clonotype Tracking Across Time Points and Tissues</h3>
+    <p class="text-slate-700 text-base leading-relaxed mb-4">
+      One of the most powerful applications of repertoire analysis is tracking the same clonotype across multiple time points or tissue compartments. In cancer immunology, you can compare the TCR repertoire in tumour-infiltrating lymphocytes to the peripheral blood to determine whether tumour-specific clones are present in the blood at detectable frequencies. In infectious disease, you can track how the repertoire changes before, during, and after pathogen clearance to identify clones that expand and then contract after resolution.
+    </p>
+    <p class="text-slate-700 text-base leading-relaxed mb-4">
+      Clonotype matching across samples requires careful consideration of the matching criteria. Two sequences are considered the same clonotype if their CDR3 amino acid sequences, V gene usage, and J gene usage all match. Matching on nucleotide sequence is more stringent and identifies cells from the same precursor with certainty. Matching on amino acid sequence is more permissive and groups functionally similar but independently arising clonotypes. Your choice should depend on whether you want to track identical cells or functionally convergent responses.
+    </p>
+  </div>
+</section>
+
+<h3 class="text-xl font-bold text-gray-900 mb-4">Knowledge Check & Assessment</h3>
   <div class="space-y-4">
     <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
       <h4 class="font-bold text-gray-800 mb-2">1. Concept Verification</h4>
@@ -262,7 +296,7 @@ clonalProportion(combined_tcr, cloneCall = &quot;aa&quot;, group.by = &quot;samp
                 <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
             </div>
             <div>
-                <h3 class="font-bold text-gray-900 mb-1">Reviewed: September 2026</h3>
+                <h3 class="font-bold text-gray-900 mb-1">Reviewed: August 2026</h3>
                 <p class="text-sm text-gray-600 mb-2">All commands and outputs were verified with the software versions listed in this tutorial. If you encounter reproducibility issues, please report them through the <a href="contact.html" class="text-blue-600 hover:underline">Contact page</a>.</p>
                 <p class="text-sm text-gray-500">Author: <a href="about.html" class="text-blue-600 hover:underline font-medium">Nasir Mahmood Abbasi, PhD</a> &middot; Category: Advanced Single-Cell Analysis</p>
             </div>
