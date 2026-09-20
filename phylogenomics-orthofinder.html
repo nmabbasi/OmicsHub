@@ -41,8 +41,7 @@
 <meta name="google-adsense-account" content="ca-pub-2910340533244599"/>
   <meta name="google-site-verification" content="XioIUjAyO5PEAT-N6nLrowdiDe4ATl-vKdRGmmrDHZM"/>
   <link rel="canonical" href="https://theomicshub.com/phylogenomics-orthofinder.html"/>
-  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "Article", "headline": "Phylogenomics with OrthoFinder", "description": "Scale up from single-gene phylogeny to whole-genome phylogenomics by identifying orthogroups and constructing species trees using OrthoFinder.", "mainEntityOfPage": {"@type": "WebPage", "@id": "https://theomicshub.com/phylogenomics-orthofinder.html"}, "image": "https://theomicshub.com/images/phylogenomics-orthofinder.webp", "author": {"@type": "Person", "name": "Nasir Mahmood Abbasi, PhD", "url": "https://theomicshub.com/about.html"}, "publisher": {"@type": "Organization", "name": "The Omics Hub", "url": "https://theomicshub.com", "logo": {"@type": "ImageObject", "url": "https://theomicshub.com/images/favicon.svg"}}, "datePublished": "2026-08-14", "dateModified": "2026-08-14"}</script>
-  <meta name="impact-site-verification" content="4bf8e6e1-5a5b-4cc3-a10b-12342990121e">
+  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "Article", "headline": "Phylogenomics with OrthoFinder", "description": "Scale up from single-gene phylogeny to whole-genome phylogenomics by identifying orthogroups and constructing species trees using OrthoFinder.", "mainEntityOfPage": {"@type": "WebPage", "@id": "https://theomicshub.com/phylogenomics-orthofinder.html"}, "image": "https://theomicshub.com/images/phylogenomics-orthofinder.webp", "author": {"@type": "Person", "name": "Nasir Mahmood Abbasi, PhD", "url": "https://theomicshub.com/about.html"}, "publisher": {"@type": "Organization", "name": "The Omics Hub", "url": "https://theomicshub.com", "logo": {"@type": "ImageObject", "url": "https://theomicshub.com/images/favicon.svg"}}, "datePublished": "2026-07-07", "dateModified": "2026-08-14"}</script>
 </head>
 <body class="bg-white text-gray-900">
 <script>
@@ -215,7 +214,41 @@ print(species_tree$tip.label)
 plot(species_tree, cex = 0.7)
 </code></pre>
 <div class="mt-10 p-8 bg-gray-50 border border-gray-200 rounded-xl">
-  <h3 class="text-xl font-bold text-gray-900 mb-4">Knowledge Check & Assessment</h3>
+  
+<section class="prose-expansion bg-white border-t border-gray-100 mt-10 pt-10 pb-4">
+  <div class="max-w-3xl mx-auto px-2">
+    <h2 class="text-2xl font-bold text-slate-900 mb-4">From Genomes to Phylogenies: A Conceptual Foundation</h2>
+    <p class="text-slate-700 text-base leading-relaxed mb-4">
+      Traditional molecular phylogenetics inferred evolutionary relationships from one or a handful of genes. Phylogenomics scales this approach to entire genomes, using hundreds or thousands of conserved genes simultaneously to produce highly resolved phylogenetic trees with narrow confidence intervals. The core analytical challenge is not the tree-building itself but the gene selection and alignment: you must identify genes that are present in exactly one copy across all the species you are comparing, that have been evolving under broadly similar selective pressures, and whose sequences can be aligned reliably.
+    </p>
+    <p class="text-slate-700 text-base leading-relaxed mb-4">
+      Genes that fail these criteria introduce noise or bias into the analysis. Genes that have been duplicated independently in different lineages (paralogs) will produce trees that reflect gene family history rather than species history. Genes under strong positive selection evolve rapidly in specific lineages, which can mislead tree reconstruction. Genes with regions that are unalignable due to insertions or deletions produce alignment columns of uncertain homology, which are better excluded than forced into an alignment.
+    </p>
+    <h3 class="text-xl font-semibold text-slate-900 mb-3 mt-8">OrthoFinder: Identifying Orthologous Groups at Scale</h3>
+    <p class="text-slate-700 text-base leading-relaxed mb-4">
+      OrthoFinder identifies orthologs and orthogroups across any number of input proteomes using an all-versus-all DIAMOND search followed by a graph-based clustering step. Orthogroups are groups of genes descended from a single gene in the last common ancestor of the input species. Within an orthogroup, each species may have one or more genes depending on whether duplications occurred after speciation.
+    </p>
+    <p class="text-slate-700 text-base leading-relaxed mb-4">
+      The key advantage of OrthoFinder over simpler reciprocal best-hit approaches is that it uses species tree-aware orthogroup inference. Rather than comparing genes from one species to another in isolation, OrthoFinder uses a reference species tree to distinguish true orthologs (which diverged due to speciation events) from co-orthologs (which diverged due to duplication events that preceded speciation). This distinction matters greatly for functional inference: orthologs tend to share conserved function across species, while paralogs may have diverged functionally.
+    </p>
+    <h3 class="text-xl font-semibold text-slate-900 mb-3 mt-8">Selecting Markers for Tree Construction</h3>
+    <p class="text-slate-700 text-base leading-relaxed mb-4">
+      After running OrthoFinder, you have a set of orthogroups. For phylogenomic tree construction, you select single-copy orthogroups, which are orthogroups where each input species contributes exactly one gene. These single-copy orthologs are the least problematic for phylogenomics because there is no ambiguity about which sequence from each species should be aligned to which. Tools like BUSCO independently assess genome or proteome completeness using a similar set of single-copy orthologs, and the overlap between OrthoFinder results and BUSCO sets provides a useful sanity check.
+    </p>
+    <p class="text-slate-700 text-base leading-relaxed mb-4">
+      A practical consideration is the number of single-copy orthologs shared across all input species. If you include a highly reduced parasite genome alongside free-living species with much larger proteomes, the number of universally single-copy genes will be small. You may need to relax the inclusion criterion from all species to a supermajority of species, accepting that some positions in the final supermatrix will be missing for certain species.
+    </p>
+    <h3 class="text-xl font-semibold text-slate-900 mb-3 mt-8">Concatenation vs Coalescence: Two Philosophies of Tree Building</h3>
+    <p class="text-slate-700 text-base leading-relaxed mb-4">
+      Once you have aligned your single-copy orthologs, you face a choice: should you concatenate all the alignments into a single supermatrix and build one tree, or should you build a separate tree for each gene and then summarise across those gene trees? Concatenation is computationally simpler and assumes that all genes in your supermatrix share the same evolutionary history. This assumption is violated when incomplete lineage sorting (ILS) is common, which happens when speciation events were rapid and the ancestral populations were large.
+    </p>
+    <p class="text-slate-700 text-base leading-relaxed mb-4">
+      Coalescence-based methods like ASTRAL address ILS by inferring the species tree as the tree that maximises the number of gene trees that agree with it under the multi-species coalescent model. They are statistically more consistent in the presence of ILS but require a large number of informative gene trees and can be sensitive to gene tree estimation error. In practice, comparing the concatenation tree to the ASTRAL species tree for your dataset is a useful diagnostic: strong disagreements between the two suggest that ILS or other gene tree discordance is a significant factor in your data.
+    </p>
+  </div>
+</section>
+
+<h3 class="text-xl font-bold text-gray-900 mb-4">Knowledge Check & Assessment</h3>
   <div class="space-y-4">
     <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
       <h4 class="font-bold text-gray-800 mb-2">1. Concept Verification</h4>
@@ -238,7 +271,7 @@ plot(species_tree, cex = 0.7)
                 <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
             </div>
             <div>
-                <h3 class="font-bold text-gray-900 mb-1">Reviewed: September 2026</h3>
+                <h3 class="font-bold text-gray-900 mb-1">Reviewed: July 2026</h3>
                 <p class="text-sm text-gray-600 mb-2">All commands and outputs were verified with the software versions listed in this tutorial. If you encounter reproducibility issues, please report them through the <a href="contact.html" class="text-blue-600 hover:underline">Contact page</a>.</p>
                 <p class="text-sm text-gray-500">Author: <a href="about.html" class="text-blue-600 hover:underline font-medium">Nasir Mahmood Abbasi, PhD</a> &middot; Category: Evolutionary and Comparative Genomics</p>
             </div>
