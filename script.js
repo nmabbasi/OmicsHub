@@ -829,6 +829,8 @@ function showHome(addToHistory = true, preventScroll = false) {
     updateNavActiveState('home');
     document.querySelectorAll('.page-content').forEach(page => page.classList.add('hidden'));
     document.getElementById('home-page').classList.remove('hidden');
+    const tutorialsPage = document.getElementById('tutorials-page');
+    if (tutorialsPage) tutorialsPage.classList.remove('hidden');
     currentPage = 'home';
     currentTutorial = null;
     if (addToHistory) {
@@ -843,7 +845,9 @@ function showHome(addToHistory = true, preventScroll = false) {
 function showTutorials(addToHistory = true) {
     updateNavActiveState('tutorials');
     document.querySelectorAll('.page-content').forEach(page => page.classList.add('hidden'));
-    document.getElementById('tutorials-page').classList.remove('hidden');
+    document.getElementById('home-page').classList.remove('hidden');
+    const tutorialsPage = document.getElementById('tutorials-page');
+    if (tutorialsPage) tutorialsPage.classList.remove('hidden');
     currentPage = 'tutorials';
     currentTutorial = null;
     if (addToHistory) {
@@ -853,7 +857,11 @@ function showTutorials(addToHistory = true) {
     // We no longer populate category filter buttons or render grid cards dynamically.
     // They are fully baked into the static HTML by inject_html_cards.py.
     
-    window.scrollTo(0, 0); // Scroll to top of page
+    // Scroll to tutorials section
+    setTimeout(() => {
+        const el = document.getElementById('all-tutorials');
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 50);
 }
 
 // Filter tutorials by category using static HTML data-category attributes
