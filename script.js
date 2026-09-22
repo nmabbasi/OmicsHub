@@ -113,23 +113,11 @@ function setupEventListeners() {
     // Handle browser back/forward buttons
     window.addEventListener('popstate', function(event) {
         const hash = window.location.hash;
-        if (hash) {
-            if (hash.startsWith('#tutorial-')) {
-                const tutorialId = hash.substring(10);
-                showTutorial(tutorialId, false); // false to prevent adding to history again
-            } else if (hash === '#all-tutorials') {
-                showTutorials(false);
-            } else if (hash === '#tutorials') {
-                showHome(false, true); // Prevent scroll to top
-                setTimeout(() => {
-                    const el = document.getElementById('tutorials');
-                    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }, 100);
-            } else {
-                showHome(false);
-            }
+        if (hash && hash.startsWith('#tutorial-')) {
+            const tutorialId = hash.substring(10);
+            showTutorial(tutorialId, false); // false to prevent adding to history again
         } else {
-            showHome(false);
+            closeTutorialView();
         }
     });
 }
@@ -824,36 +812,16 @@ async function showTutorial(id, addToHistory = true) {
     window.scrollTo(0, 0); // Scroll to top of page
 }
 
-// Show Home Page
-function showHome(addToHistory = true, preventScroll = false) {
-    updateNavActiveState('home');
-    document.querySelectorAll('.page-content').forEach(page => page.classList.add('hidden'));
-    document.getElementById('home-page').classList.remove('hidden');
-    currentPage = 'home';
+// Close Tutorial View and return to page
+function closeTutorialView() {
+    document.querySelectorAll('.page-content').forEach(page => {
+        if (page.id !== 'tutorial-page') {
+            page.classList.remove('hidden');
+        }
+    });
+    document.getElementById('tutorial-page').classList.add('hidden');
     currentTutorial = null;
-    if (addToHistory) {
-        window.history.pushState(null, '', window.location.pathname); // Clear hash
-    }
-    if (!preventScroll) {
-        window.scrollTo(0, 0); // Scroll to top of page
-    }
-}
-
-// Show Tutorials Page
-function showTutorials(addToHistory = true) {
-    updateNavActiveState('tutorials');
-    document.querySelectorAll('.page-content').forEach(page => page.classList.add('hidden'));
-    document.getElementById('tutorials-page').classList.remove('hidden');
-    currentPage = 'tutorials';
-    currentTutorial = null;
-    if (addToHistory) {
-        window.history.pushState(null, '', '#all-tutorials');
-    }
-    
-    // We no longer populate category filter buttons or render grid cards dynamically.
-    // They are fully baked into the static HTML by inject_html_cards.py.
-    
-    window.scrollTo(0, 0); // Scroll to top of page
+    updateNavActiveState();
 }
 
 // Filter tutorials by category using static HTML data-category attributes
@@ -1173,26 +1141,54 @@ document.addEventListener('click', function(e) {
     }
 });
 
-// Update Navigation Active States
-function updateNavActiveState(activeTab) {
-    const navDesktopHome = document.getElementById('nav-desktop-home');
-    const navDesktopTutorials = document.getElementById('nav-desktop-tutorials');
-    const navMobileHome = document.getElementById('nav-mobile-home');
-    const navMobileTutorials = document.getElementById('nav-mobile-tutorials');
+// Update Navigation Active State
+function updateNavActiveState() {
+    const path = window.location.pathname;
+    let page = 'home';
+    
+    if (path.includes('tutorials.html')) {
+        page = 'tutorials';
+    } else if (path.includes('services.html')) {
+        page = 'services';
+    } else if (path.includes('about.html')) {
+        page = 'about';
+    } else if (path.includes('contact.html')) {
+        page = 'contact';
+    } else if (path.includes('start-here.html')) {
+        page = 'starthere';
+    }
+    
+    // Desktop Nav
+    const desktopLinks = ['home', 'starthere', 'tutorials', 'services', 'about', 'contact'];
+    desktopLinks.forEach(id => {
+        const el = document.getElementById(`nav-desktop-${id}`);
+        if (el) {
+            if (id === page) {
+                el.classList.add('text-blue-600', 'bg-blue-50');
+                el.classList.remove('text-gray-600', 'hover:bg-gray-50');
+                el.setAttribute('aria-current', 'page');
+            } else {
+                el.classList.remove('text-blue-600', 'bg-blue-50');
+                el.classList.add('text-gray-600', 'hover:bg-gray-50');
+                el.removeAttribute('aria-current');
+            }
+        }
+    });
 
-    // Keep the visual and semantic active states in sync. The shared stylesheet
-    // uses aria-current to apply the near-black navy active-tab colour.
-    [
-        [navDesktopHome, activeTab === 'home'],
-        [navDesktopTutorials, activeTab === 'tutorials'],
-        [navMobileHome, activeTab === 'home'],
-        [navMobileTutorials, activeTab === 'tutorials']
-    ].forEach(([link, isActive]) => {
-        if (!link) return;
-        if (isActive) {
-            link.setAttribute('aria-current', 'page');
-        } else {
-            link.removeAttribute('aria-current');
+    // Mobile Nav
+    const mobileLinks = ['home', 'starthere', 'tutorials', 'services', 'about', 'contact'];
+    mobileLinks.forEach(id => {
+        const el = document.getElementById(`nav-mobile-${id}`);
+        if (el) {
+            if (id === page) {
+                el.classList.add('text-blue-600', 'bg-blue-50');
+                el.classList.remove('text-gray-700', 'hover:bg-gray-50');
+                el.setAttribute('aria-current', 'page');
+            } else {
+                el.classList.remove('text-blue-600', 'bg-blue-50');
+                el.classList.add('text-gray-700', 'hover:bg-gray-50');
+                el.removeAttribute('aria-current');
+            }
         }
     });
 }
