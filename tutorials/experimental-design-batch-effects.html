@@ -215,6 +215,8 @@ Only use it when the design contains enough information to estimate both terms.
 </code></pre>
 <h2>5. Experimental Design Principles</h2>
 <p>Good experimental design prevents confounding before data generation. The key principles are:</p>
+<div class="overflow-x-auto -mx-4 px-4">
+<table>
 <table>
 <thead>
 <tr>
@@ -246,6 +248,7 @@ Only use it when the design contains enough information to estimate both terms.
 </tr>
 </tbody>
 </table>
+</div>
 <pre><code class="language-text"># GOOD: Balanced design – each batch processes both conditions
 Batch 1: Control_1, Control_2, Treated_1, Treated_2
 Batch 2: Control_3, Control_4, Treated_3, Treated_4
@@ -272,6 +275,8 @@ plotPCA(vsd, intgroup = c("condition", "batch")) +
 - If samples cluster primarily by <strong>batch</strong> → strong batch effect, correction needed.
 - If batch and condition are <strong>confounded</strong> → correction is impossible; redesign the experiment.</p>
 <h2>7. Batch Correction Methods</h2>
+<div class="overflow-x-auto -mx-4 px-4">
+<table>
 <table>
 <thead>
 <tr>
@@ -308,6 +313,7 @@ plotPCA(vsd, intgroup = c("condition", "batch")) +
 </tr>
 </tbody>
 </table>
+</div>
 <pre><code class="language-r"># Correct approach: include batch in the DESeq2 model
 design(dds) &lt;- ~ batch + condition
 
@@ -329,6 +335,8 @@ rnapower(
 )
 # Output: n = 5 samples per group needed
 </code></pre>
+<div class="overflow-x-auto -mx-4 px-4">
+<table>
 <table>
 <thead>
 <tr>
@@ -355,6 +363,7 @@ rnapower(
 </tr>
 </tbody>
 </table>
+</div>
 <h2>Practical Exercise</h2>
 <p>Create a balanced two-condition metadata table with at least four biological replicates across two batches. Use a crosstab to prove each batch contains both conditions.</p>
 <p><strong>Pass criteria:</strong> IDs are unique, no required metadata is missing, both conditions occur in every batch, and the analysis design is written before inspecting results.</p>
