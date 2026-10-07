@@ -180,6 +180,8 @@ Legal
 <p>Once the sequencing facility provides raw FASTQ files, the initial preprocessing step (using tools like Cell Ranger or STARsolo) maps the reads to a reference genome and generates a sparse count matrix. This matrix - where rows are genes and columns are cells - is the starting point for computational biologists.</p>
 <p>In this tutorial, we will walk through a standard end-to-end analysis on a 10x Genomics dataset. We provide parallel workflows in both <strong>Python (Scanpy)</strong> and <strong>R (Seurat)</strong> so you can choose the ecosystem that best fits your needs.</p>
 <hr />
+<div class="my-8"><img src="../images/figures/basics-1.webp" alt="Feature Scatter UMAP" class="w-full rounded-xl shadow-lg border border-gray-200"><p class="text-sm text-gray-500 mt-2 text-center">Figure: Feature scatter visualization representing scRNA-seq metrics.</p></div>
+
 <h2>1. Loading the Data</h2>
 <p>We begin by loading the sparse matrix into our core data structures: <code>AnnData</code> in Python, or a <code>Seurat</code> object in R.</p>
 <pre><code class="language-python">import scanpy as sc
@@ -210,6 +212,8 @@ pbmc.data &lt;- Read10X(data.dir = data_dir)
 pbmc &lt;- CreateSeuratObject(counts = pbmc.data, project = &quot;pbmc3k&quot;, min.cells = 3, min.features = 200)
 </code></pre>
 <hr />
+<div class="my-8"><img src="../images/figures/basics-2.webp" alt="scRNA-seq Violin Plots" class="w-full rounded-xl shadow-lg border border-gray-200"><p class="text-sm text-gray-500 mt-2 text-center">Figure: Distribution of RNA counts and mitochondrial content.</p></div>
+
 <h2>2. Quality Control (QC)</h2>
 <p>Empty droplets or dying cells can confound downstream analysis. High mitochondrial expression or unusually low gene counts can flag low-quality cells, but the distribution must be inspected for each dataset and batch. The thresholds below are training starting points, not universal biological rules; document and justify any filtering decision.</p>
 <pre><code class="language-python"># Identify mitochondrial genes
