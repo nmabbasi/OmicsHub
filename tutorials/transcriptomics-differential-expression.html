@@ -216,6 +216,20 @@ dds$condition &lt;- relevel(dds$condition, ref = &quot;Control&quot;)
 # 4. Run the core DESeq2 pipeline
 dds &lt;- DESeq(dds)
 </code></pre>
+<div class="mt-8 p-6 bg-yellow-50 border-l-4 border-yellow-500 rounded-r-xl shadow-sm mb-8">
+  <h4 class="text-lg font-bold text-yellow-800 mb-2 flex items-center gap-2">
+    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+    Expert Insight: Aggressive Filtering in scRNA-seq
+  </h4>
+  <p class="text-yellow-900 text-sm">
+    When running DE analysis (like MAST or Wilcoxon) directly on single-cell clusters, the standard <code>min.pct</code> filter in Seurat is often not enough. A crucial step I always implement is filtering out genes based on <strong>mean expression across groups</strong> before finalizing results or visualizing.
+    <br><br>
+    For example, filtering out genes where both groups have a mean expression &lt; 0.2: 
+    <br><code class="language-r font-mono text-sm bg-yellow-100 px-2 py-1 rounded">filter(!(mean_expr_group1 < 0.2 &amp; mean_expr_group2 < 0.2))</code>
+    <br><br>
+    <strong>Why?</strong> In scRNA-seq, genes with near-zero expression in both groups are primarily biological noise or technical dropouts. Leaving them in the testing pool severely penalizes your adjusted p-values due to Benjamini-Hochberg multiple testing correction, causing you to lose genuinely significant but subtle biomarkers.
+  </p>
+</div>
 <hr />
 <h2>3. Extracting and Visualizing Results</h2>
 <p>Once the model is fit, we extract the results comparing the "Treated" group to the "Control" group.</p>
@@ -228,6 +242,21 @@ resOrdered &lt;- res[order(res$padj),]
 # View the top significant genes
 head(resOrdered)
 </code></pre>
+
+<div class="mt-8 p-6 bg-blue-50 border-l-4 border-blue-500 rounded-r-xl shadow-sm mb-8">
+  <h4 class="text-lg font-bold text-blue-900 mb-2 flex items-center gap-2">
+    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+    Algorithm Selection: MAST vs Wilcoxon
+  </h4>
+  <p class="text-blue-900 text-sm">
+    If you are not using pseudobulk (e.g., you are forced to run cluster-level DE because of limited replicates), which algorithm should you choose?
+    <br><br>
+    In my benchmarking on complex patient cohorts (like Sézary Syndrome PBMC datasets), <strong>MAST</strong> with patient origin included as a latent batch covariate (<code>test.use = "MAST", latent.vars = "patient_id"</code>) generally outperforms the standard Wilcoxon test. MAST explicitly models scRNA-seq dropout rates (the hurdle model) and controls for patient-specific batch effects. 
+    <br><br>
+    <strong>Best Practice:</strong> Always run your DE test <em>with</em> and <em>without</em> batch covariates, generate volcano plots for both, and compare them side-by-side to ensure you aren't losing true biological signals to aggressive over-correction.
+  </p>
+</div>
+
 <h3>Visualizing with a Volcano Plot</h3>
 <p>A Volcano Plot is the standard way to visualize DGE results, mapping statistical significance (-log10 p-value) against biological magnitude (log2FoldChange).</p>
 <pre><code class="language-r"># Convert results to a data frame

@@ -239,6 +239,20 @@ integrated_seurat &lt;- RunHarmony(merged_seurat, group.by.vars = &quot;patient_
 # Run UMAP on the Harmony reduction rather than standard PCA
 integrated_seurat &lt;- RunUMAP(integrated_seurat, reduction = &quot;harmony&quot;, dims = 1:30)
 </code></pre>
+<div class="mt-8 p-6 bg-purple-50 border-l-4 border-purple-500 rounded-r-xl shadow-sm mb-8">
+  <h4 class="text-lg font-bold text-purple-900 mb-2 flex items-center gap-2">
+    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+    Expert Insight: Diagnosing Integration Success
+  </h4>
+  <p class="text-purple-900 text-sm">
+    How do you know if Harmony or CCA actually worked without over-correcting? In my pipeline, I rely on two critical diagnostic steps:
+    <br><br>
+    <strong>1. Pre-Integration Feature Overlap:</strong> Before running any integration algorithm, I always extract the Highly Variable Genes (HVGs) per dataset and compute their overlap using a binary heatmap (e.g., <code class="bg-purple-100 px-1 rounded">pheatmap(t(overlap*1))</code>). If there is massive discordance in HVGs across your datasets, RPCA may fail, and CCA is often required to force alignment.
+    <br><br>
+    <strong>2. Multi-Reduction Visualization:</strong> Do not just look at the final UMAP! I systematically generate a grid of plots comparing standard PCA vs tSNE vs UMAP grouped by <code class="bg-purple-100 px-1 rounded">orig.ident</code> and <code class="bg-purple-100 px-1 rounded">celltype</code>. UMAP can sometimes artificially separate or merge clusters; confirming the biological mixing in the raw integrated PCA space (e.g., <code class="bg-purple-100 px-1 rounded">reduction = "pca_harmony"</code>) is essential to verify that technical batch effects were removed while true biological variance remains intact.
+  </p>
+</div>
+
 <h2>Conclusion</h2>
 <ul>
 <li>Use <strong>Harmony</strong> for large cohorts or when integrating across multiple nested batch variables.</li>
