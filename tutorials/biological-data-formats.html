@@ -243,7 +243,10 @@ read001  0  chr1  1000  60  150M  *  0  0  ATCG...  IIII...  NM:i:0
 <p>Always validate file integrity before analysis. Corrupted files produce silent errors that propagate through entire pipelines.</p>
 <pre><code class="language-bash"># Validate FASTQ integrity
 # Count records (should be divisible by 4)
-seqtk seq -A reads.fastq | wc -l  # Safe counting
+# Check fastq integrity
+# Do not rely on line counting. Use zcat and awk for structure, and seqkit for stats:
+zcat reads.fastq.gz | awk 'END{print "Records:", NR/4, "Remainder:", NR%4}' # Remainder must be 0
+seqkit stats reads.fastq.gz
 
 # Validate BAM file
 samtools quickcheck aligned.bam &amp;&amp; echo "OK" || echo "CORRUPTED"
@@ -394,7 +397,7 @@ gzip -t reads.fastq.gz &amp;&amp; echo "OK" || echo "CORRUPTED"
 </div>
 <div>
 
-<p class="text-sm text-gray-600 mb-2">This tutorial records the software versions used for its examples.  and report reproducibility issues through the <a class="text-blue-600 hover:underline" href="../contact.html">Contact page</a>.</p>
+<p class="text-sm text-gray-600 mb-2">This tutorial records the software versions used for its examples. Please re-check commands against the official documentation, and report reproducibility issues through the <a class="text-blue-600 hover:underline" href="../contact.html">Contact page</a>.</p>
 <p class="text-sm text-gray-500">Author: <a class="text-blue-600 hover:underline font-medium" href="../about.html">Nasir Mahmood Abbasi, PhD</a> · Category: Foundations &amp; Prerequisites</p>
 </div>
 </div>
