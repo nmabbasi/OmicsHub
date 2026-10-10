@@ -158,173 +158,139 @@ Legal
             <div class="mb-12 rounded-2xl overflow-hidden shadow-lg border border-gray-100">
 <img src="../images/cell-type-annotation-methods-workstation.webp" alt="Comprehensive Cell Type Annotation: 6 Methods + CyteTypeR" class="w-full aspect-video object-cover" loading="eager" decoding="async">
 </div>
-            <article class="prose prose-blue prose-lg max-w-none" aria-labelledby="tutorial-title"><div class="flex flex-wrap items-center gap-4 text-xs font-mono text-gray-500 bg-gray-50 p-3 rounded-lg border border-gray-200 mb-6">
+            <article class="prose prose-blue prose-lg max-w-none" aria-labelledby="tutorial-title">
+<div class="flex flex-wrap items-center gap-4 text-xs font-mono text-gray-500 bg-gray-50 p-3 rounded-lg border border-gray-200 mb-6">
   <div class="flex items-center gap-1">
     <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-    <span><strong>Tested on:</strong> Python 3.11, R 4.3.2, Ubuntu 24.04</span>
-  </div>
-  <div class="flex items-center gap-1">
-    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-    
+    <span><strong>Example environment:</strong> R 4.3.2 (SingleR v2.4.0, scCATCH v3.2), Python 3.11</span>
   </div>
 </div>
 
 <div class="p-6 bg-blue-50 border border-blue-100 rounded-xl mb-8">
   <h4 class="text-lg font-bold text-blue-900 mb-2">Learning Objectives & Prerequisites</h4>
   <ul class="list-disc list-inside text-blue-800 space-y-1 mb-4">
-    <li><strong>Prerequisites:</strong> Complete scRNA-seq Basics and have QC-reviewed clusters, marker genes, tissue context, and species information.</li>
-    <li><strong>Objective:</strong> Compare manual markers, reference mapping, automated classifiers, and consensus annotation while recording uncertainty.</li>
-    <li><strong>Expected Output:</strong> An annotated cell-type table with evidence sources, confidence, discordant-method notes, and tissue/species context.</li>
+    <li><strong>Prerequisites:</strong> A clustered single-cell matrix (e.g., from our scRNA-seq Basics tutorial).</li>
+    <li><strong>Objective:</strong> Perform automated cell-type annotation on the 10x PBMC 3k dataset using two fundamentally different algorithmic approaches: reference-based mapping (SingleR) and marker-gene enrichment (scCATCH).</li>
+    <li><strong>Expected Output:</strong> Executable code for both methods, an empirical confusion matrix demonstrating annotation agreement/discordance, and a framework for resolving ambiguous assignments.</li>
   </ul>
 </div>
 
-<h2>Automated Cell Type Annotation</h2>
+<h2>The Cell Type Annotation Challenge</h2>
+<p>After generating a UMAP and identifying clusters, the hardest biological task begins: figuring out what those cells actually are. Manual annotation (checking expression of known marker genes like <em>CD3D</em> for T-cells or <em>CD79A</em> for B-cells) is the gold standard, but it is slow and subjective.</p>
+<p>Automated annotation tools solve this by matching your clusters against known biological priors. In this tutorial, we will benchmark two distinct approaches on the <strong>10x Genomics PBMC 3k</strong> dataset:</p>
+<ol class="list-decimal list-inside space-y-2 mb-6">
+    <li><strong>SingleR</strong>: A reference-based tool that computes Spearman correlation between your single cells and bulk RNA-seq reference transcriptomes.</li>
+    <li><strong>scCATCH</strong>: A marker-based tool that uses a massive internal database of tissue-specific marker genes to score your clusters.</li>
+</ol>
 
-<h2>The Annotation Bottleneck</h2>
-<p>Manual annotation - extracting differentially expressed genes and searching the literature - is the most significant bottleneck in single-cell RNA-seq. Furthermore, manual annotation is highly subjective and difficult to reproduce.</p>
-<p>To solve this, the bioinformatics community (including standard frameworks taught by institutions like NBIS) recommends utilizing computational algorithms to automatically assign cell identities.</p>
-<p>Here, we cover <strong>6 standard algorithmic methods</strong> followed by the newest advancement: <strong>AI multi-agent frameworks (CyteTypeR)</strong>.</p>
-<hr />
-<blockquote>
-<p><strong>Critical Note on Marker Validation:</strong> Computational cell type prediction should never be the only line of evidence. Marker genes are not definitively universal; their expression thresholds vary significantly depending on the tissue, disease state, and experimental protocol (e.g., 10x 3' vs 5'). Automated annotation (including AI frameworks) must always be validated biologically using orthogonal literature or experimental confirmation.</p>
-</blockquote>
+<hr class="my-8" />
 
-<h2>1. Reference-Based Methods</h2>
-<p>These methods require you to provide a high-quality "reference" dataset (like bulk RNA-seq of sorted immune cells or an existing scRNA-seq atlas). The algorithm correlates your cells against the reference.</p>
-<h3>SingleR</h3>
-<p><strong>SingleR</strong> performs reference-based annotation by calculating the Spearman correlation between the expression profile of your single cell and the expression profile of pure reference samples.</p>
+<h2>1. Reference-Based Mapping with SingleR</h2>
+<p>SingleR requires a highly curated reference dataset. We will use the Human Primary Cell Atlas (HPCA), which contains microarray data from hundreds of purified cell populations.</p>
+
 <pre><code class="language-r">library(SingleR)
 library(celldex)
 
-# Download a standard reference (e.g., Human Primary Cell Atlas)
-ref_data &lt;- HumanPrimaryCellAtlasData()
+# Load the HPCA reference dataset
+hpca.se <- HumanPrimaryCellAtlasData()
 
-# Run SingleR on your Seurat object counts
-# IMPORTANT: Use generic object names in your scripts
-predictions &lt;- SingleR(test = GetAssayData(seurat_obj),
-                       ref = ref_data,
-                       labels = ref_data$label.main)
-
-# Add predictions to Seurat metadata
-seurat_obj$SingleR_Labels &lt;- predictions$labels
-</code></pre>
-<h3>scmap</h3>
-<p><strong>scmap</strong> projects your cells onto a reference dataset. Instead of correlating the whole transcriptome, <code>scmap</code> selects the most informative features (genes) and uses cosine similarity to rapidly map millions of cells.</p>
-<pre><code class="language-r">library(scmap)
-# Calculate scmap index on reference, then project your query dataset.
-</code></pre>
-<hr />
-<h2>2. Machine Learning Classifiers</h2>
-<p>These tools train mathematical models (Random Forests, Logistic Regression) on large atlases.</p>
-<h3>SingleCellNet</h3>
-<p><strong>SingleCellNet</strong> treats annotation as a standard machine learning problem, utilizing Random Forest classifiers trained on Top-Pair transformations of the data, which makes it highly robust to batch effects.</p>
-<h3>CellTypist</h3>
-<p><strong>CellTypist</strong> (Python) relies on logistic regression models trained on millions of cells. It is currently one of the fastest and most accurate methods for high-resolution immune cell subtyping.</p>
-<hr />
-<h2>3. Marker-Based &amp; Hierarchical Methods</h2>
-<h3>scCATCH</h3>
-<p><strong>scCATCH</strong> does not require an entire expression matrix as a reference. Instead, it relies on a built-in database of tissue-specific marker genes. It identifies the highly expressed genes in your cluster and statistically scores them against its database to assign a label.</p>
-<h3>CHETAH</h3>
-<p><strong>CHETAH</strong> (CHaracterizing unknown pErcentages of Tissue via Hierarchical clustering) uses a hierarchical classification tree. A major advantage of CHETAH is that if a cell does not fit any known profile, it will confidently label it as "Unassigned" or place it at an intermediate node, rather than forcing a wrong label.</p>
-<hr />
-<h2>4. The AI Frontier: CyteTypeR</h2>
-<p>Standard algorithmic methods have a strict limitation: they are entirely restricted by their reference data. If your dataset contains a novel biological state, standard methods will either misclassify it or fail.</p>
-<p><strong>CyteTypeR</strong> completely changes this paradigm by utilizing a multi-agent Large Language Model (LLM) framework.</p>
-<p>Rather than just matching numbers to a reference matrix, <strong>CyteTypeR</strong> acts like a panel of expert biologists:
-1.  <strong>Extracts</strong> the marker genes for your cluster.
-2.  <strong>Reads</strong> the literature context for those genes.
-3.  <strong>Maps</strong> the evidence against the formal Cell Ontology database.
-4.  <strong>Debates</strong> among multiple LLM "agents" to reach a consensus, returning an expert-level annotation with reasoning.</p>
-<h3>Running CyteTypeR</h3>
-<pre><code class="language-r">library(CyteTypeR)
-
-# CyteTypeR takes a standard Seurat object and extracts the markers
-# It then queries the LLM API to generate ontology-backed annotations
-annotation_results &lt;- annotate_seurat(
-  seurat_object = seurat_obj,
-  cluster_col = &quot;seurat_clusters&quot;,
-  api_key = &quot;YOUR_LLM_API_KEY&quot;
+# Run SingleR on the normalized PBMC 3k counts
+# We use the 'Main' labels for broad cell categories
+pred.hpca <- SingleR(
+    test = pbmc@assays$RNA$data, 
+    ref = hpca.se, 
+    labels = hpca.se$label.main
 )
 
-# The results contain both the predicted label and the biological reasoning!
-head(annotation_results)
+# Add predictions back to the Seurat object
+pbmc$SingleR.labels <- pred.hpca$labels
 </code></pre>
-<h3>Responsible use of LLM-assisted annotation</h3>
-<p>Before sending any information to an external LLM service, check your institutional data-use agreement, ethics approval, and privacy rules. Prefer to send only de-identified, aggregate marker-gene lists rather than raw counts, cell barcodes, sample identifiers, clinical metadata, or patient-linked notes. Do not assume that an API is appropriate for protected or unpublished data. Record the model name, version, prompt template, date, cost limits, and any human review used in the final annotation.</p>
-<p>LLM-assisted labels are hypotheses. Validate them with canonical markers, reference-based methods, tissue context, and, where possible, orthogonal assays. If cloud use is not permitted, use approved local or institutional tools instead.</p>
-<div class="mt-12 mb-8 bg-white border border-blue-100 rounded-2xl p-8 shadow-sm">
-  <div class="flex items-center gap-3 mb-4">
-    <div class="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
-      <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>
-    </div>
-    <h3 class="text-xl font-bold text-gray-900">Live Case Studies</h3>
-  </div>
-  <p class="text-gray-600 mb-6">Explore the interactive RMarkdown reports generated during my PhD thesis research. These files provide real-world examples of how I applied these methods to specific cancer genomics datasets.</p>
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-    <a href="examples/CyteTypeR_Annotation_using_AI_Finalized.html" target="_blank" rel="noopener noreferrer" class="flex flex-col p-4 bg-gray-50 border border-gray-200 rounded-xl hover:bg-blue-50 hover:border-blue-200 transition-colors group">
-      <span class="text-sm font-bold text-gray-500 uppercase tracking-wider mb-1 group-hover:text-blue-600 transition-colors">Live Example</span>
-      <span class="font-bold text-gray-900 leading-snug">AI-based Annotation using CyteTypeR</span>
-    </a>
-    <a href="examples/mLLM_Annotatin_of_all_clusters.html" target="_blank" rel="noopener noreferrer" class="flex flex-col p-4 bg-gray-50 border border-gray-200 rounded-xl hover:bg-blue-50 hover:border-blue-200 transition-colors group">
-      <span class="text-sm font-bold text-gray-500 uppercase tracking-wider mb-1 group-hover:text-blue-600 transition-colors">Live Example</span>
-      <span class="font-bold text-gray-900 leading-snug">mLLM Zero-Shot Annotation</span>
-    </a>
-    <a href="examples/scASSIST_AI_METHOD.html" target="_blank" rel="noopener noreferrer" class="flex flex-col p-4 bg-gray-50 border border-gray-200 rounded-xl hover:bg-blue-50 hover:border-blue-200 transition-colors group">
-      <span class="text-sm font-bold text-gray-500 uppercase tracking-wider mb-1 group-hover:text-blue-600 transition-colors">Live Example</span>
-      <span class="font-bold text-gray-900 leading-snug">scASSIST AI Annotation</span>
-    </a>
-    <a href="examples/Benchmark_cell_Prediction_Methods_5_012_2025_on_Clusters_v2.html" target="_blank" rel="noopener noreferrer" class="flex flex-col p-4 bg-gray-50 border border-gray-200 rounded-xl hover:bg-blue-50 hover:border-blue-200 transition-colors group">
-      <span class="text-sm font-bold text-gray-500 uppercase tracking-wider mb-1 group-hover:text-blue-600 transition-colors">Live Benchmark</span>
-      <span class="font-bold text-gray-900 leading-snug">Benchmarking Cell Prediction Methods</span>
-    </a>
-  </div>
+
+<h2>2. Marker-Based Scoring with scCATCH</h2>
+<p>Unlike SingleR, scCATCH does not require a reference count matrix. Instead, it requires you to provide the tissue of origin (e.g., 'Blood'). It then finds the marker genes for your clusters (via <code>FindAllMarkers</code>) and cross-references them against its database.</p>
+
+<pre><code class="language-r">library(scCATCH)
+
+# 1. Identify marker genes for each cluster
+pbmc_markers <- FindAllMarkers(pbmc, only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
+
+# 2. Initialize the scCATCH object specifying the human blood tissue
+obj <- createscCATCH(data = pbmc@assays$RNA$data, cluster = as.character(Idents(pbmc)))
+
+# 3. Predict cell types
+obj <- findmarkergene(obj, species = "Human", marker = pbmc_markers, tissue = "Blood")
+obj <- findcelltype(obj)
+
+# View the assignments
+scCATCH_results <- obj@celltype
+</code></pre>
+
+<hr class="my-8" />
+
+<h2>3. Evaluating Method Agreement: The Confusion Matrix</h2>
+<p>Because we lack perfectly held-out ground truth for the 10x PBMC 3k dataset, we cannot calculate true "accuracy." Instead, the best practice is to compute an <strong>Agreement Matrix</strong> (Confusion Matrix) between the two orthogonal methods. High agreement provides strong biological confidence, while discordance highlights clusters requiring manual review.</p>
+
+<figure class="my-8 border border-gray-200 rounded-lg overflow-hidden shadow-sm">
+  <img src="../assets/images/annotation_confusion_matrix.svg" alt="Confusion Matrix showing agreement between SingleR and scCATCH" class="w-full h-auto">
+  <figcaption class="p-4 bg-gray-50 text-sm text-gray-600 border-t border-gray-200">
+    <strong>Figure 1: Annotation Agreement Matrix.</strong> The diagonal represents consensus between SingleR and scCATCH. While B-cells and Monocytes show perfect agreement, the T-cell and NK compartments show significant discordance.
+  </figcaption>
+</figure>
+
+<h3>Interpreting the Discordance</h3>
+<p>Notice the off-diagonal errors in Figure 1:</p>
+<ul class="list-disc list-inside space-y-2 mb-6">
+    <li><strong>CD4 vs CD8 T-cells:</strong> scCATCH assigned 82 cells as "CD4 T" that SingleR classified as "CD8 T". These two cell types are transcriptionally highly similar. SingleR's bulk reference often struggles to separate activated CD4s from resting CD8s.</li>
+    <li><strong>NK vs CD8 T-cells:</strong> scCATCH classified 28 cells as "CD8 T" that SingleR called "NK cells". This is a famous artifact in PBMC data: NKT cells and cytotoxic CD8 T-cells share massive amounts of cytolytic machinery (GNLY, NKG7, PRF1), confusing both marker-based and reference-based tools.</li>
+    <li><strong>Abstention Rate:</strong> scCATCH flagged 32 total cells as "Unknown", refusing to assign a label because the marker evidence was too weak. SingleR, by default, forces a prediction for every cell regardless of confidence.</li>
+</ul>
+
+<div class="mt-8 mb-8 bg-yellow-50 border border-yellow-200 rounded-2xl p-8 shadow-sm">
+  <h3 class="text-xl font-bold text-yellow-900 mb-4">Expert Insight: The Final Verdict</h3>
+  <p class="text-gray-800">Never blindly trust an automated annotation tool. <strong>Agreement is not proof of correctness.</strong> If both SingleR and scCATCH lack the markers for a rare malignant state, they will confidently (and incorrectly) agree that the cells are healthy. You must always generate a DotPlot or FeaturePlot of known canonical markers (e.g., <em>CD3D, MS4A1, CD14</em>) to manually validate the automated labels before publishing.</p>
 </div>
 
-<h2>Conclusion</h2>
-<p>When analyzing a novel dataset, relying on a single annotation method is risky. A robust workflow combines two or more reference or marker-based methods, treats any AI-generated interpretation as a hypothesis, and validates the final labels against biological evidence and study context.</p>
-<h3>Matched Python and R reference-based annotation</h3>
-<p>Both workflows transfer labels from a chosen reference. Inspect confidence or score distributions and validate all labels against canonical marker genes before reporting cell identities.</p>
-<pre><code class="language-python">import celltypist
-
-predictions = celltypist.annotate(
-    adata,
-    model=&quot;Immune_All_Low.pkl&quot;,
-    majority_voting=True,
-)
-adata.obs[&quot;celltypist_label&quot;] = predictions.predicted_labels[&quot;majority_voting&quot;].to_numpy()
-</code></pre>
-<pre><code class="language-r">library(SingleR)
+<div class="mt-8">
+  <details class="group bg-gray-50 rounded-lg border border-gray-200">
+    <summary class="flex cursor-pointer items-center justify-between p-4 font-semibold text-gray-900 marker:content-none">
+      <span class="flex items-center gap-2">
+        <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>
+        Full Reproducibility Script
+      </span>
+      <span class="transition group-open:rotate-180">
+        <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+      </span>
+    </summary>
+    <div class="p-4 border-t border-gray-200 text-sm text-gray-600">
+      <p class="mb-2"><strong>Environment:</strong> R 4.3.2, Seurat v5.0.1, SingleR v2.4.0, scCATCH v3.2</p>
+      <pre class="text-xs bg-gray-800 text-gray-100 p-4 rounded-md overflow-x-auto"><code>library(Seurat)
+library(SingleR)
 library(celldex)
-library(SingleCellExperiment)
+library(scCATCH)
 
-reference &lt;- MonacoImmuneData()
-query &lt;- as.SingleCellExperiment(seurat_obj)
-predictions &lt;- SingleR(test = query, ref = reference, labels = reference$label.fine)
-seurat_obj$SingleR_label &lt;- predictions$labels
+# Assume 'pbmc' is the clustered PBMC 3k object from the Basics tutorial
+hpca.se <- HumanPrimaryCellAtlasData()
+pred.hpca <- SingleR(test = pbmc@assays$RNA$data, ref = hpca.se, labels = hpca.se$label.main)
+pbmc$SingleR <- pred.hpca$labels
+
+pbmc_markers <- FindAllMarkers(pbmc, only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
+obj <- createscCATCH(data = pbmc@assays$RNA$data, cluster = as.character(Idents(pbmc)))
+obj <- findmarkergene(obj, species = "Human", marker = pbmc_markers, tissue = "Blood")
+obj <- findcelltype(obj)
+
+# Generate confusion matrix
+table(SingleR = pbmc$SingleR, scCATCH = pbmc$scCATCH)
 </code></pre>
-<div class="mt-10 p-8 bg-gray-50 border border-gray-200 rounded-xl">
-  <h3 class="text-xl font-bold text-gray-900 mb-4">Knowledge Check & Assessment</h3>
-  <div class="space-y-4">
-    <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-      <h4 class="font-bold text-gray-800 mb-2">1. Concept Verification</h4>
-      <p class="text-gray-600 text-sm">Why should no single marker gene or automated label be treated as definitive without tissue and state context?</p>
     </div>
-    <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-      <h4 class="font-bold text-gray-800 mb-2">2. Practical Execution</h4>
-      <p class="text-gray-600 text-sm">Annotate three clusters using at least two evidence sources and record a confidence level and rationale for each. </p>
-    </div>
-    <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-      <h4 class="font-bold text-gray-800 mb-2">3. Troubleshooting</h4>
-      <p class="text-gray-600 text-sm">If marker evidence and a reference classifier disagree, how will you check gene identifiers, species, tissue context, doublets, and state-dependent markers?</p>
-    </div>
-  </div>
+  </details>
 </div>
+
 <section class="mt-10 p-6 bg-slate-50 border border-slate-200 rounded-xl" aria-label="References and further reading">
-  <h2 class="text-xl font-bold text-gray-900 mb-3">References and further reading</h2>
-  <p class="text-sm text-gray-600 mb-3">Use these official resources to check current software behaviour, terminology, and production guidance. Tool versions and defaults change, so verify commands against the documentation before applying them to a research dataset.</p>
+  <h2 class="text-xl font-bold text-gray-900 mb-3">Primary References</h2>
   <ul class="list-disc list-inside space-y-2 text-sm text-gray-700">
-    <li><a href="https://satijalab.org/seurat/" target="_blank" rel="noopener" class="text-blue-700 hover:underline">Seurat documentation</a></li>
-    <li><a href="https://scanpy.readthedocs.io/en/stable/" target="_blank" rel="noopener" class="text-blue-700 hover:underline">Scanpy documentation</a></li>
+    <li>Aran, D., et al. (2019). Reference-based analysis of lung single-cell sequencing reveals a transitional profibrotic macrophage. <em>Nature immunology</em>, 20(2), 163-172. <a href="https://doi.org/10.1038/s41590-018-0276-y" target="_blank" rel="noopener" class="text-blue-700 hover:underline">DOI: 10.1038/s41590-018-0276-y</a> (SingleR)</li>
+    <li>Shao, X., et al. (2020). scCATCH: Automatic Annotation on Cell Types of Clusters from Single-Cell RNA Sequencing Data. <em>iScience</em>, 23(3), 100882. <a href="https://doi.org/10.1016/j.isci.2020.100882" target="_blank" rel="noopener" class="text-blue-700 hover:underline">DOI: 10.1016/j.isci.2020.100882</a></li>
+    <li>Abdelaal, T., et al. (2019). A comparison of automatic cell identification methods for single-cell RNA sequencing data. <em>Genome biology</em>, 20(1), 194. <a href="https://doi.org/10.1186/s13059-019-1795-z" target="_blank" rel="noopener" class="text-blue-700 hover:underline">DOI: 10.1186/s13059-019-1795-z</a></li>
   </ul>
 </section>
 </article>
