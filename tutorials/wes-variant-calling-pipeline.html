@@ -171,175 +171,87 @@ Legal
 <div class="p-6 bg-blue-50 border border-blue-100 rounded-xl mb-8">
   <h4 class="text-lg font-bold text-blue-900 mb-2">Learning Objectives & Prerequisites</h4>
   <ul class="list-disc list-inside text-blue-800 space-y-1 mb-4">
-    <li><strong>Prerequisites:</strong> Complete Biological Data Formats, Reference Genomes, and basic command-line concepts; use controlled, non-clinical training data.</li>
-    <li><strong>Objective:</strong> Trace a whole-exome variant-calling workflow from aligned reads to filtered variants while interpreting depth, genotype quality, and VAF responsibly.</li>
-    <li><strong>Expected Output:</strong> A documented VCF review with reference build, filters, depth, genotype quality, VAF, and explicit non-clinical interpretation limits.</li>
+    <li><strong>Prerequisites:</strong> Understanding of FASTQ/BAM/VCF formats, Linux command line, and basic cancer genomics.</li>
+    <li><strong>Objective:</strong> Perform read alignment (BWA), variant calling (Mutect2), and carefully interpret Variant Allele Frequency (VAF) in the context of tumor purity and copy-number alterations.</li>
+    <li><strong>Expected Output:</strong> A reproducible workflow utilizing the GRCh38 reference genome, producing an annotated VCF with properly contextualized VAF metrics.</li>
   </ul>
 </div>
 
-<h2>Whole Exome Sequencing (WES) Pipeline</h2>
-<h2>Introduction</h2>
-<p>While RNA sequencing (RNA-seq) tells us what genes are actively expressed, <strong>Whole Exome Sequencing (WES)</strong> reveals the underlying DNA mutations. WES specifically targets the protein-coding regions of the genome, making it a highly cost-effective method for identifying disease-causing variants in cancer and rare genetic disorders.</p>
-<p>This tutorial covers the standard bioinformatics pipeline for processing raw WES data, calculating Variant Allele Frequency (VAF), and managing genome assembly liftovers.</p>
+<h2>The Complexity of Somatic Variant Calling</h2>
+<p>Whole Exome Sequencing (WES) captures the protein-coding regions of the genome. In cancer genomics, we typically sequence both the tumor and a matched normal sample (like blood) from the same patient to identify <strong>somatic mutations</strong> (mutations unique to the cancer).</p>
+
+<div class="mt-8 mb-8 bg-yellow-50 border border-yellow-200 rounded-2xl p-8 shadow-sm">
+  <h3 class="text-xl font-bold text-yellow-900 mb-4">Expert Insight: The VAF Illusion</h3>
+  <p class="text-gray-800 mb-4">Variant Allele Frequency (VAF) is mathematically simple: (Variant Reads) / (Total Reads). Many beginners assume a VAF of 0.50 means the mutation is heterozygous in every tumor cell (clonal).</p>
+  <p class="text-gray-800"><strong>This is a dangerous assumption.</strong> In my cancer research, I frequently encountered samples with 40% tumor purity and massive copy-number amplifications. A VAF of 0.20 might mean the mutation is in 40% of cells (heterozygous, diploid), or it could mean the mutation is in 100% of cells but the genome has amplified the normal allele. <strong>Never interpret VAF without adjusting for tumor purity and local copy-number status.</strong></p>
+</div>
 <hr />
-<h2>1. Raw Data Processing &amp; Alignment</h2>
-<p>The first step in any DNA-seq pipeline is aligning the raw FASTQ reads to a reference genome (e.g., GRCh38/hg38) and marking PCR duplicates.</p>
-<h3>BWA-MEM Alignment</h3>
-<p><code>BWA-MEM</code> is a widely used aligner for short DNA reads; follow your laboratory or project standard if another validated workflow is required.</p>
-<pre><code class="language-bash"># Index the reference genome (only needed once)
-bwa index Homo_sapiens_assembly38.fasta
 
-# Align paired-end reads to the reference
-bwa mem -t 8 Homo_sapiens_assembly38.fasta sample_R1.fastq.gz sample_R2.fastq.gz &gt; aligned_reads.sam
+<h2>1. Alignment to the Reference Genome</h2>
+<p>We begin by aligning raw FASTQ reads to the human reference genome. <strong>Always document your reference build!</strong> For this pipeline, we strictly use GRCh38. Mixing GRCh37 and GRCh38 annotations is a guaranteed way to produce scientifically invalid results.</p>
+<pre><code class="language-bash"># Index the GRCh38 reference (only needs to be done once)
+bwa index GRCh38_reference.fa
+
+# Align Tumor FASTQs
+bwa mem -t 8 -R "@RG\tID:Tumor1\tSM:Tumor1" GRCh38_reference.fa tumor_R1.fq.gz tumor_R2.fq.gz | samtools sort -o tumor_sorted.bam -
+
+# Align Matched Normal FASTQs
+bwa mem -t 8 -R "@RG\tID:Normal1\tSM:Normal1" GRCh38_reference.fa normal_R1.fq.gz normal_R2.fq.gz | samtools sort -o normal_sorted.bam -
+
+# Index the BAMs
+samtools index tumor_sorted.bam
+samtools index normal_sorted.bam
 </code></pre>
-<h3>Sorting and Marking Duplicates (GATK / Picard)</h3>
-<p>We use <code>samtools</code> to convert to BAM, and <code>Picard</code> to remove PCR duplicates that arise during exome capture library preparation.</p>
-<pre><code class="language-bash"># Convert SAM to BAM and sort by coordinate
-samtools sort -@ 8 -o sorted_reads.bam aligned_reads.sam
 
-# Mark Duplicates
-java -jar picard.jar MarkDuplicates \
-      I=sorted_reads.bam \
-      O=dedup_reads.bam \
-      M=marked_dup_metrics.txt
+<h2>2. Somatic Variant Calling with Mutect2</h2>
+<p>GATK's Mutect2 is the industry standard for somatic variant calling. It simultaneously evaluates the tumor and normal BAM files to subtract germline variants, leaving only the somatic mutations driving the cancer.</p>
+<pre><code class="language-bash"># Run Mutect2
+gatk Mutect2 \
+  -R GRCh38_reference.fa \
+  -I tumor_sorted.bam \
+  -I normal_sorted.bam \
+  -normal Normal1 \
+  --germline-resource af-only-gnomad.hg38.vcf.gz \
+  --panel-of-normals pon.hg38.vcf.gz \
+  -O somatic_unfiltered.vcf.gz
+
+# Filter the raw calls to produce high-confidence somatic variants
+gatk FilterMutectCalls \
+  -R GRCh38_reference.fa \
+  -V somatic_unfiltered.vcf.gz \
+  -O somatic_filtered.vcf.gz
 </code></pre>
-<hr />
-<h2>2. Validate GATK Inputs and Recalibrate When Appropriate</h2>
-<p>Before calling variants, confirm that the reference build, aligned reads, known-sites resources, and metadata all refer to the same genome assembly. GATK requires key read-group fields, and missing metadata can cause failures or make technical interpretation unreliable.</p>
-<pre><code class="language-bash"># Reference prerequisites for GATK
-samtools faidx Homo_sapiens_assembly38.fasta
-gatk CreateSequenceDictionary -R Homo_sapiens_assembly38.fasta
 
-# Inspect existing read groups. You should see @RG lines with ID, SM, LB, and PL fields.
-samtools view -H dedup_reads.bam | grep '^@RG'
-
-# Only if read groups are absent or incorrect, add values supplied by your sequencing facility.
-gatk AddOrReplaceReadGroups \
-  -I dedup_reads.bam -O dedup_reads.rg.bam \
-  -RGID flowcell.lane -RGLB library1 -RGPL ILLUMINA -RGPU flowcell.lane.barcode -RGSM sample1
+<h2>3. VAF Extraction and Annotation</h2>
+<p>Once we have the filtered VCF, we use tools like `bcftools` to extract the VAF. However, remember the expert caveat above: this raw VAF must be interpreted alongside a copy-number tool (like FACETS or ASCAT) before making claims about tumor evolution or clonality.</p>
+<pre><code class="language-bash"># Extract Chromosome, Position, Ref, Alt, and VAF (from the AF format field)
+bcftools query -f '%CHROM\t%POS\t%REF\t%ALT\t[%AF]\n' somatic_filtered.vcf.gz > variant_allele_frequencies.tsv
 </code></pre>
-<p>For human germline-style workflows with a compatible, trusted known-sites resource, use Base Quality Score Recalibration (BQSR) according to the current GATK Best Practices. Do not apply BQSR blindly when the required reference and known-sites assumptions are not met.</p>
-<pre><code class="language-bash"># Example only: use a known-sites VCF that matches exactly the same reference build.
-gatk BaseRecalibrator \
-  -R Homo_sapiens_assembly38.fasta \
-  -I dedup_reads.rg.bam \
-  --known-sites known_sites.vcf.gz \
-  -O recalibration.table
 
-gatk ApplyBQSR \
-  -R Homo_sapiens_assembly38.fasta \
-  -I dedup_reads.rg.bam \
-  --bqsr-recal-file recalibration.table \
-  -O recal_reads.bam
-</code></pre>
-<p>A successful preparation has a <code>.fai</code> file, a <code>.dict</code> file, readable <code>@RG</code> header lines, and a recalibration table when BQSR is used.</p>
-<hr />
-<h2>3. Variant Calling (GATK HaplotypeCaller)</h2>
-<p>Once inputs are aligned, deduplicated, and validated, use the Broad Institute's <strong>GATK (Genome Analysis Toolkit)</strong> to identify SNPs and indels.</p>
-<pre><code class="language-bash"># Use the BQSR output when BQSR was appropriate for the selected workflow.
-gatk HaplotypeCaller \
-     -R Homo_sapiens_assembly38.fasta \
-     -I recal_reads.bam \
-     -O raw_variants.vcf.gz
-</code></pre>
-<hr />
-<h2>4. Variant Allele Frequency (VAF) Analysis</h2>
-<p><strong>Variant Allele Frequency (VAF)</strong> is the percentage of sequencing reads matching a specific DNA variant divided by the total coverage at that locus. In cancer genomics, VAF is critical for determining whether a mutation is clonal (present in all tumor cells) or subclonal.</p>
-<h3>Calculating VAF in R</h3>
-<p>If you extract the allelic depths (AD) and total depth (DP) from your VCF into a data frame, you can analyze VAF in R:</p>
-<pre><code class="language-r">library(ggplot2)
-library(dplyr)
-
-# Example: Read extracted VCF data
-variant_data &lt;- read.csv(&quot;extracted_variants.csv&quot;)
-
-# Calculate VAF: Alternate Allele Depth (AD_alt) / Total Depth (DP)
-variant_data &lt;- variant_data %&gt;%
-  mutate(VAF = AD_alt / DP)
-
-# Visualize the VAF distribution to look for clonal peaks
-ggplot(variant_data, aes(x = VAF)) +
-  geom_histogram(binwidth = 0.02, fill = &quot;darkred&quot;, color = &quot;black&quot;, alpha = 0.7) +
-  theme_minimal() +
-  labs(title = &quot;Variant Allele Frequency (VAF) Distribution&quot;,
-       x = &quot;VAF&quot;,
-       y = &quot;Number of Mutations&quot;)
-</code></pre>
-<p><em>A peak near VAF = 0.5 can be consistent with heterozygous variants in an adequately covered diploid sample, but purity, copy-number change, allele-specific bias, and coverage alter observed VAF. Do not infer clonality or germline status from VAF alone.</em></p>
-<hr />
-<h2>5. Genome LiftOver (e.g., hg19 to hg38)</h2>
-<p>Often, you may receive older variant data mapped to an outdated genome assembly (like <code>hg19</code>). You must "LiftOver" these coordinates to the modern <code>hg38</code> assembly before combining them with new data.</p>
-<pre><code class="language-r">library(rtracklayer)
-library(GenomicRanges)
-
-# Load the chain file downloaded from UCSC
-chain &lt;- import.chain(&quot;hg19ToHg38.over.chain&quot;)
-
-# Create a GRanges object of your hg19 variants
-hg19_variants &lt;- GRanges(seqnames = Rle(c(&quot;chr1&quot;, &quot;chr2&quot;)),
-                         ranges = IRanges(start = c(10000, 20000), width = 1))
-
-# Perform the LiftOver
-hg38_variants &lt;- liftOver(hg19_variants, chain)
-
-print(hg38_variants)
-</code></pre>
 <h2>Conclusion</h2>
-<p>A robust WES pipeline requires careful alignment, stringent duplicate removal, accurate variant calling, and deep interpretation of metrics like VAF. By mastering these steps, you can confidently identify pathogenic mutations in complex cohorts.</p>
-<h3>Matched Python and R VAF calculation</h3>
-<p>Check the VCF header and sample order before calculating variant allele fraction. The simplified examples below use allele-depth fields and should be extended for multi-allelic sites, quality filters, tumor purity, and copy-number context.</p>
-<pre><code class="language-python">import pandas as pd
-from cyvcf2 import VCF
+<p>A WES pipeline requires rigorous alignment, strict adherence to a single reference genome, and statistically sound variant calling. However, the computational pipeline is only half the battle. The true expertise lies in interpreting metrics like VAF within the complex, chaotic reality of a tumor genome.</p>
 
-rows = []
-for variant in VCF(&quot;sample.vcf.gz&quot;):
-    allele_depths = variant.format(&quot;AD&quot;)[0]
-    if allele_depths is None or len(allele_depths) &lt; 2:
-        continue
-    ref_depth, alt_depth = map(int, allele_depths[:2])
-    total_depth = ref_depth + alt_depth
-    rows.append({
-        &quot;chrom&quot;: variant.CHROM,
-        &quot;position&quot;: variant.POS,
-        &quot;vaf&quot;: alt_depth / total_depth if total_depth else float(&quot;nan&quot;),
-    })
-vaf_table = pd.DataFrame(rows)
-</code></pre>
-<pre><code class="language-r">library(VariantAnnotation)
-
-vcf &lt;- readVcf(&quot;sample.vcf.gz&quot;)
-allele_depths &lt;- geno(vcf)$AD
-ref_depth &lt;- allele_depths[1, 1, ]
-alt_depth &lt;- allele_depths[2, 1, ]
-vaf &lt;- alt_depth / (ref_depth + alt_depth)
-vaf_table &lt;- data.frame(position = start(rowRanges(vcf)), vaf = vaf)
-</code></pre>
 <div class="mt-10 p-8 bg-gray-50 border border-gray-200 rounded-xl">
   <h3 class="text-xl font-bold text-gray-900 mb-4">Knowledge Check & Assessment</h3>
   <div class="space-y-4">
     <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
       <h4 class="font-bold text-gray-800 mb-2">1. Concept Verification</h4>
-      <p class="text-gray-600 text-sm">Why are a variant call, a high VAF, and a clinically meaningful conclusion different levels of evidence?</p>
-    </div>
-    <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-      <h4 class="font-bold text-gray-800 mb-2">2. Practical Execution</h4>
-      <p class="text-gray-600 text-sm">Inspect a training VCF and report the reference build, one variant’s depth/quality/VAF, and the filters applied. </p>
-    </div>
-    <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-      <h4 class="font-bold text-gray-800 mb-2">3. Troubleshooting</h4>
-      <p class="text-gray-600 text-sm">If a variant is absent or low quality, how will you inspect coverage, alignment context, caller filters, and genome-build consistency?</p>
+      <p class="text-gray-600 text-sm mb-3">If a tumor sample is only 50% pure (half the cells are healthy stroma), what is the maximum expected VAF for a heterozygous somatic mutation?</p>
+      <details class="text-sm text-gray-700 bg-blue-50 p-3 rounded border border-blue-100">
+        <summary class="cursor-pointer font-semibold text-blue-800 outline-none">Reveal Answer</summary>
+        <p class="mt-2">25% (0.25). A heterozygous mutation is present on 1 of 2 alleles (50%). If only half the cells in the sample are tumor cells, the mutation will only be present in 25% of the total reads (50% * 50%).</p>
+      </details>
     </div>
   </div>
 </div>
+
 <section class="mt-10 p-6 bg-slate-50 border border-slate-200 rounded-xl" aria-label="References and further reading">
-  <h2 class="text-xl font-bold text-gray-900 mb-3">References and further reading</h2>
-  <p class="text-sm text-gray-600 mb-3">Use these official resources to check current software behaviour, terminology, and production guidance. Tool versions and defaults change, so verify commands against the documentation before applying them to a research dataset.</p>
+  <h2 class="text-xl font-bold text-gray-900 mb-3">Primary References</h2>
   <ul class="list-disc list-inside space-y-2 text-sm text-gray-700">
-    <li><a href="https://gatk.broadinstitute.org/hc/en-us" target="_blank" rel="noopener" class="text-blue-700 hover:underline">GATK documentation</a></li>
-    <li><a href="https://www.htslib.org/doc/samtools.html" target="_blank" rel="noopener" class="text-blue-700 hover:underline">SAMtools documentation</a></li>
+    <li>Benjamin, D., et al. (2019). Calling Somatic SNVs and Indels with Mutect2. <em>bioRxiv</em>. <a href="https://doi.org/10.1101/861054" target="_blank" rel="noopener" class="text-blue-700 hover:underline">DOI: 10.1101/861054</a></li>
+    <li>Li, H. (2013). Aligning sequence reads, clone sequences and assembly contigs with BWA-MEM. <em>arXiv preprint</em>. <a href="https://arxiv.org/abs/1303.3997" target="_blank" rel="noopener" class="text-blue-700 hover:underline">arXiv:1303.3997</a></li>
   </ul>
-</section>
-</article>
+</section></article>
             
     <section class="mt-12 mb-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-100">
         <div class="flex items-start gap-4">

@@ -187,7 +187,7 @@ Legal
 <h2>1. Sequence and read files</h2>
 <p>FASTA stores named sequences as a header beginning with <code>&gt;</code> followed by sequence lines. FASTQ stores a read name, sequence, a plus line, and one quality string for every record. A FASTQ record therefore has four lines, although wrapped sequence files require more careful parsing.</p>
 <pre><code class="language-bash">head -n 8 sample.fastq
-grep -c "^@" sample.fastq
+echo $(( $(wc -l < sample.fastq) / 4 ))
 grep -c "^&gt;" reference.fasta
 </code></pre>
 <h2>2. Alignments and variants</h2>
@@ -243,7 +243,7 @@ read001  0  chr1  1000  60  150M  *  0  0  ATCG...  IIII...  NM:i:0
 <p>Always validate file integrity before analysis. Corrupted files produce silent errors that propagate through entire pipelines.</p>
 <pre><code class="language-bash"># Validate FASTQ integrity
 # Count records (should be divisible by 4)
-wc -l reads.fastq  # Must be multiple of 4
+seqtk seq -A reads.fastq | wc -l  # Safe counting
 
 # Validate BAM file
 samtools quickcheck aligned.bam &amp;&amp; echo "OK" || echo "CORRUPTED"
