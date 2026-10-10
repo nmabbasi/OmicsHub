@@ -284,6 +284,19 @@ FeaturePlot(pbmc, features = "STAT1", cols = c("blue", "white", "red"))
 <p class="font-bold text-gray-900 mb-2">⚠️ Pitfalls to Avoid</p>
 <p>Always remember that transcription factors are often expressed at extremely low levels or in short bursts, making them highly susceptible to drop-outs in scRNA-seq. By scoring their <em>targets</em>, we bypass this dropout problem. However, never interpret these scores as absolute TF protein abundance; they represent regulatory <em>influence</em>.</p>
 </div>
+
+<div class="mt-8 p-6 bg-purple-50 border-l-4 border-purple-500 rounded-r-xl shadow-sm mb-8">
+  <h4 class="text-lg font-bold text-purple-900 mb-2 flex items-center gap-2">
+    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+    Expert Insight: Resolving Phenotypic Ambiguity with GRNs
+  </h4>
+  <p class="text-purple-900 text-sm">
+    In my research, I frequently encounter cell populations with ambiguous surface markers—for example, distinguishing malignant Sézary syndrome T-cells from normal regulatory T-cells when canonical markers like CD25 drop out. Gene Regulatory Networks (GRNs) solve this.
+    <br><br>
+    By computing a multivariate linear model (MLM) via decoupleR/DoRothEA, you can map the activity of master regulators like <strong>FOXP3</strong> or <strong>STAT3</strong> across your clusters. Instead of relying on a single dropout-prone transcript, you aggregate the signal of 50+ downstream targets. When visualizing these activities via heatmaps grouped by patient origin, you can often separate disease states that appear completely mixed in standard PCA/UMAP space.
+  </p>
+</div>
+
 <hr/>
 <h2>3. Publication-Ready Plotting (SCpubr)</h2>
 <p>While Seurat's base plotting functions are good, the <strong>SCpubr</strong> package in R generates highly polished, publication-ready graphics automatically.</p>

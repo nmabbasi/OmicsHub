@@ -239,6 +239,18 @@ lines(SlingshotDataSet(sce), lwd=2, col='black')
 <p class="font-bold text-gray-900 mb-2">⚠️ Pitfalls to Avoid</p>
 <p>Slingshot's greatest strength is its flexibility, but that is also its greatest danger. It will happily fit a mathematical trajectory through <em>any</em> scatter of data you give it, even random noise. You must provide a biologically justified starting cluster (e.g., naive cells, progenitor stem cells); otherwise, the direction of pseudotime is entirely arbitrary and biologically meaningless.</p>
 </div>
+
+<div class="mt-8 p-6 bg-purple-50 border-l-4 border-purple-500 rounded-r-xl shadow-sm mb-8">
+  <h4 class="text-lg font-bold text-purple-900 mb-2 flex items-center gap-2">
+    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+    Expert Insight: Finding Driver Genes with GAMs
+  </h4>
+  <p class="text-purple-900 text-sm">
+    Slingshot gives you pseudotime values, but how do you find the genes driving the trajectory? In my advanced pipelines, I pair Slingshot with the <strong>tradeSeq</strong> package to fit Generalized Additive Models (GAMs) on the highly variable genes.
+    <br><br>
+    For example, fitting a model with <code class="bg-purple-100 px-1 rounded">fitGAM(counts = data, pseudotime = pseudotime, cellWeights = weights, nknots = 5)</code> allows you to run powerful statistical tests like <code class="bg-purple-100 px-1 rounded">associationTest()</code> to find genes dynamically changing along the trajectory, or <code class="bg-purple-100 px-1 rounded">startVsEndTest()</code> to find genes drastically different between the progenitor state and the terminal state. This turns a simple visualization into actionable biological targets.
+  </p>
+</div>
 <pre><code class="language-r">library(monocle3)
 library(SeuratWrappers)
 
