@@ -77,7 +77,6 @@ geometry: margin=1in
 Below is a quick reference for common biomarkers used in immunology and cancer research, specifically relating to T-cell malignancies like Sézary Syndrome:
 
 - **CD4**: Helper T-cell marker.
-- **FOXP3**: Master regulator for Regulatory T cells (Tregs). In Sézary syndrome, differentiating CD25+ and CD25- phenotypes is critical.
-- **CLIC1**: Chloride Intracellular Channel 1. A key marker associated with metabolic vulnerabilities in malignant cells.
+- **FOXP3**: Master regulator for Regulatory T cells (Tregs).
 - **CD25 (IL2RA)**: Alpha chain of the IL-2 receptor, typically expressed on Tregs and activated T cells.
 - **CCR4 / CCR7**: Chemokine receptors important for T-cell skin homing and lymph node migration.
