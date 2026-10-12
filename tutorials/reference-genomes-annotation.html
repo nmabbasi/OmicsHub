@@ -20,8 +20,7 @@
 <meta content="Choose genome builds, transcript versions, identifiers, and reproducible annotation sources for analysis." name="twitter:description"/>
 <meta content="https://theomicshub.com/images/reference-genomes-annotation-workstation.webp" name="twitter:image"/>
 <title>Reference Genomes and Annotation Databases | The Omics Hub</title>
-  <meta name="description" content="A complete, expert-led bioinformatics tutorial on Reference Genomes and Annotation Databases. Learn data processing, analysis workflows, and best practices.">
-
+<meta content="A complete, expert-led bioinformatics tutorial on Reference Genomes and Annotation Databases. Learn data processing, analysis workflows, and best practices." name="description"/>
 <!-- Favicon -->
 <link href="../images/favicon.svg" rel="icon" type="image/svg+xml"/>
 <!-- Pre-fetch fonts to prevent FOUC (layout shift) -->
@@ -148,7 +147,7 @@ Legal
 <div class="page-content" id="tutorial-page">
 <div class="container mx-auto px-4 py-8"><div class="max-w-4xl mx-auto"><div id="tutorial-content">
 <section class="mb-12">
-<div class="flex items-center gap-2 text-sm text-blue-600 font-medium mb-4"><span>Foundations &amp; Prerequisites</span><span>•</span><span>2026-08-17</span></div>
+<div class="flex items-center gap-2 text-sm text-blue-600 font-medium mb-4"><span>Foundations &amp; Prerequisites</span><span>-</span><span>2026-08-17</span></div>
 <h1 class="text-4xl md:text-5xl font-black text-gray-900 mb-6 leading-tight">Reference Genomes and Annotation Databases</h1>
 <div class="flex items-center gap-4"><div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 font-bold text-lg">NM</div><div><p class="font-bold text-gray-900">Nasir Mahmood Abbasi, PhD</p><p class="text-sm text-gray-500">Bioinformatics Educator</p></div></div>
 </section>
@@ -158,7 +157,6 @@ Legal
 <article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none"><div class="mb-10 text-xl text-gray-600 leading-relaxed">
 <p>A reference genome is not a neutral backdrop: its build, annotation release, transcript model, and identifiers directly affect alignment, quantification, variant calls, and biological interpretation. Record the exact references used.</p>
 </div>
-
 <div class="flex flex-wrap items-center gap-4 text-xs font-mono text-gray-500 bg-gray-50 p-3 rounded-lg border border-gray-200 mb-6">
 <div class="flex items-center gap-1">
 <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
@@ -166,7 +164,6 @@ Legal
 </div>
 <div class="flex items-center gap-1">
 <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
-
 </div>
 </div>
 <div class="p-6 bg-blue-50 border border-blue-100 rounded-xl mb-8"><h4 class="text-lg font-bold text-blue-900 mb-2">Learning Objectives &amp; Prerequisites</h4><div class="text-blue-800 space-y-2"><p><strong>By the end of this lesson, you should be able to:</strong></p><ul>
@@ -175,15 +172,9 @@ Legal
 <li>Verify checksums and record versions.</li>
 <li>Explain why mixing builds or annotations can invalidate results.</li>
 </ul><p><strong>Prerequisites:</strong></p><ul>
-<li>Understand FASTA and GTF/GFF from <a href="biological-data-formats.html">Biological Data Formats</a>.</li>
-<li>Have <code>curl</code>, <code>wget</code>, and <code>sha256sum</code> available.</li>
+<li>Understand FASTA and GTF/GFF from <a href="biological-data-formats.html">Biological Data Formats</a></li>
+<li>Have <code>curl</code><code>wget</code>and <code>sha256sum</code> available.</li>
 </ul><strong class="block mt-2 text-blue-900">Expected Output</strong><p>By the end of this lesson, you should have: <strong>A reference manifest containing the provider, accession or release, direct URL, checksum result, genome build, annotation version, and contig naming convention.</strong></p></div></div>
-
-
-
-
-
-
 <h2>1. Build and annotation are different</h2>
 <p>GRCh38 is an assembly; a GENCODE release is an annotation set for that assembly. A transcript identifier may change between releases. Keep the FASTA and GTF compatible.</p>
 <pre><code class="language-text">assembly: GRCh38
@@ -203,7 +194,7 @@ curl -L -o md5checksums.txt \
 grep "GCF_000001405.40_GRCh38.p14_genomic.fna.gz" md5checksums.txt | md5sum -c -
 </code></pre>
 <h2>3. Validate compatibility</h2>
-<p>Check chromosome names, feature IDs, coordinate conventions, and whether the annotation includes the feature type your tool expects. Do not mix <code>chr1</code> with <code>1</code> without a documented conversion.</p>
+<p>Check chromosome names, feature IDs, coordinate conventions, and whether the annotation includes the feature type your tool expects. Don't mix <code>chr1</code> with <code>1</code> without a documented conversion.</p>
 <pre><code class="language-bash">cut -f1 reference.fa.fai | head
 awk "$3=="gene" {print \$1}" annotation.gtf | sort -u | head
 </code></pre>
@@ -257,7 +248,7 @@ awk "$3=="gene" {print \$1}" annotation.gtf | sort -u | head
 </tr>
 </tbody>
 </table>
-</div>
+</table></div>
 <h2>6. Chromosome Naming Conflicts</h2>
 <p>One of the most common silent errors in bioinformatics is a chromosome naming mismatch between your reference genome and annotation file. Different sources use different conventions:</p>
 <pre><code class="language-text"># UCSC style          # Ensembl/NCBI style
@@ -275,7 +266,7 @@ awk '$3=="gene" {print $1}' annotation.gtf | sort -u &gt; chrom_gtf.txt
 # Compare – any differences indicate a naming mismatch
 diff chrom_fasta.txt chrom_gtf.txt
 </code></pre>
-<p><strong>Resolution:</strong> Use a mapping file or sed to convert between conventions. Never manually edit a reference FASTA – always script the conversion and document it.</p>
+<p><strong>Resolution:</strong> Use a mapping file or sed to convert between conventions. Never manually edit a reference FASTA, always script the conversion and document it.</p>
 <h2>7. Annotation File Formats Explained</h2>
 <div class="overflow-x-auto -mx-4 px-4">
 <table>
@@ -305,10 +296,10 @@ diff chrom_fasta.txt chrom_gtf.txt
 </tr>
 </tbody>
 </table>
-</div>
+</table></div>
 <p><strong>Critical difference:</strong> GTF uses 1-based, fully closed coordinates (<code>start=1, end=100</code> means positions 1 through 100). BED uses 0-based, half-open coordinates (<code>start=0, end=100</code> means positions 1 through 100). Mixing these silently shifts all your coordinates by one base.</p>
 <h2>8. Version Pinning and Reproducibility</h2>
-<p>Always record the exact version of your reference files. A GENCODE release number alone is not sufficient – record the full download URL, file checksum, and download date.</p>
+<p>Always record the exact version of your reference files. A GENCODE release number alone is not sufficient, record the full download URL, file checksum, and download date.</p>
 <pre><code class="language-bash"># Create a reproducible reference manifest
 cat &gt; config/reference_manifest.yml &lt;&lt; 'EOF'
 reference:
@@ -335,22 +326,15 @@ EOF
 <p></p>
 <h2>Troubleshooting</h2>
 <p>If a tool reports missing contigs or features, compare assembly names, chromosome prefixes, and annotation release before editing files.</p>
-
-
-
-
-
-
-
 <h2>Next Steps</h2>
-<p>Continue with <a href="data-visualization-fundamentals.html">Data Visualization Fundamentals</a> and <a href="wes-variant-calling-pipeline.html">Whole Exome Sequencing</a>. Record the software versions, dataset or example inputs, and any decisions you made.</p>
-<section class="mt-10 p-6 bg-slate-50 border border-slate-200 rounded-xl" aria-label="References and further reading">
-  <h2 class="text-xl font-bold text-gray-900 mb-3">References and further reading</h2>
-  <p class="text-sm text-gray-600 mb-3">Use these official resources to check current software behaviour, terminology, and production guidance. Tool versions and defaults change, so verify commands against the documentation before applying them to a research dataset.</p>
-  <ul class="list-disc list-inside space-y-2 text-sm text-gray-700">
-    <li><a href="https://gatk.broadinstitute.org/hc/en-us" target="_blank" rel="noopener" class="text-blue-700 hover:underline">GATK documentation</a></li>
-    <li><a href="https://www.htslib.org/doc/samtools.html" target="_blank" rel="noopener" class="text-blue-700 hover:underline">SAMtools documentation</a></li>
-  </ul>
+<p>Continue with <a href="data-visualization-fundamentals.html">Data Visualization Fundamentals</a> and <a href="wes-variant-calling-pipeline.html">Whole Exome Sequencing</a>Record the software versions, dataset or example inputs, and any decisions you made.</p>
+<section aria-label="References and further reading" class="mt-10 p-6 bg-slate-50 border border-slate-200 rounded-xl">
+<h2 class="text-xl font-bold text-gray-900 mb-3">References and further reading</h2>
+<p class="text-sm text-gray-600 mb-3">Use these official resources to check current software behaviour, terminology, and production guidance. Tool versions and defaults change, so verify commands against the documentation before applying them to a research dataset.</p>
+<ul class="list-disc list-inside space-y-2 text-sm text-gray-700">
+<li><a class="text-blue-700 hover:underline" href="https://gatk.broadinstitute.org/hc/en-us" rel="noopener" target="_blank">GATK documentation</a></li>
+<li><a class="text-blue-700 hover:underline" href="https://www.htslib.org/doc/samtools.html" rel="noopener" target="_blank">SAMtools documentation</a></li>
+</ul>
 </section>
 </article>
 <section class="mt-12 mb-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-100">
@@ -359,9 +343,8 @@ EOF
 <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
 </div>
 <div>
-
-<p class="text-sm text-gray-600 mb-2">This tutorial records the software versions used for its examples. Please re-check commands against the official documentation, and report reproducibility issues through the <a class="text-blue-600 hover:underline" href="../contact.html">Contact page</a>.</p>
-<p class="text-sm text-gray-500">Author: <a class="text-blue-600 hover:underline font-medium" href="../about.html">Nasir Mahmood Abbasi, PhD</a> · Category: Foundations &amp; Prerequisites</p>
+<p class="text-sm text-gray-600 mb-2">This tutorial records the software versions used for its examples. Please re-check commands against the official documentation, and report reproducibility issues through the <a class="text-blue-600 hover:underline" href="../contact.html">Contact page</a></p>
+<p class="text-sm text-gray-500">Author: <a class="text-blue-600 hover:underline font-medium" href="../about.html">Nasir Mahmood Abbasi, PhD</a> - Category: Foundations &amp; Prerequisites</p>
 </div>
 </div>
 </section>
@@ -451,8 +434,6 @@ EOF
 </div>
 </div>
 </div>
-
-
 </footer>
 <!-- Prism.js for syntax highlighting -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>

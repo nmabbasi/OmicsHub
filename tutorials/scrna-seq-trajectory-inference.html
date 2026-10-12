@@ -20,8 +20,7 @@
 <meta content="Learn the basics of inferring cellular trajectories and pseudotime using industry-standard tools like PAGA in Python and Monocle3/Slingshot in R." name="twitter:description"/>
 <meta content="https://theomicshub.com/images/trajectory-inference-workstation.webp" name="twitter:image"/>
 <title>Trajectory Inference | The Omics Hub</title>
-  <meta name="description" content="A complete, expert-led bioinformatics tutorial on Trajectory Inference. Learn data processing, analysis workflows, and best practices.">
-
+<meta content="A complete, expert-led bioinformatics tutorial on Trajectory Inference. Learn data processing, analysis workflows, and best practices." name="description"/>
 <!-- Favicon -->
 <link href="../images/favicon.svg" rel="icon" type="image/svg+xml"/>
 <!-- Pre-fetch fonts to prevent FOUC (layout shift) -->
@@ -148,7 +147,7 @@ Legal
 <div class="page-content" id="tutorial-page">
 <div class="container mx-auto px-4 py-8"><div class="max-w-4xl mx-auto"><div id="tutorial-content">
 <section class="mb-12">
-<div class="flex items-center gap-2 text-sm text-blue-600 font-medium mb-4"><span>Single-Cell RNA-seq</span><span>•</span><span>2026-09-17</span></div>
+<div class="flex items-center gap-2 text-sm text-blue-600 font-medium mb-4"><span>Single-Cell RNA-seq</span><span>-</span><span>2026-09-17</span></div>
 <h1 class="text-4xl md:text-5xl font-black text-gray-900 mb-6 leading-tight">Trajectory Inference</h1>
 <div class="flex items-center gap-4"><div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 font-bold text-lg">NM</div><div><p class="font-bold text-gray-900">Nasir Mahmood Abbasi, PhD</p><p class="text-sm text-gray-500">Bioinformatics Educator</p></div></div>
 </section>
@@ -162,7 +161,6 @@ Legal
 </div>
 <div class="flex items-center gap-1">
 <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
-
 </div>
 </div>
 <div class="p-6 bg-blue-50 border border-blue-100 rounded-xl mb-8">
@@ -176,11 +174,10 @@ Legal
 <h2>Understanding Trajectory Inference</h2>
 <p>Single-cell RNA sequencing provides static snapshots of cellular states. However, biology is highly dynamic. Processes like differentiation, immune activation, and cellular exhaustion are continuous transitions.</p>
 <p><strong>Trajectory inference (TI)</strong> algorithms attempt to order cells along a learned trajectory based on their transcriptional similarities, creating a "pseudotime" axis. This allows us to track gene expression changes as cells differentiate.</p>
-<p>In this tutorial, we will explore the foundational tools for TI in both Python and R.</p>
+<p>In this tutorial, we'll explore the foundational tools for TI in both Python and R.</p>
 <hr/>
-
 <h2>1. PAGA (Python)</h2>
-<p><strong>Partition-based Graph Abstraction (PAGA)</strong> is integrated directly into the Scanpy ecosystem. It generates a coarse-grained map of cellular connectivity and provides a robust scaffold for embedding and pseudotime calculation.</p>
+<p><strong>Partition-based Graph Abstraction (PAGA)</strong> is integrated directly into the Scanpy system. It generates a coarse-grained map of cellular connectivity and provides a solid scaffold for embedding and pseudotime calculation.</p>
 <pre><code class="language-python">import scanpy as sc
 import scvelo as scv
 
@@ -216,7 +213,7 @@ sc.pl.umap(adata, color='dpt_pseudotime', cmap='viridis')
 </div>
 <hr/>
 <h2>2. Monocle3 &amp; Slingshot (R)</h2>
-<p>In the R ecosystem, <strong>Monocle3</strong> and <strong>Slingshot</strong> are the leading frameworks for trajectory inference. Slingshot is highly favored for its simplicity and ability to handle branching trajectories effectively from existing Seurat objects.</p>
+<p>In the R system, <strong>Monocle3</strong> and <strong>Slingshot</strong> are the leading frameworks for trajectory inference. Slingshot is highly favored for its simplicity and ability to handle branching trajectories effectively from existing Seurat objects.</p>
 <pre><code class="language-r">library(Seurat)
 library(slingshot)
 library(SingleCellExperiment)
@@ -239,19 +236,18 @@ lines(SlingshotDataSet(sce), lwd=2, col='black')
 <p class="font-bold text-gray-900 mb-2">Understanding the Output</p>
 <p class="mb-3">Slingshot takes our clustered Seurat object (converted to a SingleCellExperiment) and fits principal curves through the cluster centers. This elegant approach allows us to define smooth pseudotime lineages starting from a designated root cell type, projecting cells along a continuum.</p>
 <p class="font-bold text-gray-900 mb-2">⚠️ Pitfalls to Avoid</p>
-<p>Slingshot's greatest strength is its flexibility, but that is also its greatest danger. It will happily fit a mathematical trajectory through <em>any</em> scatter of data you give it, even random noise. You must provide a biologically justified starting cluster (e.g., naive cells, progenitor stem cells); otherwise, the direction of pseudotime is entirely arbitrary and biologically meaningless.</p>
+<p>Slingshot's greatest strength is its flexibility, but that's also its greatest danger. It will happily fit a mathematical trajectory through <em>any</em> scatter of data you give it, even random noise. You must provide a biologically justified starting cluster (e.g., naive cells, progenitor stem cells); otherwise, the direction of pseudotime is entirely arbitrary and biologically meaningless.</p>
 </div>
-
 <div class="mt-8 p-6 bg-purple-50 border-l-4 border-purple-500 rounded-r-xl shadow-sm mb-8">
-  <h4 class="text-lg font-bold text-purple-900 mb-2 flex items-center gap-2">
-    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
-    Expert Insight: Finding Driver Genes with GAMs
-  </h4>
-  <p class="text-purple-900 text-sm">
-    Slingshot gives you pseudotime values, but how do you find the genes driving the trajectory? In my advanced pipelines, I pair Slingshot with the <strong>tradeSeq</strong> package to fit Generalized Additive Models (GAMs) on the highly variable genes.
-    <br><br>
-    For example, fitting a model with <code class="bg-purple-100 px-1 rounded">fitGAM(counts = data, pseudotime = pseudotime, cellWeights = weights, nknots = 5)</code> allows you to run powerful statistical tests like <code class="bg-purple-100 px-1 rounded">associationTest()</code> to find genes dynamically changing along the trajectory, or <code class="bg-purple-100 px-1 rounded">startVsEndTest()</code> to find genes drastically different between the progenitor state and the terminal state. This turns a simple visualization into actionable biological targets.
-  </p>
+<h4 class="text-lg font-bold text-purple-900 mb-2 flex items-center gap-2">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path><path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+ Expert Insight: Finding Driver Genes with GAMs
+</h4>
+<p class="text-purple-900 text-sm">
+ Slingshot gives you pseudotime values, but how do you find the genes driving the trajectory? In my advanced pipelines, I pair Slingshot with the <strong>tradeSeq</strong> package to fit Generalized Additive Models (GAMs) on the highly variable genes.
+<br/><br/>
+ For example, fitting a model with <code class="bg-purple-100 px-1 rounded">fitGAM(counts = data, pseudotime = pseudotime, cellWeights = weights, nknots = 5)</code> allows you to run powerful statistical tests like <code class="bg-purple-100 px-1 rounded">associationTest()</code> to find genes dynamically changing along the trajectory, or <code class="bg-purple-100 px-1 rounded">startVsEndTest()</code> to find genes drastically different between the progenitor state and the terminal state. This turns a simple visualization into actionable biological targets.
+</p>
 </div>
 <pre><code class="language-r">library(monocle3)
 library(SeuratWrappers)
@@ -281,7 +277,7 @@ plot_cells(cds,
 <p class="font-bold text-gray-900 mb-2">Understanding the Output</p>
 <p class="mb-3">Monocle3 requires converting our standard Seurat object into a specialized CellDataSet. It uses reversed graph embedding to learn the principal graph of the data from scratch, allowing for complex trajectories with multiple branching points and fate decisions.</p>
 <p class="font-bold text-gray-900 mb-2">⚠️ Pitfalls to Avoid</p>
-<p>Unlike Slingshot, Monocle3 calculates its own UMAP and partitions by default, which frequently frustrates users trying to perfectly map their carefully curated Seurat clusters. Make sure to explicitly transfer your Seurat embeddings and clustering if you want consistency. Furthermore, picking the "root" node in Monocle3 requires careful manual inspection of the generated graph.</p>
+<p>Unlike Slingshot, Monocle3 calculates its own UMAP and partitions by default, which frequently frustrates users trying to perfectly map their carefully picked Seurat clusters. Make sure to explicitly transfer your Seurat embeddings and clustering if you want consistency. Also, picking the "root" node in Monocle3 requires careful manual inspection of the generated graph.</p>
 </div>
 <h3>Matched Python and R trajectory workflow</h3>
 <p>The two ecosystems use different algorithms, but both require a justified biological root and should be interpreted as an inferred ordering - not observed time. Choose the implementation that fits the anticipated lineage topology and validate the result against known biology.</p>
@@ -303,7 +299,7 @@ sc.pl.umap(adata, color="dpt_pseudotime", cmap="viridis")
 <p class="font-bold text-gray-900 mb-2">Understanding the Output</p>
 <p class="mb-3">Both Diffusion Pseudotime (DPT) in Scanpy and Slingshot in R rely heavily on the correct identification of the root cell. Here, we define the root mathematically (finding the cell furthest along the diffusion map) or by providing a known early-stage population.</p>
 <p class="font-bold text-gray-900 mb-2">⚠️ Pitfalls to Avoid</p>
-<p>Pseudotime is not real time—it is a measure of transcriptional distance. If your dataset is suffering from severe cell cycle effects or high mitochondrial stress, trajectory algorithms will often mistakenly define the "stressed" cells or cycling cells as a distinct developmental lineage. Always regress out or carefully check cell cycle scoring before inferring trajectories.</p>
+<p>Pseudotime is not real time, it's a measure of transcriptional distance. If your dataset is suffering from severe cell cycle effects or high mitochondrial stress, trajectory algorithms will often mistakenly define the "stressed" cells or cycling cells as a distinct developmental lineage. Always regress out or carefully check cell cycle scoring before inferring trajectories.</p>
 </div>
 </div>
 <div aria-labelledby="trajectory-r-tab" class="code-tab-panel" hidden="" id="trajectory-r-panel" role="tabpanel">
@@ -317,26 +313,25 @@ plot(reducedDims(sce)$UMAP, col = pseudotime[, 1], pch = 16, asp = 1)
 lines(SlingshotDataSet(sce), lwd = 2, col = "black")
 </code></pre><div class="mt-4 mb-8 bg-blue-50/50 border-l-4 border-blue-500 p-5 rounded-r-lg text-sm text-gray-700">
 <p class="font-bold text-gray-900 mb-2">Understanding the Output</p>
-<p class="mb-3">This executes the final trajectory inference in the R ecosystem. By specifying the start cluster, we anchor the lineage, allowing the algorithm to assign a continuous pseudotime value to every cell along the branching paths.</p>
+<p class="mb-3">This executes the final trajectory inference in the R system. By specifying the start cluster, we anchor the lineage, allowing the algorithm to assign a continuous pseudotime value to every cell along the branching paths.</p>
 </div>
 </div>
 </div>
 <div class="mt-12 mb-8 bg-white border border-blue-100 rounded-2xl p-8 shadow-sm">
-  <div class="flex items-center gap-3 mb-4">
-    <div class="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
-      <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>
-    </div>
-    <h3 class="text-xl font-bold text-gray-900">Live Case Studies</h3>
-  </div>
-  <p class="text-gray-600 mb-6">Explore the interactive RMarkdown reports generated during my PhD thesis research. These files provide real-world examples of how I applied these methods to specific cancer genomics datasets.</p>
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-    <a href="examples/Trajectory_inference_using_Slingshot.html" target="_blank" rel="noopener noreferrer" class="flex flex-col p-4 bg-gray-50 border border-gray-200 rounded-xl hover:bg-blue-50 hover:border-blue-200 transition-colors group">
-      <span class="text-sm font-bold text-gray-500 uppercase tracking-wider mb-1 group-hover:text-blue-600 transition-colors">Live Example</span>
-      <span class="font-bold text-gray-900 leading-snug">Trajectory Inference using Slingshot</span>
-    </a>
-  </div>
+<div class="flex items-center gap-3 mb-4">
+<div class="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
+<svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
 </div>
-
+<h3 class="text-xl font-bold text-gray-900">Live Case Studies</h3>
+</div>
+<p class="text-gray-600 mb-6">Explore the interactive RMarkdown reports generated during my PhD thesis research. These files provide real-world examples of how I applied these methods to specific cancer genomics datasets.</p>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+<a class="flex flex-col p-4 bg-gray-50 border border-gray-200 rounded-xl hover:bg-blue-50 hover:border-blue-200 transition-colors group" href="examples/Trajectory_inference_using_Slingshot.html" rel="noopener noreferrer" target="_blank">
+<span class="text-sm font-bold text-gray-500 uppercase tracking-wider mb-1 group-hover:text-blue-600 transition-colors">Live Example</span>
+<span class="font-bold text-gray-900 leading-snug">Trajectory Inference using Slingshot</span>
+</a>
+</div>
+</div>
 <h2>Conclusion</h2>
 <p>Trajectory inference shifts our perspective from discrete clusters to continuous cellular development. Whether you rely on PAGA's graph abstractions in Python or Slingshot's branching lineage logic in R, establishing a solid pseudotime framework is the key to identifying the gene regulatory networks driving cellular transitions.</p>
 <div class="mt-10 p-8 bg-gray-50 border border-gray-200 rounded-xl">
@@ -371,9 +366,8 @@ lines(SlingshotDataSet(sce), lwd = 2, col = "black")
 <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
 </div>
 <div>
-
-<p class="text-sm text-gray-600 mb-2">This tutorial records the software versions used for its examples. Please re-check commands against the official documentation, and report reproducibility issues through the <a class="text-blue-600 hover:underline" href="../contact.html">Contact page</a>.</p>
-<p class="text-sm text-gray-500">Author: <a class="text-blue-600 hover:underline font-medium" href="../about.html">Nasir Mahmood Abbasi, PhD</a> · Category: Single-Cell RNA-seq</p>
+<p class="text-sm text-gray-600 mb-2">This tutorial records the software versions used for its examples. Please re-check commands against the official documentation, and report reproducibility issues through the <a class="text-blue-600 hover:underline" href="../contact.html">Contact page</a></p>
+<p class="text-sm text-gray-500">Author: <a class="text-blue-600 hover:underline font-medium" href="../about.html">Nasir Mahmood Abbasi, PhD</a> - Category: Single-Cell RNA-seq</p>
 </div>
 </div>
 </section>

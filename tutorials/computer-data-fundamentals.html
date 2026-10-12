@@ -20,8 +20,7 @@
 <meta content="Learn how computers store, process, and move biological data before using Linux, HPC, and omics workflows." name="twitter:description"/>
 <meta content="https://theomicshub.com/images/computer-data-fundamentals-workstation.webp" name="twitter:image"/>
 <title>Computer and Data Fundamentals for Biologists | The Omics Hub</title>
-  <meta name="description" content="A complete, expert-led bioinformatics tutorial on Computer and Data Fundamentals for Biologists. Learn data processing, analysis workflows, and best practices.">
-
+<meta content="A complete, expert-led bioinformatics tutorial on Computer and Data Fundamentals for Biologists. Learn data processing, analysis workflows, and best practices." name="description"/>
 <!-- Favicon -->
 <link href="../images/favicon.svg" rel="icon" type="image/svg+xml"/>
 <!-- Pre-fetch fonts to prevent FOUC (layout shift) -->
@@ -148,7 +147,7 @@ Legal
 <div class="page-content" id="tutorial-page">
 <div class="container mx-auto px-4 py-8"><div class="max-w-4xl mx-auto"><div id="tutorial-content">
 <section class="mb-12">
-<div class="flex items-center gap-2 text-sm text-blue-600 font-medium mb-4"><span>Foundations &amp; Prerequisites</span><span>•</span><span>2026-08-16</span></div>
+<div class="flex items-center gap-2 text-sm text-blue-600 font-medium mb-4"><span>Foundations &amp; Prerequisites</span><span>-</span><span>2026-08-16</span></div>
 <h1 class="text-4xl md:text-5xl font-black text-gray-900 mb-6 leading-tight">Computer and Data Fundamentals for Biologists</h1>
 <div class="flex items-center gap-4"><div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 font-bold text-lg">NM</div><div><p class="font-bold text-gray-900">Nasir Mahmood Abbasi, PhD</p><p class="text-sm text-gray-500">Bioinformatics Educator</p></div></div>
 </section>
@@ -158,7 +157,6 @@ Legal
 <article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none"><div class="mb-10 text-xl text-gray-600 leading-relaxed">
 <p>Before learning bioinformatics commands, it helps to understand what the computer is doing. This lesson builds a practical mental model of files, storage, memory, processors, paths, permissions, and compression so that later command-line errors are easier to diagnose.</p>
 </div>
-
 <div class="flex flex-wrap items-center gap-4 text-xs font-mono text-gray-500 bg-gray-50 p-3 rounded-lg border border-gray-200 mb-6">
 <div class="flex items-center gap-1">
 <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
@@ -166,7 +164,6 @@ Legal
 </div>
 <div class="flex items-center gap-1">
 <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
-
 </div>
 </div>
 <div class="p-6 bg-blue-50 border border-blue-100 rounded-xl mb-8"><h4 class="text-lg font-bold text-blue-900 mb-2">Learning Objectives &amp; Prerequisites</h4><div class="text-blue-800 space-y-2"><p><strong>By the end of this lesson, you should be able to:</strong></p><ul>
@@ -178,12 +175,6 @@ Legal
 <li>A web browser and a terminal such as macOS Terminal, Linux Terminal, or WSL.</li>
 <li>No programming experience is required.</li>
 </ul><strong class="block mt-2 text-blue-900">Expected Output</strong><p>By the end of this lesson, you should have: <strong>A documented project folder with clear raw-data, processed-data, code, results, and notes locations, plus one verified file-transfer or checksum check.</strong></p></div></div>
-
-
-
-
-
-
 <h2>1. The four resources every workflow uses</h2>
 <p>A CPU executes instructions, RAM holds actively used data, storage keeps files between sessions, and network bandwidth controls transfer speed. A workflow may be limited by any one of these resources. For example, a compressed FASTQ file can fit on disk but still require much more temporary space after decompression.</p>
 <div class="overflow-x-auto -mx-4 px-4">
@@ -219,7 +210,7 @@ Legal
 </tr>
 </tbody>
 </table>
-</div>
+</table></div>
 <h2>2. Files, paths, and safe organization</h2>
 <p>A path identifies a location. Absolute paths begin at the filesystem root, while relative paths begin in the current directory. Keep raw data read-only and separate from derived results so that an analysis can be repeated.</p>
 <pre><code class="language-text">project/
@@ -247,7 +238,7 @@ gzip -l reads.fastq.gz
 zcat reads.fastq.gz | head -n 8
 </code></pre>
 <h3>Verify a FASTQ download before analysis</h3>
-<p>After downloading a FASTQ file, compare it with the checksum published by the <strong>same data provider</strong>. This detects an incomplete or altered transfer before the file reaches a QC or alignment step. A checksum you calculate only after downloading is useful for future transfers, but it cannot prove that the original download was correct unless you compare it with the provider's manifest.</p>
+<p>After downloading a FASTQ file, compare it with the checksum published by the <strong>same data provider</strong>This detects an incomplete or altered transfer before the file reaches a QC or alignment step. A checksum you calculate only after downloading is useful for future transfers, but it can't prove that the original download was correct unless you compare it with the provider's manifest.</p>
 <p>Use the algorithm supplied by the provider. SHA-256 is preferred when available; MD5 remains common in sequencing archives for file-integrity checks.</p>
 <pre><code class="language-bash"># Example: download two read files and the provider's checksum manifest.
 curl -LO "https://provider.example.org/sample_R1.fastq.gz"
@@ -260,31 +251,24 @@ sha256sum -c SHA256SUMS | tee checksum_validation.log
 # Also test that each gzip stream can be read successfully.
 gzip -t sample_R1.fastq.gz sample_R2.fastq.gz
 </code></pre>
-<p>When an archive supplies an MD5 manifest instead, use the same pattern with <code>md5sum -c md5checksums.txt</code>. Continue only when every required file reports <code>OK</code> and <code>gzip -t</code> exits without an error. If a checksum fails, delete the affected file and download it again from the original provider; do not proceed by editing the manifest or accepting a mismatch.</p>
+<p>When an archive supplies an MD5 manifest instead, use the same pattern with <code>md5sum -c md5checksums.txt</code>Continue only when every required file reports <code>OK</code> and <code>gzip -t</code> exits without an error. If a checksum fails, delete the affected file and download it again from the original provider; don't proceed by editing the manifest or accepting a mismatch.</p>
 <blockquote>
 <p><strong>Important:</strong> A checksum verifies file integrity, not whether a dataset is appropriate for your project or whether its metadata and consent conditions permit use. Keep the manifest and <code>checksum_validation.log</code> in your project records.</p>
 </blockquote>
 <h2>Practical Exercise</h2>
-<p>Create the project tree above, place a small text file in <code>data/raw</code>, record its size with <code>du -h</code>, and write a README sentence describing where raw data and results belong.</p>
+<p>Create the project tree above, place a small text file in <code>data/raw</code>record its size with <code>du -h</code>and write a README sentence describing where raw data and results belong.</p>
 <p></p>
 <h2>Troubleshooting</h2>
-<p>If <code>mkdir</code> reports a permission error, work inside your home directory rather than a system directory. If <code>df -h</code> is nearly full, do not start a large download; ask the cluster administrator about quotas.</p>
-
-
-
-
-
-
-
+<p>If <code>mkdir</code> reports a permission error, work inside your home directory rather than a system directory. If <code>df -h</code> is nearly full, don't start a large download; ask the cluster administrator about quotas.</p>
 <h2>Next Steps</h2>
-<p>Continue with <a href="biological-data-formats.html">Biological Data Formats</a> and <a href="reproducible-project-structure.html">Reproducible Project Structure</a>. Record the software versions, dataset or example inputs, and any decisions you made.</p>
-<section class="mt-10 p-6 bg-slate-50 border border-slate-200 rounded-xl" aria-label="References and further reading">
-  <h2 class="text-xl font-bold text-gray-900 mb-3">References and further reading</h2>
-  <p class="text-sm text-gray-600 mb-3">Use these official resources to check current software behaviour, terminology, and production guidance. Tool versions and defaults change, so verify commands against the documentation before applying them to a research dataset.</p>
-  <ul class="list-disc list-inside space-y-2 text-sm text-gray-700">
-    <li><a href="https://www.ncbi.nlm.nih.gov/books/NBK21154/" target="_blank" rel="noopener" class="text-blue-700 hover:underline">NCBI Bookshelf: Bioinformatics</a></li>
-    <li><a href="https://www.ebi.ac.uk/training/online/" target="_blank" rel="noopener" class="text-blue-700 hover:underline">EMBL-EBI Training</a></li>
-  </ul>
+<p>Continue with <a href="biological-data-formats.html">Biological Data Formats</a> and <a href="reproducible-project-structure.html">Reproducible Project Structure</a>Record the software versions, dataset or example inputs, and any decisions you made.</p>
+<section aria-label="References and further reading" class="mt-10 p-6 bg-slate-50 border border-slate-200 rounded-xl">
+<h2 class="text-xl font-bold text-gray-900 mb-3">References and further reading</h2>
+<p class="text-sm text-gray-600 mb-3">Use these official resources to check current software behaviour, terminology, and production guidance. Tool versions and defaults change, so verify commands against the documentation before applying them to a research dataset.</p>
+<ul class="list-disc list-inside space-y-2 text-sm text-gray-700">
+<li><a class="text-blue-700 hover:underline" href="https://www.ncbi.nlm.nih.gov/books/NBK21154/" rel="noopener" target="_blank">NCBI Bookshelf: Bioinformatics</a></li>
+<li><a class="text-blue-700 hover:underline" href="https://www.ebi.ac.uk/training/online/" rel="noopener" target="_blank">EMBL-EBI Training</a></li>
+</ul>
 </section>
 </article>
 <section class="mt-12 mb-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-100">
@@ -293,9 +277,8 @@ gzip -t sample_R1.fastq.gz sample_R2.fastq.gz
 <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
 </div>
 <div>
-
-<p class="text-sm text-gray-600 mb-2">This tutorial records the software versions used for its examples. Please re-check commands against the official documentation, and report reproducibility issues through the <a class="text-blue-600 hover:underline" href="../contact.html">Contact page</a>.</p>
-<p class="text-sm text-gray-500">Author: <a class="text-blue-600 hover:underline font-medium" href="../about.html">Nasir Mahmood Abbasi, PhD</a> · Category: Foundations &amp; Prerequisites</p>
+<p class="text-sm text-gray-600 mb-2">This tutorial records the software versions used for its examples. Please re-check commands against the official documentation, and report reproducibility issues through the <a class="text-blue-600 hover:underline" href="../contact.html">Contact page</a></p>
+<p class="text-sm text-gray-500">Author: <a class="text-blue-600 hover:underline font-medium" href="../about.html">Nasir Mahmood Abbasi, PhD</a> - Category: Foundations &amp; Prerequisites</p>
 </div>
 </div>
 </section>
@@ -378,8 +361,6 @@ gzip -t sample_R1.fastq.gz sample_R2.fastq.gz
 </div>
 </div>
 </div>
-
-
 </footer>
 <!-- Prism.js for syntax highlighting -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>

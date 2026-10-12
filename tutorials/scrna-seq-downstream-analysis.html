@@ -20,8 +20,7 @@
 <meta content="Explore foundational advanced downstream analyses: mapping cell-cell communication networks, inferring Transcription Factor (TF) activities, and generating publication-ready plots (SCpubr)." name="twitter:description"/>
 <meta content="https://theomicshub.com/images/scrna-downstream-analysis.webp" name="twitter:image"/>
 <title>Downstream Analysis | The Omics Hub</title>
-  <meta name="description" content="A complete, expert-led bioinformatics tutorial on Downstream Analysis. Learn data processing, analysis workflows, and best practices.">
-
+<meta content="A complete, expert-led bioinformatics tutorial on Downstream Analysis. Learn data processing, analysis workflows, and best practices." name="description"/>
 <!-- Favicon -->
 <link href="../images/favicon.svg" rel="icon" type="image/svg+xml"/>
 <!-- Pre-fetch fonts to prevent FOUC (layout shift) -->
@@ -148,7 +147,7 @@ Legal
 <div class="page-content" id="tutorial-page">
 <div class="container mx-auto px-4 py-8"><div class="max-w-4xl mx-auto"><div id="tutorial-content">
 <section class="mb-12">
-<div class="flex items-center gap-2 text-sm text-blue-600 font-medium mb-4"><span>Single-Cell RNA-seq</span><span>•</span><span>2026-08-28</span></div>
+<div class="flex items-center gap-2 text-sm text-blue-600 font-medium mb-4"><span>Single-Cell RNA-seq</span><span>-</span><span>2026-08-28</span></div>
 <h1 class="text-4xl md:text-5xl font-black text-gray-900 mb-6 leading-tight">Downstream Analysis</h1>
 <div class="flex items-center gap-4"><div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 font-bold text-lg">NM</div><div><p class="font-bold text-gray-900">Nasir Mahmood Abbasi, PhD</p><p class="text-sm text-gray-500">Bioinformatics Educator</p></div></div>
 </section>
@@ -162,7 +161,6 @@ Legal
 </div>
 <div class="flex items-center gap-1">
 <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
-
 </div>
 </div>
 <div class="p-6 bg-blue-50 border border-blue-100 rounded-xl mb-8">
@@ -174,7 +172,7 @@ Legal
 </ul>
 </div>
 <h2>Beyond Clustering: Functional Single-Cell Biology</h2>
-<p>Once cells are clustered and annotated, the focus shifts to understanding <em>how</em> these populations function and interact. This involves interrogating <strong>Transcription Factor (TF) activity</strong>, inferring <strong>Cell-Cell Communication</strong>, and creating high-quality visualizations.</p>
+<p>Once cells are clustered and annotated, the focus shifts to understanding <em>how</em> these populations function and interact. This involves interrogating <strong>Transcription Factor (TF) activity</strong>inferring <strong>Cell-Cell Communication</strong>and creating high-quality visualizations.</p>
 <p>In this tutorial, we cover the foundational tools for these advanced downstream steps across both R and Python.</p>
 <hr/>
 <h2>1. Cell-Cell Communication (Receptor-Ligand)</h2>
@@ -208,9 +206,9 @@ netVisual_circle(cellchat@net$count, vertex.weight = groupSize,
                  weight.scale = T, label.edge= F, title.name = "Number of interactions")
 </code></pre><div class="mt-4 mb-8 bg-blue-50/50 border-l-4 border-blue-500 p-5 rounded-r-lg text-sm text-gray-700">
 <p class="font-bold text-gray-900 mb-2">Understanding the Output</p>
-<p class="mb-3">In this block, we pass our normalized counts and cell annotations into CellChat to compute probabilities of cell-cell communication. The algorithm uses a curated database of known receptor-ligand pairs and calculates interaction strength based on the law of mass action. We then filter out interactions involving very few cells to strip away statistical noise.</p>
+<p class="mb-3">In this block, we pass our normalized counts and cell annotations into CellChat to compute probabilities of cell-cell communication. The algorithm uses a picked database of known receptor-ligand pairs and calculates interaction strength based on the law of mass action. We then filter out interactions involving very few cells to strip away statistical noise.</p>
 <p class="font-bold text-gray-900 mb-2">⚠️ Pitfalls to Avoid</p>
-<p>A common beginner mistake is forgetting to verify the species database or using raw, un-normalized counts. Furthermore, CellChat assumes that mRNA expression directly correlates with protein surface expression, which isn't always true. Always validate surprising receptor-ligand pairs using spatial transcriptomics or protein-level assays (like flow cytometry).</p>
+<p>A common beginner mistake is forgetting to verify the species database or using raw, un-normalized counts. Also, CellChat assumes that mRNA expression directly correlates with protein surface expression, which isn't always true. Always validate surprising receptor-ligand pairs using spatial transcriptomics or protein-level assays (like flow cytometry).</p>
 </div>
 <pre><code class="language-python"># In Python, CellPhoneDB is typically run via the command line on exported count matrices.
 # First, export your Scanpy AnnData object to raw counts and metadata.
@@ -284,21 +282,19 @@ FeaturePlot(pbmc, features = "STAT1", cols = c("blue", "white", "red"))
 <p class="font-bold text-gray-900 mb-2">Understanding the Output</p>
 <p class="mb-3">Similar to the Python workflow, the R version integrates smoothly with Seurat, assigning TF activity scores as an entirely new assay. This allows you to visualize TF activity directly on your UMAP just like a regular gene feature plot.</p>
 <p class="font-bold text-gray-900 mb-2">⚠️ Pitfalls to Avoid</p>
-<p>Always remember that transcription factors are often expressed at extremely low levels or in short bursts, making them highly susceptible to drop-outs in scRNA-seq. By scoring their <em>targets</em>, we bypass this dropout problem. However, never interpret these scores as absolute TF protein abundance; they represent regulatory <em>influence</em>.</p>
+<p>Always remember that transcription factors are often expressed at extremely low levels or in short bursts, making them highly susceptible to drop-outs in scRNA-seq. By scoring their <em>targets</em>we bypass this dropout problem. However, never interpret these scores as absolute TF protein abundance; they represent regulatory <em>influence</em></p>
 </div>
-
 <div class="mt-8 p-6 bg-purple-50 border-l-4 border-purple-500 rounded-r-xl shadow-sm mb-8">
-  <h4 class="text-lg font-bold text-purple-900 mb-2 flex items-center gap-2">
-    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
-    Expert Insight: Resolving Phenotypic Ambiguity with GRNs
-  </h4>
-  <p class="text-purple-900 text-sm">
-    In my research, I frequently encounter cell populations with ambiguous surface markers—for example, distinguishing malignant Sézary syndrome T-cells from normal regulatory T-cells when canonical markers like CD25 drop out. Gene Regulatory Networks (GRNs) solve this.
-    <br><br>
-    By computing a multivariate linear model (MLM) via decoupleR/DoRothEA, you can map the activity of master regulators like <strong>FOXP3</strong> or <strong>STAT3</strong> across your clusters. Instead of relying on a single dropout-prone transcript, you aggregate the signal of 50+ downstream targets. When visualizing these activities via heatmaps grouped by patient origin, you can often separate disease states that appear completely mixed in standard PCA/UMAP space.
-  </p>
+<h4 class="text-lg font-bold text-purple-900 mb-2 flex items-center gap-2">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path><path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+ Expert Insight: Resolving Phenotypic Ambiguity with GRNs
+</h4>
+<p class="text-purple-900 text-sm">
+ In my research, I frequently encounter cell populations with ambiguous surface markers, for example, distinguishing malignant Sézary syndrome T-cells from normal regulatory T-cells when canonical markers like CD25 drop out. Gene Regulatory Networks (GRNs) solve this.
+<br/><br/>
+ By computing a multivariate linear model (MLM) via decoupleR/DoRothEA, you can map the activity of master regulators like <strong>FOXP3</strong> or <strong>STAT3</strong> across your clusters. Instead of relying on a single dropout-prone transcript, you aggregate the signal of 50+ downstream targets. When visualizing these activities via heatmaps grouped by patient origin, you can often separate disease states that appear completely mixed in standard PCA/UMAP space.
+</p>
 </div>
-
 <hr/>
 <h2>3. Publication-Ready Plotting (SCpubr)</h2>
 <p>While Seurat's base plotting functions are good, the <strong>SCpubr</strong> package in R generates highly polished, publication-ready graphics automatically.</p>
@@ -323,38 +319,37 @@ SCpubr::do_DotPlot(sample = pbmc,
 <p class="font-bold text-gray-900 mb-2">Understanding the Output</p>
 <p class="mb-3">SCpubr provides a high-level wrapper around ggplot2, optimized specifically for single-cell data. We use it here to generate a publication-ready UMAP with density contours, which highlights where the true core of a cell population sits beneath the scatter noise.</p>
 <p class="font-bold text-gray-900 mb-2">⚠️ Pitfalls to Avoid</p>
-<p>While SCpubr creates beautiful plots effortlessly, over-plotting density contours on highly fragmented or poorly clustered datasets can create a messy, illegible figure. Make sure your clustering and batch correction are biologically sound before trying to beautify the visualization. A pretty plot cannot rescue a bad UMAP embedding.</p>
+<p>While SCpubr creates beautiful plots effortlessly, over-plotting density contours on highly fragmented or poorly clustered datasets can create a messy, illegible figure. Make sure your clustering and batch correction are biologically sound before trying to beautify the visualization. A pretty plot can't rescue a bad UMAP embedding.</p>
 </div>
 <div class="mt-12 mb-8 bg-white border border-blue-100 rounded-2xl p-8 shadow-sm">
-  <div class="flex items-center gap-3 mb-4">
-    <div class="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
-      <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>
-    </div>
-    <h3 class="text-xl font-bold text-gray-900">Live Case Studies</h3>
-  </div>
-  <p class="text-gray-600 mb-6">Explore the interactive RMarkdown reports generated during my PhD thesis research. These files provide real-world examples of how I applied these methods to specific cancer genomics datasets.</p>
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-    <a href="examples/Combined_LIANA_Analysis_Conserved_Specific_Signaling.html" target="_blank" rel="noopener noreferrer" class="flex flex-col p-4 bg-gray-50 border border-gray-200 rounded-xl hover:bg-blue-50 hover:border-blue-200 transition-colors group">
-      <span class="text-sm font-bold text-gray-500 uppercase tracking-wider mb-1 group-hover:text-blue-600 transition-colors">Live Example</span>
-      <span class="font-bold text-gray-900 leading-snug">Conserved vs Specific Signaling (LIANA)</span>
-    </a>
-    <a href="examples/WNN_analysis_of_CITE_seq_RNA_ADT.html" target="_blank" rel="noopener noreferrer" class="flex flex-col p-4 bg-gray-50 border border-gray-200 rounded-xl hover:bg-blue-50 hover:border-blue-200 transition-colors group">
-      <span class="text-sm font-bold text-gray-500 uppercase tracking-wider mb-1 group-hover:text-blue-600 transition-colors">Advanced Example</span>
-      <span class="font-bold text-gray-900 leading-snug">WNN Analysis of CITE-seq (RNA+ADT)</span>
-    </a>
-    <a href="examples/inferCNV_analysis.html" target="_blank" rel="noopener noreferrer" class="flex flex-col p-4 bg-gray-50 border border-gray-200 rounded-xl hover:bg-blue-50 hover:border-blue-200 transition-colors group">
-      <span class="text-sm font-bold text-gray-500 uppercase tracking-wider mb-1 group-hover:text-blue-600 transition-colors">Advanced Example</span>
-      <span class="font-bold text-gray-900 leading-snug">InferCNV Analysis</span>
-    </a>
-    <a href="examples/TCR_Analysis_v2.html" target="_blank" rel="noopener noreferrer" class="flex flex-col p-4 bg-gray-50 border border-gray-200 rounded-xl hover:bg-blue-50 hover:border-blue-200 transition-colors group">
-      <span class="text-sm font-bold text-gray-500 uppercase tracking-wider mb-1 group-hover:text-blue-600 transition-colors">Advanced Example</span>
-      <span class="font-bold text-gray-900 leading-snug">TCR Clone Analysis</span>
-    </a>
-  </div>
+<div class="flex items-center gap-3 mb-4">
+<div class="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
+<svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
 </div>
-
+<h3 class="text-xl font-bold text-gray-900">Live Case Studies</h3>
+</div>
+<p class="text-gray-600 mb-6">Explore the interactive RMarkdown reports generated during my PhD thesis research. These files provide real-world examples of how I applied these methods to specific cancer genomics datasets.</p>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+<a class="flex flex-col p-4 bg-gray-50 border border-gray-200 rounded-xl hover:bg-blue-50 hover:border-blue-200 transition-colors group" href="examples/Combined_LIANA_Analysis_Conserved_Specific_Signaling.html" rel="noopener noreferrer" target="_blank">
+<span class="text-sm font-bold text-gray-500 uppercase tracking-wider mb-1 group-hover:text-blue-600 transition-colors">Live Example</span>
+<span class="font-bold text-gray-900 leading-snug">Conserved vs Specific Signaling (LIANA)</span>
+</a>
+<a class="flex flex-col p-4 bg-gray-50 border border-gray-200 rounded-xl hover:bg-blue-50 hover:border-blue-200 transition-colors group" href="examples/WNN_analysis_of_CITE_seq_RNA_ADT.html" rel="noopener noreferrer" target="_blank">
+<span class="text-sm font-bold text-gray-500 uppercase tracking-wider mb-1 group-hover:text-blue-600 transition-colors">Advanced Example</span>
+<span class="font-bold text-gray-900 leading-snug">WNN Analysis of CITE-seq (RNA+ADT)</span>
+</a>
+<a class="flex flex-col p-4 bg-gray-50 border border-gray-200 rounded-xl hover:bg-blue-50 hover:border-blue-200 transition-colors group" href="examples/inferCNV_analysis.html" rel="noopener noreferrer" target="_blank">
+<span class="text-sm font-bold text-gray-500 uppercase tracking-wider mb-1 group-hover:text-blue-600 transition-colors">Advanced Example</span>
+<span class="font-bold text-gray-900 leading-snug">InferCNV Analysis</span>
+</a>
+<a class="flex flex-col p-4 bg-gray-50 border border-gray-200 rounded-xl hover:bg-blue-50 hover:border-blue-200 transition-colors group" href="examples/TCR_Analysis_v2.html" rel="noopener noreferrer" target="_blank">
+<span class="text-sm font-bold text-gray-500 uppercase tracking-wider mb-1 group-hover:text-blue-600 transition-colors">Advanced Example</span>
+<span class="font-bold text-gray-900 leading-snug">TCR Clone Analysis</span>
+</a>
+</div>
+</div>
 <h2>Conclusion</h2>
-<p>Mastering these downstream analysis techniques allows you to graduate from simply classifying cells to understanding the mechanistic networks and interactions driving tissue biology. Both R and Python offer robust, highly developed tools to accomplish these goals.</p>
+<p>Mastering these downstream analysis techniques allows you to graduate from simply classifying cells to understanding the mechanistic networks and interactions driving tissue biology. Both R and Python offer solid, highly developed tools to accomplish these goals.</p>
 <div class="mt-10 p-8 bg-gray-50 border border-gray-200 rounded-xl">
 <h3 class="text-xl font-bold text-gray-900 mb-4">Knowledge Check &amp; Assessment</h3>
 <div class="space-y-4">
@@ -387,9 +382,8 @@ SCpubr::do_DotPlot(sample = pbmc,
 <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
 </div>
 <div>
-
-<p class="text-sm text-gray-600 mb-2">This tutorial records the software versions used for its examples. Please re-check commands against the official documentation, and report reproducibility issues through the <a class="text-blue-600 hover:underline" href="../contact.html">Contact page</a>.</p>
-<p class="text-sm text-gray-500">Author: <a class="text-blue-600 hover:underline font-medium" href="../about.html">Nasir Mahmood Abbasi, PhD</a> · Category: Single-Cell RNA-seq</p>
+<p class="text-sm text-gray-600 mb-2">This tutorial records the software versions used for its examples. Please re-check commands against the official documentation, and report reproducibility issues through the <a class="text-blue-600 hover:underline" href="../contact.html">Contact page</a></p>
+<p class="text-sm text-gray-500">Author: <a class="text-blue-600 hover:underline font-medium" href="../about.html">Nasir Mahmood Abbasi, PhD</a> - Category: Single-Cell RNA-seq</p>
 </div>
 </div>
 </section>
