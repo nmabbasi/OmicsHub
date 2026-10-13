@@ -30,7 +30,7 @@
 <!-- Prism.js for syntax highlighting -->
 <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet"/>
 <!-- Custom CSS -->
-<link href="../style.css?v=20260818-header-brand-32" rel="stylesheet"/>
+<link href="../style.css?v=20261013-archetype-v1" rel="stylesheet"/>
 <script src="../analytics.js"></script>
 <script>
 window.dataLayer = window.dataLayer || [];
@@ -161,15 +161,33 @@ Legal
 <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
 </div>
 </div>
-<div class="p-6 bg-blue-50 border border-blue-100 rounded-xl mb-8"><h4 class="text-lg font-bold text-blue-900 mb-2">Learning Objectives &amp; Prerequisites</h4><div class="text-blue-800 space-y-2"><p><strong>By the end of this lesson, you should be able to:</strong></p><ul>
-<li>Explain the difference between CPU, RAM, storage, and network bandwidth.</li>
-<li>Describe files, directories, paths, extensions, metadata, and file permissions.</li>
-<li>Estimate why sequencing data needs substantial storage and memory.</li>
-<li>Choose safe locations for raw data, intermediate files, and results.</li>
-</ul><p><strong>Prerequisites:</strong></p><ul>
-<li>A web browser and a terminal such as macOS Terminal, Linux Terminal, or WSL.</li>
-<li>No programming experience is required.</li>
-</ul><strong class="block mt-2 text-blue-900">Expected Output</strong><p>By the end of this lesson, you should have: <strong>A documented project folder with clear raw-data, processed-data, code, results, and notes locations, plus one verified file-transfer or checksum check.</strong></p></div></div>
+
+<div class="archetype-banner archetype-banner-linux">
+<div class="archetype-header-row">
+<div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;">
+<span class="archetype-badge archetype-badge-linux">Terminal Engineering</span>
+<span style="font-size:0.75rem;color:#94a3b8;font-family:monospace;">Bioinformatics Shell Blueprint</span>
+</div>
+<div style="font-size:0.75rem;color:#67e8f9;font-weight:600;display:flex;align-items:center;gap:0.35rem;">
+<span style="width:8px;height:8px;border-radius:50%;background:#34d399;display:inline-block;"></span>
+      High-Performance Text Streaming
+    </div>
+</div>
+<div class="archetype-grid-3">
+<div class="archetype-subcard">
+<div class="archetype-subcard-title archetype-subcard-title-linux">Stream Architecture</div>
+<p class="archetype-subcard-body">Processing multi-gigabyte genomics files sequentially via standard Unix streams without filling memory buffers.</p>
+</div>
+<div class="archetype-subcard">
+<div class="archetype-subcard-title archetype-subcard-title-linux">Non-Destructive Ops</div>
+<p class="archetype-subcard-body">Verifying filter parameters with <code>head</code>, dry-runs, and atomic file redirection before overwriting biological records.</p>
+</div>
+<div class="archetype-subcard">
+<div class="archetype-subcard-title archetype-subcard-title-linux">Reproducibility Core</div>
+<p class="archetype-subcard-body">Encapsulating one-liners into modular POSIX bash scripts with explicit variable quoting and exit-on-error safety traps.</p>
+</div>
+</div>
+</div>
 <h2>1. The four resources every workflow uses</h2>
 <p>A CPU executes instructions, RAM holds actively used data, storage keeps files between sessions, and network bandwidth controls transfer speed. A workflow may be limited by any one of these resources. For example, a compressed FASTQ file can fit on disk but still require much more temporary space after decompression.</p>
 <div class="overflow-x-auto -mx-4 px-4">
@@ -257,6 +275,80 @@ gzip -t sample_R1.fastq.gz sample_R2.fastq.gz
 <p>If <code>mkdir</code> reports a permission error, work inside your home directory rather than a system directory. If <code>df -h</code> is nearly full, don't start a large download; ask the cluster administrator about quotas.</p>
 <h2>Next Steps</h2>
 <p>Continue with <a href="biological-data-formats.html">Biological Data Formats</a> and <a href="reproducible-project-structure.html">Reproducible Project Structure</a>Record the software versions, dataset or example inputs, and any decisions you made.</p>
+<div class="mt-12 p-8 bg-gradient-to-b from-slate-50 to-cyan-50/30 border border-slate-200 rounded-2xl shadow-sm">
+<div class="flex items-center gap-3 mb-6">
+<div class="w-10 h-10 rounded-xl bg-cyan-700 text-white flex items-center justify-center font-bold text-lg shadow-md shadow-cyan-700/20">
+      💻
+    </div>
+<div>
+<h3 class="text-xl font-bold text-gray-900">Terminal Survival Guide: Handling Multi-Gigabyte Genomic Streams</h3>
+<p class="text-xs text-gray-500">Essential field tactics for command-line computational biology</p>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+<div class="bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
+<h4 class="font-bold text-slate-900 text-base mb-2 flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-rose-500"></span>
+        1. The Windows Line-Ending (CRLF) Silent Pipeline Killer
+      </h4>
+<p class="text-gray-600 text-sm leading-relaxed mb-3">
+        Metadata files or sample sheets edited in Excel or Windows editors inject carriage returns (<code>\r</code>) that cause bash scripts and bioinformatics tools to fail cryptically with errors like <code>command not found^M</code> or unmatched sample IDs.
+      </p>
+<div class="text-xs font-mono bg-slate-50 p-2.5 rounded border border-slate-200 text-slate-700">
+        Fix: Inspect with <code>file sample_sheet.txt</code> and sanitize instantly with <code>tr -d '\r' &lt; sample_sheet.txt &gt; clean.txt</code> or <code>dos2unix</code>.
+      </div>
+</div>
+<div class="bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
+<h4 class="font-bold text-slate-900 text-base mb-2 flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-amber-500"></span>
+        2. Pipe Buffering vs. Uncompressed Disk Exhaustion
+      </h4>
+<p class="text-gray-600 text-sm leading-relaxed mb-3">
+        Uncompressing 100 GB FASTQ or VCF files to disk before filtering frequently exhausts user storage quotas. Instead, stream data directly through pipelines using gzip-aware tools (<code>zcat</code>, <code>pigz -dc</code>) and pipe directly into downstream parsers.
+      </p>
+<div class="text-xs font-mono bg-slate-50 p-2.5 rounded border border-slate-200 text-slate-700">
+        Best Practice: Use <code>pigz -dc reads.fq.gz | awk ... | gzip &gt; filtered.fq.gz</code> to leverage multi-threaded streaming with zero disk bloat.
+      </div>
+</div>
+</div>
+<div class="bg-slate-900 text-white p-5 rounded-xl shadow-inner">
+<h4 class="font-bold text-cyan-300 text-sm uppercase tracking-wider mb-2">Production Shell Engineering Checklist</h4>
+<ul class="text-sm space-y-2 text-slate-200 list-disc list-inside">
+<li><strong>Defensive Scripting Flags:</strong> Always start pipelines with <code>set -euo pipefail</code> so unexpected errors fail fast instead of propagating corrupted output.</li>
+<li><strong>Delimiters Matter:</strong> When cutting or sorting tab-delimited genomic formats (BED, GTF, TSV), explicitly specify <code>cut -d$'	'</code> or <code>sort -t$'	'</code> to prevent space vs. tab parsing ambiguity.</li>
+<li><strong>Sorting Genomic Coordinates:</strong> Always use <code>sort -k1,1 -k2,2n</code> to ensure chromosome order followed by numerical start coordinate sorting.</li>
+</ul>
+</div>
+</div>
+<div class="archetype-deepdive-container">
+<div class="archetype-deepdive-header">
+<div class="archetype-deepdive-icon" style="background:#0e7490;">💻</div>
+<div>
+<h3 class="archetype-deepdive-title">Terminal Survival Guide: Handling Multi-Gigabyte Genomic Streams</h3>
+<p class="archetype-deepdive-subtitle">Essential field tactics for command-line computational biology</p>
+</div>
+</div>
+<div class="archetype-grid-2">
+<div class="archetype-card-white">
+<h4><span style="width:8px;height:8px;border-radius:50%;background:#f43f5e;display:inline-block;"></span> 1. The Windows Line-Ending (CRLF) Silent Pipeline Killer</h4>
+<p>Metadata files or sample sheets edited in Excel or Windows editors inject carriage returns (<code>\r</code>) that cause bash scripts and bioinformatics tools to fail cryptically with errors like <code>command not found^M</code> or unmatched sample IDs.</p>
+<div class="archetype-tip-box">Fix: Inspect with <code>file sample_sheet.txt</code> and sanitize instantly with <code>tr -d '\r' &lt; sample_sheet.txt &gt; clean.txt</code> or <code>dos2unix</code>.</div>
+</div>
+<div class="archetype-card-white">
+<h4><span style="width:8px;height:8px;border-radius:50%;background:#f59e0b;display:inline-block;"></span> 2. Pipe Buffering vs. Uncompressed Disk Exhaustion</h4>
+<p>Uncompressing 100 GB FASTQ or VCF files to disk before filtering frequently exhausts user storage quotas. Instead, stream data directly through pipelines using gzip-aware tools (<code>zcat</code>, <code>pigz -dc</code>) and pipe directly into downstream parsers.</p>
+<div class="archetype-tip-box">Best Practice: Use <code>pigz -dc reads.fq.gz | awk ... | gzip &gt; filtered.fq.gz</code> to leverage multi-threaded streaming with zero disk bloat.</div>
+</div>
+</div>
+<div class="archetype-checklist-box">
+<div class="archetype-checklist-title" style="color:#a5f3fc;">Production Shell Engineering Checklist</div>
+<ul>
+<li><strong>Defensive Scripting Flags:</strong> Always start pipelines with <code>set -euo pipefail</code> so unexpected errors fail fast instead of propagating corrupted output.</li>
+<li><strong>Delimiters Matter:</strong> When cutting or sorting tab-delimited genomic formats (BED, GTF, TSV), explicitly specify <code>cut -d$'	'</code> or <code>sort -t$'	'</code> to prevent space vs. tab parsing ambiguity.</li>
+<li><strong>Sorting Genomic Coordinates:</strong> Always use <code>sort -k1,1 -k2,2n</code> to ensure chromosome order followed by numerical start coordinate sorting.</li>
+</ul>
+</div>
+</div>
 <section aria-label="References and further reading" class="mt-10 p-6 bg-slate-50 border border-slate-200 rounded-xl">
 <h2 class="text-xl font-bold text-gray-900 mb-3">References and further reading</h2>
 <p class="text-sm text-gray-600 mb-3">Use these official resources to check current software behaviour, terminology, and production guidance. Tool versions and defaults change, so verify commands against the documentation before applying them to a research dataset.</p>
@@ -265,7 +357,6 @@ gzip -t sample_R1.fastq.gz sample_R2.fastq.gz
 <li><a class="text-blue-700 hover:underline" href="https://www.ebi.ac.uk/training/online/" rel="noopener" target="_blank">EMBL-EBI Training</a></li>
 </ul>
 </section>
-
 </article>
 <section class="mt-12 mb-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-100">
 <div class="flex items-start gap-4">
@@ -399,8 +490,6 @@ gzip -t sample_R1.fastq.gz sample_R2.fastq.gz
 })();
 </script>
 <script src="../code-tabs.js"></script>
-<script src="../copy-code.js"></script>
-<script src="../subscribe-fab.js"></script>
 <script src="../copy-code.js"></script>
 <script src="../subscribe-fab.js"></script>
 <!-- Cookie Consent Banner -->

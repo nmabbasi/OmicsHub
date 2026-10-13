@@ -23,7 +23,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@400;500&amp;display=block" rel="stylesheet"/>
 <link href="../tailwind.min.css" rel="stylesheet"/>
 <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet"/>
-<link href="../style.css?v=20260818-header-brand-32" rel="stylesheet"/>
+<link href="../style.css?v=20261013-archetype-v1" rel="stylesheet"/>
 <script src="../analytics.js"></script>
 <script>
 window.dataLayer = window.dataLayer || [];
@@ -98,17 +98,36 @@ function toggleMobileMenu() {
 <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
 </div>
 </div>
-<div class="p-6 bg-blue-50 border border-blue-100 rounded-xl mb-8">
-<h4 class="text-lg font-bold text-blue-900 mb-2">Learning Objectives &amp; Prerequisites</h4>
-<ul class="list-disc list-inside text-blue-800 space-y-1 mb-4">
-<li><strong>Prerequisites:</strong> Proficiency in Python and a fundamental understanding of how LLM APIs (OpenAI, Anthropic) operate.</li>
-<li><strong>Objective:</strong> Learn to use agentic frameworks to orchestrate multi-step bioinformatics pipelines autonomously.</li>
-<li><strong>Expected Output:</strong> A conceptual and practical understanding of setting up a multi-agent system using LangGraph.</li>
-</ul>
-</div>
+
 <div class="p-6 bg-amber-50 border border-amber-200 rounded-xl mb-8">
 <h3 class="text-lg font-bold text-amber-900 mb-3">📘 The Shift to Multi-Agent Orchestration</h3>
 <p class="text-amber-800 mb-2">Single prompt LLMs are powerful, but they struggle with long-horizon, multi-step tasks like running a Nextflow pipeline, debugging the errors, and summarizing the results. Multi-agent orchestration solves this by assigning specific roles (e.g., Coder, Reviewer, Executor) to different agents that collaborate to achieve a goal.</p>
+</div>
+<div class="archetype-banner archetype-banner-ai">
+<div class="archetype-header-row">
+<div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;">
+<span class="archetype-badge archetype-badge-ai">AI Engineering Blueprint</span>
+<span style="font-size:0.75rem;color:#94a3b8;font-family:monospace;">Agentic Bioinformatics &amp; AI</span>
+</div>
+<div style="font-size:0.75rem;color:#d8b4fe;font-weight:600;display:flex;align-items:center;gap:0.35rem;">
+<span style="width:8px;height:8px;border-radius:50%;background:#34d399;display:inline-block;"></span>
+      Deterministic Biological Grounding
+    </div>
+</div>
+<div class="archetype-grid-3">
+<div class="archetype-subcard">
+<div class="archetype-subcard-title archetype-subcard-title-ai">Retrieval Grounding</div>
+<p class="archetype-subcard-body">Coupling Large Language Models with deterministic bioinformatics APIs (gget, NCBI Entrez, Ensembl REST) to eliminate hallucinated gene IDs.</p>
+</div>
+<div class="archetype-subcard">
+<div class="archetype-subcard-title archetype-subcard-title-ai">Code Verification</div>
+<p class="archetype-subcard-body">Sandboxing generated R/Python execution, syntax linting, and automated unit testing against synthetic benchmark data.</p>
+</div>
+<div class="archetype-subcard">
+<div class="archetype-subcard-title archetype-subcard-title-ai">Autonomous Workflows</div>
+<p class="archetype-subcard-body">Structuring stateful multi-agent systems with explicit human-in-the-loop review for critical analytical transitions.</p>
+</div>
+</div>
 </div>
 <h2>Before You Begin: Install the Frameworks in an Isolated Environment</h2>
 <p>LangGraph and AutoGen are orchestration frameworks, not biological validators. Use a separate environment, pin versions after testing, and keep provider credentials outside the repository.</p>
@@ -182,49 +201,78 @@ app = workflow.compile()
 <li><strong>Scale:</strong> Orchestration allows for the high-throughput utilization of biological foundation models like ESM3 and scGPT.</li>
 </ul>
 </div>
-<div class="mt-10 p-8 bg-gray-50 border border-gray-200 rounded-xl">
-<section class="prose-expansion bg-white border-t border-gray-100 mt-10 pt-10 pb-4">
-<div class="max-w-3xl mx-auto px-2">
-<h2 class="text-2xl font-bold text-slate-900 mb-4">What AI Orchestration Means in a Research Context</h2>
-<p class="text-slate-700 text-base leading-relaxed mb-4">
- The term AI orchestration in bioinformatics refers to coordinating multiple AI components, including large language models, specialised biological AI models, and automated tool use, in a structured pipeline that can plan, execute, and evaluate multi-step research tasks. Rather than asking a model a single question and interpreting the answer manually, an orchestrated system routes queries through several agents or models, each with a defined role, and aggregates the results into a coherent output.
-</p>
-<p class="text-slate-700 text-base leading-relaxed mb-4">
- In practice, this can look like a system where a planning agent receives a high-level research question, decomposes it into sub-tasks, assigns each sub-task to a specialised agent (one for literature retrieval, one for database querying, one for code generation and execution), and then synthesises the results into a summary. The biology researcher interacts with the top-level system and receives integrated outputs without needing to manage each tool individually.
-</p>
-<h3 class="text-xl font-semibold text-slate-900 mb-3 mt-8">Concrete Use Cases in Genomics and Multi-Omics</h3>
-<p class="text-slate-700 text-base leading-relaxed mb-4">
- One of the most useful current applications is variant interpretation. When a whole-exome sequencing analysis identifies a list of candidate variants, an orchestrated system can automatically query ClinVar for pathogenicity classifications, pull the associated literature from PubMed, retrieve population frequency from gnomAD, check protein domain databases for functional context, and generate a structured summary for each variant. What would take a researcher several hours of manual database querying takes the orchestrated system minutes.
-</p>
-<p class="text-slate-700 text-base leading-relaxed mb-4">
- A second use case is iterative single-cell analysis. A human researcher defines a broad goal, for example identifying the transcriptional programs of tumour-associated macrophages in a dataset, and the orchestrated system proposes and executes a series of analytical steps, checking the output of each step before deciding on the next. When a clustering step produces an unexpected number of clusters, the system can adjust resolution parameters and re-run without human intervention. The researcher reviews the final output rather than managing every intermediate decision.
-</p>
-<h3 class="text-xl font-semibold text-slate-900 mb-3 mt-8">Tool Use and Retrieval Augmented Generation</h3>
-<p class="text-slate-700 text-base leading-relaxed mb-4">
- A large language model used alone has fixed knowledge that stops at its training cutoff. In a rapidly evolving field like bioinformatics, this is a significant limitation: a model trained in 2024 doesn't know about tools, datasets, or methods published in 2025. Retrieval augmented generation (RAG) addresses this by connecting the model to an external knowledge base that's queried at inference time. The model generates a query, the retrieval system finds the most relevant documents, and the model generates its response conditioned on those documents.
-</p>
-<p class="text-slate-700 text-base leading-relaxed mb-4">
- For bioinformatics, a well-designed RAG system might index your institution's preprint server, picked tool documentation, and your own project notes. When you ask the system to suggest an alignment tool for a specific organism and read type, it retrieves documentation for relevant tools, compares their stated capabilities, and generates a reasoned recommendation grounded in current tool documentation rather than training data that may be months or years out of date.
-</p>
-<h3 class="text-xl font-semibold text-slate-900 mb-3 mt-8">Limitations and Responsible Use</h3>
-<p class="text-slate-700 text-base leading-relaxed mb-4">
- AI orchestration systems can fail in non-obvious ways. A system that automates variant interpretation may produce a confidently worded summary of a benign variant as pathogenic if the retrieval step returns an outdated or incorrect document. A code generation agent may produce syntactically correct code that produces subtly wrong results due to a misunderstood parameter. These failures are particularly dangerous when the output looks plausible and the researcher doesn't verify intermediate results.
-</p>
-<p class="text-slate-700 text-base leading-relaxed mb-4">
- The practical rule for using AI orchestration in research is to treat it as an accelerator for exploratory analysis and literature review, not as a replacement for biological judgment and manual verification of results. Always inspect intermediate outputs, validate AI-generated code against expected behaviour on test data, and cross-check AI-summarised findings against the original sources before including them in a manuscript or clinical report.
-</p>
+<div class="mt-12 p-8 bg-gradient-to-b from-slate-50 to-purple-50/30 border border-slate-200 rounded-2xl shadow-sm">
+<div class="flex items-center gap-3 mb-6">
+<div class="w-10 h-10 rounded-xl bg-purple-700 text-white flex items-center justify-center font-bold text-lg shadow-md shadow-purple-700/20">
+      🤖
+    </div>
+<div>
+<h3 class="text-xl font-bold text-gray-900">Verification Protocols &amp; Hallucination Defense in Automated Workflows</h3>
+<p class="text-xs text-gray-500">Production safety standards for AI-assisted computational biology</p>
 </div>
-</section>
-<h3 class="text-xl font-bold text-gray-900 mb-4">Knowledge Check &amp; Assessment</h3>
-<div class="space-y-4">
-<div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-<h4 class="font-bold text-gray-800 mb-2">1. Concept Verification</h4>
-<p class="text-gray-600 text-sm">Why is a stateful, cyclic graph (like those built with LangGraph) superior to a simple linear chain when generating bioinformatics code?</p>
 </div>
-<div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-<h4 class="font-bold text-gray-800 mb-2">2. Practical Execution</h4>
-<p class="text-gray-600 text-sm">Draft a simple architectural diagram (on paper or using a tool) outlining a 3-agent system designed to automatically download FASTQ files from the SRA, run FastQC, and summarize the results.</p>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+<div class="bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
+<h4 class="font-bold text-purple-950 text-base mb-2 flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-rose-500"></span>
+        1. Hallucinated Gene Identifiers &amp; Deprecated Functions
+      </h4>
+<p class="text-gray-600 text-sm leading-relaxed mb-3">
+        LLMs frequently invent non-existent gene symbols or propose deprecated software syntax (e.g., using Seurat v3 function signatures in Seurat v5). In automated pipelines, these hallucinations cause silent downstream data corruption or script failure.
+      </p>
+<div class="text-xs font-mono bg-slate-50 p-2.5 rounded border border-slate-200 text-slate-700">
+        Defense: Validate all AI-extracted gene lists against official HGNC / Ensembl databases programmatically before feeding them into pathway enrichment engines.
+      </div>
 </div>
+<div class="bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
+<h4 class="font-bold text-purple-950 text-base mb-2 flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-amber-500"></span>
+        2. Non-Deterministic Code Generation in Reproducible Pipelines
+      </h4>
+<p class="text-gray-600 text-sm leading-relaxed mb-3">
+        Relying on interactive AI chats without versioning the exact prompts and model checkpoints breaks scientific reproducibility. A workflow that cannot be rerun identically six months later cannot be published in reputable journals.
+      </p>
+<div class="text-xs font-mono bg-slate-50 p-2.5 rounded border border-slate-200 text-slate-700">
+        Defense: Commit all AI prompting templates, API hyperparameters (temperature = 0.0), and environment lockfiles to version-controlled repositories.
+      </div>
+</div>
+</div>
+<div class="bg-purple-950 text-white p-5 rounded-xl shadow-inner">
+<h4 class="font-bold text-fuchsia-300 text-sm uppercase tracking-wider mb-2">AI-Bioinformatics Production Checklist</h4>
+<ul class="text-sm space-y-2 text-purple-100 list-disc list-inside">
+<li><strong>Deterministic Grounding:</strong> Always provide authoritative API schemas or documentation snippets in prompt contexts to anchor model output to verified interfaces.</li>
+<li><strong>Unit Testing Outputs:</strong> Write automated assertions that verify matrix dimensions, column headers, and data types before passing outputs to downstream steps.</li>
+<li><strong>Audit Trails:</strong> Maintain human-verifiable provenance logs documenting which pipeline stages were AI-assisted and which were independently validated.</li>
+</ul>
+</div>
+</div>
+<div class="archetype-deepdive-container">
+<div class="archetype-deepdive-header">
+<div class="archetype-deepdive-icon" style="background:#7e22ce;">🤖</div>
+<div>
+<h3 class="archetype-deepdive-title">Verification Protocols &amp; Hallucination Defense in Automated Workflows</h3>
+<p class="archetype-deepdive-subtitle">Production safety standards for AI-assisted computational biology</p>
+</div>
+</div>
+<div class="archetype-grid-2">
+<div class="archetype-card-white">
+<h4><span style="width:8px;height:8px;border-radius:50%;background:#f43f5e;display:inline-block;"></span> 1. Hallucinated Gene Identifiers &amp; Deprecated Functions</h4>
+<p>LLMs frequently invent non-existent gene symbols or propose deprecated software syntax (e.g., using Seurat v3 function signatures in Seurat v5). In automated pipelines, these hallucinations cause silent downstream data corruption or script failure.</p>
+<div class="archetype-tip-box">Defense: Validate all AI-extracted gene lists against official HGNC / Ensembl databases programmatically before feeding them into pathway enrichment engines.</div>
+</div>
+<div class="archetype-card-white">
+<h4><span style="width:8px;height:8px;border-radius:50%;background:#f59e0b;display:inline-block;"></span> 2. Non-Deterministic Code Generation in Reproducible Pipelines</h4>
+<p>Relying on interactive AI chats without versioning the exact prompts and model checkpoints breaks scientific reproducibility. A workflow that cannot be rerun identically six months later cannot be published in reputable journals.</p>
+<div class="archetype-tip-box">Defense: Commit all AI prompting templates, API hyperparameters (temperature = 0.0), and environment lockfiles to version-controlled repositories.</div>
+</div>
+</div>
+<div class="archetype-checklist-box">
+<div class="archetype-checklist-title" style="color:#e9d5ff;">AI-Bioinformatics Production Checklist</div>
+<ul>
+<li><strong>Deterministic Grounding:</strong> Always provide authoritative API schemas or documentation snippets in prompt contexts to anchor model output to verified interfaces.</li>
+<li><strong>Unit Testing Outputs:</strong> Write automated assertions that verify matrix dimensions, column headers, and data types before passing outputs to downstream steps.</li>
+<li><strong>Audit Trails:</strong> Maintain human-verifiable provenance logs documenting which pipeline stages were AI-assisted and which were independently validated.</li>
+</ul>
 </div>
 </div>
 <section aria-label="References and further reading" class="mt-10 p-6 bg-slate-50 border border-slate-200 rounded-xl">
@@ -235,7 +283,6 @@ app = workflow.compile()
 <li><a class="text-blue-700 hover:underline" href="https://oecd.ai/en/ai-principles" rel="noopener" target="_blank">OECD AI Principles</a></li>
 </ul>
 </section>
-
 </article>
 <section class="mt-12 mb-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-100">
 <div class="flex items-start gap-4">
