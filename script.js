@@ -40,8 +40,25 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Handle initial routing after tutorials load
 function handleInitialRoute() {
+    const hasHomePage = Boolean(document.getElementById('home-page'));
+    const hasAllTutorialsList = Boolean(document.getElementById('all-tutorials-list'));
+    const hasTutorialPage = Boolean(document.getElementById('tutorial-page'));
+
+    // Static tutorial/legal pages include this script for shared UI behavior,
+    // but they do not use SPA-style section routing.
+    if (!hasHomePage && !hasAllTutorialsList && !hasTutorialPage) {
+        updateNavActiveState();
+        return;
+    }
+
     if (window.PRELOADED_TUTORIAL_ID) {
         showTutorial(window.PRELOADED_TUTORIAL_ID, false);
+        return;
+    }
+
+    // On the dedicated tutorials index, keep users on that page by default.
+    if (hasAllTutorialsList && !hasHomePage) {
+        showTutorials();
         return;
     }
 
@@ -64,6 +81,42 @@ function handleInitialRoute() {
     } else {
         showHome();
     }
+}
+
+function showHome(scrollToTop = true) {
+    const homePage = document.getElementById('home-page');
+    const tutorialPage = document.getElementById('tutorial-page');
+
+    // When dynamic sections are unavailable (e.g., static tutorial pages),
+    // return users to the main homepage.
+    if (!homePage) {
+        window.location.href = 'index.html';
+        return;
+    }
+
+    document.querySelectorAll('.page-content').forEach(page => page.classList.add('hidden'));
+    homePage.classList.remove('hidden');
+    if (tutorialPage) tutorialPage.classList.add('hidden');
+
+    currentPage = 'home';
+    currentTutorial = null;
+
+    if (scrollToTop) {
+        window.scrollTo(0, 0);
+    }
+
+    updateNavActiveState();
+}
+
+function showTutorials() {
+    const allTutorialsList = document.getElementById('all-tutorials-list');
+    if (!allTutorialsList) {
+        window.location.href = 'tutorials.html';
+        return;
+    }
+
+    currentPage = 'tutorials';
+    updateNavActiveState();
 }
 
 // Setup event listeners
@@ -606,7 +659,7 @@ async function showTutorial(id, addToHistory = true) {
 
     // Update URL if we are dynamically navigating from within the same page
     if (addToHistory && !window.PRELOADED_TUTORIAL_ID) {
-        window.history.pushState(null, '', `${tutorialId}.html`);
+        window.history.pushState(null, '', `${id}.html`);
     }
 
     const tutorialContentDiv = document.getElementById('tutorial-content');
@@ -661,7 +714,7 @@ async function showTutorial(id, addToHistory = true) {
                 </div>
 
                 ${(function() {
-                    const currentIndex = tutorials.findIndex(t => t.id === tutorialId);
+                    const currentIndex = tutorials.findIndex(t => t.id === id);
                     if (currentIndex !== -1 && currentIndex < tutorials.length - 1) {
                         const nextTutorial = tutorials[currentIndex + 1];
                         if (nextTutorial.category === tutorial.category) {
