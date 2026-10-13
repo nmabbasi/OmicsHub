@@ -30,7 +30,7 @@
 <!-- Prism.js for syntax highlighting -->
 <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet"/>
 <!-- Custom CSS -->
-<link href="../style.css?v=20261013-archetype-v1" rel="stylesheet"/>
+<link href="../style.css?v=20260818-header-brand-32" rel="stylesheet"/>
 <script src="../analytics.js"></script>
 <script>
 window.dataLayer = window.dataLayer || [];
@@ -158,32 +158,13 @@ Legal
 <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
 </div>
 </div>
-
-<div class="archetype-banner archetype-banner-single-cell">
-<div class="archetype-header-row">
-<div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;">
-<span class="archetype-badge archetype-badge-single-cell">Clinical Genomics Protocol</span>
-<span style="font-size:0.75rem;color:#94a3b8;font-family:monospace;">Single-Cell Oncology Core</span>
-</div>
-<div style="font-size:0.75rem;color:#a5b4fc;font-weight:600;display:flex;align-items:center;gap:0.35rem;">
-<span style="width:8px;height:8px;border-radius:50%;background:#34d399;display:inline-block;"></span>
-      10x Genomics Chromium &amp; Multi-Omics Standards
-    </div>
-</div>
-<div class="archetype-grid-3">
-<div class="archetype-subcard">
-<div class="archetype-subcard-title archetype-subcard-title-single-cell">Biological Ground Truth</div>
-<p class="archetype-subcard-body">Isolating true phenotypic heterogeneity and rare malignant subclones from technical dissociation artifacts and ambient mRNA contamination.</p>
-</div>
-<div class="archetype-subcard">
-<div class="archetype-subcard-title archetype-subcard-title-single-cell">Analytical Guardrails</div>
-<p class="archetype-subcard-body">Dynamic MAD-based filtering thresholds, doublet scrubbers (scDblFinder), and variance-stabilizing normalization (SCTransform v2 / scran).</p>
-</div>
-<div class="archetype-subcard">
-<div class="archetype-subcard-title archetype-subcard-title-single-cell">Core Deliverable</div>
-<p class="archetype-subcard-body">Publication-ready, batch-corrected embeddings and reproducible cell identity annotations mapped to validated reference atlases.</p>
-</div>
-</div>
+<div class="p-6 bg-blue-50 border border-blue-100 rounded-xl mb-8">
+<h4 class="text-lg font-bold text-blue-900 mb-2">Learning Objectives &amp; Prerequisites</h4>
+<ul class="list-disc list-inside text-blue-800 space-y-1 mb-4">
+<li><strong>Prerequisites:</strong> Complete scRNA-seq Basics and have a dataset with sample or batch labels and computed QC metrics.</li>
+<li><strong>Objective:</strong> Use LISI and silhouette-style diagnostics to quantify batch mixing and biological separation without relying only on visual embeddings.</li>
+<li><strong>Expected Output:</strong> A QC/integration evaluation table that reports metrics, neighborhood settings, labels, and a balanced interpretation.</li>
+</ul>
 </div>
 <h2>Mathematical Quality Control for Integration &amp; Clustering</h2>
 <h2>The Problem with Subjective UMAPs</h2>
@@ -260,125 +241,21 @@ labels &lt;- as.numeric(factor(seurat_obj$seurat_clusters))
 sil &lt;- silhouette(labels, dist(embedding))
 summary(sil[, "sil_width"])
 </code></pre>
-<div class="mt-12 p-8 bg-gradient-to-b from-slate-50 to-indigo-50/30 border border-slate-200 rounded-2xl shadow-sm">
-<div class="flex items-center gap-3 mb-6">
-<div class="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-bold text-lg shadow-md shadow-indigo-600/20">
-      🔬
-    </div>
-<div>
-<h3 class="text-xl font-bold text-gray-900">Wet-Lab Realities &amp; Analytical Pitfalls in Single-Cell Oncology</h3>
-<p class="text-xs text-gray-500">Crucial considerations from the Bordeaux Institute of Oncology (BRIC, INSERM U1312)</p>
+<div class="mt-10 p-8 bg-gray-50 border border-gray-200 rounded-xl">
+<h3 class="text-xl font-bold text-gray-900 mb-4">Knowledge Check &amp; Assessment</h3>
+<div class="space-y-4">
+<div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
+<h4 class="font-bold text-gray-800 mb-2">1. Concept Verification</h4>
+<p class="text-gray-600 text-sm">Why can a high batch-mixing score be undesirable if cell identities or conditions are overcorrected?</p>
 </div>
+<div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
+<h4 class="font-bold text-gray-800 mb-2">2. Practical Execution</h4>
+<p class="text-gray-600 text-sm">Calculate or inspect LISI and silhouette metrics for pre- and post-integration data, then explain the trade-off in one paragraph. </p>
 </div>
-<div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-<div class="bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
-<h4 class="font-bold text-indigo-950 text-base mb-2 flex items-center gap-2">
-<span class="w-2 h-2 rounded-full bg-amber-500"></span>
-        1. The Uniform Mitochondrial Threshold Trap
-      </h4>
-<p class="text-gray-600 text-sm leading-relaxed mb-3">
-        Applying a blanket 5% mitochondrial read cutoff across heterogeneous tumor biopsies often discards biologically vital cell states. In renal cell carcinoma, oncocytomas, and metabolically hyperactive cytotoxic T-cells, physiological mitochondrial transcript levels naturally reach 12-18% without loss of membrane integrity.
-      </p>
-<div class="text-xs font-mono bg-slate-50 p-2.5 rounded border border-slate-200 text-slate-700">
-        Tip: Calculate MAD (Median Absolute Deviation) thresholds independently within preliminary cell clusters rather than discarding cells globally before inspection.
-      </div>
+<div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
+<h4 class="font-bold text-gray-800 mb-2">3. Troubleshooting</h4>
+<p class="text-gray-600 text-sm">If metrics disagree with a UMAP, how will you check label choice, neighborhood parameters, class imbalance, and whether the expected biology was preserved?</p>
 </div>
-<div class="bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
-<h4 class="font-bold text-indigo-950 text-base mb-2 flex items-center gap-2">
-<span class="w-2 h-2 rounded-full bg-rose-500"></span>
-        2. Enzymatic Dissociation &amp; Heat-Shock Stress
-      </h4>
-<p class="text-gray-600 text-sm leading-relaxed mb-3">
-        Enzymatic digestion at 37°C frequently triggers artifactual expression of early-response and heat-shock genes (<em>FOS</em>, <em>JUN</em>, <em>HSP90AA1</em>, <em>HSPA1A</em>). In solid tumor dissociation, cells that took longer to dissociate can artificially cluster together purely driven by ex vivo stress.
-      </p>
-<div class="text-xs font-mono bg-slate-50 p-2.5 rounded border border-slate-200 text-slate-700">
-        Tip: Score cells against a curated dissociation gene signature (e.g., van den Brink et al.) and evaluate whether cluster separation correlates with stress markers.
-      </div>
-</div>
-</div>
-<div class="bg-indigo-900 text-white p-5 rounded-xl shadow-inner">
-<h4 class="font-bold text-indigo-200 text-sm uppercase tracking-wider mb-2">Quality Control Diagnostic Checklist</h4>
-<ul class="text-sm space-y-2 text-indigo-100/90 list-disc list-inside">
-<li><strong>Empty Droplet Removal:</strong> Validate that <code>EmptyDrops</code> FDR &lt; 0.001 is utilized instead of simple total-UMI cutoffs to preserve small lymphocytes.</li>
-<li><strong>Doublet Scrubbing:</strong> Run <code>DoubletFinder</code> or <code>scDblFinder</code> prior to integration to prevent chimeric artificial clusters bridging two disparate cell types.</li>
-<li><strong>Ambient RNA Decontamination:</strong> Deploy <code>SoupX</code> or <code>CellBender</code> if high-expression lineage markers (e.g. <em>HBB</em> from lysed erythrocytes) contaminate unrelated immune clusters.</li>
-</ul>
-</div>
-</div>
-<div class="mt-12 p-8 bg-gradient-to-b from-slate-50 to-indigo-50/30 border border-slate-200 rounded-2xl shadow-sm">
-<div class="flex items-center gap-3 mb-6">
-<div class="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-bold text-lg shadow-md shadow-indigo-600/20">
-      🔬
-    </div>
-<div>
-<h3 class="text-xl font-bold text-gray-900">Wet-Lab Realities &amp; Analytical Pitfalls in Single-Cell Oncology</h3>
-<p class="text-xs text-gray-500">Methodological guidance from cancer biology and single-cell genomics research</p>
-</div>
-</div>
-<div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-<div class="bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
-<h4 class="font-bold text-indigo-950 text-base mb-2 flex items-center gap-2">
-<span class="w-2 h-2 rounded-full bg-amber-500"></span>
-        1. The Uniform Mitochondrial Threshold Fallacy
-      </h4>
-<p class="text-gray-600 text-sm leading-relaxed mb-3">
-        Applying a blanket 5% mitochondrial read cutoff across heterogeneous tumor biopsies frequently discards biologically vital cell states. In renal cell carcinoma, oncocytomas, and metabolically hyperactive cytotoxic T-cells, physiological mitochondrial transcript levels naturally reach 12-18% without loss of membrane integrity.
-      </p>
-<div class="text-xs font-mono bg-slate-50 p-2.5 rounded border border-slate-200 text-slate-700">
-        Best Practice: Calculate MAD (Median Absolute Deviation) thresholds independently within preliminary cell clusters rather than discarding cells globally before inspection.
-      </div>
-</div>
-<div class="bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
-<h4 class="font-bold text-indigo-950 text-base mb-2 flex items-center gap-2">
-<span class="w-2 h-2 rounded-full bg-rose-500"></span>
-        2. Enzymatic Dissociation &amp; Heat-Shock Signatures
-      </h4>
-<p class="text-gray-600 text-sm leading-relaxed mb-3">
-        Enzymatic digestion at 37°C frequently triggers artifactual expression of early-response and heat-shock genes (<em>FOS</em>, <em>JUN</em>, <em>HSP90AA1</em>, <em>HSPA1A</em>). In solid tumor dissociation, cells that took longer to dissociate can artificially cluster together purely driven by ex vivo stress.
-      </p>
-<div class="text-xs font-mono bg-slate-50 p-2.5 rounded border border-slate-200 text-slate-700">
-        Best Practice: Score cells against a curated dissociation gene signature and evaluate whether cluster separation correlates with stress markers.
-      </div>
-</div>
-</div>
-<div class="bg-indigo-900 text-white p-5 rounded-xl shadow-inner">
-<h4 class="font-bold text-indigo-200 text-sm uppercase tracking-wider mb-2">Quality Control Diagnostic Checklist</h4>
-<ul class="text-sm space-y-2 text-indigo-100/90 list-disc list-inside">
-<li><strong>Empty Droplet Removal:</strong> Validate that <code>EmptyDrops</code> FDR &lt; 0.001 is utilized instead of simple total-UMI cutoffs to preserve small lymphocytes.</li>
-<li><strong>Doublet Scrubbing:</strong> Run <code>DoubletFinder</code> or <code>scDblFinder</code> prior to integration to prevent chimeric artificial clusters bridging two disparate cell types.</li>
-<li><strong>Ambient RNA Decontamination:</strong> Deploy <code>SoupX</code> or <code>CellBender</code> if high-expression lineage markers (e.g. <em>HBB</em> from lysed erythrocytes) contaminate unrelated immune clusters.</li>
-<li><strong>Biological Heterogeneity:</strong> Confirm that dimensional reduction parameters (e.g., PCA dimensions, resolution) preserve known lineage controls before drawing novel subtype conclusions.</li>
-</ul>
-</div>
-</div>
-<div class="archetype-deepdive-container">
-<div class="archetype-deepdive-header">
-<div class="archetype-deepdive-icon" style="background:#4f46e5;">🔬</div>
-<div>
-<h3 class="archetype-deepdive-title">Wet-Lab Realities &amp; Analytical Pitfalls in Single-Cell Oncology</h3>
-<p class="archetype-deepdive-subtitle">Methodological guidance from cancer biology and single-cell genomics research</p>
-</div>
-</div>
-<div class="archetype-grid-2">
-<div class="archetype-card-white">
-<h4><span style="width:8px;height:8px;border-radius:50%;background:#f59e0b;display:inline-block;"></span> 1. The Uniform Mitochondrial Threshold Fallacy</h4>
-<p>Applying a blanket 5% mitochondrial read cutoff across heterogeneous tumor biopsies frequently discards biologically vital cell states. In renal cell carcinoma, oncocytomas, and metabolically hyperactive cytotoxic T-cells, physiological mitochondrial transcript levels naturally reach 12-18% without loss of membrane integrity.</p>
-<div class="archetype-tip-box">Best Practice: Calculate MAD (Median Absolute Deviation) thresholds independently within preliminary cell clusters rather than discarding cells globally before inspection.</div>
-</div>
-<div class="archetype-card-white">
-<h4><span style="width:8px;height:8px;border-radius:50%;background:#f43f5e;display:inline-block;"></span> 2. Enzymatic Dissociation &amp; Heat-Shock Signatures</h4>
-<p>Enzymatic digestion at 37°C frequently triggers artifactual expression of early-response and heat-shock genes (<em>FOS</em>, <em>JUN</em>, <em>HSP90AA1</em>, <em>HSPA1A</em>). In solid tumor dissociation, cells that took longer to dissociate can artificially cluster together purely driven by ex vivo stress.</p>
-<div class="archetype-tip-box">Best Practice: Score cells against a curated dissociation gene signature and evaluate whether cluster separation correlates with stress markers.</div>
-</div>
-</div>
-<div class="archetype-checklist-box">
-<div class="archetype-checklist-title" style="color:#c7d2fe;">Quality Control Diagnostic Checklist</div>
-<ul>
-<li><strong>Empty Droplet Removal:</strong> Validate that <code>EmptyDrops</code> FDR &lt; 0.001 is utilized instead of simple total-UMI cutoffs to preserve small lymphocytes.</li>
-<li><strong>Doublet Scrubbing:</strong> Run <code>DoubletFinder</code> or <code>scDblFinder</code> prior to integration to prevent chimeric artificial clusters bridging two disparate cell types.</li>
-<li><strong>Ambient RNA Decontamination:</strong> Deploy <code>SoupX</code> or <code>CellBender</code> if high-expression lineage markers (e.g. <em>HBB</em> from lysed erythrocytes) contaminate unrelated immune clusters.</li>
-<li><strong>Biological Heterogeneity:</strong> Confirm that dimensional reduction parameters (e.g., PCA dimensions, resolution) preserve known lineage controls before drawing novel subtype conclusions.</li>
-</ul>
 </div>
 </div>
 <section aria-label="References and further reading" class="mt-10 p-6 bg-slate-50 border border-slate-200 rounded-xl">
@@ -389,6 +266,7 @@ summary(sil[, "sil_width"])
 <li><a class="text-blue-700 hover:underline" href="https://scanpy.readthedocs.io/en/stable/" rel="noopener" target="_blank">Scanpy documentation</a></li>
 </ul>
 </section>
+
 </article>
 <section class="mt-12 mb-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-100">
 <div class="flex items-start gap-4">
@@ -529,6 +407,8 @@ summary(sil[, "sil_width"])
 })();
 </script>
 <script src="../code-tabs.js"></script>
+<script src="../copy-code.js"></script>
+<script src="../subscribe-fab.js"></script>
 <script src="../copy-code.js"></script>
 <script src="../subscribe-fab.js"></script>
 <!-- Cookie Consent Banner -->

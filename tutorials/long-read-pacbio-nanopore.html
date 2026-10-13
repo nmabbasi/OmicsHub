@@ -30,7 +30,7 @@
 <!-- Prism.js for syntax highlighting -->
 <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet"/>
 <!-- Custom CSS -->
-<link href="../style.css?v=20261013-archetype-v1" rel="stylesheet"/>
+<link href="../style.css?v=20260818-header-brand-32" rel="stylesheet"/>
 <script src="../analytics.js"></script>
 <script>
 window.dataLayer = window.dataLayer || [];
@@ -158,32 +158,13 @@ Legal
 <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
 </div>
 </div>
-
-<div class="archetype-banner archetype-banner-foundations">
-<div class="archetype-header-row">
-<div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;">
-<span class="archetype-badge archetype-badge-foundations">Methodological Rigor</span>
-<span style="font-size:0.75rem;color:#94a3b8;font-family:monospace;">Foundations &amp; Statistical Framework</span>
-</div>
-<div style="font-size:0.75rem;color:#93c5fd;font-weight:600;display:flex;align-items:center;gap:0.35rem;">
-<span style="width:8px;height:8px;border-radius:50%;background:#34d399;display:inline-block;"></span>
-      Peer-Reviewed Best Practices
-    </div>
-</div>
-<div class="archetype-grid-3">
-<div class="archetype-subcard">
-<div class="archetype-subcard-title archetype-subcard-title-foundations">Study Architecture</div>
-<p class="archetype-subcard-body">Defining true biological replicates vs technical subsamples and balancing experimental units across sequencing batches.</p>
-</div>
-<div class="archetype-subcard">
-<div class="archetype-subcard-title archetype-subcard-title-foundations">Statistical Modeling</div>
-<p class="archetype-subcard-body">Controlling false discovery rates (Benjamini-Hochberg FDR) across tens of thousands of simultaneous genomic hypothesis tests.</p>
-</div>
-<div class="archetype-subcard">
-<div class="archetype-subcard-title archetype-subcard-title-foundations">Reproducibility Core</div>
-<p class="archetype-subcard-body">Fixing random generator seeds, archiving container environments, and maintaining transparent code-to-figure provenance.</p>
-</div>
-</div>
+<div class="p-6 bg-blue-50 border border-blue-100 rounded-xl mb-8">
+<h4 class="text-lg font-bold text-blue-900 mb-2">Learning Objectives &amp; Prerequisites</h4>
+<ul class="list-disc list-inside text-blue-800 space-y-1 mb-4">
+<li><strong>Prerequisites:</strong> Complete Biological Data Formats, reference-genome concepts, and basic command-line analysis; understand read length and per-read error profiles.</li>
+<li><strong>Objective:</strong> Compare PacBio and Nanopore long-read data, choose appropriate QC/alignment/variant or isoform tools, and report platform-specific limitations.</li>
+<li><strong>Expected Output:</strong> A documented long-read analysis plan with platform, basecalling or CCS assumptions, reference version, QC metrics, and validation approach.</li>
+</ul>
 </div>
 <h2>Long-Read Sequencing Data Analysis</h2>
 <h2>Introduction</h2>
@@ -231,78 +212,53 @@ isoquant.py --reference hg38.fasta \
 <hr/>
 <h2>Conclusion</h2>
 <p>Long-read sequencing is rapidly becoming the standard for genome assembly, structural variant detection, and full-length transcriptomics. By mastering tools like NanoPlot, Flye, and Minimap2, you can get biological insights that were previously hidden by the limitations of short-read technology.</p>
-<div class="mt-12 p-8 bg-gradient-to-b from-slate-50 to-sky-50/30 border border-slate-200 rounded-2xl shadow-sm">
-<div class="flex items-center gap-3 mb-6">
-<div class="w-10 h-10 rounded-xl bg-sky-700 text-white flex items-center justify-center font-bold text-lg shadow-md shadow-sky-700/20">
-      📊
-    </div>
-<div>
-<h3 class="text-xl font-bold text-gray-900">Statistical Rigor &amp; Peer-Review Traps in Computational Biology</h3>
-<p class="text-xs text-gray-500">Methodological principles to prevent manuscript rejection and irreproducible findings</p>
+<div class="mt-10 p-8 bg-gray-50 border border-gray-200 rounded-xl">
+<section class="prose-expansion bg-white border-t border-gray-100 mt-10 pt-10 pb-4">
+<div class="max-w-3xl mx-auto px-2">
+<h2 class="text-2xl font-bold text-slate-900 mb-4">What Long Reads Reveal That Short Reads Can't</h2>
+<p class="text-slate-700 text-base leading-relaxed mb-4">
+ Illumina short-read sequencing produces highly accurate reads of 150 to 300 base pairs. For most routine applications, including differential expression analysis, variant calling in coding regions, and standard metagenomic profiling, this is sufficient. However, certain biological questions are structurally impossible to answer with short reads, and these are precisely the questions where long-read platforms become essential.
+</p>
+<p class="text-slate-700 text-base leading-relaxed mb-4">
+ The most significant limitation of short reads is their inability to resolve repetitive sequences and structural variants. The human genome contains roughly 50 percent repetitive sequence, including transposable elements, centromeric repeats, and segmental duplications. When a 150 bp read falls entirely within a repetitive region, it maps to multiple locations with equal probability, and the mapper either discards it or assigns it arbitrarily. Long reads of 10 to 50 kilobases span repetitive regions and anchor to unique flanking sequence on both ends, resolving the mapping problem entirely.
+</p>
+<h3 class="text-xl font-semibold text-slate-900 mb-3 mt-8">PacBio HiFi vs Oxford Nanopore: The Trade-off in 2026</h3>
+<p class="text-slate-700 text-base leading-relaxed mb-4">
+ PacBio's HiFi reads, generated using circular consensus sequencing, achieve Illumina-level accuracy (Q30 or higher, meaning fewer than 1 error per 1,000 bases) at read lengths of 10 to 25 kilobases. They're the gold standard for applications where both read length and accuracy are required, such as diploid genome assembly, full-length isoform sequencing, and structural variant discovery with high confidence.
+</p>
+<p class="text-slate-700 text-base leading-relaxed mb-4">
+ Oxford Nanopore sequencing produces reads that are longer on average (N50 of 20 to 100 kilobases depending on library preparation) but historically had higher raw error rates around 5 to 15 percent per read. Recent chemistry versions and the R10 pore have brought single-read accuracy to Q20 to Q25, which is sufficient for many applications when reads are present in sufficient depth. Nanopore's key advantages are real-time sequencing, the ability to detect base modifications (methylation, for example) directly from the electrical signal, and portability through the MinION device. PacBio's key advantages are higher per-read accuracy and better established computational tools for genome assembly.
+</p>
+<h3 class="text-xl font-semibold text-slate-900 mb-3 mt-8">Full-Length Transcript Sequencing: Resolving Isoform Complexity</h3>
+<p class="text-slate-700 text-base leading-relaxed mb-4">
+ Alternative splicing affects the majority of multi-exon human genes. Short-read RNA-seq can detect which exons are present in a sample, but when a transcript has 10 exons and any 3 of them can be skipped independently, the number of possible isoforms is combinatorially large. Short reads can't determine which combinations of exon skipping events co-occur in the same transcript molecule.
+</p>
+<p class="text-slate-700 text-base leading-relaxed mb-4">
+ Long-read isoform sequencing, using PacBio Iso-Seq or Nanopore direct RNA-seq, sequences full-length transcripts from the poly-A tail to the 5-prime cap. Each read represents a single transcript molecule, making it straightforward to determine exactly which combination of exons was present in that molecule. Tools like FLAMES and IsoSeq3 cluster and error-correct the resulting reads to produce a high-confidence isoform catalogue. This approach has revealed thousands of novel isoforms in human tissues that were completely invisible to short-read RNA-seq.
+</p>
+<h3 class="text-xl font-semibold text-slate-900 mb-3 mt-8">Practical Considerations Before Committing to a Long-Read Experiment</h3>
+<p class="text-slate-700 text-base leading-relaxed mb-4">
+ Long-read sequencing costs considerably more per base than short-read sequencing, and the sample preparation requirements are more stringent. DNA and RNA must be of high molecular weight, as fragmented nucleic acids produce short reads that undermine the key advantage of the platform. Extraction protocols designed for short-read sequencing typically involve vortexing or bead-milling steps that shear DNA to a few kilobases; these must be replaced with gentle extraction methods such as plug-based or magnetic-bead protocols.
+</p>
+<p class="text-slate-700 text-base leading-relaxed mb-4">
+ Before designing a long-read experiment, clearly define what question can't be answered with short reads. If you're doing standard differential expression analysis or SNP genotyping in well-characterised regions, short reads are less expensive and the tools are more mature. If you're assembling a new genome, resolving structural rearrangements in a cancer sample, or characterising the isoform repertoire of a tissue, long reads are justified and in many cases the only viable approach.
+</p>
 </div>
+</section>
+<h3 class="text-xl font-bold text-gray-900 mb-4">Knowledge Check &amp; Assessment</h3>
+<div class="space-y-4">
+<div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
+<h4 class="font-bold text-gray-800 mb-2">1. Concept Verification</h4>
+<p class="text-gray-600 text-sm">How do long reads change the trade-off between read length, per-read error, structural context, and sequencing depth compared with short reads?</p>
 </div>
-<div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-<div class="bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
-<h4 class="font-bold text-slate-900 text-base mb-2 flex items-center gap-2">
-<span class="w-2 h-2 rounded-full bg-rose-500"></span>
-        1. The Pseudoreplication Trap in Omics Differential Expression
-      </h4>
-<p class="text-gray-600 text-sm leading-relaxed mb-3">
-        Treating individual cells or technical sequencing lanes as independent biological observations dramatically inflates statistical degrees of freedom, yielding artificially minuscule p-values (e.g. p = 1e-250) that do not replicate across biological donors.
-      </p>
-<div class="text-xs font-mono bg-slate-50 p-2.5 rounded border border-slate-200 text-slate-700">
-        Best Practice: Model at the level of the true experimental unit (the biological organism or donor) using pseudobulk aggregation or linear mixed models.
-      </div>
+<div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
+<h4 class="font-bold text-gray-800 mb-2">2. Practical Execution</h4>
+<p class="text-gray-600 text-sm">Inspect a long-read QC or alignment summary and report read-length distribution, mapping rate, reference build, and one platform-specific caveat. </p>
 </div>
-<div class="bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
-<h4 class="font-bold text-slate-900 text-base mb-2 flex items-center gap-2">
-<span class="w-2 h-2 rounded-full bg-amber-500"></span>
-        2. Unadjusted P-Values &amp; Multi-Testing Inflation
-      </h4>
-<p class="text-gray-600 text-sm leading-relaxed mb-3">
-        When testing 20,000 genes simultaneously at alpha = 0.05, pure random noise generates 1,000 false-positive hits by chance alone. Failing to enforce rigorous multiple testing correction (FDR / q-value) remains a primary reason reviewers reject bioinformatic submissions.
-      </p>
-<div class="text-xs font-mono bg-slate-50 p-2.5 rounded border border-slate-200 text-slate-700">
-        Best Practice: Always report adjusted p-values (Benjamini-Hochberg or q-values) and filter by biological effect size (log2 fold change &gt; 1.0) simultaneously.
-      </div>
+<div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
+<h4 class="font-bold text-gray-800 mb-2">3. Troubleshooting</h4>
+<p class="text-gray-600 text-sm">If mapping or variant results differ strongly from short-read evidence, how will you inspect basecalling, read quality, repeats, coverage, reference choice, and caller assumptions?</p>
 </div>
-</div>
-<div class="bg-slate-900 text-white p-5 rounded-xl shadow-inner">
-<h4 class="font-bold text-sky-300 text-sm uppercase tracking-wider mb-2">Computational Biology Integrity Checklist</h4>
-<ul class="text-sm space-y-2 text-slate-200 list-disc list-inside">
-<li><strong>Fixed Random Seeds:</strong> Ensure every stochastic algorithm (UMAP, t-SNE, random forest, k-means) specifies an explicit numerical seed (e.g., <code>set.seed(42)</code>) for exact reproducibility.</li>
-<li><strong>Data Leakage Prevention:</strong> When training predictive classifiers, perform all normalization, feature selection, and scaling strictly inside cross-validation folds.</li>
-<li><strong>Transparent Visualizations:</strong> Accompany bar charts with overlaid raw data points, or use boxplots/violin plots that accurately communicate variance and distribution shape.</li>
-</ul>
-</div>
-</div>
-<div class="archetype-deepdive-container">
-<div class="archetype-deepdive-header">
-<div class="archetype-deepdive-icon" style="background:#0284c7;">📊</div>
-<div>
-<h3 class="archetype-deepdive-title">Statistical Rigor &amp; Peer-Review Traps in Computational Biology</h3>
-<p class="archetype-deepdive-subtitle">Methodological principles to prevent manuscript rejection and irreproducible findings</p>
-</div>
-</div>
-<div class="archetype-grid-2">
-<div class="archetype-card-white">
-<h4><span style="width:8px;height:8px;border-radius:50%;background:#f43f5e;display:inline-block;"></span> 1. The Pseudoreplication Trap in Omics Differential Expression</h4>
-<p>Treating individual cells or technical sequencing lanes as independent biological observations dramatically inflates statistical degrees of freedom, yielding artificially minuscule p-values (e.g. p = 1e-250) that do not replicate across biological donors.</p>
-<div class="archetype-tip-box">Best Practice: Model at the level of the true experimental unit (the biological organism or donor) using pseudobulk aggregation or linear mixed models.</div>
-</div>
-<div class="archetype-card-white">
-<h4><span style="width:8px;height:8px;border-radius:50%;background:#f59e0b;display:inline-block;"></span> 2. Unadjusted P-Values &amp; Multi-Testing Inflation</h4>
-<p>When testing 20,000 genes simultaneously at alpha = 0.05, pure random noise generates 1,000 false-positive hits by chance alone. Failing to enforce rigorous multiple testing correction (FDR / q-value) remains a primary reason reviewers reject bioinformatic submissions.</p>
-<div class="archetype-tip-box">Best Practice: Always report adjusted p-values (Benjamini-Hochberg or q-values) and filter by biological effect size (log2 fold change &gt; 1.0) simultaneously.</div>
-</div>
-</div>
-<div class="archetype-checklist-box">
-<div class="archetype-checklist-title" style="color:#bae6fd;">Computational Biology Integrity Checklist</div>
-<ul>
-<li><strong>Fixed Random Seeds:</strong> Ensure every stochastic algorithm (UMAP, t-SNE, random forest, k-means) specifies an explicit numerical seed (e.g., <code>set.seed(42)</code>) for exact reproducibility.</li>
-<li><strong>Data Leakage Prevention:</strong> When training predictive classifiers, perform all normalization, feature selection, and scaling strictly inside cross-validation folds.</li>
-<li><strong>Transparent Visualizations:</strong> Accompany bar charts with overlaid raw data points, or use boxplots/violin plots that accurately communicate variance and distribution shape.</li>
-</ul>
 </div>
 </div>
 <section aria-label="References and further reading" class="mt-10 p-6 bg-slate-50 border border-slate-200 rounded-xl">
@@ -313,6 +269,7 @@ isoquant.py --reference hg38.fasta \
 <li><a class="text-blue-700 hover:underline" href="https://nanoporetech.com/documentation" rel="noopener" target="_blank">Oxford Nanopore documentation</a></li>
 </ul>
 </section>
+
 </article>
 <section class="mt-12 mb-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-100">
 <div class="flex items-start gap-4">
@@ -455,6 +412,8 @@ isoquant.py --reference hg38.fasta \
 })();
 </script>
 <script src="../code-tabs.js"></script>
+<script src="../copy-code.js"></script>
+<script src="../subscribe-fab.js"></script>
 <script src="../copy-code.js"></script>
 <script src="../subscribe-fab.js"></script>
 <!-- Cookie Consent Banner -->

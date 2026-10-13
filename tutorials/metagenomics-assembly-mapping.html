@@ -30,7 +30,7 @@
 <!-- Prism.js for syntax highlighting -->
 <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet"/>
 <!-- Custom CSS -->
-<link href="../style.css?v=20261013-archetype-v1" rel="stylesheet"/>
+<link href="../style.css?v=20260818-header-brand-32" rel="stylesheet"/>
 <script src="../analytics.js"></script>
 <script>
 window.dataLayer = window.dataLayer || [];
@@ -158,32 +158,13 @@ Legal
 <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
 </div>
 </div>
-
-<div class="archetype-banner archetype-banner-metagenomics">
-<div class="archetype-header-row">
-<div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;">
-<span class="archetype-badge archetype-badge-metagenomics">Microbial Genomics Framework</span>
-<span style="font-size:0.75rem;color:#94a3b8;font-family:monospace;">Taxonomic &amp; Functional Profiling</span>
-</div>
-<div style="font-size:0.75rem;color:#6ee7b7;font-weight:600;display:flex;align-items:center;gap:0.35rem;">
-<span style="width:8px;height:8px;border-radius:50%;background:#34d399;display:inline-block;"></span>
-      High-Resolution Microbiome Analytics
-    </div>
-</div>
-<div class="archetype-grid-3">
-<div class="archetype-subcard">
-<div class="archetype-subcard-title archetype-subcard-title-metagenomics">Resolution Horizon</div>
-<p class="archetype-subcard-body">Balancing 16S amplicon sub-genus surveys against shotgun metagenomic strain-level and metatranscriptomic metabolic activity profiling.</p>
-</div>
-<div class="archetype-subcard">
-<div class="archetype-subcard-title archetype-subcard-title-metagenomics">Reference Curation</div>
-<p class="archetype-subcard-body">Leveraging updated GTDB, SILVA, or RefSeq databases while controlling for k-mer collision rates in complex environmental communities.</p>
-</div>
-<div class="archetype-subcard">
-<div class="archetype-subcard-title archetype-subcard-title-metagenomics">Ecological Metrics</div>
-<p class="archetype-subcard-body">Rigorous estimation of Alpha diversity (Shannon, Simpson) and compositional Beta diversity distances (Bray-Curtis, Aitchison).</p>
-</div>
-</div>
+<div class="p-6 bg-blue-50 border border-blue-100 rounded-xl mb-8">
+<h4 class="text-lg font-bold text-blue-900 mb-2">Learning Objectives &amp; Prerequisites</h4>
+<ul class="list-disc list-inside text-blue-800 space-y-1 mb-4">
+<li><strong>Prerequisites:</strong> Complete Quality Control Fundamentals, command-line basics, and understand paired-end reads and assemblies.</li>
+<li><strong>Objective:</strong> Plan a metagenomic assembly workflow, map reads back to contigs, and interpret coverage and assembly-quality evidence.</li>
+<li><strong>Expected Output:</strong> An assembly-and-mapping report that records input reads, assembler settings, mapping rate, coverage, and quality limitations.</li>
+</ul>
 </div>
 <h2>Metagenomics: Assembly and Mapping</h2>
 <h2>Introduction to Metagenomics</h2>
@@ -265,78 +246,21 @@ samtools depth -a reads_to_contigs.bam &gt; contig_depth.tsv
 <li><strong>Insertions/Deletions:</strong> Look for purple <code>I</code> symbols (insertions) or black horizontal lines within a read (deletions).</li>
 </ul>
 <p>By mastering SPAdes, BWA, and IGV, you establish the foundation for any solid genomics or metagenomics pipeline.</p>
-<div class="mt-12 p-8 bg-gradient-to-b from-slate-50 to-emerald-50/30 border border-slate-200 rounded-2xl shadow-sm">
-<div class="flex items-center gap-3 mb-6">
-<div class="w-10 h-10 rounded-xl bg-emerald-700 text-white flex items-center justify-center font-bold text-lg shadow-md shadow-emerald-700/20">
-      🦠
-    </div>
-<div>
-<h3 class="text-xl font-bold text-gray-900">Contamination Defense &amp; False-Positive Taxa in Microbial Profiling</h3>
-<p class="text-xs text-gray-500">Methodological guidelines for high-integrity microbiome research</p>
+<div class="mt-10 p-8 bg-gray-50 border border-gray-200 rounded-xl">
+<h3 class="text-xl font-bold text-gray-900 mb-4">Knowledge Check &amp; Assessment</h3>
+<div class="space-y-4">
+<div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
+<h4 class="font-bold text-gray-800 mb-2">1. Concept Verification</h4>
+<p class="text-gray-600 text-sm">Why is read mapping back to assembled contigs important before interpreting a metagenomic assembly?</p>
 </div>
+<div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
+<h4 class="font-bold text-gray-800 mb-2">2. Practical Execution</h4>
+<p class="text-gray-600 text-sm">Run a small test assembly or inspect supplied contigs, then map reads and summarize mapping rate and per-contig coverage. </p>
 </div>
-<div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-<div class="bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
-<h4 class="font-bold text-emerald-950 text-base mb-2 flex items-center gap-2">
-<span class="w-2 h-2 rounded-full bg-rose-500"></span>
-        1. The Reagent "Kitome" &amp; Low-Biomass Fallacy
-      </h4>
-<p class="text-gray-600 text-sm leading-relaxed mb-3">
-        DNA extraction kits and molecular reagents naturally harbor trace microbial DNA fragments (the "kitome", commonly <em>Ralstonia</em>, <em>Pseudomonas</em>, <em>Sphingomonas</em>). In low-biomass clinical specimens (blood, cerebrospinal fluid, tumor biopsies), these contaminants can dominate sequencing outputs and be falsely reported as novel disease biomarkers.
-      </p>
-<div class="text-xs font-mono bg-slate-50 p-2.5 rounded border border-slate-200 text-slate-700">
-        Best Practice: Always sequence blank extraction controls alongside samples and use tools like <code>decontam</code> (prevalence or frequency models) to subtract reagent contaminants statistically.
-      </div>
+<div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
+<h4 class="font-bold text-gray-800 mb-2">3. Troubleshooting</h4>
+<p class="text-gray-600 text-sm">If assembly quality is poor, how will you investigate read quality, contamination, sequencing depth, k-mer settings, and uneven community abundance?</p>
 </div>
-<div class="bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
-<h4 class="font-bold text-emerald-950 text-base mb-2 flex items-center gap-2">
-<span class="w-2 h-2 rounded-full bg-amber-500"></span>
-        2. K-mer Collisions &amp; Bracken Bayesian Re-estimation
-      </h4>
-<p class="text-gray-600 text-sm leading-relaxed mb-3">
-        Classifiers like Kraken2 assign reads to the Lowest Common Ancestor (LCA). Due to highly conserved gene sequences between closely related species, raw read counts at the species level are often severely underestimated while genus-level counts become inflated.
-      </p>
-<div class="text-xs font-mono bg-slate-50 p-2.5 rounded border border-slate-200 text-slate-700">
-        Best Practice: Never rely solely on raw Kraken2 reports for species-level abundance; always apply <code>Bracken</code> Bayesian redistribution to obtain calibrated relative abundance estimates.
-      </div>
-</div>
-</div>
-<div class="bg-emerald-950 text-white p-5 rounded-xl shadow-inner">
-<h4 class="font-bold text-emerald-300 text-sm uppercase tracking-wider mb-2">Microbiome Analytical Quality Checklist</h4>
-<ul class="text-sm space-y-2 text-emerald-100 list-disc list-inside">
-<li><strong>Host DNA Depletion:</strong> In human-derived metagenomic datasets, map reads to the human reference (T2T-CHM13 or GRCh38) with <code>minimap2</code>/<code>bowtie2</code> and strictly remove host reads prior to assembly.</li>
-<li><strong>Compositional Data Awareness:</strong> Microbiome relative abundances sum to 1 (simplex geometry); apply centered log-ratio (CLR) transformations before running linear regression or correlation tests.</li>
-<li><strong>Assembly Evaluation:</strong> Profile metagenomic MAGs (Metagenome-Assembled Genomes) with <code>CheckM</code> or <code>CheckM2</code> to ensure &gt; 90% completeness and &lt; 5% contamination before declaring novel taxa.</li>
-</ul>
-</div>
-</div>
-<div class="archetype-deepdive-container">
-<div class="archetype-deepdive-header">
-<div class="archetype-deepdive-icon" style="background:#047857;">🦠</div>
-<div>
-<h3 class="archetype-deepdive-title">Contamination Defense &amp; False-Positive Taxa in Microbial Profiling</h3>
-<p class="archetype-deepdive-subtitle">Methodological guidelines for high-integrity microbiome research</p>
-</div>
-</div>
-<div class="archetype-grid-2">
-<div class="archetype-card-white">
-<h4><span style="width:8px;height:8px;border-radius:50%;background:#f43f5e;display:inline-block;"></span> 1. The Reagent "Kitome" &amp; Low-Biomass Fallacy</h4>
-<p>DNA extraction kits and molecular reagents naturally harbor trace microbial DNA fragments (the "kitome", commonly <em>Ralstonia</em>, <em>Pseudomonas</em>, <em>Sphingomonas</em>). In low-biomass clinical specimens (blood, cerebrospinal fluid, tumor biopsies), these contaminants can dominate sequencing outputs and be falsely reported as novel disease biomarkers.</p>
-<div class="archetype-tip-box">Best Practice: Always sequence blank extraction controls alongside samples and use tools like <code>decontam</code> to subtract reagent contaminants statistically.</div>
-</div>
-<div class="archetype-card-white">
-<h4><span style="width:8px;height:8px;border-radius:50%;background:#f59e0b;display:inline-block;"></span> 2. K-mer Collisions &amp; Bracken Bayesian Re-estimation</h4>
-<p>Classifiers like Kraken2 assign reads to the Lowest Common Ancestor (LCA). Due to highly conserved gene sequences between closely related species, raw read counts at the species level are often severely underestimated while genus-level counts become inflated.</p>
-<div class="archetype-tip-box">Best Practice: Never rely solely on raw Kraken2 reports for species-level abundance; always apply <code>Bracken</code> Bayesian redistribution to obtain calibrated relative abundance estimates.</div>
-</div>
-</div>
-<div class="archetype-checklist-box">
-<div class="archetype-checklist-title" style="color:#a7f3d0;">Microbiome Analytical Quality Checklist</div>
-<ul>
-<li><strong>Host DNA Depletion:</strong> In human-derived metagenomic datasets, map reads to the human reference (T2T-CHM13 or GRCh38) with <code>minimap2</code>/<code>bowtie2</code> and strictly remove host reads prior to assembly.</li>
-<li><strong>Compositional Data Awareness:</strong> Microbiome relative abundances sum to 1 (simplex geometry); apply centered log-ratio (CLR) transformations before running linear regression or correlation tests.</li>
-<li><strong>Assembly Evaluation:</strong> Profile metagenomic MAGs (Metagenome-Assembled Genomes) with <code>CheckM</code> or <code>CheckM2</code> to ensure &gt; 90% completeness and &lt; 5% contamination before declaring novel taxa.</li>
-</ul>
 </div>
 </div>
 <section aria-label="References and further reading" class="mt-10 p-6 bg-slate-50 border border-slate-200 rounded-xl">
@@ -347,6 +271,7 @@ samtools depth -a reads_to_contigs.bam &gt; contig_depth.tsv
 <li><a class="text-blue-700 hover:underline" href="https://www.ebi.ac.uk/metagenomics/" rel="noopener" target="_blank">EMBL-EBI metagenomics resources</a></li>
 </ul>
 </section>
+
 </article>
 <section class="mt-12 mb-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-100">
 <div class="flex items-start gap-4">
@@ -487,6 +412,8 @@ samtools depth -a reads_to_contigs.bam &gt; contig_depth.tsv
 })();
 </script>
 <script src="../code-tabs.js"></script>
+<script src="../copy-code.js"></script>
+<script src="../subscribe-fab.js"></script>
 <script src="../copy-code.js"></script>
 <script src="../subscribe-fab.js"></script>
 <!-- Cookie Consent Banner -->

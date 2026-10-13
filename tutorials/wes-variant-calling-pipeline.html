@@ -30,7 +30,7 @@
 <!-- Prism.js for syntax highlighting -->
 <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet"/>
 <!-- Custom CSS -->
-<link href="../style.css?v=20261013-archetype-v1" rel="stylesheet"/>
+<link href="../style.css?v=20260818-header-brand-32" rel="stylesheet"/>
 <script src="../analytics.js"></script>
 <script>
 window.dataLayer = window.dataLayer || [];
@@ -156,32 +156,13 @@ Legal
 <span><strong>Example environment:</strong> Ubuntu 24.04, Bash 5.1 (BWA-MEM 0.7.17, GATK 4.4.0)</span>
 </div>
 </div>
-
-<div class="archetype-banner archetype-banner-foundations">
-<div class="archetype-header-row">
-<div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;">
-<span class="archetype-badge archetype-badge-foundations">Methodological Rigor</span>
-<span style="font-size:0.75rem;color:#94a3b8;font-family:monospace;">Foundations &amp; Statistical Framework</span>
-</div>
-<div style="font-size:0.75rem;color:#93c5fd;font-weight:600;display:flex;align-items:center;gap:0.35rem;">
-<span style="width:8px;height:8px;border-radius:50%;background:#34d399;display:inline-block;"></span>
-      Peer-Reviewed Best Practices
-    </div>
-</div>
-<div class="archetype-grid-3">
-<div class="archetype-subcard">
-<div class="archetype-subcard-title archetype-subcard-title-foundations">Study Architecture</div>
-<p class="archetype-subcard-body">Defining true biological replicates vs technical subsamples and balancing experimental units across sequencing batches.</p>
-</div>
-<div class="archetype-subcard">
-<div class="archetype-subcard-title archetype-subcard-title-foundations">Statistical Modeling</div>
-<p class="archetype-subcard-body">Controlling false discovery rates (Benjamini-Hochberg FDR) across tens of thousands of simultaneous genomic hypothesis tests.</p>
-</div>
-<div class="archetype-subcard">
-<div class="archetype-subcard-title archetype-subcard-title-foundations">Reproducibility Core</div>
-<p class="archetype-subcard-body">Fixing random generator seeds, archiving container environments, and maintaining transparent code-to-figure provenance.</p>
-</div>
-</div>
+<div class="p-6 bg-blue-50 border border-blue-100 rounded-xl mb-8">
+<h4 class="text-lg font-bold text-blue-900 mb-2">Learning Objectives &amp; Prerequisites</h4>
+<ul class="list-disc list-inside text-blue-800 space-y-1 mb-4">
+<li><strong>Prerequisites:</strong> Basic Linux command line, understanding of FASTQ/BAM formats, and an installed HPC or local conda environment with GATK and BWA.</li>
+<li><strong>Objective:</strong> Run a complete, GATK Best Practices germline variant calling pipeline from raw FASTQ to annotated VCF using the standard NA12878 dataset.</li>
+<li><strong>Expected Output:</strong> A multi-stage pipeline demonstrating strict quality control (MultiQC), BAM processing, precise GATK HaplotypeCaller execution, a quantitative filtering cascade, and a VAF distribution diagnostic plot.</li>
+</ul>
 </div>
 <h2>The Germline WES Pipeline (GATK Best Practices)</h2>
 <p>Whole Exome Sequencing (WES) focuses the sequencing power exclusively on the protein-coding regions of the genome (roughly 1-2%). This allows for incredibly deep coverage (often &gt;100x) at a fraction of the cost of Whole Genome Sequencing (WGS), making it ideal for clinical diagnostics and rare disease gene discovery.</p>
@@ -340,80 +321,6 @@ bcftools query -f '%CHROM\t%POS\t[%AF]\n' NA12878_filtered.vcf.gz &gt; vafs.tsv
 </div>
 </details>
 </div>
-<div class="mt-12 p-8 bg-gradient-to-b from-slate-50 to-sky-50/30 border border-slate-200 rounded-2xl shadow-sm">
-<div class="flex items-center gap-3 mb-6">
-<div class="w-10 h-10 rounded-xl bg-sky-700 text-white flex items-center justify-center font-bold text-lg shadow-md shadow-sky-700/20">
-      📊
-    </div>
-<div>
-<h3 class="text-xl font-bold text-gray-900">Statistical Rigor &amp; Peer-Review Traps in Computational Biology</h3>
-<p class="text-xs text-gray-500">Methodological principles to prevent manuscript rejection and irreproducible findings</p>
-</div>
-</div>
-<div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-<div class="bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
-<h4 class="font-bold text-slate-900 text-base mb-2 flex items-center gap-2">
-<span class="w-2 h-2 rounded-full bg-rose-500"></span>
-        1. The Pseudoreplication Trap in Omics Differential Expression
-      </h4>
-<p class="text-gray-600 text-sm leading-relaxed mb-3">
-        Treating individual cells or technical sequencing lanes as independent biological observations dramatically inflates statistical degrees of freedom, yielding artificially minuscule p-values (e.g. p = 1e-250) that do not replicate across biological donors.
-      </p>
-<div class="text-xs font-mono bg-slate-50 p-2.5 rounded border border-slate-200 text-slate-700">
-        Best Practice: Model at the level of the true experimental unit (the biological organism or donor) using pseudobulk aggregation or linear mixed models.
-      </div>
-</div>
-<div class="bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
-<h4 class="font-bold text-slate-900 text-base mb-2 flex items-center gap-2">
-<span class="w-2 h-2 rounded-full bg-amber-500"></span>
-        2. Unadjusted P-Values &amp; Multi-Testing Inflation
-      </h4>
-<p class="text-gray-600 text-sm leading-relaxed mb-3">
-        When testing 20,000 genes simultaneously at alpha = 0.05, pure random noise generates 1,000 false-positive hits by chance alone. Failing to enforce rigorous multiple testing correction (FDR / q-value) remains a primary reason reviewers reject bioinformatic submissions.
-      </p>
-<div class="text-xs font-mono bg-slate-50 p-2.5 rounded border border-slate-200 text-slate-700">
-        Best Practice: Always report adjusted p-values (Benjamini-Hochberg or q-values) and filter by biological effect size (log2 fold change &gt; 1.0) simultaneously.
-      </div>
-</div>
-</div>
-<div class="bg-slate-900 text-white p-5 rounded-xl shadow-inner">
-<h4 class="font-bold text-sky-300 text-sm uppercase tracking-wider mb-2">Computational Biology Integrity Checklist</h4>
-<ul class="text-sm space-y-2 text-slate-200 list-disc list-inside">
-<li><strong>Fixed Random Seeds:</strong> Ensure every stochastic algorithm (UMAP, t-SNE, random forest, k-means) specifies an explicit numerical seed (e.g., <code>set.seed(42)</code>) for exact reproducibility.</li>
-<li><strong>Data Leakage Prevention:</strong> When training predictive classifiers, perform all normalization, feature selection, and scaling strictly inside cross-validation folds.</li>
-<li><strong>Transparent Visualizations:</strong> Accompany bar charts with overlaid raw data points, or use boxplots/violin plots that accurately communicate variance and distribution shape.</li>
-</ul>
-</div>
-</div>
-<div class="archetype-deepdive-container">
-<div class="archetype-deepdive-header">
-<div class="archetype-deepdive-icon" style="background:#0284c7;">📊</div>
-<div>
-<h3 class="archetype-deepdive-title">Statistical Rigor &amp; Peer-Review Traps in Computational Biology</h3>
-<p class="archetype-deepdive-subtitle">Methodological principles to prevent manuscript rejection and irreproducible findings</p>
-</div>
-</div>
-<div class="archetype-grid-2">
-<div class="archetype-card-white">
-<h4><span style="width:8px;height:8px;border-radius:50%;background:#f43f5e;display:inline-block;"></span> 1. The Pseudoreplication Trap in Omics Differential Expression</h4>
-<p>Treating individual cells or technical sequencing lanes as independent biological observations dramatically inflates statistical degrees of freedom, yielding artificially minuscule p-values (e.g. p = 1e-250) that do not replicate across biological donors.</p>
-<div class="archetype-tip-box">Best Practice: Model at the level of the true experimental unit (the biological organism or donor) using pseudobulk aggregation or linear mixed models.</div>
-</div>
-<div class="archetype-card-white">
-<h4><span style="width:8px;height:8px;border-radius:50%;background:#f59e0b;display:inline-block;"></span> 2. Unadjusted P-Values &amp; Multi-Testing Inflation</h4>
-<p>When testing 20,000 genes simultaneously at alpha = 0.05, pure random noise generates 1,000 false-positive hits by chance alone. Failing to enforce rigorous multiple testing correction (FDR / q-value) remains a primary reason reviewers reject bioinformatic submissions.</p>
-<div class="archetype-tip-box">Best Practice: Always report adjusted p-values (Benjamini-Hochberg or q-values) and filter by biological effect size (log2 fold change &gt; 1.0) simultaneously.</div>
-</div>
-</div>
-<div class="archetype-checklist-box">
-<div class="archetype-checklist-title" style="color:#bae6fd;">Computational Biology Integrity Checklist</div>
-<ul>
-<li><strong>Fixed Random Seeds:</strong> Ensure every stochastic algorithm (UMAP, t-SNE, random forest, k-means) specifies an explicit numerical seed (e.g., <code>set.seed(42)</code>) for exact reproducibility.</li>
-<li><strong>Data Leakage Prevention:</strong> When training predictive classifiers, perform all normalization, feature selection, and scaling strictly inside cross-validation folds.</li>
-<li><strong>Transparent Visualizations:</strong> Accompany bar charts with overlaid raw data points, or use boxplots/violin plots that accurately communicate variance and distribution shape.</li>
-</ul>
-</div>
-</div>
 <section aria-label="References and further reading" class="mt-10 p-6 bg-slate-50 border border-slate-200 rounded-xl">
 <h2 class="text-xl font-bold text-gray-900 mb-3">Primary References</h2>
 <ul class="list-disc list-inside space-y-2 text-sm text-gray-700">
@@ -422,6 +329,7 @@ bcftools query -f '%CHROM\t%POS\t[%AF]\n' NA12878_filtered.vcf.gz &gt; vafs.tsv
 <li>Zook, J. M., et al. (2014). Integrating human sequence data sets provides a resource of benchmark SNP and indel genotype calls. <em>Nature biotechnology</em>32(3), 246-251. <a class="text-blue-700 hover:underline" href="https://doi.org/10.1038/nbt.2835" rel="noopener" target="_blank">DOI: 10.1038/nbt.2835</a> (NA12878/GIAB)</li>
 </ul>
 </section>
+
 </article>
 <section class="mt-12 mb-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-100">
 <div class="flex items-start gap-4">
@@ -562,6 +470,8 @@ bcftools query -f '%CHROM\t%POS\t[%AF]\n' NA12878_filtered.vcf.gz &gt; vafs.tsv
 })();
 </script>
 <script src="../code-tabs.js"></script>
+<script src="../copy-code.js"></script>
+<script src="../subscribe-fab.js"></script>
 <script src="../copy-code.js"></script>
 <script src="../subscribe-fab.js"></script>
 <!-- Cookie Consent Banner -->

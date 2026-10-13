@@ -30,7 +30,7 @@
 <!-- Prism.js for syntax highlighting -->
 <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet"/>
 <!-- Custom CSS -->
-<link href="../style.css?v=20261013-archetype-v1" rel="stylesheet"/>
+<link href="../style.css?v=20260818-header-brand-32" rel="stylesheet"/>
 <script src="../analytics.js"></script>
 <script>
 window.dataLayer = window.dataLayer || [];
@@ -158,32 +158,13 @@ Legal
 <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
 </div>
 </div>
-
-<div class="archetype-banner archetype-banner-hpc">
-<div class="archetype-header-row">
-<div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;">
-<span class="archetype-badge archetype-badge-hpc">HPC Systems Architecture</span>
-<span style="font-size:0.75rem;color:#94a3b8;font-family:monospace;">Slurm &amp; Compute Orchestration</span>
-</div>
-<div style="font-size:0.75rem;color:#fcd34d;font-weight:600;display:flex;align-items:center;gap:0.35rem;">
-<span style="width:8px;height:8px;border-radius:50%;background:#34d399;display:inline-block;"></span>
-      High-Throughput Production Profile
-    </div>
-</div>
-<div class="archetype-grid-3">
-<div class="archetype-subcard">
-<div class="archetype-subcard-title archetype-subcard-title-hpc">Partition Topology</div>
-<p class="archetype-subcard-body">Selecting target queues (standard, high-memory, GPU accelerated) based on algorithmic concurrency and memory limits.</p>
-</div>
-<div class="archetype-subcard">
-<div class="archetype-subcard-title archetype-subcard-title-hpc">Resource Allocation</div>
-<p class="archetype-subcard-body">Balancing CPU-to-RAM ratios, avoiding thread over-subscription, and leveraging node-local high-speed SSD scratch partitions.</p>
-</div>
-<div class="archetype-subcard">
-<div class="archetype-subcard-title archetype-subcard-title-hpc">Execution Guardrails</div>
-<p class="archetype-subcard-body">Automated job array scheduling, dynamic checkpointing, and strict I/O bandwidth preservation across shared Lustre/NFS filesystems.</p>
-</div>
-</div>
+<div class="p-6 bg-blue-50 border border-blue-100 rounded-xl mb-8">
+<h4 class="text-lg font-bold text-blue-900 mb-2">Learning Objectives &amp; Prerequisites</h4>
+<ul class="list-disc list-inside text-blue-800 space-y-1 mb-4">
+<li><strong>Prerequisites:</strong> Complete Advanced Shell Scripting and Conda/Mamba Environments; install one workflow manager in an isolated environment.</li>
+<li><strong>Objective:</strong> Translate manual pipeline steps into a dependency-aware Snakemake or Nextflow workflow with reproducible inputs and outputs.</li>
+<li><strong>Expected Output:</strong> A minimal workflow that runs on test data, records software requirements, and produces a declared result file.</li>
+</ul>
 </div>
 <h2>Reproducible Bioinformatics Workflows</h2>
 <h2>The Problem with Bash Scripts</h2>
@@ -257,106 +238,53 @@ nextflow run nf-core/rnaseq -profile docker --input samplesheet.csv --outdir res
 <li>Use <strong>Snakemake</strong> if you want to quickly wrap your existing Python/Bash scripts into a solid pipeline.</li>
 <li>Use <strong>Nextflow</strong> if you're building enterprise-level pipelines, or if you want to use the incredible pre-built <code>nf-core</code> pipelines.</li>
 </ul>
-<div class="mt-12 p-8 bg-gradient-to-b from-slate-50 to-amber-50/30 border border-slate-200 rounded-2xl shadow-sm">
-<div class="flex items-center gap-3 mb-6">
-<div class="w-10 h-10 rounded-xl bg-amber-600 text-white flex items-center justify-center font-bold text-lg shadow-md shadow-amber-600/20">
-      ⚡
-    </div>
-<div>
-<h3 class="text-xl font-bold text-gray-900">Cluster Triage &amp; Production Slurm Troubleshooting Matrix</h3>
-<p class="text-xs text-gray-500">Real-world recovery strategies for high-performance computing failures</p>
+<div class="mt-10 p-8 bg-gray-50 border border-gray-200 rounded-xl">
+<section class="prose-expansion bg-white border-t border-gray-100 mt-10 pt-10 pb-4">
+<div class="max-w-3xl mx-auto px-2">
+<h2 class="text-2xl font-bold text-slate-900 mb-4">Why Shell Scripts Are Not Enough</h2>
+<p class="text-slate-700 text-base leading-relaxed mb-4">
+ Almost every bioinformatics project begins with a shell script. You write a few lines to trim reads, align to a reference, and count features. The script works. You run it for your 10 samples and move on to analysis. Six months later, a collaborator sends you 40 new samples and asks you to run the same pipeline. You re-run your script, and it fails partway through because one sample has a different file naming convention, one step was already completed and the output files exist but are incomplete, and you can't easily tell which samples finished successfully.
+</p>
+<p class="text-slate-700 text-base leading-relaxed mb-4">
+ Workflow managers like Snakemake and Nextflow solve these problems by separating the description of the pipeline from the execution logic. You define rules or processes that specify inputs, outputs, and the command to run. The workflow manager handles dependency resolution, partial re-runs, job scheduling on HPC clusters, and parallel execution automatically. You never manually manage which samples need to be re-processed; the tool determines this by checking which output files exist and which are missing or out of date.
+</p>
+<h3 class="text-xl font-semibold text-slate-900 mb-3 mt-8">Snakemake: A Natural Fit for Python Users</h3>
+<p class="text-slate-700 text-base leading-relaxed mb-4">
+ Snakemake is written in and extends Python. If you already write Python analysis scripts, the syntax for defining rules feels familiar. Each rule specifies an input function, an output file pattern, and a shell command or Python function. Snakemake resolves the order in which rules must run by working backwards from the target output files: it asks what files are needed to produce the final output, then what files are needed to produce those files, and so on, building a directed acyclic graph of jobs.
+</p>
+<p class="text-slate-700 text-base leading-relaxed mb-4">
+ One of Snakemake's practical advantages is its integration with Conda. You can specify a Conda environment file for each rule, and Snakemake will create and activate that environment automatically when the rule runs. This means your STAR alignment step uses a pinned STAR version and your DESeq2 step uses a pinned Bioconductor version, with no manual environment management required. Combined with the <code>--use-singularity</code> flag, you can run each rule inside its own container for maximum isolation.
+</p>
+<h3 class="text-xl font-semibold text-slate-900 mb-3 mt-8">Nextflow: Portability Across Compute Environments</h3>
+<p class="text-slate-700 text-base leading-relaxed mb-4">
+ Nextflow uses a dataflow programming model where each process consumes from input channels and emits to output channels. This is conceptually different from Snakemake's file-based dependency graph. The practical consequence is that Nextflow pipelines are often more portable across compute environments: the same Nextflow script can run locally, on AWS Batch, on Google Cloud, on Azure, or on an HPC cluster with SLURM or PBS by changing a configuration profile. No changes to the pipeline logic are required.
+</p>
+<p class="text-slate-700 text-base leading-relaxed mb-4">
+ The nf-core community has built a library of over 100 peer-reviewed, community-maintained Nextflow pipelines covering standard bioinformatics workflows including RNA-seq, ChIP-seq, methylation, metagenomics, and single-cell RNA-seq. Rather than building a pipeline from scratch, you can start with an nf-core pipeline and modify it for your specific use case. Each nf-core pipeline includes automated testing, documentation, and a consistent parameter interface, which significantly reduces the time from raw data to analysed results.
+</p>
+<h3 class="text-xl font-semibold text-slate-900 mb-3 mt-8">Which Tool Should You Choose?</h3>
+<p class="text-slate-700 text-base leading-relaxed mb-4">
+ The choice between Snakemake and Nextflow often comes down to team familiarity and compute environment. If your team works primarily in Python and runs jobs on a single HPC cluster, Snakemake is easier to learn and deploy. If your team needs pipelines that run across multiple cloud providers or you want to use the nf-core system, Nextflow is the better investment. Both tools are actively maintained, well-documented, and widely used in the bioinformatics community.
+</p>
+<p class="text-slate-700 text-base leading-relaxed mb-4">
+ The most important thing is to use either one consistently rather than maintaining a collection of shell scripts. Even a basic Snakemake workflow with three rules is more reproducible, more auditable, and easier to extend than a script that chains commands together in a single file. Start small, add rules as you add pipeline steps, and version control your workflow alongside your analysis code.
+</p>
 </div>
+</section>
+<h3 class="text-xl font-bold text-gray-900 mb-4">Knowledge Check &amp; Assessment</h3>
+<div class="space-y-4">
+<div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
+<h4 class="font-bold text-gray-800 mb-2">1. Concept Verification</h4>
+<p class="text-gray-600 text-sm">What problem does a directed acyclic workflow graph solve that a sequence of manually run shell commands doesn't?</p>
 </div>
-<div class="overflow-x-auto mb-6">
-<table class="w-full text-left text-sm border-collapse bg-white rounded-xl overflow-hidden border border-gray-200 shadow-sm">
-<thead class="bg-gray-100 text-gray-700 font-semibold border-b border-gray-200">
-<tr>
-<th class="p-3">Slurm State / Exit Code</th>
-<th class="p-3">Underlying Cause</th>
-<th class="p-3">Recommended Production Fix</th>
-</tr>
-</thead>
-<tbody class="divide-y divide-gray-100 text-gray-600">
-<tr class="hover:bg-amber-50/50">
-<td class="p-3 font-mono text-xs font-bold text-rose-600">OUT_OF_MEMORY (137)</td>
-<td class="p-3">Memory request exceeded cgroup threshold during peak alignment or matrix loading.</td>
-<td class="p-3 text-xs font-mono">Increase <code>--mem</code> or <code>--mem-per-cpu</code> by 25-50%; profile with <code>sacct -j JOBID --format=MaxRSS</code>.</td>
-</tr>
-<tr class="hover:bg-amber-50/50">
-<td class="p-3 font-mono text-xs font-bold text-amber-600">TIMEOUT (0:15)</td>
-<td class="p-3">Job exceeded wallclock limit; disk I/O bottlenecks or slow network mounts slowed runtime.</td>
-<td class="p-3 text-xs font-mono">Stage large FASTQ/BAM inputs to local node scratch (<code>$TMPDIR</code>) before processing.</td>
-</tr>
-<tr class="hover:bg-amber-50/50">
-<td class="p-3 font-mono text-xs font-bold text-indigo-600">NODE_FAIL</td>
-<td class="p-3">Hardware fault, kernel panic, or compute node communication dropped off network.</td>
-<td class="p-3 text-xs font-mono">Add <code>--requeue</code> flag to sbatch script to automatically resume execution on a healthy node.</td>
-</tr>
-<tr class="hover:bg-amber-50/50">
-<td class="p-3 font-mono text-xs font-bold text-slate-600">BUS ERROR / IO Error</td>
-<td class="p-3">Shared Lustre/NFS locking conflict or scratch quota completely exhausted.</td>
-<td class="p-3 text-xs font-mono">Verify available project quota via <code>myquota</code> or <code>lfs quota -u $USER /shared</code>.</td>
-</tr>
-</tbody>
-</table>
+<div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
+<h4 class="font-bold text-gray-800 mb-2">2. Practical Execution</h4>
+<p class="text-gray-600 text-sm">Build and run a two-step test workflow that transforms an input file and records the result in a separate output directory. </p>
 </div>
-<div class="bg-slate-900 text-white p-5 rounded-xl shadow-inner">
-<h4 class="font-bold text-amber-300 text-sm uppercase tracking-wider mb-2">Cluster Operational Hygiene Checklist</h4>
-<ul class="text-sm space-y-2 text-slate-200 list-disc list-inside">
-<li><strong>Never Execute on Login Nodes:</strong> Restrict login node activity strictly to text editing, git commits, and sbatch dispatching; heavy computations will be killed by sysadmin watchers.</li>
-<li><strong>Array Jobs Over Loops:</strong> Replace shell <code>for</code> loops that launch hundreds of individual sbatch commands with a single <code>#SBATCH --array=1-N</code> job array.</li>
-<li><strong>Ephemeral File Cleanup:</strong> Always include <code>trap 'rm -rf $TMPDIR/scratch_*' EXIT</code> in submission scripts to prevent orphaned temporary data from filling node disks.</li>
-</ul>
+<div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
+<h4 class="font-bold text-gray-800 mb-2">3. Troubleshooting</h4>
+<p class="text-gray-600 text-sm">If a workflow reruns unexpectedly or can't find an output, how will you inspect rule inputs, wildcards, file timestamps, and the execution graph?</p>
 </div>
-</div>
-<div class="archetype-deepdive-container">
-<div class="archetype-deepdive-header">
-<div class="archetype-deepdive-icon" style="background:#d97706;">⚡</div>
-<div>
-<h3 class="archetype-deepdive-title">Cluster Triage &amp; Production Slurm Troubleshooting Matrix</h3>
-<p class="archetype-deepdive-subtitle">Real-world recovery strategies for high-performance computing failures</p>
-</div>
-</div>
-<div style="overflow-x:auto;margin-bottom:1.5rem;">
-<table style="width:100%;text-align:left;font-size:0.875rem;border-collapse:collapse;background:#ffffff;border-radius:0.75rem;overflow:hidden;border:1px solid #e2e8f0;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
-<thead style="background:#f1f5f9;color:#334155;font-weight:600;border-bottom:1px solid #e2e8f0;">
-<tr>
-<th style="padding:0.75rem 1rem;">Slurm State / Exit Code</th>
-<th style="padding:0.75rem 1rem;">Underlying Cause</th>
-<th style="padding:0.75rem 1rem;">Recommended Production Fix</th>
-</tr>
-</thead>
-<tbody style="color:#475569;">
-<tr style="border-bottom:1px solid #f1f5f9;">
-<td style="padding:0.75rem 1rem;font-family:monospace;font-size:0.75rem;font-weight:700;color:#e11d48;">OUT_OF_MEMORY (137)</td>
-<td style="padding:0.75rem 1rem;">Memory request exceeded cgroup threshold during peak alignment or matrix loading.</td>
-<td style="padding:0.75rem 1rem;font-family:monospace;font-size:0.75rem;">Increase <code>--mem</code> or <code>--mem-per-cpu</code> by 25-50%; profile with <code>sacct -j JOBID --format=MaxRSS</code>.</td>
-</tr>
-<tr style="border-bottom:1px solid #f1f5f9;">
-<td style="padding:0.75rem 1rem;font-family:monospace;font-size:0.75rem;font-weight:700;color:#d97706;">TIMEOUT (0:15)</td>
-<td style="padding:0.75rem 1rem;">Job exceeded wallclock limit; disk I/O bottlenecks or slow network mounts slowed runtime.</td>
-<td style="padding:0.75rem 1rem;font-family:monospace;font-size:0.75rem;">Stage large FASTQ/BAM inputs to local node scratch (<code>$TMPDIR</code>) before processing.</td>
-</tr>
-<tr style="border-bottom:1px solid #f1f5f9;">
-<td style="padding:0.75rem 1rem;font-family:monospace;font-size:0.75rem;font-weight:700;color:#4f46e5;">NODE_FAIL</td>
-<td style="padding:0.75rem 1rem;">Hardware fault, kernel panic, or compute node communication dropped off network.</td>
-<td style="padding:0.75rem 1rem;font-family:monospace;font-size:0.75rem;">Add <code>--requeue</code> flag to sbatch script to automatically resume execution on a healthy node.</td>
-</tr>
-<tr>
-<td style="padding:0.75rem 1rem;font-family:monospace;font-size:0.75rem;font-weight:700;color:#475569;">BUS ERROR / IO Error</td>
-<td style="padding:0.75rem 1rem;">Shared Lustre/NFS locking conflict or scratch quota completely exhausted.</td>
-<td style="padding:0.75rem 1rem;font-family:monospace;font-size:0.75rem;">Verify available project quota via <code>myquota</code> or <code>lfs quota -u $USER /shared</code>.</td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="archetype-checklist-box">
-<div class="archetype-checklist-title" style="color:#fde68a;">Cluster Operational Hygiene Checklist</div>
-<ul>
-<li><strong>Never Execute on Login Nodes:</strong> Restrict login node activity strictly to text editing, git commits, and sbatch dispatching; heavy computations will be killed by sysadmin watchers.</li>
-<li><strong>Array Jobs Over Loops:</strong> Replace shell <code>for</code> loops that launch hundreds of individual sbatch commands with a single <code>#SBATCH --array=1-N</code> job array.</li>
-<li><strong>Ephemeral File Cleanup:</strong> Always include <code>trap 'rm -rf $TMPDIR/scratch_*' EXIT</code> in submission scripts to prevent orphaned temporary data from filling node disks.</li>
-</ul>
 </div>
 </div>
 <section aria-label="References and further reading" class="mt-10 p-6 bg-slate-50 border border-slate-200 rounded-xl">
@@ -367,6 +295,7 @@ nextflow run nf-core/rnaseq -profile docker --input samplesheet.csv --outdir res
 <li><a class="text-blue-700 hover:underline" href="https://www.nextflow.io/docs/latest/" rel="noopener" target="_blank">Nextflow documentation</a></li>
 </ul>
 </section>
+
 </article>
 <section class="mt-12 mb-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-100">
 <div class="flex items-start gap-4">
@@ -507,6 +436,8 @@ nextflow run nf-core/rnaseq -profile docker --input samplesheet.csv --outdir res
 })();
 </script>
 <script src="../code-tabs.js"></script>
+<script src="../copy-code.js"></script>
+<script src="../subscribe-fab.js"></script>
 <script src="../copy-code.js"></script>
 <script src="../subscribe-fab.js"></script>
 <!-- Cookie Consent Banner -->
