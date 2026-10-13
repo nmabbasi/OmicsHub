@@ -83,7 +83,7 @@ gtag('consent', 'default', {
 Legal
 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
 </button>
-<div id="legal-menu" role="menu" class="absolute right-0 top-full mt-1 w-52 bg-white border border-gray-100 rounded-xl shadow-lg opacity-0 invisible  transition-all duration-200 z-50 overflow-hidden">
+<div id="legal-menu" role="menu" class="absolute right-0 top-full mt-1 w-52 bg-white border border-gray-100 rounded-xl shadow-lg opacity-0 invisible -translate-y-1 scale-95 pointer-events-none transition-all duration-200 ease-out origin-top-right z-50 overflow-hidden">
 <a href="pages/privacy.html" class="block px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors">Privacy Policy</a>
 <a href="pages/terms.html" class="block px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors">Terms of Service</a>
 <a href="pages/disclaimer.html" class="block px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors">Disclaimer</a>
@@ -354,13 +354,30 @@ function toggleMobileMenu() {
 (function () {
   const legalButton = document.getElementById("legal-menu-button");
   const legalMenu = document.getElementById("legal-menu");
+  let closeTimer = null;
   const setLegalState = (open) => {
     if (!legalButton || !legalMenu) return;
     legalButton.setAttribute("aria-expanded", String(open));
-    legalMenu.classList.toggle("opacity-100", open);
-    legalMenu.classList.toggle("visible", open);
-    legalMenu.classList.toggle("opacity-0", !open);
-    legalMenu.classList.toggle("invisible", !open);
+
+    if (closeTimer) {
+      clearTimeout(closeTimer);
+      closeTimer = null;
+    }
+
+    if (open) {
+      legalMenu.classList.remove("invisible", "pointer-events-none", "opacity-0", "-translate-y-1", "scale-95");
+      legalMenu.classList.add("visible", "opacity-100", "translate-y-0", "scale-100");
+      return;
+    }
+
+    legalMenu.classList.remove("opacity-100", "translate-y-0", "scale-100");
+    legalMenu.classList.add("opacity-0", "-translate-y-1", "scale-95", "pointer-events-none");
+
+    closeTimer = window.setTimeout(() => {
+      legalMenu.classList.add("invisible");
+      legalMenu.classList.remove("visible");
+      closeTimer = null;
+    }, 200);
   };
   if (legalButton && legalMenu) {
     legalButton.addEventListener("click", (event) => {

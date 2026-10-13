@@ -137,24 +137,46 @@ function setupEventListeners() {
     const legalButton = document.getElementById('legal-menu-button');
     const legalMenu = document.getElementById('legal-menu');
     if (legalButton && legalMenu) {
+        let closeTimer = null;
+
+        const setLegalState = (open) => {
+            legalButton.setAttribute('aria-expanded', String(open));
+
+            if (closeTimer) {
+                clearTimeout(closeTimer);
+                closeTimer = null;
+            }
+
+            if (open) {
+                legalMenu.classList.remove('invisible', 'pointer-events-none', 'opacity-0', '-translate-y-1', 'scale-95');
+                legalMenu.classList.add('visible', 'opacity-100', 'translate-y-0', 'scale-100');
+                return;
+            }
+
+            legalMenu.classList.remove('opacity-100', 'translate-y-0', 'scale-100');
+            legalMenu.classList.add('opacity-0', '-translate-y-1', 'scale-95', 'pointer-events-none');
+
+            closeTimer = window.setTimeout(() => {
+                legalMenu.classList.add('invisible');
+                legalMenu.classList.remove('visible');
+                closeTimer = null;
+            }, 200);
+        };
+
         legalButton.addEventListener('click', function(event) {
             event.stopPropagation();
             const expanded = legalButton.getAttribute('aria-expanded') === 'true';
-            legalButton.setAttribute('aria-expanded', String(!expanded));
-            legalMenu.classList.toggle('opacity-0', expanded);
-            legalMenu.classList.toggle('invisible', expanded);
+            setLegalState(!expanded);
         });
         legalMenu.querySelectorAll('a').forEach(link => link.setAttribute('role', 'menuitem'));
         document.addEventListener('click', function(event) {
             if (!legalButton.parentElement.contains(event.target)) {
-                legalButton.setAttribute('aria-expanded', 'false');
-                legalMenu.classList.add('opacity-0', 'invisible');
+                setLegalState(false);
             }
         });
         legalButton.addEventListener('keydown', function(event) {
             if (event.key === 'Escape') {
-                legalButton.setAttribute('aria-expanded', 'false');
-                legalMenu.classList.add('opacity-0', 'invisible');
+                setLegalState(false);
                 legalButton.focus();
             }
         });
