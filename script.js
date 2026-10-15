@@ -1087,7 +1087,7 @@ function handleSearch() {
 
     const rawQuery = searchInput.value.trim();
     const queryTerms = normalizeSearchText(rawQuery).split(' ').filter(Boolean);
-    const homeResults = filterTutorialCards('#tutorials-list .tutorial-card', queryTerms, '');
+    const homeResults = filterTutorialCards('#tutorials-list article', queryTerms, '');
     filterTutorialCards('#all-tutorials-list .tutorial-grid-card', queryTerms, 'flex');
     renderSearchSuggestions(homeResults.matches, rawQuery, queryTerms);
 
