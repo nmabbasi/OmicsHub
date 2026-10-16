@@ -130,10 +130,7 @@ function toggleMobileMenu() {
 <div class="mb-12 rounded-2xl overflow-hidden shadow-lg border border-gray-100">
 <img alt="Experimental Design and Batch Effects" class="w-full aspect-video object-cover" decoding="async" loading="eager" src="../images/experimental-design-batch-effects-workstation.webp"/>
 </div>
-<article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none"><div class="mb-10 text-xl text-gray-600 leading-relaxed">
-<p>Many bioinformatics problems are created before the first command is run. A balanced design, enough biological replicates, and complete metadata protect the analysis from confounding and make downstream models interpretable.</p>
-</div>
-<div class="flex flex-wrap items-center gap-4 text-xs font-mono text-gray-500 bg-gray-50 p-3 rounded-lg border border-gray-200 mb-6">
+<article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none"><div class="flex flex-wrap items-center gap-4 text-xs font-mono text-gray-500 bg-gray-50 p-3 rounded-lg border border-gray-200 mb-6">
 <div class="flex items-center gap-1">
 <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
 <span><strong>Tested on:</strong> Python 3.11, R 4.3.2, Ubuntu 24.04</span>
@@ -141,213 +138,170 @@ function toggleMobileMenu() {
 <div class="flex items-center gap-1">
 <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
 </div>
-</div>
-<div class="p-6 bg-blue-50 border border-blue-100 rounded-xl mb-8"><h4 class="text-lg font-bold text-blue-900 mb-2">Learning Objectives &amp; Prerequisites</h4><div class="text-blue-800 space-y-2"><p><strong>By the end of this lesson, you should be able to:</strong></p><ul>
-<li>Define experimental units, biological replicates, technical replicates, and batches.</li>
-<li>Recognize confounding and avoid designs where condition equals batch.</li>
-<li>Create a metadata table suitable for modeling.</li>
-<li>Plan randomization, blocking, and QC before analyzing outcomes.</li>
-</ul><p><strong>Prerequisites:</strong></p><ul>
-<li>Complete <a href="statistics-for-bioinformatics.html">Statistics for Bioinformatics</a></li>
-<li>Understand that batch correction can't reliably recover information absent from the design.</li>
-</ul><strong class="block mt-2 text-blue-900">Expected Output</strong><p>By the end of this lesson, you should have: <strong>A design table that defines the biological question, experimental unit, covariates, replicates, randomization or blocking plan, and possible batch effects.</strong></p></div></div>
-<h2>1. Experimental units</h2>
-<p>The experimental unit is the entity independently assigned to a condition, such as a donor, animal, or culture. Cells from one donor are not automatically independent biological replicates.</p>
-<pre><code class="language-text">donor,condition,batch,library_id
-D01,control,1,L01
-D02,control,2,L02
-D03,treated,1,L03
-D04,treated,2,L04
-</code></pre>
-<h2>2. Confounding</h2>
-<p>If every control is processed in batch 1 and every treated sample in batch 2, condition and batch are indistinguishable. No algorithm can prove which caused a difference. Balance batches when possible.</p>
-<pre><code class="language-text">Good: each batch contains control and treated samples.
-Risky: batch 1 contains only controls and batch 2 only treated samples.
-</code></pre>
-<h2>3. Metadata validation</h2>
-<p>Treat metadata as data. Check unique IDs, missing values, valid factor levels, and agreement with filenames before running a pipeline.</p>
-<pre><code class="language-python">import pandas as pd
-meta = pd.read_csv("metadata.csv")
-assert meta.sample_id.is_unique
-assert meta.condition.notna().all()
-print(pd.crosstab(meta.batch, meta.condition))
-</code></pre>
-<pre><code class="language-r">meta &lt;- read.csv("metadata.csv", stringsAsFactors = FALSE)
-stopifnot(!anyDuplicated(meta$sample_id))
-stopifnot(all(!is.na(meta$condition)))
-with(meta, table(batch, condition))
-</code></pre>
-<h2>4. Analysis consequences</h2>
-<p>Include pre-specified covariates in the design, document exclusions, and distinguish biological correction from technical removal. Over-correction can erase real biology.</p>
-<pre><code class="language-text">Design formula example: ~ batch + condition
-Only use it when the design contains enough information to estimate both terms.
-</code></pre>
-<h2>5. Experimental Design Principles</h2>
-<p>Good experimental design prevents confounding before data generation. The key principles are:</p>
-<div class="overflow-x-auto -mx-4 px-4">
-<table>
-<table>
-<thead>
-<tr>
-<th>Principle</th>
-<th>Definition</th>
-<th>Example</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><strong>Randomization</strong></td>
-<td>Assign samples to groups randomly</td>
-<td>Randomly assign mice to treatment cages</td>
-</tr>
-<tr>
-<td><strong>Replication</strong></td>
-<td>Include biological replicates (not technical)</td>
-<td>≥3 biological replicates per condition</td>
-</tr>
-<tr>
-<td><strong>Blocking</strong></td>
-<td>Group known sources of variation</td>
-<td>Process all conditions on the same sequencing lane</td>
-</tr>
-<tr>
-<td><strong>Balancing</strong></td>
-<td>Equal sample sizes across groups</td>
-<td>Same number of samples per condition per batch</td>
-</tr>
-</tbody>
-</table>
-</table></div>
-<pre><code class="language-text"># GOOD: Balanced design – each batch processes both conditions
-Batch 1: Control_1, Control_2, Treated_1, Treated_2
-Batch 2: Control_3, Control_4, Treated_3, Treated_4
-
-# BAD: Confounded design – batch = condition
-Batch 1: Control_1, Control_2, Control_3, Control_4
-Batch 2: Treated_1, Treated_2, Treated_3, Treated_4
-</code></pre>
-<p><strong>Why the bad design fails:</strong> Any difference between groups could be caused by the biological condition OR by batch-specific technical variation (different reagent lots, different operators, different sequencing lanes). These effects are mathematically inseparable.</p>
-<h2>6. Identifying Batch Effects</h2>
-<p>Before correction, you must first detect whether batch effects exist. Use dimensionality reduction (PCA) to visualize sample clustering:</p>
-<pre><code class="language-r">library(DESeq2)
-
-# Perform variance-stabilizing transformation
-vsd &lt;- vst(dds, blind = TRUE)
-
-# PCA plot colored by condition, shaped by batch
-plotPCA(vsd, intgroup = c("condition", "batch")) +
-  labs(title = "PCA: Check for Batch Effects") +
-  theme_minimal()
-</code></pre>
-<p><strong>Interpretation guide:</strong>
-- If samples cluster primarily by <strong>condition</strong> -&gt; minimal batch effect, proceed.
-- If samples cluster primarily by <strong>batch</strong> -&gt; strong batch effect, correction needed.
-- If batch and condition are <strong>confounded</strong> -&gt; correction is impossible; redesign the experiment.</p>
-<h2>7. Batch Correction Methods</h2>
-<div class="overflow-x-auto -mx-4 px-4">
-<table>
-<table>
-<thead>
-<tr>
-<th>Method</th>
-<th>Package</th>
-<th>When to Use</th>
-<th>Limitation</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><strong>Include batch as covariate</strong></td>
-<td>DESeq2, limma</td>
-<td>Batch is known, not confounded with condition</td>
-<td>Requires balanced design</td>
-</tr>
-<tr>
-<td><strong>ComBat</strong></td>
-<td>sva</td>
-<td>Remove batch effects from normalized data</td>
-<td>Can over-correct if groups are unbalanced</td>
-</tr>
-<tr>
-<td><strong>Harmony</strong></td>
-<td>harmony</td>
-<td>Single-cell integration across batches</td>
-<td>May merge genuine biological differences</td>
-</tr>
-<tr>
-<td><strong>limma::removeBatchEffect</strong></td>
-<td>limma</td>
-<td>Visualization only (corrected values for PCA/heatmaps)</td>
-<td>Do NOT use corrected values for DE testing</td>
-</tr>
-</tbody>
-</table>
-</table></div>
-<pre><code class="language-r"># Correct approach: include batch in the DESeq2 model
-design(dds) &lt;- ~ batch + condition
-
-# The condition effect is estimated AFTER accounting for batch
-dds &lt;- DESeq(dds)
-results &lt;- results(dds, contrast = c("condition", "treated", "control"))
-</code></pre>
-<p><strong>Critical warning:</strong> Never use batch-corrected expression values as input for differential expression testing. Instead, include batch as a covariate in the statistical model. Using corrected values can deflate variance estimates and inflate false positive rates.</p>
-<h2>8. Sample Size and Power Considerations</h2>
-<p>Underpowered experiments waste resources and produce unreliable results. Use power analysis before designing your experiment:</p>
-<pre><code class="language-r"># RNA-seq power analysis (rough estimate)
-library(RNASeqPower)
-rnapower(
-  depth = 20,        # millions of reads per sample
-  cv = 0.4,          # biological coefficient of variation
-  effect = 1.5,      # minimum fold change to detect
-  alpha = 0.05,      # significance level
-  power = 0.8        # desired power
-)
-# Output: n = 5 samples per group needed
-</code></pre>
-<div class="overflow-x-auto -mx-4 px-4">
-<table>
-<table>
-<thead>
-<tr>
-<th>Biological CV</th>
-<th>Typical System</th>
-<th>Recommended Replicates</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>0.1 – 0.2</td>
-<td>Cell lines</td>
-<td>3 per group</td>
-</tr>
-<tr>
-<td>0.3 – 0.4</td>
-<td>Inbred mice</td>
-<td>4–6 per group</td>
-</tr>
-<tr>
-<td>0.5 – 1.0</td>
-<td>Human clinical</td>
-<td>8–15+ per group</td>
-</tr>
-</tbody>
-</table>
-</table></div>
-<h2>Practical Exercise</h2>
-<p>Create a balanced two-condition metadata table with at least four biological replicates across two batches. Use a crosstab to prove each batch contains both conditions.</p>
-<p></p>
-<h2>Troubleshooting</h2>
-<p>If condition and batch are perfectly confounded, report the limitation and avoid claiming a batch-corrected causal result.</p>
-<h2>Next Steps</h2>
-<p>Continue with <a href="reference-genomes-annotation.html">Reference Genomes and Annotation Databases</a> and <a href="reproducible-project-structure.html">Reproducible Project Structure</a>Record the software versions, dataset or example inputs, and any decisions you made.</p>
-<section aria-label="References and further reading" class="mt-10 p-6 bg-slate-50 border border-slate-200 rounded-xl">
-<h2 class="text-xl font-bold text-gray-900 mb-3">References and further reading</h2>
-<p class="text-sm text-gray-600 mb-3">Use these official resources to check current software behaviour, terminology, and production guidance. Tool versions and defaults change, so verify commands against the documentation before applying them to a research dataset.</p>
-<ul class="list-disc list-inside space-y-2 text-sm text-gray-700">
-<li><a class="text-blue-700 hover:underline" href="https://www.ncbi.nlm.nih.gov/books/NBK21154/" rel="noopener" target="_blank">NCBI Bookshelf: Bioinformatics</a></li>
-<li><a class="text-blue-700 hover:underline" href="https://www.ebi.ac.uk/training/online/" rel="noopener" target="_blank">EMBL-EBI Training</a></li>
+</div><h2>Learning objectives and prerequisites</h2>
+<p>By the end of this lesson you will be able to:</p>
+<ul>
+<li>Define experimental units, biological replicates, technical replicates, and batches, and explain why those distinctions matter for inference.</li>
+<li>Recognize confounding between biological condition and batch, and avoid designs where condition equals batch.</li>
+<li>Create and validate a metadata table (sample sheet) suitable for modeling and batch-aware analyses.</li>
+<li>Plan randomization, blocking, and simple quality-control (QC) steps that reduce batch effects before sequencing.</li>
 </ul>
-</section>
+<p>Prerequisites: basic familiarity with experiment planning and the statistical concept of a covariate. Familiarity with R or Python is helpful because reproducible validation examples are shown. Important conceptual prerequisite: batch correction cannot reliably recover biological signal that the experimental design has made statistically indistinguishable from technical effects.</p>
+<h2>Why this matters — biological and computational context</h2>
+<p>Many downstream bioinformatics problems are created before the first sample is processed. If samples assigned to different biological conditions are also processed at different times, using different reagent lots, or by different operators—then the measured differences can reflect technical variation (batch effects) rather than biology. Statistical models treat batch as a covariate that explains some of the observed variation; however, when condition and batch are perfectly confounded (for example, all controls processed in lane 1 and all treatments in lane 2), there is no experimental data to separate biological from technical causes. No computational correction can reliably recover the separate effects in that case.</p>
+<p>Careful experimental design reduces the need for aggressive post hoc correction, simplifies modeling, and protects against false discoveries and rejected true effects. Good decisions include choosing the correct experimental unit (the object randomized to treatment), collecting biological replicates (independent units), recording complete metadata (all suspected covariates), and planning randomization or blocking so that batches are balanced across conditions.</p>
+<h2>Reproducible workflow — files, checks, and example commands</h2>
+<p>What you should have before following the commands below:</p>
+<ul>
+<li>A comma-separated metadata file (metadata.csv) with one row per biological replicate and columns including at minimum: sample_id, donor (or experimental_unit), condition, batch, library_id, and any other covariates you plan to model (e.g., sex, age, collection_date).</li>
+<li>Raw data files whose filenames include sample_id or a stable mapping file from sample_id to filename (for example, FASTQ files, or processed counts matrix for RNA-seq).</li>
+<li>R (&gt;= 4.0) or Python (&gt;= 3.8) available for the validation checks below. The examples use base R and pandas in Python; additional packages (DESeq2, sva, scikit-learn) are optional and noted when used.</li>
+</ul>
+<h3>1) Example metadata.csv format</h3>
+<pre><code>sample_id,experimental_unit,condition,batch,library_id,sex,collection_date
+S01,Donor01,control,Lane1,L01,M,2024-01-12
+S02,Donor02,control,Lane2,L02,F,2024-01-13
+S03,Donor03,treated,Lane1,L03,M,2024-01-12
+S04,Donor04,treated,Lane2,L04,F,2024-01-13
+</code></pre>
+<p>Save this as metadata.csv in the working directory for the examples that follow.</p>
+<h3>2) Basic metadata validation (Python)</h3>
+<p>These checks treat metadata as primary data: verify identifiers, missingness, consistent factor levels, and that batches contain samples from all experimental conditions when possible.</p>
+<pre><code>#!/usr/bin/env python3
+# Requires: pandas
+import pandas as pd
+meta = pd.read_csv("metadata.csv")
+
+# Basic checks
+assert meta['sample_id'].is_unique, "sample_id contains duplicates"
+assert meta['experimental_unit'].notna().all(), "missing experimental_unit"
+assert meta['condition'].notna().all(), "missing condition"
+assert meta['batch'].notna().all(), "missing batch"
+
+# Show counts per batch and condition
+print(pd.crosstab(meta['batch'], meta['condition']))
+
+# Save a cleaned copy for downstream use
+meta.to_csv("metadata.validated.csv", index=False)
+print("Validated metadata written to metadata.validated.csv")
+</code></pre>
+<p>What the commands produce:</p>
+<ul>
+<li>Console output of a cross-tabulation of batch by condition (helps spot confounding).</li>
+<li>A file metadata.validated.csv that you can point downstream tools to.</li>
+</ul>
+<h3>3) Same validation in R</h3>
+<pre><code># R script: metadata_checks.R
+meta &lt;- read.csv("metadata.csv", stringsAsFactors = FALSE)
+
+# Basic checks stop on failure
+stopifnot(!anyDuplicated(meta$sample_id))
+stopifnot(all(!is.na(meta$experimental_unit)))
+stopifnot(all(!is.na(meta$condition)))
+stopifnot(all(!is.na(meta$batch)))
+
+# Crosstab
+print(with(meta, table(batch, condition)))
+
+# Write validated file
+write.csv(meta, "metadata.validated.csv", row.names = FALSE)
+cat("Validated metadata written to metadata.validated.csv\n")
+</code></pre>
+<h3>4) Visual checks for batch effects (R, PCA example)</h3>
+<p>If you have an expression/count matrix (rows = features, columns = samples) named counts.csv, the following R example shows a minimal reproducible workflow to produce a principal component analysis (PCA) plot colored by condition and shaped by batch. This is an exploratory check only; interpretation follows below.</p>
+<pre><code># R script: pca_check.R
+# Requires: DESeq2 or base prcomp; this example uses base prcomp after a simple log transform
+counts &lt;- as.matrix(read.csv("counts.csv", row.names = 1))
+meta &lt;- read.csv("metadata.validated.csv", stringsAsFactors = FALSE)
+
+# Align columns: assume counts columns are sample_id
+stopifnot(all(colnames(counts) %in% meta$sample_id))
+meta &lt;- meta[match(colnames(counts), meta$sample_id), ]
+
+# Simple transform (log2 CPM-like, for exploratory PCA)
+libsize &lt;- colSums(counts)
+cpm &lt;- t(t(counts) / libsize * 1e6)
+logcpm &lt;- log2(cpm + 1)
+
+# PCA
+pca &lt;- prcomp(t(logcpm), center = TRUE, scale. = TRUE)
+pc_df &lt;- data.frame(PC1 = pca$x[,1], PC2 = pca$x[,2], meta)
+
+# Save a CSV of PCA coordinates and show a quick textual summary
+write.csv(pc_df, "pca_coordinates.csv", row.names = FALSE)
+print(summary(pca))
+</code></pre>
+<p>What the commands produce:</p>
+<ul>
+<li>A file pca_coordinates.csv with PC1 and PC2 coordinates for each sample and its metadata.</li>
+<li>Console output summarizing variance explained by principal components.</li>
+</ul>
+<h3>5) Planning randomization and blocking</h3>
+<p>Before sample processing, produce a randomized assignment of samples to lanes, plates, or processing batches while blocking on known covariates (for example, balance sex and condition across lanes). Example: create a balanced assignment to two sequencing lanes in Python.</p>
+<pre><code>#!/usr/bin/env python3
+import pandas as pd
+from sklearn.utils import shuffle
+
+meta = pd.read_csv("metadata.validated.csv")
+
+# Simple block: ensure equal numbers of condition per batch (2 lanes)
+# This example assumes an even number per group; adapt for odd group sizes
+lanes = ["Lane1", "Lane2"]
+out = []
+for cond, group in meta.groupby('condition'):
+    group = shuffle(group, random_state=42)
+    half = len(group) // 2
+    group.loc[:half-1, 'batch_assignment'] = lanes[0]
+    group.loc[half:, 'batch_assignment'] = lanes[1]
+    out.append(group)
+assigned = pd.concat(out)
+assigned.to_csv("metadata.randomized.csv", index=False)
+print("Randomized assignment written to metadata.randomized.csv")
+</code></pre>
+<p>Note: adapt randomization scripts to respect paired designs or blocking by donor (experimental unit). Always record the random seed and the algorithm used so assignments are reproducible.</p>
+<h2>Output inspection and interpretation</h2>
+<p>After running the validation and PCA checks, here’s how to interpret common outcomes. Be explicit about what a result suggests and what it does not prove.</p>
+<ul>
+<li>Cross-tabulation with both conditions present in each batch (e.g., each lane contains controls and treated samples): this is the design goal. It reduces confounding and allows modeling both batch and condition effects simultaneously.</li>
+<li>PCA shows samples clustering primarily by condition, with no clear separation by batch: likely minimal batch-driven variation. You can proceed with differential testing that includes batch as a covariate to be conservative.</li>
+<li>PCA shows samples clustering primarily by batch: this indicates a strong batch effect. If the design is balanced (both conditions in each batch), include batch in the model and consider batch-correction methods such as limma::removeBatchEffect or ComBat, after careful inspection.</li>
+<li>PCA shows that samples cluster by a covariate you did not expect (e.g., collection_date, operator): investigate and, if possible, include that covariate in downstream models or in blocking during future experiments.</li>
+<li>If the cross-tabulation shows perfect confounding (e.g., batch 1 = all controls, batch 2 = all treated), then no statistical or computational method can independently estimate both effects from the data. The correct fix is experimental: repeat sampling with a balanced design or add new replicates randomized across batches.</li>
+</ul>
+<p>Important caution: clustering by batch does not prove that all observed differential expression is technical. Likewise, clustering by condition does not prove there are no technical effects. These visual checks are hypothesis-generating; rigorous modeling and sensitivity analyses are required for robust conclusions.</p>
+<h2>Troubleshooting — symptoms, likely causes, and fixes</h2>
+<h3>Symptom: All controls are in batch 1 and all treatments are in batch 2</h3>
+<p>Likely cause: sample processing order mimicked treatment assignment (confounding). Fix: If possible, reprocess a subset of samples so that each batch contains multiple conditions, or collect new samples and randomize them across batches. Document the limitation and avoid batch-correction claims that separate technical from biological effects.</p>
+<h3>Symptom: PCA shows one sample far from all others</h3>
+<p>Likely causes: library failure, mislabeling, contamination, or rare biology. Fix: investigate raw diagnostics (FastQC for sequencing reads, mapping rate, insert size), check sample identifiers against lab records, and consider excluding the sample if it fails QC—document the exclusion and reason. Do not casually remove outliers without justification.</p>
+<h3>Symptom: After batch correction, many expected biology-driven differences disappear</h3>
+<p>Likely causes: over-correction from using batch-removal methods that do not respect study design (e.g., correcting when batch and condition are partially confounded) or incorrectly specifying the model formula. Fix: revisit the design matrix, ensure all biological covariates are included in the model used by the batch-correction routine (for example, include condition in ComBat's "mod" parameter), and rerun. Consider a sensitivity analysis comparing corrected and uncorrected results.</p>
+<h3>Symptom: Unexpected covariate (e.g., operator) correlates with principal components</h3>
+<p>Likely cause: unrecorded or ignored technical variation. Fix: include the covariate in downstream models when possible; for future studies, plan to block or randomize with respect to that covariate.</p>
+<h2>Limitations, version and reference-data caveats, and responsible use</h2>
+<ul>
+<li>Batch-correction methods (ComBat, limma removeBatchEffect, sva) require that batch is not perfectly confounded with the biological variable of interest. These methods adjust for observed batch structure but cannot create information that the experiment did not collect.</li>
+<li>Different sequencing centers, library kits, and aligners produce different systematic biases. When comparing datasets across centers or platforms, be cautious: batch correction may harmonize means but can distort feature-specific variance and downstream inference. Document versions of tools and reference genomes used. </li>
+<li>Software versions matter. Examples here use base R functionality and pandas; for specific packages cite the versions you use (DESeq2, limma, sva, ComBat). Reproducibility requires recording package versions and seeds for randomization. For production pipelines, include checksums for input files and containerized environments where possible.</li>
+<li>Ethical/responsible-use note: do not attempt post hoc correction to salvage a design that is fundamentally confounded for a claim with high stakes (clinical, policy). Report design limitations clearly in methods and supplementary materials.</li>
+</ul>
+<h2>Next-step checklist</h2>
+<ul>
+<li>Create or update a metadata spreadsheet with required columns: sample_id, experimental_unit, condition, batch, library_id, and additional covariates (sex, age, operator, collection_date).</li>
+<li>Run the metadata validation scripts provided above and inspect the batch vs condition cross-tabulation.</li>
+<li>Randomize or block samples across planned processing batches and save a reproducible assignment (record seed and method).</li>
+<li>Produce PCA or other low-dimensional visualizations and inspect clustering by condition and batch before applying batch correction.</li>
+<li>If correction is needed and design supports it, include batch as a covariate in the statistical model and perform a sensitivity analysis with and without batch correction.</li>
+<li>Document all decisions, exclusions, and the software environment (versions) in your project record.</li>
+</ul>
+<h2>References</h2>
+<ul>
+<li><a href="https://www.bioconductor.org/packages/release/bioc/html/DESeq2.html">DESeq2 — Bioconductor project page</a> (modeling counts with covariates)</li>
+<li><a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC1665468/">Johnson, Li &amp; Rabinovic (2007) — Adjusting batch effects in microarray expression data using empirical Bayes methods (ComBat)</a></li>
+<li><a href="https://bioconductor.org/packages/release/bioc/html/sva.html">sva package (Surrogate Variable Analysis) — Bioconductor</a></li>
+<li><a href="https://www.encodeproject.org/standards/metadata/">ENCODE metadata standards</a> — guidance for recording sample and experiment metadata</li>
+<li><a href="https://www.nature.com/articles/nmeth.3251">Leek et al. (2010) — Tackling the widespread and critical impact of batch effects in high-throughput data</a></li>
+</ul>
 </article>
 <section class="mt-12 mb-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-100">
 <div class="flex items-start gap-4">

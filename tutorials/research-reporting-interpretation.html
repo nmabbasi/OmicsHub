@@ -130,10 +130,7 @@ function toggleMobileMenu() {
 <div class="mb-12 rounded-2xl overflow-hidden shadow-lg border border-gray-100">
 <img alt="Research Reporting and Interpretation" class="w-full aspect-video object-cover" decoding="async" loading="eager" src="../images/research-reporting-interpretation-workstation.webp"/>
 </div>
-<article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none"><div class="mb-10 text-xl text-gray-600 leading-relaxed">
-<p>A successful analysis is not complete when a command finishes. It's complete when another researcher can understand what was done, reproduce the result, and distinguish evidence from speculation.</p>
-</div>
-<div class="flex flex-wrap items-center gap-4 text-xs font-mono text-gray-500 bg-gray-50 p-3 rounded-lg border border-gray-200 mb-6">
+<article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none"><div class="flex flex-wrap items-center gap-4 text-xs font-mono text-gray-500 bg-gray-50 p-3 rounded-lg border border-gray-200 mb-6">
 <div class="flex items-center gap-1">
 <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
 <span><strong>Tested on:</strong> Python 3.11, R 4.3.2, Ubuntu 24.04</span>
@@ -141,187 +138,185 @@ function toggleMobileMenu() {
 <div class="flex items-center gap-1">
 <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
 </div>
-</div>
-<div class="p-6 bg-blue-50 border border-blue-100 rounded-xl mb-8"><h4 class="text-lg font-bold text-blue-900 mb-2">Learning Objectives &amp; Prerequisites</h4><div class="text-blue-800 space-y-2"><p><strong>By the end of this lesson, you should be able to:</strong></p><ul>
-<li>Write a methods paragraph with data, software, versions, parameters, and references.</li>
-<li>Create an informative figure legend.</li>
-<li>Separate observation, interpretation, and limitation.</li>
-<li>Preserve provenance and report negative or ambiguous results honestly.</li>
-</ul><p><strong>Prerequisites:</strong></p><ul>
-<li>Complete <a href="data-visualization-fundamentals.html">Data Visualization Fundamentals</a></li>
-<li>Have one small analysis result or QC plot to describe.</li>
-</ul><strong class="block mt-2 text-blue-900">Expected Output</strong><p>By the end of this lesson, you should have: <strong>A concise analysis report that states the question, data provenance, methods and versions, results, limitations, and the distinction between observation and conclusion.</strong></p></div></div>
-<h2>1. Methods as a reproducibility record</h2>
-<p>State data source and access date, sample design, preprocessing, software versions, parameters, reference versions, statistical model, and where scripts are available. Avoid vague phrases such as "standard pipeline."</p>
-<pre><code class="language-text">Data: public dataset accession and download date
-Reference: assembly and annotation release
-Software: package versions
-Parameters: thresholds, dimensions, seeds
-Statistics: model, contrast, correction
-</code></pre>
-<h2>2. Figure legends</h2>
-<p>A legend should define the dataset, groups, visual encodings, preprocessing, statistic, sample count, and abbreviation. It shouldn't make a claim that the figure can't support.</p>
-<pre><code class="language-text">Figure 1. Mitochondrial QC by condition. Each point is a cell; boxes show median and IQR. Cells were filtered at the pre-specified threshold. n is shown in the panel.
-</code></pre>
-<h2>3. Observation versus interpretation</h2>
-<p>Observation describes what's visible or measured. Interpretation proposes why it may matter. Limitation states what alternative explanations remain.</p>
-<pre><code class="language-text">Observation: treated samples have higher median expression.
-Interpretation: treatment may alter the pathway.
-Limitation: donors and batch are not fully balanced.
-</code></pre>
-<h2>4. Shareable provenance</h2>
-<p>Publish scripts, environment files, checksums, README, and a license where permitted. Don't publish identifiable human data or credentials.</p>
-<pre><code class="language-bash"> git status
- git log --oneline -1
- sha256sum results/figures/qc.webp
-</code></pre>
-<h2>5. Reporting Standards in Bioinformatics</h2>
-<p>Different analysis types have community-agreed reporting standards. Following these ensures your work is reviewable and reproducible.</p>
-<div class="overflow-x-auto -mx-4 px-4">
-<table>
-<table>
-<thead>
-<tr>
-<th>Analysis Type</th>
-<th>Reporting Guideline</th>
-<th>Key Requirements</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>RNA-seq differential expression</td>
-<td>MINSEQE / ENCODE</td>
-<td>Raw data in GEO/SRA, normalization method, statistical test, FDR threshold</td>
-</tr>
-<tr>
-<td>Variant calling</td>
-<td>GA4GH / ACMG</td>
-<td>Reference genome, caller + version, filter criteria, pathogenicity evidence</td>
-</tr>
-<tr>
-<td>Metagenomics</td>
-<td>MIMARKS / MIxS</td>
-<td>Sample metadata, sequencing platform, database version, classification method</td>
-</tr>
-<tr>
-<td>Single-cell RNA-seq</td>
-<td>scRNA-tools reporting</td>
-<td>Cell count, QC thresholds, clustering resolution, marker genes</td>
-</tr>
-<tr>
-<td>Machine learning</td>
-<td>TRIPOD / PROBAST</td>
-<td>Training/test split, performance metrics, cross-validation strategy</td>
-</tr>
-</tbody>
-</table>
-</table></div>
-<h2>6. Writing a Methods Section</h2>
-<p>A complete Methods section should allow another researcher to reproduce your analysis from raw data to final figures. Include:</p>
-<pre><code class="language-markdown">## Methods
-
-### Data acquisition
-RNA-seq reads for 12 tumor/normal pairs were obtained from GEO (GSE123456).
-Raw FASTQ files were validated with FastQC v0.12.1 and trimmed with
-Trim Galore v0.6.10 (--quality 20 --length 36).
-
-### Alignment and quantification
-Reads were aligned to GRCh38 (GENCODE v46) using STAR v2.7.11b
-(--outSAMtype BAM SortedByCoordinate). Gene-level counts were obtained
-with featureCounts v2.0.6 (-t exon -g gene_id -s 2).
-
-### Differential expression
-DESeq2 v1.42.0 was used with default shrinkage (apeglm). Genes with
-adjusted p-value &lt; 0.05 and |log2FC| &gt; 1 were considered significant.
-
-### Software environment
-All analyses were run on Ubuntu 22.04 with R 4.4.1 and Python 3.11.
-A complete conda environment specification is available in the repository.
-</code></pre>
-<h2>7. Figure and Table Best Practices</h2>
-<p>Figures and tables are often the first (and sometimes only) elements reviewers examine. Follow these principles:</p>
+</div><h2>Learning objectives and prerequisites</h2>
+<p>By the end of this lesson you will be able to:</p>
 <ul>
-<li><strong>Self-contained:</strong> Every figure should be interpretable without reading the full text.</li>
-<li><strong>Labeled axes:</strong> Include units, sample sizes, and statistical annotations.</li>
-<li><strong>Color-blind friendly:</strong> Use colorblind-safe palettes (e.g., viridis, ColorBrewer).</li>
-<li><strong>Resolution:</strong> Minimum 300 DPI for publication; vector formats (PDF, SVG) preferred.</li>
+<li>Write a concise, reproducible methods paragraph that lists data provenance, software and version numbers, key parameters, and where scripts are stored.</li>
+<li>Compose figure legends that report dataset, visual encodings, preprocessing, sample counts, and the statistical summary shown (observation vs interpretation).</li>
+<li>Distinguish observation, interpretation, and limitation in results reporting, and explicitly report negative or ambiguous outcomes.</li>
+<li>Package provenance (scripts, environment spec, checksums) so others can validate your results.</li>
 </ul>
-<pre><code class="language-r"># Example: a publication-quality volcano plot
-library(ggplot2)
-ggplot(deg_results, aes(x = log2FoldChange, y = -log10(padj))) +
-  geom_point(aes(color = significant), size = 1, alpha = 0.6) +
-  scale_color_manual(values = c("grey70", "#E41A1C")) +
-  labs(
-    x = expression(log[2]~"Fold Change"),
-    y = expression(-log[10]~"Adjusted p-value"),
-    title = "Differential Expression: Tumor vs. Normal",
-    subtitle = paste(sum(deg_results$significant), "significant genes (FDR &lt; 0.05, |log2FC| &gt; 1)")
-  ) +
-  theme_minimal(base_size = 14) +
-  geom_hline(yintercept = -log10(0.05), linetype = "dashed", color = "blue")
+<p>Prerequisites</p>
+<ul>
+<li>Completed "Data Visualization Fundamentals" or equivalent experience creating and exporting at least one plot.</li>
+<li>A small analysis result or QC plot to describe (for example: a per-sample QC table and one summary plot).</li>
+<li>Basic command-line familiarity and a git repository for your project.</li>
+</ul>
+<h2>Why reproducible reporting and careful interpretation matter</h2>
+<p>Computational analyses generate outputs, but a result only becomes scientific knowledge when other researchers can (1) identify the exact inputs and steps used, (2) reproduce the outputs, and (3) see how the evidence supports — or fails to support — the claims. Poor reporting creates barriers to reuse, obscures sources of error, and inflates confidence in tentative findings.</p>
+<p>Clear reporting also helps reviewers and collaborators evaluate whether a finding is robust across software versions, reference data, or parameter choices. In omics, differences in reference genomes, annotation releases, normalization methods, or filtering rules can change results substantially. The goal of this lesson is to give practical, reproducible guidance for writing methods, figure legends, and interpretation text that are useful, honest, and actionable.</p>
+<h2>Reproducible sequential workflow (example)</h2>
+<p>The example below assumes you have a small RNA-seq differential expression result (counts table and a QC plot). The commands are realistic and conservative. Replace dataset IDs, file names, and parameters with values from your project. All paths are relative to a git-tracked project directory: <code>project/</code>.</p>
+<p>Files you should have before starting:</p>
+<ul>
+<li><code>data/raw/GSE123456_sample_sheet.csv</code> — sample metadata (sample ID, condition, file paths or accessions)</li>
+<li><code>data/raw/FASTQ/*_R1.fastq.gz</code> and <code>*_R2.fastq.gz</code> or note that FASTQ are in a public archive (GEO/SRA)</li>
+<li><code>results/counts/gene_counts.tsv</code> — gene-level counts (or a script that generates it)</li>
+<li><code>results/figures/qc_plot.png</code> — example QC plot to describe</li>
+<li><code>scripts/</code> — analysis scripts (R, Python, shell)</li>
+<li><code>environment.yaml</code> — conda environment spec or <code>renv.lock</code>/<code>sessionInfo.txt</code> describing R packages</li>
+</ul>
+<h3>1. Record provenance: capture the repository state and checksums</h3>
+<p>Save the repository snapshot, the exact last commit used for the figures, and checksums for key outputs. Run these commands from the project root and commit the generated files to git (non-sensitive files only).</p>
+<pre><code># show the exact commit used to generate results
+git rev-parse --short HEAD &gt; provenance/commit.txt
+
+# record the output of git status (uncommitted changes) so you can see differences
+git status --porcelain &gt; provenance/git_status.txt
+
+# record the latest commit message(s)
+git log --oneline -n 5 &gt; provenance/git_log_recent.txt
+
+# compute SHA-256 checksums for important outputs (non-identifiable)
+sha256sum results/counts/gene_counts.tsv &gt; provenance/checksums.txt
+sha256sum results/figures/qc_plot.png &gt;&gt; provenance/checksums.txt
 </code></pre>
-<h2>8. Common Reporting Errors to Avoid</h2>
-<div class="overflow-x-auto -mx-4 px-4">
-<table>
-<table>
-<thead>
-<tr>
-<th>Error</th>
-<th>Why It's Problematic</th>
-<th>Correction</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Reporting p-values without multiple testing correction</td>
-<td>Inflates false positive rate</td>
-<td>Always report adjusted p-values (FDR, Bonferroni)</td>
-</tr>
-<tr>
-<td>Showing bar plots for continuous distributions</td>
-<td>Hides data distribution and outliers</td>
-<td>Use box plots, violin plots, or dot plots</td>
-</tr>
-<tr>
-<td>Omitting sample sizes</td>
-<td>Readers cannot assess statistical power</td>
-<td>State n per group in every figure legend</td>
-</tr>
-<tr>
-<td>Cherry-picking genes for validation</td>
-<td>Confirmation bias</td>
-<td>Report all tested genes with effect sizes and confidence intervals</td>
-</tr>
-<tr>
-<td>Using "significant" without defining the threshold</td>
-<td>Ambiguous and non-reproducible</td>
-<td>State the exact threshold: "FDR &lt; 0.05 and</td>
-</tr>
-</tbody>
-</table>
-</table></div>
-<h2>9. Interpretation vs. Over-interpretation</h2>
-<p>The most common scientific writing error is stating conclusions that exceed the evidence. Follow this hierarchy:</p>
-<ol>
-<li><strong>Observation:</strong> "Gene X shows a 3.2-fold increase in expression (FDR = 0.001) in tumor samples."</li>
-<li><strong>Interpretation:</strong> "This is consistent with the known role of Gene X in cell proliferation pathways."</li>
-<li><strong>Over-interpretation (avoid):</strong> "Gene X causes tumor growth." ← Requires functional validation, not just differential expression.</li>
-</ol>
-<h2>Practical Exercise</h2>
-<p>Write a 150-word methods paragraph and figure legend for one plot. Mark each sentence as method, observation, interpretation, or limitation.</p>
-<p></p>
-<h2>Troubleshooting</h2>
-<p>If the result is ambiguous, report the ambiguity. Don't change thresholds or omit samples solely to obtain a preferred conclusion.</p>
-<h2>Next Steps</h2>
-<p>Continue with <a href="introduction-to-bioinformatics.html">Introduction to Bioinformatics</a> and <a href="experimental-design-batch-effects.html">Experimental Design and Batch Effects</a>Record the software versions, dataset or example inputs, and any decisions you made.</p>
-<section aria-label="References and further reading" class="mt-10 p-6 bg-slate-50 border border-slate-200 rounded-xl">
-<h2 class="text-xl font-bold text-gray-900 mb-3">References and further reading</h2>
-<p class="text-sm text-gray-600 mb-3">Use these official resources to check current software behaviour, terminology, and production guidance. Tool versions and defaults change, so verify commands against the documentation before applying them to a research dataset.</p>
-<ul class="list-disc list-inside space-y-2 text-sm text-gray-700">
-<li><a class="text-blue-700 hover:underline" href="https://www.ncbi.nlm.nih.gov/books/NBK21154/" rel="noopener" target="_blank">NCBI Bookshelf: Bioinformatics</a></li>
-<li><a class="text-blue-700 hover:underline" href="https://www.ebi.ac.uk/training/online/" rel="noopener" target="_blank">EMBL-EBI Training</a></li>
+<p>What these commands produce:</p>
+<ul>
+<li><code>provenance/commit.txt</code>: a commit hash you can cite in methods</li>
+<li><code>provenance/git_status.txt</code>: indicates whether working tree had uncommitted changes</li>
+<li><code>provenance/checksums.txt</code>: checksums used to verify file integrity</li>
 </ul>
-</section>
+<h3>2. Export software environment and versions</h3>
+<p>For R-based analysis, capture package versions with <code>sessionInfo()</code> or an <code>renv.lock</code>. For conda/Python, export the environment. Example for conda:</p>
+<pre><code># from your conda environment named 'omics-env'
+conda list --explicit &gt; provenance/conda_explicit.txt
+conda env export --no-builds &gt; provenance/environment.yaml
+</code></pre>
+<p>What these files produce:</p>
+<ul>
+<li><code>provenance/environment.yaml</code>: reproducible package list (no-builds makes it more portable)</li>
+<li><code>provenance/conda_explicit.txt</code>: exact package builds if you need bitwise reproduction</li>
+</ul>
+<h3>3. Reproducible data-access statement</h3>
+<p>Document where raw data were obtained, exact accession identifiers, and the download date. If data are public (recommended), include accession and a checksum for the downloaded files. Example text you can paste into a methods paragraph:</p>
+<pre><code>Data: Raw sequencing files for the 12 tumor/normal pairs were downloaded from GEO (GSE123456) on 2026-06-01. Local copies are stored in <code>data/raw/</code>; checksums recorded in <code>provenance/checksums.txt</code>.</code></pre>
+<h3>4. Example pipeline steps (alignment and counts) — reproducible commands</h3>
+<p>This example uses STAR for alignment and featureCounts for gene counting. It assumes paired FASTQ files and a local indexed GRCh38 reference in <code>reference/GRCh38/</code>.</p>
+<pre><code># index directory (performed once; record version of genome FASTA and GTF)
+# do NOT overwrite an existing index used previously unless you update the methods
+mkdir -p reference/GRCh38/index
+# Record the reference files used
+echo "GRCh38 primary assembly FASTA: reference/GRCh38/GRCh38.primary.fa" &gt; provenance/reference_files.txt
+echo "Annotation GTF: reference/GRCh38/gencode.v46.annotation.gtf" &gt;&gt; provenance/reference_files.txt
+
+# align sample with STAR (example for one sample)
+STAR \
+  --runThreadN 8 \
+  --genomeDir reference/GRCh38/index \
+  --readFilesIn data/raw/SampleA_R1.fastq.gz data/raw/SampleA_R2.fastq.gz \
+  --readFilesCommand zcat \
+  --outFileNamePrefix results/alignment/SampleA. \
+  --outSAMtype BAM SortedByCoordinate
+
+# Produce gene counts with featureCounts
+featureCounts -T 8 -a reference/GRCh38/gencode.v46.annotation.gtf \
+  -o results/counts/gene_counts.tsv \
+  results/alignment/*.bam
+</code></pre>
+<p>What these commands produce:</p>
+<ul>
+<li><code>results/alignment/SampleA.Aligned.sortedByCoord.out.bam</code> for each sample</li>
+<li><code>results/counts/gene_counts.tsv</code>: gene-by-sample count matrix</li>
+</ul>
+<h3>5. Differential expression (DE) with explicit parameters</h3>
+<p>Use an analysis script and record the script path and the R session info used to run it. Example Rscript invocation:</p>
+<pre><code># run differential expression (DE) script and capture session info
+Rscript scripts/de_analysis/run_de_pipeline.R \
+  --counts results/counts/gene_counts.tsv \
+  --meta data/raw/GSE123456_sample_sheet.csv \
+  --outdir results/de \
+  2&gt;&amp;1 | tee provenance/run_de_pipeline.log
+</code></pre>
+<p>Inside <code>scripts/de_analysis/run_de_pipeline.R</code> the script should:</p>
+<ul>
+<li>explicitly set the R package versions used (print <code>sessionInfo()</code>)</li>
+<li>document the statistical model (for example: design = ~ donor + condition)</li>
+<li>specify multiple testing correction (Benjamini-Hochberg) and thresholds used (adjusted p-value &lt; 0.05, |log2FC| &gt; 1)</li>
+</ul>
+<p>What the invocation produces:</p>
+<ul>
+<li><code>results/de/de_results.tsv</code>: table of genes with fold changes and adjusted p-values</li>
+<li><code>provenance/run_de_pipeline.log</code>: script stdout/stderr including <code>sessionInfo()</code></li>
+</ul>
+<h2>Output inspection and interpretation</h2>
+<p>After running the pipeline, inspect the outputs systematically. The goal of inspection is to separate direct observations (measured facts) from interpretation (biological meaning) and to note limitations.</p>
+<h3>What to look for in QC and counts</h3>
+<ul>
+<li>Counts distribution per sample (library size): look for outliers, very low-depth libraries, or samples with anomalous mapping rates.</li>
+<li>Gene detection rate: number of genes with non-zero counts per sample.</li>
+<li>Principal component analysis (PCA) or multidimensional scaling: do samples cluster by expected experimental variable (e.g., condition) or by batch/donor?</li>
+<li>Differential expression: number of genes passing threshold and effect sizes (log2 fold changes) — examine volcano plots and MA plots.</li>
+</ul>
+<p>Example observations you might report (phrased as observations, not conclusions):</p>
+<ul>
+<li>Observation: Median mapping rate across samples was 92% (range 81–96%).</li>
+<li>Observation: PCA shows separation on PC1 that aligns with donor identity rather than treatment.</li>
+<li>Observation: 153 genes meet the specified threshold (adjusted p-value &lt; 0.05 and |log2FC| &gt; 1).</li>
+</ul>
+<p>How to phrase interpretation and limitations:</p>
+<ul>
+<li>Interpretation: The treatment is associated with altered expression in the pathway annotated as “oxidative phosphorylation.” This is a possible biological effect consistent with the observed DE genes.</li>
+<li>Limitation: Donor is a confounding variable — PCA indicates donor explains more variance than treatment, and donors were not fully balanced across conditions. Therefore, treatment-associated signals could be influenced by donor-specific effects.</li>
+</ul>
+<p>Important: Do not state causal or definitive claims unless the design supports them. For example, do not say “treatment causes pathway activation” if the experiment is observational or if confounders were not controlled.</p>
+<h2>Figure legends: an explicit template</h2>
+<p>A figure legend should let a reader understand the figure without reading the full text. Include dataset, preprocessing, visual encoding, statistics reported, sample counts, and whether any filtering was applied. Avoid interpretive claims in the legend if the figure does not directly support them.</p>
+<p>Template legend (modify values):</p>
+<pre><code>Figure 1. QC summary of mitochondrial read fraction by condition. Each point represents one cell/sample (n = 96). Horizontal bars indicate median and interquartile range (IQR). Mitochondrial fraction was computed as mitochondrial gene counts / total counts after filtering genes with &lt;= 1 count across all samples. Samples with mitochondrial fraction &gt; 0.2 were flagged and excluded from downstream analysis as pre-specified. Statistical comparison used Wilcoxon rank-sum test between conditions; p-values are reported without multiple-test correction. See Methods for sample metadata and thresholds.</code></pre>
+<h2>Troubleshooting</h2>
+<p>Below are common symptoms, likely causes, and suggested fixes.</p>
+<h3>Symptom: One or two samples have very low library size (few mapped reads)</h3>
+<ul>
+<li>Likely causes: failed sequencing lane, incorrect sample demultiplexing, corrupted FASTQ files.</li>
+<li>Fixes: inspect raw FASTQ quality with FastQC; check read counts in alignment logs; re-download raw files from archive; if the sample is irrecoverable, record the exclusion with rationale and update sample counts in methods.</li>
+</ul>
+<h3>Symptom: PCA separates samples by batch or processing date, not biological condition</h3>
+<ul>
+<li>Likely causes: batch effects, confounded experimental design (batch aligned with treatment).</li>
+<li>Fixes: include batch/donor in the statistical model; if confounding cannot be separated, explicitly report the limitation and avoid strong causal claims. Consider collecting additional balanced data if possible.</li>
+</ul>
+<h3>Symptom: Very few or zero differentially expressed genes</h3>
+<ul>
+<li>Likely causes: low statistical power (small n), over-stringent filtering, incorrect model specification.</li>
+<li>Fixes: check model design matrix for coding errors; increase sample size if possible; report negative results transparently; consider pre-specifying effect size of interest and presenting effect-size estimates with confidence intervals rather than only p-values.</li>
+</ul>
+<h2>Limitations, version and reference-data caveats, and responsible-use notes</h2>
+<p>Limitations and caveats should be explicit in a short subsection of your report. List key dependencies and their versions, and call out any results that are sensitive to these choices.</p>
+<ul>
+<li>Reference data: Specify the genome assembly and annotation release (for example, GRCh38, GENCODE v46). Different annotation releases change gene models and counts; re-running with a different GTF can alter downstream DE lists.</li>
+<li>Software versions: Record exact versions (e.g., STAR v2.7.11b, featureCounts v2.0.6, R 4.3.2, DESeq2 v1.42.0). Even minor version changes can affect results; include <code>sessionInfo()</code> or an environment export in provenance files.</li>
+<li>Parameter sensitivity: Report thresholds used (filtering, p-value and fold-change cutoffs). Where possible, show how results change under alternative reasonable parameter choices (sensitivity analysis).</li>
+<li>Privacy and data sharing: Do not publish identifiable human-level data or sensitive subject metadata. Share derived summary tables or synthetic examples when raw data cannot be shared; clearly note access restrictions and how others can request access.</li>
+</ul>
+<p>Responsible-use note: Avoid overstating clinical or biological implications beyond the scope of the experimental design. Clearly separate what the data directly show from hypotheses that require orthogonal validation (orthogonal assays, replication cohorts, causal experiments).</p>
+<h2>Next-step checklist (concise)</h2>
+<ul>
+<li>Write a single-paragraph Methods summary including data accession, download date, reference genome/GTF release, and software (with versions).</li>
+<li>Include a script path and commit hash: "Analysis scripts available at scripts/, commit <code>$(cat provenance/commit.txt)</code>."</li>
+<li>Attach environment specification (<code>provenance/environment.yaml</code>) and checksums (<code>provenance/checksums.txt</code>).</li>
+<li>Draft figure legends using the template above; include n, preprocessing, and the exact statistic plotted.</li>
+<li>Write an Observation / Interpretation / Limitation statement for each main result.</li>
+<li>Run basic sensitivity checks (e.g., alternative normalization, inclusion/exclusion of outlier samples) and report any major differences.</li>
+</ul>
+<h2>References</h2>
+<ul>
+<li><a href="https://www.ncbi.nlm.nih.gov/geo/">GEO: Gene Expression Omnibus</a> — public repository for high-throughput functional genomics data.</li>
+<li><a href="https://bioconductor.org/packages/release/bioc/html/DESeq2.html">DESeq2 (Bioconductor)</a> — commonly used R package for differential expression analysis and guidance on model specification.</li>
+<li><a href="https://www.encodeproject.org/">ENCODE Project</a> — reporting guidelines and best practices for sequencing experiments (MINSEQE referenced within community guidelines).</li>
+<li><a href="https://gatk.broadinstitute.org/">GATK (Broad Institute)</a> — best-practice workflows and documentation relevant to variant calling reproducibility.</li>
+<li><a href="https://www.nature.com/articles/s41592-019-0686-2">Nature Methods: Ten simple rules for reproducible computational research</a> — practical principles that apply across omics analyses.</li>
+</ul>
 </article>
 <section class="mt-12 mb-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-100">
 <div class="flex items-start gap-4">

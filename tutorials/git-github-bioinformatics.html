@@ -130,10 +130,7 @@ function toggleMobileMenu() {
 <div class="mb-12 rounded-2xl overflow-hidden shadow-lg border border-gray-100">
 <img alt="Git and GitHub for Bioinformatics" class="w-full aspect-video object-cover" decoding="async" loading="eager" src="../images/git-github-bioinformatics-workstation.webp"/>
 </div>
-<article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none"><div class="mb-10 text-xl text-gray-600 leading-relaxed">
-<p>Git records how a project changes over time. GitHub provides a collaborative home for repositories, issues, releases, and documentation. Together they make it possible to identify the exact scripts and configuration used to produce a result. Never commit private patient data or credentials.</p>
-</div>
-<div class="flex flex-wrap items-center gap-4 text-xs font-mono text-gray-500 bg-gray-50 p-3 rounded-lg border border-gray-200 mb-6">
+<article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none"><div class="flex flex-wrap items-center gap-4 text-xs font-mono text-gray-500 bg-gray-50 p-3 rounded-lg border border-gray-200 mb-6">
 <div class="flex items-center gap-1">
 <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
 <span><strong>Tested on:</strong> Python 3.11, R 4.3.2, Ubuntu 24.04</span>
@@ -141,199 +138,227 @@ function toggleMobileMenu() {
 <div class="flex items-center gap-1">
 <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
 </div>
-</div>
-<div class="p-6 bg-blue-50 border border-blue-100 rounded-xl mb-8"><h4 class="text-lg font-bold text-blue-900 mb-2">Learning Objectives &amp; Prerequisites</h4><div class="text-blue-800 space-y-2"><p><strong>By the end of this lesson, you should be able to:</strong></p><ul>
-<li>Create a repository, make commits, inspect history, and use branches.</li>
-<li>Write a useful README and <code>.gitignore</code> for a bioinformatics project.</li>
-<li>Push code without exposing raw data, passwords, tokens, or private identifiers.</li>
-<li>Use issues and pull requests for review.</li>
-</ul><p><strong>Prerequisites:</strong></p><ul>
-<li>Complete <a href="computer-data-fundamentals.html">Computer and Data Fundamentals</a></li>
-<li>Install Git and create a GitHub account if you want to push to a remote repository.</li>
-</ul><strong class="block mt-2 text-blue-900">Expected Output</strong><p>By the end of this lesson, you should have: <strong>A local repository with a README, a meaningful first commit, a <code>.gitignore</code>, and a clean <code>git status</code> before publishing or sharing code.</strong></p></div></div>
-<h2>1. Start a reproducible repository</h2>
-<p>A repository should contain scripts, configuration, documentation, and small example data - not an uncontrolled dump of raw sequencing files.</p>
-<pre><code class="language-bash">mkdir omics-demo &amp;&amp; cd omics-demo
+</div><h2>Learning objectives and prerequisites</h2>
+<p>By the end of this lesson you will be able to:</p>
+<ul>
+<li>Create and initialize a local Git repository for a bioinformatics project.</li>
+<li>Make focused commits, inspect history, and work with branches for safe feature development.</li>
+<li>Write a practical README and .gitignore that avoid committing sensitive or large raw data.</li>
+<li>Configure a remote (GitHub) connection safely and push code without leaking secrets.</li>
+<li>Use Git LFS or DVC to manage large sequencing files outside of Git history.</li>
+</ul>
+<p>Prerequisites:</p>
+<ul>
+<li>Basic comfort using a terminal (bash, zsh, or similar).</li>
+<li>Git installed locally (see <code>git --version</code>).</li>
+<li>Optional: a GitHub account if you want to push to a remote repository.</li>
+</ul>
+<h2>Why Git and GitHub matter in bioinformatics</h2>
+<p>Bioinformatics analyses are complex: multiple scripts, configuration files, software environments, and sometimes many collaborators. Git provides a precise, timestamped history of how text files (code, configuration, notebooks, small sample data) change over time. That history is the minimal unit for reproducibility: a commit hash identifies the exact code state that produced a result.</p>
+<p>GitHub (and similar hosted services) add collaboration features: remote hosting, issues, pull requests for code review, and releases to bundle a particular snapshot for distribution. Together they help you track provenance (what was run and when), enable peer review of analysis code, and reduce accidental sharing of private data.</p>
+<p>Important safety notes:</p>
+<ul>
+<li>Never commit raw patient identifiers, clinical notes, full BAM/FASTQ files, or API credentials into a Git repository.</li>
+<li>Large raw data should be stored in institutional storage, cloud buckets, or tracked with tools designed for large files (Git LFS or DVC).</li>
+<li>Consider project policies (institutional review boards, data-sharing agreements) before publishing code or scripts that could re-identify individuals.</li>
+</ul>
+<h2>Reproducible, sequential workflow</h2>
+<p>The following steps show a minimal, reproducible project layout. Commands are written with explicit paths and produce predictable files. Replace USER and REPO with your GitHub username and repository name only after confirming no sensitive data are present.</p>
+<h3>1. Create a project directory and initialize Git</h3>
+<pre><code>mkdir -p ~/projects/omics-demo
+cd ~/projects/omics-demo
 git init
-printf "# Omics demo\n" &gt; README.md
-printf "*.fastq.gz\n.env\nresults/\n" &gt; .gitignore
-git add README.md .gitignore
-git commit -m "Initialize reproducible project"
 </code></pre>
-<h2>2. Record meaningful changes</h2>
-<p>A commit should represent one understandable change. Use <code>git diff</code> before committing and write messages that explain what changed.</p>
-<pre><code class="language-bash">git status
-git diff
-git log --oneline --decorate -5
-git add scripts/
-git commit -m "Add read QC summary script"
-</code></pre>
-<h2>3. Connect a remote safely</h2>
-<p>Use SSH keys or a credential manager. Never put a personal access token in a URL, shell history, notebook, or script.</p>
-<pre><code class="language-bash">git remote add origin https://github.com/USER/REPO.git
-git branch -M main
-git push -u origin main
-</code></pre>
-<h2>4. Reproducibility checklist</h2>
-<p>Record software versions, environment files, reference versions, command parameters, and the commit hash associated with a result.</p>
-<pre><code class="language-bash">git rev-parse --short HEAD
-python --version
-conda env export --from-history &gt; environment.yml
-</code></pre>
-<h2>5. Setting Up a Bioinformatics Repository</h2>
-<pre><code class="language-bash"># Initialize a new project
-mkdir rnaseq-analysis &amp;&amp; cd rnaseq-analysis
-git init
+<p>Files created / modified:</p>
+<ul>
+<li>The directory <code>~/projects/omics-demo</code> is created.</li>
+<li><code>.git/</code> is created as the local repository metadata (hidden).</li>
+</ul>
+<p>What this produces: a local empty repository ready to track files.</p>
+<h3>2. Add a README and a conservative .gitignore</h3>
+<pre><code>cat &gt; README.md &lt;&lt; 'EOF'
+# Omics demo
 
-# Configure your identity (required once per machine)
-git config user.name "Your Name"
-git config user.email "your.email@institution.edu"
+This repository contains example scripts and configuration to illustrate Git best practices
+for a bioinformatics analysis. This repo intentionally avoids raw sequencing files.
+EOF
 
-# Create the standard bioinformatics .gitignore
 cat &gt; .gitignore &lt;&lt; 'EOF'
-# Large data files – track with DVC or external storage
+# Raw sequencing and large files
 data/raw/
 *.fastq.gz
 *.bam
 *.bai
 
-# Temporary and generated files
+# Temporary files and python caches
 *.pyc
 __pycache__/
 .ipynb_checkpoints/
 
-# Environment files
-envs/
-.venv/
-
-# OS files
-.DS_Store
-Thumbs.db
-
-# Sensitive credentials
+# Environment directories
 .env
+.venv/
+envs/
+
+# Credentials and keys
+.env.local
 *.key
 EOF
-
-git add .
-git commit -m "Initial project structure"
 </code></pre>
-<h2>6. Branching and Feature Development</h2>
-<p>Branches let you experiment without risking your stable analysis. Use descriptive branch names:</p>
-<pre><code class="language-bash"># Create a branch for a new analysis
-git checkout -b feature/add-deseq2-analysis
-
-# Make changes, commit incrementally
-git add scripts/run_deseq2.R
-git commit -m "Add DESeq2 differential expression script"
-
-git add results/figures/volcano_plot.webp
-git commit -m "Add volcano plot from DESeq2 results"
-
-# When the analysis is complete and verified, merge back
-git checkout main
-git merge feature/add-deseq2-analysis
-git branch -d feature/add-deseq2-analysis
-</code></pre>
-<h2>7. Commit Discipline</h2>
-<p>Good commit messages are essential for understanding the history of an analysis. Follow the conventional commit format:</p>
-<pre><code class="language-text"># Good commits – each captures one logical change
-git commit -m "Add QC filtering step: remove genes with &lt; 10 total counts"
-git commit -m "Fix chromosome naming mismatch between FASTA and GTF"
-git commit -m "Update DESeq2 from v1.40 to v1.42 for apeglm shrinkage"
-
-# Bad commits – vague, bundled, or meaningless
-git commit -m "updates"
-git commit -m "fixed stuff"
-git commit -m "final version v3"
-</code></pre>
-<h2>8. Handling Large Files with Git LFS or DVC</h2>
-<p>Raw sequencing data (FASTQ, BAM) should never be committed directly to Git. Use Git LFS or DVC for large file tracking:</p>
-<pre><code class="language-bash"># Option 1: Git LFS for moderately large files
-git lfs install
-git lfs track "*.bam"
-git lfs track "*.fastq.gz"
-git add .gitattributes
-git commit -m "Configure Git LFS for sequencing files"
-
-# Option 2: DVC for very large datasets
-pip install dvc
-dvc init
-dvc add data/raw/sample_R1.fastq.gz
-git add data/raw/sample_R1.fastq.gz.dvc .gitignore
-git commit -m "Track raw FASTQ with DVC"
-</code></pre>
-<h2>9. Conflict Resolution</h2>
-<p>When two collaborators edit the same file, Git reports a merge conflict. Resolve it systematically:</p>
-<pre><code class="language-bash"># Attempt to merge
-git merge collaborator/branch-name
-
-# If conflict occurs, Git marks the file:
-# &lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD
-# your version of the code
-# =======
-# their version of the code
-# &gt;&gt;&gt;&gt;&gt;&gt;&gt; collaborator/branch-name
-
-# Steps to resolve:
-# 1. Open the conflicting file
-# 2. Choose the correct version (or combine both)
-# 3. Remove the conflict markers
-# 4. Test that the code still works
-# 5. Stage and commit
-
-git add scripts/run_analysis.R
-git commit -m "Resolve merge conflict in run_analysis.R: keep updated filter threshold"
-</code></pre>
-<div class="overflow-x-auto -mx-4 px-4">
-<table>
-<table>
-<thead>
-<tr>
-<th>Problem</th>
-<th>Cause</th>
-<th>Solution</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>fatal: not a git repository</code></td>
-<td>Not in a Git-initialized directory</td>
-<td>Run <code>git init</code> or <code>cd</code> to the correct directory</td>
-</tr>
-<tr>
-<td>Accidentally committed large files</td>
-<td>Forgot <code>.gitignore</code></td>
-<td>Use <code>git rm --cached file</code> and update <code>.gitignore</code></td>
-</tr>
-<tr>
-<td>Lost work after <code>git reset --hard</code></td>
-<td>Destructive reset</td>
-<td>Use <code>git reflog</code> to find and recover the lost commit</td>
-</tr>
-<tr>
-<td>Push rejected</td>
-<td>Remote has newer commits</td>
-<td>Run <code>git pull --rebase</code> before pushing</td>
-</tr>
-</tbody>
-</table>
-</table></div>
-<h2>Practical Exercise</h2>
-<p>Create a small repository containing a README, <code>.gitignore</code>one script, and an environment file. Make two commits and use <code>git log</code> to show the history.</p>
-<p></p>
-<h2>Troubleshooting</h2>
-<p>If a push is rejected, pull and inspect the remote history before forcing anything. If a secret was committed, rotate it immediately; deleting the file is not enough because it remains in Git history.</p>
-<h2>Next Steps</h2>
-<p>Continue with <a href="reproducible-project-structure.html">Reproducible Project Structure</a> and <a href="python-fundamentals-bioinformatics.html">Python Fundamentals</a>Record the software versions, dataset or example inputs, and any decisions you made.</p>
-<section aria-label="References and further reading" class="mt-10 p-6 bg-slate-50 border border-slate-200 rounded-xl">
-<h2 class="text-xl font-bold text-gray-900 mb-3">References and further reading</h2>
-<p class="text-sm text-gray-600 mb-3">Use these official resources to check current software behaviour, terminology, and production guidance. Tool versions and defaults change, so verify commands against the documentation before applying them to a research dataset.</p>
-<ul class="list-disc list-inside space-y-2 text-sm text-gray-700">
-<li><a class="text-blue-700 hover:underline" href="https://www.ncbi.nlm.nih.gov/books/NBK21154/" rel="noopener" target="_blank">NCBI Bookshelf: Bioinformatics</a></li>
-<li><a class="text-blue-700 hover:underline" href="https://www.ebi.ac.uk/training/online/" rel="noopener" target="_blank">EMBL-EBI Training</a></li>
+<p>Files created:</p>
+<ul>
+<li><code>README.md</code> — human-readable description and usage notes.</li>
+<li><code>.gitignore</code> — prevents common sensitive or large files from being added accidentally.</li>
 </ul>
-</section>
+<h3>3. Make a first meaningful commit</h3>
+<pre><code>git add README.md .gitignore
+git commit -m "Initialize project with README and conservative .gitignore"
+git log --oneline --decorate -1
+</code></pre>
+<p>What to inspect:</p>
+<ul>
+<li><code>git status</code> should report no changes to commit.</li>
+<li><code>git log --oneline --decorate -1</code> prints the most recent commit hash and message; this hash identifies this snapshot.</li>
+</ul>
+<h3>4. Add a small example script and document inputs/outputs</h3>
+<pre><code>mkdir -p scripts results
+cat &gt; scripts/qc_summary.py &lt;&lt; 'EOF'
+#!/usr/bin/env python3
+# scripts/qc_summary.py
+# Example: read a tab-delimited QC summary and print counts per sample.
+import sys
+import csv
+
+if len(sys.argv) &lt; 2:
+    print("Usage: qc_summary.py samples.tsv")
+    sys.exit(1)
+
+with open(sys.argv[1]) as fh:
+    reader = csv.DictReader(fh, delimiter='\t')
+    for row in reader:
+        print(row.get('sample', 'NA'), row.get('reads', '0'))
+EOF
+
+chmod +x scripts/qc_summary.py
+git add scripts/qc_summary.py
+git commit -m "Add small QC summary script with documented input format"
+</code></pre>
+<p>Files and outputs:</p>
+<ul>
+<li><code>scripts/qc_summary.py</code> — an executable example script. It documents expected input (a TSV with a "sample" and "reads" column).</li>
+<li><code>results/</code> — a directory to hold generated figures or processed outputs (left empty in this step).</li>
+</ul>
+<h3>5. Tagging and capturing the environment</h3>
+<p>Record the software environment and the commit hash you used to generate results. This is essential for later reproducibility.</p>
+<pre><code># record the short commit hash
+git rev-parse --short HEAD &gt; COMMIT_HASH.txt
+
+# record Python and pip versions (example)
+python3 --version &gt; ENV_INFO.txt
+pip3 freeze &gt; requirements.txt
+
+git add COMMIT_HASH.txt ENV_INFO.txt requirements.txt
+git commit -m "Record commit hash and environment information"
+</code></pre>
+<p>What these files contain:</p>
+<ul>
+<li><code>COMMIT_HASH.txt</code> — the unique identifier of the repository state.</li>
+<li><code>ENV_INFO.txt</code> and <code>requirements.txt</code> — exported software environment details to help reproduce the analysis later.</li>
+</ul>
+<h3>6. Configure a remote GitHub repository safely</h3>
+<p>When you are ready to publish non-sensitive code to GitHub, set up a remote. Use HTTPS with a credential manager or SSH keys; do NOT hard-code personal access tokens into commands, scripts, or environment files.</p>
+<pre><code># Example remote setup (HTTPS). Replace USER and REPO.
+git remote add origin https://github.com/USER/REPO.git
+git branch -M main
+git push -u origin main
+</code></pre>
+<p>Alternatives and safety reminders:</p>
+<ul>
+<li>Prefer SSH: <code>git remote add origin git@github.com:USER/REPO.git</code> (requires an SSH key associated with your GitHub account).</li>
+<li>Never put tokens in a URL like <code>https://TOKEN@github.com/...</code> — this can leak to shell history and CI logs.</li>
+</ul>
+<h2>Output inspection and interpretation</h2>
+<p>After following the workflow above, check the following and interpret what they mean (and do not mean):</p>
+<ul>
+<li><strong>git status</strong> should show a clean working tree if you've committed all changes. Clean status means your local text files are fully captured by Git, not that the analysis itself is correct.</li>
+<li><strong>git log --oneline --decorate</strong> shows the sequence of commits. Each commit message should correspond to a single logical change — this makes it possible to find the commit that introduced a change later.</li>
+<li><strong>COMMIT_HASH.txt</strong> stores a unique identifier. The presence of this file allows you to link a published result (paper, figure) to an exact code snapshot. It does not guarantee that the environment recorded will reproduce the result unless versions of non-Python dependencies (R, system libraries, reference genomes) are also captured.</li>
+<li><strong>.gitignore</strong> ensures that large or sensitive files are not accidentally added. However, if a file was committed before it was added to .gitignore, the history still contains that file. Removing sensitive data from history requires special procedures (see Troubleshooting).</li>
+</ul>
+<p>What a plausible result looks like (example checks):</p>
+<ul>
+<li>Running <code>scripts/qc_summary.py samples.tsv</code> prints sample names and read counts — this verifies the script runs but does not verify data quality.</li>
+<li>After pushing, the remote repository on GitHub shows the README, commit history, and files you expect. If files are missing, check <code>git push</code> output for errors (authentication, protected branches).</li>
+</ul>
+<p>What this does NOT prove:</p>
+<ul>
+<li>That your analysis produced biologically valid results. Git documents provenance, not correctness.</li>
+<li>That a given environment will run identically on a different machine unless all dependencies (including system libraries and reference data versions) are captured and tested.</li>
+</ul>
+<h2>Troubleshooting: symptoms, causes, and fixes</h2>
+<h3>Symptom: "git push" fails with authentication errors</h3>
+<p>Likely causes:</p>
+<ul>
+<li>No SSH key is configured, or the SSH agent is not running.</li>
+<li>Credential manager mis-configuration for HTTPS.</li>
+</ul>
+<p>Fixes:</p>
+<ul>
+<li>Use SSH: generate a key with <code>ssh-keygen -t ed25519 -C "your.email@institution.edu"</code>, add the public key to GitHub, and test with <code>ssh -T git@github.com</code>.</li>
+<li>For HTTPS, ensure a credential helper is configured (<code>git config --global credential.helper</code>), or use your operating system's credential prompt rather than embedding tokens in commands.</li>
+</ul>
+<h3>Symptom: Sensitive file accidentally committed</h3>
+<p>Likely causes:</p>
+<ul>
+<li>A secret was present before a .gitignore rule was added.</li>
+</ul>
+<p>Fixes and cautions:</p>
+<ul>
+<li>Remove the file from history using the BFG Repo-Cleaner or <code>git filter-repo</code>. Follow upstream guides carefully. After rewriting history you must force-push and coordinate with collaborators; this invalidates old commit hashes.</li>
+<li>Change any leaked credentials immediately (rotate tokens, change passwords) because even after removal they may persist in forks or cached mirrors.</li>
+</ul>
+<h3>Symptom: Large files make the repository slow</h3>
+<p>Likely causes:</p>
+<ul>
+<li>Raw FASTQ or BAM were committed into the Git history.</li>
+</ul>
+<p>Fixes:</p>
+<ul>
+<li>Use Git LFS for moderate-sized files (track filetypes with <code>git lfs track "*.bam"</code>), then add and commit the .gitattributes file. See official Git LFS docs.</li>
+<li>For large datasets, use DVC (Data Version Control) to track large files in external storage while keeping small pointer files in Git.</li>
+</ul>
+<h2>Limitations, version and reference-data caveats, and responsible use</h2>
+<p>Limitations:</p>
+<ul>
+<li>Git is designed to track changes to text files efficiently. It does not manage very large binary files well without extensions like Git LFS or DVC.</li>
+<li>Commit hashes are stable for a repository only; rewriting history (force pushes) changes hashes and can complicate reproducibility unless carefully coordinated.</li>
+</ul>
+<p>Version and reference-data caveats:</p>
+<ul>
+<li>Record versions of reference genomes, annotation files (GTF/GFF), and index files. These are often updated, and differences can materially change results.</li>
+<li>System libraries (C/C++ runtime versions), R and Bioconductor package versions, and container images all affect reproducibility. Where feasible, capture a container (Docker/Singularity) or an explicit environment export (e.g., <code>conda env export</code> or <code>renv.lock</code> for R).</li>
+</ul>
+<p>Responsible use:</p>
+<ul>
+<li>Do not publish code or metadata that could re-identify individuals. Before sharing, remove or generalize identifiers and consult data-use agreements.</li>
+<li>When using third-party datasets, respect licensing and citation requirements.</li>
+</ul>
+<h2>Next-step checklist</h2>
+<ul>
+<li>Make sure your repository contains: <code>README.md</code>, <code>.gitignore</code>, small example scripts, and a file recording <code>COMMIT_HASH.txt</code> and environment details.</li>
+<li>Decide how to handle large data: add Git LFS for intermediate outputs or configure DVC for raw data stored externally.</li>
+<li>Establish a branching strategy (e.g., <code>main</code> for stable code, feature branches for work in progress).</li>
+<li>Write CONTRIBUTING.md and a basic code of conduct if you expect external collaborators.</li>
+<li>Before pushing to a public remote, run <code>git status</code> and <code>git grep -n --hidden -I 'PASSWORD\\|TOKEN\\|SECRET'</code> (or an equivalent scan) to check for accidental secrets. If in doubt, do not push and consult your data governance officer.</li>
+</ul>
+<h2>References</h2>
+<ul>
+<li><a href="https://git-scm.com/docs">Git documentation</a> — official reference for Git commands and workflows.</li>
+<li><a href="https://docs.github.com/">GitHub Docs</a> — official guidance on remotes, SSH keys, and GitHub workflows (pull requests, issues).</li>
+<li><a href="https://git-lfs.github.com/">Git LFS</a> — tools and documentation for tracking large binary files with Git.</li>
+<li><a href="https://dvc.org/doc">DVC (Data Version Control)</a> — documentation for versioning large datasets and connecting to remote storage.</li>
+<li><a href="https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1003285">“Ten Simple Rules for Reproducible Computational Research”</a> — principles that complement careful version control.</li>
+</ul>
 </article>
 <section class="mt-12 mb-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-100">
 <div class="flex items-start gap-4">

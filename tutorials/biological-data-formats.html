@@ -130,10 +130,7 @@ function toggleMobileMenu() {
 <div class="mb-12 rounded-2xl overflow-hidden shadow-lg border border-gray-100">
 <img alt="Biological Data Formats" class="w-full aspect-video object-cover" decoding="async" loading="eager" src="../images/biological-data-formats-workstation.webp"/>
 </div>
-<article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none"><div class="mb-10 text-xl text-gray-600 leading-relaxed">
-<p>Bioinformatics tools exchange information through standardized files. A learner who can inspect a file, identify its assumptions, and validate its contents is much less likely to run the right command on the wrong input.</p>
-</div>
-<div class="flex flex-wrap items-center gap-4 text-xs font-mono text-gray-500 bg-gray-50 p-3 rounded-lg border border-gray-200 mb-6">
+<article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none"><div class="flex flex-wrap items-center gap-4 text-xs font-mono text-gray-500 bg-gray-50 p-3 rounded-lg border border-gray-200 mb-6">
 <div class="flex items-center gap-1">
 <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
 <span><strong>Tested on:</strong> Python 3.11, R 4.3.2, Ubuntu 24.04</span>
@@ -141,214 +138,187 @@ function toggleMobileMenu() {
 <div class="flex items-center gap-1">
 <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
 </div>
-</div>
-<div class="p-6 bg-blue-50 border border-blue-100 rounded-xl mb-8"><h4 class="text-lg font-bold text-blue-900 mb-2">Learning Objectives &amp; Prerequisites</h4><div class="text-blue-800 space-y-2"><p><strong>By the end of this lesson, you should be able to:</strong></p><ul>
-<li>Recognize the purpose and basic structure of FASTA, FASTQ, BAM, VCF, GTF/GFF, and count matrices.</li>
-<li>Use shell commands to inspect headers, record counts, and delimiters.</li>
-<li>Distinguish reference sequences, reads, alignments, variants, annotations, and expression matrices.</li>
-<li>Identify metadata that must remain linked to samples.</li>
-</ul><p><strong>Prerequisites:</strong></p><ul>
-<li>Complete <a href="computer-data-fundamentals.html">Computer and Data Fundamentals</a></li>
-<li>Know basic <code>pwd</code><code>ls</code><code>head</code><code>grep</code>and pipe syntax.</li>
-</ul><strong class="block mt-2 text-blue-900">Expected Output</strong><p>By the end of this lesson, you should have: <strong>A small, validated set of FASTA, FASTQ, BAM/CRAM, VCF, GTF/GFF, and tabular-file examples with their purpose, structure, and safe inspection command recorded.</strong></p></div></div>
-<h2>1. Sequence and read files</h2>
-<p>FASTA stores named sequences as a header beginning with <code>&gt;</code> followed by sequence lines. FASTQ stores a read name, sequence, a plus line, and one quality string for every record. A FASTQ record therefore has four lines, although wrapped sequence files require more careful parsing.</p>
-<pre><code class="language-bash">head -n 8 sample.fastq
-echo $(( $(wc -l &lt; sample.fastq) / 4 ))
-grep -c "^&gt;" reference.fasta
-</code></pre>
-<h2>2. Alignments and variants</h2>
-<p>SAM is text; BAM is its compressed binary equivalent. A BAM requires an index for many random-access operations. VCF stores variant records with a header, reference/alternate alleles, quality, filters, and sample genotype fields. Never interpret a VCF without checking the reference genome build.</p>
-<pre><code class="language-bash">samtools view -H aligned.bam | head
-samtools quickcheck aligned.bam
-bcftools view -h variants.vcf.gz | head
-</code></pre>
-<h2>3. Annotation and expression tables</h2>
-<p>GTF/GFF files describe genomic features such as genes and transcripts. Count matrices usually have genes in rows, samples or cells in columns, and an identifier column. Confirm whether values are raw counts, normalized values, or transformed values before choosing a statistical method.</p>
-<pre><code class="language-bash">head -n 3 annotation.gtf
-head -n 5 counts.tsv | cut -f1-5
-</code></pre>
-<h2>4. Metadata is part of the experiment</h2>
-<p>A sample sheet should link every file to sample ID, donor, condition, batch, library type, and other pre-specified variables. Don't infer experimental groups from filenames alone.</p>
-<pre><code class="language-text">sample_id,fastq_r1,condition,batch,donor
-S01,S01_R1.fastq.gz,control,1,D01
-</code></pre>
-<h2>5. Format Specifications and Validation</h2>
-<p>Every file format has a formal specification. Understanding the column structure prevents silent parsing errors.</p>
-<h3>FASTA Format</h3>
-<pre><code class="language-text">&gt;sequence_id optional description
-ATCGATCGATCGATCGATCG
-ATCGATCGATCGATCG
-</code></pre>
+</div><h2>Learning objectives and prerequisites</h2>
+<p>By the end of this lesson you will be able to:</p>
 <ul>
-<li>Header lines start with <code>&gt;</code></li>
-<li>Sequence can span multiple lines</li>
-<li>No quality scores (use FASTQ for raw reads)</li>
+<li>Recognize the purpose and canonical structure of FASTA, FASTQ, SAM/BAM (and CRAM), VCF, GTF/GFF, and simple count matrices.</li>
+<li>Use reproducible shell commands and small tools to inspect file headers, record structure, and basic integrity checks without modifying the files.</li>
+<li>Interpret inspection output conservatively: identify what a result indicates and what it does not prove.</li>
+<li>Identify common causes of format-related errors and apply pragmatic fixes or validation steps.</li>
 </ul>
-<h3>FASTQ Format</h3>
-<pre><code class="language-text">@read_id instrument:run:flowcell:lane:tile:x:y
-ATCGATCGATCGATCGATCG
-+
-IIIIIIIIIIIIIIIIIIIII
-</code></pre>
+<p>Prerequisites:</p>
 <ul>
-<li>Four lines per record: header, sequence, separator, quality</li>
-<li>Quality scores are Phred+33 encoded ASCII characters</li>
-<li><code>I</code> = Q40 (1 in 10,000 error rate), <code>!</code> = Q0</li>
+<li>Comfort with a Unix-like shell (pwd, ls, head, tail, wc, grep, cut, pipe syntax).</li>
+<li>Basic familiarity with sequencing concepts (reference genome, reads, alignment, variants, gene models).</li>
+<li>Tools used in examples: samtools (for SAM/BAM/CRAM/FASTA index), bcftools (for VCF), seqkit (optional, for FASTA/FASTQ stats), gzip/zcat. Exact versions are not required but commands assume samtools &gt;= 1.9 and bcftools &gt;= 1.9 for shown flags; check local versions if behavior differs.</li>
 </ul>
-<h3>SAM/BAM Format</h3>
-<pre><code class="language-text">@HD  VN:1.6  SO:coordinate
-@SQ  SN:chr1  LN:248956422
-read001  0  chr1  1000  60  150M  *  0  0  ATCG...  IIII...  NM:i:0
-</code></pre>
+<h2>Why formats matter: biological and computational context</h2>
+<p>Bioinformatics workflows are chains of tools where each tool expects inputs in a specific format and with specific conventions (for example, a coordinate system or reference build). File formats (FASTA, FASTQ, SAM/BAM, VCF, GTF/GFF, expression matrices) encode different aspects of an experiment: raw sequences, per-base quality, alignments to a reference, called variants, genome annotations, and tabular quantifications. Misinterpreting a file (for example using a BAM produced against hg19 with an hg38 reference) can silently invalidate downstream analyses. Validating inputs and understanding metadata prevents wasted computation and incorrect conclusions.</p>
+<h2>Reproducible inspection workflow</h2>
+<p>Below is a sequential set of checks and commands you can run on example files. The commands are read-only and safe; none delete or overwrite data. Replace the example filenames with your own paths. Explain what files you should have and what each command produces.</p>
+<p>Files you should have locally before running the checks (replace paths with your files):</p>
 <ul>
-<li>Header lines start with <code>@</code></li>
-<li>11 mandatory columns: QNAME, FLAG, RNAME, POS, MAPQ, CIGAR, RNEXT, PNEXT, TLEN, SEQ, QUAL</li>
-<li>BAM is the compressed binary version of SAM</li>
+<li>reference.fa (a FASTA reference genome or contig set)</li>
+<li>reads_R1.fastq.gz and reads_R2.fastq.gz (paired FASTQ read files, gzip-compressed)</li>
+<li>aligned.bam (coordinate-sorted BAM)</li>
+<li>variants.vcf.gz (bgzip-compressed VCF) and variants.vcf.gz.csi or .tbi (index)</li>
+<li>annotation.gtf (GTF or GFF file of gene models)</li>
+<li>counts.tsv (tab-delimited gene-by-sample count matrix)</li>
 </ul>
-<h2>6. Validation Commands</h2>
-<p>Always validate file integrity before analysis. Corrupted files produce silent errors that propagate through entire pipelines.</p>
-<pre><code class="language-bash"># Validate FASTQ integrity
+<h3>1. Basic, safe file listing and checks</h3>
+<pre><code># List files and sizes
+ls -lh reference.fa reads_R1.fastq.gz reads_R2.fastq.gz aligned.bam variants.vcf.gz annotation.gtf counts.tsv
 
-# Check fastq integrity
-# Do not rely on line counting. Use zcat and awk for structure, and seqkit for stats:
-zcat reads.fastq.gz | awk 'END{print "Records:", NR/4, "Remainder:", NR%4}' # Remainder must be 0
-seqkit stats reads.fastq.gz
-
-# Validate BAM file
-samtools quickcheck aligned.bam &amp;&amp; echo "OK" || echo "CORRUPTED"
-
-# Validate VCF file
-bcftools stats variants.vcf | head -20
-
-# Check FASTA index consistency
-samtools faidx reference.fa
-# Creates reference.fa.fai – verify chromosome count
-wc -l reference.fa.fai
-
-# Verify file checksums after transfer
-md5sum -c checksums.md5
+# Check file types (returns file magic)
+file reference.fa reads_R1.fastq.gz aligned.bam variants.vcf.gz annotation.gtf counts.tsv
 </code></pre>
-<h2>7. Format Conversion</h2>
-<p>Converting between formats is a routine bioinformatics task. Use established tools rather than custom scripts to avoid edge cases.</p>
-<div class="overflow-x-auto -mx-4 px-4">
-<table>
-<table>
-<thead>
-<tr>
-<th>From</th>
-<th>To</th>
-<th>Tool</th>
-<th>Command</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>SAM</td>
-<td>BAM</td>
-<td>samtools</td>
-<td><code>samtools view -bS input.sam &gt; output.bam</code></td>
-</tr>
-<tr>
-<td>BAM</td>
-<td>SAM</td>
-<td>samtools</td>
-<td><code>samtools view -h input.bam &gt; output.sam</code></td>
-</tr>
-<tr>
-<td>BAM</td>
-<td>FASTQ</td>
-<td>samtools</td>
-<td><code>samtools fastq input.bam &gt; output.fastq</code></td>
-</tr>
-<tr>
-<td>FASTQ</td>
-<td>FASTA</td>
-<td>seqtk</td>
-<td><code>seqtk seq -a input.fastq &gt; output.fasta</code></td>
-</tr>
-<tr>
-<td>GFF3</td>
-<td>GTF</td>
-<td>gffread</td>
-<td><code>gffread input.gff3 -T -o output.gtf</code></td>
-</tr>
-<tr>
-<td>VCF</td>
-<td>BED</td>
-<td>bedtools</td>
-<td><code>bedtools vcf2bed &lt; input.vcf &gt; output.bed</code></td>
-</tr>
-</tbody>
-</table>
-</table></div>
-<p><strong>Warning:</strong> Coordinate system differences between BED (0-based, half-open) and GTF/VCF (1-based, closed) are the single most common source of off-by-one errors in bioinformatics. Always verify coordinates after conversion.</p>
-<h2>8. Compression and Storage</h2>
-<p>Raw bioinformatics files are typically very large. Use appropriate compression to save storage and transfer time.</p>
-<pre><code class="language-bash"># BGZF compression (block-gzipped, allows random access)
-bgzip -c variants.vcf &gt; variants.vcf.gz
-tabix -p vcf variants.vcf.gz
-
-# Standard gzip (no random access)
-gzip reads.fastq
-
-# Check compressed file integrity
-gzip -t reads.fastq.gz &amp;&amp; echo "OK" || echo "CORRUPTED"
+<p>What it produces: file type descriptions and sizes. Interpretation: confirms compression (gzip), plain text, or binary (BAM). What it does not prove: file content correctness — a gzip file could be truncated or a BAM could be corrupted even if 'file' reports its type.</p>
+<h3>2. FASTA: reference sequences</h3>
+<pre><code># Show first 6 header lines and the first sequence lines (safe for large files)
+grep -m 6 "^&gt;" reference.fa
+samtools faidx reference.fa   # creates reference.fa.fai (if missing) without changing reference.fa
+head -n 3 reference.fa.fai    # shows contig name, length, offset in file
 </code></pre>
-<div class="overflow-x-auto -mx-4 px-4">
-<table>
-<table>
-<thead>
-<tr>
-<th>File Type</th>
-<th>Typical Size (human WGS)</th>
-<th>Compressed Size</th>
-<th>Compression Ratio</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>FASTQ (paired)</td>
-<td>~200 GB</td>
-<td>~60 GB (gzip)</td>
-<td>3:1</td>
-</tr>
-<tr>
-<td>BAM (aligned)</td>
-<td>~80 GB</td>
-<td>N/A (already binary)</td>
-<td>–</td>
-</tr>
-<tr>
-<td>VCF (variants)</td>
-<td>~5 GB</td>
-<td>~500 MB (bgzip)</td>
-<td>10:1</td>
-</tr>
-<tr>
-<td>BED (regions)</td>
-<td>~10 MB</td>
-<td>~2 MB (gzip)</td>
-<td>5:1</td>
-</tr>
-</tbody>
-</table>
-</table></div>
-<h2>Practical Exercise</h2>
-<p>Inspect one small FASTA, FASTQ, GTF, or count table. Record its format, number of records or rows, identifier field, compression state, and the metadata required to interpret it.</p>
-<p></p>
-<h2>Troubleshooting</h2>
-<p>If a count table appears shifted, inspect delimiters and quoted fields. If a BAM fails <code>samtools quickcheck</code>re-download or regenerate it rather than continuing with corrupted data.</p>
-<h2>Next Steps</h2>
-<p>Continue with <a href="quality-control-fundamentals.html">Quality Control Fundamentals</a> and <a href="reference-genomes-annotation.html">Reference Genomes and Annotation Databases</a>Record the software versions, dataset or example inputs, and any decisions you made.</p>
-<section aria-label="References and further reading" class="mt-10 p-6 bg-slate-50 border border-slate-200 rounded-xl">
-<h2 class="text-xl font-bold text-gray-900 mb-3">References and further reading</h2>
-<p class="text-sm text-gray-600 mb-3">Use these official resources to check current software behaviour, terminology, and production guidance. Tool versions and defaults change, so verify commands against the documentation before applying them to a research dataset.</p>
-<ul class="list-disc list-inside space-y-2 text-sm text-gray-700">
-<li><a class="text-blue-700 hover:underline" href="https://www.ncbi.nlm.nih.gov/books/NBK21154/" rel="noopener" target="_blank">NCBI Bookshelf: Bioinformatics</a></li>
-<li><a class="text-blue-700 hover:underline" href="https://www.ebi.ac.uk/training/online/" rel="noopener" target="_blank">EMBL-EBI Training</a></li>
+<p>What these commands do: the grep line reveals the first few sequence headers (lines beginning with &gt;). samtools faidx creates an index file (reference.fa.fai) used for random access; it is non-destructive and will write the index file to disk if absent.</p>
+<p>What to look for:</p>
+<ul>
+<li>Header format: many tools expect the contig name (for example "chr1") as the first token after &gt;. Embedded spaces or additional annotations are common — check whether your pipeline trims or uses the full header string.</li>
+<li>Contig names and lengths in reference.fa.fai should match the reference build you expect (hg19 vs hg38 vs a bacterial genome).</li>
 </ul>
-</section>
+<p>Limitations: faidx will succeed even if sequence content is not representative of your study (e.g., different build). Always record the source, version, and checksum of the reference used.</p>
+<h3>3. FASTQ: raw reads and quality strings</h3>
+<pre><code># Check compressed FASTQ record structure (counts)
+zcat reads_R1.fastq.gz | awk 'END{print "Lines:", NR, "Records:", NR/4, "Remainder:", NR%4}'
+
+# Show a few records for visual inspection
+zcat reads_R1.fastq.gz | sed -n '1,12p'
+
+# Use seqkit (if available) for summary statistics
+seqkit stats reads_R1.fastq.gz
+</code></pre>
+<p>What these commands do: the awk approach verifies the total number of lines is a multiple of 4 (one proxy that records are intact). The sed shows the canonical four-line structure for reads: header starting with '@', sequence, plus-line '+', and quality string.</p>
+<p>Interpretation guidance:</p>
+<ul>
+<li>A remainder (NR%4 != 0) indicates a truncated/corrupted FASTQ or unexpected line wrapping; do not proceed to alignment without fixing.</li>
+<li>Compare read counts between R1 and R2 for paired-end data — they should match exactly.</li>
+<li>Examine header formats: instrument tags or sample barcodes may be embedded. Downstream demultiplexing tools expect particular header formats.</li>
+</ul>
+<h3>4. SAM/BAM/CRAM: alignments</h3>
+<pre><code># Show the SAM header (read-only)
+samtools view -H aligned.bam | sed -n '1,40p'
+
+# Quick integrity check
+samtools quickcheck aligned.bam &amp;&amp; echo "aligned.bam appears complete" || echo "aligned.bam may be truncated/corrupt"
+
+# Count reads (mapped and unmapped)
+samtools flagstat aligned.bam | sed -n '1,10p'
+</code></pre>
+<p>What these produce: the SAM header shows program (@PG), sequence dictionary (@SQ), and read group (@RG) lines. flagstat reports total reads and mapping statistics.</p>
+<p>What to look for:</p>
+<ul>
+<li>Presence of @SQ lines: contig names must match your reference.fa; mismatches cause mis-interpretation when extracting regions.</li>
+<li>Read group (@RG) and sample identifiers: many variant callers and downstream tools rely on RG tags to distinguish libraries or samples.</li>
+<li>flagstat output gives the proportion of mapped reads; a low mapping rate can indicate wrong reference, adapters not trimmed, or contamination.</li>
+</ul>
+<p>What these checks do not prove: correct alignment parameters or absence of systematic bias (PCR duplicates, alignment artefacts). Use deeper QC tools (e.g., Qualimap, Picard CollectAlignmentSummaryMetrics) for those checks.</p>
+<h3>5. VCF: variants and genotypes</h3>
+<pre><code># Show VCF header and a few records (for bgzip-compressed VCF)
+bcftools view -h variants.vcf.gz | sed -n '1,200p'
+bcftools view variants.vcf.gz | sed -n '1,10p'
+
+# Check VCF integrity and basic stats
+bcftools index --stats variants.vcf.gz 2&gt;&amp;1 | sed -n '1,40p'
+bcftools stats variants.vcf.gz | sed -n '1,40p'
+</code></pre>
+<p>Interpretation tips:</p>
+<ul>
+<li>VCF header lines starting with '##' include meta-information fields. Confirm the INFO and FORMAT fields you expect (for example, DP for depth, AD for allele depth).</li>
+<li>Confirm the REF alleles correspond to the reference.fa used for alignment and variant calling. A mismatch in reference build can make VCF interpretation meaningless.</li>
+<li>Sample genotype columns: check sample names and ensure they match your sample sheet, not only filenames.</li>
+</ul>
+<p>What these checks do not prove: variant callers have different sensitivity/specificity; presence of a variant in VCF is not validation of biological truth — further QC, filtering, and orthogonal validation may be needed.</p>
+<h3>6. GTF/GFF: genome annotations</h3>
+<pre><code># Inspect the first lines of a GTF (or GFF) file
+head -n 20 annotation.gtf
+
+# Count features by type (e.g., exon, gene, transcript)
+cut -f3 annotation.gtf | sort | uniq -c | sort -nr | sed -n '1,20p'
+</code></pre>
+<p>Key points:</p>
+<ul>
+<li>GTF (Gene Transfer Format) has 9 columns; the 3rd column is the feature type. The 9th column contains attribute key-value pairs (e.g., gene_id, transcript_id). Tools expect certain attribute keys; check whether the file uses gene_id or a different attribute name.</li>
+<li>Coordinate conventions: GTF/GFF use 1-based closed coordinates. Confirm the tools you use expect the same convention.</li>
+</ul>
+<h3>7. Count matrices (expression or feature tables)</h3>
+<pre><code># Show header and first rows
+head -n 6 counts.tsv
+
+# Show column names and count of columns (samples)
+awk 'NR==1{print; print "Columns:", NF}' FS="\t" counts.tsv
+
+# Check whether values are integers or floating point (raw counts expected as integers)
+awk 'NR&gt;1{for(i=2;i&lt;=NF;i++){if($i!=int($i)) {print "Non-integer value at line", NR; exit}}}END{print "Checked numeric format"}' FS="\t" counts.tsv
+</code></pre>
+<p>What to check:</p>
+<ul>
+<li>Row identifiers: are they gene symbols, Ensembl IDs, or something else? Confirm consistency with annotation.gtf if you plan to map gene IDs to coordinates.</li>
+<li>Are values raw counts, normalized counts (TPM, FPKM), or log-transformed? Normalized values should not be treated as counts in methods that require integer counts (edgeR, DESeq2).</li>
+<li>Missing values or non-numeric entries can break downstream tools; inspect and handle them explicitly.</li>
+</ul>
+<h2>Output inspection and interpretation</h2>
+<p>When you run the checks above, use conservative interpretations:</p>
+<ul>
+<li>If samtools quickcheck reports the BAM appears complete, that is a lightweight test for truncation; it does not guarantee the BAM has valid indexing or consistent read group metadata.</li>
+<li>Matching read counts between paired FASTQ files supports correctness, but does not prove reads are paired correctly in headers. Compare read name prefixes exactly.</li>
+<li>VCF header showing a specific reference MD5 or assembly name is useful; but if the VCF lacks an explicit build, you must obtain provenance externally (sample sheets, pipeline logs, or metadata files).</li>
+<li>For count matrices, integer-only values suggest raw counts; however, confirm by provenance (quantification tool settings) because some pipelines round or store normalized values as integers.</li>
+</ul>
+<p>Do not assume that a “valid” file equals “correct for my analysis.” Validation checks confirm syntactic integrity and some semantic cues, but experimental design, matching references, and metadata completeness determine whether a file is appropriate for a specific pipeline.</p>
+<h2>Troubleshooting: symptoms, likely causes, and fixes</h2>
+<p>Symptom: fastq record count remainder &gt; 0 (NR%4 != 0)</p>
+<ul>
+<li>Likely causes: truncated transfer, improper gzip handling, CRLF vs LF issues, or wrapped quality/sequence lines that were inadvertently merged.</li>
+<li>Fixes: re-transfer the file with checksums; if compressed, test gzip integrity (gunzip -t). Use seqkit or fastq tools to attempt repair, but prefer to recover from original uncorrupted source.</li>
+</ul>
+<p>Symptom: BAM aligner reports contig SN names not found or tools fail to extract regions</p>
+<ul>
+<li>Likely causes: BAM @SQ contig names differ from reference.fa (prefixes like 'chr' vs no 'chr'), or the reference used to align is different from local reference.</li>
+<li>Fixes: confirm contig naming conventions and use a reference matching the BAM (@SQ). If necessary, create a mapping (rename) of contigs or re-run alignment using the correct reference.</li>
+</ul>
+<p>Symptom: VCF filtering yields no variants, or genotype fields are malformed</p>
+<ul>
+<li>Likely causes: VCF generated with nonstandard FORMAT fields, missing sample columns, or mis-specified header metadata.</li>
+<li>Fixes: inspect header (bcftools view -h) for FORMAT definitions. Recreate/repair header if you have provenance; if not, consult the variant caller documentation to reconstruct expected fields.</li>
+</ul>
+<p>Symptom: Count matrix contains decimals but downstream tools require integers</p>
+<ul>
+<li>Likely causes: the matrix holds normalized expressions (TPM, FPKM, or CPM) or has been rounded incorrectly.</li>
+<li>Fixes: find raw count output from the quantification step (featureCounts, htseq-count, Salmon with --geneMap/--quantMode) or re-run quantification with settings producing integer counts. If only normalized values exist, choose statistical methods appropriate for non-count data.</li>
+</ul>
+<h2>Limitations, caveats, and responsible use</h2>
+<ul>
+<li>Reference builds and contig naming are a common source of silent errors. Always record the exact reference FASTA filename, version, and checksum (md5 or sha256) used to align or call variants.</li>
+<li>File-format specifications evolve. Tools may accept nonstandard variants of formats; relying on a single tool's acceptance is risky. Where possible, validate against standard tools (samtools, bcftools, seqkit) and the formal format specification.</li>
+<li>Do not attempt to infer experimental groups from filenames alone. Maintain a separate sample sheet that maps sample IDs to files and experiment metadata (library type, batch, donor, condition). This sheet should be version-controlled and immutable for a given analysis run.</li>
+<li>Many checks above inspect syntactic integrity and summary statistics. They do not replace statistical QC, biological replication assessment, or independent experimental validation of findings.</li>
+<li>Tool versions matter. Commands and default behaviors (for example, CRAM support, compression defaults) vary across samtools/bcftools releases. Record versions (samtools --version, bcftools --version) in your pipeline provenance logs.</li>
+</ul>
+<h2>Next-step checklist</h2>
+<ul>
+<li>Record and store checksums for all input files (md5sum file &gt; file.md5). Use these for transfers and provenance.</li>
+<li>Confirm reference FASTA and VCF reference build match (inspect headers for build tags or MD5). If missing, document the inferred build and find the authoritative reference FASTA.</li>
+<li>Ensure sample sheet is complete and matches file names (include sample_id, fastq paths, library type, batch, donor, and expected read length).</li>
+<li>Run basic QC tools appropriate to each format (FastQC for FASTQ, samtools flagstat and Picard for BAM, bcftools stats for VCF, featureCounts or Salmon for counts). Save outputs adjacent to inputs.</li>
+<li>Version-control small metadata and the inspection commands you ran (a short shell script or Makefile fragment) so the checks are reproducible.</li>
+</ul>
+<h2>References</h2>
+<ul>
+<li><a href="https://samtools.github.io/hts-specs/SAMv1.pdf">SAM/BAM format specification (SAMv1)</a></li>
+<li><a href="https://samtools.github.io/hts-specs/">HTSlib/hts-specs (SAM/BAM/CRAM, VCF/BCF specifications)</a></li>
+<li><a href="https://www.ensembl.org/info/website/upload/gff.html">GTF/GFF format guidance (Ensembl)</a></li>
+<li><a href="https://academic.oup.com/bioinformatics/article/25/15/2078/225615">FASTQ format description and historical context (Cock et al., 2009)</a></li>
+<li><a href="https://github.com/shenwei356/seqkit">seqkit — toolkit for FASTA/FASTQ inspection and stats (GitHub)</a></li>
+</ul>
 </article>
 <section class="mt-12 mb-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-100">
 <div class="flex items-start gap-4">

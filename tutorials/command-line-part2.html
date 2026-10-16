@@ -138,133 +138,158 @@ function toggleMobileMenu() {
 <div class="flex items-center gap-1">
 <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
 </div>
-</div>
-<div class="p-6 bg-blue-50 border border-blue-100 rounded-xl mb-8">
-<h4 class="text-lg font-bold text-blue-900 mb-2">Learning Objectives &amp; Prerequisites</h4>
-<ul class="list-disc list-inside text-blue-800 space-y-1 mb-4">
-<li><strong>Prerequisites:</strong> Complete Basic Navigation and have example text, FASTA, or tab-delimited files available.</li>
-<li><strong>Objective:</strong> Use grep, cut, sort, uniq, sed, and pipes to filter, summarize, and reshape biological text files.</li>
-<li><strong>Expected Output:</strong> A reproducible one-line or small shell workflow that extracts and summarizes a defined set of records.</li>
+</div><h2>Learning objectives &amp; prerequisites</h2>
+<p><strong>Prerequisites:</strong> Completion of a basic command-line navigation tutorial (listing directories, viewing files). Have example text files ready in a working directory: a short FASTA file (sequences.fasta), a tab-delimited table (data.tsv), and a FASTQ file (reads.fastq) or equivalents. Replace filenames below with your real file paths.</p>
+<p><strong>Learning objectives:</strong> After working through this lesson you will be able to:</p>
+<ul>
+<li>Use grep (global regular expression print), sed (stream editor), cut, sort, uniq, and pipes to filter and reshape biological text files.</li>
+<li>Write short, reproducible one-line or small multi-step shell workflows that extract specific records and produce simple summaries.</li>
+<li>Recognize when line-oriented tools are appropriate versus when sequence-aware tools are required.</li>
 </ul>
-</div>
-<h2>Text Processing: The Bioinformatician's Superpower</h2>
-<h3>Viewing File Contents</h3>
-<h4><code>cat</code> - Display entire file</h4>
-<pre><code class="language-bash">cat sequences.fasta             # Show entire file
-cat file1.txt file2.txt        # Concatenate files
-</code></pre>
-<h4><code>head</code> - Show beginning of file</h4>
-<pre><code class="language-bash">head sequences.fasta            # First 10 lines
-head -n 20 sequences.fasta      # First 20 lines
-head -n 5 *.txt                # First 5 lines of all text files
-</code></pre>
-<h4><code>tail</code> - Show end of file</h4>
-<pre><code class="language-bash">tail sequences.fasta            # Last 10 lines
-tail -n 20 sequences.fasta      # Last 20 lines
-tail -f logfile.txt            # Follow file as it grows
-</code></pre>
-<h4><code>less</code> - Interactive file viewer</h4>
-<pre><code class="language-bash">less sequences.fasta            # View file interactively
-</code></pre>
-<p><strong>Navigation in <code>less</code></strong>- <code>Space</code>Next page
-- <code>b</code>Previous page
-- <code>/pattern</code>Search forward
-- <code>q</code>Quit</p>
-<h3>Searching and Filtering (<code>grep</code>)</h3>
-<p><code>grep</code> is arguably the most powerful text-searching tool in a bioinformatician's toolkit. Instead of manually scrolling through gigabytes of text, <code>grep</code> allows you to extract exactly the lines you need based on pattern matching. The name stands for "global regular expression print", which hints at its ability to use complex regular expressions, though simple string matching is often enough for daily tasks.</p>
-<p>In bioinformatics, you'll use <code>grep</code> constantly to extract specific sequences, find error messages in log files, or pull out records matching a specific gene ID. It's incredibly fast and memory-efficient because it processes files line-by-line rather than loading the entire file into RAM. Here are the most common usage patterns:</p>
-<pre><code class="language-bash">grep "ATCG" sequences.fasta      # Find lines containing ATCG
-grep -c "&gt;" sequences.fasta      # Count sequence headers
-grep -v "&gt;" sequences.fasta      # Show lines NOT containing &gt;
-grep -i "error" logfile.txt      # Case-insensitive search
-grep -n "pattern" file.txt       # Show line numbers
-grep -A 3 -B 3 "pattern" file    # Show 3 lines after and before
-</code></pre>
-<h3>Counting Things (<code>wc</code>)</h3>
-<pre><code class="language-bash">wc file.txt                      # Lines, words, characters
-wc -l file.txt                   # Count lines only
-wc -w file.txt                   # Count words only
-wc -c file.txt                   # Count characters only
-</code></pre>
-<h3>Sorting and Uniqueness</h3>
-<h4><code>sort</code> - Sort lines</h4>
-<pre><code class="language-bash">sort file.txt                    # Sort alphabetically
-sort -n numbers.txt              # Sort numerically
-sort -r file.txt                 # Reverse sort
-sort -k 2 data.txt              # Sort by second column
-</code></pre>
-<h4><code>uniq</code> - Remove duplicates</h4>
-<pre><code class="language-bash">uniq file.txt                    # Remove adjacent duplicates
-sort file.txt | uniq             # Remove all duplicates
-uniq -c file.txt                 # Count occurrences
-</code></pre>
-<h2>Bioinformatics-Specific Examples</h2>
-<h3>Working with FASTA Files</h3>
-<h4>Count sequences in a FASTA file</h4>
-<pre><code class="language-bash">grep -c "&gt;" sequences.fasta
-</code></pre>
-<h4>Extract sequence headers</h4>
-<pre><code class="language-bash">grep "&gt;" sequences.fasta | head -10
-</code></pre>
-<h4>Remove the "&gt;" from headers</h4>
-<pre><code class="language-bash">grep "&gt;" sequences.fasta | sed 's/&gt;//'
-</code></pre>
-<h4>Find sequences with specific patterns</h4>
-<p>The quick <code>grep -A 1</code> approach works <strong>only</strong> when each sequence occupies exactly one line. Many FASTA files wrap long sequences over multiple lines, so inspect the file with <code>less sequences.fasta</code> before using line-based commands.</p>
-<p>For a wrapped or unknown FASTA layout, use a sequence-aware tool such as <code>seqkit</code></p>
-<pre><code class="language-bash"># Install once in a bioinformatics environment
-mamba install -c conda-forge -c bioconda seqkit
+<h2>Why text processing matters in bioinformatics</h2>
+<p>Many bioinformatics data formats—FASTA, FASTQ, variant tables, gene annotation TSVs—are plain text. Efficiently filtering, extracting, and summarizing these files from the command line lets you explore data quickly, create reproducible preprocessing steps, and integrate with larger pipelines. Text tools operate line-by-line, so they are memory-efficient for very large files. However, that same line-oriented behavior means you must understand file layout (for example, whether sequence lines are wrapped) before applying a command like grep or cut.</p>
+<h3>Key concept: line orientation vs. record orientation</h3>
+<p>Tools such as grep, sed, cut, sort, and uniq work on lines. If a biological record spans multiple lines (common in wrapped FASTA), naive line-based commands can yield incorrect results. Sequence-aware tools (for example, seqkit) treat sequences as records and should be used when format complexity matters.</p>
+<h2>Reproducible workflow: filter, extract, and summarize</h2>
+<p>Below is a sequential workflow demonstrating typical tasks. Each code block lists the expected input files and what each command produces. Use exact paths if your files are in another directory (for example, /home/user/data/sequences.fasta).</p>
+<h3>Files used in this example</h3>
+<ul>
+<li>sequences.fasta — a FASTA file containing sequence records. The file may be wrapped (long sequences on multiple lines) or unwrapped (each sequence on a single line).</li>
+<li>reads.fastq — a FASTQ file of sequencing reads (optional for the FASTQ section).</li>
+<li>data.tsv — a tab-delimited table with a header line and multiple columns (e.g., gene_id, sample, count).</li>
+</ul>
+<h3>1) Inspect files safely</h3>
+<p>Before running extraction commands, inspect the file to determine layout.</p>
+<pre><code># Show the first 40 lines of a FASTA to check header and wrap behavior
+head -n 40 sequences.fasta
 
-# Search sequence content, then preserve complete FASTA records
-seqkit grep -s -p "ATGC" sequences.fasta &gt; matching_sequences.fasta
-seqkit stats matching_sequences.fasta
+# View the file interactively (use q to quit)
+less sequences.fasta
 </code></pre>
-<p>The final <code>seqkit stats</code> command should report the number and lengths of the records retained.</p>
-<h3>Working with FASTQ Files</h3>
-<h4>Count reads in a FASTQ file</h4>
-<pre><code class="language-bash">wc -l reads.fastq | awk '{print $1/4}'
+<p>What these produce: text printed to your terminal showing the file start. Look for whether sequence headers begin with "&gt;" (FASTA) and whether sequences continue on multiple lines.</p>
+<h3>2) Count sequence records in a FASTA file (safe line-based and record-aware)</h3>
+<p>If each FASTA header begins with "&gt;" and headers are on separate lines, counting headers is a quick proxy for record count. If sequences are wrapped, this remains valid because headers are still single lines.</p>
+<pre><code># Count FASTA headers (sequences.fasta -&gt; counts to stdout)
+grep -c '^&gt;' sequences.fasta
 </code></pre>
-<h4>Extract quality scores</h4>
-<pre><code class="language-bash">awk 'NR%4==0' reads.fastq | head -10
+<p>What it produces: a single integer printed to stdout representing the number of header lines. Caveat: if your FASTA includes comment lines or nonstandard headers that also start with "&gt;", adjust the pattern.</p>
+<p>If you prefer a sequence-aware count using seqkit (recommended for complex FASTA files):</p>
+<pre><code># Requires seqkit installed; replace path or install in your environment
+seqkit stats sequences.fasta
 </code></pre>
-<h4>Convert FASTQ to FASTA</h4>
-<pre><code class="language-bash">awk 'NR%4==1{printf "&gt;%s\n", substr($0,2)} NR%4==2{print}' reads.fastq &gt; sequences.fasta
+<p>seqkit outputs a tabular summary including number of sequences and lengths. It is record-aware and will be correct even for wrapped FASTA.</p>
+<h3>3) Extract headers and tidy them (remove the leading &gt;)</h3>
+<pre><code># Extract header lines and remove the leading '&gt;'
+grep '^&gt;' sequences.fasta | sed 's/^&gt;//' &gt; headers.txt
+# Output: headers.txt contains one header per line (header text only)
 </code></pre>
-<h3>Working with Tab-Delimited Files</h3>
-<h4>View first few columns</h4>
-<pre><code class="language-bash">cut -f 1,2,3 data.tsv | head
+<p>Explanation: grep selects header lines; sed substitutes the leading character. headers.txt is ready to be used for lookups or counts.</p>
+<h3>4) Find sequences that contain a short motif (use record-aware tool if sequences are wrapped)</h3>
+<p>If sequences are unwrapped (each sequence on a single line), you can use a line-based approach. For wrapped FASTA, use seqkit.</p>
+<pre><code># Line-based (only correct if sequences occupy a single line)
+grep -n -A 1 'ATGCG' sequences.fasta &gt; matching_lines.txt
+# Output: matching_lines.txt contains the header and the following sequence line(s) as printed by grep's -A 1 option
+
+# Record-aware approach (recommended)
+seqkit grep -s -p 'ATGCG' sequences.fasta &gt; matching_records.fasta
+# Output: matching_records.fasta contains full FASTA records that include the motif
 </code></pre>
-<h4>Sort by a specific column</h4>
-<pre><code class="language-bash">sort -k 3 -n data.tsv           # Sort by 3rd column numerically
+<p>Interpretation: For seqkit, matching_records.fasta contains complete records; inspect them with seqkit stats or less. For the grep approach, ensure sequence format is compatible; otherwise you may miss matches or produce partial records.</p>
+<h3>5) Convert a FASTQ to FASTA (simple, line-oriented conversion)</h3>
+<pre><code># Convert reads.fastq -&gt; sequences.fastq.fasta (non-destructive)
+awk 'NR%4==1{printf "&gt;%s\n", substr($0,2)} NR%4==2{print}' reads.fastq &gt; reads.fasta
+# Output: reads.fasta with &gt;header lines and sequence lines
 </code></pre>
-<h4>Filter rows based on column values</h4>
-<pre><code class="language-bash">awk '$3 &gt; 100' data.tsv         # Show rows where column 3 &gt; 100
+<p>Explanation: FASTQ has four-line records: header, sequence, plus-line, quality. The awk script maps these into FASTA header + sequence. Verify reads.fasta with head or seqkit stats.</p>
+<h3>6) Work with tab-delimited data (column selection, filtering, counting)</h3>
+<pre><code># Show header and first 5 rows (safe inspection)
+head -n 6 data.tsv
+
+# Extract columns 1 and 3 to a new file (tab-delimited)
+cut -f 1,3 data.tsv &gt; col1_col3.tsv
+# Output: col1_col3.tsv contains only columns 1 and 3
+
+# Filter rows where column 3 (count) &gt; 100 (assumes header present)
+# This keeps the header and filters numeric rows
+(head -n1 data.tsv &amp;&amp; awk -F'\t' 'NR&gt;1 &amp;&amp; $3&gt;100' data.tsv) &gt; filtered_counts.tsv
+# Output: filtered_counts.tsv with header plus rows where col3 &gt; 100
+
+# Count unique values in column 1 and sort by frequency
+cut -f1 data.tsv | tail -n +2 | sort | uniq -c | sort -k1,1nr &gt; gene_counts.txt
+# Output: gene_counts.txt lists unique values and their occurrence counts, sorted descending
 </code></pre>
-<div class="mt-10 p-8 bg-gray-50 border border-gray-200 rounded-xl">
-<h3 class="text-xl font-bold text-gray-900 mb-4">Knowledge Check &amp; Assessment</h3>
-<div class="space-y-4">
-<div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-<h4 class="font-bold text-gray-800 mb-2">1. Concept Verification</h4>
-<p class="text-gray-600 text-sm">How do standard input, standard output, a pipe, and a redirect connect command-line tools?</p>
-</div>
-<div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-<h4 class="font-bold text-gray-800 mb-2">2. Practical Execution</h4>
-<p class="text-gray-600 text-sm">Use grep, cut, sort, and uniq to count a selected feature or sequence header from a supplied text file. </p>
-</div>
-<div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-<h4 class="font-bold text-gray-800 mb-2">3. Troubleshooting</h4>
-<p class="text-gray-600 text-sm">If a pipeline returns no records, how will you test each command separately and inspect quoting, delimiters, and regular expressions?</p>
-</div>
-</div>
-</div>
-<section aria-label="References and further reading" class="mt-10 p-6 bg-slate-50 border border-slate-200 rounded-xl">
-<h2 class="text-xl font-bold text-gray-900 mb-3">References and further reading</h2>
-<p class="text-sm text-gray-600 mb-3">Use these official resources to check current software behaviour, terminology, and production guidance. Tool versions and defaults change, so verify commands against the documentation before applying them to a research dataset.</p>
-<ul class="list-disc list-inside space-y-2 text-sm text-gray-700">
-<li><a class="text-blue-700 hover:underline" href="https://slurm.schedmd.com/documentation.html" rel="noopener" target="_blank">Slurm documentation</a></li>
-<li><a class="text-blue-700 hover:underline" href="https://man.openbsd.org/ssh" rel="noopener" target="_blank">OpenSSH manual pages</a></li>
+<p>Notes: The parentheses around the header-preserve pipeline ensure the header is copied, then rows are filtered. Replace column indices based on your file schema.</p>
+<h3>7) Small example: extract records for a set of gene IDs</h3>
+<p>Given a file genes_of_interest.txt listing one gene ID per line, extract rows from data.tsv where the first column matches any of those IDs.</p>
+<pre><code># genes_of_interest.txt contains gene IDs, one per line
+# Create a patterns file suitable for grep (-F for fixed strings, -f reads patterns)
+grep -F -f genes_of_interest.txt data.tsv &gt; genes_subset.tsv
+# Output: genes_subset.tsv contains rows from data.tsv having any of the listed gene IDs
+</code></pre>
+<p>Caveat: If your gene IDs could match substrings in other columns, use awk to anchor the match to column 1:</p>
+<pre><code># Anchored match on column 1 (tab-separated)
+awk -F'\t' 'NR==FNR{a[$1]; next} ($1 in a)' genes_of_interest.txt data.tsv &gt; genes_subset.tsv
+# Output: genes_subset.tsv with exact column-1 matches
+</code></pre>
+<h2>Output inspection and interpretation</h2>
+<p>What to look for after each step:</p>
+<ul>
+<li>Counts from grep -c '^&gt;' or seqkit stats: confirm the number matches expectations (e.g., sample metadata). A mismatch can indicate extra header-like lines, concatenated files, or file corruption.</li>
+<li>Headers.txt contents: verify that IDs are what downstream tools expect (no extra whitespace, no &gt; character).</li>
+<li>Matching_records.fasta: check that full records were preserved; if only partial sequences appear, you may have used a line-based grep on wrapped FASTA.</li>
+<li>Filtered TSV outputs: confirm the header presence and that numeric comparisons (such as $3 &gt; 100) behave as intended. Non-numeric text in numeric columns will cause awk to treat values as zero or generate warnings depending on the shell/awk version.</li>
 </ul>
-</section>
+<p>What a plausible result means—and what it does NOT prove:</p>
+<ul>
+<li>A list of sequence IDs matching 'ATGCG' indicates those sequences contain that motif. It does NOT imply functional significance or experimental validity—further validation and context are required.</li>
+<li>A high read count or many matching records may indicate biological signal or contamination; text processing alone cannot distinguish these possibilities.</li>
+<li>Counting headers gives the number of records in the file, but not the uniqueness of IDs. Use uniq or additional checks to test for duplicated IDs.</li>
+</ul>
+<h2>Troubleshooting</h2>
+<p>Below are common symptoms, likely causes, and suggested fixes.</p>
+<h3>Symptom: grep returns no matches, but you expect hits</h3>
+<ul>
+<li>Cause: pattern case mismatch. Fix: use -i for case-insensitive search: grep -i 'pattern' file.</li>
+<li>Cause: pattern contains characters interpreted by the shell. Fix: quote patterns properly (single quotes preferred) and escape regex metacharacters, or use grep -F for fixed-string matching.</li>
+<li>Cause: line wrapping or multi-line records. Fix: use a record-aware tool like seqkit or reformat the file so each record is single-line if appropriate.</li>
+</ul>
+<h3>Symptom: cut results include empty columns or wrong fields</h3>
+<ul>
+<li>Cause: different delimiter than tab. Fix: identify delimiter (use head | sed or less) and supply -d option to cut, or use awk -F to specify delimiter.</li>
+<li>Cause: header contains extra whitespace. Fix: clean headers with sed to trim whitespace: sed 's/^[ \t]*//; s/[ \t]*$//' file.</li>
+</ul>
+<h3>Symptom: awk numeric comparison fails</h3>
+<ul>
+<li>Cause: non-numeric characters (commas, units) in the numeric column. Fix: remove or convert non-numeric characters before numeric comparison, e.g., gsub(/,/, "", $3) inside awk.</li>
+</ul>
+<h3>Symptom: pipelines are slow on very large files</h3>
+<ul>
+<li>Cause: using algorithms that are not streaming-friendly or too many intermediate writes to disk. Fix: keep operations piped where possible (avoid unnecessary temporary files), or use specialized tools (seqkit, samtools for SAM/BAM) and appropriate hardware.</li>
+</ul>
+<h2>Limitations, version and reference-data caveats, and responsible use</h2>
+<ul>
+<li>Line-based tools assume a consistent file structure. If input formats vary across files, automated scripts can silently produce incorrect outputs. Always inspect representative samples with head or less.</li>
+<li>Command behavior can vary slightly with tool versions (GNU vs BSD variants). When writing reproducible pipelines, document tool versions (for example, grep --version) and consider using a package manager (conda/mamba) to pin versions.</li>
+<li>For very large datasets, file encoding and newlines (Windows CRLF vs Unix LF) can affect pattern matching. Normalize files with dos2unix if needed.</li>
+<li>Responsible use: extracting sequence IDs or motifs does not replace proper ethical review or consent checks for sensitive genomic data. Do not share sensitive outputs without appropriate permissions.</li>
+<li>Record-aware tools (seqkit, samtools, bcftools) are preferable for formats with multi-line records or binary representations (e.g., BAM/CRAM). Prefer these when available rather than attempting complex sed/awk workarounds.</li>
+</ul>
+<h2>Next-step checklist</h2>
+<ul>
+<li>Verify file layout for each dataset (wrapped vs unwrapped FASTA, tab delimiter).</li>
+<li>Create and test one small, documented command-line workflow for a common task (e.g., extract gene set, count reads).</li>
+<li>Record tool versions used and consider containerizing workflows (Docker/Singularity) or using an environment manager (conda) for reproducibility.</li>
+<li>When uncertain about format complexities, use seqkit or other format-aware tools rather than relying solely on line-based utilities.</li>
+<li>Practice safe data handling and check institutional policies before sharing processed data.</li>
+</ul>
+<h2>References</h2>
+<ul>
+<li><a href="https://www.gnu.org/software/grep/manual/grep.html">GNU grep manual</a> — documentation and options for pattern searching.</li>
+<li><a href="https://www.gnu.org/software/sed/manual/sed.html">GNU sed manual</a> — stream editor reference for substitution and simple text transformations.</li>
+<li><a href="https://www.gnu.org/software/coreutils/manual/coreutils.html">GNU Coreutils (cut, sort, uniq, wc)</a> — authoritative reference for standard text-processing utilities.</li>
+<li><a href="https://bioinf.shenwei.me/seqkit">seqkit documentation</a> — a fast toolkit for FASTA/Q manipulation with record-aware operations.</li>
+<li><a href="https://www.ncbi.nlm.nih.gov/nuccore/">FASTA format FAQ (NCBI)</a> — practical notes about the FASTA format and common format pitfalls.</li>
+</ul>
 </article>
 <section class="mt-12 mb-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-100">
 <div class="flex items-start gap-4">

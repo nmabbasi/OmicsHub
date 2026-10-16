@@ -130,10 +130,7 @@ function toggleMobileMenu() {
 <div class="mb-12 rounded-2xl overflow-hidden shadow-lg border border-gray-100">
 <img alt="Reproducible Project Structure" class="w-full aspect-video object-cover" decoding="async" loading="eager" src="../images/reproducible-project-structure-workstation.webp"/>
 </div>
-<article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none"><div class="mb-10 text-xl text-gray-600 leading-relaxed">
-<p>A reproducible analysis is easier to inspect, rerun, share, and repair. A consistent project structure prevents raw files from being overwritten and makes the path from input to figure visible to collaborators.</p>
-</div>
-<div class="flex flex-wrap items-center gap-4 text-xs font-mono text-gray-500 bg-gray-50 p-3 rounded-lg border border-gray-200 mb-6">
+<article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none"><div class="flex flex-wrap items-center gap-4 text-xs font-mono text-gray-500 bg-gray-50 p-3 rounded-lg border border-gray-200 mb-6">
 <div class="flex items-center gap-1">
 <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
 <span><strong>Tested on:</strong> Python 3.11, R 4.3.2, Ubuntu 24.04</span>
@@ -141,154 +138,198 @@ function toggleMobileMenu() {
 <div class="flex items-center gap-1">
 <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
 </div>
-</div>
-<div class="p-6 bg-blue-50 border border-blue-100 rounded-xl mb-8"><h4 class="text-lg font-bold text-blue-900 mb-2">Learning Objectives &amp; Prerequisites</h4><div class="text-blue-800 space-y-2"><p><strong>By the end of this lesson, you should be able to:</strong></p><ul>
-<li>Create a safe directory structure for data, code, results, logs, and configuration.</li>
-<li>Separate immutable raw data from derived files.</li>
-<li>Record commands, software versions, references, and random seeds.</li>
-<li>Write a README that lets another learner reproduce a result.</li>
-</ul><p><strong>Prerequisites:</strong></p><ul>
-<li>Complete <a href="git-github-bioinformatics.html">Git and GitHub for Bioinformatics</a></li>
-<li>Know basic shell commands and one scripting language.</li>
-</ul><strong class="block mt-2 text-blue-900">Expected Output</strong><p>By the end of this lesson, you should have: <strong>A project directory with separated raw data, derived data, code, results, documentation, and an environment or dependency record.</strong></p></div></div>
-<h2>1. A practical layout</h2>
-<p>Use names that communicate role rather than personal computer paths.</p>
-<pre><code class="language-text">project/
-├── README.md
-├── config/
-├── data/raw/
-├── data/processed/
-├── envs/
-├── scripts/
-├── results/figures/
-├── results/tables/
-└── logs/
+</div><h2>Learning objectives and prerequisites</h2>
+<p><strong>By the end of this lesson</strong> you will be able to:</p>
+<ul>
+<li>Create a clear, role-oriented project directory for a bioinformatics analysis.</li>
+<li>Keep raw (immutable) inputs separate from derived data and results.</li>
+<li>Record provenance: checksums, software versions, configuration, and the Git commit that produced results.</li>
+<li>Write a short, runnable README that lets another researcher reproduce an analysis from raw files to figures.</li>
+</ul>
+<p><strong>Prerequisites:</strong> basic shell (bash) skills, familiarity with one scripting language (Python or R recommended), and basic Git. A working installation of tools mentioned below (sha256sum, git, conda/mamba or pip, R with renv if used) is assumed.</p>
+<h2>Why project structure matters in bioinformatics</h2>
+<p>Bioinformatics analyses typically transform large, sensitive, and often heterogeneous datasets through multi-step computational pipelines. Without a consistent project layout, it is easy to lose track of which files are inputs, which are intermediate, and which are final outputs. That ambiguity increases the risk of overwriting raw data, repeating expensive computations unnecessarily, and failing to reproduce results months later or on a different machine.</p>
+<p>A deliberate structure communicates intent to collaborators and future you: what is raw and never changed, what is reproducible and can be re-created from code, and where to look for provenance information (software versions, commands, and commit hashes). This reduces both accidental errors and the time needed to validate, extend, or audit analyses.</p>
+<h2>Reproducible, step-by-step workflow</h2>
+<p>The commands below create a compact, practical layout and show how to capture provenance without making destructive changes. All paths are relative to the project root; replace <code>project</code> with your actual project folder name. These commands are reproducible and conservative: they avoid destructive operations (no <code>rm -rf</code>), and they explicit about input and output files.</p>
+<h3>1. Create the directory skeleton</h3>
+<pre><code># From the parent folder:
+mkdir -p project/{config,data/{raw,processed},envs,scripts,results/{figures,tables},logs}
+# Create a minimal README and .gitignore
+touch project/README.md project/config/.keep project/data/raw/.keep
+cat &gt; project/.gitignore &lt;&lt;'EOF'
+# Raw data (keep out of version control)
+data/raw/
+# Large processed artifacts
+data/processed/
+results/
+# Python artifacts
+*.pyc
+__pycache__/
+# Local environment files
+.env
+EOF
 </code></pre>
-<h2>2. Provenance files</h2>
-<p>Record input checksums, software versions, reference builds, commands, parameters, and the Git commit. Keep large or sensitive data outside public repositories.</p>
-<pre><code class="language-bash">find data/raw -type f -maxdepth 1 -print0 | xargs -0 sha256sum &gt; config/raw_checksums.sha256
-python --version &gt; config/versions.txt
-git rev-parse HEAD &gt;&gt; config/versions.txt
-</code></pre>
-<h2>3. Configuration over hard-coding</h2>
-<p>Put sample names, paths, thresholds, and resource settings in a configuration file. This lets the same script run on a second dataset without editing logic.</p>
-<pre><code class="language-yaml">threads: 4
-min_genes: 200
+<p>What you should have:</p>
+<ul>
+<li><code>project/config/</code> — configuration, checksums, provenance text files</li>
+<li><code>project/data/raw/</code> — immutable input files you obtained (FASTQ, BAM, VCF, etc.)</li>
+<li><code>project/data/processed/</code> — intermediate, regenerable files</li>
+<li><code>project/scripts/</code> — executable scripts or pipeline entry points</li>
+<li><code>project/results/</code> — final figures and tables intended for reporting</li>
+<li><code>project/logs/</code> — execution logs; each run should append a timestamped log</li>
+<li><code>project/envs/</code> — environment or dependency manifests</li>
+</ul>
+<h3>2. Add an example configuration file</h3>
+<pre><code># project/config/analysis.yml
+# Store parameter values, paths, and resource settings here.
+threads: 4
 reference: GRCh38
-input: data/raw/counts.tsv
+min_counts: 10
+input_counts: data/raw/counts.tsv
+output_dir: data/processed/qc
 </code></pre>
-<h2>4. README and results</h2>
-<p>Explain setup, expected inputs, commands, outputs, and limitations. Name results by meaning and preserve logs beside them.</p>
-<pre><code class="language-text">1. Create environment
-2. Place validated input in data/raw
-3. Run scripts/run_qc.sh
-4. Inspect results/figures/qc.webp
-</code></pre>
-<h2>5. Naming Conventions</h2>
-<p>Adopt a systematic naming scheme. Avoid spaces, special characters, and ambiguous abbreviations. Use ISO 8601 dates (<code>YYYY-MM-DD</code>) and lowercase with hyphens or shows.</p>
-<pre><code class="language-text"># Good: descriptive, date-stamped, sortable
-data/raw/2026-08-15_rnaseq_sample01_R1.fastq.gz
-results/figures/2026-08-15_pca-plot.webp
+<p>Why: keeping these parameters separate from code avoids hard-coded values and makes the analysis easier to re-run with different datasets or thresholds.</p>
+<h3>3. Record provenance for raw inputs and software versions</h3>
+<pre><code># From project root
+# 1) Record SHA-256 checksums of every file directly under data/raw
+find data/raw -maxdepth 1 -type f -print0 | xargs -0 sha256sum &gt; config/raw_checksums.sha256
 
-# Bad: ambiguous, unsortable, undated
-data/new data (2)/file.txt
-results/final_final_v3.png
-</code></pre>
-<h2>6. Environment and Dependency Management</h2>
-<p>Record the exact software environment alongside the project. This ensures that another researcher, or your future self, can recreate the same computational conditions.</p>
-<pre><code class="language-bash"># Conda: export a pinned environment
+# 2) Record software versions used on this machine
+python --version 2&gt;&amp;1 | sed 's/^/python: /' &gt; config/versions.txt
+Rscript --version 2&gt;&amp;1 | sed 's/^/R: /' &gt;&gt; config/versions.txt
+git --version 2&gt;&amp;1 | sed 's/^/git: /' &gt;&gt; config/versions.txt
+
+# 3) If using conda or mamba, export an environment (no builds to improve portability)
 conda env export --no-builds &gt; envs/environment.yml
 
-# Pip: freeze exact versions
+# 4) If using pip in a virtualenv
 pip freeze &gt; envs/requirements.txt
 
-# R: use renv for snapshot isolation
-# In R console: renv::snapshot()
+# 5) If using R with renv, create a snapshot from an R session
+# In R console: renv::snapshot(lockfile = "envs/renv.lock")
 </code></pre>
-<p><strong>Why this matters:</strong> A script that runs under Python 3.10 with pandas 1.5 may silently produce different results under Python 3.12 with pandas 2.1 due to API changes, deprecations, or altered default parameters.</p>
-<h2>7. Version Control Integration</h2>
-<p>Every project should be a Git repository from day one. Commit early and often, and use <code>.gitignore</code> to exclude large data files, temporary outputs, and sensitive credentials.</p>
-<pre><code class="language-bash"># Initialize and make first commit
-git init
-echo "data/raw/" &gt;&gt; .gitignore
-echo "*.pyc" &gt;&gt; .gitignore
-echo ".env" &gt;&gt; .gitignore
-git add .
-git commit -m "Initial project structure with README and configs"
-</code></pre>
-<p>Track the relationship between code versions and results by recording the Git commit hash alongside every output:</p>
-<pre><code class="language-bash">echo "Results generated at commit: $(git rev-parse --short HEAD)" &gt;&gt; results/run_log.txt
-</code></pre>
-<h2>8. Data Protection and Backup Strategy</h2>
-<p>Raw data must be treated as <strong>immutable</strong>Never modify raw files directly; instead, read them into processing scripts and write derived outputs to <code>data/processed/</code> or <code>results/</code></p>
-<div class="overflow-x-auto -mx-4 px-4">
-<table>
-<table>
-<thead>
-<tr>
-<th>Rule</th>
-<th>Implementation</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Raw data is read-only</td>
-<td><code>chmod 444 data/raw/*</code> after download</td>
-</tr>
-<tr>
-<td>Processed data is reproducible</td>
-<td>Delete and regenerate from raw + code</td>
-</tr>
-<tr>
-<td>Results include provenance</td>
-<td>Each output records the script, commit, and parameters used</td>
-</tr>
-<tr>
-<td>Sensitive data stays local</td>
-<td>Use <code>.gitignore</code> and never commit patient identifiers</td>
-</tr>
-</tbody>
-</table>
-</table></div>
-<h2>9. Documentation Standards</h2>
-<p>A good README answers five questions:</p>
-<ol>
-<li><strong>What</strong> does this project analyze?</li>
-<li><strong>How</strong> do I set up the environment?</li>
-<li><strong>Where</strong> is the input data, and how was it obtained?</li>
-<li><strong>Which</strong> commands reproduce the results?</li>
-<li><strong>What</strong> are the known limitations?</li>
-</ol>
-<pre><code class="language-markdown"># RNA-seq Differential Expression Analysis
-
-## Setup
-1. Install conda: see envs/environment.yml
-2. Place raw FASTQ files in data/raw/
-3. Run: bash scripts/run_pipeline.sh
-
-## Outputs
-- results/figures/volcano_plot.webp
-- results/tables/deg_table.csv
-
-## Limitations
-- Tested on Ubuntu 22.04 with 32 GB RAM
-- Requires ~50 GB disk space for genome index
-</code></pre>
-<h2>Practical Exercise</h2>
-<p>Create this structure for a small project, add a README with four reproducible steps, and record one version file and one checksum file.</p>
-<p></p>
-<h2>Troubleshooting</h2>
-<p>If a script depends on a personal path, replace it with a command-line argument or configuration value.</p>
-<h2>Next Steps</h2>
-<p>Continue with <a href="reproducible-workflows-snakemake-nextflow.html">Snakemake &amp; Nextflow</a> and <a href="research-reporting-interpretation.html">Research Reporting</a>Record the software versions, dataset or example inputs, and any decisions you made.</p>
-<section aria-label="References and further reading" class="mt-10 p-6 bg-slate-50 border border-slate-200 rounded-xl">
-<h2 class="text-xl font-bold text-gray-900 mb-3">References and further reading</h2>
-<p class="text-sm text-gray-600 mb-3">Use these official resources to check current software behaviour, terminology, and production guidance. Tool versions and defaults change, so verify commands against the documentation before applying them to a research dataset.</p>
-<ul class="list-disc list-inside space-y-2 text-sm text-gray-700">
-<li><a class="text-blue-700 hover:underline" href="https://www.ncbi.nlm.nih.gov/books/NBK21154/" rel="noopener" target="_blank">NCBI Bookshelf: Bioinformatics</a></li>
-<li><a class="text-blue-700 hover:underline" href="https://www.ebi.ac.uk/training/online/" rel="noopener" target="_blank">EMBL-EBI Training</a></li>
+<p>What these files produce:</p>
+<ul>
+<li><code>config/raw_checksums.sha256</code> — a record to verify raw inputs have not changed</li>
+<li><code>config/versions.txt</code> — human-readable summary of key tool versions</li>
+<li><code>envs/environment.yml</code> or <code>envs/requirements.txt</code> — machine-readable environment manifests</li>
 </ul>
-</section>
+<h3>4. Make a simple, reproducible run script</h3>
+<p>Write a single wrapper that documents and runs the analysis. This file will append provenance to a per-run log so every result can be tied to a Git commit and parameter set.</p>
+<pre><code># project/scripts/run_qc.sh
+#!/usr/bin/env bash
+set -euo pipefail
+
+PROJECT_ROOT="$(cd "$(dirname "$0")/../.." &amp;&amp; pwd)"
+CONFIG="$PROJECT_ROOT/config/analysis.yml"
+LOG="$PROJECT_ROOT/logs/run_$(date +%Y%m%dT%H%M%S).log"
+COMMIT="$(git -C "$PROJECT_ROOT" rev-parse --short HEAD || echo 'no-git')"
+
+echo "Run started: $(date)" &gt;&gt; "$LOG"
+echo "Project: $PROJECT_ROOT" &gt;&gt; "$LOG"
+echo "Git commit: $COMMIT" &gt;&gt; "$LOG"
+echo "Config used: $CONFIG" &gt;&gt; "$LOG"
+echo "---" &gt;&gt; "$LOG"
+
+# Example command: a Python QC script that reads config file and writes outputs.
+# The Python script is expected to write a QC report to data/processed/qc/report.html
+python "$PROJECT_ROOT/scripts/qc_counts.py" --config "$CONFIG" &gt;&gt; "$LOG" 2&gt;&amp;1
+
+echo "Run finished: $(date)" &gt;&gt; "$LOG"
+</code></pre>
+<p>What you should provide:</p>
+<ul>
+<li><code>project/scripts/qc_counts.py</code> — the actual implementation (Python or R) that reads the config YAML, reads <code>data/raw/counts.tsv</code>, performs checks/filters, writes <code>data/processed/qc/*</code>.</li>
+<li>The wrapper <code>run_qc.sh</code> creates a timestamped log in <code>logs/</code> and records the Git commit.</li>
+</ul>
+<h2>Output inspection and interpretation</h2>
+<p>After running <code>project/scripts/run_qc.sh</code>, inspect these files:</p>
+<ul>
+<li><code>logs/run_*.log</code> — contains the command stdout/stderr, start/end times, and Git commit hash. Check for error messages or stack traces here first.</li>
+<li><code>data/processed/qc/report.html</code> (or <code>results/figures/*.png</code>, <code>results/tables/*.tsv</code>) — final outputs intended for interpretation.</li>
+<li><code>config/raw_checksums.sha256</code> — re-run <code>sha256sum -c config/raw_checksums.sha256</code> to verify raw files are unchanged.</li>
+<li><code>envs/environment.yml</code> or <code>envs/requirements.txt</code> — use these to recreate an environment if results need to be regenerated.</li>
+</ul>
+<p>What to look for and what it implies:</p>
+<ul>
+<li>A successful run with no errors and presence of expected output files suggests the pipeline executed to completion on this machine and input set. It does not prove the results are scientifically correct—only that the computation ran.</li>
+<li>Consistent checksums confirm raw files were not silently modified. A mismatch indicates the input changed and you should not assume reproducibility until you reconcile differences.</li>
+<li>Version mismatches (e.g., different Python or package versions) can explain subtle differences in downstream results; use environment manifests to re-create the original software stack.</li>
+</ul>
+<h2>Troubleshooting: symptoms, likely causes, and fixes</h2>
+<ul>
+<li>
+<strong>Symptom:</strong> Script fails with "module not found" or ImportError.
+    <br/><strong>Likely cause:</strong> Required package not installed or different Python environment active.
+    <br/><strong>Fix:</strong> Recreate the environment from <code>envs/environment.yml</code> (if using conda) or <code>envs/requirements.txt</code>. Activate the correct environment before running:
+    <pre><code>conda env create -f envs/environment.yml
+conda activate myenv
+bash scripts/run_qc.sh</code></pre>
+</li>
+<li>
+<strong>Symptom:</strong> Output files present but metrics or plots look wrong (e.g., zero counts, all samples identical).
+    <br/><strong>Likely cause:</strong> Wrong input file path in configuration or mis-specified delimiter/format.
+    <br/><strong>Fix:</strong> Inspect the first lines of the input with <code>head data/raw/counts.tsv</code> and verify the config <code>input_counts</code> points to the correct file. Add basic checks in your script (e.g., confirm &gt;1 non-zero row/column).
+  </li>
+<li>
+<strong>Symptom:</strong> Checksums fail after a run.
+    <br/><strong>Likely cause:</strong> Raw files were accidentally modified or overwritten.
+    <br/><strong>Fix:</strong> Recover raw files from backup, or if intentionally updated, regenerate <code>config/raw_checksums.sha256</code> and record a note in <code>config/change_log.txt</code> describing why the raw inputs changed (date, source, reason).
+  </li>
+<li>
+<strong>Symptom:</strong> Results differ between two machines despite same input files.
+    <br/><strong>Likely cause:</strong> Different software versions or locale/encoding differences.
+    <br/><strong>Fix:</strong> Compare <code>config/versions.txt</code> between machines. Use the pinned environment manifest to standardize versions, then re-run the pipeline.
+  </li>
+<li>
+<strong>Symptom:</strong> Git commit recorded in logs is "no-git".
+    <br/><strong>Likely cause:</strong> The project directory is not a Git repository or the script was run outside of the repo.
+    <br/><strong>Fix:</strong> Initialize Git and make an initial commit (see version control section below), or run the analysis from within the repository.
+  </li>
+</ul>
+<h2>Limitations, version and reference-data caveats, and responsible use</h2>
+<p>Carefully consider these points when applying the structure above:</p>
+<ul>
+<li><strong>Immutability is a policy, not an enforcement mechanism.</strong> Setting files to read-only (e.g., <code>chmod 444 data/raw/*</code>) discourages accidental edits but does not replace sensible backup and access-control policies. Keep original copies backed up in a separate storage system (institutional storage or object storage with versioning).</li>
+<li><strong>Software versions matter.</strong> Semantic or behavioral changes between library versions can change results even when code is unchanged. Exported environment manifests improve reproducibility but may not guarantee identical execution across operating systems (different glibc, CPU instruction sets, or RNG implementations can produce differences). For maximum reproducibility, consider containerization (Docker/Singularity) in addition to environment manifests.</li>
+<li><strong>Reference data needs exact identifiers.</strong> For genomic references (e.g., GRCh38), include the exact source, sequence MD5/sha256, and any index files used. Different patch levels or decoy sequences change coordinate systems and outcomes. Record accession numbers, file checksums, and where the reference was downloaded from.</li>
+<li><strong>Privacy and data sharing.</strong> Do not commit sensitive or personally identifiable information to version control. Keep a separate document describing data access procedures and the legal/ethical approvals required to use the data.</li>
+<li><strong>Provenance shows what was run, not why it is correct.</strong> Provenance enables auditing and re-running analyses; it does not validate assumptions, statistical correctness, or biological interpretation. Pair good project structure with peer review and appropriate validation experiments.</li>
+</ul>
+<h2>Tidy naming conventions and minimal standards</h2>
+<p>Use names that encode role and sortable properties. A minimal convention:</p>
+<ul>
+<li>Use ISO 8601 dates at the start for time-ordered files: <code>2026-08-15_sample01_R1.fastq.gz</code></li>
+<li>Lowercase letters, digits, hyphens; avoid spaces and special characters.</li>
+<li>Suffix files by type: <code>.fastq.gz</code>, <code>.tsv</code>, <code>.html</code>, <code>.yml</code>.</li>
+</ul>
+<h2>Version control integration (brief)</h2>
+<p>Start a Git repo from day one; track code, small configs, and documentation. Exclude raw and heavy files via <code>.gitignore</code>. Record the commit hash in each run log so results are tied to a specific code state.</p>
+<pre><code># Initialize git and make the initial commit (non-destructive)
+cd project
+git init
+git add README.md config scripts .gitignore
+git commit -m "Initial project structure and documentation"
+# Record commit hash for provenance
+git rev-parse --short HEAD &gt; config/git_commit.txt
+</code></pre>
+<h2>Next-step checklist</h2>
+<ol>
+<li>Populate <code>data/raw/</code> with validated input files; compute and save checksums: <code>sha256sum data/raw/* &gt; config/raw_checksums.sha256</code>.</li>
+<li>Implement or adapt the analysis script(s) in <code>scripts/</code> to read <code>config/analysis.yml</code> and write to <code>data/processed/</code> or <code>results/</code>.</li>
+<li>Export environment manifests into <code>envs/</code> and store a human-readable <code>config/versions.txt</code>.</li>
+<li>Initialize Git, commit code and configs, and keep sensitive/raw data out of the repo.</li>
+<li>Run the wrapper <code>scripts/run_qc.sh</code> and inspect the log in <code>logs/</code>.</li>
+<li>Document the procedure in <code>README.md</code> including commands to reproduce the run.</li>
+</ol>
+<h2>References</h2>
+<ul>
+<li><a href="https://git-scm.com/doc">Git documentation — git-scm.com</a></li>
+<li><a href="https://docs.conda.io/en/latest/">Conda documentation — conda.io</a></li>
+<li><a href="https://rstudio.github.io/renv/articles/renv.html">renv: reproducible R environments — RStudio</a></li>
+<li><a href="https://doi.org/10.1371/journal.pcbi.1003285">Sandve et al., Ten simple rules for reproducible computational research — PLOS Computational Biology</a></li>
+</ul>
 </article>
 <section class="mt-12 mb-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-100">
 <div class="flex items-start gap-4">

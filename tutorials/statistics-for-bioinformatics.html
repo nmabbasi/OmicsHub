@@ -130,10 +130,7 @@ function toggleMobileMenu() {
 <div class="mb-12 rounded-2xl overflow-hidden shadow-lg border border-gray-100">
 <img alt="Statistics for Bioinformatics" class="w-full aspect-video object-cover" decoding="async" loading="eager" src="../images/statistics-bioinformatics-workstation.webp"/>
 </div>
-<article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none"><div class="mb-10 text-xl text-gray-600 leading-relaxed">
-<p>Statistics helps distinguish repeatable evidence from noise. In bioinformatics, the number of measurements can be enormous while the number of biological replicates remains small, so study design and effect size matter as much as a p-value.</p>
-</div>
-<div class="flex flex-wrap items-center gap-4 text-xs font-mono text-gray-500 bg-gray-50 p-3 rounded-lg border border-gray-200 mb-6">
+<article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none"><div class="flex flex-wrap items-center gap-4 text-xs font-mono text-gray-500 bg-gray-50 p-3 rounded-lg border border-gray-200 mb-6">
 <div class="flex items-center gap-1">
 <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
 <span><strong>Tested on:</strong> Python 3.11, R 4.3.2, Ubuntu 24.04</span>
@@ -141,265 +138,243 @@ function toggleMobileMenu() {
 <div class="flex items-center gap-1">
 <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
 </div>
-</div>
-<div class="p-6 bg-blue-50 border border-blue-100 rounded-xl mb-8"><h4 class="text-lg font-bold text-blue-900 mb-2">Learning Objectives &amp; Prerequisites</h4><div class="text-blue-800 space-y-2"><p><strong>By the end of this lesson, you should be able to:</strong></p><ul>
-<li>Distinguish biological from technical replicates.</li>
-<li>Explain effect size, uncertainty, p-values, and false discovery rate.</li>
-<li>Choose a simple comparison without violating independence assumptions.</li>
-<li>Interpret a result with limitations and not just a significance threshold.</li>
-</ul><p><strong>Prerequisites:</strong></p><ul>
-<li>Basic algebra and a data frame in R or Python.</li>
-<li>Complete <a href="quality-control-fundamentals.html">Quality Control Fundamentals</a></li>
-</ul><strong class="block mt-2 text-blue-900">Expected Output</strong><p>By the end of this lesson, you should have: <strong>A short analysis plan that states the outcome, predictor, experimental unit, covariates, replicates, visual diagnostic, and the interpretation limits of the planned test.</strong></p></div></div>
-<h2>1. Replicates and distributions</h2>
-<p>Biological replicates represent independent experimental units; technical replicates measure the same unit repeatedly. Plot the data before selecting a test.</p>
-<pre><code class="language-r">set.seed(7)
-x &lt;- rnorm(12, mean=10, sd=2)
-summary(x)
-hist(x, main="Example distribution", xlab="Measurement")
+</div><h2>Learning objectives and prerequisites</h2>
+<p>By the end of this lesson you will be able to:</p>
+<ul>
+<li>Differentiate biological from technical replicates and state the experimental unit.</li>
+<li>Explain effect size, uncertainty (confidence intervals), p-values, and the false discovery rate (FDR).</li>
+<li>Choose and implement a simple two-group comparison without violating independence assumptions.</li>
+<li>Describe when and how to correct for multiple testing and how to report limits of a result.</li>
+<li>Write a brief, reproducible analysis plan that lists outcome, predictor, experimental unit, covariates, replicates, diagnostic plots, and interpretation limits.</li>
+</ul>
+<p>Prerequisites:</p>
+<ul>
+<li>Basic algebra and familiarity with a data-frame structure in R or Python.</li>
+<li>Installed software: R (recommended &gt;= 4.0), Python (recommended &gt;= 3.8), and the libraries used below (installation commands included).</li>
+</ul>
+<h2>Why these statistics matter in bioinformatics</h2>
+<p>Bioinformatics analyses commonly measure many features (for example, thousands of genes or proteins) on a relatively small number of independent biological samples. This creates two important issues:</p>
+<ul>
+<li>Multiple testing: evaluating thousands of hypotheses inflates the probability of false positives; controlling a family-wise or false discovery rate is essential.</li>
+<li>Limited replicates: with few independent biological replicates, variability and effect size dominate inference—p-values alone are not sufficient evidence of biological importance.</li>
+</ul>
+<p>Good analysis emphasizes: (1) a clear statement of what is being tested (null hypothesis), (2) whether the experimental units are independent, (3) appropriate diagnostics (plots and assumptions checks), (4) reporting effect sizes with uncertainty, and (5) transparent multiple-testing handling. The reproducible workflows below show how to run a simple two-group comparison, inspect outputs, and interpret results cautiously.</p>
+<h2>Reproducible sequential workflow</h2>
+<p>The example workflow compares a single gene (or any single numeric feature) between a control and treated group, demonstrating diagnostics, a two-sample test, effect-size calculation, and FDR correction placeholder for many features. Files and directories used in the example:</p>
+<ul>
+<li><code>data/control.csv</code> — one-column CSV of control measurements (one row per biological replicate).</li>
+<li><code>data/treated.csv</code> — one-column CSV of treated measurements.</li>
+<li><code>results/</code> — directory to hold generated plots and text outputs.</li>
+</ul>
+<p>Create the directories and example CSVs (no destructive commands):</p>
+<pre><code># from a shell
+mkdir -p data results
+
+# Example CSVs: do not overwrite real data. These are small illustrative files.
+printf "value\n8.9\n9.8\n10.4\n9.5\n" &gt; data/control.csv
+printf "value\n11.2\n10.7\n12.1\n11.4\n" &gt; data/treated.csv
 </code></pre>
-<h2>2. Effect size and uncertainty</h2>
-<p>A difference of 0.2 may be statistically significant in a huge dataset but scientifically unimportant. Report a difference or fold change with uncertainty and the scale used.</p>
-<pre><code class="language-r">mean_treated - mean_control
-log2(mean_treated / mean_control)
+<h3>Python: diagnostics, t-test, Cohen's d, and FDR step</h3>
+<p>Required Python packages: numpy, pandas, scipy, matplotlib, statsmodels.</p>
+<pre><code># Install (if needed)
+python -m pip install --user numpy pandas scipy matplotlib statsmodels
+
+# Script: scripts/compare_groups.py
+# Usage: python scripts/compare_groups.py data/control.csv data/treated.csv results/
 </code></pre>
-<h2>3. Multiple testing</h2>
-<p>Testing thousands of genes creates many false positives. Control the false discovery rate with an appropriate correction and pre-specify the threshold.</p>
-<pre><code class="language-r">p.adjust(p_values, method = "BH")
-</code></pre>
-<h3>Matched Python and R example</h3>
-<p>Use the same biological-replicate vectors in either language. The code illustrates a simple independent-sample comparison and a Benjamini-Hochberg adjustment; it doesn't replace checking the design, assumptions, or effect size.</p>
-<pre><code class="language-python">import numpy as np
+<pre><code>#!/usr/bin/env python3
+# scripts/compare_groups.py
+import sys
+import numpy as np
+import pandas as pd
 from scipy import stats
 from statsmodels.stats.multitest import multipletests
+import matplotlib.pyplot as plt
+from math import sqrt
 
-control = np.array([8.9, 9.8, 10.4, 9.5])
-treated = np.array([11.2, 10.7, 12.1, 11.4])
-result = stats.ttest_ind(treated, control, equal_var=False)
-print({"mean_difference": treated.mean() - control.mean(), "p_value": result.pvalue})
+control_path, treated_path, outdir = sys.argv[1], sys.argv[2], sys.argv[3]
 
-adjusted_p = multipletests(p_values, method="fdr_bh")[1]
+# Read inputs
+ctrl = pd.read_csv(control_path)['value'].dropna().to_numpy()
+trt  = pd.read_csv(treated_path)['value'].dropna().to_numpy()
+
+# Diagnostics: simple boxplot and histogram
+plt.figure()
+plt.boxplot([ctrl, trt], labels=['control', 'treated'])
+plt.title('Boxplot: control vs treated')
+plt.savefig(f'{outdir}/boxplot_control_treated.png', dpi=150)
+
+plt.figure()
+plt.hist(ctrl, alpha=0.6, label='control')
+plt.hist(trt,  alpha=0.6, label='treated')
+plt.legend()
+plt.title('Histograms')
+plt.savefig(f'{outdir}/histograms.png', dpi=150)
+
+# Summary statistics
+summary = {
+    'n_control': len(ctrl),
+    'n_treated': len(trt),
+    'mean_control': float(np.mean(ctrl)),
+    'mean_treated': float(np.mean(trt)),
+    'sd_control': float(np.std(ctrl, ddof=1)),
+    'sd_treated': float(np.std(trt, ddof=1))
+}
+pd.Series(summary).to_csv(f'{outdir}/summary_stats.csv')
+
+# Welch's t-test (does not assume equal variances)
+tt = stats.ttest_ind(trt, ctrl, equal_var=False)
+with open(f'{outdir}/ttest_result.txt', 'w') as fh:
+    fh.write(f'pvalue_welch\t{tt.pvalue}\n')
+    fh.write(f'statistic\t{tt.statistic}\n')
+
+# Cohen's d (pooled SD version)
+pooled_sd = sqrt(((len(ctrl)-1)*np.var(ctrl, ddof=1) + (len(trt)-1)*np.var(trt, ddof=1)) / (len(ctrl) + len(trt) - 2))
+cohens_d = (np.mean(trt) - np.mean(ctrl)) / pooled_sd if pooled_sd &gt; 0 else float('nan')
+with open(f'{outdir}/effect_size.txt', 'w') as fh:
+    fh.write(f'cohens_d\t{cohens_d}\n')
+
+# Placeholders for multiple testing: if you have p-values vector for many features, use multipletests
+# Example:
+# pvals = np.loadtxt('pvalues_all_features.txt')
+# adj = multipletests(pvals, alpha=0.05, method='fdr_bh')[1]
+# np.savetxt(f'{outdir}/pvalues_adj.txt', adj)
 </code></pre>
-<pre><code class="language-r">control &lt;- c(8.9, 9.8, 10.4, 9.5)
-treated &lt;- c(11.2, 10.7, 12.1, 11.4)
-result &lt;- t.test(treated, control, var.equal = FALSE)
-print(list(mean_difference = mean(treated) - mean(control), p_value = result$p.value))
-
-adjusted_p &lt;- p.adjust(p_values, method = "BH")
-</code></pre>
-<h2>4. Power and limitations</h2>
-<p>Power depends on effect size, variability, sample size, and the decision threshold. A non-significant result is not proof of no effect; report the uncertainty and observed effect.</p>
-<pre><code class="language-text">Report: effect size, confidence interval, sample size, test, adjusted p-value, and biological limitation.
-</code></pre>
-<h2>5. Hypothesis Testing Framework</h2>
-<p>Every statistical test in bioinformatics follows the same logical framework:</p>
-<ol>
-<li><strong>State the null hypothesis (H₀):</strong> "There's no difference in gene expression between treated and control groups."</li>
-<li><strong>Choose a test:</strong> Based on data distribution, sample size, and experimental design.</li>
-<li><strong>Calculate the test statistic and p-value.</strong></li>
-<li><strong>Apply multiple testing correction</strong> (critical in genomics, you're testing thousands of genes).</li>
-<li><strong>Interpret the result</strong> in biological context, not just statistical significance.</li>
-</ol>
-<h2>6. A Worked Statistical Test</h2>
-<pre><code class="language-r"># Example: Test whether a gene is differentially expressed
-# between control and treated groups
-
-control &lt;- c(5.2, 4.8, 5.5, 4.9, 5.1)
-treated &lt;- c(8.3, 7.9, 8.7, 8.1, 8.5)
-
-# Step 1: Check normality assumption
-shapiro.test(control)  # p = 0.92 (normal)
-shapiro.test(treated)  # p = 0.88 (normal)
-
-# Step 2: Check equal variance
-var.test(control, treated)  # p = 0.85 (variances equal)
-
-# Step 3: Perform two-sample t-test
-result &lt;- t.test(control, treated, var.equal = TRUE)
-print(result)
-
-# Output:
-# t = -14.2, df = 8, p-value = 1.2e-06
-# 95% CI: [-3.73, -2.67]
-# mean of control = 5.10, mean of treated = 8.30
-
-# Step 4: Calculate effect size (Cohen's d)
-cohens_d &lt;- (mean(treated) - mean(control)) / sqrt(
-  ((length(control)-1)*var(control) + (length(treated)-1)*var(treated)) /
-  (length(control) + length(treated) - 2)
-)
-print(paste("Cohen's d:", round(cohens_d, 2)))
-# Cohen's d: 12.73 (very large effect)
-</code></pre>
-<h2>7. Multiple Testing Correction</h2>
-<p>When testing thousands of genes simultaneously, the probability of false positives increases dramatically. A p-value threshold of 0.05 across 20,000 genes would produce ~1,000 false positives by chance.</p>
-<pre><code class="language-r"># Simulate: 20,000 genes, no real differential expression
-set.seed(42)
-p_values &lt;- runif(20000)  # Uniform p-values (null hypothesis true for all)
-
-# Without correction: how many "significant" at p &lt; 0.05?
-sum(p_values &lt; 0.05)  # ~1,000 false positives!
-
-# Bonferroni correction (very conservative)
-p_bonferroni &lt;- p.adjust(p_values, method = "bonferroni")
-sum(p_bonferroni &lt; 0.05)  # ~0 (correctly rejects none)
-
-# Benjamini-Hochberg (FDR) correction (recommended for genomics)
-p_fdr &lt;- p.adjust(p_values, method = "BH")
-sum(p_fdr &lt; 0.05)  # ~0 (correctly rejects none)
-</code></pre>
-<div class="overflow-x-auto -mx-4 px-4">
-<table>
-<table>
-<thead>
-<tr>
-<th>Method</th>
-<th>Controls</th>
-<th>Stringency</th>
-<th>Best For</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Bonferroni</td>
-<td>Family-wise error rate (FWER)</td>
-<td>Very strict</td>
-<td>Clinical/diagnostic applications</td>
-</tr>
-<tr>
-<td>Benjamini-Hochberg (BH)</td>
-<td>False discovery rate (FDR)</td>
-<td>Moderate</td>
-<td>Exploratory genomics, RNA-seq</td>
-</tr>
-<tr>
-<td>Storey's q-value</td>
-<td>Positive FDR</td>
-<td>Least strict</td>
-<td>Large-scale screening</td>
-</tr>
-</tbody>
-</table>
-</table></div>
-<h2>8. Common Statistical Pitfalls in Bioinformatics</h2>
-<div class="overflow-x-auto -mx-4 px-4">
-<table>
-<table>
-<thead>
-<tr>
-<th>Pitfall</th>
-<th>Example</th>
-<th>Consequence</th>
-<th>Prevention</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Pseudoreplication</td>
-<td>Treating technical replicates as biological</td>
-<td>Inflated sample size, false significance</td>
-<td>Aggregate technical replicates before testing</td>
-</tr>
-<tr>
-<td>Data dredging</td>
-<td>Testing every gene pair for correlation</td>
-<td>Massive multiple testing burden</td>
-<td>Pre-register hypotheses or correct for all tests</td>
-</tr>
-<tr>
-<td>P-hacking</td>
-<td>Trying different tests until p &lt; 0.05</td>
-<td>Unreliable results</td>
-<td>Choose the test before seeing data</td>
-</tr>
-<tr>
-<td>Ignoring effect size</td>
-<td>Reporting p = 0.001 for a 1.05-fold change</td>
-<td>Statistically significant but biologically meaningless</td>
-<td>Always report fold change AND p-value</td>
-</tr>
-<tr>
-<td>Circular analysis</td>
-<td>Using all data to select genes, then testing the same genes</td>
-<td>100% false discovery rate</td>
-<td>Use independent training/test splits</td>
-</tr>
-</tbody>
-</table>
-</table></div>
-<h2>9. Choosing the Right Statistical Test</h2>
-<div class="overflow-x-auto -mx-4 px-4">
-<table>
-<table>
-<thead>
-<tr>
-<th>Data Type</th>
-<th>Groups</th>
-<th>Distribution</th>
-<th>Recommended Test</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Continuous</td>
-<td>2 groups</td>
-<td>Normal</td>
-<td>Student's t-test or Welch's t-test</td>
-</tr>
-<tr>
-<td>Continuous</td>
-<td>2 groups</td>
-<td>Non-normal</td>
-<td>Wilcoxon rank-sum (Mann-Whitney U)</td>
-</tr>
-<tr>
-<td>Continuous</td>
-<td>≥3 groups</td>
-<td>Normal</td>
-<td>One-way ANOVA + post-hoc</td>
-</tr>
-<tr>
-<td>Continuous</td>
-<td>≥3 groups</td>
-<td>Non-normal</td>
-<td>Kruskal-Wallis + Dunn's test</td>
-</tr>
-<tr>
-<td>Count data</td>
-<td>2+ groups</td>
-<td>Negative binomial</td>
-<td>DESeq2, edgeR</td>
-</tr>
-<tr>
-<td>Categorical</td>
-<td>2 categories</td>
-<td>N/A</td>
-<td>Fisher's exact test or Chi-squared</td>
-</tr>
-<tr>
-<td>Survival</td>
-<td>Time-to-event</td>
-<td>N/A</td>
-<td>Log-rank test, Cox regression</td>
-</tr>
-</tbody>
-</table>
-</table></div>
-<h2>Practical Exercise</h2>
-<p>Take a small table with two conditions. Plot each group, report the mean difference, and explain why biological replicate count matters more than simply adding cells or reads.</p>
-<p></p>
-<h2>Troubleshooting</h2>
-<p>If assumptions fail, don't automatically switch tests. Inspect distributions, dependence, batch, outliers, and the design before consulting a statistician.</p>
-<h2>Next Steps</h2>
-<p>Continue with <a href="experimental-design-batch-effects.html">Experimental Design and Batch Effects</a> and <a href="transcriptomics-differential-expression.html">Pseudobulk DE Analysis</a>Record the software versions, dataset or example inputs, and any decisions you made.</p>
-<section aria-label="References and further reading" class="mt-10 p-6 bg-slate-50 border border-slate-200 rounded-xl">
-<h2 class="text-xl font-bold text-gray-900 mb-3">References and further reading</h2>
-<p class="text-sm text-gray-600 mb-3">Use these official resources to check current software behaviour, terminology, and production guidance. Tool versions and defaults change, so verify commands against the documentation before applying them to a research dataset.</p>
-<ul class="list-disc list-inside space-y-2 text-sm text-gray-700">
-<li><a class="text-blue-700 hover:underline" href="https://cran.r-project.org/manuals.html" rel="noopener" target="_blank">R Project documentation</a></li>
-<li><a class="text-blue-700 hover:underline" href="https://www.tidyverse.org/learn/" rel="noopener" target="_blank">Tidyverse documentation</a></li>
+<p>What the script produces (paths):</p>
+<ul>
+<li><code>results/boxplot_control_treated.png</code> and <code>results/histograms.png</code> — diagnostic plots.</li>
+<li><code>results/summary_stats.csv</code> — sample counts, means, and standard deviations.</li>
+<li><code>results/ttest_result.txt</code> — t-statistic and p-value from Welch's t-test.</li>
+<li><code>results/effect_size.txt</code> — Cohen's d value.</li>
 </ul>
-</section>
+<h3>R: equivalent reproducible workflow</h3>
+<p>Required R packages: readr, ggplot2 (for plotting). The R commands mirror the Python workflow.</p>
+<pre><code># Install packages in R if needed:
+# install.packages(c("readr", "ggplot2"))
+
+# Script: scripts/compare_groups.R
+# Usage: Rscript scripts/compare_groups.R data/control.csv data/treated.csv results/
+args &lt;- commandArgs(trailingOnly = TRUE)
+control_path &lt;- args[1]
+treated_path &lt;- args[2]
+outdir &lt;- args[3]
+
+library(readr)
+library(ggplot2)
+
+ctrl &lt;- read_csv(control_path, show_col_types = FALSE)$value
+trt &lt;- read_csv(treated_path, show_col_types = FALSE)$value
+
+# Diagnostics
+df &lt;- data.frame(value = c(ctrl, trt),
+                 group = rep(c("control","treated"), c(length(ctrl), length(trt))))
+p1 &lt;- ggplot(df, aes(group, value)) + geom_boxplot() + ggtitle("Boxplot: control vs treated")
+ggsave(file.path(outdir, "boxplot_control_treated.png"), p1, dpi = 150, width = 6, height = 4)
+
+p2 &lt;- ggplot(df, aes(value, fill = group)) + geom_histogram(alpha = 0.6, bins = 12, position = "identity") +
+  ggtitle("Histograms")
+ggsave(file.path(outdir, "histograms.png"), p2, dpi = 150, width = 6, height = 4)
+
+# Summary
+summary_stats &lt;- tibble::tibble(
+  n_control = length(ctrl),
+  n_treated = length(trt),
+  mean_control = mean(ctrl),
+  mean_treated = mean(trt),
+  sd_control = sd(ctrl),
+  sd_treated = sd(trt)
+)
+write.csv(summary_stats, file = file.path(outdir, "summary_stats.csv"), row.names = FALSE)
+
+# Test: Welch two-sample t-test
+res &lt;- t.test(trt, ctrl, var.equal = FALSE)
+writeLines(c(paste0("statistic\t", res$statistic),
+             paste0("pvalue\t", res$p.value)), con = file.path(outdir, "ttest_result.txt"))
+
+# Cohen's d (pooled SD)
+pooled_sd &lt;- sqrt(((length(ctrl)-1)*var(ctrl) + (length(trt)-1)*var(trt)) / (length(ctrl) + length(trt) - 2))
+cohens_d &lt;- (mean(trt) - mean(ctrl)) / pooled_sd
+writeLines(paste0("cohens_d\t", cohens_d), con = file.path(outdir, "effect_size.txt"))
+</code></pre>
+<h2>Output inspection and interpretation</h2>
+<p>When you examine the produced outputs, follow these steps and questions:</p>
+<ul>
+<li>Open diagnostic plots:
+    <ul>
+<li>Boxplot: Are there extreme outliers in one group? Outliers may indicate technical problems (measurement error) or true biological extremes—inspect raw data and metadata.</li>
+<li>Histogram: Are distributions extremely skewed? Strong skew can violate t-test assumptions and warrant transformation (log-scale) or a nonparametric test (see troubleshooting).</li>
+</ul>
+</li>
+<li>Summary statistics:
+    <ul>
+<li>Check sample sizes (n_control, n_treated). Very small n (e.g., n&lt;3 per group) severely limit confidence and power.</li>
+<li>Compare means and standard deviations. Large variability relative to mean difference implies low power.</li>
+</ul>
+</li>
+<li>t-test output:
+    <ul>
+<li>P-value: a small p-value indicates data are unlikely under the null hypothesis given model assumptions; it is not the probability that the null is true.</li>
+<li>Test statistic and degrees of freedom describe the standardized difference given variance and sample size.</li>
+</ul>
+</li>
+<li>Effect size (Cohen's d):
+    <ul>
+<li>Provides a scale-free measure of the difference: small (~0.2), medium (~0.5), large (~0.8) are conventional heuristics, but context matters.</li>
+<li>Report effect size with its uncertainty when possible (e.g., bootstrap CI) rather than a single point estimate.</li>
+</ul>
+</li>
+</ul>
+<p>What a plausible result means and what it does NOT prove:</p>
+<ul>
+<li>Significant p-value + substantial effect size: evidence that the groups differ for this feature under the assumptions used. It does not prove causality, nor generalize beyond the sampled population if sampling was biased.</li>
+<li>Non-significant p-value: does not prove absence of effect. A non-significant result could reflect low power (small sample size, large variability), inappropriate test, or a genuinely small effect below biological relevance.</li>
+<li>Many tests across features without correction: high risk of false positives. Use FDR control (Benjamini–Hochberg or other methods) when analyzing many features.</li>
+</ul>
+<h2>Troubleshooting: symptoms, likely causes, and fixes</h2>
+<p>Symptom: Very small p-value but tiny absolute difference (e.g., mean difference = 0.02).</p>
+<ul>
+<li>Cause: Very large sample size can make trivial differences statistically significant.</li>
+<li>Fix: Report and interpret effect size and confidence interval; judge biological relevance separately from statistical significance.</li>
+</ul>
+<p>Symptom: Non-significant result, yet means look different in plots.</p>
+<ul>
+<li>Cause: High variability, small sample size, or outliers inflating variance.</li>
+<li>Fix: Check plots and raw data; consider removing technical outliers with documented criteria, transform data (e.g., log), or increase sample size for adequate power.</li>
+</ul>
+<p>Symptom: Test warnings about normality or extreme skew.</p>
+<ul>
+<li>Cause: Data do not meet t-test assumptions (approximate normality of residuals or homoscedasticity—equal variances).</li>
+<li>Fix: Use nonparametric tests (e.g., Mann–Whitney U for independent two-group comparisons) or apply a transformation (e.g., log, Box–Cox) and re-run diagnostics. For count-like genomic data (RNA-seq), use models tailored to counts (e.g., edgeR, DESeq2 in R) rather than t-tests.</li>
+</ul>
+<p>Symptom: Too many apparent positives when testing thousands of features.</p>
+<ul>
+<li>Cause: Multiple testing inflates false positives.</li>
+<li>Fix: Apply FDR-control methods (Benjamini–Hochberg) or more conservative family-wise error corrections if appropriate. Pre-filter features with low signal to reduce tests, but pre-specify filters to avoid bias.</li>
+</ul>
+<h2>Limitations, version and reference-data caveats, and responsible use</h2>
+<ul>
+<li>Assumptions: Classical t-tests assume that observations are independent and, for the pooled-variance t-test, that variances are similar. Violations require alternative methods or careful modelling.</li>
+<li>Biological vs technical replicates: only biological replicates count toward inference about population variability. Technical replicates should be summarized (e.g., mean per biological sample) or modeled explicitly with mixed models if you want to partition variance.</li>
+<li>Versioning: analysis software and library versions can change defaults (for example, how missing values are handled, or statistical test implementations). Record the R and Python package versions used in any report. Example: R &gt;= 4.0, SciPy &gt;= 1.7, statsmodels &gt;= 0.13 are common minimums as of the time of this writing.</li>
+<li>Reference data: when using annotated genome references or gene models, record the exact reference version (e.g., GRCh38.p13, Ensembl release X) and gene identifier mappings—these affect which features map to which tests.</li>
+<li>Responsible reporting: always report effect sizes and uncertainty, exact sample counts, the test used (including its parameters), any data transformations, and the multiple-testing correction method and threshold. Do not reduce interpretation to "significant" vs "not significant" without context.</li>
+</ul>
+<h2>Next-step checklist</h2>
+<ol>
+<li>Write a one-paragraph analysis plan: outcome, predictor, experimental unit, covariates, replicate definition, and primary diagnostic plot.</li>
+<li>Run the scripts above on your data files and review the diagnostic plots for outliers and distributional problems.</li>
+<li>If many features are tested, compute and report adjusted p-values (FDR). Keep raw p-values for transparency.</li>
+<li>Report: sample sizes, means, standard deviations, effect sizes (Cohen's d or fold-change), confidence intervals (where feasible), test name and parameters, and multiple-testing method.</li>
+<li>If results will inform experimental follow-up, plan a power analysis to determine necessary sample size for the smallest biologically meaningful effect size.</li>
+</ol>
+<h2>References</h2>
+<ul>
+<li><a href="https://www.jstor.org/stable/2346101" rel="noopener" target="_blank">Benjamini Y, Hochberg Y. Controlling the false discovery rate: a practical and powerful approach to multiple testing. Journal of the Royal Statistical Society Series B. 1995.</a></li>
+<li><a href="https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.ttest_ind.html" rel="noopener" target="_blank">SciPy: scipy.stats.ttest_ind documentation</a></li>
+<li><a href="https://www.statsmodels.org/stable/generated/statsmodels.stats.multitest.multipletests.html" rel="noopener" target="_blank">statsmodels: multipletests (multiple testing corrections)</a></li>
+<li><a href="https://stat.ethz.ch/R-manual/R-devel/library/stats/html/t.test.html" rel="noopener" target="_blank">R: t.test documentation</a></li>
+<li><a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC1852658/" rel="noopener" target="_blank">Practical guidance: Wilkinson, M. D. et al., "The FAIR Guiding Principles for scientific data management and stewardship" (for reproducible data reporting)</a></li>
+</ul>
 </article>
 <section class="mt-12 mb-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-100">
 <div class="flex items-start gap-4">

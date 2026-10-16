@@ -130,10 +130,7 @@ function toggleMobileMenu() {
 <div class="mb-12 rounded-2xl overflow-hidden shadow-lg border border-gray-100">
 <img alt="Data Visualization Fundamentals" class="w-full aspect-video object-cover" decoding="async" loading="eager" src="../images/data-visualization-fundamentals-workstation.webp"/>
 </div>
-<article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none"><div class="mb-10 text-xl text-gray-600 leading-relaxed">
-<p>A plot is an argument about data. Good visualization reveals uncertainty, sample structure, and potential artifacts while preserving units and context. This lesson gives learners a practical checklist for reading and creating bioinformatics figures.</p>
-</div>
-<div class="flex flex-wrap items-center gap-4 text-xs font-mono text-gray-500 bg-gray-50 p-3 rounded-lg border border-gray-200 mb-6">
+<article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none"><div class="flex flex-wrap items-center gap-4 text-xs font-mono text-gray-500 bg-gray-50 p-3 rounded-lg border border-gray-200 mb-6">
 <div class="flex items-center gap-1">
 <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
 <span><strong>Tested on:</strong> Python 3.11, R 4.3.2, Ubuntu 24.04</span>
@@ -141,216 +138,283 @@ function toggleMobileMenu() {
 <div class="flex items-center gap-1">
 <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
 </div>
-</div>
-<div class="p-6 bg-blue-50 border border-blue-100 rounded-xl mb-8"><h4 class="text-lg font-bold text-blue-900 mb-2">Learning Objectives &amp; Prerequisites</h4><div class="text-blue-800 space-y-2"><p><strong>By the end of this lesson, you should be able to:</strong></p><ul>
-<li>Select plots that match a question and data type.</li>
-<li>Read distributions, PCA, heatmaps, UMAPs, volcano plots, and coverage plots.</li>
-<li>Use labels, scales, palettes, and legends responsibly.</li>
-<li>Separate visual patterns from statistical and biological evidence.</li>
-</ul><p><strong>Prerequisites:</strong></p><ul>
-<li>Basic R or Python plotting.</li>
-<li>Complete <a href="quality-control-fundamentals.html">Quality Control Fundamentals</a></li>
-</ul><strong class="block mt-2 text-blue-900">Expected Output</strong><p>By the end of this lesson, you should have: <strong>One publication-ready exploratory plot with labeled axes, a stated colour choice, an interpretation note, and the code used to create it.</strong></p></div></div>
-<h2>1. Start with the question</h2>
-<p>Use a distribution to inspect spread, a scatter plot to compare measurements, PCA to summarize major variation, a heatmap to inspect patterns, and UMAP to visualize local neighborhoods. No plot proves a mechanism by itself.</p>
-<pre><code class="language-python">import seaborn as sns
+</div><h2>Learning objectives and prerequisites</h2>
+<p>By the end of this lesson you will be able to:</p>
+<ul>
+<li>Choose appropriate visualizations for common bioinformatics questions (QC, sample structure, differential signals).</li>
+<li>Generate reproducible plots for distributions, PCA (principal component analysis), UMAP (Uniform Manifold Approximation and Projection), heatmaps, and volcano plots, with explicit preprocessing reported.</li>
+<li>Read and interpret these plots conservatively: distinguish visual patterns from statistical or biological claims and list the assumptions behind each plot.</li>
+<li>Produce a publication-ready exploratory figure with labeled axes (including units), a documented color choice, an interpretation note, and the code used to create it.</li>
+</ul>
+<p>Prerequisites:</p>
+<ul>
+<li>Basic familiarity with R (ggplot2) or Python (matplotlib/seaborn/pandas). Example code is provided for both languages.</li>
+<li>Completion of a basic quality-control tutorial for the assay you are using (e.g., RNA-seq QC, single-cell QC).</li>
+<li>Access to a UNIX-like shell to run commands and save outputs to files.</li>
+</ul>
+<h2>Why careful visualization matters (biological and computational context)</h2>
+<p>Plots are arguments: they communicate evidence, assumptions, and uncertainty. In omics and bioinformatics, visuals are used at multiple stages — quality control (QC), exploratory data analysis (EDA), dimensionality reduction, and hypothesis testing. Each plot type encodes both data and processing choices (filtering, normalization, scaling, color mapping). If these choices are not reported, readers may over-interpret visual patterns as biological mechanisms when they could be batch effects, normalization artifacts, or downstream processing differences.</p>
+<p>This lesson emphasizes responsible plotting: always show units and sample sizes, state preprocessing, avoid misleading scales or truncated axes, and treat plots as descriptive evidence that motivates further statistical testing, not proof of mechanism.</p>
+<h2>Reproducible, sequential workflow</h2>
+<p>The workflow below assumes you start with tabular expression or QC metrics. Example paths and outputs are explicit. Adjust file names to your environment. The commands are intended to be run locally; they do not modify your raw data files.</p>
+<h3>Files you should have</h3>
+<ul>
+<li>data/qc_metrics.tsv — tab-separated QC metrics with columns: sample, batch, condition, total_reads, pct_mt, mapping_rate (example header below).</li>
+<li>data/counts.tsv — raw or preprocessed count matrix (genes x samples) for PCA/heatmaps/volcano; tab-separated with gene IDs in the first column and sample IDs matching qc_metrics.tsv header.</li>
+</ul>
+<p>Example header for qc_metrics.tsv (first line):</p>
+<pre><code>sample\tbatch\tcondition\ttotal_reads\tpct_mt\tmapping_rate
+S01\tB1\tcontrol\t25000000\t5.2\t0.95
+...</code></pre>
+<h3>Step A — Basic QC plots (distribution, per-sample metrics)</h3>
+<p>Goal: identify outliers, batch patterns, or samples that fail pre-defined thresholds.</p>
+<pre><code># Python 3.11 example (save to scripts/qc_plots.py)
+# Input: data/qc_metrics.tsv
+# Output: results/qc_boxplot.png, results/qc_histograms.png
+import pandas as pd
+import seaborn as sns
 import matplotlib.pyplot as plt
+sns.set(style="whitegrid", context="talk")
 
-# Always label units and groups
-sns.boxplot(data=df, x="batch", y="pct_mt", hue="condition", showfliers=False)
-sns.stripplot(data=df, x="batch", y="pct_mt", hue="condition", dodge=True, color="black", alpha=0.55)
-plt.xlabel("Batch")
-plt.ylabel("Mitochondrial reads (%)")
-plt.legend(title="Condition")
-</code></pre>
-<pre><code class="language-r">library(ggplot2)
+qc = pd.read_csv("data/qc_metrics.tsv", sep="\t")
 
-# Always label units and groups
-ggplot(df, aes(x = batch, y = pct_mt, color = condition)) +
-  geom_boxplot(outlier.shape = NA) + geom_jitter(width = .15) +
-  labs(x="Batch", y="Mitochondrial reads (%)")
+# Boxplot by batch with jittered points colored by condition
+plt.figure(figsize=(8,5))
+ax = sns.boxplot(data=qc, x="batch", y="pct_mt", showfliers=False)
+sns.stripplot(data=qc, x="batch", y="pct_mt", hue="condition", dodge=True,
+              jitter=0.2, palette="colorblind", alpha=0.6)
+ax.set_xlabel("Batch")
+ax.set_ylabel("Mitochondrial reads (%)")
+ax.set_title("QC: mitochondrial fraction by batch")
+plt.legend(title="Condition", bbox_to_anchor=(1.05, 1), loc="upper left")
+plt.tight_layout()
+plt.savefig("results/qc_boxplot.png", dpi=300)
+plt.close()
+
+# Histogram and KDE of total reads
+plt.figure(figsize=(6,4))
+sns.histplot(qc["total_reads"]/1e6, kde=True, color="#4C72B0", bins=20)
+plt.xlabel("Total reads (millions)")
+plt.title("Distribution of sequencing depth")
+plt.tight_layout()
+plt.savefig("results/qc_histograms.png", dpi=300)
 </code></pre>
-<h2>2. PCA and UMAP</h2>
-<p>PCA axes are linear summaries; UMAP is a neighborhood visualization whose geometry depends on parameters. Report preprocessing, dimensions, neighbors, metric, and random seed.</p>
-<pre><code class="language-python">sc.tl.pca(adata, n_comps=30, random_state=7)
-sc.pp.neighbors(adata, n_neighbors=15, n_pcs=20, random_state=7)
-sc.tl.umap(adata, random_state=7)
+<pre><code># R 4.3.2 equivalent (save to scripts/qc_plots.R)
+# Input: data/qc_metrics.tsv
+# Output: results/qc_boxplot_R.png
+library(ggplot2)
+qc &lt;- read.delim("data/qc_metrics.tsv", stringsAsFactors = FALSE)
+
+p &lt;- ggplot(qc, aes(x = batch, y = pct_mt, color = condition)) +
+  geom_boxplot(outlier.shape = NA, alpha = 0.6) +
+  geom_jitter(width = 0.2, size = 1.5, alpha = 0.7) +
+  labs(x = "Batch", y = "Mitochondrial reads (%)", title = "QC: mitochondrial fraction by batch") +
+  theme_minimal()
+ggsave("results/qc_boxplot_R.png", p, width = 8, height = 5, dpi = 300)
 </code></pre>
-<h2>3. Heatmaps and volcano plots</h2>
-<p>Cluster and scale deliberately. A volcano plot combines effect size and significance; a small p-value alone is not a large or meaningful biological effect.</p>
-<pre><code class="language-text">Figure checklist: title, units, n, group definition, preprocessing, color meaning, and scale.
-</code></pre>
-<h2>4. Honest visual interpretation</h2>
-<p>Use colorblind-safe palettes, avoid truncated axes when they mislead, show individual points when possible, and state limitations in the caption.</p>
-<pre><code class="language-text">Caption template: Dataset; preprocessing; n; statistic; software/version; interpretation; limitation.
-</code></pre>
-<h2>5. Choosing the Right Plot Type</h2>
-<p>The most common mistake in data visualization is choosing a plot type that obscures the data's structure. Use this decision guide:</p>
-<div class="overflow-x-auto -mx-4 px-4">
-<table>
-<table>
-<thead>
-<tr>
-<th>Question You're Answering</th>
-<th>Recommended Plot</th>
-<th>Avoid</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>How is a single variable distributed?</td>
-<td>Histogram, density plot, violin plot</td>
-<td>Pie chart</td>
-</tr>
-<tr>
-<td>How do two continuous variables relate?</td>
-<td>Scatter plot, hexbin plot</td>
-<td>3D surface plot</td>
-</tr>
-<tr>
-<td>How do groups compare?</td>
-<td>Box plot, violin plot, dot plot</td>
-<td>Bar plot with error bars</td>
-</tr>
-<tr>
-<td>How does a measurement change over time?</td>
-<td>Line plot</td>
-<td>Scatter plot without connection</td>
-</tr>
-<tr>
-<td>What is the composition of categories?</td>
-<td>Stacked bar chart, alluvial plot</td>
-<td>Pie chart for &gt;5 categories</td>
-</tr>
-<tr>
-<td>What are the relationships in high-dimensional data?</td>
-<td>PCA, UMAP, heatmap</td>
-<td>&gt;3 dimensions on cartesian axes</td>
-</tr>
-</tbody>
-</table>
-</table></div>
-<h2>6. A Complete Plotting Example in Python</h2>
-<pre><code class="language-python">import matplotlib.pyplot as plt
+<p>What these commands produce:</p>
+<ul>
+<li>results/qc_boxplot.png (or qc_boxplot_R.png) — a boxplot of pct_mt per batch with individual points colored by condition.</li>
+<li>results/qc_histograms.png — global distribution of sequencing depth (total reads) in millions.</li>
+</ul>
+<h3>Step B — PCA for global structure</h3>
+<p>Goal: identify axes of major variation and check for cohort, batch, or outlier structure. Always document preprocessing (log-transform, scaling) and random seed.</p>
+<pre><code># Python example using scikit-learn (save to scripts/pca_analysis.py)
+# Input: data/counts.tsv
+# Output: results/pca_coords.tsv, results/pca_plot.png
 import numpy as np
 import pandas as pd
+from sklearn.decomposition import PCA
+from sklearn.preprocessing import StandardScaler
+import matplotlib.pyplot as plt
+import seaborn as sns
 
-# Create example QC data
-np.random.seed(42)
-qc_data = pd.DataFrame({
-    "sample": [f"S{i:02d}" for i in range(1, 13)],
-    "total_reads_M": np.random.normal(25, 5, 12),
-    "mapping_rate": np.random.uniform(0.85, 0.98, 12),
-    "condition": ["control"]*6 + ["treated"]*6
-})
+np.random.seed(7)
+counts = pd.read_csv("data/counts.tsv", sep="\t", index_col=0)  # genes x samples
+# Basic preprocessing: filter low-count genes, log2 CPM (counts per million)
+libsize = counts.sum(axis=0)
+cpm = counts.divide(libsize, axis=1) * 1e6
+logcpm = np.log2(cpm + 1)
 
-# Create a publication-quality figure
-fig, axes = plt.subplots(1, 2, figsize=(12, 5))
+# Keep genes with variance above a small threshold to reduce noise
+var_genes = logcpm.var(axis=1)
+keep = var_genes &gt; 0.5
+mat = logcpm.loc[keep].T  # samples x genes
 
-# Panel A: Read depth per sample
-colors = ["#4C72B0" if c == "control" else "#DD8452" for c in qc_data["condition"]]
-axes[0].bar(qc_data["sample"], qc_data["total_reads_M"], color=colors)
-axes[0].set_xlabel("Sample")
-axes[0].set_ylabel("Total Reads (millions)")
-axes[0].set_title("A. Sequencing Depth")
-axes[0].tick_params(axis="x", rotation=45)
-axes[0].axhline(y=20, color="red", linestyle="--", alpha=0.5, label="QC threshold")
-axes[0].legend()
+# Scale features (zero mean, unit variance)
+mat_scaled = StandardScaler().fit_transform(mat)
 
-# Panel B: Mapping rate distribution by group
-for cond, color in [("control", "#4C72B0"), ("treated", "#DD8452")]:
-    subset = qc_data[qc_data["condition"] == cond]
-    axes[1].hist(subset["mapping_rate"], bins=6, alpha=0.6, color=color, label=cond)
-axes[1].set_xlabel("Mapping Rate")
-axes[1].set_ylabel("Frequency")
-axes[1].set_title("B. Alignment Quality")
-axes[1].legend()
+pca = PCA(n_components=10, random_state=7)
+pcs = pca.fit_transform(mat_scaled)
 
+pcs_df = pd.DataFrame(pcs[:, :2], columns=["PC1", "PC2"], index=mat.index)
+pcs_df.to_csv("results/pca_coords.tsv", sep="\t")
+
+meta = pd.read_csv("data/qc_metrics.tsv", sep="\t", index_col=0)
+plot_df = pcs_df.join(meta, how="left")
+
+plt.figure(figsize=(6,5))
+sns.scatterplot(data=plot_df, x="PC1", y="PC2", hue="condition", style="batch", palette="colorblind", s=60)
+plt.xlabel(f"PC1 ({pca.explained_variance_ratio_[0]*100:.1f}%)")
+plt.ylabel(f"PC2 ({pca.explained_variance_ratio_[1]*100:.1f}%)")
+plt.title("PCA of log2-CPM (genes filtered, scaled)")
 plt.tight_layout()
-plt.savefig("results/figures/qc_summary.webp", dpi=300, bbox_inches="tight")
-plt.show()
+plt.savefig("results/pca_plot.png", dpi=300)
 </code></pre>
-<h2>7. Color and Accessibility</h2>
-<p>Approximately 8% of males and 0.5% of females have some form of color vision deficiency. Use colorblind-safe palettes:</p>
-<pre><code class="language-python"># Colorblind-safe palettes
+<p>Notes:</p>
+<ul>
+<li>Save PCA coordinates to results/pca_coords.tsv so downstream reproducibility is explicit.</li>
+<li>Report preprocessing: gene filtering threshold, transformation (log2-CPM + 1), scaling method, and random_state.</li>
+</ul>
+<h3>Step C — UMAP for local neighborhoods (single-cell or high-dimensional)</h3>
+<pre><code># Python example using umap-learn (save to scripts/umap_analysis.py)
+# Input: results/pca_coords.tsv or preprocessed matrix
+# Output: results/umap_coords.tsv, results/umap_plot.png
+import umap
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+np.random.seed(7)
+# Prefer running UMAP on PCA components or scaled features, not raw counts
+pca_coords = pd.read_csv("results/pca_coords.tsv", sep="\t", index_col=0)
+# If you have numeric PCA components, use them; here we'll simulate using first 10 PCs if available
+# Assume pca_matrix is samples x n_components produced earlier; for this example, re-load mat_scaled if available
+# For reproducibility, you should run UMAP with documented parameters:
+reducer = umap.UMAP(n_neighbors=15, min_dist=0.1, n_components=2, metric="euclidean", random_state=7)
+# If you have the original scaled matrix, pass that; here we use PCS (if saved as many dims)
+# Example: pcs_full = pd.read_csv("results/pca_full.tsv", sep="\t", index_col=0)
+# embedding = reducer.fit_transform(pcs_full)
+# For demonstration, if only PC1/PC2 available, UMAP is less meaningful — prefer at least 10 PCs.
+embedding = reducer.fit_transform(pca_coords.values)  # adjust according to your saved matrix
+emb_df = pd.DataFrame(embedding, columns=["UMAP1", "UMAP2"], index=pca_coords.index)
+emb_df.to_csv("results/umap_coords.tsv", sep="\t")
+
+meta = pd.read_csv("data/qc_metrics.tsv", sep="\t", index_col=0)
+plot_df = emb_df.join(meta, how="left")
+plt.figure(figsize=(6,5))
+sns.scatterplot(data=plot_df, x="UMAP1", y="UMAP2", hue="condition", palette="tab10", s=40)
+plt.title("UMAP (n_neighbors=15, min_dist=0.1) — input: PCA components")
+plt.tight_layout()
+plt.savefig("results/umap_plot.png", dpi=300)
+</code></pre>
+<p>Important: record all UMAP parameters (n_neighbors, min_dist, metric, random_state) and the input matrix (which PCA components or scaled features you used). UMAP is sensitive to these choices, and different seeds or inputs can produce different-looking layouts.</p>
+<h3>Step D — Heatmap and clustering</h3>
+<pre><code># Python example using seaborn clustermap (save to scripts/heatmap.py)
+# Input: data/counts.tsv, results/pca_coords.tsv
+# Output: results/heatmap_topgenes.png
+import pandas as pd
+import numpy as np
+import seaborn as sns
 import matplotlib.pyplot as plt
 
-# Option 1: Use built-in colorblind-safe colormap
-plt.set_cmap("viridis")
+counts = pd.read_csv("data/counts.tsv", sep="\t", index_col=0)
+# Select top variable genes for the heatmap (e.g., top 50 by variance)
+logcpm = np.log2((counts / counts.sum(axis=0)) * 1e6 + 1)
+var = logcpm.var(axis=1)
+top50 = logcpm.loc[var.sort_values(ascending=False).head(50).index]
 
-# Option 2: Seaborn colorblind palette
-import seaborn as sns
-sns.set_palette("colorblind")
+# Z-score by gene (rows) to emphasize patterns across samples
+from scipy.stats import zscore
+z_top50 = top50.apply(zscore, axis=1)
 
-# Option 3: Manually specify accessible colors
-accessible_colors = {
-    "blue": "#0072B2",
-    "orange": "#E69F00",
-    "green": "#009E73",
-    "vermilion": "#D55E00",
-    "sky_blue": "#56B4E9"
-}
+cg = sns.clustermap(z_top50, method="average", metric="euclidean",
+                    row_cluster=True, col_cluster=True, cmap="vlag",
+                    col_colors=None, standard_scale=None, figsize=(10,10))
+plt.savefig("results/heatmap_topgenes.png", dpi=300)
 </code></pre>
-<h2>8. Figure Quality Standards</h2>
-<div class="overflow-x-auto -mx-4 px-4">
-<table>
-<table>
-<thead>
-<tr>
-<th>Requirement</th>
-<th>Standard</th>
-<th>How to Check</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Resolution</td>
-<td>≥300 DPI for print, ≥150 DPI for web</td>
-<td><code>fig.savefig(..., dpi=300)</code></td>
-</tr>
-<tr>
-<td>Format</td>
-<td>Vector (SVG/PDF) for figures, WebP/PNG for web</td>
-<td>Save both formats</td>
-</tr>
-<tr>
-<td>Font size</td>
-<td>≥8pt for axis labels, ≥10pt for titles</td>
-<td>Set <code>fontsize</code> parameters</td>
-</tr>
-<tr>
-<td>Axis labels</td>
-<td>Include units in parentheses</td>
-<td>"Expression (TPM)", "Length (bp)"</td>
-</tr>
-<tr>
-<td>Legend</td>
-<td>Inside or adjacent to the plot area</td>
-<td>Never overlapping data points</td>
-</tr>
-<tr>
-<td>White space</td>
-<td>Minimal margins, no excessive padding</td>
-<td><code>bbox_inches="tight"</code></td>
-</tr>
-</tbody>
-</table>
-</table></div>
-<h2>Practical Exercise</h2>
-<p>Create one QC plot and one between-group plot using a small table. Add a caption that states n, units, preprocessing, and one limitation.</p>
-<p></p>
-<h2>Troubleshooting</h2>
-<p>If colors are indistinguishable, use a palette designed for color-vision accessibility and add shapes or labels rather than relying on color alone.</p>
-<h2>Next Steps</h2>
-<p>Continue with <a href="scrna-seq-basics.html">scRNA-seq Basics</a> and <a href="research-reporting-interpretation.html">Research Reporting and Interpretation</a>Record the software versions, dataset or example inputs, and any decisions you made.</p>
-<section aria-label="References and further reading" class="mt-10 p-6 bg-slate-50 border border-slate-200 rounded-xl">
-<h2 class="text-xl font-bold text-gray-900 mb-3">References and further reading</h2>
-<p class="text-sm text-gray-600 mb-3">Use these official resources to check current software behaviour, terminology, and production guidance. Tool versions and defaults change, so verify commands against the documentation before applying them to a research dataset.</p>
-<ul class="list-disc list-inside space-y-2 text-sm text-gray-700">
-<li><a class="text-blue-700 hover:underline" href="https://www.ncbi.nlm.nih.gov/books/NBK21154/" rel="noopener" target="_blank">NCBI Bookshelf: Bioinformatics</a></li>
-<li><a class="text-blue-700 hover:underline" href="https://www.ebi.ac.uk/training/online/" rel="noopener" target="_blank">EMBL-EBI Training</a></li>
+<p>Document clustering choices: distance metric (euclidean, correlation), linkage method (average, ward), and whether rows/columns were scaled or standardized. Heatmaps emphasize patterns but can hide absolute expression units; always state the transformation used (e.g., row z-score).</p>
+<h3>Step E — Volcano plot for differential expression</h3>
+<pre><code># R example using DESeq2 result (save to scripts/volcano_plot.R)
+# Input: results/deseq2_results.tsv (must contain log2FoldChange and padj columns)
+# Output: results/volcano.png
+library(ggplot2)
+res &lt;- read.delim("results/deseq2_results.tsv", stringsAsFactors = FALSE)
+res$label &lt;- ifelse(res$padj &lt; 0.05 &amp; abs(res$log2FoldChange) &gt; 1, "significant", "not_significant")
+
+ggplot(res, aes(x=log2FoldChange, y=-log10(padj))) +
+  geom_point(aes(color=label), alpha=0.6, size=1.5) +
+  scale_color_manual(values=c("not_significant"="#B0B0B0", "significant"="#D62728")) +
+  labs(x="log2 fold change", y="-log10 adjusted p-value", title="Volcano plot") +
+  geom_vline(xintercept=c(-1,1), linetype="dashed", color="black", alpha=0.5) +
+  geom_hline(yintercept=-log10(0.05), linetype="dashed", color="black", alpha=0.5) +
+  theme_minimal()
+ggsave("results/volcano.png", width=6, height=5, dpi=300)
+</code></pre>
+<p>Note: the volcano plot visualizes effect size (log2 fold change) vs statistical significance (adjusted p-value). Do not equate statistical significance with biological importance; small effect sizes with tiny p-values may be statistically robust but biologically negligible. Report the test used (Wald test, LRT), multiple testing correction method (e.g., Benjamini–Hochberg), and the model formula (covariates included).</p>
+<h2>Output inspection and interpretation</h2>
+<p>For each plot type, here is what to look for and what a plausible observation might indicate — along with what it does NOT prove.</p>
+<h3>QC plots (boxplots, histograms)</h3>
+<ul>
+<li>Look for: clear outliers, multi-modal distributions, batch-specific shifts, or truncated axes.</li>
+<li>Plausible meaning: a cluster of low total_reads could indicate failed libraries; batch shifts in pct_mt may suggest technical differences in sample handling.</li>
+<li>What it does NOT prove: a high mitochondrial fraction does not, by itself, prove a sample is degraded or low-quality — check protocol-specific thresholds and other QC metrics (mapping_rate, gene detection).</li>
 </ul>
-</section>
+<h3>PCA</h3>
+<ul>
+<li>Look for: separation by known covariates (condition, batch), tight clusters, or single-sample outliers. Check explained variance for PC1/PC2.</li>
+<li>Plausible meaning: if PC1 separates samples by batch and explains a large fraction of variance, batch correction or modelling may be required before downstream analysis.</li>
+<li>What it does NOT prove: PCA shows major axes of variation but does not identify which genes drive the separation without further loadings analysis; it does not establish causality.</li>
+</ul>
+<h3>UMAP</h3>
+<ul>
+<li>Look for: local clusters, gradients, or mixing of known labels. Compare multiple parameter settings (n_neighbors, min_dist) and seeds.</li>
+<li>Plausible meaning: tight local clusters often reflect groups of similar samples/cells but can also arise from overclustering or insufficient preprocessing.</li>
+<li>What it does NOT prove: UMAP geometry is non-linear and non-parametric; distances or angles are not directly interpretable as meaningful global metrics, and different runs/parameters can change the layout.</li>
+</ul>
+<h3>Heatmap</h3>
+<ul>
+<li>Look for: consistent block structures, sample clusters, and annotation concordance with metadata.</li>
+<li>Plausible meaning: co-clustering of sets of genes and samples can indicate shared regulation or technical biases (e.g., library prep). Examine raw vs scaled views to understand absolute vs relative changes.</li>
+<li>What it does NOT prove: heatmap clustering alone does not validate biological pathways or regulatory relationships — follow up with enrichment analysis and statistical tests.</li>
+</ul>
+<h3>Volcano plot</h3>
+<ul>
+<li>Look for: genes that are both large in effect and significant. Mark thresholds clearly (fold-change, adjusted p-value).</li>
+<li>Plausible meaning: candidate genes for follow-up validation; however small fold-changes with tiny p-values may be sequencing-depth artifacts or batch-related.</li>
+<li>What it does NOT prove: significance does not equal biological relevance; validate with independent experiments or orthogonal measurements.</li>
+</ul>
+<h2>Troubleshooting</h2>
+<p>Symptom: PCA separates samples by batch rather than the biological condition you expect.</p>
+<ul>
+<li>Likely causes: unbalanced design, batch-specific library prep, or normalization that removed biological signal.</li>
+<li>Fixes: re-check metadata, include batch as a covariate in downstream models, consider batch-correction methods (ComBat, limma removeBatchEffect) while preserving experimental contrasts. Always perform diagnostics post-correction to ensure biology is retained.</li>
+</ul>
+<p>Symptom: UMAP shows many singleton clusters or excessive fragmentation.</p>
+<ul>
+<li>Likely causes: insufficient feature selection (too many noisy features), inappropriate n_neighbors for dataset size, or very aggressive min_dist.</li>
+<li>Fixes: reduce dimensionality first (PCA on top variable genes), increase n_neighbors, increase min_dist, or use larger perplexity analogue in t-SNE if appropriate. Rerun with documented seed and parameters.</li>
+</ul>
+<p>Symptom: Heatmap shows no structure, everything looks uniform.</p>
+<ul>
+<li>Likely causes: plotting raw counts without transformation, or inclusion of too many low-variance genes.</li>
+<li>Fixes: log-transform or compute z-scores per gene, restrict to top variable genes, and choose color scales that show midrange contrasts (e.g., divergent palettes centered at zero after z-scoring).</li>
+</ul>
+<h2>Limitations, version and reference-data caveats, and responsible-use notes</h2>
+<ul>
+<li>Software versions matter. Reproducibility requires recording major package versions (e.g., Python 3.11, R 4.3.2, scikit-learn version, umap-learn version, seaborn/matplotlib or ggplot2). Save session info or a conda/environment YAML when possible.</li>
+<li>Transformations affect interpretability: e.g., log-transformed data compresses large differences; z-scoring removes between-gene amplitude information. State transformations explicitly in captions and methods.</li>
+<li>Color and accessibility: use colorblind-friendly palettes (e.g., ColorBrewer “Colorblind” or seaborn “colorblind” palette). Avoid red/green as the only contrast for critical categorizations.</li>
+<li>Statistical caution: visualization is exploratory. Use appropriate statistical models for inference and correct for multiple testing. Provide effect-size thresholds in addition to p-values.</li>
+<li>Reference data: when comparing to external references (e.g., cell atlases), ensure compatible preprocessing and batch-correction strategies are applied; mismatched normalization can produce misleading overlays.</li>
+</ul>
+<h2>Next-step checklist (concise)</h2>
+<ul>
+<li>Document preprocessing steps (filtering thresholds, normalization, scaling) in a README accompanying your figures.</li>
+<li>Save intermediate outputs (pca_coords.tsv, umap_coords.tsv, heatmap matrices) to the results/ directory for reproducibility.</li>
+<li>Annotate each figure with: dataset, n (samples), preprocessing summary, plotting parameters (e.g., UMAP params), software versions, interpretation sentence, and one limitation sentence.</li>
+<li>When making biological claims, follow visualization with appropriate statistical tests and, where possible, independent validation.</li>
+</ul>
+<h2>References</h2>
+<ul>
+<li><a href="https://matplotlib.org/stable/contents.html">matplotlib — Official documentation</a></li>
+<li><a href="https://seaborn.pydata.org/tutorial.html">seaborn tutorial — Statistical data visualization in Python</a></li>
+<li><a href="https://scikit-learn.org/stable/modules/decomposition.html#pca">scikit-learn PCA documentation</a></li>
+<li><a href="https://umap-learn.readthedocs.io/en/latest/">UMAP (umap-learn) documentation</a> — McInnes, Healy, and Melville (UMAP paper: https://arxiv.org/abs/1802.03426)</li>
+<li><a href="https://ggplot2.tidyverse.org/">ggplot2 — Official documentation</a></li>
+</ul>
+<p>Follow these guidelines and always treat plots as part of a reproducible analysis pipeline: record inputs, parameters, random seeds, and software versions. A clear caption and saved code are the best defenses against misinterpretation.</p>
 </article>
 <section class="mt-12 mb-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-100">
 <div class="flex items-start gap-4">

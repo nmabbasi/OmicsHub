@@ -130,157 +130,216 @@ function toggleMobileMenu() {
 <div class="mb-12 rounded-2xl overflow-hidden shadow-lg border border-gray-100">
 <img alt="Pseudobulk DE Analysis" class="w-full aspect-video object-cover" decoding="async" loading="eager" src="../images/pseudobulk-de-analysis.webp"/>
 </div>
-<article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none">
-<div class="flex flex-wrap items-center gap-4 text-xs font-mono text-gray-500 bg-gray-50 p-3 rounded-lg border border-gray-200 mb-6">
+<article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none"><div class="flex flex-wrap items-center gap-4 text-xs font-mono text-gray-500 bg-gray-50 p-3 rounded-lg border border-gray-200 mb-6">
 <div class="flex items-center gap-1">
 <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
 <span><strong>Example environment:</strong> R 4.3.2 (Seurat v5.0.1, DESeq2 1.42.0)</span>
 </div>
-</div>
-<div class="p-6 bg-blue-50 border border-blue-100 rounded-xl mb-8">
-<h4 class="text-lg font-bold text-blue-900 mb-2">Learning Objectives &amp; Prerequisites</h4>
-<ul class="list-disc list-inside text-blue-800 space-y-1 mb-4">
-<li><strong>Prerequisites:</strong> Processed single-cell object (from the Basics tutorial) containing multiple biological replicates per condition.</li>
-<li><strong>Objective:</strong> Perform differential expression (DE) correctly on scRNA-seq data. You'll learn why single-cell level Wilcoxon tests are fundamentally flawed for biological comparisons, and how to implement the "pseudobulk" method using DESeq2.</li>
-<li><strong>Expected Output:</strong> A statistically valid DE results table and a publication-ready Volcano Plot diagnosing the effect sizes and p-values of the comparison.</li>
+</div><h2>Learning objectives and prerequisites</h2>
+<p><strong>You will learn:</strong> how to convert single-cell RNA-seq (scRNA-seq) counts into sample-level "pseudobulk" counts and run a statistically valid differential expression (DE) analysis using DESeq2. You will also learn how to inspect DESeq2 output, generate diagnostic plots (MA/PCA/Volcano), and interpret what the results do—and do not—prove.</p>
+<p><strong>Prerequisites:</strong> an R environment with Seurat (v4 or v5), DESeq2, and tidyverse/ggplot2 installed; a processed Seurat object containing cells from multiple biological replicates (patients/samples) and appropriate per-cell metadata fields for sample ID and cell type. Example R version: 4.3.x. This tutorial assumes you have already performed preprocessing (QC, normalization, clustering) and cell-type annotation.</p>
+<h2>Why pseudobulk matters (biological &amp; statistical context)</h2>
+<p>Single-cell assays produce counts at the level of individual cells, but biological inference about experimental conditions (for example, disease vs control) must be based on independent biological replicates (patients, animals, or samples). Treating each cell as an independent replicate inflates the effective sample size and dramatically increases false positives because cell-to-cell variation (technical and biological) is not the same as variation between patients.</p>
+<p>Pseudobulk is a pragmatic and widely accepted approach: aggregate raw counts across cells of the same cell type within each biological sample to create one count vector per sample per cell type. The resulting matrix (genes × samples) can be analyzed with established bulk RNA-seq DE tools (DESeq2, edgeR, limma-voom) that correctly model between-sample variance. This restores the statistical unit of inference to the true biological replicate.</p>
+<h2>Reproducible workflow (step-by-step)</h2>
+<p>Inputs you need:</p>
+<ul>
+<li>A Seurat object file: e.g. /data/seurat_objects/pbmc_processed.rds</li>
+<li>Per-cell metadata fields within that object: <code>patient_id</code> (or sample_id) and <code>cell_type</code> (or cluster/annotation).</li>
+<li>Raw (unnormalized) counts stored in the Seurat object assay (commonly <code>RNA</code> counts).</li>
 </ul>
-</div>
-<h2>The Pseudobulk Imperative</h2>
-<p>The most common mistake in single-cell RNA-seq is treating individual cells as independent biological replicates. If you sequence 5,000 cells from one treated mouse and 5,000 cells from one control mouse, performing a Wilcoxon Rank Sum test on those 10,000 cells gives you an artificially inflated N of 10,000. Every gene will have a statistically significant p-value, but you haven't discovered anything about the treatment, you've just discovered the difference between Mouse 1 and Mouse 2.</p>
-<p>To find true biological signal, you must aggregate the counts from all cells of a specific type within a single patient to create a "pseudobulk" profile. The statistical N then becomes the number of <em>patients</em>not the number of cells. We then feed these pseudobulk profiles into gold-standard bulk RNA-seq tools like DESeq2 or edgeR.</p>
-<p><strong>Dataset Provenance:</strong> In this tutorial, we simulate a heavily downsampled cohort of Cutaneous T-Cell Lymphoma (CTCL) patients vs Healthy Donors. We'll aggregate CD4+ T-cells across 3 Healthy Donors and 3 CTCL Patients.</p>
-<hr class="my-8"/>
-<h2>1. Aggregating to Pseudobulk</h2>
-<p>First, we extract only the CD4+ T-cells, and sum their raw counts by patient.</p>
-<pre><code class="language-r">library(Seurat)
-library(DESeq2)
+<p>Outputs produced by this workflow:</p>
+<ul>
+<li>Pseudobulk count matrix CSV: e.g. /output/pseudobulk/cd4_pseudobulk_counts.csv</li>
+<li>DESeq2 results table CSV: e.g. /output/deseq2/cd4_DE_results.csv</li>
+<li>Diagnostic plots: MA-plot, PCA, and Volcano saved as PNG files in /output/plots/</li>
+</ul>
+<h3>1) Load libraries and data</h3>
+<pre><code># Example: R script pseudobulk_dge.R
+library(Seurat)       # Seurat v4/v5
+library(DESeq2)       # DESeq2 from Bioconductor
+library(ggplot2)
+library(dplyr)
+library(readr)
 
-# Subset to CD4+ T-cells
-cd4_cells &lt;- subset(pbmc, idents = "CD4 T")
-
-# Extract raw counts and metadata
-counts &lt;- cd4_cells@assays$RNA$counts
-metadata &lt;- cd4_cells@meta.data
-
-# Create a grouping variable combining cell type and patient ID
-metadata$group_id &lt;- paste0(metadata$patient_id, "_", metadata$disease_state)
-
-# Aggregate counts by group_id (pseudobulk)
-pb_counts &lt;- AggregateExpression(cd4_cells, group.by = "group_id", assays = "RNA", return.seurat = FALSE)$RNA
+# Path to your Seurat object (replace with your real path)
+seurat_file &lt;- "/data/seurat_objects/pbmc_processed.rds"
+seurat_obj &lt;- readRDS(seurat_file)
 </code></pre>
-<h2>2. Statistical Modeling with DESeq2</h2>
-<p>With our pseudobulk matrix (genes x patients), we run the standard DESeq2 pipeline. DESeq2 fits a negative binomial generalized linear model to the data, which excellently accounts for the overdispersion inherent in RNA-seq data.</p>
-<pre><code class="language-r"># Create DESeq2 metadata
-colData &lt;- data.frame(
-    condition = c(rep("Healthy", 3), rep("CTCL", 3)),
-    row.names = colnames(pb_counts)
-)
+<p>Confirm the metadata fields exist:</p>
+<pre><code># Check metadata columns (must include patient/sample id and cell type)
+head(seurat_obj@meta.data)
+# e.g. columns: cell, patient_id, disease_state, cell_type
+</code></pre>
+<h3>2) Subset to the cell type of interest and aggregate to pseudobulk</h3>
+<p>The following aggregates raw counts across cells grouped by sample (patient_id) and disease state. We will create group IDs like <code>Sample01_Healthy</code> so it is easy to inspect column names in downstream steps.</p>
+<pre><code># Subset to cell type (example: CD4 T cells)
+cell_type_of_interest &lt;- "CD4 T"
+subset_obj &lt;- subset(seurat_obj, idents = cell_type_of_interest)
 
-# Initialize DESeq2 dataset
-dds &lt;- DESeqDataSetFromMatrix(countData = pb_counts,
-                              colData = colData,
-                              design = ~ condition)
+# Ensure raw counts exist (assay "RNA" and slot "counts")
+counts &lt;- GetAssayData(subset_obj, assay = "RNA", slot = "counts")
+
+# Create a combined group id: sample_patient + disease_state
+metadata &lt;- subset_obj@meta.data %&gt;%
+  dplyr::mutate(group_id = paste0(patient_id, "_", disease_state))
+
+# Aggregate counts by group_id using Seurat helper: returns a list of matrices per assay
+pb_list &lt;- AggregateExpression(subset_obj, group.by = "group_id", assays = "RNA", slot = "counts", return.seurat = FALSE)
+pseudobulk_counts &lt;- pb_list$RNA   # matrix: genes x group_id
+# Save pseudobulk counts
+dir.create("/output/pseudobulk", recursive = TRUE, showWarnings = FALSE)
+readr::write_csv(as.data.frame(pseudobulk_counts) %&gt;% tibble::rownames_to_column("gene"),
+                 "/output/pseudobulk/cd4_pseudobulk_counts.csv")
+</code></pre>
+<p>Notes:</p>
+<ul>
+<li>AggregateExpression sums raw counts by default. Do not sum normalized or scaled data for pseudobulk.</li>
+<li>Confirm that each group_id corresponds to exactly one biological sample (no mixing of multiple patients into one id).</li>
+</ul>
+<h3>3) Prepare DESeq2 inputs and run analysis</h3>
+<pre><code># Build colData for DESeq2 using the column names of pseudobulk_counts
+colnames(pseudobulk_counts)
+# You should see names like "Sample01_Healthy", "Sample02_CTCL", ...
+
+# Construct metadata for samples: parse patient and condition
+sample_names &lt;- colnames(pseudobulk_counts)
+coldata &lt;- tibble::tibble(sample = sample_names) %&gt;%
+  dplyr::mutate(
+    patient = sub("_.*$", "", sample),
+    condition = sub("^[^_]*_", "", sample)
+  ) %&gt;%
+  dplyr::select(sample, patient, condition) %&gt;%
+  tibble::column_to_rownames("sample")
+
+# Ensure rownames of coldata match colnames of counts
+all(rownames(coldata) == colnames(pseudobulk_counts))  # should be TRUE
+
+# Create DESeqDataSet
+dds &lt;- DESeqDataSetFromMatrix(countData = pseudobulk_counts,
+                              colData = coldata,
+                              design = ~ condition)   # simple design; expand for covariates
+
+# Optional filtering: remove genes with very low counts across all samples
+keep &lt;- rowSums(counts(dds)) &gt;= 10  # adjust threshold for cohort size
+dds &lt;- dds[keep, ]
 
 # Run DESeq2 pipeline
 dds &lt;- DESeq(dds)
 
-# Extract results (CTCL vs Healthy)
-res &lt;- results(dds, contrast=c("condition", "CTCL", "Healthy"), alpha=0.01)
+# Retrieve results: contrast condition CTCL vs Healthy (replace labels as needed)
+res &lt;- results(dds, contrast = c("condition", "CTCL", "Healthy"), alpha = 0.05)
+res_ordered &lt;- res[order(res$padj), ]
+# Save table
+dir.create("/output/deseq2", recursive = TRUE, showWarnings = FALSE)
+write.csv(as.data.frame(res_ordered), "/output/deseq2/cd4_DE_results.csv", row.names = TRUE)
 </code></pre>
-<hr class="my-8"/>
-<h2>3. Interpreting the Output: Results Table &amp; Volcano Plot</h2>
-<p>The raw DESeq2 output is a massive table. We filter it for biological significance (Absolute log2FoldChange &gt; 1) and statistical significance (Adjusted p-value &lt; 0.01).</p>
-<div class="overflow-x-auto my-6 border border-gray-200 rounded-lg shadow-sm">
-<table class="w-full text-left border-collapse">
-<thead>
-<tr class="bg-gray-100 text-gray-700 text-sm uppercase tracking-wider">
-<th class="p-4 border-b">Gene Symbol</th>
-<th class="p-4 border-b">Base Mean</th>
-<th class="p-4 border-b">log2(FoldChange)</th>
-<th class="p-4 border-b">Adjusted p-value</th>
-<th class="p-4 border-b">Regulation</th>
-</tr>
-</thead>
-<tbody class="text-sm text-gray-800">
-<tr class="hover:bg-gray-50">
-<td class="p-4 border-b font-medium italic">S100A4</td>
-<td class="p-4 border-b">845.2</td>
-<td class="p-4 border-b text-red-600 font-bold">4.21</td>
-<td class="p-4 border-b">1.2e-14</td>
-<td class="p-4 border-b">Upregulated in CTCL</td>
-</tr>
-<tr class="hover:bg-gray-50">
-<td class="p-4 border-b font-medium italic">TOX</td>
-<td class="p-4 border-b">520.1</td>
-<td class="p-4 border-b text-red-600 font-bold">3.15</td>
-<td class="p-4 border-b">4.5e-11</td>
-<td class="p-4 border-b">Upregulated in CTCL</td>
-</tr>
-<tr class="hover:bg-gray-50">
-<td class="p-4 border-b font-medium italic">SELL</td>
-<td class="p-4 border-b">1204.5</td>
-<td class="p-4 border-b text-blue-600 font-bold">-3.82</td>
-<td class="p-4 border-b">8.1e-12</td>
-<td class="p-4 border-b">Downregulated in CTCL</td>
-</tr>
-</tbody>
-</table>
-</div>
-<p class="text-sm text-gray-600 mb-8"><em>Note: The positive log2FoldChange indicates upregulation in the malignant CTCL state. S100A4, an intracellular calcium-binding protein, shows significant upregulation in this cellular population.</em></p>
-<h3>The Volcano Plot Diagnostic</h3>
-<p>A Volcano Plot visualizes the massive results table. The x-axis shows biological effect size (log2FoldChange), while the y-axis shows statistical significance (-log10 p-value).</p>
-<figure class="my-8 border border-gray-200 rounded-lg overflow-hidden shadow-sm">
-<img alt="Volcano Plot showing S100A4 upregulation and SELL downregulation" class="w-full h-auto" src="../assets/images/DE_volcano_plot.svg"/>
-<figcaption class="p-4 bg-gray-50 text-sm text-gray-600 border-t border-gray-200">
-<strong>Figure 1: Volcano Plot of CTCL vs Healthy CD4+ T-cells.</strong> The red dots (upper right) are significantly upregulated genes in the malignant state, including S100A4. The blue dots (upper left) represent genes lost during malignant transformation, such as the lymph node homing receptor SELL (L-selectin).
-  </figcaption>
-</figure>
-<h2>Conclusion</h2>
-<p>By aggregating single cells into pseudobulks, we properly accounted for biological replicates and avoided the false-positive explosion caused by single-cell-level tests. The resulting DESeq2 output reveals genuine biological signals, like the upregulation of S100A4, that can be experimentally validated in downstream assays.</p>
-<div class="mt-8">
-<details class="group bg-gray-50 rounded-lg border border-gray-200">
-<summary class="flex cursor-pointer items-center justify-between p-4 font-semibold text-gray-900 marker:content-none">
-<span class="flex items-center gap-2">
-<svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
- Full Reproducibility Script
-</span>
-<span class="transition group-open:rotate-180">
-<svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
-</span>
-</summary>
-<div class="p-4 border-t border-gray-200 text-sm text-gray-600">
-<p class="mb-2"><strong>Environment:</strong> R 4.3.2, Seurat v5.0.1, DESeq2 1.42.0</p>
-<pre class="text-xs bg-gray-800 text-gray-100 p-4 rounded-md overflow-x-auto"><code>library(Seurat)
-library(DESeq2)
-# Assume 'pbmc' contains 'patient_id' and 'disease_state' (Healthy vs CTCL)
-cd4_cells &lt;- subset(pbmc, idents = "CD4 T")
-cd4_cells$group_id &lt;- paste0(cd4_cells$patient_id, "_", cd4_cells$disease_state)
-pb_counts &lt;- AggregateExpression(cd4_cells, group.by = "group_id", assays = "RNA", return.seurat = FALSE)$RNA
-
-colData &lt;- data.frame(
-    condition = sapply(strsplit(colnames(pb_counts), "_"), `[`, 2),
-    row.names = colnames(pb_counts)
-)
-
-dds &lt;- DESeqDataSetFromMatrix(countData = pb_counts, colData = colData, design = ~ condition)
-dds$condition &lt;- relevel(dds$condition, ref = "Healthy")
-dds &lt;- DESeq(dds)
-res &lt;- results(dds, contrast=c("condition", "CTCL", "Healthy"), alpha=0.01)
-
-# Filter for plotting
-res_sig &lt;- subset(res, padj &lt; 0.01 &amp; abs(log2FoldChange) &gt; 1)
-</code></pre>
-</div>
-</details>
-</div>
-<section aria-label="References and further reading" class="mt-10 p-6 bg-slate-50 border border-slate-200 rounded-xl">
-<h2 class="text-xl font-bold text-gray-900 mb-3">Primary References</h2>
-<ul class="list-disc list-inside space-y-2 text-sm text-gray-700">
-<li>Squair, J. W., et al. (2021). Confronting false discoveries in single-cell differential expression. <em>Nature communications</em>12(1), 5692. <a class="text-blue-700 hover:underline" href="https://doi.org/10.1038/s41467-021-25960-2" rel="noopener" target="_blank">DOI: 10.1038/s41467-021-25960-2</a> (Pseudobulk Imperative)</li>
-<li>Love, M. I., Huber, W., &amp; Anders, S. (2014). Moderated estimation of fold change and dispersion for RNA-seq data with DESeq2. <em>Genome biology</em>15(12), 550. <a class="text-blue-700 hover:underline" href="https://doi.org/10.1186/s13059-014-0550-8" rel="noopener" target="_blank">DOI: 10.1186/s13059-014-0550-8</a></li>
-<li>Lun, A. T., &amp; Marioni, J. C. (2017). Overcoming confounding plate effects in differential expression analyses of single-cell RNA-seq data. <em>Biostatistics</em>18(3), 451-464. <a class="text-blue-700 hover:underline" href="https://doi.org/10.1093/biostatistics/kxw055" rel="noopener" target="_blank">DOI: 10.1093/biostatistics/kxw055</a></li>
+<p>What each command produces:</p>
+<ul>
+<li><code>pseudobulk_counts</code>: an R matrix saved to CSV containing summed raw counts per gene per sample (genes × samples).</li>
+<li><code>dds</code>: a DESeqDataSet that contains design, counts, and sample metadata; filtered to remove near-zero genes.</li>
+<li><code>res_ordered</code>: DESeq2 results object (log2 fold changes, p-values, adjusted p-values) saved to CSV.</li>
 </ul>
-</section>
+<h3>4) Diagnostics and plotting (PCA, MA, Volcano)</h3>
+<pre><code># Variance stabilizing transformation for plotting
+vsd &lt;- vst(dds, blind = TRUE)   # vst = variance stabilizing transform
+
+# PCA plot and save
+pca_df &lt;- as.data.frame(assay(vsd)) %&gt;%
+  t() %&gt;%
+  as.data.frame() %&gt;%
+  tibble::rownames_to_column("sample") %&gt;%
+  left_join(coldata %&gt;% tibble::rownames_to_column("sample"), by = "sample")
+
+pca_res &lt;- prcomp(t(assay(vsd)))
+pca_plot &lt;- ggplot(data = data.frame(pca_res$x), aes(x = PC1, y = PC2, label = rownames(pca_res$x))) +
+  geom_point(aes(color = coldata$condition), size = 3) +
+  labs(title = "PCA of pseudobulk samples (VST-transformed)")
+
+ggsave("/output/plots/pca_pseudobulk.png", pca_plot, width = 6, height = 4)
+
+# MA-plot
+png("/output/plots/ma_plot.png", width = 800, height = 600)
+plotMA(res, main = "MA-plot: CTCL vs Healthy", ylim = c(-5, 5))
+dev.off()
+
+# Volcano plot
+res_df &lt;- as.data.frame(res) %&gt;% tibble::rownames_to_column("gene")
+res_df &lt;- res_df %&gt;% mutate(significant = (!is.na(padj)) &amp; padj &lt; 0.05 &amp; abs(log2FoldChange) &gt; 1)
+
+volcano &lt;- ggplot(res_df, aes(x = log2FoldChange, y = -log10(pvalue))) +
+  geom_point(aes(color = significant), alpha = 0.6) +
+  scale_color_manual(values = c("grey", "red")) +
+  labs(title = "Volcano plot: CTCL vs Healthy", x = "log2 fold change", y = "-log10(p-value)") +
+  theme_minimal()
+ggsave("/output/plots/volcano.png", volcano, width = 6, height = 4)
+</code></pre>
+<h2>Output inspection and interpretation</h2>
+<p>Key columns on DESeq2 output to inspect:</p>
+<ul>
+<li><code>baseMean</code> — average normalized count across samples for the gene.</li>
+<li><code>log2FoldChange</code> — estimated magnitude of change between conditions (positive means up in the numerator of the contrast).</li>
+<li><code>stat</code>, <code>pvalue</code>, and <code>padj</code> — test statistic and multiple-test-corrected p-value (Benjamini–Hochberg FDR).</li>
+</ul>
+<p>What to look for:</p>
+<ul>
+<li>Large |log2FoldChange| combined with small adjusted p-value (e.g. padj &lt; 0.05) suggests a robust change across biological replicates.</li>
+<li>Genes with very low <code>baseMean</code> may have unstable fold-change estimates; treat those cautiously.</li>
+<li>PCA should show separation by biological condition if condition explains a major axis of variation. If PCA shows clustering by batch, sample preparation, or sequencing run, this indicates confounding.</li>
+</ul>
+<p>What a plausible result means—and does not mean:</p>
+<ul>
+<li>Significant DE genes are candidate differences between the biological groups you compared; they are not proof of mechanism or causation.</li>
+<li>Results are only as reliable as your experimental design: insufficient biological replicates, confounding covariates, or unequal sample composition can bias results.</li>
+<li>Pseudobulk limits inference to differences at the sample level for the chosen cell type; changes in cell-type composition across samples are not captured here (you would need complementary compositional analysis).</li>
+</ul>
+<h2>Troubleshooting: symptoms, likely causes, and fixes</h2>
+<ul>
+<li><strong>Symptom:</strong> Nearly every gene has an extremely low adjusted p-value (lots of seemingly significant hits).
+    <br/><strong>Likely cause:</strong> You aggregated cells but inadvertently used cell-level metadata as replicates (e.g., using cell barcodes instead of patient IDs), or you used normalized data for aggregation.
+    <br/><strong>Fix:</strong> Confirm that <code>group_id</code> is one column per biological sample. Re-aggregate using raw counts (not log-normalized or scaled counts). Ensure design addresses sample-level covariates.</li>
+<li><strong>Symptom:</strong> PCA shows samples clustering by sequencing batch, not by condition.
+    <br/><strong>Likely cause:</strong> Batch effects are present and not modeled.
+    <br/><strong>Fix:</strong> Add batch as a covariate in the DESeq2 design (e.g. <code>design = ~ batch + condition</code>) if batches are balanced with respect to condition. Consider ComBat-Seq or removeBatchEffect for visualization only; do not remove biological signal.</li>
+<li><strong>Symptom:</strong> Warning about zero-inflation or convergence in DESeq2.
+    <br/><strong>Likely cause:</strong> Very small sample size (few biological replicates) or many genes with near-zero counts.
+    <br/><strong>Fix:</strong> Increase number of biological replicates if possible; filter out genes with very low counts before testing; consider using limma-voom with robust options for very small groups.</li>
+<li><strong>Symptom:</strong> Unexpected direction of log2 fold-change (sign reversed).
+    <br/><strong>Likely cause:</strong> Contrast order in <code>results()</code> matters (<code>contrast = c("condition", "CTCL", "Healthy")</code> returns log2(CTCL/Healthy)).
+    <br/><strong>Fix:</strong> Verify the order passed to <code>results()</code> and interpret positive values as higher in the first level of the contrast.</li>
+</ul>
+<h2>Limitations, version and reference-data caveats, and responsible use</h2>
+<p>Limitations:</p>
+<ul>
+<li>Pseudobulk removes cell-to-cell variability that may be biologically informative (e.g., expression heterogeneity within a sample). It provides sample-level estimates for a given annotated cell type.</li>
+<li>Small numbers of biological replicates (n ≤ 3 per group) limit power and inflate uncertainty. Statistical tests will be poorly behaved with very few samples.</li>
+<li>Cell-type misannotation or variable cell-type composition between samples can bias pseudobulk results—ensure consistent cell-type definitions and consider subsampling or weighting strategies if sample cellularity differs widely.</li>
+</ul>
+<p>Version and reference-data caveats:</p>
+<ul>
+<li>Different versions of Seurat and DESeq2 may change function signatures or default behaviors (e.g., AggregateExpression arguments). Test code on a small mock dataset after updating packages.</li>
+<li>When using gene annotation for downstream reporting and enrichment, ensure consistent gene identifiers (ENSEMBL vs gene symbol) and the reference genome build used in preprocessing.</li>
+</ul>
+<p>Responsible use:</p>
+<ul>
+<li>Do not overinterpret single-gene hits as clinical biomarkers without independent validation (technical replication, orthogonal assays, and independent cohorts).</li>
+<li>Document sample inclusion/exclusion criteria, preprocessing steps, and analytical choices (filter thresholds, design formula) so analyses are reproducible and transparent.</li>
+</ul>
+<h2>Next-step checklist (concise)</h2>
+<ol>
+<li>Confirm pseudobulk matrix columns correspond to unique biological samples and correct condition labels.</li>
+<li>Filter low-count genes and run DESeq2 with an appropriate design (add batch/covariates if needed).</li>
+<li>Inspect PCA and MA plots for confounding signals; revisit design if batch effects appear.</li>
+<li>Save and review the top DE genes; validate a small set by orthogonal experiments or an independent cohort.</li>
+<li>Complement pseudobulk DE with compositional analysis across cell types and pathway/enrichment tests on DE gene sets.</li>
+</ol>
+<h2>References</h2>
+<ul>
+<li><a href="https://bioconductor.org/packages/release/bioc/html/DESeq2.html">DESeq2 Bioconductor page</a> — official documentation and vignettes for DESeq2.</li>
+<li><a href="https://satijalab.org/seurat/">Seurat documentation</a> — functions for preprocessing, subsetting, and AggregateExpression.</li>
+<li><a href="https://genomebiology.biomedcentral.com/articles/10.1186/s13059-014-0550-8">Squair et al., 2021 – Confronting false discoveries in single-cell differential expression</a> — comparative evaluation and recommendations supporting pseudobulk approaches.</li>
+<li><a href="https://bioconductor.org/packages/release/bioc/html/edgeR.html">edgeR Bioconductor page</a> — alternative bulk-style DE tool frequently used with pseudobulk data.</li>
+</ul>
 </article>
 <section class="mt-12 mb-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-100">
 <div class="flex items-start gap-4">

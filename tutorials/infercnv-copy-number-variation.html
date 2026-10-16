@@ -138,123 +138,226 @@ function toggleMobileMenu() {
 <div class="flex items-center gap-1">
 <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
 </div>
-</div>
-<div class="p-6 bg-blue-50 border border-blue-100 rounded-xl mb-8">
-<h4 class="text-lg font-bold text-blue-900 mb-2">Learning Objectives &amp; Prerequisites</h4>
-<ul class="list-disc list-inside text-blue-800 space-y-1 mb-4">
-<li><strong>Prerequisites:</strong> Complete scRNA-seq Basics and cell-type annotation; use matched reference cells and non-clinical training data where appropriate.</li>
-<li><strong>Objective:</strong> Infer broad copy-number patterns from expression while understanding reference selection, smoothing, and the need for orthogonal validation.</li>
-<li><strong>Expected Output:</strong> A CNV inference figure with reference-cell rationale, genomic patterns, sample context, and an explicit non-diagnostic interpretation.</li>
+</div><h2>Learning objectives and prerequisites</h2>
+<p>By the end of this lesson you will be able to:</p>
+<ul>
+<li>Prepare the three canonical inputs required by inferCNV (raw counts matrix, cell annotations, and gene ordering).</li>
+<li>Create an inferCNV object and run the core pipeline in R with reproducible commands.</li>
+<li>Inspect and interpret inferCNV outputs, including heatmaps and per-cell CNV scores, while understanding caveats that prevent over-interpretation.</li>
+<li>Recognize common failure modes and apply practical troubleshooting steps.</li>
 </ul>
-</div>
-<h2>Inferring Copy Number Variation with inferCNV</h2>
-<h2>Introduction</h2>
-<p>In oncology and cancer single-cell RNA-seq, distinguishing malignant tumor cells from normal, healthy cells in the microenvironment is the most critical first step. Because cancer is fundamentally driven by genomic instability, malignant cells often have massive chromosomal amplifications or deletions.</p>
-<p><strong>inferCNV</strong> is a powerful R package that uses single-cell RNA expression as a proxy for DNA copy number variation (CNV). By comparing the expression of genes across the genome in a suspect cell against a known "normal" reference cell, it can identify these large-scale chromosomal alterations.</p>
-<hr/>
-<h2>1. Preparing Data for inferCNV</h2>
-<p>You need three inputs for inferCNV:
-1. A raw count matrix.
-2. A metadata file mapping each cell to its annotation (e.g., "Tumor", "Normal_T_cell", "Normal_B_cell").
-3. A gene ordering file mapping each gene to its physical position on the chromosome.</p>
-<pre><code class="language-r">library(infercnv)
+<p>Prerequisites:</p>
+<ul>
+<li>Completed basic single-cell RNA-seq (scRNA-seq) workflows: quality control, normalization, integration, clustering, and cell-type annotation.</li>
+<li>Familiarity with R (&gt;= 4.0 recommended) and a working install of the inferCNV package (see References).</li>
+<li>Access to non-malignant reference cells within the same sample or a matched normal sample; using unrelated clinical samples as references is discouraged.</li>
+</ul>
+<h2>Context: why infer CNVs from scRNA-seq?</h2>
+<p>Copy number variation (CNV) refers to gains and losses of chromosomal segments and is a hallmark of many cancers. Direct measurement of CNV requires DNA-based assays (e.g., whole-genome sequencing, shallow WGS, or single-cell DNA-seq). However, broad CNV events often change the aggregate expression of genes across genomic regions. inferCNV is an R package that leverages single-cell transcriptomes to infer large-scale CNV patterns by comparing expression in "query" cells to a set of "reference" (presumed diploid) cells. This makes inferCNV useful for prioritising putative malignant or aneuploid populations in tumors, or for exploring chromosomal perturbations in heterogeneous tissues.</p>
+<p>Important conceptual points:</p>
+<ul>
+<li>inferCNV infers broad-scale (megabase-level) copy number changes rather than precise small focal events.</li>
+<li>It is an expression-based, not DNA-based, method: differences in expression programs, cell cycle, or sample composition can create patterns that mimic CNV.</li>
+<li>Reference selection is the most critical factor: if the reference set contains cells with copy-number lesions, inferences will be biased.</li>
+</ul>
+<h2>Reproducible workflow</h2>
+<p>The steps below describe a minimal, reproducible inferCNV run in R. Each step explicitly states expected inputs and outputs. Adjust paths and parameters for your environment. These commands are non-destructive: they read input files and write results to an output directory.</p>
+<h3>Required files (inputs)</h3>
+<ul>
+<li>Raw counts matrix in R format or as an on-disk matrix: counts_matrix.rds (genes x cells). Rows named by gene symbols (HGNC-style preferred).</li>
+<li>Cell annotations: cell_annotations.tsv (tab-delimited, two columns: <code>cell_id</code> and <code>cell_type</code> or group label). Cell IDs must match the column names of the counts matrix.</li>
+<li>Gene ordering file: gene_ordering.tsv (tab-delimited, columns: <code>gene_symbol</code>, <code>chromosome</code>, <code>start</code>, <code>end</code>). Coordinates should match the genome build used for gene symbols (e.g., hg38).</li>
+</ul>
+<h3>Example R session</h3>
+<pre><code># Start an R session. Install infercnv if you have not already:
+# install.packages("BiocManager")
+# BiocManager::install("infercnv")
 
-# Assuming you have extracted counts from your Seurat object
-raw_counts &lt;- GetAssayData(seurat_obj, slot = "counts")
+library(infercnv)
 
-# Create the inferCNV object
+# 1) Load inputs. Replace paths with your files.
+counts &lt;- readRDS("counts_matrix.rds")             # gene x cell matrix (raw counts)
+annotations &lt;- read.delim("cell_annotations.tsv", header=TRUE, stringsAsFactors=FALSE)
+gene_order &lt;- read.delim("gene_ordering.tsv", header=TRUE, stringsAsFactors=FALSE)
+
+# Sanity checks (explicit failures are better than silent mismatches)
+stopifnot(all(colnames(counts) %in% annotations$cell_id))
+stopifnot(all(rownames(counts) %in% gene_order$gene_symbol))
+
+# 2) Write annotation file required by inferCNV (if not already in file form)
+# inferCNV expects a two-column tab file: cell_id \t cell_group
+write.table(annotations[,c("cell_id","cell_type")],
+            file="infercnv_annotations.tsv", sep="\t", quote=FALSE, row.names=FALSE, col.names=FALSE)
+
+# 3) Write gene ordering file in inferCNV expected format:
+# columns: gene_symbol \t chr \t start \t end
+write.table(gene_order[,c("gene_symbol","chromosome","start","end")],
+            file="infercnv_gene_ordering.tsv", sep="\t", quote=FALSE, row.names=FALSE, col.names=FALSE)
+
+# 4) Create the inferCNV object.
+# Choose reference groups: names in 'cell_type' that represent normal/diploid cells
+reference_groups &lt;- c("T_cell","B_cell","Endothelial")  # example; adjust to your annotations
+
 infercnv_obj &lt;- CreateInfercnvObject(
-  raw_counts_matrix = raw_counts,
-  annotations_file = "cell_annotations.txt",
-  delim = "\t",
-  gene_order_file = "gene_ordering_hg38.txt",
-  ref_group_names = c("Normal_T_cell", "Normal_B_cell") # Define the healthy reference!
+    raw_counts_matrix = counts,
+    annotations_file = "infercnv_annotations.tsv",
+    delim = "\t",
+    gene_order_file = "infercnv_gene_ordering.tsv",
+    ref_group_names = reference_groups
 )
-</code></pre>
-<hr/>
-<h2>2. Running the inferCNV Pipeline</h2>
-<p>inferCNV applies a series of smoothing steps, moving averages, and hidden Markov models (HMM) to denoise the RNA data and uncover the true DNA copy number signal.</p>
-<pre><code class="language-r"># Run the core inferCNV algorithm
-infercnv_obj &lt;- infercnv::run(
-  infercnv_obj,
-  cutoff = 0.1, # 0.1 for 10x Genomics, 1 for Smart-seq2
-  out_dir = "infercnv_output/",
-  cluster_by_groups = TRUE,
-  denoise = TRUE,
-  HMM = TRUE,
-  num_threads = 8
-)
-</code></pre>
-<h3>Key Considerations</h3>
-<ul>
-<li><strong>Cutoff:</strong> Use <code>0.1</code> for sparse data like 10x Genomics, and <code>1.0</code> for full-length methods like Smart-seq2.</li>
-<li><strong>Denoising:</strong> Always use <code>denoise = TRUE</code> to remove background noise using the residual distributions.</li>
-<li><strong>HMM:</strong> The Hidden Markov Model predicts the actual integer copy number (e.g., 2 copies, 3 copies, or complete deletion).</li>
-</ul>
-<hr/>
-<h2>3. Interpreting the Output</h2>
-<p>inferCNV automatically generates a heatmap in your output directory (<code>infercnv_output/infercnv.webp</code>).</p>
-<ul>
-<li><strong>Rows</strong> are individual cells.</li>
-<li><strong>Columns</strong> are genes, ordered strictly by their physical location from Chromosome 1 to Chromosome X/Y.</li>
-<li><strong>Colors:</strong> Red indicates chromosomal amplification (e.g., Trisomy). Blue indicates chromosomal deletion.</li>
-</ul>
-<p>Large, coordinated shifts across chromosome arms can be <strong>consistent with</strong> copy-number alteration and may help prioritize clusters for follow-up. They don't, by themselves, prove that cells are malignant: expression programs, technical effects, an unsuitable reference, or subclonal structure can all influence the pattern. A neutral-looking reference is useful, but it's not a guarantee of a diploid genome.</p>
-<p>Treat expression-derived CNV inference as a screening and hypothesis-generation step. Before reporting a malignant population, validate the result with orthogonal DNA-based evidence when possible, such as matched bulk or single-cell DNA sequencing, shallow whole-genome sequencing, FISH, or clinically reviewed genomic data. Interpret the result together with pathology, sample context, QC, and canonical lineage markers.</p>
-<h3>Matched Python and R CNV-inference workflow</h3>
-<p>Define normal-reference cells before inference and interpret broad expression-derived CNV patterns cautiously. These methods don't replace DNA-based copy-number validation.</p>
-<pre><code class="language-python">import infercnvpy as cnv
 
+# 5) Run inferCNV.
+# - cutoff: 0.1 for droplet-based 10x (sparse); 1 for Smart-seq2-like full-length counts.
+# - out_dir: path to write outputs (creates directory if needed).
+out_dir &lt;- "infercnv_output"
+dir.create(out_dir, showWarnings = FALSE)
+
+infercnv_obj &lt;- infercnv::run(
+    infercnv_obj,
+    cutoff = 0.1,
+    out_dir = out_dir,
+    cluster_by_groups = TRUE,
+    denoise = TRUE,
+    HMM = TRUE,
+    num_threads = 4,
+    analysis_mode = "samples"  # or "cells" depending on design; see docs
+)
+
+# 6) After run, key outputs live in out_dir.
+# Examples:
+# - infercnv_output/infercnv.preprocessed_counts.{rds,tsv}
+# - infercnv_output/infercnv.observations.png (heatmap)
+# - infercnv_output/infercnv.HMMpred.data.tsv (HMM copy-number calls)
+# - infercnv_output/infercnv.final_infercnv.{rds,tsv}
+</code></pre>
+<p>Notes on parameters:</p>
+<ul>
+<li>cutoff: minimum expression threshold per gene to include it in smoothing. Use 0.1 for 10x-style UMI counts and 1.0 for deeper full-length protocols. Check the package documentation for guidance if you are unsure.</li>
+<li>denoise: performs residual-based denoising that reduces background variability. Recommended for most use cases.</li>
+<li>HMM: runs an optional Hidden Markov Model to assign discrete copy-number states. Treat HMM outputs as smoothed calls, not definitive DNA copy numbers.</li>
+</ul>
+<h3>Optional: an infercnvpy (Python) example</h3>
+<pre><code># If you prefer Python, infercnvpy provides similar functionality.
+# This example assumes an AnnData object `adata` where adata.X are raw counts,
+# and 'cell_type' is in adata.obs.
+
+import infercnvpy as cnv
+
+# Inputs:
+# adata: AnnData with raw counts in adata.X
+# reference_cat: list of cell-type names to use as diploid reference
 cnv.tl.infercnv(
     adata,
     reference_key="cell_type",
-    reference_cat=["B cell", "T cell"],
+    reference_cat=["T_cell", "B_cell", "Endothelial"],
     window_size=100,
-    key_added="cnv",
+    copy_on_back=0.1,   # analogous to cutoff; api may change—see docs
+    use_pbar=True
 )
-cnv_matrix = adata.obsm["X_cnv"]
-</code></pre>
-<pre><code class="language-r">library(infercnv)
 
-infercnv_obj &lt;- CreateInfercnvObject(
-  raw_counts_matrix = counts_matrix,
-  annotations_file = "cell_annotations.tsv",
-  delim = "\t",
-  gene_order_file = "gene_order.tsv",
-  ref_group_names = c("B cell", "T cell")
-)
-infercnv_obj &lt;- infercnv::run(
-  infercnv_obj,
-  cutoff = 0.1,
-  out_dir = "infercnv_output",
-  cluster_by_groups = TRUE
-)
+# After run, inferred CNV signals may be in adata.obsm["X_cnv"]
+cnv_matrix = adata.obsm.get("X_cnv")  # check the key your infercnvpy version uses
 </code></pre>
-<div class="mt-10 p-8 bg-gray-50 border border-gray-200 rounded-xl">
-<h3 class="text-xl font-bold text-gray-900 mb-4">Knowledge Check &amp; Assessment</h3>
-<div class="space-y-4">
-<div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-<h4 class="font-bold text-gray-800 mb-2">1. Concept Verification</h4>
-<p class="text-gray-600 text-sm">Why is expression-derived CNV inference not a substitute for validated DNA-based copy-number measurement?</p>
-</div>
-<div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-<h4 class="font-bold text-gray-800 mb-2">2. Practical Execution</h4>
-<p class="text-gray-600 text-sm">Run or inspect an inferCNV output, identify the reference population, and report one broad pattern with its limitations. </p>
-</div>
-<div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-<h4 class="font-bold text-gray-800 mb-2">3. Troubleshooting</h4>
-<p class="text-gray-600 text-sm">If a broad CNV signal appears in many cell types, how will you investigate reference quality, normalization, cell-cycle effects, and technical artifacts?</p>
-</div>
-</div>
-</div>
-<section aria-label="References and further reading" class="mt-10 p-6 bg-slate-50 border border-slate-200 rounded-xl">
-<h2 class="text-xl font-bold text-gray-900 mb-3">References and further reading</h2>
-<p class="text-sm text-gray-600 mb-3">Use these official resources to check current software behaviour, terminology, and production guidance. Tool versions and defaults change, so verify commands against the documentation before applying them to a research dataset.</p>
-<ul class="list-disc list-inside space-y-2 text-sm text-gray-700">
-<li><a class="text-blue-700 hover:underline" href="https://satijalab.org/seurat/" rel="noopener" target="_blank">Seurat documentation</a></li>
-<li><a class="text-blue-700 hover:underline" href="https://scanpy.readthedocs.io/en/stable/" rel="noopener" target="_blank">Scanpy documentation</a></li>
+<h2>Output inspection and interpretation</h2>
+<p>Primary outputs to inspect in the inferCNV output directory:</p>
+<ul>
+<li>Heatmap images (e.g., infercnv_output/infercnv.observations.png or .pdf): rows are cells, columns are ordered genes (genomic order). Color scale shows relative expression deviation versus reference.</li>
+<li>HMM-predicted states (e.g., infercnv_output/infercnv.HMMpred.data.tsv): per-gene or per-region discrete labels such as deletion, neutral, or amplification.</li>
+<li>Processed numeric matrices (e.g., infercnv.final_infercnv.tsv): these allow custom plotting and downstream analyses.</li>
 </ul>
-</section>
+<p>What to look for:</p>
+<ul>
+<li>Large contiguous blocks (tens of megabases) of coordinate expression shift across many genes on the same chromosome or chromosome arm. These are the canonical signal for CNV.</li>
+<li>Consistent patterns across many cells in a cluster: if a cluster of cells shows the same regional amplification/deletion, this suggests a clonal or subclonal genomic event rather than cell-cycle or transcriptional differences alone.</li>
+<li>Concordance between HMM states and the continuous heatmap: HMM should roughly align with prominent heatmap patterns if denoising and reference selection were appropriate.</li>
+</ul>
+<p>What a plausible positive result means:</p>
+<ul>
+<li>Coordinated amplification or deletion across many genes in a contiguous genomic region is consistent with a copy-number lesion and can be used to prioritise cells/clusters for DNA validation.</li>
+<li>Shared CNV patterns across cells that also express malignant markers strengthens the hypothesis of malignancy.</li>
+</ul>
+<p>What the result does NOT prove:</p>
+<ul>
+<li>An expression-based CNV call is not a diagnostic DNA measurement. Confounding factors—cell cycle, strong transcriptional programs that co-regulate nearby genes, or an inappropriate reference—can produce false positives.</li>
+<li>Small focal CNVs or balanced rearrangements will generally not be detectable by inferCNV.</li>
+<li>Quantitative copy number (exact integer ploidy) should not be assumed from inferred signal alone without orthogonal DNA data.</li>
+</ul>
+<h2>Troubleshooting</h2>
+<p>Below are common symptoms, likely causes, and practical fixes.</p>
+<h3>Symptom: No clear signal — heatmap looks noisy or flat</h3>
+<ul>
+<li>Possible causes:
+    <ul>
+<li>Reference groups contain contaminated or aneuploid cells (non-diploid).</li>
+<li>Too aggressive filtering of genes removed informative genes.</li>
+<li>Incorrect gene ordering or mismatched genome build (e.g., gene symbols matched to different coordinates).</li>
+<li>cutoff parameter too high for sparse data.</li>
+</ul>
+</li>
+<li>Fixes:
+    <ul>
+<li>Confirm reference groups are high-confidence normal cells (e.g., stromal or immune cells not expected to be malignant). If unsure, restrict to well-characterised cell subsets.</li>
+<li>Check the gene_ordering file for completeness and that gene symbols match rownames(counts). Use Ensembl-to-HGNC mapping if necessary.</li>
+<li>Reduce cutoff to 0.1 for 10x/UMI data. Re-run with denoise=TRUE and HMM=FALSE first to see raw-signal improvements.</li>
+</ul>
+</li>
+</ul>
+<h3>Symptom: Many small fragmented gains and losses scattered across genome</h3>
+<ul>
+<li>Possible causes:
+    <ul>
+<li>Batch effects or strong cell-type-specific transcriptional programs dominate the signal.</li>
+<li>Over-smoothing window size or inappropriate denoising parameters producing spurious local excursions.</li>
+<li>Counts were normalized prior to inferCNV (inferCNV expects raw counts).</li>
+</ul>
+</li>
+<li>Fixes:
+    <ul>
+<li>Use raw, integer UMI counts as input. Do not use log-normalised or scaled counts.</li>
+<li>Apply cluster_by_groups=TRUE to organize cells by annotation to better visualise group-level shifts.</li>
+<li>Experiment with disabling HMM and examining continuous signal; adjust denoise and smoothing parameters.</li>
+</ul>
+</li>
+</ul>
+<h3>Symptom: Reference appears shifted relative to expectation</h3>
+<ul>
+<li>Possible causes: reference set contains a subpopulation with true CNV; reference composition differs across samples.</li>
+<li>Fixes: build a stricter reference set (e.g., only well-characterised immune subsets), or use matched normal tissue when available. Run inferCNV with reference groups from the same sample where possible.</li>
+</ul>
+<h2>Limitations, version and reference-data caveats, and responsible use</h2>
+<p>Limitations and caveats:</p>
+<ul>
+<li>Genome build consistency: gene coordinates in the gene_order file must match the gene symbols and the genome assembly you intend to represent (e.g., hg19/GRCh37 vs hg38/GRCh38). Mismatches will produce incorrect genomic ordering and misleading heatmaps.</li>
+<li>Resolution: inferCNV is tuned to large-scale events (&gt; several Mb). It is not suitable for detecting single-exon or small focal CNVs.</li>
+<li>Noise model: sequencing depth, protocol differences (10x vs Smart-seq2), and sample composition influence sensitivity. Parameter choices (cutoff, denoise) must reflect data type.</li>
+<li>Reference fidelity: a diploid reference is assumed. If references are not diploid, inferred relative shifts may be inverted or dampened.</li>
+</ul>
+<p>Version and reproducibility:</p>
+<ul>
+<li>Different inferCNV releases may change default parameters and output formats. Record the package version (e.g., sessionInfo() in R) and document genome build and gene ID mapping used.</li>
+<li>Keep the input raw counts, annotation file, and gene_ordering file in an archival folder alongside the output directory for reproducibility.</li>
+</ul>
+<p>Responsible use and interpretation:</p>
+<ul>
+<li>Treat inferCNV results as hypothesis-generating. Any claim about malignancy or diagnostics should rely on orthogonal DNA-based validation and expert pathology review.</li>
+<li>Do not report expression-inferred CNVs as clinical diagnoses. Label results explicitly as inferred from transcriptome data in any downstream communication.</li>
+</ul>
+<h2>Next-step checklist</h2>
+<ol>
+<li>Confirm raw counts and gene-ordering are consistent (matching gene symbols and genome build).</li>
+<li>Define and document reference groups; re-check that these cells are likely diploid.</li>
+<li>Run inferCNV with denoise=TRUE and appropriate cutoff for your platform; inspect both continuous heatmap and HMM outputs.</li>
+<li>Compare CNV patterns to cluster annotations and known marker genes to prioritise candidate malignant clusters.</li>
+<li>Validate prioritized candidates with orthogonal DNA assays (shallow WGS, targeted DNA panels, FISH, or single-cell DNA-seq) before making biological or clinical claims.</li>
+</ol>
+<h2>References</h2>
+<ul>
+<li><a href="https://github.com/broadinstitute/inferCNV">inferCNV GitHub repository (Broad Institute)</a></li>
+<li><a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6130192/">Patel et al., 2014 and related single-cell tumor CNV methodology discussions — representative literature (search for primary inferCNV citations on GitHub)</a></li>
+<li><a href="https://bioconductor.org/packages/release/bioc/html/infercnv.html">Bioconductor: infercnv package documentation</a></li>
+<li><a href="https://github.com/icbi-lab/infercnvpy">infercnvpy GitHub (Python implementation / wrapper)</a></li>
+</ul>
+<p>Keep a reproducible record of the session information you used to run inferCNV (R version, inferCNV package version, and any other package versions); this aids later audits and validation.</p>
 </article>
 <section class="mt-12 mb-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-100">
 <div class="flex items-start gap-4">

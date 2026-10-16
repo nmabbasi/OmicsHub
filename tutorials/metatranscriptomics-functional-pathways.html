@@ -138,86 +138,149 @@ function toggleMobileMenu() {
 <div class="flex items-center gap-1">
 <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
 </div>
-</div>
-<div class="p-6 bg-blue-50 border border-blue-100 rounded-xl mb-8">
-<h4 class="text-lg font-bold text-blue-900 mb-2">Learning Objectives &amp; Prerequisites</h4>
-<ul class="list-disc list-inside text-blue-800 space-y-1 mb-4">
-<li><strong>Prerequisites:</strong> Complete Metatranscriptomics Basics and be comfortable interpreting gene-family and pathway abundance tables.</li>
-<li><strong>Objective:</strong> Map microbial transcripts to functional gene families and pathways while separating observed activity from unsupported causal claims.</li>
-<li><strong>Expected Output:</strong> A pathway-level table with normalized abundance, database version, sample comparison, and stated uncertainty.</li>
-</ul>
-</div>
-<h2>Functional Pathway Analysis in Metatranscriptomics</h2>
-<h2>Introduction</h2>
-<p>In our previous metatranscriptomics guide, we discussed the critical first step: filtering out the massive abundance of ribosomal RNA (rRNA) using SortMeRNA to isolate the functional messenger RNA (mRNA).</p>
-<p>Once you've your clean mRNA reads, the next goal is functional profiling: <strong>What specific biochemical pathways are the microbes actively using?</strong> The absolute gold standard for this analysis is <strong>HUMAnN 3</strong></p>
-<hr/>
-<h2>1. How HUMAnN 3 Works</h2>
-<p>HUMAnN 3 (The HMP Unified Metabolic Analysis Network) is highly sophisticated. It uses a tiered approach to maximize both speed and accuracy:</p>
+</div><h2>Learning objectives and prerequisites</h2>
+<p><strong>Prerequisites:</strong> You should have completed a basic metatranscriptomics workflow that produced quality-filtered, ribosomal RNA (rRNA)-depleted mRNA reads (FASTQ or FASTA). You should be comfortable with the command line, understand basic read mapping and gene-family abundance tables, and know how to work with tabular text files (TSV/CSV).</p>
+<p><strong>Learning objectives:</strong> After following this lesson you will be able to</p>
 <ul>
-<li><strong>Tier 1 (Nucleotide level):</strong> It first runs <code>MetaPhlAn</code> to determine exactly which species are present in your sample. It then dynamically builds a custom database of the pangenomes for <em>only</em> those specific species. It maps your mRNA reads to this custom database using Bowtie2. This is extremely fast and accurate.</li>
-<li><strong>Tier 2 (Translated search):</strong> Any reads that fail to map to the known species' pangenomes (the "unclassified" reads) are translated into proteins and searched against the massive <strong>UniRef90</strong> protein database using DIAMOND. This is slower, but ensures you capture functional genes even from unknown or unculturable species.</li>
+<li>Run HUMAnN 3 to profile active microbial functions from mRNA reads and map gene families to metabolic pathways using the MetaCyc database.</li>
+<li>Understand HUMAnN's tiered search strategy (nucleotide and translated searches) and the types of output files it produces.</li>
+<li>Normalize and inspect pathway abundance and coverage outputs and correctly interpret what pathway-level signals indicate (and what they do not prove).</li>
+<li>Troubleshoot common problems and understand limitations such as database versions, multi-mapping, and compositional data issues.</li>
 </ul>
-<hr/>
-<h2>2. Running the HUMAnN 3 Pipeline</h2>
-<pre><code class="language-bash"># Assuming you have your rRNA-depleted mRNA reads
-humann --input sample_mRNA.fastq.gz \
-       --output humann_out/ \
-       --threads 16 \
-       --taxonomic-profile metaphlan_bugs_list.tsv # Optional: provide pre-computed taxonomy
+<h2>Why map transcripts to pathways? Biological and computational context</h2>
+<p>Metatranscriptomics measures the pool of RNA transcripts produced by a microbial community. Mapping transcripts to functional gene families and then to metabolic pathways provides a higher-level view of which biochemical processes are actively transcribed in the community. This approach helps answer questions such as: which metabolic routes are currently expressed, which species contribute to those routes, and how pathway expression changes across conditions.</p>
+<p>Important caveats: transcriptional activity does not equal enzymatic activity. Detection of mRNA for pathway genes is evidence of expression but not direct proof of metabolic flux or reaction rates. Also, metatranscriptomes are compositional: reported abundances depend on library depth and experimental protocol; appropriate normalization and statistical modeling are essential for valid comparisons.</p>
+<h2>Reproducible workflow (step-by-step)</h2>
+<p>Below is a sequential, reproducible workflow using HUMAnN 3. The example assumes you already have rRNA-depleted reads in compressed FASTQ. Replace sample names and paths to match your environment. Each command lists expected inputs and outputs.</p>
+<h3>Files you should have before starting</h3>
+<ul>
+<li>Input reads: data/sampleA_mRNA.fastq.gz (rRNA-depleted, quality-filtered)</li>
+<li>Optional taxonomic profile: metaphlan/sampleA_profile.tsv (from MetaPhlAn 3) — if you have this, HUMAnN will skip its internal taxonomic profiling step.</li>
+<li>Output directory: humann_out/ (will be created by HUMAnN)</li>
+</ul>
+<h3>1) Run HUMAnN 3</h3>
+<p>HUMAnN 3 performs a tiered search: a nucleotide-level search against strain pangenomes (fast) and a translated protein search for unmapped reads (sensitive). Provide the path to a taxonomic profile if you have one to speed execution and ensure reproducibility.</p>
+<pre><code>humann --input data/sampleA_mRNA.fastq.gz \
+       --output humann_out/sampleA/ \
+       --threads 12 \
+       --metaphlan-options "--input_type fastq" \
+       --taxonomic-profile metaphlan/sampleA_profile.tsv
 </code></pre>
-<h3>Understanding the MetaCyc Database</h3>
-<p>HUMAnN 3 maps the individual gene families it finds into complete metabolic pathways using the <strong>MetaCyc</strong> database.</p>
-<p>Why MetaCyc instead of KEGG? MetaCyc is heavily focused on experimentally elucidated pathways and is highly picked for microbial metabolism, whereas KEGG is broader and includes many eukaryotic-specific signaling pathways that are irrelevant to microbiome research.</p>
-<hr/>
-<h2>3. Interpreting HUMAnN Outputs</h2>
-<p>HUMAnN 3 generates three primary output files:</p>
-<ol>
-<li><strong><code>pathabundance.tsv</code></strong>The abundance of complete metabolic pathways (e.g., <em>GLYCOLYSIS-E-D: superpathway of glycolysis</em>).</li>
-<li><strong><code>pathcoverage.tsv</code></strong>The coverage of the pathway. (Just because one gene in a 10-gene pathway is highly expressed doesn't mean the pathway is active. Coverage checks if the <em>entire</em> pathway is present).</li>
-<li><strong><code>genefamilies.tsv</code></strong>The abundance of individual UniRef90 gene families.</li>
-</ol>
-<h3>Stratification by Species</h3>
-<p>The brilliance of HUMAnN 3 is that the outputs are <strong>stratified</strong></p>
-<p>If you look at <code>pathabundance.tsv</code>you won't just see "Glycolysis = 5000". You'll see:
-* <code>Glycolysis</code> = 5000
-* <code>Glycolysis|Escherichia_coli</code> = 4000
-* <code>Glycolysis|Bacteroides_fragilis</code> = 1000</p>
-<p>This allows you to confidently state not just <em>what</em> the community is doing, but exactly <em>which species</em> is responsible for doing it!</p>
-<hr/>
-<h2>4. Normalization and Differential Testing Are Different Steps</h2>
-<p>HUMAnN produces several abundance tables, and the correct statistical input depends on the question. CPM or relative-abundance tables can be useful for <strong>descriptive plots</strong>but don't pass library-size-normalized CPM values directly to count-based differential-expression models such as DESeq2. DESeq2 expects un-normalized or estimated counts and computes its own size factors internally.</p>
-<pre><code class="language-bash"># Create a CPM table for visualization or exploratory comparisons.
-humann_renorm_table --input humann_out/sample_pathabundance.tsv \
-                    --output sample_pathabundance_cpm.tsv \
+<p>Inputs: data/sampleA_mRNA.fastq.gz (FASTQ). Optional: metaphlan/sampleA_profile.tsv (MetaPhlAn taxonomic profile). Outputs (created under humann_out/sampleA/):</p>
+<ul>
+<li>sampleA_genefamilies.tsv — gene-family abundances (UniRefX family IDs).</li>
+<li>sampleA_pathabundance.tsv — pathway abundance table (MetaCyc pathway IDs and names).</li>
+<li>sampleA_pathcoverage.tsv — pathway coverage values (fraction or completeness metric).</li>
+<li>log files (humann logs, run parameters).</li>
+</ul>
+<h3>2) Rename and organize results for multi-sample projects</h3>
+<p>If you are processing multiple samples in a loop or with a workflow manager, collect per-sample HUMAnN outputs into a single results directory. Example command renames and moves files into a consistent structure:</p>
+<pre><code># Example (run once per sample)
+mkdir -p humann_out/merged_tables/
+cp humann_out/sampleA/sampleA_pathabundance.tsv humann_out/merged_tables/sampleA_pathabundance.tsv
+cp humann_out/sampleA/sampleA_pathcoverage.tsv  humann_out/merged_tables/sampleA_pathcoverage.tsv
+cp humann_out/sampleA/sampleA_genefamilies.tsv  humann_out/merged_tables/sampleA_genefamilies.tsv
+</code></pre>
+<h3>3) Join per-sample tables into a matrix</h3>
+<p>HUMAnN includes helper utilities to join tables across samples. These produce a single table with pathway IDs as rows and samples as columns.</p>
+<pre><code># Join pathway abundance tables (run from humann_out/merged_tables)
+humann_join_tables --input . --file_name sampleA_pathabundance.tsv --output merged_pathabundance.tsv --name-by sample
+humann_join_tables --input . --file_name sampleA_pathcoverage.tsv --output merged_pathcoverage.tsv --name-by sample
+humann_join_tables --input . --file_name sampleA_genefamilies.tsv --output merged_genefamilies.tsv --name-by sample
+</code></pre>
+<p>Inputs: the per-sample TSVs in humann_out/merged_tables/. Outputs: merged tables in the current directory (merged_pathabundance.tsv etc.).</p>
+<h3>4) Normalize for visualization or downstream methods</h3>
+<p>HUMAnN reports different abundance units (copies per million, reads per kilobase, etc.). Choose normalization carefully depending on the downstream method.</p>
+<pre><code># Example: create copies-per-million (CPM) normalized pathway table for plotting
+humann_renorm_table --input merged_pathabundance.tsv \
+                    --output merged_pathabundance_cpm.tsv \
                     --units cpm
 </code></pre>
-<p>Before differential testing, first determine whether your chosen HUMAnN output is a count-like table or a normalized abundance. Use raw or appropriately estimated counts with DESeq2, keep sample metadata and batch variables explicit, and record the transformation used only for visualization. If you only have compositional or normalized pathway abundances, choose a method whose assumptions match that input rather than treating it as a DESeq2 count matrix. Consult the <a href="https://bioconductor.org/packages/devel/bioc/vignettes/DESeq2/inst/doc/DESeq2.html">DESeq2 vignette</a> for its input requirements.</p>
-<div class="mt-10 p-8 bg-gray-50 border border-gray-200 rounded-xl">
-<h3 class="text-xl font-bold text-gray-900 mb-4">Knowledge Check &amp; Assessment</h3>
-<div class="space-y-4">
-<div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-<h4 class="font-bold text-gray-800 mb-2">1. Concept Verification</h4>
-<p class="text-gray-600 text-sm">Why does a detected transcript support potential activity but not necessarily measured pathway flux or phenotype?</p>
-</div>
-<div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-<h4 class="font-bold text-gray-800 mb-2">2. Practical Execution</h4>
-<p class="text-gray-600 text-sm">Interpret a HUMAnN-style pathway output and report one up- or down-shift with the normalization method and biological caveat. </p>
-</div>
-<div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-<h4 class="font-bold text-gray-800 mb-2">3. Troubleshooting</h4>
-<p class="text-gray-600 text-sm">If a pathway disappears after filtering, how will you inspect read depth, reference coverage, normalization, and the gene-family evidence behind it?</p>
-</div>
-</div>
-</div>
-<section aria-label="References and further reading" class="mt-10 p-6 bg-slate-50 border border-slate-200 rounded-xl">
-<h2 class="text-xl font-bold text-gray-900 mb-3">References and further reading</h2>
-<p class="text-sm text-gray-600 mb-3">Use these official resources to check current software behaviour, terminology, and production guidance. Tool versions and defaults change, so verify commands against the documentation before applying them to a research dataset.</p>
-<ul class="list-disc list-inside space-y-2 text-sm text-gray-700">
-<li><a class="text-blue-700 hover:underline" href="https://www.ncbi.nlm.nih.gov/genome/" rel="noopener" target="_blank">NCBI Genome and metagenome resources</a></li>
-<li><a class="text-blue-700 hover:underline" href="https://www.ebi.ac.uk/metagenomics/" rel="noopener" target="_blank">EMBL-EBI metagenomics resources</a></li>
+<p>Inputs: merged_pathabundance.tsv. Output: merged_pathabundance_cpm.tsv (values scaled to copies per million). Do not treat CPM-normalized values as raw counts for count-based models like DESeq2.</p>
+<h3>5) (Optional) Split stratified tables by species</h3>
+<p>HUMAnN outputs stratified values (e.g., PATHWAY and PATHWAY|Species). You can separate taxon-stratified contributions using provided utilities or by simple text parsing if you prefer species-level matrices for targeted analyses.</p>
+<pre><code># Example: Unstratify pathway abundance to separate community-level vs. stratified contributions
+humann_split_stratified_table --input merged_pathabundance.tsv \
+                              --output merged_pathabundance_unstratified.tsv
+</code></pre>
+<p>Input: merged_pathabundance.tsv. Output: merged_pathabundance_unstratified.tsv where stratified entries have been separated into distinct columns.</p>
+<h2>Output inspection and interpretation</h2>
+<p>HUMAnN produces three main categories of output: gene-family abundances (UniRef-based), pathway abundances (MetaCyc-based), and pathway coverage. Here is how to interpret each and what to beware of.</p>
+<h3>What to look for</h3>
+<ul>
+<li><strong>Pathway abundance (pathabundance.tsv):</strong> A numeric estimate of pathway-level expression. Higher values indicate more transcript evidence mapped to the constituent gene families for that pathway.</li>
+<li><strong>Pathway coverage (pathcoverage.tsv):</strong> A measure of completeness: how many key steps in the pathway are supported by detected gene families. Low coverage with a high abundance can indicate a few highly expressed genes but not the full pathway.</li>
+<li><strong>Gene-family table (genefamilies.tsv):</strong> Use this to trace which specific UniRef families drive pathway signals and to evaluate multi-mapping or ambiguous assignments.</li>
+<li><strong>Stratified outputs:</strong> Entries like PATHWAY|Escherichia_coli indicate species-specific contribution. Compare stratified and unstratified totals to confirm the community vs species-specific roles.</li>
 </ul>
-</section>
+<h3>What a plausible result means</h3>
+<p>Example interpretation (conceptual): if a glycolysis pathway shows moderate-to-high abundance and high coverage across samples, the community is transcribing most glycolytic enzymes, suggesting active sugar catabolism at the transcriptional level. If most of that pathway is stratified to a single taxon, it suggests that taxon is the dominant transcriber of glycolysis genes.</p>
+<h3>What the outputs do NOT prove</h3>
+<ul>
+<li>Transcript detection does not confirm protein abundance, enzyme activity, or metabolic flux. Post-transcriptional regulation and enzyme kinetics are not measured here.</li>
+<li>High pathway abundance may be driven by a single highly expressed gene shared among multiple pathways, so examine gene-family contributions and coverage.</li>
+<li>Cross-sample comparisons require appropriate normalization and statistical modeling; raw normalized values are not sufficient for robust inference without accounting for compositionality, batch effects, and library size.</li>
+</ul>
+<h2>Troubleshooting</h2>
+<p>Below are common symptoms, likely causes, and recommended fixes.</p>
+<h3>Symptom: HUMAnN runs very slowly or appears stalled</h3>
+<ul>
+<li>Likely cause: DIAMOND translated search on large unmapped read sets; insufficient threads or IO bottlenecks.</li>
+<li>Fixes:
+    <ul>
+<li>Provide a pre-computed MetaPhlAn profile with --taxonomic-profile to skip the internal taxonomic profiling.</li>
+<li>Increase --threads and ensure scratch disk has enough space and good IO performance.</li>
+<li>Limit DIAMOND sensitivity options if you need speed over sensitivity (consult HUMAnN docs), but be aware this trades sensitivity for time.</li>
+</ul>
+</li>
+</ul>
+<h3>Symptom: Most reads map to "unclassified" and pathway coverage is low</h3>
+<ul>
+<li>Likely cause: samples contain novel taxa or poorly represented genomes in the pangenome/UniRef databases, or mRNA reads are too short/low-quality for confident mapping.</li>
+<li>Fixes:
+    <ul>
+<li>Check read length and quality; consider re-trimming or adjusting minimum read length before HUMAnN.</li>
+<li>If many reads are unclassified, inspect DIAMOND results (if saved) and consider updating reference databases (UniRef, MetaCyc) or supplementing with custom protein databases relevant to your environment.</li>
+<li>Use appropriate DIAMOND settings (e-value, sensitivity) to increase detection, but document changed parameters.</li>
+</ul>
+</li>
+</ul>
+<h3>Symptom: Unexpected taxonomic assignments in stratified outputs</h3>
+<ul>
+<li>Likely cause: shared gene families across taxa, multi-mapping, or inaccurate taxonomic profile used to build pangenomes.</li>
+<li>Fixes:
+    <ul>
+<li>Inspect gene-family rows to see if the UniRef entries are conserved across taxa; review the species profile used by HUMAnN.</li>
+<li>Run MetaPhlAn independently on the same reads to confirm the taxonomic profile.</li>
+<li>Be conservative in attributing pathway function to a species when stratified contributions are small or when gene families are highly conserved.</li>
+</ul>
+</li>
+</ul>
+<h2>Limitations, version and reference-data caveats, and responsible use</h2>
+<p>Limitations to consider when planning or reporting HUMAnN-based metatranscriptomic analyses:</p>
+<ul>
+<li><strong>Database versions matter:</strong> MetaCyc releases and UniRef clusters are periodically updated. Always record the exact database versions (MetaCyc release date, UniRef90/50 version) and HUMAnN version used. Differences across database versions can change pathway mappings and abundances.</li>
+<li><strong>Stratification ambiguity:</strong> Gene-family to species mappings can be ambiguous for conserved genes. Use stratified outputs conservatively and validate key assignments with additional evidence (e.g., genome bin contigs, targeted qPCR).</li>
+<li><strong>Compositional data:</strong> Metatranscriptomic libraries are compositional; relative abundances can be misleading if interpreted as absolute expression differences. Use proper normalization and, if possible, spike-ins or internal standards to estimate absolute transcript abundances.</li>
+<li><strong>Biological interpretation:</strong> Presence of transcripts is suggestive of biological activity but not definitive. Combine metatranscriptomics with metaproteomics, metabolomics, or activity assays when claiming functional activity or metabolic flux.</li>
+<li><strong>Reproducibility:</strong> Share exact command lines, HUMAnN and database versions, and sample metadata to enable reproducible interpretation.</li>
+</ul>
+<h2>Next-step checklist</h2>
+<ol>
+<li>Confirm you have recorded HUMAnN version and the MetaCyc/UniRef database versions used.</li>
+<li>Inspect genefamilies.tsv to identify which UniRef families drive pathway signals of interest.</li>
+<li>Examine pathcoverage.tsv: prioritize pathways with both high abundance and high coverage for interpretation.</li>
+<li>Choose appropriate normalization for your downstream analysis (CPM for visualization; raw counts or appropriate count-like values + DESeq2 for differential testing, following method-specific input rules).</li>
+<li>For key findings, validate with complementary approaches (targeted qPCR, metaproteomics, metabolomics) before asserting functional activity or ecological roles.</li>
+</ol>
+<h2>References</h2>
+<ul>
+<li><a href="https://github.com/biobakery/humann">HUMAnN 3 documentation and GitHub repository</a></li>
+<li><a href="https://metacyc.org/">MetaCyc Pathway/Genome Database</a></li>
+<li><a href="https://huttenhower.sph.harvard.edu/metaphlan/">MetaPhlAn: strain-level taxonomic profiling documentation</a></li>
+<li><a href="https://github.com/BenLangmead/bowtie2">Bowtie2: read aligner</a> (used within HUMAnN nucleotide-level stage)</li>
+<li><a href="https://github.com/bbuchfink/diamond">DIAMOND: accelerated translated search</a> (used within HUMAnN translated search stage)</li>
+</ul>
 </article>
 <section class="mt-12 mb-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-100">
 <div class="flex items-start gap-4">

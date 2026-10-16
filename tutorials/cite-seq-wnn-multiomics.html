@@ -138,135 +138,246 @@ function toggleMobileMenu() {
 <div class="flex items-center gap-1">
 <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
 </div>
-</div>
-<div class="p-6 bg-blue-50 border border-blue-100 rounded-xl mb-8">
-<h4 class="text-lg font-bold text-blue-900 mb-2">Learning Objectives &amp; Prerequisites</h4>
-<ul class="list-disc list-inside text-blue-800 space-y-1 mb-4">
-<li><strong>Prerequisites:</strong> Complete scRNA-seq Basics and have paired RNA/protein or multi-modal data with clearly documented feature names.</li>
-<li><strong>Objective:</strong> Integrate CITE-seq or multi-modal data with WNN while evaluating modality quality, weighting, and biological agreement.</li>
-<li><strong>Expected Output:</strong> A multi-modal object with modality-specific QC, WNN embedding, feature interpretation, and documented modality contributions.</li>
+</div><h2>Learning objectives &amp; prerequisites</h2>
+<p>
+By the end of this lesson you will be able to:
+</p>
+<ul>
+<li>Prepare a Seurat CITE-seq object containing RNA and antibody-derived tag (ADT) assays.</li>
+<li>Normalize and preprocess ADT data using CLR (centered log ratio) and run modality-specific dimensionality reduction.</li>
+<li>Run Seurat's Weighted Nearest Neighbor (WNN) workflow to integrate RNA and protein measurements, generate a joint embedding, and inspect per-cell modality weights.</li>
+<li>Interpret modality contributions and evaluate when protein or RNA drives neighborhood structure.</li>
 </ul>
-</div>
-<h2>Multi-Omics: CITE-seq &amp; WNN Integration</h2>
-<h2>Introduction</h2>
-<p>Traditional scRNA-seq only measures the transcriptome. However, many critical biological processes are driven by cell surface proteins (e.g., CD4, CD8, PD-1) whose abundance doesn't always correlate perfectly with RNA levels.</p>
-<p><strong>CITE-seq</strong> (Cellular Indexing of Transcriptomes and Epitopes by Sequencing) solves this by using antibody-derived tags (ADTs) to simultaneously measure RNA and protein levels in the exact same cell.</p>
-<p>This tutorial covers the normalization of ADT data and the advanced <strong>Weighted Nearest Neighbor (WNN)</strong> integration method in Seurat to combine these two modalities.</p>
-<hr/>
-<h2>1. Preparing the CITE-seq Object</h2>
-<p>A CITE-seq Seurat object contains two distinct "Assays": <code>RNA</code> (for transcripts) and <code>ADT</code> (for proteins).</p>
-<pre><code class="language-r">library(Seurat)
+<p>
+Prerequisites:
+</p>
+<ul>
+<li>Familiarity with single-cell RNA-seq basics and the Seurat R package (v4+ recommended).</li>
+<li>Installed software: R (≥4.0), Seurat (v4 or later), and tidyverse/ggplot2 for plotting. This tutorial uses canonical Seurat function names—adjust if using wrappers or older versions.</li>
+<li>Input files: an expression matrix for RNA, an ADT matrix (same barcodes), or a preconstructed Seurat object containing two assays named "RNA" and "ADT". Provide absolute or relative paths and document filenames.</li>
+</ul>
+<h2>Why integrate RNA and protein? Biological &amp; computational context</h2>
+<p>
+Single-cell RNA sequencing (scRNA-seq) profiles the transcriptome, but many biologically important cell states and identities are better defined by surface proteins (for example CD markers). CITE-seq (Cellular Indexing of Transcriptomes and Epitopes by sequencing) augments scRNA-seq with antibody-derived tags (ADTs), giving simultaneous RNA and protein measurements in the same cell. Because RNA and protein measurements have different measurement noise, dynamic ranges, and technical artefacts, naive concatenation can let one modality dominate downstream analyses.
+</p>
+<p>
+Weighted Nearest Neighbor (WNN) analysis (Seurat v4) addresses this by computing modality-specific neighbor graphs and learning per-cell modality weights that reflect which data type is more informative for local neighborhood structure. WNN therefore enables joint clustering and visualization that respect both modalities while adapting to cell-by-cell modality quality differences.
+</p>
+<h2>Reproducible workflow: inputs, commands, and expected outputs</h2>
+<p>
+This section gives an executable R workflow. Replace paths and filenames with your own. The commands are sequential: each produces intermediate objects saved in memory; the code includes optional file output steps so you can reproduce later runs.
+</p>
+<h3>Files you should have</h3>
+<ul>
+<li>RNA read count matrix (cells × genes), e.g. data/rna_counts.mtx or data/rna_counts.rds</li>
+<li>ADT count matrix (cells × proteins), e.g. data/adt_counts.mtx or data/adt_counts.rds</li>
+<li>Optional: a barcode list and feature annotation files matching the matrices.</li>
+</ul>
+<h3>R script: build a Seurat CITE-seq object and preprocess</h3>
+<pre><code># Load libraries
+library(Seurat)
 library(ggplot2)
 
-# Assuming 'seurat_obj' has already been loaded with both matrices
-# Verify the assays
-Assays(seurat_obj)
-# Output should show: "RNA", "ADT"
+# 1) Read input matrices (example uses RDS; replace with readMM/read.table as needed)
+# Expected input: matrices with identical column names (cell barcodes)
+rna_mat &lt;- readRDS("data/rna_counts.rds")  # sparse matrix: genes x cells
+adt_mat &lt;- readRDS("data/adt_counts.rds")  # matrix: proteins x cells
+
+# 2) Create Seurat object with RNA assay
+seurat_obj &lt;- CreateSeuratObject(counts = rna_mat, assay = "RNA", project = "CITE_project")
+
+# 3) Add ADT assay. Ensure protein names are safe (no slashes); keep original names documented.
+seurat_obj[["ADT"]] &lt;- CreateAssayObject(counts = adt_mat)
+
+# Save intermediate object for reproducibility
+saveRDS(seurat_obj, file = "results/seurat_initial.rds")
 </code></pre>
-<hr/>
-<h2>2. ADT Normalization (Margin 1 vs Margin 2)</h2>
-<p>While RNA is usually normalized via LogNormalize or SCTransform, ADT data requires <strong>Centered Log-Ratio (CLR)</strong> normalization.</p>
-<p>There are two ways to apply CLR:
-* <strong>Margin = 1 (Across cells):</strong> Normalizes the protein signal across all cells independently. Best when you want to compare the expression of a specific protein across different cell populations.
-* <strong>Margin = 2 (Across proteins):</strong> Normalizes the signal across all proteins within a single cell. Best for reducing cell-to-cell technical variations.</p>
-<pre><code class="language-r"># Set Default Assay to ADT
-DefaultAssay(seurat_obj) &lt;- 'ADT'
+<p>
+What this produces:
+</p>
+<ul>
+<li>In-memory Seurat object with assays "RNA" and "ADT". The file results/seurat_initial.rds is a reproducible checkpoint.</li>
+</ul>
+<h3>Preprocess RNA (standard): filtering, normalization, PCA</h3>
+<pre><code># Basic QC: percent mitochondrial, per-cell counts, per-cell features
+seurat_obj[["percent.mt"]] &lt;- PercentageFeatureSet(seurat_obj, pattern = "^MT-")
 
-# Normalize using CLR (Margin 2 is standard for CITE-seq in Seurat v4+)
-seurat_obj &lt;- NormalizeData(seurat_obj, normalization.method = 'CLR', margin = 2)
+# Example thresholds: adjust to your tissue/species
+seurat_obj &lt;- subset(seurat_obj, subset = nFeature_RNA &gt; 200 &amp; nCount_RNA &gt; 500 &amp; percent.mt &lt; 20)
 
-# Run PCA specifically on the protein data
-# (Unlike RNA, we do not find variable features; we use all ADT proteins)
-seurat_obj &lt;- ScaleData(seurat_obj)
-seurat_obj &lt;- RunPCA(seurat_obj, features = rownames(seurat_obj), reduction.name = 'apca')
+# Normalize and find variable features
+DefaultAssay(seurat_obj) &lt;- "RNA"
+seurat_obj &lt;- NormalizeData(seurat_obj, normalization.method = "LogNormalize", scale.factor = 1e4)
+seurat_obj &lt;- FindVariableFeatures(seurat_obj, selection.method = "vst", nfeatures = 3000)
+seurat_obj &lt;- ScaleData(seurat_obj, features = VariableFeatures(seurat_obj))
+seurat_obj &lt;- RunPCA(seurat_obj, features = VariableFeatures(seurat_obj), reduction.name = "pca")
+
+# Save
+saveRDS(seurat_obj, file = "results/seurat_rna_pca.rds")
 </code></pre>
-<hr/>
-<h2>3. Weighted Nearest Neighbor (WNN) Integration</h2>
-<p>How do you combine RNA and Protein clustering? If you simply merge them, one modality will dominate the other.</p>
-<p>Seurat's <strong>WNN Analysis</strong> solves this by calculating a "weight" for each cell. If a cell has a very clear protein profile but a noisy RNA profile, WNN assigns higher weight to the protein data for that specific cell.</p>
-<pre><code class="language-r"># Ensure RNA has also been processed (SCTransform or LogNormalize + PCA)
-DefaultAssay(seurat_obj) &lt;- 'RNA'
+<p>
+Produces:
+</p>
+<ul>
+<li>PCA embedding stored in seurat_obj[["pca"]].</li>
+<li>Results checkpoint results/seurat_rna_pca.rds.</li>
+</ul>
+<h3>Preprocess ADT: CLR normalization and protein PCA</h3>
+<pre><code># Switch to ADT assay
+DefaultAssay(seurat_obj) &lt;- "ADT"
 
-# Find the multi-modal neighbors using WNN
-seurat_obj &lt;- FindMultiModalNeighbors(
-  seurat_obj,
-  reduction.list = list("pca", "apca"), # RNA PCA and ADT PCA
-  dims.list = list(1:30, 1:18),         # Dimensions to use for each
-  modality.weight.name = "RNA.weight"   # Name of the weight column
-)
+# CLR normalization. margin = 2 performs per-cell centering across proteins (common default for CITE-seq)
+# Note: margin = 1 normalizes across cells for each protein; choose based on experimental design.
+seurat_obj &lt;- NormalizeData(seurat_obj, normalization.method = "CLR", margin = 2)
 
-# Run UMAP and Clustering on the integrated WNN graph
-seurat_obj &lt;- RunUMAP(seurat_obj, nn.name = "weighted.nn", reduction.name = "wnn.umap", reduction.key = "wnnUMAP_")
-seurat_obj &lt;- FindClusters(seurat_obj, graph.name = "wsnn", algorithm = 3, resolution = 0.5)
+# Scale and run PCA on all ADT features (usually few proteins; do not select HVGs)
+adt_features &lt;- rownames(seurat_obj[["ADT"]])
+seurat_obj &lt;- ScaleData(seurat_obj, features = adt_features)
+seurat_obj &lt;- RunPCA(seurat_obj, features = adt_features, reduction.name = "apca")
+
+# Save
+saveRDS(seurat_obj, file = "results/seurat_adt_pca.rds")
 </code></pre>
-<hr/>
-<h2>4. Visualizing Multi-Omics Data</h2>
-<p>Once WNN is complete, you can visualize both modalities side-by-side to see how surface proteins perfectly define clusters that RNA alone struggles to separate (such as CD4+ Memory vs Naive T-cells).</p>
-<pre><code class="language-r"># Visualize the WNN UMAP
-DimPlot(seurat_obj, reduction = 'wnn.umap', group.by = 'seurat_clusters', label = TRUE)
+<p>
+Produces:
+</p>
+<ul>
+<li>ADT PCA stored in seurat_obj[["apca"]].</li>
+<li>Checkpoint results/seurat_adt_pca.rds.</li>
+</ul>
+<h3>Run WNN integration, embedding, and clustering</h3>
+<pre><code># Ensure RNA is default for the function that requires "pca" as an entry
+DefaultAssay(seurat_obj) &lt;- "RNA"
 
-# Compare RNA vs Protein expression directly
-FeaturePlot(seurat_obj,
-            features = c("rna_CD4", "adt_CD4"), # Prefix determines the assay
-            reduction = 'wnn.umap',
-            min.cutoff = 'q10',
-            max.cutoff = 'q90')
-</code></pre>
-<figure class="lesson-figure">
-<img alt="WNN embedding comparison with cluster view on the left and predicted cell-type view on the right, illustrating joint RNA and antibody-derived tag analysis." height="576" loading="lazy" src="../images/tutorial-figures/wnn-multimodal-embedding.webp" width="960"/>
-<figcaption>
-<strong>Figure: A joint WNN embedding can connect clusters with multimodal cell-type interpretation.</strong> The left panel shows a joint neighborhood structure; the right panel illustrates how predicted identities can be compared against the same embedding. Treat predictions as evidence to verify with RNA markers, ADT signal, and biological context - not as final labels by themselves.
-    <span class="figure-source">Author-provided non-clinical teaching figure. This panel is included to demonstrate multi-modal interpretation rather than to report a disease-specific result.</span>
-</figcaption>
-</figure>
-<p>By using WNN integration, you get a much higher resolution of cellular heterogeneity than standard scRNA-seq can provide.</p>
-<h3>Matched Python and R weighted-nearest-neighbour workflow</h3>
-<p>Preprocess RNA and protein modalities separately before computing a joint graph. Compare modality weights and marker evidence before interpreting the resulting clusters.</p>
-<pre><code class="language-python">import muon as mu
-import scanpy as sc
-
-sc.pp.neighbors(mdata["rna"])
-sc.pp.neighbors(mdata["prot"])
-mu.pp.neighbors(mdata, key_added="wnn")
-mu.tl.umap(mdata, neighbors_key="wnn")
-sc.tl.leiden(mdata, neighbors_key="wnn", key_added="leiden_wnn")
-</code></pre>
-<pre><code class="language-r">library(Seurat)
-
+# Find multi-modal neighbors: supply the reductions and appropriate dims.
+# Adjust dims.list to the number of informative PCs for your dataset.
 seurat_obj &lt;- FindMultiModalNeighbors(
   seurat_obj,
   reduction.list = list("pca", "apca"),
   dims.list = list(1:30, 1:18),
-  modality.weight.name = "RNA.weight"
+  modality.weight.name = "modality_weights"
 )
-seurat_obj &lt;- RunUMAP(seurat_obj, nn.name = "weighted.nn", reduction.name = "wnn.umap")
-seurat_obj &lt;- FindClusters(seurat_obj, graph.name = "wsnn", resolution = 0.5)
+
+# Build a UMAP on the weighted neighbor graph and cluster using the WNN graph
+seurat_obj &lt;- RunUMAP(seurat_obj, nn.name = "weighted.nn", reduction.name = "wnn.umap", reduction.key = "wnnUMAP_")
+seurat_obj &lt;- FindClusters(seurat_obj, graph.name = "wsnn", algorithm = 3, resolution = 0.5)
+
+# Save final integrated object
+saveRDS(seurat_obj, file = "results/seurat_wnn_integrated.rds")
 </code></pre>
-<div class="mt-10 p-8 bg-gray-50 border border-gray-200 rounded-xl">
-<h3 class="text-xl font-bold text-gray-900 mb-4">Knowledge Check &amp; Assessment</h3>
-<div class="space-y-4">
-<div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-<h4 class="font-bold text-gray-800 mb-2">1. Concept Verification</h4>
-<p class="text-gray-600 text-sm">Why should RNA and protein modalities be quality-controlled and interpreted separately before drawing conclusions from a joint embedding?</p>
-</div>
-<div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-<h4 class="font-bold text-gray-800 mb-2">2. Practical Execution</h4>
-<p class="text-gray-600 text-sm">Create or inspect a WNN analysis and compare an RNA marker, an antibody-derived tag, and the resulting joint neighborhood structure. </p>
-</div>
-<div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-<h4 class="font-bold text-gray-800 mb-2">3. Troubleshooting</h4>
-<p class="text-gray-600 text-sm">If RNA and protein disagree, how will you inspect antibody background, feature normalization, batch effects, doublets, and biology such as post-transcriptional regulation?</p>
-</div>
-</div>
-</div>
-<section aria-label="References and further reading" class="mt-10 p-6 bg-slate-50 border border-slate-200 rounded-xl">
-<h2 class="text-xl font-bold text-gray-900 mb-3">References and further reading</h2>
-<p class="text-sm text-gray-600 mb-3">Use these official resources to check current software behaviour, terminology, and production guidance. Tool versions and defaults change, so verify commands against the documentation before applying them to a research dataset.</p>
-<ul class="list-disc list-inside space-y-2 text-sm text-gray-700">
-<li><a class="text-blue-700 hover:underline" href="https://satijalab.org/seurat/" rel="noopener" target="_blank">Seurat documentation</a></li>
-<li><a class="text-blue-700 hover:underline" href="https://scanpy.readthedocs.io/en/stable/" rel="noopener" target="_blank">Scanpy documentation</a></li>
+<p>
+Produces:
+</p>
+<ul>
+<li>Weighted neighbor graph stored internally (graph name "wsnn"), a UMAP reduction "wnn.umap", per-cell modality weights in meta.data under the column(s) named by "modality_weights" (e.g., RNA.weight and ADT.weight).</li>
+<li>Cluster assignments stored in seurat_obj$seurat_clusters and checkpoint results/seurat_wnn_integrated.rds.</li>
 </ul>
-</section>
+<h2>Output inspection and interpretation</h2>
+<p>
+After running the pipeline, inspect the following elements. Do not treat any single plot or statistic as definitive; use them together to form a consistent interpretation.
+</p>
+<h3>Key items to inspect</h3>
+<ul>
+<li>UMAP embedding: DimPlot(seurat_obj, reduction = "wnn.umap", group.by = "seurat_clusters"). Look for coherent clusters and whether known marker proteins localize to expected clusters.</li>
+<li>Per-cell modality weights: View seurat_obj@meta.data columns named by modality.weight.name; these show how much weight WNN assigned to each modality per cell. Plot distributions: VlnPlot or FeaturePlot.</li>
+<li>Feature concordance: Compare RNA versus ADT signals for canonical markers. Example: FeaturePlot(seurat_obj, features = c("CD4", "CD8A"))—prefixing depends on assay; you can call FetchData to pull assay-specific values.</li>
+<li>Cluster marker identification: Use FindMarkers on the integrated cluster labels but consider modality—identify markers in RNA and ADT separately to verify.</li>
+</ul>
+<h3>What to look for and what it means</h3>
+<ul>
+<li>Clusters where ADT markers are sharply enriched but RNA markers are weak: WNN may give higher protein weights to these cells, which is expected for markers with low RNA-protein correlation (surface proteins with low mRNA stability).</li>
+<li>Cells with high RNA weight: indicates neighborhoods where transcriptome structure is more informative than protein measurements (for example, transcriptionally distinct states without clear surface-protein differences).</li>
+<li>Mixed-weight neighborhoods: both modalities contribute—these are places where RNA and protein agree on cell identity and WNN improves robustness.</li>
+</ul>
+<h3>What results do NOT prove</h3>
+<ul>
+<li>WNN output does not establish causality—high protein weight does not imply protein measurement is biologically ground truth; it reflects local signal-to-noise relationships.</li>
+<li>Cluster labels inferred from WNN should not be considered validated cell types without verifying canonical markers, metadata, and experimental context.</li>
+<li>Discrepancies between RNA and ADT may arise from technical issues (e.g., ambient antibody background, poor antibody specificity) rather than biology.</li>
+</ul>
+<h2>Troubleshooting: symptoms, likely causes, and fixes</h2>
+<p>
+Below are common issues and concrete steps to diagnose/fix them.
+</p>
+<h3>1. ADT signal looks uniformly high or dominated by a few proteins</h3>
+<ul>
+<li>Symptom: After CLR normalization, some ADT features dominate UMAP or PCA.</li>
+<li>Likely causes: Strongly expressed proteins, technical antibody overloading, or poor CLR choice (margin)</li>
+<li>Fixes:
+    <ul>
+<li>Plot raw ADT counts by protein to identify outliers: boxplot/violin of counts per ADT.</li>
+<li>Consider margin = 1 (per-protein across cells) if comparing the same protein across cell types is the primary goal; margin = 2 (default) standardizes each cell's protein profile.</li>
+<li>Remove problematic antibody features (after careful documentation) if an antibody is clearly non-specific or saturated.</li>
+</ul>
+</li>
+</ul>
+<h3>2. Few or no informative ADT PCs</h3>
+<ul>
+<li>Symptom: APCA (ADT PCA) variances are flat and first PCs explain little variance.</li>
+<li>Likely causes: Low ADT complexity (few proteins) or poor signal-to-noise.</li>
+<li>Fixes:
+    <ul>
+<li>Use more ADT features if available; include isotype controls to assess background.</li>
+<li>Inspect per-protein mean and variance; if most proteins are near background, consider re-evaluating experimental protocol or antibody panel.</li>
+<li>If you have very few proteins (e.g., &lt;10), be cautious with PCA-based dimensionality reduction; you may use all proteins directly in neighbor calculations instead of many PCs.</li>
+</ul>
+</li>
+</ul>
+<h3>3. WNN UMAP shows RNA-dominated structure or vice versa</h3>
+<ul>
+<li>Symptom: Joint UMAP looks identical to RNA-only UMAP.</li>
+<li>Likely causes: One modality has much higher dimensionality or signal; dims.list selection favored RNA PCs excessively.</li>
+<li>Fixes:
+    <ul>
+<li>Re-evaluate dims.list to ensure ADT dims capture useful signal (try fewer RNA PCs or more ADT PCs if justified).</li>
+<li>Check modality weights distribution (seurat_obj$modality_weights). If weights are extreme, revisit normalization and scaling for the weaker modality.</li>
+</ul>
+</li>
+</ul>
+<h3>4. Mismatched barcodes between RNA and ADT</h3>
+<ul>
+<li>Symptom: errors when adding ADT assay or neighbor finding produces fewer cells than expected.</li>
+<li>Likely causes: barcode naming conventions differ (prefixes/suffixes) or missing barcodes due to filtering.</li>
+<li>Fixes:
+    <ul>
+<li>Harmonize barcodes prior to CreateAssayObject. Use intersect(colnames(rna_mat), colnames(adt_mat)) to get common barcodes and subset both matrices to those cells.</li>
+<li>Document any barcode filtering steps and save filtered matrices.</li>
+</ul>
+</li>
+</ul>
+<h2>Limitations, version caveats, and responsible-use notes</h2>
+<p>
+Limitations to keep in mind:
+</p>
+<ul>
+<li>WNN is an unsupervised integration method. It reflects relative local informativeness but does not correct modality-specific artifacts such as antibody cross-reactivity or ambient RNA contamination.</li>
+<li>Normalization choices (CLR margin, RNA normalization method) substantially affect results. Carefully document settings, and, where possible, test alternatives (e.g., SCTransform for RNA).</li>
+<li>Results are sensitive to dim selection (dims.list). Use variance-explained elbow plots or JackStraw (for PCA) to choose reasonable PC counts. Overfitting by including many noisy PCs can degrade neighbor quality.</li>
+<li>Seurat implementation details change between major versions. Use Seurat v4+ for the WNN API as shown; consult release notes when upgrading. Save session info (R version and package versions) with saveRDS(sessionInfo(), file="results/session_info.rds") for reproducibility.</li>
+</ul>
+<p>
+Responsible-use notes:
+</p>
+<ul>
+<li>Do not treat clustering or automated labels as clinical diagnoses. Validate cell labels with orthogonal data or experiments when possible.</li>
+<li>Document all preprocessing and filtering steps. Share intermediate checkpoints and seed settings to enable reproducibility.</li>
+</ul>
+<h2>Concise next-step checklist</h2>
+<ol>
+<li>Confirm input matrices and barcode matching; save filtered inputs.</li>
+<li>Run RNA and ADT preprocessing pipelines separately and save checkpoints (RDS files).</li>
+<li>Run FindMultiModalNeighbors with a few sensible dims.list choices; inspect modality-weight distributions.</li>
+<li>Visualize WNN UMAP and compare to RNA-only and ADT-only embeddings.</li>
+<li>Identify cluster markers in both modalities; validate with known biology and additional controls.</li>
+<li>Save final Seurat object and session info for provenance.</li>
+</ol>
+<h2>References</h2>
+<ul>
+<li><a href="https://satijalab.org/seurat/articles/multimodal_vignette.html">Seurat v4: Weighted Nearest Neighbor (WNN) analysis vignette</a> — official Seurat documentation and examples.</li>
+<li><a href="https://www.nature.com/articles/nbt.3973">Stoeckius et al., 2017 — CITE-seq: Simultaneous epitope and transcriptome measurement in single cells</a> (Nature Biotechnology)</li>
+<li><a href="https://satijalab.org/seurat/">Seurat project site</a> — package documentation and release notes.</li>
+<li><a href="https://www.10xgenomics.com/support/software/cell-ranger/latest/analysis/feature-barcode-matrices">H3ABioNet / HBC training: Practical notes on ADT normalization</a> — guidance on CLR and alternative normalization approaches.</li>
+</ul>
 </article>
 <section class="mt-12 mb-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-100">
 <div class="flex items-start gap-4">

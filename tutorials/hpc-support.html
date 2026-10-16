@@ -138,122 +138,238 @@ function toggleMobileMenu() {
 <div class="flex items-center gap-1">
 <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
 </div>
-</div>
-<div class="p-6 bg-blue-50 border border-blue-100 rounded-xl mb-8">
-<h4 class="text-lg font-bold text-blue-900 mb-2">Learning Objectives &amp; Prerequisites</h4>
-<ul class="list-disc list-inside text-blue-800 space-y-1 mb-4">
-<li><strong>Prerequisites:</strong> Complete the preceding HPC lessons and have access to your own job IDs and log files, where permitted.</li>
-<li><strong>Objective:</strong> Diagnose common cluster problems, collect useful evidence, and write an effective support request without exposing sensitive data.</li>
-<li><strong>Expected Output:</strong> A support-ready issue report containing the job ID, command, resource request, relevant log excerpt, and steps already attempted.</li>
+</div><h2>Learning objectives and prerequisites</h2>
+<p>
+  By the end of this lesson you should be able to:
+</p>
+<ul>
+<li>Use core Slurm tools (sacct, scontrol, squeue, tail) to collect job evidence.</li>
+<li>Interpret common job states and exit codes to distinguish resource, software, and environment errors.</li>
+<li>Extract compact, non-sensitive information to include in a support request (Minimal Reproducible Example).</li>
+<li>Apply straightforward fixes (increase memory, load modules, correct working directory) and know when to escalate to support.</li>
 </ul>
-</div>
-<h2>Diagnosing HPC Failures</h2>
-<p>When running large-scale bioinformatics pipelines on a High-Performance Computing (HPC) cluster, job failures are inevitable. Whether it's an Out-Of-Memory (OOM) error, a timeout, or a missing dependency, knowing how to independently diagnose the issue is a critical skill.</p>
-<p>Before escalating an issue to your cluster's support team or system administrators, you should systematically investigate the failure using Slurm's built-in accounting and profiling tools.</p>
-<hr/>
-<h2>1. Checking Job State and Exit Codes</h2>
-<p>When a job fails or disappears from the queue, your first step should be checking its final state and exit code using <code>sacct</code> (Slurm Accounting).</p>
-<pre><code class="language-bash"># Replace 1234567 with your actual job ID
+<p>
+  Prerequisites: you have access to the cluster where your jobs ran, the original submission script or command, and the job ID(s) you want to investigate. Familiarity with basic shell commands, your cluster's module or environment system (Modules or Conda), and the bioinformatics tool(s) used in the job is assumed.
+</p>
+<h2>Why this topic matters (context)</h2>
+<p>
+  Large-scale bioinformatics workflows routinely run for hours or days and often require dozens to hundreds of CPUs and tens to hundreds of gigabytes of RAM. When a job fails, blindly resubmitting wastes queue time and administrator effort. System administrators cannot diagnose a problem without concise, reproducible evidence. Learning to diagnose failures yourself reduces downtime, protects sensitive data, and makes support interactions productive. This lesson focuses on pragmatic, reproducible steps to gather evidence, interpret results, and remediate common problems on clusters using Slurm (Simple Linux Utility for Resource Management).
+</p>
+<h2>Reproducible workflow: collect evidence and try local fixes</h2>
+<p>
+  The workflow below is sequential: collect metadata from Slurm, inspect job logs, run short local checks (environment, file paths), and, if necessary, resubmit with adjusted resources or environment. Each code block includes what files you should have and what the command produces.
+</p>
+<h3>Files you should have before starting</h3>
+<ul>
+<li>Your submission script (example: run_alignment.sbatch)</li>
+<li>The job ID (example: 1234567) from sbatch output or the cluster web UI</li>
+<li>Any generated log files (example: slurm-1234567.out and optional slurm-1234567.err)</li>
+</ul>
+<h3>1) Collect Slurm accounting and state information</h3>
+<p>
+  Purpose: determine final job state, exit code, requested vs. used resources. Replace 1234567 with your actual job ID. These commands read the Slurm accounting database and do not modify cluster state.
+</p>
+<pre><code># Show job summary: JobID, name, state, exit code, elapsed walltime, requested memory, and peak memory usage
 sacct -j 1234567 --format=JobID,JobName,State,ExitCode,Elapsed,ReqMem,MaxRSS
+
+# If your cluster supports it, get a single-line overview using seff
+seff 1234567
+
+# Show detailed scontrol job info (node allocations, submit host, environment variables)
+scontrol show job 1234567
 </code></pre>
-<h3>Common Slurm States:</h3>
+<p>
+  What these produce:
+</p>
 <ul>
-<li><code>COMPLETED</code>The job finished successfully (ExitCode 0:0).</li>
-<li><code>FAILED</code>The job terminated with a non-zero exit code. Look at the <code>ExitCode</code> column.</li>
-<li><code>TIMEOUT</code>The job exceeded its requested walltime (<code>--time</code>).</li>
-<li><code>OUT_OF_MEMORY</code> or <code>OOM</code>The job used more memory than requested (<code>--mem</code>).</li>
-<li><code>CANCELLED</code>The job was killed by the user or an administrator.</li>
+<li>sacct: a table with one or more accounting lines for the job and job steps (e.g., 1234567.batch)</li>
+<li>seff: a human-friendly summary of CPU and memory utilization</li>
+<li>scontrol: raw Slurm internal state, including nodes used, partition, and the submission directory (SLURM_SUBMIT_DIR) if recorded</li>
 </ul>
-<h3>Understanding Exit Codes</h3>
-<p>If your job state is <code>FAILED</code>the exit code provides the first clue:
-* <strong>Exit Code 1</strong>General error (e.g., syntax error in your script, file not found).
-* <strong>Exit Code 127</strong>"Command not found". This usually means you forgot to load a module (e.g., <code>module load samtools</code>) or activate your Conda environment before running the tool.
-* <strong>Exit Code 137</strong>Process killed (SIGKILL). In HPC environments, this is almost always an <strong>Out-Of-Memory (OOM)</strong> kill by the Linux kernel because your process exceeded the memory allocated to it by Slurm.</p>
-<hr/>
-<h2>2. Investigating Out-Of-Memory (OOM) Errors</h2>
-<p>Memory limits are the most common cause of bioinformatics job failures. Tools like genome assemblers, aligners (STAR, BWA), and single-cell tools (Seurat, Scanpy) can consume massive amounts of RAM.</p>
-<p>If you suspect an OOM error, compare the <code>ReqMem</code> (Requested Memory) with the <code>MaxRSS</code> (Maximum Resident Set Size, or peak memory usage) from your <code>sacct</code> output.</p>
-<pre><code class="language-bash">sacct -j 1234567 --format=JobID,ReqMem,MaxRSS,State
+<h3>2) Inspect the job log(s)</h3>
+<p>
+  Purpose: find tool-specific error messages or Python/R tracebacks. Most Slurm setups write stdout and stderr to slurm-<jobid>.out by default. If your job used --error or --output, inspect those files instead.
+</jobid></p>
+<pre><code># Show the last 200 lines of the default log file (adjust path as needed)
+tail -n 200 slurm-1234567.out
+
+# If stderr was split, check both
+tail -n 200 slurm-1234567.err
+tail -n 200 slurm-1234567.out
 </code></pre>
-<p>If <code>MaxRSS</code> is very close to or equals <code>ReqMem</code>the job was killed for memory reasons. </p>
-<h3>Profiling with <code>seff</code></h3>
-<p>Many clusters provide the <code>seff</code> (Slurm Efficiency) tool, which offers a highly readable summary of CPU and Memory utilization for a completed job.</p>
-<pre><code class="language-bash">seff 1234567
-</code></pre>
-<p><strong>Output Example:</strong></p>
-<pre><code class="language-text">Job ID: 1234567
-Cluster: omicshub-cluster
-User/Group: TheOmicsHub/research
-State: OUT_OF_MEMORY (exit code 125)
-Nodes: 1
-Cores per node: 8
-CPU Utilized: 02:15:30
-CPU Efficiency: 85.20% of 02:39:04 core-walltime
-Job Wall-clock time: 00:19:53
-Memory Utilized: 64.00 GB
-Memory Efficiency: 100.00% of 64.00 GB
-</code></pre>
-<p>In this example, the memory efficiency is 100%, confirming the job hit its limit. The solution is to resubmit the job with a higher <code>--mem</code> request (e.g., <code>--mem=128G</code>).</p>
-<hr/>
-<h2>3. Reading the Error Logs</h2>
-<p>Slurm normally writes standard output to <code>slurm-&lt;jobid&gt;.out</code> and standard error to the same file, unless you explicitly split them using <code>--error=slurm-%j.err</code></p>
-<p>Always check the last 50 lines of your log file for stack traces or error messages from the software itself:</p>
-<pre><code class="language-bash">tail -n 50 slurm-1234567.out
-</code></pre>
-<p><strong>Common log file errors:</strong>
-* <code>FileNotFoundError: No such file or directory: 'data/reads.fastq'</code>Your script is running from the wrong directory. Ensure your submission script uses <code>cd $SLURM_SUBMIT_DIR</code>* <code>ModuleNotFoundError: No module named 'scanpy'</code>Your Conda environment wasn't activated in the batch script.</p>
-<hr/>
-<h2>4. How to Write an Effective Support Ticket</h2>
-<p>If you've checked the exit codes, analyzed the logs, and still can't resolve the issue, it's time to contact HPC support.</p>
-<p>System administrators handle hundreds of users and tickets. A vague message like <em>"My job failed, please help"</em> will significantly delay your resolution. Instead, provide a <strong>Minimal Reproducible Example (MRE)</strong></p>
-<h3>Information to Include:</h3>
-<ol>
-<li><strong>Job ID(s)</strong> of the failed runs.</li>
-<li><strong>The exact command or submission script</strong> you used (<code>sbatch run_pipeline.sh</code>).</li>
-<li><strong>The path to your working directory</strong> so admins can inspect the files.</li>
-<li><strong>A specific excerpt of the error log</strong> (don't attach a 50MB log file; paste the relevant 20 lines).</li>
-<li><strong>What you have already tried</strong> (e.g., "I increased the memory to 128G but it still failed with Exit Code 137").</li>
-</ol>
-<h3>Template for HPC Support:</h3>
-<blockquote>
-<p><strong>Subject:</strong> Job failing with Exit Code 137 on the highmem partition</p>
-<p>Hello HPC Support,</p>
-<p>My job (<code>ID: 1234567</code>) running <code>cellranger count</code> failed on the <code>highmem</code> partition.</p>
+<p>
+  What to look for:
+</p>
 <ul>
-<li><strong>Working Directory:</strong> <code>/scratch/users/TheOmicsHub/project_x</code></li>
-<li><strong>Script:</strong> <code>run_cellranger.sh</code></li>
-<li><strong>Log File:</strong> <code>slurm-1234567.out</code></li>
+<li>Stack traces, Python/R exceptions, or explicit error messages from the tool (e.g., "FileNotFoundError" or "Segmentation fault").</li>
+<li>Messages from the job scheduler injected into the file (e.g., "Killed" or "Memory killed").</li>
+<li>Missing module/command messages like "command not found" or "ModuleNotFoundError".</li>
 </ul>
-<p>The <code>sacct</code> output shows <code>State: FAILED</code> and <code>ExitCode: 137</code>I initially requested 64GB of RAM and it failed, so I increased it to 128GB (<code>Job ID: 1234568</code>), but it still failed immediately. </p>
-<p>The end of the log file shows: <code>error: memory allocation failed</code>Is there a hard limit on memory per task on this partition, or could this be a node-specific hardware issue?</p>
-<p>Thank you.</p>
-</blockquote>
-<hr/>
-<div class="mt-10 p-8 bg-gray-50 border border-gray-200 rounded-xl">
-<h3 class="text-xl font-bold text-gray-900 mb-4">Knowledge Check &amp; Assessment</h3>
-<div class="space-y-4">
-<div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-<h4 class="font-bold text-gray-800 mb-2">1. Concept Verification</h4>
-<p class="text-gray-600 text-sm">Why is a reproducible minimal example more useful to HPC support than a vague statement that "the cluster failed"?</p>
-</div>
-<div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-<h4 class="font-bold text-gray-800 mb-2">2. Practical Execution</h4>
-<p class="text-gray-600 text-sm">Run the diagnostic commands (`sacct` and `seff`) in this lesson for one completed or test job and assemble a concise troubleshooting note. </p>
-</div>
-<div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-<h4 class="font-bold text-gray-800 mb-2">3. Troubleshooting</h4>
-<p class="text-gray-600 text-sm">If a job fails with `Exit Code 127`, what's the most likely problem with your submission script?</p>
-</div>
-</div>
-</div>
-<section aria-label="References and further reading" class="mt-10 p-6 bg-slate-50 border border-slate-200 rounded-xl">
-<h2 class="text-xl font-bold text-gray-900 mb-3">References and further reading</h2>
-<p class="text-sm text-gray-600 mb-3">Use these official resources to check current software behaviour, terminology, and production guidance. Tool versions and defaults change, so verify commands against the documentation before applying them to a research dataset.</p>
-<ul class="list-disc list-inside space-y-2 text-sm text-gray-700">
-<li><a class="text-blue-700 hover:underline" href="https://slurm.schedmd.com/documentation.html" rel="noopener" target="_blank">Slurm documentation</a></li>
-<li><a class="text-blue-700 hover:underline" href="https://man.openbsd.org/ssh" rel="noopener" target="_blank">OpenSSH manual pages</a></li>
+<h3>3) Confirm the execution environment</h3>
+<p>
+  Purpose: verify that the same module or Conda environment will be used in a resubmission. A common error is forgetting to load modules or activate Conda in the batch script.
+</p>
+<pre><code># If your cluster uses Modules:
+module avail          # lists available modules
+module list           # lists modules currently loaded in an interactive session
+
+# If using Conda from within the batch script, ensure the activation step is present
+# Example lines that should appear in your submission script (run_alignment.sbatch):
+# source /path/to/miniconda3/etc/profile.d/conda.sh
+# conda activate myenv
+
+# In an interactive node (if permitted), check tool versions
+which bwa
+bwa 2&gt;&amp;1 | head -n 1
+</code></pre>
+<p>
+  Files produced: none — these are checks you perform interactively. If a tool is missing or the wrong version is found, adjust the batch script to load the correct module or activate the correct environment.
+</p>
+<h3>4) Minimal re-run for debugging (short, small resource test)</h3>
+<p>
+  Purpose: avoid re-running a full job. Create a downsampled or short test that reproduces the error quickly and with low resources. Below is a generic example for an alignment pipeline that uses a small subset of reads. Adapt paths and commands for your pipeline tools.</p>
+<pre><code># Create a small test FASTQ (first 10000 lines = 2500 reads from a gzipped FASTQ)
+zcat data/reads.fastq.gz | head -n 10000 | gzip -c &gt; test_reads.fastq.gz
+
+# Run the same command you used in the job locally (interactive node or small job)
+# Example: run a single-sample alignment with BWA
+bwa mem -t 4 ref/genome.fa test_reads.fastq.gz &gt; test_reads.sam
+
+# Or submit a tiny batch job to test environment and basic resource behavior
+cat &gt; tiny_test.sbatch &lt;&lt;'SBATCH'
+#!/bin/bash
+#SBATCH --job-name=tinytest
+#SBATCH --time=00:10:00
+#SBATCH --cpus-per-task=4
+#SBATCH --mem=4G
+#SBATCH --output=tinytest-%j.out
+
+module load bwa
+bwa mem -t 4 ref/genome.fa test_reads.fastq.gz &gt; tinytest.sam
+SBATCH
+
+sbatch tiny_test.sbatch
+</code></pre>
+<p>
+  Files produced: test_reads.fastq.gz, test_reads.sam (or tinytest-%j.out and tinytest.sam). If the small test succeeds, the problem in the full job is likely a resource scaling or input-size issue rather than an environment or syntax error.</p>
+<h2>Output inspection and interpretation</h2>
+<p>
+  After you collect the outputs above, here are the common pieces of evidence and how to interpret them — including what a result does not prove.
+</p>
+<h3>sacct and seff output</h3>
+<ul>
+<li>MaxRSS close to ReqMem and a job state of FAILED or OUT_OF_MEMORY: strong evidence of an Out-Of-Memory (OOM) kill. This does not prove a memory leak in the program; it only proves the job used more memory than it was allocated.</li>
+<li>ExitCode 0:0 with State COMPLETED but missing output files: indicates the job finished normally but your job script may have redirected outputs to unexpected paths or the application silently skipped outputs. Check the script's working directory (SLURM_SUBMIT_DIR) and file paths.</li>
+<li>ExitCode 137: typically the Linux kernel killed the process (SIGKILL); on clusters this is usually due to memory exhaustion. It does not, by itself, indicate whether the memory spike was transient or related to an input file.</li>
 </ul>
-</section>
+<h3>Log file contents</h3>
+<ul>
+<li>Tool-specific error messages (e.g., "FileNotFoundError: data/reads.fastq"): this implicates files or paths — check SLURM_SUBMIT_DIR and that all input files existed at submission time. This proves a missing-file condition if the path is absolute or the file's absence can be verified.</li>
+<li>"command not found" or shell errors: the job script failed to load the expected environment; check module load/conda activation lines. This proves an environment setup issue when the script lacks those commands.</li>
+<li>Segmentation faults or "Bus error": could be corrupted input, a software bug, or exceeding memory/stack limits. These messages require more investigation (e.g., trying a small test or a different software version).</li>
+</ul>
+<h2>Troubleshooting: symptoms, likely causes, and concrete fixes</h2>
+<p>
+  The table below gives practical symptom → likely cause → recommended action pairs. Use them as a checklist when diagnosing.
+</p>
+<h3>Symptom: Exit code 127 or "command not found"</h3>
+<p>Likely cause: The batch script did not load the module or activate the Conda environment before invoking the command.</p>
+<p>Fixes:</p>
+<ul>
+<li>Add explicit module load lines to the batch script: <code>module load bwa/0.7.17</code> (replace with your cluster’s module name).</li>
+<li>For Conda, ensure the activation lines are present and use the absolute path to conda's initialization script:
+    <pre><code>source /path/to/miniconda3/etc/profile.d/conda.sh
+conda activate myenv</code></pre>
+</li>
+<li>Test the script in an interactive job or short test job to confirm the tool is available.</li>
+</ul>
+<h3>Symptom: Exit code 137 or seff shows 100% memory efficiency</h3>
+<p>Likely cause: the process was killed by the OS for exceeding memory limits (OOM).</p>
+<p>Fixes:</p>
+<ul>
+<li>Resubmit with higher memory: <code>#SBATCH --mem=128G</code> or increase per-cpu memory as appropriate.</li>
+<li>Decrease concurrency or chunk input: reduce threads or split the dataset into smaller batches.</li>
+<li>Profile the program memory usage with test inputs or tools like /usr/bin/time -v to measure peak RSS locally before resubmitting.
+    <pre><code>/usr/bin/time -v my_program args &gt; out.txt 2&gt; time-stats.txt</code></pre>
+</li>
+</ul>
+<h3>Symptom: TIMEOUT or job ended with State=TIMEOUT</h3>
+<p>Likely cause: requested walltime (--time) was too small.</p>
+<p>Fixes:</p>
+<ul>
+<li>Increase the walltime in the batch script, but be realistic: over-requesting may increase queue wait time. Use seff from previous successful runs to estimate realistic walltime.</li>
+<li>Enable periodic checkpointing or implement pipeline restart points if the tool supports it.</li>
+</ul>
+<h3>Symptom: Job disappears from queue or is CANCELLED by admin</h3>
+<p>Likely cause: administrative intervention (e.g., maintenance) or cluster policy (preemption/priority).</p>
+<p>Fixes:</p>
+<ul>
+<li>Check cluster notices or contact support to ask whether maintenance windows or policy-based preemption occurred.</li>
+<li>If preemption is likely, consider using a different partition/quality-of-service (QOS) with fewer preemptions for long jobs.</li>
+</ul>
+<h3>Symptom: Application crashes with Segmentation fault</h3>
+<p>Likely causes: corrupted input, incompatible binary, or insufficient memory.</p>
+<p>Fixes:</p>
+<ul>
+<li>Validate inputs (e.g., check FASTQ/FASTA integrity with md5sum or format validators).</li>
+<li>Try a different software version or compile from source if binary is incompatible with node architecture.</li>
+<li>Test a small dataset to reproduce the crash quickly.</li>
+</ul>
+<h2>How to prepare an effective support request</h2>
+<p>
+  If you need to contact cluster support, include a concise, privacy-respecting set of items. Avoid attaching raw data that may be sensitive. A useful support-ready report includes:
+</p>
+<ul>
+<li>Job ID(s) and approximate timestamps (submit and end times).</li>
+<li>Exact sbatch command or submission script (paste the file body or attach a text file).</li>
+<li>The specific command that failed inside the script (not only the script name).</li>
+<li>Output of sacct and scontrol for the job (copy-paste; use code blocks).</li>
+<li>Relevant excerpt from the log file (only the lines showing the error or the final ~100 lines). Redact sensitive paths or sample names if required by policy and note that you have redacted values.</li>
+<li>Steps you have already tried (e.g., increased memory to 128G, ran a small test, activated environment changes).</li>
+</ul>
+<p>
+  Example template to paste into a ticket:
+</p>
+<pre><code>Job ID: 1234567
+Submit host: mylogin.cluster.edu
+Partition: standard
+Submission script: (paste content of run_alignment.sbatch here)
+Command that failed: bwa mem -t 16 ref/genome.fa sample.fastq.gz &gt; out.sam
+
+sacct output:
+( paste sacct -j 1234567 --format=JobID,State,ExitCode,ReqMem,MaxRSS here )
+
+Log excerpt (last 100 lines):
+( paste relevant log lines here )
+
+Steps attempted:
+- Checked modules and added "module load bwa/0.7.17"
+- Ran a small test set (test_reads.fastq.gz) successfully
+- Increased memory from 64G to 128G and re-ran (result: same OOM)
+</code></pre>
+<h2>Limitations, version and data caveats, and responsible use</h2>
+<ul>
+<li>Slurm behavior and available tools (sacct, seff, scontrol) depend on cluster configuration and Slurm version. Commands and output fields may differ across versions (the examples here were composed for Slurm 20+ but check your site's documentation).</li>
+<li>seff is not guaranteed to be installed on all clusters. If missing, sacct and /usr/bin/time remain reliable alternatives.</li>
+<li>Always avoid including raw sequence data or personally identifiable information (PII) in support tickets. If support needs such data, coordinate a secure transfer channel with the administrators.</li>
+<li>Administrative fixes (node reboots, system logs) may be restricted to support staff; do not ask support to run destructive debugging commands (e.g., rm -rf). If a support staff request could reveal sensitive information, ask about redaction procedures first.</li>
+<li>Performance on a local workstation may not reflect cluster behavior (different CPU architecture, memory bandwidth, or MPI libraries). Use a short test on the cluster itself where possible.</li>
+</ul>
+<h2>Next-step checklist (concise)</h2>
+<ul>
+<li>Collect sacct, scontrol, and the last 100 lines of the job log.</li>
+<li>Try a small, quick test to reproduce the error with low resources.</li>
+<li>Check and explicitly set module or Conda activation lines in your sbatch script.</li>
+<li>If resource-related, resubmit with conservative increases (double memory or reduce threads) and measure with /usr/bin/time -v.</li>
+<li>If unresolved, submit a concise support ticket including the template shown above and note any privacy redactions.</li>
+</ul>
+<h2>References</h2>
+<ul>
+<li><a href="https://slurm.schedmd.com/documentation.html">Slurm official documentation (SchedMD)</a></li>
+<li><a href="https://slurm.schedmd.com/sacct.html">sacct — Slurm accounting tool</a></li>
+<li><a href="https://slurm.schedmd.com/scontrol.html">scontrol — view and modify Slurm jobs</a></li>
+<li><a href="https://support.access-ci.org/">XSEDE: Troubleshooting jobs on HPC systems (practical guidance)</a></li>
+</ul>
 </article>
 <section class="mt-12 mb-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-100">
 <div class="flex items-start gap-4">

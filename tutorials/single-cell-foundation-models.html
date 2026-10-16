@@ -130,123 +130,232 @@ function toggleMobileMenu() {
 <div class="flex items-center gap-1">
 <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
 </div>
-</div>
-<div class="p-6 bg-blue-50 border border-blue-100 rounded-xl mb-8">
-<h4 class="text-lg font-bold text-blue-900 mb-2">Learning Objectives &amp; Prerequisites</h4>
-<ul class="list-disc list-inside text-blue-800 space-y-1 mb-4">
-<li><strong>Prerequisites:</strong> Experience with single-cell RNA-seq analysis (e.g., Scanpy or Seurat) and PyTorch.</li>
-<li><strong>Objective:</strong> Learn to deploy transformer-based models like scGPT for zero-shot cell type annotation and batch integration.</li>
-<li><strong>Expected Output:</strong> Integration of a pre-trained single-cell foundation model into a standard AnnData workflow.</li>
-</ul>
-</div>
-<div class="p-6 bg-amber-50 border border-amber-200 rounded-xl mb-8">
-<h3 class="text-lg font-bold text-amber-900 mb-3">📘 What are Single-Cell Foundation Models?</h3>
-<p class="text-amber-800 mb-2">Models like scGPT and Geneformer are large language models trained on millions of single-cell transcriptomes instead of human text. They learn the "language" of gene expression, allowing them to perform tasks like cell type annotation, batch correction, and gene network inference with minimal or zero fine-tuning.</p>
-</div>
-<h2>Before You Begin: Prepare a Small, Normalized Dataset</h2>
-<p>Foundation models for single-cell data are sensitive to species, gene identifiers, preprocessing, and tokenization choices. Start with a small public dataset and preserve the original matrix and metadata so preprocessing can be audited.</p>
-<h3>Environment checklist</h3>
-<pre><code class="language-bash">python3 -m venv .venv
-source .venv/bin/activate
-python -m pip install --upgrade pip
-python -m pip install scanpy anndata pandas numpy
-python -c "import scanpy, anndata; print('single-cell environment: OK')"</code></pre>
-<p>Before loading a foundation model, confirm that the matrix orientation, gene identifiers, species, and cell-level metadata match the model documentation. Compare zero-shot labels with marker genes and a conventional clustering workflow.</p>
-<p><strong>Success check:</strong> the same input file, preprocessing notes, and model checkpoint allow another learner to reproduce your embedding and annotation table.</p>
-<h2>Integrating Transformers into scRNA-seq</h2>
-<p>Traditional single-cell workflows rely heavily on statistical heuristics and manual parameter tuning (e.g., choosing PCA dimensions or clustering resolutions). Foundation models extract deep, contextualized embeddings directly from raw counts.</p>
-<h3>Step 1: Setting up the Environment</h3>
-<p>Foundation models are heavily reliant on PyTorch and the Hugging Face <code>transformers</code> system. A GPU with at least 16 GB VRAM (e.g., NVIDIA A100, V100, or RTX 4090) is strongly recommended for inference. CPU-only inference is possible but may take 10 to 50 times longer depending on the dataset size.</p>
-<pre><code class="language-bash"># Create a dedicated conda environment with pinned versions
-conda create -n scfm python=3.10 -y
-conda activate scfm
-
-# Install PyTorch with CUDA 11.8 support
-pip install torch==2.1.0 torchvision==0.16.0 --index-url https://download.pytorch.org/whl/cu118
-
-# Install single-cell tools
-pip install scanpy==1.10.1 anndata==0.10.7 scgpt==0.2.1
-pip install geneformer  # Hugging Face-based, requires transformers&gt;=4.30
-
-# Verify GPU availability
-python -c "import torch; print(f'CUDA available: {torch.cuda.is_available()}')"</code></pre>
-<p><strong>Common pitfall:</strong> If <code>torch.cuda.is_available()</code> returns <code>False</code>verify your CUDA driver version with <code>nvidia-smi</code> and ensure the PyTorch CUDA version matches your system driver. On HPC clusters, you may need to <code>module load cuda/11.8</code> before activating the conda environment.</p>
-<h3>Step 2: Tokenization and Embedding</h3>
-<p>Just as LLMs tokenize words, scGPT tokenizes gene expression values. Each gene is mapped to a token, and its expression level is discretized into bins. You pass your <code>AnnData</code> object into the model, and it returns a lower-dimensional embedding space that's often inherently batch-corrected.</p>
-<pre><code class="language-python">import scgpt as scg
-import scanpy as sc
-
-# Load your standard AnnData
-adata = sc.read_h5ad("my_data.h5ad")
-
-# Ensure gene names are HGNC symbols (scGPT requirement)
-adata.var_names_make_unique()
-print(f"Cells: {adata.n_obs}, Genes: {adata.n_vars}")
-
-# Load the pre-trained scGPT checkpoint
-model = scg.model.load_pretrained("scGPT_human")
-
-# Encode cells into the foundation model embedding space
-adata.obsm["X_scGPT"] = model.encode(adata)
-print(f"Embedding shape: {adata.obsm['X_scGPT'].shape}")
-# Expected output: (n_cells, 512) for the default scGPT architecture</code></pre>
-<p><strong>Important:</strong> scGPT expects human HGNC gene symbols (e.g., <code>CD3D</code><code>MS4A1</code>). If your data uses Ensembl IDs, convert them first using <code>biomart</code> or the <code>gget</code> package covered in our deterministic retrieval tutorial.</p>
-<h3>Step 3: Zero-Shot Annotation</h3>
-<p>Because these models have seen millions of cells, you can perform zero-shot annotation by comparing your cell embeddings to the embeddings of reference cells or gene signatures, entirely skipping the manual marker-gene inspection step.</p>
-<pre><code class="language-python"># Compute UMAP from foundation model embeddings
-sc.pp.neighbors(adata, use_rep="X_scGPT", n_neighbors=15)
-sc.tl.umap(adata)
-sc.tl.leiden(adata, resolution=0.5)
-
-# Visualize the embedding space
-sc.pl.umap(adata, color=["leiden"], title="scGPT Embedding Clusters")</code></pre>
-<p>Compare these clusters against your conventional PCA-based workflow. Foundation model embeddings frequently separate rare cell populations (e.g., dendritic cell subsets or transitional progenitors) that PCA-based approaches merge into a single cluster.</p>
-<h3>scGPT vs. Geneformer: Choosing the Right Model</h3>
-<p>Both scGPT and Geneformer are transformer-based foundation models, but they differ in architecture, training data, and best use cases:</p>
-<div class="overflow-x-auto mb-6">
-<table class="min-w-full text-sm border border-gray-200 rounded-lg">
-<thead class="bg-gray-100"><tr><th class="px-4 py-2 text-left">Feature</th><th class="px-4 py-2 text-left">scGPT</th><th class="px-4 py-2 text-left">Geneformer</th></tr></thead>
-<tbody>
-<tr class="border-t"><td class="px-4 py-2">Architecture</td><td class="px-4 py-2">Generative pre-trained transformer</td><td class="px-4 py-2">BERT-style masked language model</td></tr>
-<tr class="border-t"><td class="px-4 py-2">Training data</td><td class="px-4 py-2">33 million human cells (CELLxGENE)</td><td class="px-4 py-2">30 million human cells (Genecorpus-30M)</td></tr>
-<tr class="border-t"><td class="px-4 py-2">Best for</td><td class="px-4 py-2">Batch integration, multi-omic tasks</td><td class="px-4 py-2">Gene network inference, disease modeling</td></tr>
-<tr class="border-t"><td class="px-4 py-2">GPU requirement</td><td class="px-4 py-2">16 GB+ VRAM recommended</td><td class="px-4 py-2">8 GB+ VRAM (smaller model)</td></tr>
-<tr class="border-t"><td class="px-4 py-2">Citation</td><td class="px-4 py-2">Cui et al., Nature Methods 2024</td><td class="px-4 py-2">Theodoris et al., Nature 2023</td></tr>
-</tbody>
-</table>
-</div>
-<p><strong>Practical recommendation:</strong> Start with Geneformer if you've limited GPU resources or are primarily interested in gene regulatory networks. Use scGPT if your primary goal is batch integration across large multi-sample datasets.</p>
-<h3>Limitations and Common Pitfalls</h3>
+</div><h2>Learning objectives and prerequisites</h2>
+<p><strong>Learning objectives</strong></p>
 <ul>
-<li><strong>Species limitation:</strong> Both scGPT and Geneformer are trained exclusively on human data. For mouse datasets, you must first map orthologs to human gene symbols, which introduces noise.</li>
-<li><strong>Hallucinated annotations:</strong> Zero-shot predictions can confidently assign incorrect labels when your tissue type was not well-represented in the training corpus. Always validate predictions against known marker genes.</li>
-<li><strong>Reproducibility:</strong> Model weights and tokenizer versions affect results. Pin your checkpoint version and record the exact commit hash in your analysis notebook.</li>
-<li><strong>Preprocessing sensitivity:</strong> Foundation models expect raw counts or lightly normalized data. Applying SCTransform or other heavy normalization before encoding can degrade embedding quality.</li>
+<li>Understand the concept of single-cell foundation models (SFMs) and how they differ from conventional single‑cell methods.</li>
+<li>Integrate a pre-trained transformer-based model (for example, scGPT-style models) into an AnnData-based single-cell workflow for embedding, visualization, and zero‑shot cell type annotation.</li>
+<li>Compare and interpret model-derived embeddings against standard Scanpy preprocessing and clustering results, and apply simple diagnostics to check species and gene-identifier compatibility.</li>
 </ul>
-<hr/>
-<h2>Conclusion</h2>
-<p>Single-cell foundation models represent a model shift in transcriptomics. By using agents to write the complex PyTorch boilerplate, you can rapidly incorporate these modern models into your daily analysis pipelines.</p>
-<div class="mt-10 p-8 bg-gray-50 border border-gray-200 rounded-xl">
-<h3 class="text-xl font-bold text-gray-900 mb-4">Knowledge Check &amp; Assessment</h3>
-<div class="space-y-4">
-<div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-<h4 class="font-bold text-gray-800 mb-2">1. Concept Verification</h4>
-<p class="text-gray-600 text-sm">How does the "tokenization" of single-cell data in scGPT differ from tokenizing natural language text?</p>
-</div>
-<div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-<h4 class="font-bold text-gray-800 mb-2">2. Practical Execution</h4>
-<p class="text-gray-600 text-sm">Ask your AI assistant to draft a script that downloads the Geneformer model from Hugging Face and prepares an AnnData object for input.</p>
-</div>
-</div>
-</div>
-<section aria-label="References and further reading" class="mt-10 p-6 bg-slate-50 border border-slate-200 rounded-xl">
-<h2 class="text-xl font-bold text-gray-900 mb-3">References and further reading</h2>
-<p class="text-sm text-gray-600 mb-3">Use these official resources to check current software behaviour, terminology, and production guidance. Tool versions and defaults change, so verify commands against the documentation before applying them to a research dataset.</p>
-<ul class="list-disc list-inside space-y-2 text-sm text-gray-700">
-<li><a class="text-blue-700 hover:underline" href="https://satijalab.org/seurat/" rel="noopener" target="_blank">Seurat documentation</a></li>
-<li><a class="text-blue-700 hover:underline" href="https://scanpy.readthedocs.io/en/stable/" rel="noopener" target="_blank">Scanpy documentation</a></li>
+<p><strong>Prerequisites</strong></p>
+<ul>
+<li>Familiarity with single-cell RNA-seq (scRNA-seq) concepts and workflows (e.g., Scanpy/AnnData or Seurat).</li>
+<li>Comfort using the command line and creating Python virtual environments.</li>
+<li>Basic knowledge of PyTorch and Hugging Face transformers is useful but not required.</li>
+<li>A small, preprocessed scRNA-seq dataset in AnnData/HDF5AD format (example filename: <code>my_data.h5ad</code>).</li>
 </ul>
-</section>
+<h2>Why single-cell foundation models matter</h2>
+<p>Single-cell foundation models (SFMs) are large neural networks trained on many millions of individual cell transcriptomes rather than human language. By learning patterns across enormous and diverse single‑cell datasets, SFMs can produce contextualized embeddings of cells and sometimes perform tasks such as zero‑shot cell type annotation or batch correction without per‑dataset retraining.</p>
+<p>This approach shifts some decisions away from classical heuristics (e.g., how many principal components to use) toward learned representations that capture nonlinear relationships in gene co‑expression across experiments. SFMs are promising for rapid exploration, for seeding downstream analyses, and for enabling users to leverage broad population-level knowledge. However, they are sensitive to input conventions (species, gene identifiers, preprocessing) and should be used alongside—rather than as a replacement for—standard quality control, marker inspection, and domain knowledge.</p>
+<h2>Reproducible workflow (step‑by‑step)</h2>
+<p>The steps below assume you have a local project directory and the following file:</p>
+<ul>
+<li><code>data/my_data.h5ad</code> — an AnnData file containing raw or normalized counts, cell metadata (<code>adata.obs</code>), and gene names in <code>adata.var_names</code>.</li>
+</ul>
+<p>All commands assume a Unix-like shell. Use explicit paths so others can reproduce your run.</p>
+<h3>1) Create a controlled Python environment</h3>
+<pre><code># From project root
+python3 -m venv .venv
+source .venv/bin/activate
+
+# Upgrade pip
+python -m pip install --upgrade pip
+
+# Install core tools (explicit versions are recommended for reproducibility)
+pip install "scanpy&gt;=1.10" "anndata&gt;=0.10" pandas numpy scipy matplotlib
+# PyTorch and Hugging Face (CPU or GPU variants)
+pip install torch torchvision --index-url https://download.pytorch.org/whl/cu118
+pip install transformers
+# If a provided scGPT package is available via pip
+pip install scgpt  # optional; check package name / version for your model
+</code></pre>
+<p>What these commands produce:</p>
+<ul>
+<li>A reproducible virtual environment at <code>.venv/</code>.</li>
+<li>Installed Python packages used in the tutorial.</li>
+</ul>
+<h3>2) Verify environment and dataset</h3>
+<pre><code># Verify imports and GPU (GPU recommended but optional)
+python - &lt;&lt;'PY'
+import sys, scanpy as sc, anndata, torch
+print("Python:", sys.version.split()[0])
+print("Scanpy:", sc.__version__)
+print("AnnData:", anndata.__version__)
+print("Torch CUDA available:", torch.cuda.is_available())
+
+# Quick check of the input file
+import scanpy as sc
+adata = sc.read_h5ad("data/my_data.h5ad")
+print("Cells:", adata.n_obs, "Genes:", adata.n_vars)
+print("obs keys:", list(adata.obs.keys())[:10])
+print("var_names sample:", adata.var_names[:10])
+PY
+</code></pre>
+<p>What to expect:</p>
+<ul>
+<li>Confirmation that packages import without error.</li>
+<li>Basic file diagnostics printed to the terminal (number of cells/genes and sample metadata fields).</li>
+</ul>
+<h3>3) Confirm gene identifier and species compatibility</h3>
+<p>Most SFMs are trained with a specific gene vocabulary (e.g., human HGNC gene symbols). Before encoding, make sure your <code>adata.var_names</code> match the model's expected gene identifiers. If your data uses Ensembl IDs (e.g., <code>ENSG00000000003</code>), convert them to symbols using a deterministic mapping (biomaRt, gget, or a local lookup table).</p>
+<pre><code># Example using gget (install separately if used)
+# pip install gget
+python - &lt;&lt;'PY'
+import scanpy as sc
+adata = sc.read_h5ad("data/my_data.h5ad")
+
+# Example naive check for Ensembl-like names
+ensembl_like = any(name.startswith("ENSG") for name in adata.var_names[:50])
+print("Looks like Ensembl IDs:", ensembl_like)
+
+# Save a copy for auditing before any conversion
+adata.write_h5ad("data/my_data_orig.h5ad")
+print("Saved audit copy to data/my_data_orig.h5ad")
+PY
+</code></pre>
+<p>What this produces:</p>
+<ul>
+<li>An audit copy <code>data/my_data_orig.h5ad</code> to preserve the exact input.</li>
+<li>A simple check whether gene names look like Ensembl IDs.</li>
+</ul>
+<h3>4) Load a pre‑trained foundation model and compute embeddings</h3>
+<p>The exact API depends on the model implementation. The pattern below shows two common approaches: (A) model provides an <code>encode</code>/<code>transform</code> call that accepts an AnnData or numpy array; (B) model provided via Hugging Face that expects a tokenized input. Replace model names and API calls with those in the model's documentation.</p>
+<pre><code># Example Python script: scripts/run_sfm_encode.py
+# Inputs:
+#   data/my_data.h5ad
+#   model checkpoint or Hugging Face model id (string)
+# Outputs:
+#   data/my_data_with_sfm.h5ad  (AnnData with embedding stored in .obsm['X_sfm'])
+#   logs/encode_log.txt
+
+import scanpy as sc
+import numpy as np
+import sys, os
+# Replace following import with the model package you are using
+# For illustration only:
+# import scgpt as scg
+from transformers import AutoModel  # placeholder
+
+adata = sc.read_h5ad("data/my_data.h5ad")
+
+# Preliminary checks
+assert adata.n_obs &gt; 0, "No cells found in input file."
+
+# --- PSEUDOCODE / placeholder: replace with actual model load/encode API ---
+# model = scg.model.load_pretrained("scGPT_human")
+# embeddings = model.encode(adata)  # returns (n_cells, d)
+
+# If using huggingface-style model: you will need tokenization/forward steps
+# The code below does not run as-is; consult the model's readme for exact calls.
+embeddings = np.random.randn(adata.n_obs, 512)  # placeholder to illustrate shape
+
+# Attach to AnnData (choose a descriptive key)
+adata.obsm["X_sfm"] = embeddings
+
+# Save a new AnnData file so downstream steps are reproducible
+adata.write_h5ad("data/my_data_with_sfm.h5ad")
+print("Saved encoded AnnData to data/my_data_with_sfm.h5ad")
+</code></pre>
+<p>What these commands produce:</p>
+<ul>
+<li>An AnnData file <code>data/my_data_with_sfm.h5ad</code> with the model-derived embeddings in <code>.obsm['X_sfm']</code>.</li>
+<li>Log messages you can save for reproducibility.</li>
+</ul>
+<h3>5) Downstream visualization and zero‑shot annotation</h3>
+<p>Common downstream steps are neighborhood graph construction, UMAP visualization, and label transfer or nearest‑neighbor classification using embeddings.</p>
+<pre><code># Example analysis pipeline using Scanpy
+python - &lt;&lt;'PY'
+import scanpy as sc
+adata = sc.read_h5ad("data/my_data_with_sfm.h5ad")
+
+# Use the foundation-model embedding as the basis for neighbors
+sc.pp.neighbors(adata, use_rep="X_sfm", n_neighbors=15)
+sc.tl.umap(adata, min_dist=0.5)
+sc.pl.umap(adata, color=["batch", "some_existing_label"], save="_sfm_umap.png")
+
+# Simple zero-shot label propagation using k-NN to a small reference set
+# Suppose you have reference embeddings and labels saved as numpy files:
+#   data/ref_embeddings.npy  (shape: n_ref x d)
+#   data/ref_labels.npy      (shape: n_ref,)
+import numpy as np
+ref_emb = np.load("data/ref_embeddings.npy")
+ref_labels = np.load("data/ref_labels.npy")
+
+from sklearn.neighbors import KNeighborsClassifier
+knn = KNeighborsClassifier(n_neighbors=5)
+knn.fit(ref_emb, ref_labels)
+preds = knn.predict(adata.obsm["X_sfm"])
+adata.obs["sfm_pred"] = preds
+
+# Save annotated AnnData
+adata.write_h5ad("data/my_data_with_sfm_annotated.h5ad")
+print("Saved annotated AnnData to data/my_data_with_sfm_annotated.h5ad")
+PY
+</code></pre>
+<p>What these commands produce:</p>
+<ul>
+<li>UMAP figures saved to the configured Scanpy plotting directory (e.g., <code>figures/umap_sfm_umap.png</code>).</li>
+<li>Annotated AnnData with predicted labels in <code>adata.obs['sfm_pred']</code>.</li>
+</ul>
+<h2>Output inspection and interpretation</h2>
+<p>After running the workflow, inspect the following:</p>
+<ul>
+<li><strong>Embedding shape:</strong> ensure <code>adata.obsm['X_sfm']</code> has shape (<em>n_cells</em>, <em>embedding_dim</em>)—e.g., (10,000, 512). If the shape is incorrect, the model likely returned a per-gene vector or an error occurred.</li>
+<li><strong>UMAP and neighborhood graph:</strong> visualize the UMAP colored by known metadata (sample, batch, QC flags) and by <code>sfm_pred</code> (zero‑shot labels). Coherent separation by known biological labels suggests the embedding preserves biological signal; complete mixing may indicate excessive batch effects, or mismatch between model expectations and input.</li>
+<li><strong>Concordance with marker genes:</strong> pick a few canonical marker genes and plot expression on the UMAP. A good sign is that model-predicted labels correspond to marker expression (e.g., predicted T cells are enriched for CD3D expression). Discrepancies require manual validation.</li>
+</ul>
+<p>What a plausible result means—and does NOT prove:</p>
+<ul>
+<li>If predicted labels align with marker-gene expression and expected clusters, it suggests the SFM embedding is informative for your dataset.</li>
+<li>It does NOT prove the predictions are absolutely correct or transferable to clinical decision-making. Zero‑shot labels are model inferences and may reflect biases in the training corpus.</li>
+<li>Good visual separation does not guarantee accurate gene-level imputation or differential expression; follow up with conventional differential testing and marker validation.</li>
+</ul>
+<h2>Troubleshooting</h2>
+<p>Below are common symptoms, likely causes, and concrete fixes.</p>
+<h3>Symptom: Model fails to load or raises import errors</h3>
+<ul>
+<li>Cause: Missing package or incompatible version of transformers/PyTorch.</li>
+<li>Fix: Verify package versions (<code>pip list</code>) and reinstall recommended versions from the model documentation. On clusters, ensure the CUDA driver matches the PyTorch wheel (check <code>nvidia-smi</code>).</li>
+</ul>
+<h3>Symptom: <code>adata.obsm['X_sfm']</code> contains NaNs or zeros</h3>
+<ul>
+<li>Cause: The model may expect nonzero counts or particular normalization; tokenization may have failed for many genes.</li>
+<li>Fix: Check that gene names match the model vocabulary. Re-run tokenization/encoding with a small subset of cells (10–100) while printing diagnostic messages.</li>
+</ul>
+<h3>Symptom: Predictions are dominated by a single class or by batch labels</h3>
+<ul>
+<li>Cause: Species mismatch, incorrect gene IDs, or reference labels mismatched to your data.</li>
+<li>Fix: Confirm species and gene ID mapping. Use marker-gene diagnostics to determine whether the model is learning biology or batch. Try subsampling to equalize batches for a sanity check.</li>
+</ul>
+<h3>Symptom: Inference is extremely slow on CPU</h3>
+<ul>
+<li>Cause: SFMs are compute intensive; transformer layers have high memory and compute cost.</li>
+<li>Fix: Use GPU nodes with sufficient VRAM (&gt;=16 GB recommended). For large datasets, embed in batches and save intermediate files. Consider model quantization or CPU-optimized inference frameworks if GPU not available.</li>
+</ul>
+<h2>Limitations, version caveats, and responsible use</h2>
+<ul>
+<li><strong>Model training biases:</strong> SFMs are trained on public or consortium datasets and can reflect sampling bias (overrepresentation of certain tissues, cell types, or species). Interpret zero‑shot outputs with caution, especially for rare or poorly represented cell states.</li>
+<li><strong>Gene vocabulary and species:</strong> Many models expect a specific gene vocabulary (human HGNC symbols are common). Always map and document gene identifier conversions; keep an audit copy of the original AnnData.</li>
+<li><strong>Preprocessing sensitive:</strong> Tokenization strategies (discretization bins, normalization) may be required or assumed; check the model README for preprocessing steps. Differences in pre-processing can change embedding geometry substantially.</li>
+<li><strong>Versioning:</strong> Record exact versions of model checkpoints, package versions, and input files. Save the model id or checkpoint hash (e.g., a Hugging Face model id) and the script used to generate embeddings so results are reproducible.</li>
+<li><strong>Responsible use:</strong> SFMs are research tools. Do not use zero‑shot annotations for clinical decision-making or to make unvalidated biological claims without orthogonal validation (e.g., orthogonal assays, curated markers, or manual expert review).</li>
+</ul>
+<h2>Next-step checklist</h2>
+<ul>
+<li>Record and save: input AnnData (<code>my_data_orig.h5ad</code>), processed AnnData with embeddings (<code>my_data_with_sfm.h5ad</code>), and annotated output (<code>my_data_with_sfm_annotated.h5ad</code>).</li>
+<li>Inspect canonical marker genes across predicted labels and clusters; document any mismatches.</li>
+<li>Compare SFM-derived neighborhood graph and clustering to a standard Scanpy PCA-based pipeline (e.g., run PCA, neighbors on PCA, resolution sweep on Leiden clustering).</li>
+<li>Save a short reproducible script and environment specification (<code>requirements.txt</code> or <code>environment.yml</code>), and note the model checkpoint id and package versions.</li>
+<li>If results are promising, consider fine‑tuning the model on a modestly sized labeled dataset for your domain following the model's fine-tuning instructions.</li>
+</ul>
+<h2>References</h2>
+<ul>
+<li><a href="https://github.com/bowang-lab/scGPT">scGPT repository (GitHub)</a> — model code and documentation (consult for exact API and tokenization).</li>
+<li><a href="https://scanpy.readthedocs.io/">Scanpy documentation</a> — AnnData-centric single-cell analysis tools and plotting functions.</li>
+<li><a href="https://pytorch.org/">PyTorch official site</a> — installation guidance and CUDA‑compatible wheel selection.</li>
+<li><a href="https://huggingface.co/docs/transformers/index">Hugging Face Transformers documentation</a> — model hosting and tokenizer/inference patterns used by many foundation models.</li>
+<li><a href="https://anndata.readthedocs.io/">AnnData documentation</a> — file formats and recommended practices for preserving metadata and matrix orientation.</li>
+</ul>
 </article>
 <section class="mt-12 mb-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-100">
 <div class="flex items-start gap-4">

@@ -131,137 +131,215 @@ function toggleMobileMenu() {
 <div class="flex items-center gap-1">
 <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
 </div>
-</div>
-<div class="p-6 bg-blue-50 border border-blue-100 rounded-xl mb-8">
-<h4 class="text-lg font-bold text-blue-900 mb-2">Learning Objectives &amp; Prerequisites</h4>
-<ul class="list-disc list-inside text-blue-800 space-y-1 mb-4">
-<li><strong>Prerequisites:</strong> Basic command-line knowledge and Python environment.</li>
-<li><strong>Objective:</strong> Learn to use the `gget` tool to query biological databases (Ensembl, UniProt) directly and reliably, bypassing LLM hallucinations.</li>
-<li><strong>Expected Output:</strong> The ability to prompt an AI agent to use `gget` to fetch accurate gene and protein metadata before writing analysis code.</li>
-</ul>
-</div>
-<div class="p-6 bg-amber-50 border border-amber-200 rounded-xl mb-8">
-<h3 class="text-lg font-bold text-amber-900 mb-3">📘 The Hallucination Problem</h3>
-<p class="text-amber-800 mb-2">Large Language Models (LLMs) are great at writing code, but they're notorious for hallucinating specific biological facts (like exact genomic coordinates, transcript variants, or current gene aliases). To solve this, we must teach our AI agents to perform <em>deterministic retrieval</em> using reliable APIs before answering.</p>
-</div>
-<h2>Before You Begin: Install and Test Retrieval Separately</h2>
-<p>Separate data retrieval from AI interpretation. First prove that gget returns the expected record with a reproducible command. Only then provide that saved output to an AI assistant for explanation.</p>
-<pre><code class="language-bash">python3 -m venv .venv
-source .venv/bin/activate
-python -m pip install --upgrade pip gget
-python -c "import gget; print('gget import: OK')"
-mkdir -p retrieval-results</code></pre>
-<p>Pin the package version after the first successful run, record the query and date, and save the raw response. Don't ask the model to invent a value when the retrieval command fails; fix the query or report the missing result explicitly.</p>
-<p><strong>Success check:</strong> a second run with the same query produces a saved response whose source, identifier, and retrieval date are recorded.</p>
-<h2>Introducing gget for Reliable Data Retrieval</h2>
-<p><code>gget</code> is a free, open-source command-line tool and Python package that efficiently queries large biological databases (Ensembl, UniProt, NCBI). By instructing your AI coding assistant to use <code>gget</code>you ensure the data it relies on is 100% accurate.</p>
-<h3>Step 1: Installing and Verifying gget</h3>
-<p>Install <code>gget</code> in the same environment where your AI agent executes code. Pin the version to ensure reproducibility:</p>
-<pre><code class="language-bash">pip install gget==0.28.6
-
-# Verify the installation and check available modules
-gget --help
-# Expected output: list of subcommands (info, seq, search, enrichr, archs4, ...)</code></pre>
-<h3>gget Module Reference</h3>
-<p>The <code>gget</code> package provides multiple modules, each querying a different biological database:</p>
-<div class="overflow-x-auto mb-6">
-<table class="min-w-full text-sm border border-gray-200 rounded-lg">
-<thead class="bg-gray-100"><tr><th class="px-4 py-2 text-left">Module</th><th class="px-4 py-2 text-left">Database</th><th class="px-4 py-2 text-left">Use Case</th></tr></thead>
-<tbody>
-<tr class="border-t"><td class="px-4 py-2"><code>gget info</code></td><td class="px-4 py-2">Ensembl</td><td class="px-4 py-2">Gene metadata, Ensembl IDs, aliases, coordinates</td></tr>
-<tr class="border-t"><td class="px-4 py-2"><code>gget seq</code></td><td class="px-4 py-2">Ensembl</td><td class="px-4 py-2">Nucleotide/protein FASTA sequences</td></tr>
-<tr class="border-t"><td class="px-4 py-2"><code>gget search</code></td><td class="px-4 py-2">Ensembl</td><td class="px-4 py-2">Free-text gene search across species</td></tr>
-<tr class="border-t"><td class="px-4 py-2"><code>gget enrichr</code></td><td class="px-4 py-2">Enrichr</td><td class="px-4 py-2">Gene set enrichment analysis</td></tr>
-<tr class="border-t"><td class="px-4 py-2"><code>gget archs4</code></td><td class="px-4 py-2">ARCHS4</td><td class="px-4 py-2">Expression data across tissues and cell types</td></tr>
-<tr class="border-t"><td class="px-4 py-2"><code>gget alphafold</code></td><td class="px-4 py-2">AlphaFold DB</td><td class="px-4 py-2">Protein structure prediction</td></tr>
-</tbody>
-</table>
-</div>
-<h3>Step 2: Retrieving Gene Information Programmatically</h3>
-<p>The key to this workflow is using <code>gget</code> as a Python library to retrieve verified data before any AI-generated analysis begins:</p>
-<pre><code class="language-python">import gget
-import json
-
-# Retrieve gene information from Ensembl
-result = gget.info("FOXP3", species="human")
-print(result.to_json(indent=2))
-
-# Expected output includes:
-# - ensembl_id: "ENSG00000049768"
-# - uniprot_id: "Q9BZS1"
-# - chromosome: "X"
-# - biotype: "protein_coding"
-# - description: "forkhead box P3"
-
-# Save the verified result for reproducibility
-result.to_csv("retrieval-results/foxp3_info.csv", index=False)
-print(f"Retrieved Ensembl ID: {result.iloc[0]['ensembl_id']}")</code></pre>
-<p><strong>Why this matters:</strong> If you ask ChatGPT or Copilot "What's the Ensembl ID for FOXP3?", it may return an outdated ID or confuse it with a pseudogene. The <code>gget</code> call queries the live Ensembl API and returns the current, authoritative record.</p>
-<h3>Step 3: Retrieving Sequences for Downstream Analysis</h3>
-<p>Use <code>gget seq</code> to download FASTA sequences directly from Ensembl:</p>
-<pre><code class="language-python">import gget
-
-# Retrieve the protein sequence for TP53
-fasta = gget.seq("ENSG00000141510", translate=True)
-print(fasta[:200])  # Print first 200 characters
-
-# Save to file for alignment or structural prediction
-with open("retrieval-results/tp53_protein.fasta", "w") as f:
-    f.write(fasta)
-
-# Calculate basic sequence statistics
-from collections import Counter
-seq = fasta.split("\n", 1)[1].replace("\n", "")
-aa_counts = Counter(seq)
-print(f"Sequence length: {len(seq)} amino acids")
-print(f"Most common residues: {aa_counts.most_common(5)}")</code></pre>
-<h3>Step 4: Combining gget with Gene Set Enrichment</h3>
-<p>A common workflow is to take a list of differentially expressed genes and run enrichment analysis:</p>
-<pre><code class="language-python">import gget
-
-# Run enrichment analysis on a gene list from your DEG analysis
-deg_genes = ["FOXP3", "IL2RA", "CTLA4", "IKZF2", "TIGIT"]
-
-enrichment = gget.enrichr(
-    genes=deg_genes,
-    database="GO_Biological_Process_2023",
-    species="human"
-)
-
-# Display top 5 enriched pathways
-print(enrichment[["Term", "Adjusted P-value"]].head())
-enrichment.to_csv("retrieval-results/treg_enrichment.csv", index=False)</code></pre>
-<h3>Common Pitfalls and Troubleshooting</h3>
+</div><h2>Learning objectives and prerequisites</h2>
+<p><strong>By the end of this lesson you will be able to:</strong></p>
 <ul>
-<li><strong>Species mismatch:</strong> Always specify <code>species="human"</code> or <code>species="mouse"</code> explicitly. The default species may change between gget versions.</li>
-<li><strong>Gene symbol ambiguity:</strong> Some symbols map to multiple genes (e.g., "ACE" vs "ACE2"). Use Ensembl IDs when precision is critical.</li>
-<li><strong>API rate limits:</strong> If querying hundreds of genes in a loop, add a <code>time.sleep(0.5)</code> delay between calls to avoid being rate-limited by Ensembl.</li>
-<li><strong>Offline environments:</strong> <code>gget</code> requires internet access. On air-gapped HPC systems, download results on a login node and transfer the CSV files to compute nodes.</li>
+<li>Install and verify the gget command-line tool and Python package in a reproducible environment.</li>
+<li>Perform deterministic retrievals from Ensembl and UniProt using gget (both CLI and Python API).</li>
+<li>Save, record, and present retrieval outputs so they can be passed to a Large Language Model (LLM) or human reviewer instead of asking the LLM to invent facts.</li>
+<li>Interpret common outputs (IDs, coordinates, sequences) and understand what they do and do not prove.</li>
 </ul>
-<hr/>
-<h2>Conclusion</h2>
-<p>Deterministic retrieval bridges the gap between the creative problem-solving of LLMs and the absolute precision required in bioinformatics. By providing tools like <code>gget</code> to your AI agents, you eliminate data hallucinations and build reproducible workflows.</p>
-<div class="mt-10 p-8 bg-gray-50 border border-gray-200 rounded-xl">
-<h3 class="text-xl font-bold text-gray-900 mb-4">Knowledge Check &amp; Assessment</h3>
-<div class="space-y-4">
-<div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-<h4 class="font-bold text-gray-800 mb-2">1. Concept Verification</h4>
-<p class="text-gray-600 text-sm">Why is it dangerous to ask an LLM directly for a specific transcript's genomic coordinates without using a tool like `gget`?</p>
-</div>
-<div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-<h4 class="font-bold text-gray-800 mb-2">2. Practical Execution</h4>
-<p class="text-gray-600 text-sm">Ask your AI assistant to use `gget` to find all human orthologs of the mouse gene 'Cd8a' and output them to a JSON file.</p>
-</div>
-</div>
-</div>
-<section aria-label="References and further reading" class="mt-10 p-6 bg-slate-50 border border-slate-200 rounded-xl">
-<h2 class="text-xl font-bold text-gray-900 mb-3">References and further reading</h2>
-<p class="text-sm text-gray-600 mb-3">Use these official resources to check current software behaviour, terminology, and production guidance. Tool versions and defaults change, so verify commands against the documentation before applying them to a research dataset.</p>
-<ul class="list-disc list-inside space-y-2 text-sm text-gray-700">
-<li><a class="text-blue-700 hover:underline" href="https://www.nist.gov/itl/ai-risk-management-framework" rel="noopener" target="_blank">NIST AI Risk Management Framework</a></li>
-<li><a class="text-blue-700 hover:underline" href="https://oecd.ai/en/ai-principles" rel="noopener" target="_blank">OECD AI Principles</a></li>
+<p><strong>Prerequisites:</strong> basic command-line familiarity (bash or similar), a working Python 3.8+ environment, and permission to install Python packages. No prior knowledge of gget or the Ensembl/UniProt APIs is required.</p>
+<h2>Why deterministic retrieval matters in bioinformatics</h2>
+<p>Large Language Models (LLMs) are powerful at synthesizing text and generating code, but they are not authoritative sources of changing biological facts such as current Ensembl gene IDs, transcript coordinates, or canonical UniProt accessions. These facts change over time: annotations are updated, assemblies are remapped, and IDs may be deprecated. Handing an LLM a deterministic, programmatically retrieved record from a primary database before asking it to analyze or write code prevents hallucinations and provides an auditable provenance trail.</p>
+<p>gget is a small tool designed to query authoritative bioinformatics resources (Ensembl, UniProt, NCBI, AlphaFold DB, ARCHS4, Enrichr) and return structured results you can save. The workflow we teach here separates retrieval (deterministic, reproducible) from interpretation (LLM or human). Save the raw retrieval responses, the command used, and the retrieval timestamp so downstream analyses can be reproduced and validated.</p>
+<h2>Reproducible, sequential workflow</h2>
+<p>The following workflow is structured so you first confirm retrieval works locally, then save and validate outputs, then hand those saved files to an LLM for interpretation. All commands assume a Unix-like shell. Replace species and identifiers as needed.</p>
+<h3>1) Create an isolated environment and install gget</h3>
+<p>Files you should have after this step: the virtual environment directory (.venv) and the installation record commands-output.txt.</p>
+<pre><code># Create and activate a Python virtual environment
+python3 -m venv .venv
+source .venv/bin/activate
+
+# Upgrade pip and install a pinned gget version for reproducibility
+python -m pip install --upgrade pip
+python -m pip install "gget==0.28.6"
+
+# Verify installation and save the help output
+gget --help &gt; retrieval-results/gget-help.txt 2&gt;&amp;1
+echo "gget version and help saved to retrieval-results/gget-help.txt"
+</code></pre>
+<p>What these commands produce:</p>
+<ul>
+<li><code>.venv/</code> — isolated Python environment (do not delete if you want reproducibility).</li>
+<li><code>retrieval-results/gget-help.txt</code> — contains the list of gget subcommands (info, seq, search, enrichr, archs4, alphafold, etc.).</li>
 </ul>
-</section>
+<p>Note: pin the version number after you confirm behavior (here we used 0.28.6 as an example). If you are reproducing this tutorial at a later date, choose and record the specific version you used.</p>
+<h3>2) Prepare a retrieval-results directory and record metadata</h3>
+<pre><code># Make a directory to hold raw retrievals and logs
+mkdir -p retrieval-results
+# Record the environment and Python package list for provenance
+python -m pip freeze &gt; retrieval-results/requirements.txt
+date --iso-8601=seconds &gt; retrieval-results/retrieval_timestamp.txt
+echo "Command: gget --help" &gt;&gt; retrieval-results/retrieval_timestamp.txt
+</code></pre>
+<p>Files created:</p>
+<ul>
+<li><code>retrieval-results/requirements.txt</code> — exact package versions installed.</li>
+<li><code>retrieval-results/retrieval_timestamp.txt</code> — timestamp and basic provenance for the run.</li>
+</ul>
+<h3>3) Deterministic retrieval: get Ensembl gene metadata using gget info</h3>
+<p>Example goal: fetch authoritative Ensembl metadata for the human gene FOXP3. Save the raw output and a CSV excerpt for quick human reading.</p>
+<pre><code># CLI: write JSON output of gget info to a file
+gget info FOXP3 --species human --format json &gt; retrieval-results/FOXP3_ensembl_info.json
+
+# Python: read, inspect and write a CSV summary using the gget Python API
+python - &lt;&lt;'PY'
+import json, csv
+from pathlib import Path
+
+p = Path("retrieval-results/FOXP3_ensembl_info.json")
+data = json.load(p.open())
+# gget.info returns a list-like structure; adapt depending on actual shape
+# Here we extract commonly useful fields safely
+fields = ["query", "ensembl_id", "symbol", "description", "chromosome", "start", "end", "strand", "biotype", "uniprot_id"]
+rows = []
+for record in data:
+    rows.append({f: record.get(f, "") for f in fields})
+
+csv_path = Path("retrieval-results/FOXP3_ensembl_info.csv")
+with csv_path.open("w", newline='') as fh:
+    writer = csv.DictWriter(fh, fieldnames=fields)
+    writer.writeheader()
+    writer.writerows(rows)
+print("Saved CSV summary to", csv_path)
+PY
+</code></pre>
+<p>Files produced:</p>
+<ul>
+<li><code>retrieval-results/FOXP3_ensembl_info.json</code> — raw JSON from Ensembl via gget.</li>
+<li><code>retrieval-results/FOXP3_ensembl_info.csv</code> — human-readable summary with canonical fields.</li>
+</ul>
+<h3>4) Deterministic retrieval: download a protein sequence with gget seq</h3>
+<p>Obtain the protein FASTA for a specific Ensembl ID and save it for downstream analyses (alignment, domain searches, structure prediction). Example uses ENSG IDs or transcript/protein IDs depending on the resource.</p>
+<pre><code># Use gget seq from CLI with an Ensembl gene or transcript ID
+# Here we request the canonical protein sequence for ENSG00000141510 (TP53 example).
+gget seq ENSG00000141510 --translate true &gt; retrieval-results/TP53_protein.fasta
+
+# Confirm the first line is a FASTA header and the file is non-empty
+head -n 1 retrieval-results/TP53_protein.fasta
+wc -c retrieval-results/TP53_protein.fasta
+</code></pre>
+<p>Files produced:</p>
+<ul>
+<li><code>retrieval-results/TP53_protein.fasta</code> — FASTA-formatted sequence retrieved from Ensembl (or other configured backend).</li>
+</ul>
+<h3>5) Save exact commands, inputs, and timestamps for provenance</h3>
+<pre><code># Append the commands used to a provenance log with timestamps
+echo "gget info FOXP3 --species human --format json" &gt;&gt; retrieval-results/commands.log
+date --iso-8601=seconds &gt;&gt; retrieval-results/commands.log
+echo "gget seq ENSG00000141510 --translate true" &gt;&gt; retrieval-results/commands.log
+date --iso-8601=seconds &gt;&gt; retrieval-results/commands.log
+</code></pre>
+<p>Files produced:</p>
+<ul>
+<li><code>retrieval-results/commands.log</code> — a small provenance log mapping commands to timestamps.</li>
+</ul>
+<h2>Output inspection and interpretation</h2>
+<p>After you save retrieval outputs, inspect them systematically. For each saved file ask:</p>
+<ul>
+<li>Does the record include authoritative IDs (Ensembl ENSG/ENST/ENSP, UniProt accession)?</li>
+<li>Are coordinates present, and do they reference a specified assembly (e.g., GRCh38/hg38)?</li>
+<li>Is there a retrieval timestamp and the gget version recorded?</li>
+</ul>
+<p>Example: what to look for in <code>FOXP3_ensembl_info.csv</code></p>
+<ul>
+<li><strong>ensembl_id</strong>: typically starts with <code>ENSG</code> for genes. If empty, the symbol may be ambiguous or the query matched nothing.</li>
+<li><strong>chromosome, start, end</strong>: numeric coordinates; verify if the record includes an assembly tag. If the assembly is missing, do not assume GRCh38 — consult the Ensembl API response or database documentation.</li>
+<li><strong>uniprot_id</strong>: link to UniProt canonical accessions, if present. Absence does not mean the protein is uncharacterized; it may reflect lacking cross-reference in that release.</li>
+<li><strong>description</strong>: human-readable gene description. Do not treat this as a definitive function annotation; it's a short text string from the database.</li>
+</ul>
+<p>What a plausible result means and does not prove:</p>
+<ul>
+<li>Correct IDs and coordinates indicate the current database mapping at retrieval time. They do <em>not</em> prove that downstream analyses (e.g., variant effect predictions) were performed correctly—those require separate validation.</li>
+<li>Presence of a UniProt accession means UniProt and Ensembl are cross-referenced in that release; absence could be due to timing or curation differences, not necessarily absence of an actual protein product.</li>
+<li>Sequence retrieved in FASTA is the sequence the source database considers canonical at that time. It does not guarantee experimental validation or that other isoforms do not exist.</li>
+</ul>
+<h2>Troubleshooting: symptoms, likely causes, and fixes</h2>
+<p>Below are common issues when working with gget and how to proceed.</p>
+<h3>Symptom: gget command not found</h3>
+<ul>
+<li>Likely cause: gget is not installed in the active Python environment or the virtualenv is not activated.</li>
+<li>Fixes:
+    <ol>
+<li>Activate the virtual environment: <code>source .venv/bin/activate</code>.</li>
+<li>Reinstall: <code>python -m pip install gget==0.28.6</code> and check <code>python -m pip freeze | grep gget</code>.</li>
+<li>Use the full path to the python-installed gget: <code>python -m gget info FOXP3</code>.</li>
+</ol>
+</li>
+</ul>
+<h3>Symptom: empty JSON or no matching record for a gene symbol</h3>
+<ul>
+<li>Likely causes:
+    <ul>
+<li>Ambiguous or species-ambiguous gene symbol (e.g., many species use the same symbol).</li>
+<li>Symbol is deprecated or not present in the selected species.</li>
+</ul>
+</li>
+<li>Fixes:
+    <ol>
+<li>Supply species explicitly: <code>gget info FOXP3 --species human</code>.</li>
+<li>Try a stable identifier (Ensembl ENSG...) if available.</li>
+<li>Use <code>gget search FOXP3 --species human --format json</code> to see candidate matches and their species context.</li>
+</ol>
+</li>
+</ul>
+<h3>Symptom: FASTA file is truncated or contains HTML/redirect text</h3>
+<ul>
+<li>Likely causes: network interruption, API rate limiting, or gget following an HTTP redirect to a page.</li>
+<li>Fixes:
+    <ol>
+<li>Check network connectivity and retry.</li>
+<li>Inspect the file start with <code>head -n5</code> to see if it contains an error HTML page; if so, retry later or switch to a different server endpoint if available.</li>
+<li>Use the Python API and check for exceptions rather than piping CLI output, so you get proper error messages.</li>
+</ol>
+</li>
+</ul>
+<h3>Symptom: different results on repeat retrievals</h3>
+<ul>
+<li>Likely causes:
+    <ul>
+<li>Database updates between retrievals (annotation changes, new releases).</li>
+<li>Different default assembly or species settings in different runs.</li>
+</ul>
+</li>
+<li>Fixes:
+    <ol>
+<li>Record the gget version and retrieval timestamp; include the Ensembl release or assembly where possible.</li>
+<li>If reproducibility is critical, capture and archive the raw JSON output and the complete environment (requirements.txt, Python version).</li>
+</ol>
+</li>
+</ul>
+<h2>Limitations, reference-data caveats, and responsible use</h2>
+<p>Limitations and caveats to keep in mind:</p>
+<ul>
+<li>Database currency: gget queries live services (Ensembl, UniProt). Results reflect the state of those databases at retrieval time and can change with new releases.</li>
+<li>Identifier granularity: Ensembl has separate namespaces for genes (ENSG), transcripts (ENST) and proteins (ENSP). Ensure you request the correct namespace for your task.</li>
+<li>Assembly version: Genomic coordinates are meaningful only when paired with an assembly (e.g., GRCh37/hg19 vs GRCh38/hg38). If the API response omits the assembly, do not assume one—explicitly request or record it.</li>
+<li>LLM interpretation: providing retrieved records to an LLM reduces hallucination risk but does not eliminate reasoning errors the LLM may make when integrating disparate facts. Always validate critical steps.</li>
+<li>Data licensing and usage: follow the terms of service and licensing of the upstream databases (Ensembl, UniProt, NCBI, AlphaFold). Some data may have restrictions for commercial use.</li>
+</ul>
+<p>Responsible-use notes:</p>
+<ul>
+<li>When sharing retrieval outputs in publications or reports, include the exact commands, the gget and dependency versions, retrieval timestamps, and the source (Ensembl/UniProt release).</li>
+<li>Do not assume that a retrieved gene description equals experimentally validated function. Use appropriate experimental evidence when making biological claims.</li>
+<li>For human genomic data with privacy concerns, ensure that any identifiers or sequences do not inadvertently reveal participant-level data or violate consent agreements.</li>
+</ul>
+<h2>Next-step checklist</h2>
+<ol>
+<li>Confirm gget installation and record <code>retrieval-results/gget-help.txt</code> and <code>retrieval-results/requirements.txt</code>.</li>
+<li>Run a deterministic retrieval for at least one gene and save both raw JSON and a CSV summary in <code>retrieval-results/</code>.</li>
+<li>Record the exact commands and timestamps to <code>retrieval-results/commands.log</code>.</li>
+<li>Feed the saved JSON/CSV to your LLM or AI agent as contextual evidence; instruct the agent to cite the saved file when making factual statements.</li>
+<li>If you will share results externally, include the gget version, retrieval timestamp, and database release numbers in your methods section.</li>
+</ol>
+<h2>References</h2>
+<ul>
+<li><a href="https://www.ensembl.org/index.html">Ensembl official website</a> — primary resource for gene models and annotations.</li>
+<li><a href="https://www.uniprot.org/help/uniprotkb">UniProtKB documentation</a> — authoritative protein sequence and functional annotation resource.</li>
+<li><a href="https://github.com/pachterlab/gget">gget on GitHub</a> — source code, issues, and README with subcommand details.</li>
+<li><a href="https://alphafold.ebi.ac.uk/">AlphaFold Protein Structure Database</a> — for retrieving predicted protein structures (via gget alphafold).</li>
+</ul>
 </article>
 <section class="mt-12 mb-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-100">
 <div class="flex items-start gap-4">

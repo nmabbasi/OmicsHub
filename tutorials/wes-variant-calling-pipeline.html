@@ -130,186 +130,175 @@ function toggleMobileMenu() {
 <div class="mb-12 rounded-2xl overflow-hidden shadow-lg border border-gray-100">
 <img alt="Whole Exome Sequencing (WES): Variant Calling &amp; VAF" class="w-full aspect-video object-cover" decoding="async" loading="eager" src="../images/wes-variant-calling.webp"/>
 </div>
-<article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none">
-<div class="flex flex-wrap items-center gap-4 text-xs font-mono text-gray-500 bg-gray-50 p-3 rounded-lg border border-gray-200 mb-6">
+<article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none"><div class="flex flex-wrap items-center gap-4 text-xs font-mono text-gray-500 bg-gray-50 p-3 rounded-lg border border-gray-200 mb-6">
 <div class="flex items-center gap-1">
 <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
 <span><strong>Example environment:</strong> Ubuntu 24.04, Bash 5.1 (BWA-MEM 0.7.17, GATK 4.4.0)</span>
 </div>
-</div>
-<div class="p-6 bg-blue-50 border border-blue-100 rounded-xl mb-8">
-<h4 class="text-lg font-bold text-blue-900 mb-2">Learning Objectives &amp; Prerequisites</h4>
-<ul class="list-disc list-inside text-blue-800 space-y-1 mb-4">
-<li><strong>Prerequisites:</strong> Basic Linux command line, understanding of FASTQ/BAM formats, and an installed HPC or local conda environment with GATK and BWA.</li>
-<li><strong>Objective:</strong> Run a complete, GATK Best Practices germline variant calling pipeline from raw FASTQ to annotated VCF using the standard NA12878 dataset.</li>
-<li><strong>Expected Output:</strong> A multi-stage pipeline demonstrating strict quality control (MultiQC), BAM processing, precise GATK HaplotypeCaller execution, a quantitative filtering cascade, and a VAF distribution diagnostic plot.</li>
-</ul>
-</div>
-<h2>The Germline WES Pipeline (GATK Best Practices)</h2>
-<p>Whole Exome Sequencing (WES) focuses the sequencing power exclusively on the protein-coding regions of the genome (roughly 1-2%). This allows for incredibly deep coverage (often &gt;100x) at a fraction of the cost of Whole Genome Sequencing (WGS), making it ideal for clinical diagnostics and rare disease gene discovery.</p>
-<p><strong>Dataset Provenance:</strong> In this tutorial, we're processing <strong>NA12878</strong>the Genome in a Bottle (GIAB) gold-standard benchmark sample. We align to the <code>GRCh38</code> reference genome.</p>
+</div><h2>Learning objectives &amp; prerequisites</h2>
+<p><strong>By the end of this lesson</strong> you will be able to:</p>
 <ul>
-<li>Raw Data: <a class="text-blue-600 hover:underline" href="https://www.ebi.ac.uk/ena/browser/view/ERR3239334" target="_blank">ERR3239334 (NA12878 WES 100x)</a></li>
-<li>Target Intervals: Agilent SureSelect Human All Exon V6</li>
+<li>Run an end-to-end germline Whole Exome Sequencing (WES) variant-calling workflow from paired FASTQ to filtered VCF suitable for downstream annotation.</li>
+<li>Compute Variant Allele Frequency (VAF) from a VCF and interpret VAF distributions for germline WES data.</li>
+<li>Understand common failure modes and how to inspect intermediate files (FASTQ quality, alignment metrics, duplicate rates, depth by target).</li>
 </ul>
-<hr class="my-8"/>
-<h2>1. Alignment and Preprocessing</h2>
-<p>We begin by aligning the paired-end reads to the GRCh38 reference using BWA-MEM. We immediately pipe the output to <code>samtools</code> to sort it and convert it to a compressed BAM file, saving significant disk space. Following alignment, we mark PCR duplicates (to prevent artificial allele amplification) and optionally perform Base Quality Score Recalibration (BQSR) to correct systematic sequencer errors.</p>
-<pre><code class="language-bash"># 1. Align reads and sort BAM on the fly
-bwa mem -t 16 -R '@RG\tID:NA12878\tSM:NA12878\tPL:ILLUMINA' \
-    refs/GRCh38.fa raw_data/ERR3239334_1.fastq.gz raw_data/ERR3239334_2.fastq.gz | \
-    samtools sort -@ 8 -o aligned/NA12878.sorted.bam -
-
-# 2. Mark PCR Duplicates using GATK
+<p><strong>Prerequisites</strong>: Comfortable with the Linux command line, basic knowledge of FASTQ/BAM/VCF formats, and access to a conda-enabled environment, HPC, or local installation with the following (example versions used in commands but not strictly required):</p>
+<ul>
+<li>BWA-MEM (0.7.17), samtools (1.16+), GATK (4.4+), Picard (via GATK or standalone), bcftools (1.15+), bedtools, liftover utilities (if needed), and R or Python for plotting.</li>
+<li>Reference FASTA (GRCh38 primary assembly or GRCh37 as appropriate) and matching index files, and exome interval BED (e.g., Agilent SureSelect V6 intervals).</li>
+</ul>
+<h2>Why this matters: biological and computational context</h2>
+<p>Whole Exome Sequencing targets protein-coding regions (~1–2% of the genome), enabling deep coverage across exons for cost-effective detection of germline variants. Deep coverage increases sensitivity for heterozygous variants and enables more confident VAF estimation. However, WES introduces target-capture biases (edge effects, GC bias), and many variant-calling errors arise from mapping artifacts, PCR duplicates, and systematic base-calling errors. The GATK Best Practices workflow combines careful alignment, duplicate marking, local re-assembly, and calibration to reduce false positives and produce high-quality variant calls.</p>
+<p>Variant Allele Frequency (VAF) is the fraction of sequencing reads supporting the alternate allele at a locus. For a diploid germline heterozygous single-nucleotide variant (SNV) with no bias, VAF ≈ 0.5; homozygous alternate VAF ≈ 1.0; low VAFs may indicate mosaicism, contamination, subclonal variation, or sequencing error. Interpreting VAF requires considering depth, strand balance, read position, and mapping quality.</p>
+<h2>Required input files and directory layout</h2>
+<p>Before beginning, create a working directory and ensure you have these files (examples paths below):</p>
+<ul>
+<li>Raw paired FASTQ: raw/NA12878_R1.fastq.gz and raw/NA12878_R2.fastq.gz</li>
+<li>Reference FASTA: refs/GRCh38.fa (with fasta index .fai and dictionary .dict)</li>
+<li>Exome interval file: refs/SureSelect_V6_intervals.bed (BED coordinate system matching the reference)</li>
+<li>Optional: known-sites for BQSR (e.g., dbSNP, Mills indels) in GRCh38 coordinates</li>
+</ul>
+<h2>Reproducible workflow (sequential commands)</h2>
+<p>Each command below states inputs and outputs. Adjust thread counts (-t, -@) for your environment. These commands are written to be safe (no destructive operations) and to document file provenance.</p>
+<h3>1. Alignment and on-the-fly sorting</h3>
+<pre><code># Input: raw/NA12878_R1.fastq.gz, raw/NA12878_R2.fastq.gz, refs/GRCh38.fa
+# Output: aligned/NA12878.sorted.bam (coordinate-sorted BAM)
+bwa mem -t 16 -R '@RG\tID:NA12878\tSM:NA12878\tPL:ILLUMINA' refs/GRCh38.fa \
+  raw/NA12878_R1.fastq.gz raw/NA12878_R2.fastq.gz \
+  | samtools sort -@ 8 -o aligned/NA12878.sorted.bam -T aligned/tmp.NA12878
+# Index the sorted BAM
+samtools index aligned/NA12878.sorted.bam
+</code></pre>
+<p>Notes: Include a proper Read Group (-R) string: ID (read group ID), SM (sample name), PL (platform). GATK requires SM to be present in the BAM header.</p>
+<h3>2. Mark duplicates</h3>
+<pre><code># Input: aligned/NA12878.sorted.bam
+# Output: aligned/NA12878.dedup.bam, metrics/NA12878_dup_metrics.txt
 gatk MarkDuplicates \
-    -I aligned/NA12878.sorted.bam \
-    -O aligned/NA12878.dedup.bam \
-    -M metrics/NA12878_dup_metrics.txt
-
-# 3. Index the final analysis-ready BAM
-samtools index aligned/NA12878.dedup.bam
+  -I aligned/NA12878.sorted.bam \
+  -O aligned/NA12878.dedup.bam \
+  -M metrics/NA12878_dup_metrics.txt \
+  --CREATE_INDEX true
 </code></pre>
-<div class="mt-8 mb-8 bg-yellow-50 border border-yellow-200 rounded-2xl p-8 shadow-sm">
-<h3 class="text-xl font-bold text-yellow-900 mb-4">Expert Insight: Read Groups (RG)</h3>
-<p class="text-gray-800">Don't forget the <code>-R</code> flag in BWA-MEM. GATK <em>requires</em> proper Read Group tags (ID, SM, PL). If you omit this, HaplotypeCaller will immediately crash complaining about missing sample names. The <code>SM</code> (Sample Name) is exactly what will appear as the column header in your final VCF.</p>
-</div>
-<h3>Sequencing Quality Control (MultiQC)</h3>
-<p>Before calling variants, you must verify that the sequencing run was successful. A WES pipeline is only as good as its target coverage.</p>
-<div class="overflow-x-auto my-6 border border-gray-200 rounded-lg shadow-sm">
-<table class="w-full text-left border-collapse">
-<thead>
-<tr class="bg-gray-100 text-gray-700 text-sm uppercase tracking-wider">
-<th class="p-4 border-b">Metric</th>
-<th class="p-4 border-b">Result (NA12878)</th>
-<th class="p-4 border-b">Quality Threshold</th>
-</tr>
-</thead>
-<tbody class="text-sm text-gray-800">
-<tr class="hover:bg-gray-50">
-<td class="p-4 border-b font-medium">Alignment Rate</td>
-<td class="p-4 border-b text-green-600 font-bold">99.8%</td>
-<td class="p-4 border-b">&gt;95%</td>
-</tr>
-<tr class="hover:bg-gray-50">
-<td class="p-4 border-b font-medium">Duplicate Rate</td>
-<td class="p-4 border-b text-yellow-600 font-bold">12.4%</td>
-<td class="p-4 border-b">&lt;20%</td>
-</tr>
-<tr class="hover:bg-gray-50">
-<td class="p-4 border-b font-medium">Mean Target Coverage</td>
-<td class="p-4 border-b text-green-600 font-bold">115x</td>
-<td class="p-4 border-b">&gt;60x</td>
-</tr>
-<tr class="hover:bg-gray-50">
-<td class="p-4 border-b font-medium">% Targets at ≥30x</td>
-<td class="p-4 border-b text-green-600 font-bold">96.2%</td>
-<td class="p-4 border-b">&gt;90%</td>
-</tr>
-</tbody>
-</table>
-</div>
-<p class="text-sm text-gray-600 mb-8"><em>Note: The 30x threshold is critical for germline calling because you need roughly 15 reads supporting the alternate allele and 15 reads supporting the reference allele to confidently call a heterozygous variant (VAF ~0.5).</em></p>
-<hr class="my-8"/>
-<h2>2. Variant Calling and Filtering</h2>
-<p>We use GATK <code>HaplotypeCaller</code>which performs local de novo assembly of active regions. This makes it far superior to simple pileup callers, especially for calling indels.</p>
-<pre><code class="language-bash"># 1. Call variants (Targeting only the exome intervals saves immense time)
+<p>What this produces: a coordinate-sorted, duplicate-marked BAM with an accompanying metrics file. The BAM will have the duplicate flag set (0x400) for reads inferred to be PCR/optical duplicates.</p>
+<h3>3. Base Quality Score Recalibration (BQSR) — optional but recommended</h3>
+<pre><code># Input: aligned/NA12878.dedup.bam, known-sites VCFs (e.g., dbsnp, Mills indels)
+# Output: aligned/NA12878.recal.table, aligned/NA12878.recal.bam
+gatk BaseRecalibrator \
+  -R refs/GRCh38.fa \
+  -I aligned/NA12878.dedup.bam \
+  --known-sites refs/dbsnp_146_GRCh38.vcf.gz \
+  --known-sites refs/Mills_and_1000G_gold_standard.indels_GRCh38.vcf.gz \
+  -O aligned/NA12878.recal.table \
+  -L refs/SureSelect_V6_intervals.bed
+
+gatk ApplyBQSR \
+  -R refs/GRCh38.fa \
+  -I aligned/NA12878.dedup.bam \
+  --bqsr-recal-file aligned/NA12878.recal.table \
+  -O aligned/NA12878.recal.bam \
+  --create-output-bam-index true
+</code></pre>
+<p>Notes: Known-sites must match the reference build. BQSR models systematic errors for the sequencer and adjusts base quality scores. For modest pipelines, you may skip BQSR, but be aware it can improve variant quality in some datasets.</p>
+<h3>4. Call variants with GATK HaplotypeCaller (per-sample GVCF or direct VCF)</h3>
+<pre><code># Input: aligned/NA12878.recal.bam (or aligned/NA12878.dedup.bam if skipping BQSR)
+# Output (here): vcf/NA12878_raw.vcf.gz
 gatk HaplotypeCaller \
-    -R refs/GRCh38.fa \
-    -I aligned/NA12878.dedup.bam \
-    -L refs/SureSelect_V6_intervals.bed \
-    -O vcf/NA12878_raw.vcf.gz
-
-# 2. Hard Filtering (if not using VQSR)
+  -R refs/GRCh38.fa \
+  -I aligned/NA12878.recal.bam \
+  -L refs/SureSelect_V6_intervals.bed \
+  --native-pair-hmm-threads 8 \
+  -O vcf/NA12878_raw.vcf.gz
+</code></pre>
+<p>Tip: For cohort workflows, run HaplotypeCaller in GVCF mode (--emit-ref-confidence GVCF) and jointly genotype later with GenotypeGVCFs.</p>
+<h3>5. Hard-filtering (example filters; consider VQSR for larger sample sets)</h3>
+<pre><code># Input: vcf/NA12878_raw.vcf.gz
+# Output: vcf/NA12878_filtered.vcf.gz
 gatk VariantFiltration \
-    -V vcf/NA12878_raw.vcf.gz \
-    -filter "QD &lt; 2.0" --filter-name "QD2" \
-    -filter "QUAL &lt; 30.0" --filter-name "QUAL30" \
-    -filter "FS &gt; 60.0" --filter-name "FS60" \
-    -O vcf/NA12878_filtered.vcf.gz
+  -R refs/GRCh38.fa \
+  -V vcf/NA12878_raw.vcf.gz \
+  -O vcf/NA12878_filtered.vcf.gz \
+  --filter-name "QD_lt_2" --filter-expression "QD &lt; 2.0" \
+  --filter-name "QUAL_lt_30" --filter-expression "QUAL &lt; 30.0" \
+  --filter-name "FS_gt_60" --filter-expression "FS &gt; 60.0" \
+  --filter-name "MQ_lt_40" --filter-expression "MQ &lt; 40.0"
 </code></pre>
-<h3>Variant Cascade: The Filtering Funnel</h3>
-<p>Variant calling produces massive amounts of false positives due to alignment artifacts. Here is how our NA12878 calls dropped through the filtering cascade:</p>
-<div class="overflow-x-auto my-6 border border-gray-200 rounded-lg shadow-sm">
-<table class="w-full text-left border-collapse">
-<thead>
-<tr class="bg-gray-100 text-gray-700 text-sm uppercase tracking-wider">
-<th class="p-4 border-b">Pipeline Stage</th>
-<th class="p-4 border-b">Total Variants</th>
-<th class="p-4 border-b">Ti/Tv Ratio</th>
-</tr>
-</thead>
-<tbody class="text-sm text-gray-800">
-<tr class="hover:bg-gray-50">
-<td class="p-4 border-b font-medium">Raw Calls</td>
-<td class="p-4 border-b">145,210</td>
-<td class="p-4 border-b text-red-600">1.82</td>
-</tr>
-<tr class="hover:bg-gray-50">
-<td class="p-4 border-b font-medium">Post GATK Filtration (PASS)</td>
-<td class="p-4 border-b">92,400</td>
-<td class="p-4 border-b text-yellow-600">2.41</td>
-</tr>
-<tr class="hover:bg-gray-50">
-<td class="p-4 border-b font-medium">Exome Targets Only (On-target)</td>
-<td class="p-4 border-b text-blue-600 font-bold">54,180</td>
-<td class="p-4 border-b text-green-600 font-bold">2.95</td>
-</tr>
-</tbody>
-</table>
-</div>
-<p class="text-sm text-gray-600 mb-8"><em>Note: The Transition/Transversion (Ti/Tv) ratio is a powerful quality metric. For human whole genome data, it is typically ~2.0. However, inside the coding exome, evolutionary constraints push the Ti/Tv ratio closer to ~3.0. Our final value of 2.95 proves the filtering successfully isolated high-quality exonic variants.</em></p>
-<hr class="my-8"/>
-<h2>3. VAF Distribution Diagnostic</h2>
-<p>Before proceeding to clinical annotation, you must check the Variant Allele Frequency (VAF) distribution. For a pure germline sample, you expect two distinct peaks: one at 0.5 (heterozygous variants, where one chromosome has the mutation) and one at 1.0 (homozygous alternate variants).</p>
-<figure class="my-8 border border-gray-200 rounded-lg overflow-hidden shadow-sm">
-<img alt="VAF Distribution showing peaks at 0.5 and 1.0" class="w-full h-auto" src="../assets/images/VAF_distribution.svg"/>
-<figcaption class="p-4 bg-gray-50 text-sm text-gray-600 border-t border-gray-200">
-<strong>Figure 1: VAF Distribution of NA12878 PASS Variants.</strong> As expected for a pure germline sample, the data forms a perfect bimodal distribution. The heterozygous peak is tightly centered on 0.5. If this peak was shifted to 0.2, it would indicate tumor contamination, mosaicism, or a severe alignment bias.
-  </figcaption>
-</figure>
-<h2>Conclusion</h2>
-<p>We successfully mapped, deduped, and called variants on the NA12878 exome, achieving a pristine Ti/Tv ratio of 2.95 and a perfect VAF distribution. The resulting VCF is now ready for functional annotation using tools like SnpEff, VEP, or ANNOVAR to determine which of these 54,180 variants actually disrupt protein function.</p>
-<div class="mt-8">
-<details class="group bg-gray-50 rounded-lg border border-gray-200">
-<summary class="flex cursor-pointer items-center justify-between p-4 font-semibold text-gray-900 marker:content-none">
-<span class="flex items-center gap-2">
-<svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
- Full Reproducibility Script &amp; Provenance
-</span>
-<span class="transition group-open:rotate-180">
-<svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
-</span>
-</summary>
-<div class="p-4 border-t border-gray-200 text-sm text-gray-600">
-<p class="mb-2"><strong>Environment:</strong> BWA 0.7.17, samtools 1.13, GATK 4.4.0, bcftools 1.13</p>
-<pre class="text-xs bg-gray-800 text-gray-100 p-4 rounded-md overflow-x-auto"><code>#!/bin/bash
-# 1. Download NA12878 Exome
-wget ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR323/004/ERR3239334/ERR3239334_1.fastq.gz
-wget ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR323/004/ERR3239334/ERR3239334_2.fastq.gz
-
-# 2. Align
-bwa mem -t 16 -R '@RG\tID:NA12878\tSM:NA12878\tPL:ILLUMINA' GRCh38.fa ERR3239334_1.fastq.gz ERR3239334_2.fastq.gz | samtools sort -@ 8 -o NA12878.sorted.bam -
-gatk MarkDuplicates -I NA12878.sorted.bam -O NA12878.dedup.bam -M metrics.txt
-samtools index NA12878.dedup.bam
-
-# 3. Call
-gatk HaplotypeCaller -R GRCh38.fa -I NA12878.dedup.bam -O NA12878_raw.vcf.gz
-gatk VariantFiltration -V NA12878_raw.vcf.gz -filter "QD &lt; 2.0" --filter-name "QD2" -O NA12878_filtered.vcf.gz
-
-# 4. Extract VAFs for plotting
-bcftools query -f '%CHROM\t%POS\t[%AF]\n' NA12878_filtered.vcf.gz &gt; vafs.tsv
+<p>What the FILTER column means: variants tagged with FILTER=PASS (or '.') survive filters; others will have the filter name added. These thresholds are illustrative; consider dataset-specific tuning and VQSR for cohorts &amp; exome data.</p>
+<h3>6. Optional: LiftOver variants between genome builds</h3>
+<p>If you need to convert coordinates between GRCh37 and GRCh38, use Picard/GATK/GATK LiftoverVcf with the chain file. Always re-annotate and validate lifted variants.</p>
+<pre><code># Input: vcf/NA12878_filtered.vcf.gz (GRCh37)
+# Output: vcf/NA12878_filtered.GRCh38.vcf.gz
+gatk LiftoverVcf \
+  -I vcf/NA12878_filtered.vcf.gz \
+  -O vcf/NA12878_filtered.GRCh38.vcf.gz \
+  -CHAIN refs/hg19ToHg38.over.chain.gz \
+  -R refs/GRCh38.fa \
+  --REJECT vcf/NA12878_liftover_rejected.vcf.gz
 </code></pre>
-</div>
-</details>
-</div>
-<section aria-label="References and further reading" class="mt-10 p-6 bg-slate-50 border border-slate-200 rounded-xl">
-<h2 class="text-xl font-bold text-gray-900 mb-3">Primary References</h2>
-<ul class="list-disc list-inside space-y-2 text-sm text-gray-700">
-<li>Van der Auwera, G. A., et al. (2013). From FastQ data to high confidence variant calls: the Genome Analysis Toolkit best practices pipeline. <em>Current protocols in bioinformatics</em>43(1), 11-10. <a class="text-blue-700 hover:underline" href="https://doi.org/10.1002/0471250953.bi1110s43" rel="noopener" target="_blank">DOI: 10.1002/0471250953.bi1110s43</a></li>
-<li>Li, H., &amp; Durbin, R. (2009). Fast and accurate short read alignment with Burrows-Wheeler transform. <em>Bioinformatics</em>25(14), 1754-1760. <a class="text-blue-700 hover:underline" href="https://doi.org/10.1093/bioinformatics/btp324" rel="noopener" target="_blank">DOI: 10.1093/bioinformatics/btp324</a></li>
-<li>Zook, J. M., et al. (2014). Integrating human sequence data sets provides a resource of benchmark SNP and indel genotype calls. <em>Nature biotechnology</em>32(3), 246-251. <a class="text-blue-700 hover:underline" href="https://doi.org/10.1038/nbt.2835" rel="noopener" target="_blank">DOI: 10.1038/nbt.2835</a> (NA12878/GIAB)</li>
+<h3>7. Compute Variant Allele Frequency (VAF)</h3>
+<p>VAF is usually computed from the AD (allelic depths) or by counting reads in the BAM. The simplest method uses the AD field in the VCF:</p>
+<pre><code># Input: vcf/NA12878_filtered.vcf.gz
+# Output: vcf/NA12878_filtered.withVAF.tsv (tab-delimited with CHR POS REF ALT DP AD VAF)
+bcftools query -f '%CHROM\t%POS\t%REF\t%ALT[\t%DP\t%AD]\n' vcf/NA12878_filtered.vcf.gz \
+  | awk 'BEGIN{OFS="\t"; print "CHROM","POS","REF","ALT","DP","AD","VAF"} \
+    {dp=$5; split($6,ad,","); if (ad[2]=="") ad[2]=0; v= (dp&gt;0 ? ad[2]/dp : "NA"); print $1,$2,$3,$4,dp,ad[2],v}' \
+  &gt; vcf/NA12878_filtered.withVAF.tsv
+</code></pre>
+<p>Notes: AD format is typically REF,ALT counts. Some callers provide multiple ALT counts (e.g., multiallelic). Confirm field order with bcftools query or header inspection.</p>
+<h3>8. Quick VAF distribution plot (example in R)</h3>
+<pre><code># Input: vcf/NA12878_filtered.withVAF.tsv
+# Output: diagnostics/VAF_distribution.png
+Rscript -e 'd&lt;-read.delim("vcf/NA12878_filtered.withVAF.tsv", header=TRUE); \
+  png("diagnostics/VAF_distribution.png", width=800, height=600); \
+  hist(as.numeric(d$VAF[!is.na(d$VAF)]), breaks=100, col="steelblue", main="VAF distribution", xlab="VAF"); dev.off()'
+</code></pre>
+<p>This histogram will help you inspect modes at ~0.5 (heterozygous), ~1.0 (homozygous alt), and any unexpected low-VAF peaks.</p>
+<h2>Output inspection and interpretation</h2>
+<p>When inspecting results, focus on both file-level metrics and per-variant signals.</p>
+<ul>
+<li><strong>BAM-level QC</strong>: examine mapping rate, insert size distribution, duplicate rate, and on-target coverage using tools such as samtools flagstat, Picard CollectHsMetrics, and MultiQC. Typical WES targets: mean target coverage often &gt;60x for reliable germline calling; many clinical WES runs aim for &gt;100x.</li>
+<li><strong>Variant counts and Ti/Tv</strong>: raw VCFs will have many false positives. After reasonable filtering, exonic Ti/Tv often approaches ~2.8–3.2; a value dramatically lower suggests noisy calls or contamination; dramatically higher is unusual and suggests filtering artifacts.</li>
+<li><strong>VAF patterns</strong>: expect two primary modes for germline WES: one near 0.5 (heterozygous) and one near 1.0 (homozygous alt). A heavy tail of low VAF variants (&lt;0.2) often indicates sequencing errors, contamination, or true mosaicism; interpretation requires depth and strand evidence.</li>
+<li><strong>Per-variant evidence</strong>: inspect DP (depth), AD (allelic depths), MQ (mapping quality), FS/ReadPosRankSum (strand and read position bias). A variant with VAF ~0.5 but very low DP (&lt;20) is less confident than the same VAF at DP 100.</li>
 </ul>
-</section>
+<p>What a plausible result means and does NOT prove:</p>
+<ul>
+<li>Finding a heterozygous variant (VAF ~0.5) in a gene associated with disease is only an initial observation; it does not prove pathogenicity. It requires clinical interpretation, inheritance analysis, orthogonal validation (Sanger) for critical cases, and annotation (population frequency, predicted impact).</li>
+<li>Low-VAF variants may be true somatic/mosaic events or artifacts. They do not prove somatic origin without further experimental or cohort context.</li>
+</ul>
+<h2>Troubleshooting (symptoms, likely causes, and fixes)</h2>
+<h3>Symptom: HaplotypeCaller crashes with "No samples in header"</h3>
+<p>Likely cause: BAM lacks Read Group (RG) or SM tag. Fix: re-run BWA-MEM with -R '@RG\tID:... \tSM:... \tPL:...' or use Picard AddOrReplaceReadGroups to add RGs.</p>
+<h3>Symptom: Excessive false positives clustered near exon boundaries</h3>
+<p>Likely cause: Capture-edge mapping artifacts or incomplete target BED specification. Fix: restrict calling to padded intervals (e.g., add 50 bp padding to capture BED) or apply stricter filters for indels near target edges. Consider redoing alignment with stricter parameters or using local realignment approaches.</p>
+<h3>Symptom: Low on-target rate or highly uneven coverage</h3>
+<p>Likely cause: Library preparation or capture failure, incorrect BED file (wrong build or coordinate system), or mislabeled sample. Fix: verify BED build matches reference, re-run capture QC, inspect insert-size distribution, and consult wet-lab team.</p>
+<h3>Symptom: Unexpected Ti/Tv ratio (very low)</h3>
+<p>Likely cause: excessive false positives from permissive filters, contamination, or misaligned reads. Fix: tighten filters (increase QD/QUAL thresholds), inspect contamination estimate (VerifyBamID), or re-evaluate alignment parameters.</p>
+<h2>Limitations, version and reference-data caveats, and responsible use</h2>
+<ul>
+<li>Reference-build mismatch: Known-sites, interval BEDs, and chain files must match the reference FASTA. Using GRCh37 resources on GRCh38 BAMs will produce incorrect results.</li>
+<li>Version differences: GATK, BWA, and samtools evolve. Command flags or default behaviors may change. Always test on a small subset and consult the tool's versioned documentation. Pipeline reproducibility requires recording exact versions.</li>
+<li>Hard-filter thresholds are dataset-dependent. Variant Quality Score Recalibration (VQSR) is preferred for large cohorts; hard filters may be adequate for single-sample WES but require tuning.</li>
+<li>Ethical/responsible use: Do not make clinical claims based solely on this pipeline output. Clinical reporting requires validated pipelines, accredited labs, confirmatory testing, and genetic counseling.</li>
+<li>Liftover caveats: Some variants do not map cleanly between builds and will be rejected by LiftoverVcf. Re-annotation and manual review are required for lifted variants in clinically relevant loci.</li>
+</ul>
+<h2>Concise next-step checklist</h2>
+<ol>
+<li>Run BAM-level QC (samtools flagstat, Picard CollectHsMetrics) and produce a MultiQC report.</li>
+<li>Confirm RG tags and reference-build consistency for all inputs.</li>
+<li>Run HaplotypeCaller in GVCF mode for cohort workflows, then joint genotype with GenotypeGVCFs.</li>
+<li>Filter variants (VQSR for cohorts; tuned hard filters for single samples) and compute VAFs.</li>
+<li>Annotate with VEP/ANNOVAR/Ensembl tools and interpret with population databases (gnomAD) and clinical resources (ClinVar).</li>
+<li>For clinically actionable variants, plan orthogonal validation and integrate phenotype information before reporting.</li>
+</ol>
+<h2>References</h2>
+<ul>
+<li><a href="https://gatk.broadinstitute.org/">GATK Best Practices documentation (Broad Institute)</a></li>
+<li><a href="http://bio-bwa.sourceforge.net/">BWA (Burrows–Wheeler Aligner) official page</a></li>
+<li><a href="http://www.htslib.org/">HTSlib / samtools documentation</a></li>
+<li><a href="https://www.nature.com/articles/nbt.2527">DePristo et al., "A framework for variation discovery and genotyping using next-generation DNA sequencing", Nature Genetics (GATK foundational paper)</a></li>
+<li><a href="https://www.nist.gov/programs-projects/genome-bottle">Genome in a Bottle (GIAB) benchmark resources (NA12878)</a></li>
+</ul>
 </article>
 <section class="mt-12 mb-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-100">
 <div class="flex items-start gap-4">

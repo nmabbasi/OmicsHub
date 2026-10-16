@@ -130,10 +130,7 @@ function toggleMobileMenu() {
 <div class="mb-12 rounded-2xl overflow-hidden shadow-lg border border-gray-100">
 <img alt="Computer and Data Fundamentals for Biologists" class="w-full aspect-video object-cover" decoding="async" loading="eager" src="../images/computer-data-fundamentals-workstation.webp"/>
 </div>
-<article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none"><div class="mb-10 text-xl text-gray-600 leading-relaxed">
-<p>Before learning bioinformatics commands, it helps to understand what the computer is doing. This lesson builds a practical mental model of files, storage, memory, processors, paths, permissions, and compression so that later command-line errors are easier to diagnose.</p>
-</div>
-<div class="flex flex-wrap items-center gap-4 text-xs font-mono text-gray-500 bg-gray-50 p-3 rounded-lg border border-gray-200 mb-6">
+<article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none"><div class="flex flex-wrap items-center gap-4 text-xs font-mono text-gray-500 bg-gray-50 p-3 rounded-lg border border-gray-200 mb-6">
 <div class="flex items-center gap-1">
 <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
 <span><strong>Tested on:</strong> Python 3.11, R 4.3.2, Ubuntu 24.04</span>
@@ -141,111 +138,171 @@ function toggleMobileMenu() {
 <div class="flex items-center gap-1">
 <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
 </div>
-</div>
-<div class="p-6 bg-blue-50 border border-blue-100 rounded-xl mb-8"><h4 class="text-lg font-bold text-blue-900 mb-2">Learning Objectives &amp; Prerequisites</h4><div class="text-blue-800 space-y-2"><p><strong>By the end of this lesson, you should be able to:</strong></p><ul>
-<li>Explain the difference between CPU, RAM, storage, and network bandwidth.</li>
-<li>Describe files, directories, paths, extensions, metadata, and file permissions.</li>
-<li>Estimate why sequencing data needs substantial storage and memory.</li>
-<li>Choose safe locations for raw data, intermediate files, and results.</li>
-</ul><p><strong>Prerequisites:</strong></p><ul>
-<li>A web browser and a terminal such as macOS Terminal, Linux Terminal, or WSL.</li>
-<li>No programming experience is required.</li>
-</ul><strong class="block mt-2 text-blue-900">Expected Output</strong><p>By the end of this lesson, you should have: <strong>A documented project folder with clear raw-data, processed-data, code, results, and notes locations, plus one verified file-transfer or checksum check.</strong></p></div></div>
-<h2>1. The four resources every workflow uses</h2>
-<p>A CPU executes instructions, RAM holds actively used data, storage keeps files between sessions, and network bandwidth controls transfer speed. A workflow may be limited by any one of these resources. For example, a compressed FASTQ file can fit on disk but still require much more temporary space after decompression.</p>
-<div class="overflow-x-auto -mx-4 px-4">
-<table>
-<table>
-<thead>
-<tr>
-<th>Resource</th>
-<th>What it controls</th>
-<th>Typical failure</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>CPU</td>
-<td>How quickly calculations run</td>
-<td>Long runtime</td>
-</tr>
-<tr>
-<td>RAM</td>
-<td>How much data a process can hold</td>
-<td>Out-of-memory error</td>
-</tr>
-<tr>
-<td>Storage</td>
-<td>Files and temporary output</td>
-<td>Disk quota/full disk</td>
-</tr>
-<tr>
-<td>Network</td>
-<td>Download/upload speed</td>
-<td>Slow or interrupted transfer</td>
-</tr>
-</tbody>
-</table>
-</table></div>
-<h2>2. Files, paths, and safe organization</h2>
-<p>A path identifies a location. Absolute paths begin at the filesystem root, while relative paths begin in the current directory. Keep raw data read-only and separate from derived results so that an analysis can be repeated.</p>
-<pre><code class="language-text">project/
-├── data/raw/          # original downloads; never edit
-├── data/processed/    # filtered or converted data
-├── scripts/           # commands and programs
-├── results/           # tables and figures
-├── logs/              # execution logs
-└── README.md          # provenance and instructions
-</code></pre>
-<h2>3. Inspect a workspace safely</h2>
-<p>The following commands work on Linux, macOS, and WSL. Read the output before deleting or moving anything.</p>
-<pre><code class="language-bash">pwd
-ls -lah
-du -sh .
-df -h .
-mkdir -p project/{data/raw,data/processed,scripts,results,logs}
-printf "# Project
-" &gt; project/README.md
-</code></pre>
-<h2>4. Compression and file size</h2>
-<p>FASTQ and tabular files are often compressed with gzip. Compression saves storage and transfer time but some tools can read compressed input directly while others require decompression. Check the file before processing it.</p>
-<pre><code class="language-bash">file reads.fastq.gz
-gzip -l reads.fastq.gz
-zcat reads.fastq.gz | head -n 8
-</code></pre>
-<h3>Verify a FASTQ download before analysis</h3>
-<p>After downloading a FASTQ file, compare it with the checksum published by the <strong>same data provider</strong>This detects an incomplete or altered transfer before the file reaches a QC or alignment step. A checksum you calculate only after downloading is useful for future transfers, but it can't prove that the original download was correct unless you compare it with the provider's manifest.</p>
-<p>Use the algorithm supplied by the provider. SHA-256 is preferred when available; MD5 remains common in sequencing archives for file-integrity checks.</p>
-<pre><code class="language-bash"># Example: download two read files and the provider's checksum manifest.
-curl -LO "https://provider.example.org/sample_R1.fastq.gz"
-curl -LO "https://provider.example.org/sample_R2.fastq.gz"
-curl -LO "https://provider.example.org/SHA256SUMS"
-
-# The manifest must contain hashes for the exact downloaded filenames.
-sha256sum -c SHA256SUMS | tee checksum_validation.log
-
-# Also test that each gzip stream can be read successfully.
-gzip -t sample_R1.fastq.gz sample_R2.fastq.gz
-</code></pre>
-<p>When an archive supplies an MD5 manifest instead, use the same pattern with <code>md5sum -c md5checksums.txt</code>Continue only when every required file reports <code>OK</code> and <code>gzip -t</code> exits without an error. If a checksum fails, delete the affected file and download it again from the original provider; don't proceed by editing the manifest or accepting a mismatch.</p>
-<blockquote>
-<p><strong>Important:</strong> A checksum verifies file integrity, not whether a dataset is appropriate for your project or whether its metadata and consent conditions permit use. Keep the manifest and <code>checksum_validation.log</code> in your project records.</p>
-</blockquote>
-<h2>Practical Exercise</h2>
-<p>Create the project tree above, place a small text file in <code>data/raw</code>record its size with <code>du -h</code>and write a README sentence describing where raw data and results belong.</p>
-<p></p>
-<h2>Troubleshooting</h2>
-<p>If <code>mkdir</code> reports a permission error, work inside your home directory rather than a system directory. If <code>df -h</code> is nearly full, don't start a large download; ask the cluster administrator about quotas.</p>
-<h2>Next Steps</h2>
-<p>Continue with <a href="biological-data-formats.html">Biological Data Formats</a> and <a href="reproducible-project-structure.html">Reproducible Project Structure</a>Record the software versions, dataset or example inputs, and any decisions you made.</p>
-<section aria-label="References and further reading" class="mt-10 p-6 bg-slate-50 border border-slate-200 rounded-xl">
-<h2 class="text-xl font-bold text-gray-900 mb-3">References and further reading</h2>
-<p class="text-sm text-gray-600 mb-3">Use these official resources to check current software behaviour, terminology, and production guidance. Tool versions and defaults change, so verify commands against the documentation before applying them to a research dataset.</p>
-<ul class="list-disc list-inside space-y-2 text-sm text-gray-700">
-<li><a class="text-blue-700 hover:underline" href="https://www.ncbi.nlm.nih.gov/books/NBK21154/" rel="noopener" target="_blank">NCBI Bookshelf: Bioinformatics</a></li>
-<li><a class="text-blue-700 hover:underline" href="https://www.ebi.ac.uk/training/online/" rel="noopener" target="_blank">EMBL-EBI Training</a></li>
+</div><h2>Learning objectives and prerequisites</h2>
+<p>By the end of this lesson you will be able to:</p>
+<ul>
+<li>Explain the difference between CPU (central processing unit), RAM (random access memory), storage (disk), and network bandwidth and why a bioinformatics workflow can be limited by any of them.</li>
+<li>Describe files, directories, absolute and relative paths, file extensions, basic metadata, and UNIX file permissions.</li>
+<li>Estimate why raw sequencing data often requires large disk and temporary space, and how memory needs grow with certain operations.</li>
+<li>Create a reproducible project folder layout that separates raw data, intermediate files, code, results, and logs, and perform one verified file integrity check (checksum).</li>
 </ul>
-</section>
+<p>Prerequisites:</p>
+<ul>
+<li>A computer with a terminal (macOS Terminal, a Linux shell, or Windows Subsystem for Linux). Commands below were written for a POSIX-like shell (bash or similar).</li>
+<li>Internet access for downloading example files (optional) and for following references.</li>
+<li>No prior programming experience is required; the lesson focuses on concepts and safe command usage.</li>
+</ul>
+<h2>Why these fundamentals matter for biological data</h2>
+<p>Modern omics datasets—DNA/RNA sequencing, mass spectrometry proteomics, large-scale imaging—produce many files that are large and frequently compressed. A typical short-read sequencing run can generate tens to hundreds of gigabytes of compressed FASTQ files. A single analysis step (for example, read alignment or large-table joins) can require temporary disk space and memory far in excess of the stored file size, because tools often decompress data or build in-memory indexes.</p>
+<p>Understanding where data lives (storage), where it is processed (RAM), who performs the work (CPU), and how data moves between sites (network bandwidth) helps you:</p>
+<ul>
+<li>Choose an appropriate computer or high-performance computing (HPC) queue.</li>
+<li>Organize data so analyses are reproducible and raw data are preserved.</li>
+<li>Diagnose common error messages such as “out of memory”, “disk quota exceeded”, or “permission denied”.</li>
+</ul>
+<h2>Practical, reproducible workflow</h2>
+<p>The commands below create a project structure, inspect files safely, check file compression and integrity, and record provenance. Execute them step-by-step in a terminal. Replace example filenames and URLs with your real filenames or downloads.</p>
+<p>Files you should have for this exercise (either real or small test files):</p>
+<ul>
+<li>Two compressed FASTQ files: project/data/raw/sample_R1.fastq.gz and project/data/raw/sample_R2.fastq.gz (these may be small test files or real data downloaded from a provider).</li>
+<li>A checksum manifest published by the data provider (e.g., SHA256SUMS or MD5SUMS) placed as project/data/raw/SHA256SUMS.</li>
+</ul>
+<p>Step 1 — create a safe project layout</p>
+<pre><code># From your home or a working directory, create a project folder and subfolders.
+mkdir -p ~/projects/my-study/{data/raw,data/processed,scripts,results,logs}
+# Create an initial README to document purpose and provenance.
+printf "# my-study\n\nRaw data: data/raw/\nProcessed data: data/processed/\n" &gt; ~/projects/my-study/README.md
+</code></pre>
+<p>What this produces:</p>
+<ul>
+<li>A directory tree at ~/projects/my-study with separate places for raw and processed data, scripts, results, and logs.</li>
+<li>A simple README documenting intentions and locations.</li>
+</ul>
+<p>Step 2 — list and inspect disk usage safely</p>
+<pre><code># Show where you are and list contents with human-readable sizes.
+cd ~/projects/my-study
+pwd
+ls -lah
+
+# Show disk usage for this project directory (summary).
+du -sh . | tee logs/disk_usage_$(date +%F).txt
+
+# Show overall filesystem space and usage.
+df -h .
+</code></pre>
+<p>What these commands show and why they matter:</p>
+<ul>
+<li>pwd prints your current path: useful to avoid acting in the wrong directory.</li>
+<li>ls -lah lists files, including hidden ones, with permissions and sizes.</li>
+<li>du -sh . reports the total disk space used by the project and helps plan for expected growth.</li>
+<li>df -h shows remaining space on the filesystem—if you are near capacity you may need to choose a different storage location.</li>
+</ul>
+<p>Step 3 — inspect compressed files without decompressing everything</p>
+<pre><code># Show file type and compression container. This is safe and non-destructive.
+file data/raw/sample_R1.fastq.gz
+file data/raw/sample_R2.fastq.gz
+
+# Show the compressed and uncompressed sizes (gzip).
+gzip -l data/raw/sample_R1.fastq.gz
+gzip -l data/raw/sample_R2.fastq.gz
+
+# Peek at the first few lines of a FASTQ file without writing uncompressed contents to disk.
+zcat data/raw/sample_R1.fastq.gz | head -n 8
+</code></pre>
+<p>What each command produces and how to interpret it:</p>
+<ul>
+<li>file reports whether the file is a gzip-compressed stream or plain text, and sometimes the detected character encoding.</li>
+<li>gzip -l lists the compressed size, uncompressed size (if recorded), and compression ratio. Note that some gzip streams may not record exact uncompressed sizes for concatenated streams.</li>
+<li>zcat (or gzcat on macOS with GNU gzip) streams uncompressed text to stdout. The FASTQ format is line-oriented: the first four lines correspond to one read record (header, sequence, + line, quality). Seeing correct FASTQ headers and no binary or error output suggests the file is intact for basic parsing.</li>
+</ul>
+<p>Step 4 — verify file integrity with the provider's checksum manifest (preferred)</p>
+<pre><code># Example: provider published SHA256SUMS in the same directory as the FASTQ files.
+# Place the provided manifest in your raw data directory as data/raw/SHA256SUMS, then:
+cd ~/projects/my-study/data/raw
+
+# Verify every file listed in the manifest. The manifest should contain lines like:
+# <hex-hash>  sample_R1.fastq.gz
+# <hex-hash>  sample_R2.fastq.gz
+sha256sum -c SHA256SUMS 2&gt;&amp;1 | tee ../../logs/checksum_validation_$(date +%F).log
+
+# Also verify gzip streams can be read (non-zero exit indicates a problem).
+gzip -t sample_R1.fastq.gz sample_R2.fastq.gz
+echo "gzip exit status: $?"
+</hex-hash></hex-hash></code></pre>
+<p>What to expect and what it does not prove:</p>
+<ul>
+<li>sha256sum -c reads the manifest and checks each listed file. For each entry you should see "OK" or "FAILED". Save the output to logs/checksum_validation_YYYY-MM-DD.log for provenance.</li>
+<li>gzip -t tests whether the gzip stream can be decompressed to the end without producing errors. A non-zero exit code or stderr messages indicate a corrupted stream.</li>
+<li>Important: a checksum check confirms the file you downloaded matches the provider's published bytes. It does not guarantee the biological suitability of the data (correct sample, experimental design, or consent and metadata). Always keep the manifest and your log files with the project.</li>
+</ul>
+<h2>Output inspection and interpretation</h2>
+<p>After running the commands, here is how to interpret common outputs:</p>
+<ul>
+<li>ls -lah shows file permissions in the left-most column, e.g., -rw-r--r--. The first character indicates type (dash for regular file, d for directory). The next three are owner permissions (read/write/execute), then group, then others. If you cannot read a file, you may see permission denied errors; changing permissions requires caution and appropriate authorization.</li>
+<li>du -sh . returns the total size used by the directory. If this number is much larger than the sum of compressed FASTQ sizes, check for hidden files, intermediate files, or large temporary directories (for example, alignment index files or temporary directories used by tools).</li>
+<li>gzip -l shows if the uncompressed size recorded in the gzip header is plausible. Some tools concatenate gzip streams (multiple gzip members), which can complicate uncompressed-size reporting; in those cases rely on streaming verification with zcat and counting lines if needed (see commands below).</li>
+<li>sha256sum -c manifest reports "OK" for matching files. If you see "FAILED", the file is different from the manifest. Do not edit the manifest to force a match; instead re-download the affected file and re-verify.</li>
+<li>zcat + head lets you confirm the FASTQ header format. A typical Illumina-style header looks like @<instrument>:<run>:<flowcell>:<lane>:<tile>:<x>:<y> <read>:<is_filtered>:<control_number>:<sample_number>. If FASTQ records look truncated or lines are missing, the file may be corrupt.</sample_number></control_number></is_filtered></read></y></x></tile></lane></flowcell></run></instrument></li>
+</ul>
+<p>Example additional check — count reads without writing a full uncompressed file:</p>
+<pre><code># Each FASTQ record is 4 lines. Count records safely via streaming.
+zcat data/raw/sample_R1.fastq.gz | echo $(( $(wc -l) / 4 ))
+# Alternatively, use:
+zcat data/raw/sample_R1.fastq.gz | awk 'END {print NR/4}'
+</code></pre>
+<p>Note: counting may be slow for very large files; use quotas and avoid expanding compressed files to disk when possible.</p>
+<h2>Troubleshooting: common symptoms, likely causes, and fixes</h2>
+<ul>
+<li>
+<strong>Symptom:</strong> "Permission denied" when trying to read or write files.<br/>
+<strong>Likely causes:</strong> file owner or permission bits prevent your user from reading/writing; trying to write to a read-only mounted filesystem.<br/>
+<strong>Fixes:</strong> check ownership with ls -lah, use sudo only if you understand system-wide implications, or copy files to a directory you own (cp /path/to/source ~/projects/my-study/data/raw/). Contact your sysadmin if adjusting permissions is needed on shared systems.
+  </li>
+<li>
+<strong>Symptom:</strong> Out-of-memory (OOM) or process killed during large operations.<br/>
+<strong>Likely causes:</strong> tool requires more RAM than available (for example, building a large in-memory index or loading many samples at once).<br/>
+<strong>Fixes:</strong> reduce parallelism, split work into smaller batches, run on a machine with more RAM, or use tools designed for streaming (low-memory) processing.
+  </li>
+<li>
+<strong>Symptom:</strong> Disk quota exceeded or "No space left on device".<br/>
+<strong>Likely causes:</strong> insufficient storage for temporary files, large intermediate files, or logs.<br/>
+<strong>Fixes:</strong> clean temporary directories, move raw data to a larger volume, compress processed files (when safe), and review workflow temporary directory settings (many tools respect TMPDIR). Consider using an HPC scratch filesystem for temporary I/O-heavy steps.
+  </li>
+<li>
+<strong>Symptom:</strong> Checksum mismatch ("FAILED").<br/>
+<strong>Likely causes:</strong> interrupted download, transfer corruption, or manifest mismatch (manifest corresponds to a different filename/version).<br/>
+<strong>Fixes:</strong> re-download the file from the original provider; verify that the manifest lists the exact filename; if the provider's manifest lists different names, consult the provider's documentation or contact their support.
+  </li>
+<li>
+<strong>Symptom:</strong> gzip -t reports an error or zcat fails partway through.<br/>
+<strong>Likely causes:</strong> corrupted gzip stream or truncated file.<br/>
+<strong>Fixes:</strong> re-download; if using transfer acceleration (e.g., parallel downloads) try a single-stream download; verify network stability.
+  </li>
+</ul>
+<h2>Limitations, version caveats, and responsible-use notes</h2>
+<ul>
+<li>Tools and utilities (gzip, sha256sum, zcat, file) differ slightly by platform and version. The GNU coreutils behavior on Linux is a common baseline; macOS ships BSD variants where some options differ (for example, gzcat may be required). Consult your system manual pages (man gzip) for platform-specific details.</li>
+<li>Checksum algorithms: SHA-256 is preferred for collision resistance. Some archives still publish MD5 manifests; MD5 detects most accidental corruption but is cryptographically weaker. Use whatever algorithm the provider supplies and record which one you used.</li>
+<li>Storage considerations: compressed file size on disk is only part of the story. Some tools need temporary space equal to several times the uncompressed input size (for sorting, indexing, or intermediate BAM files). Plan for large tmp/scratch spaces or pipeline parameters that allow streaming to avoid materializing large intermediates.</li>
+<li>Data governance and ethics: verifying file integrity does not verify consent, provenance, or legal permission to use a dataset. Always confirm metadata, consent, and any access restrictions before reusing or publishing analyses derived from public or controlled-access data.</li>
+</ul>
+<h2>Concise next-step checklist</h2>
+<ol>
+<li>Create and document your project directory: README.md, and separate raw/processed/data locations.</li>
+<li>Verify all downloaded files with the provider's manifest using the same checksum algorithm supplied by the provider.</li>
+<li>Keep verification logs (checksum output, gzip -t output) inside your project logs directory for reproducibility.</li>
+<li>Confirm available RAM and disk before running memory- or I/O-intensive steps; adjust pipeline parallelism and temporary directories accordingly.</li>
+<li>Confirm legal and ethical permissions for data use before analysis or sharing results.</li>
+</ol>
+<h2>References</h2>
+<ul>
+<li><a href="https://www.gnu.org/software/coreutils/manual/coreutils.html">GNU coreutils manual (ls, du, df, mkdir, printf)</a></li>
+<li><a href="https://www.gnu.org/software/gzip/manual/gzip.html">gzip documentation (gzip, zcat, gzip -t)</a></li>
+<li><a href="https://www.openssh.com/">OpenSSH and secure transfer recommendations (scp, sftp; see provider instructions for secure download)</a></li>
+<li><a href="https://www.ncbi.nlm.nih.gov/sra">NCBI Sequence Read Archive (SRA) — guidance on downloading and checksums for sequencing data</a></li>
+<li><a href="https://www.cdc.gov/phin/toolkit/Downloads/Checksum_Algorithms.pdf">Overview of checksum algorithms (SHA-256, MD5) — general guidance</a></li>
+</ul>
+<p>Keep the commands, logs, and manifest files inside your project directory. These records support reproducibility, make troubleshooting easier, and help you responsibly manage biological data as you progress to running analyses on local, HPC, or cloud resources.</p>
 </article>
 <section class="mt-12 mb-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-100">
 <div class="flex items-start gap-4">

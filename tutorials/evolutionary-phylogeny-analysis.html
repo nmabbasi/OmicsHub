@@ -138,125 +138,234 @@ function toggleMobileMenu() {
 <div class="flex items-center gap-1">
 <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
 </div>
-</div>
-<div class="p-6 bg-blue-50 border border-blue-100 rounded-xl mb-8">
-<h4 class="text-lg font-bold text-blue-900 mb-2">Learning Objectives &amp; Prerequisites</h4>
-<ul class="list-disc list-inside text-blue-800 space-y-1 mb-4">
-<li><strong>Prerequisites:</strong> Complete Biological Data Formats and understand sequences, multiple sequence alignment, and homologous characters.</li>
-<li><strong>Objective:</strong> Build and interpret a phylogenetic tree while distinguishing tree topology, support, rooting, and evolutionary inference.</li>
-<li><strong>Expected Output:</strong> A reproducible tree-analysis record containing aligned input, model or method, root choice, support values, and figure caption.</li>
+</div><h2>Learning objectives and prerequisites</h2>
+<p>
+By the end of this lesson you will be able to:
+</p>
+<ul>
+<li>Produce a reproducible multiple sequence alignment (MSA) for homologous sequences using Kalign.</li>
+<li>Build a phylogenetic tree from that alignment using MEGA-CC (command-line MEGA) or alternative CLI tools (IQ-TREE, FastTree).</li>
+<li>Record and interpret key analysis choices: alignment file, evolutionary model or method, rooting strategy, and support values.</li>
+<li>Critically evaluate what the resulting tree does and does not demonstrate about evolutionary relationships.</li>
 </ul>
-</div>
-<h2>Evolutionary Bioinformatics Analysis</h2>
-<h2>Introduction to Evolutionary Bioinformatics</h2>
-<p>Evolutionary bioinformatics applies computational methods to understand the evolutionary relationships between biological sequences (DNA, RNA, or proteins). By analyzing these relationships, we can infer common ancestry, trace the history of gene families, and understand functional conservation.</p>
-<p>Two of the most fundamental steps in evolutionary analysis are <strong>Multiple Sequence Alignment (MSA)</strong> and <strong>Phylogeny (Tree Construction)</strong></p>
-<hr/>
-<h2>1. Multiple Sequence Alignment using Kalign</h2>
-<p>Before building an evolutionary tree, homologous sequences must be aligned to identify conserved regions and mutations. While tools like Clustal Omega and MAFFT are popular, <strong>Kalign</strong> is highly efficient for aligning massive datasets rapidly.</p>
-<h3>Installing Kalign</h3>
-<p>Kalign is available via Conda/Mamba in the bioconda channel:</p>
-<pre><code class="language-bash"># Create a dedicated environment
-mamba create -n phylogeny_env kalign
-conda activate phylogeny_env
-</code></pre>
-<h3>Running Kalign</h3>
-<p>To perform a multiple sequence alignment on a FASTA file containing unaligned sequences:</p>
-<pre><code class="language-bash"># Basic alignment
-kalign -i unaligned_sequences.fasta -o aligned_sequences.fasta
+<p>
+Prerequisites:
+</p>
+<ul>
+<li>Familiarity with biological sequence files (FASTA), basic UNIX command line, and the concept of homologous characters and multiple sequence alignment.</li>
+<li>Access to a Unix-like environment (Linux, macOS, or WSL) with Conda/Mamba or direct binaries for the tools mentioned. The tutorial uses file paths as examples—adapt them to your workspace.</li>
+</ul>
+<h2>Why evolutionary phylogeny matters (biological and computational context)</h2>
+<p>
+Phylogenetic analysis reconstructs relationships among genes, proteins, or organisms by comparing homologous characters (nucleotides or amino acids). Trees summarize hypotheses of shared ancestry: topology (branching pattern) suggests relative relationships, branch lengths often represent estimated genetic change, and support values indicate statistical confidence in clades under the chosen model and data. Phylogenies are used in systematics, comparative genomics, functional inference, and epidemiology, but they are hypotheses, not definitive histories; results depend on the input alignment, model choice, taxon sampling, and methodological assumptions.
+</p>
+<p>
+Computationally, robust phylogenetic inference requires two main preprocessing steps: (1) generate a reliable MSA that attempts to align homologous positions across sequences, and (2) select a phylogenetic method (distance, maximum likelihood, Bayesian, or approximate methods) with a clear statement of the evolutionary model and support strategy (bootstraps, posterior probabilities). This tutorial emphasizes reproducible command-line workflows and explicit recording of settings.
+</p>
+<h2>Reproducible workflow (sequential)</h2>
+<p>
+Overview: work in a project directory containing raw sequences, intermediate files, configuration files, and results. The commands below are realistic examples and should be run after creating an appropriate environment. Replace filenames and paths with your local names.
+</p>
+<h3>1) Prepare a project folder and raw input</h3>
+<pre><code># Create a project directory (safe operation)
+mkdir -p ~/phylogeny-project/results
+cd ~/phylogeny-project
 
-# Specify output format (e.g., Clustal format instead of FASTA)
-kalign -i unaligned_sequences.fasta -f clu -o aligned_sequences.aln
+# Place your unaligned FASTA file here (example path)
+# expected input: sequences.fasta — a plain FASTA file with sequence identifiers and sequences
+ls -l sequences.fasta
 </code></pre>
-<p>Kalign uses the Wu-Manber string-matching algorithm, making it exceptionally fast for large-scale phylogenomics projects where thousands of sequences are involved.</p>
-<hr/>
-<h2>2. Phylogenetic Tree Construction</h2>
-<p>Once sequences are aligned, the next step is calculating the evolutionary distance and constructing a phylogenetic tree. There are several methods for tree construction:
-* <strong>Distance-based:</strong> Neighbor-Joining (NJ), UPGMA
-* <strong>Character-based:</strong> Maximum Parsimony (MP), Maximum Likelihood (ML)
-* <strong>Bayesian Inference:</strong> (e.g., MrBayes)</p>
-<h3>Using MEGA via Command Line (MEGA-CC)</h3>
-<p><strong>Molecular Evolutionary Genetics Analysis (MEGA)</strong> is an industry standard for phylogeny. While famous for its graphical interface, MEGA also provides a command-line version called <strong>MEGA-CC</strong> (MEGA Computational Core), which is perfect for HPC environments or automated pipelines.</p>
-<h3>Generating a Configuration (.mao) File</h3>
-<p>MEGA-CC requires an analysis options file (<code>.mao</code>). You may create it in the MEGA GUI, but don't treat a GUI selection as the complete record of an analysis. Save the exact <code>.mao</code> file beside the alignment, record the MEGA-CC version, and commit both settings and command to the project repository.</p>
-<p>For an auditable exercise, create a project folder containing:</p>
-<pre><code class="language-text">phylogeny-project/
-├── aligned_sequences.fasta
-├── ML_Tree_Settings.mao
-├── command.txt
-└── results/
-</code></pre>
-<p>Write the exact <code>megacc</code> command into <code>command.txt</code>If a learner can't produce or inspect a <code>.mao</code> file, use the fully command-line IQ-TREE route below instead; it exposes model selection and bootstrap settings directly in the command.</p>
-<h3>Running MEGA-CC</h3>
-<p>Once you've your alignment file and your <code>.mao</code> configuration file, you can run the analysis on the command line:</p>
-<pre><code class="language-bash"># Run MEGA-CC for Maximum Likelihood tree construction
-megacc -a ML_Tree_Settings.mao -d aligned_sequences.fasta -o output_tree
-</code></pre>
-<p>This will output several files, including the tree in Newick format (<code>output_tree.nwk</code>), which can be visualized using tools like FigTree or iTOL (Interactive Tree Of Life).</p>
-<hr/>
-<h2>3. Alternative Command Line Phylogeny Tools</h2>
-<p>While MEGA is excellent, other highly optimized command-line tools are heavily used in modern bioinformatics:</p>
-<h3>IQ-TREE (Maximum Likelihood)</h3>
-<p>IQ-TREE is renowned for its speed and its "ModelFinder" feature, which automatically determines the best-fitting evolutionary model for your data before building the tree.</p>
-<pre><code class="language-bash">mamba install -c bioconda iqtree
+<p>
+Files you should have at this stage:
+</p>
+<ul>
+<li><code>sequences.fasta</code> — raw unaligned nucleotide or protein sequences in FASTA format.</li>
+<li>A writable <code>results/</code> directory for outputs.</li>
+</ul>
+<h3>2) Install tools (recommended: use Conda/Mamba)</h3>
+<pre><code># Create and activate a reproducible environment (example)
+mamba create -n phylogeny_env -y kalign iqtree megacc fasttree
+mamba activate phylogeny_env
 
-# Run IQ-TREE with automatic model selection and 1000 ultrafast bootstraps
-iqtree -s aligned_sequences.fasta -m MFP -B 1000
+# If using conda instead of mamba, replace 'mamba' with 'conda' and adjust '-y' flags.
 </code></pre>
-<h3>FastTree (Approximate Maximum Likelihood)</h3>
-<p>For massive alignments (e.g., tens of thousands of sequences), FastTree is often the only feasible option.</p>
-<pre><code class="language-bash">mamba install -c bioconda fasttree
+<p>
+Notes: package names and channels may change over time. If you prefer individual installation or binary downloads, consult the official project pages in the References section.
+</p>
+<h3>3) Multiple sequence alignment with Kalign</h3>
+<p>
+Kalign is a fast aligner suitable for moderate to large datasets. For protein sequences, align amino acids; for nucleotide analyses of coding sequences, align by translated amino acids when appropriate, or use codon-aware methods (not covered here).
+</p>
+<pre><code># Align sequences (FASTA input -&gt; FASTA output)
+kalign -i sequences.fasta -o results/aligned_sequences.fasta
 
-# Build a tree using the General Time Reversible (GTR) model
-FastTree -gtr -nt &lt; aligned_sequences.fasta &gt; output.tree
+# To output in Clustal format (optional)
+kalign -i sequences.fasta -f clu -o results/aligned_sequences.aln
 </code></pre>
-<hr/>
-<h2>Summary Workflow</h2>
+<p>
+What these commands produce:
+</p>
+<ul>
+<li><code>results/aligned_sequences.fasta</code> — aligned sequences in FASTA format (gaps inserted).</li>
+<li>Optionally <code>results/aligned_sequences.aln</code> — Clustal format alignment.</li>
+</ul>
+<h3>4) Inspect the alignment</h3>
+<pre><code># Quick text-based inspection; view header and first alignment block
+head -n 200 results/aligned_sequences.fasta
+
+# Summary statistics using seqmagick or simple python (optional)
+# Install seqmagick if desired: mamba install -c bioconda seqmagick
+seqmagick info results/aligned_sequences.fasta
+</code></pre>
+<p>
+Things to check:
+</p>
+<ul>
+<li>Do sequence names match expectations and are unique?</li>
+<li>Are there long stretches of gaps or sequences with excessive missing data?</li>
+<li>Has the alignment preserved expected conserved motifs (if known)?</li>
+</ul>
+<h3>5) Build a tree with MEGA-CC (command-line MEGA)</h3>
+<p>
+MEGA-CC requires a configuration (.mao) file that records method parameters. Best practice: create the .mao using the MEGA GUI to ensure correct structure, then edit or version-control it. Here we show how to run MEGA-CC when you already have a settings file.
+</p>
+<pre><code># Example file locations:
+# results/aligned_sequences.fasta  (input alignment)
+# ML_Tree_Settings.mao             (MEGA options file you prepared)
+
+# Run MEGA-CC (adjust path to megacc binary if not on PATH)
+megacc -a ML_Tree_Settings.mao -d results/aligned_sequences.fasta -o results/megacc_output
+</code></pre>
+<p>
+Expected MEGA outputs (look in <code>results/megacc_output/</code>):
+</p>
+<ul>
+<li><code>*.nwk</code> — Newick-format tree files (may be rooted/unrooted depending on settings).</li>
+<li>Log files and result summaries that include substitution model, likelihood, and support values (if bootstraps were requested).</li>
+</ul>
+<p>
+Important: record the exact <code>ML_Tree_Settings.mao</code> used, the MEGA-CC version string (run <code>megacc --version</code>), and the full command line in a <code>command.txt</code> file in your project folder for reproducibility.
+</p>
+<h3>6) Alternative: build with IQ-TREE (explicit model selection &amp; bootstraps)</h3>
+<p>
+IQ-TREE exposes model selection and bootstrap settings in the command line and is commonly used for ML trees with automatic model testing (ModelFinder).
+</p>
+<pre><code># Run IQ-TREE with automatic model selection (-m MFP), 1,000 ultrafast bootstraps (-B 1000),
+# and save outputs to results/iqtree_run (IQ-TREE will create files with the prefix)
+iqtree -s results/aligned_sequences.fasta -m MFP -B 1000 -pre results/iqtree_run
+
+# To show the version for provenance
+iqtree --version
+</code></pre>
+<p>
+IQ-TREE will produce:
+</p>
+<ul>
+<li><code>results/iqtree_run.treefile</code> — ML tree with branch lengths.</li>
+<li><code>results/iqtree_run.ufboot</code> — bootstrap trees (if bootstraps were requested).</li>
+<li><code>results/iqtree_run.log</code> and <code>results/iqtree_run.iqtree</code> — model selection output, log-likelihoods, and parameter estimates.</li>
+</ul>
+<h3>7) FastTree for very large datasets (approximate ML)</h3>
+<pre><code># FastTree for nucleotide sequences (default is approximately ML); use -nt for nucleotides
+FastTree -nt results/aligned_sequences.fasta &gt; results/fasttree.nwk
+</code></pre>
+<p>
+FastTree is optimized for speed and will produce one Newick tree file. It makes approximations that are appropriate for exploratory analyses of very large alignments but may not match more rigorous ML methods on smaller datasets.
+</p>
+<h2>Output inspection and interpretation</h2>
+<p>
+After producing trees, inspect both the tree file contents and the associated logs to interpret meaningfully:
+</p>
+<ul>
+<li>Open the Newick file in a tree viewer (FigTree, iTOL, Dendroscope) or use text tools to display structure. Example: <code>cat results/iqtree_run.treefile</code>.</li>
+<li>Check support values: bootstrap percentages (IQ-TREE) or ultrafast bootstrap (UFboot) values near nodes. High support (commonly &gt;70–95% depending on method) suggests the data are consistent with that clade under the chosen model and sample of sites, but support thresholds are heuristic.</li>
+<li>Examine branch lengths: long branches indicate more inferred substitutions; very short branches can indicate unresolved relationships.</li>
+<li>Model choice: in IQ-TREE logs, ModelFinder reports the best-fitting substitution model and AIC/BIC scores. Record this model as part of your analysis provenance.</li>
+<li>Rooting: many ML methods produce unrooted trees. Root placement affects interpretation of directionality (ancestor-descendant). Rooting requires an explicit outgroup (a lineage known to be outside the ingroup) or methods like midpoint rooting; record which approach you used.</li>
+</ul>
+<p>
+What a plausible result means:
+</p>
+<ul>
+<li>Consistent clades with strong support indicate that, under the alignment and model used, those taxa share a closer relationship to each other than to others in the set.</li>
+<li>Branch-length patterns can suggest relative rates of evolution but do not alone prove absolute timing or direction of change without calibration.</li>
+</ul>
+<p>
+What the tree does NOT prove:
+</p>
+<ul>
+<li>A single tree does not definitively establish true historical events—trees are model-dependent hypotheses.</li>
+<li>Low support nodes indicate unresolved relationships, not necessarily absence of relationship.</li>
+<li>Convergence, horizontal gene transfer, recombination, or alignment error can mislead inference; additional evidence is often required to support strong evolutionary claims.</li>
+</ul>
+<h2>Troubleshooting (symptoms, likely causes, fixes)</h2>
+<ul>
+<li>
+<strong>Symptom:</strong> Alignment shows sequences with many terminal gaps or extremely short aligned length.
+    <br/><strong>Likely cause:</strong> Mixed sequence types (proteins and nucleotides) or truncated sequences.
+    <br/><strong>Fix:</strong> Verify sequence type and convert consistently (translate nucleotides to protein if aligning coding sequences by amino acids), remove obviously incomplete sequences, and re-run Kalign.
+  </li>
+<li>
+<strong>Symptom:</strong> MEGA-CC fails with a parsing error for the .mao file.
+    <br/><strong>Likely cause:</strong> The .mao file is corrupted or produced by an incompatible MEGA version.
+    <br/><strong>Fix:</strong> Recreate the .mao file using the same MEGA GUI version as your MEGA-CC installation, or use IQ-TREE which is fully command-line driven and self-documenting.
+  </li>
+<li>
+<strong>Symptom:</strong> Very low bootstrap support across many nodes.
+    <br/><strong>Likely cause:</strong> Insufficient informative sites, poor alignment, or wrong model class.
+    <br/><strong>Fix:</strong> Inspect alignment for ambiguous regions, consider trimming poorly aligned columns (with caution), increase taxon sampling, or perform model testing (IQ-TREE's ModelFinder). Consider alternative loci or concatenated datasets if appropriate.
+  </li>
+<li>
+<strong>Symptom:</strong> Unexpected topologies contrasting well-established relationships.
+    <br/><strong>Likely cause:</strong> Long-branch attraction, recombination, paralogy (mixing paralogous gene copies), or poor alignment.
+    <br/><strong>Fix:</strong> Check for paralogs (sequence similarity clusters), remove recombining regions, use site-heterogeneous models or partitioned analyses, and validate input sequences.
+  </li>
+<li>
+<strong>Symptom:</strong> Tool installation issues or missing binaries.
+    <br/><strong>Likely cause:</strong> Channel mismatch or version conflicts in Conda/Mamba environment.
+    <br/><strong>Fix:</strong> Create a fresh environment, install packages from bioconda channel with the required <code>conda-forge</code> priority and channels ordered: <code>conda config --add channels conda-forge; conda config --add channels bioconda</code>. Consult official install docs in References.
+  </li>
+</ul>
+<h2>Limitations, version and reference-data caveats, and responsible use</h2>
+<p>
+Limitations:
+</p>
+<ul>
+<li>Results depend on sequence sampling, alignment quality, model choice, and method. No single method guarantees the "true" tree.</li>
+<li>Bootstraps and posterior probabilities measure data consistency under chosen assumptions, not absolute truth.</li>
+<li>Fast approximate methods (FastTree) trade accuracy for speed and may be inappropriate when detailed model-based inference is needed.</li>
+</ul>
+<p>
+Version and reference-data caveats:
+</p>
+<ul>
+<li>Software behavior and available models change across versions. Always record program versions (for example, run <code>iqtree --version</code>, <code>megacc --version</code>, <code>kalign --version</code>) and software source.</li>
+<li>Substitution model sets differ between programs; the same model name may have different parameterizations. Report the exact model string and where it was selected.</li>
+<li>Reference data (taxon names, outgroup selection) can bias results—document why each sequence was included and any sequences omitted.</li>
+</ul>
+<p>
+Responsible use:
+</p>
+<ul>
+<li>Avoid overinterpreting trees. When making biological claims (e.g., taxonomic changes, epidemiological inferences), combine phylogenetic evidence with additional data and appropriate statistical tests.</li>
+<li>Follow data-sharing policies and privacy considerations for sequence data (e.g., human-derived viruses) and cite sequence sources.</li>
+</ul>
+<h2>Concise next-step checklist</h2>
 <ol>
-<li><strong>Gather Sequences:</strong> Download homologous FASTA sequences.</li>
-<li><strong>Align:</strong> Use <code>kalign</code> to generate a solid multiple sequence alignment.</li>
-<li><strong>Build Tree:</strong> Use <code>megacc</code> or <code>iqtree</code> to compute evolutionary distances and infer the tree topology.</li>
-<li><strong>Visualize:</strong> Upload the resulting <code>.nwk</code> file to iTOL for publication-ready visualization.</li>
+<li>Record provenance: save copies of <code>aligned_sequences.fasta</code>, the MEGA .mao file (if used), IQ-TREE logs, and the exact commands in <code>command.txt</code>.</li>
+<li>Visualize the primary tree in a GUI (FigTree or iTOL) and annotate clades of interest.</li>
+<li>If nodes of interest have low support, consider additional loci, remove problematic sequences, or try alternative models/partitioning.</li>
+<li>Prepare a figure caption that lists alignment method, program versions, substitution model, bootstrap method and replicates, and rooting choice.</li>
+<li>Deposit alignment and tree files in an archive (e.g., Dryad, Zenodo) if publishing results to enable reproducibility.</li>
 </ol>
-<h3>Matched Python and R tree-inspection workflow</h3>
-<p>Use code to inspect and plot an already inferred Newick tree; it doesn't substitute for model selection, alignment review, or branch-support assessment during inference.</p>
-<pre><code class="language-python">from Bio import Phylo
-
-species_tree = Phylo.read("species_tree.nwk", "newick")
-print({"tips": species_tree.count_terminals(), "total_branch_length": species_tree.total_branch_length()})
-Phylo.draw(species_tree)
-</code></pre>
-<pre><code class="language-r">library(ape)
-
-species_tree &lt;- read.tree("species_tree.nwk")
-print(list(tips = Ntip(species_tree), total_branch_length = sum(species_tree$edge.length)))
-plot(species_tree, cex = 0.7)
-</code></pre>
-<div class="mt-10 p-8 bg-gray-50 border border-gray-200 rounded-xl">
-<h3 class="text-xl font-bold text-gray-900 mb-4">Knowledge Check &amp; Assessment</h3>
-<div class="space-y-4">
-<div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-<h4 class="font-bold text-gray-800 mb-2">1. Concept Verification</h4>
-<p class="text-gray-600 text-sm">What does a branch pattern represent, and what can't be inferred from branch placement without an explicit root and support assessment?</p>
-</div>
-<div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-<h4 class="font-bold text-gray-800 mb-2">2. Practical Execution</h4>
-<p class="text-gray-600 text-sm">Generate or inspect a tree from a provided alignment, identify sister groups and support values, and write a cautious interpretation. </p>
-</div>
-<div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-<h4 class="font-bold text-gray-800 mb-2">3. Troubleshooting</h4>
-<p class="text-gray-600 text-sm">If a tree changes after alignment trimming or rooting, what methodological choices should be reported before making evolutionary claims?</p>
-</div>
-</div>
-</div>
-<section aria-label="References and further reading" class="mt-10 p-6 bg-slate-50 border border-slate-200 rounded-xl">
-<h2 class="text-xl font-bold text-gray-900 mb-3">References and further reading</h2>
-<p class="text-sm text-gray-600 mb-3">Use these official resources to check current software behaviour, terminology, and production guidance. Tool versions and defaults change, so verify commands against the documentation before applying them to a research dataset.</p>
-<ul class="list-disc list-inside space-y-2 text-sm text-gray-700">
-<li><a class="text-blue-700 hover:underline" href="http://www.iqtree.org/doc/" rel="noopener" target="_blank">IQ-TREE documentation</a></li>
-<li><a class="text-blue-700 hover:underline" href="https://mafft.cbrc.jp/alignment/software/" rel="noopener" target="_blank">MAFFT documentation</a></li>
+<h2>References</h2>
+<ul>
+<li><a href="https://mafft.cbrc.jp/alignment/software/">MAFFT: Multiple sequence alignment program</a> — general reference for MSA alternatives.</li>
+<li><a href="https://www.megasoftware.net/">MEGA-CC documentation</a> — official MEGA command-line usage and .mao file guidance.</li>
+<li><a href="http://www.iqtree.org/doc/">IQ-TREE documentation</a> — ModelFinder, ultrafast bootstraps, and command-line examples.</li>
+<li><a href="https://github.com/morgannprice/fasttree">FastTree documentation</a> — approximate ML for very large alignments.</li>
+<li><a href="https://github.com/TimoLassmann/kalign">Kalign project page</a> — installation and usage details for Kalign.</li>
 </ul>
-</section>
 </article>
 <section class="mt-12 mb-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-100">
 <div class="flex items-start gap-4">

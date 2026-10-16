@@ -138,111 +138,203 @@ function toggleMobileMenu() {
 <div class="flex items-center gap-1">
 <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
 </div>
-</div>
-<div class="p-6 bg-blue-50 border border-blue-100 rounded-xl mb-8">
-<h4 class="text-lg font-bold text-blue-900 mb-2">Learning Objectives &amp; Prerequisites</h4>
-<ul class="list-disc list-inside text-blue-800 space-y-1 mb-4">
-<li><strong>Prerequisites:</strong> Complete scRNA-seq Basics. Install Seurat v5 and Harmony.</li>
-<li><strong>Objective:</strong> Perform a controlled comparison of batch-effect correction using Harmony and RPCA on two distinct PBMC datasets (10x PBMC 3k and 10k).</li>
-<li><strong>Expected Output:</strong> Visual UMAPs and quantitative metrics (iLISI and cLISI) demonstrating successful batch mixing without destroying biological variance.</li>
+</div><h2>Learning objectives &amp; prerequisites</h2>
+<p><strong>By the end of this lesson you will be able to:</strong></p>
+<ul>
+<li>Understand the conceptual differences between Harmony, RPCA (Reciprocal PCA), and CCA (Canonical Correlation Analysis) for single-cell integration.</li>
+<li>Run a reproducible comparison of Harmony and Seurat RPCA integration on two PBMC (peripheral blood mononuclear cell) datasets using Seurat v5 and Harmony.</li>
+<li>Compute and interpret quantitative diagnostics (iLISI and cLISI) to evaluate batch mixing versus biological conservation.</li>
 </ul>
-</div>
-<h2>The Anatomy of a Batch Effect</h2>
-<p>When you sequence cells in different batches (different days, different lanes, or different donors), technical artifacts can completely obscure genuine biological differences. Integration mathematically forces these batches into a shared space. However, integration is not a magic wand. If you integrate two completely different tissues, the algorithm will mathematically force them to overlap, destroying real biology in a phenomenon known as <strong>overcorrection</strong></p>
-<p><strong>Key Caveat for this Dataset:</strong> We're integrating 10x Genomics PBMC 3k (v1 chemistry) with PBMC 10k (v3 chemistry). They differ fundamentally in their RNA capture efficiency. Integrating them isn't just correcting a "batch"; it's correcting <em>chemistry</em>If your datasets don't have a genuine batch effect, don't integrate them.</p>
-<div class="mt-8 mb-8 bg-yellow-50 border border-yellow-200 rounded-2xl p-8 shadow-sm">
-<h3 class="text-xl font-bold text-yellow-900 mb-4">Expert Insight: Overcorrecting Rare Malignant States</h3>
-<p class="text-gray-800 mb-4">During my PhD research on CTCL patients, I integrated healthy donor T-cells with malignant T-cells. Malignant cells often separate by patient because of patient-specific CNV and expression programs, while normal cells co-cluster across patients. Integrating with 'patient' as the batch variable using aggressive Canonical Correlation Analysis (CCA) forced the malignant cells to perfectly overlap with healthy regulatory T-cells (Tregs), erasing the heterogeneity I wanted to study.</p>
-<p class="text-gray-800">I quickly switched to <strong>Harmony</strong> and <strong>RPCA (Reciprocal PCA)</strong>which are much gentler. They correctly preserved the malignant cells as a unique, non-overlapping cluster while integrating the background normal cells perfectly. <em>Design a real overcorrection test on your data: remove one cell type (e.g., monocytes) from one dataset, integrate, and check if the algorithm forces the missing type onto other cells!</em></p>
-</div>
-<hr/>
-<h2>1. Preparing the Datasets &amp; Unintegrated Baseline</h2>
-<p>Always plot the unintegrated data first. If the batches already overlap perfectly, you don't need integration! Integration alters your data matrix, so avoid it if unnecessary.</p>
-<pre><code class="language-r">library(Seurat)
-library(harmony)
+<p><strong>Prerequisites</strong></p>
+<ul>
+<li>Familiarity with basic single-cell RNA-seq (scRNA-seq) concepts (normalization, HVG selection, PCA, UMAP). If needed, complete the "scRNA-seq Basics" tutorial first.</li>
+<li>R 4.3+ with Bioconductor/CRAN packages: Seurat v5, harmony, lisi (or the lisi implementation you prefer), patchwork (optional for plotting). Example tested environments: R 4.3.x; this page does not promise exact reproducibility across all minor versions.</li>
+<li>Two prepared Seurat object files: pbmc3k.rds and pbmc10k.rds (these are example filenames—replace with your datasets). Each should be an unintegrated Seurat object containing raw counts in the "RNA" assay and a sample-level metadata field can be added.</li>
+</ul>
+<h2>Why integration matters (biological and computational context)</h2>
+<p>When cells are profiled across different experimental batches (different chemistries, days, or donors), technical variability can dominate the signal. Integration algorithms transform cell embeddings so that cells with the same biological identity from different batches co-locate, enabling joint downstream analysis.</p>
+<p>However, integration is fundamentally a mathematical transformation of your data. If biological variation aligns with batch structure (for example, a cell type present in only one batch), aggressive integration may erase that biology (overcorrection). Different algorithms make different assumptions and trade sensitivity to batch vs. preservation of biology. This tutorial contrasts three commonly used approaches:</p>
+<ul>
+<li><strong>Harmony</strong> — iterative correction in PCA space; generally conservative and scalable.</li>
+<li><strong>RPCA (Reciprocal PCA)</strong> — Seurat's reciprocal PCA-based integration that aligns PCA subspaces from pairwise anchors.</li>
+<li><strong>CCA (Canonical Correlation Analysis)</strong> — finds correlated components across datasets; can be more aggressive and is historically popular in Seurat.</li>
+</ul>
+<h2>Reproducible workflow (R)</h2>
+<p>The following workflow is sequential and reproducible. Adjust file paths as needed. All commands assume you start from two Seurat objects saved as RDS files: <code>pbmc3k.rds</code> and <code>pbmc10k.rds</code>. Expected outputs are explicitly stated after each step.</p>
+<pre><code># 0. Load libraries
+library(Seurat)       # v5+
+library(harmony)      # Harmony integration
+library(lisi)         # compute_lisi() for LISI metrics
+library(patchwork)    # optional, for combining plots
+</code></pre>
+<p>Files to have in your working directory:</p>
+<ul>
+<li><code>pbmc3k.rds</code> — Seurat object (raw counts in DefaultAssay "RNA")</li>
+<li><code>pbmc10k.rds</code> — Seurat object (raw counts in DefaultAssay "RNA")</li>
+</ul>
+<pre><code># 1. Read and annotate batch metadata
+pbmc3k &lt;- readRDS("pbmc3k.rds")   # input: Seurat object file
+pbmc3k$batch &lt;- "v1_3k"           # adds metadata column "batch"
 
-# Load and merge raw objects
-pbmc3k &lt;- readRDS("pbmc3k.rds"); pbmc3k$batch &lt;- "v1_3k"
-pbmc10k &lt;- readRDS("pbmc10k.rds"); pbmc10k$batch &lt;- "v3_10k"
-merged_pbmc &lt;- merge(pbmc3k, y = pbmc10k)
-merged_pbmc &lt;- NormalizeData(merged_pbmc) |&gt; FindVariableFeatures() |&gt; ScaleData() |&gt; RunPCA()
-merged_pbmc &lt;- RunUMAP(merged_pbmc, dims = 1:30)
-DimPlot(merged_pbmc, group.by = "batch")
+pbmc10k &lt;- readRDS("pbmc10k.rds")
+pbmc10k$batch &lt;- "v3_10k"
+
+# Merge objects (creates a merged Seurat object)
+merged &lt;- merge(pbmc3k, y = pbmc10k, add.cell.ids = c("3k", "10k"))
+# output: Seurat object 'merged' with cells from both samples and metadata field 'batch'
 </code></pre>
-<figure class="my-8 border border-gray-200 rounded-lg overflow-hidden shadow-sm">
-<img alt="Unintegrated UMAP showing clear batch separation between PBMC 3k and 10k" class="w-full h-auto" src="../assets/images/Harmony_Intergrations_and_visualization_of_PBMC_10x_1.png"/>
-<figcaption class="p-4 bg-gray-50 text-sm text-gray-600 border-t border-gray-200">
-<strong>Figure 1: Unintegrated UMAP of PBMC 3k and 10k.</strong> Generated using Seurat v5. Notice the clear separation of clusters driven entirely by the chemistry version rather than biology.
-  </figcaption>
-</figure>
-<h2>2. Gentle Integration with Harmony</h2>
-<p>Harmony is an iterative algorithm that projects cells into a shared PCA space, clusters them, and calculates a correction factor to pull batches together. It's highly scalable and generally preserves unique biological states well.</p>
-<pre><code class="language-r"># Run Harmony directly on the PCA reduction
-merged_pbmc &lt;- RunHarmony(merged_pbmc, group.by.vars = "batch")
-# The 'theta' parameter controls diversity. theta=2 is default. Higher theta forces stronger mixing.
-merged_pbmc &lt;- RunUMAP(merged_pbmc, reduction = "harmony", dims = 1:30)
-DimPlot(merged_pbmc, group.by = "batch")
+<p>Important: keep copies of the original objects if you need to revert. Merging does not modify the original RDS files.</p>
+<pre><code># 2. Standard preprocessing (same pipeline for all methods)
+DefaultAssay(merged) &lt;- "RNA"
+merged &lt;- NormalizeData(merged, verbose = FALSE)
+merged &lt;- FindVariableFeatures(merged, selection.method = "vst", nfeatures = 3000, verbose = FALSE)
+merged &lt;- ScaleData(merged, verbose = FALSE)
+merged &lt;- RunPCA(merged, npcs = 50, verbose = FALSE)
+# output: PCA reduction stored in merged[["pca"]]
 </code></pre>
-<figure class="my-8 border border-gray-200 rounded-lg overflow-hidden shadow-sm">
-<img alt="Harmony Integrated UMAP showing mixed batches" class="w-full h-auto" src="../assets/images/Harmony_Intergrations_and_visualization_of_PBMC_10x_2.png"/>
-<figcaption class="p-4 bg-gray-50 text-sm text-gray-600 border-t border-gray-200">
-<strong>Figure 2: Harmony Integrated UMAP.</strong> The batches are now beautifully mixed. The algorithm successfully identified the shared biological states across the v1 and v3 chemistries.
-  </figcaption>
-</figure>
-<h2>3. Quantitative Diagnostics: LISI Scores</h2>
-<p>Visualizing the UMAP is not enough. You must calculate quantitative metrics to prove that technical batches are mixed while biological cell types remain distinct. The LISI (Local Inverse Simpson's Index) metric is the gold standard.</p>
-<div class="overflow-x-auto my-6 border border-gray-200 rounded-lg shadow-sm">
-<table class="w-full text-left border-collapse">
-<thead>
-<tr class="bg-gray-100 text-gray-700 text-sm uppercase tracking-wider">
-<th class="p-4 border-b">Integration Method</th>
-<th class="p-4 border-b">Median iLISI (Batch Mixing)</th>
-<th class="p-4 border-b">Median cLISI (Cell Type Purity)</th>
-</tr>
-</thead>
-<tbody class="text-sm text-gray-800">
-<tr class="hover:bg-gray-50">
-<td class="p-4 border-b font-medium">Unintegrated (Raw PCA)</td>
-<td class="p-4 border-b text-red-600 font-bold">1.02</td>
-<td class="p-4 border-b text-green-600">1.95</td>
-</tr>
-<tr class="hover:bg-gray-50">
-<td class="p-4 border-b font-medium bg-blue-50">Harmony</td>
-<td class="p-4 border-b text-green-600 font-bold bg-blue-50">1.85</td>
-<td class="p-4 border-b text-green-600 bg-blue-50">1.93</td>
-</tr>
-<tr class="hover:bg-gray-50">
-<td class="p-4 border-b font-medium">Seurat RPCA</td>
-<td class="p-4 border-b text-yellow-600">1.60</td>
-<td class="p-4 border-b text-green-600">1.94</td>
-</tr>
-</tbody>
-</table>
-</div>
-<p class="text-sm text-gray-600 mb-8"><em>Note: iLISI ranges from 1 (unmixed) to 2 (perfectly mixed for 2 batches). cLISI should ideally stay near 1 (pure cell types) or 2 depending on baseline purity. Harmony achieves excellent batch mixing (1.85) without significantly degrading cell type purity.</em></p>
-<h2>Conclusion</h2>
-<p>RPCA and Harmony are current best practices, while aggressive CCA should be used with extreme caution. Always run a baseline unintegrated analysis, tune your <code>theta</code> parameters in Harmony, and validate your final UMAP with LISI scores.</p>
-<div class="mt-10 p-8 bg-gray-50 border border-gray-200 rounded-xl">
-<h3 class="text-xl font-bold text-gray-900 mb-4">Knowledge Check &amp; Assessment</h3>
-<div class="space-y-4">
-<div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-<h4 class="font-bold text-gray-800 mb-2">1. The Missing Cell Type Test</h4>
-<p class="text-gray-600 text-sm mb-3">If you deliberately remove B-cells from Dataset A, but keep them in Dataset B, what happens if your integration algorithm is too aggressive?</p>
-<details class="text-sm text-gray-700 bg-blue-50 p-3 rounded border border-blue-100">
-<summary class="cursor-pointer font-semibold text-blue-800 outline-none">Reveal Answer</summary>
-<p class="mt-2">An overly aggressive algorithm (like classic CCA) will "hallucinate" B-cells in Dataset A by warping other cells (like T-cells or monocytes) to overlap with Dataset B's B-cells. This is why you must use gentle integrators like Harmony or RPCA when datasets have non-overlapping cell populations.</p>
-</details>
-</div>
-</div>
-</div>
-<section aria-label="References and further reading" class="mt-10 p-6 bg-slate-50 border border-slate-200 rounded-xl">
-<h2 class="text-xl font-bold text-gray-900 mb-3">Primary References</h2>
-<ul class="list-disc list-inside space-y-2 text-sm text-gray-700">
-<li>Korsunsky, I., et al. (2019). Fast, sensitive and accurate integration of single-cell data with Harmony. <em>Nature methods</em>16(12), 1289-1296. <a class="text-blue-700 hover:underline" href="https://doi.org/10.1038/s41592-019-0619-0" rel="noopener" target="_blank">DOI: 10.1038/s41592-019-0619-0</a></li>
-<li>Stuart, T., et al. (2019). Complete Integration of Single-Cell Data. <em>Cell</em>177(7), 1888-1902.e21. <a class="text-blue-700 hover:underline" href="https://doi.org/10.1016/j.cell.2019.05.031" rel="noopener" target="_blank">DOI: 10.1016/j.cell.2019.05.031</a> (Seurat RPCA/CCA)</li>
-<li>Luecken, M. D., et al. (2022). Benchmarking atlas-level data integration in single-cell genomics. <em>Nature methods</em>19(1), 41-50. <a class="text-blue-700 hover:underline" href="https://doi.org/10.1038/s41592-021-01336-8" rel="noopener" target="_blank">DOI: 10.1038/s41592-021-01336-8</a></li>
+<p>Produce an unintegrated baseline UMAP for reference:</p>
+<pre><code># Baseline: UMAP on raw PCA
+merged &lt;- RunUMAP(merged, reduction = "pca", dims = 1:30, reduction.name = "umap.pca")
+# output: UMAP coordinates stored in merged[["umap.pca"]]
+
+# Example plotting (interactive environment)
+DimPlot(merged, reduction = "umap.pca", group.by = "batch")
+</code></pre>
+<p>Interpretation: If batches already co-mingle in this plot, integration may not be necessary. The UMAP is a visualization of the PCA embedding and is not a formal test of integration quality.</p>
+<h3>Harmony integration</h3>
+<pre><code># 3a. Run Harmony (operates on PCA embeddings)
+merged_harmony &lt;- merged                       # copy to keep original merged intact
+merged_harmony &lt;- RunHarmony(merged_harmony, group.by.vars = "batch", reduction = "pca", dims.use = 1:30)
+# output: Harmony reduction stored in merged_harmony[["harmony"]]
+
+# Build UMAP from Harmony
+merged_harmony &lt;- RunUMAP(merged_harmony, reduction = "harmony", dims = 1:30, reduction.name = "umap.harmony")
+# output: UMAP coords in merged_harmony[["umap.harmony"]]
+</code></pre>
+<p>Notes: Harmony has parameters such as <code>theta</code> (diversity clustering penalty). Higher theta forces stronger mixing; default values are often sensible but test sensitivity.</p>
+<h3>Seurat RPCA integration</h3>
+<pre><code># 3b. Run Seurat RPCA integration workflow (anchors-based)
+# Split back into a list of Seurat objects by batch for anchor-based methods
+obj_list &lt;- SplitObject(merged, split.by = "batch")
+
+# Standardize preprocessing for each object (these commands are idempotent if already done)
+for (i in seq_along(obj_list)) {
+  DefaultAssay(obj_list[[i]]) &lt;- "RNA"
+  obj_list[[i]] &lt;- NormalizeData(obj_list[[i]], verbose = FALSE)
+  obj_list[[i]] &lt;- FindVariableFeatures(obj_list[[i]], selection.method = "vst", nfeatures = 3000, verbose = FALSE)
+  obj_list[[i]] &lt;- ScaleData(obj_list[[i]], verbose = FALSE)
+  obj_list[[i]] &lt;- RunPCA(obj_list[[i]], npcs = 50, verbose = FALSE)
+}
+
+# Find integration anchors using RPCA
+anchors_rpca &lt;- FindIntegrationAnchors(object.list = obj_list, anchor.features = 3000, reduction = "rpca", dims = 1:50)
+# output: anchors object 'anchors_rpca'
+
+# Integrate
+merged_rpca &lt;- IntegrateData(anchorset = anchors_rpca, dims = 1:50)
+# output: Seurat object 'merged_rpca' with "integrated" assay
+DefaultAssay(merged_rpca) &lt;- "integrated"
+merged_rpca &lt;- ScaleData(merged_rpca, verbose = FALSE)
+merged_rpca &lt;- RunPCA(merged_rpca, npcs = 50, verbose = FALSE)
+merged_rpca &lt;- RunUMAP(merged_rpca, reduction = "pca", dims = 1:30, reduction.name = "umap.rpca")
+# output: UMAP coords in merged_rpca[["umap.rpca"]]
+</code></pre>
+<h3>Optional: Seurat CCA integration</h3>
+<p>If you want to compare with CCA-based integration, substitute <code>reduction = "rpca"</code> with <code>reduction = "cca"</code> in <code>FindIntegrationAnchors</code> (CCA may require additional tuning and larger computational resources).</p>
+<h2>Quantitative diagnostics: LISI (Local Inverse Simpson's Index)</h2>
+<p>Visual inspection is necessary but insufficient. Compute iLISI (batch mixing) and cLISI (cell-type mixing/purity) to quantify performance.</p>
+<pre><code># Prepare a data.frame of embeddings and metadata for compute_lisi()
+# Example for Harmony result
+emb_harmony &lt;- Embeddings(merged_harmony, "harmony")[, 1:30]
+meta_harmony &lt;- merged_harmony@meta.data
+df_harmony &lt;- as.data.frame(emb_harmony)
+df_harmony$batch &lt;- meta_harmony$batch
+# If you have cell type labels in meta (e.g., "celltype"), include them similarly.
+
+# Compute LISI: columns used for LISI = embedding dims, meta columns to evaluate = "batch" and "celltype"
+# compute_lisi expects a data.frame with embeddings and metadata columns
+lisi_harmony &lt;- compute_lisi(df_harmony, df_harmony[, c("batch")], perplexity = 30)
+# output: matrix with iLISI per cell for 'batch'; summarize with median/mean
+
+# Repeat for RPCA-integrated object
+emb_rpca &lt;- Embeddings(merged_rpca, "pca")[, 1:30]
+df_rpca &lt;- as.data.frame(emb_rpca)
+df_rpca$batch &lt;- merged_rpca@meta.data$batch
+lisi_rpca &lt;- compute_lisi(df_rpca, df_rpca[, c("batch")], perplexity = 30)
+</code></pre>
+<p>Interpretation of LISI values for two batches: iLISI ≈ 1 means unmixed (cells only see their own batch locally); iLISI ≈ 2 means perfect mixing across two batches. For cLISI (computed against cell type labels), values near 1 indicate local purity of the same annotated cell type and higher values indicate local mixing of cell types (bad if you expect purity).</p>
+<h2>Output inspection and interpretation</h2>
+<p>After generating UMAPs and LISI scores, inspect results along three dimensions:</p>
+<ol>
+<li><strong>Batch mixing (visual):</strong> Are batch labels distributed across clusters, or is there clear separation driven by batch? If clusters contain a mix of batches, that suggests mixing.</li>
+<li><strong>Batch mixing (quantitative):</strong> Median iLISI across cells — higher is better for mixing, but interpret relative to baseline (unintegrated) and biological expectations.</li>
+<li><strong>Biological conservation:</strong> Compute cLISI using known cell type labels (if available) or inspect expression of canonical marker genes. If cLISI increases substantially after integration (local neighborhoods now mix multiple annotated cell types), the method may be overcorrecting.</li>
+</ol>
+<p>What a plausible result means:</p>
+<ul>
+<li>High iLISI and unchanged/low cLISI: likely successful integration — technical batch is reduced while cell type separation is preserved.</li>
+<li>High iLISI and high cLISI: batch removed but biological identity blurred — possible overcorrection.</li>
+<li>Low iLISI: integration failed to mix batches — maybe undercorrection or incompatible datasets.</li>
 </ul>
-</section>
+<p>What these diagnostics do NOT prove:</p>
+<ul>
+<li>LISI does not prove absence of subtle distortions in gene expression values or marker gene relationships.</li>
+<li>Good mixing on UMAP or LISI does not guarantee preservation of rare or continuous biological trajectories; further downstream checks (marker expression, differential testing using unadjusted data) are needed.</li>
+</ul>
+<h2>Troubleshooting: symptoms, likely causes, and fixes</h2>
+<ul>
+<li>
+<strong>Symptom:</strong> Integration produces perfectly overlapped clusters across batches but marker genes for expected cell types are lost (clusters no longer express markers).
+    <br/><strong>Likely cause:</strong> Overcorrection, possibly due to inappropriate anchor selection or overly aggressive parameters.
+    <br/><strong>Fix:</strong> Reduce integration strength: for Harmony, lower <code>theta</code> or increase <code>lambda</code> (see Harmony docs). For RPCA/CCA, reduce anchor.features, increase k.anchor, or evaluate using fewer dims.
+  </li>
+<li>
+<strong>Symptom:</strong> Batches remain separated after integration (low iLISI).
+    <br/><strong>Likely cause:</strong> Biological differences align with batch (true biological differences), insufficient shared features, or poor preprocessing (inconsistent normalization / HVG selection).
+    <br/><strong>Fix:</strong> Ensure all input objects were preprocessed consistently (same normalization, selection of variable features). Increase anchor.features or dims used; check that there are enough shared cell types across batches.
+  </li>
+<li>
+<strong>Symptom:</strong> RPCA or CCA fails with memory errors or unreasonable run time.
+    <br/><strong>Likely cause:</strong> Large number of cells/features and default parameters that are computationally heavy.
+    <br/><strong>Fix:</strong> Subsample cells for exploratory comparisons, reduce nfeatures or dims, run integration on a high-memory node, or use Harmony which is more scalable.
+  </li>
+<li>
+<strong>Symptom:</strong> LISI throws errors about data frame formats or missing columns.
+    <br/><strong>Likely cause:</strong> compute_lisi expects embeddings and metadata combined in a single data.frame with metadata columns present.
+    <br/><strong>Fix:</strong> Construct the data.frame as shown (embeddings columns followed by metadata columns) and pass the correct column names.
+  </li>
+</ul>
+<h2>Limitations, version &amp; reference-data caveats, and responsible use</h2>
+<p>Limitations and caveats:</p>
+<ul>
+<li>Integration transforms embeddings; they are not the original expression matrix. For differential expression or gene-level analyses, either use uncorrected expression values with covariates or use integration-aware methods that preserve gene-level interpretation.</li>
+<li>Algorithms rely on the existence of shared biological states across batches. If two datasets are fundamentally different in cell type composition or one lacks a cell type entirely, integration can either fail to mix or will force spurious overlap.</li>
+<li>Results are sensitive to preprocessing (variable feature selection, scaling, number of PCA components). Keep preprocessing consistent across methods for fair comparisons.</li>
+<li>Different Seurat and harmony package versions may change behavior or defaults; reproduce results by recording package versions. Example packages to note: Seurat v5.x, harmony v1.x, lisi v0.x.</li>
+</ul>
+<p>Responsible-use notes:</p>
+<ul>
+<li>Always visualize and quantify integration outcomes; do not rely on a single plot or metric.</li>
+<li>For clinical or translational interpretations avoid using integrated embeddings as direct evidence of biological equivalence — follow up with orthogonal validation (marker staining, independent cohorts).</li>
+<li>Document your integration choices (parameters, features used) in notebooks or pipelines so analyses are auditable and reproducible.</li>
+</ul>
+<h2>Next-step checklist (concise)</h2>
+<ol>
+<li>Ensure you have saved copies of raw, unintegrated Seurat objects (pbmc3k.rds, pbmc10k.rds).</li>
+<li>Run the baseline PCA + UMAP and inspect batch separation visually before integration.</li>
+<li>Run Harmony and RPCA as separate branches, saving outputs (merged_harmony.rds, merged_rpca.rds).</li>
+<li>Compute iLISI and cLISI for each integrated result and compare to baseline.</li>
+<li>Inspect marker gene expression across resulting clusters to confirm biological preservation.</li>
+<li>If results diverge, iterate on parameters (theta for Harmony, anchor.features/dims for RPCA) and document all parameter choices.</li>
+</ol>
+<h2>References</h2>
+<ul>
+<li><a href="https://satijalab.org/seurat/">Seurat documentation (Satija Lab)</a></li>
+<li><a href="https://github.com/immunogenomics/harmony">Harmony GitHub repository and docs</a></li>
+<li><a href="https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1004142">Butler et al., Integrating single-cell transcriptomic data across different conditions, technologies, and species (Seurat CCA anchoring background)</a></li>
+<li><a href="https://www.sc-best-practices.org/cellular-structure/integration/">Stuart et al., Comprehensive Integration of Single-Cell Data (Seurat anchors)</a></li>
+<li><a href="https://github.com/immunogenomics/lisi">LISI metric implementation and guidance (GitHub)</a></li>
+</ul>
 </article>
 <section class="mt-12 mb-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-100">
 <div class="flex items-start gap-4">

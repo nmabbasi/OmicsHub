@@ -138,125 +138,182 @@ function toggleMobileMenu() {
 <div class="flex items-center gap-1">
 <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
 </div>
-</div>
-<div class="p-6 bg-blue-50 border border-blue-100 rounded-xl mb-8">
-<h4 class="text-lg font-bold text-blue-900 mb-2">Learning Objectives &amp; Prerequisites</h4>
-<ul class="list-disc list-inside text-blue-800 space-y-1 mb-4">
-<li><strong>Prerequisites:</strong> A terminal on Linux, macOS, or Windows WSL; no prior shell experience is required.</li>
-<li><strong>Objective:</strong> Navigate directories, inspect files, create folders, and use paths safely in a command-line bioinformatics project.</li>
-<li><strong>Expected Output:</strong> A small project directory created from the terminal with documented paths and correctly named files.</li>
-</ul>
-</div>
-<h2>Why the Command Line Matters in Bioinformatics</h2>
-<p>The command line is like learning to drive a manual transmission car. Sure, automatic is easier to start with, but once you master manual, you've complete control over the machine. In bioinformatics, that control translates to unprecedented power and efficiency.</p>
-<p>Here's why every bioinformatician needs command line skills:</p>
+</div><h2>Learning objectives and prerequisites</h2>
+<p>Prerequisites: a working terminal on Linux, macOS, or Windows Subsystem for Linux (WSL). No prior shell experience required, but basic familiarity with copying and pasting text will help.</p>
+<p>By the end of this lesson you will be able to:</p>
 <ul>
-<li><strong>Processing massive datasets</strong> that would crash graphical programs</li>
-<li><strong>Automating repetitive tasks</strong> that would take hours manually</li>
-<li><strong>Connecting tools together</strong> in powerful workflows</li>
-<li><strong>Working on remote servers</strong> where GUIs aren't available</li>
-<li><strong>Reproducing analyses</strong> with precise, documented commands</li>
+<li>Identify your current directory and list its contents.</li>
+<li>Move between directories using absolute and relative paths.</li>
+<li>Create, copy, move, and inspect files and directories reliably.</li>
+<li>Use safe practices for naming and working with bioinformatics project files.</li>
 </ul>
-<p>Think of the command line as your Swiss Army knife for biological data: once you master it, you'll wonder how you ever lived without it.</p>
-<h2>Getting Started: Your First Commands</h2>
-<h3>Opening the Terminal</h3>
-<p><strong>On macOS</strong>Press <code>Cmd + Space</code>type "Terminal", and press Enter
-<strong>On Linux</strong>Press <code>Ctrl + Alt + T</code> or search for "Terminal"
-<strong>On Windows</strong>Use Windows Subsystem for Linux (WSL) or Git Bash</p>
-<h3>Understanding the Prompt</h3>
-<p>When you open a terminal, you'll see something like:</p>
-<pre><code class="language-bash">TheOmicsHub@nmabbasi:~$
-</code></pre>
-<p>This example prompt tells you:
-- <code>TheOmicsHub</code>The workstation or host name
-- <code>nmabbasi</code>The account name
-- <code>~</code>The current location (home directory)
-- <code>$</code>The terminal is ready for a command</p>
-<h2>Essential Navigation Commands</h2>
-<h3>Where Am I? (<code>pwd</code>)</h3>
-<p>The <code>pwd</code> command (print working directory) tells you exactly where you're in the file system:</p>
-<pre><code class="language-bash">pwd
-# Output: /home/nmabbasi
-</code></pre>
-<p>Think of it as your GPS for the file system: you should always know where you're before you start moving around.</p>
-<h3>What's Here? (<code>ls</code>)</h3>
-<p>The <code>ls</code> command lists the contents of your current directory:</p>
-<pre><code class="language-bash">ls                    # Basic listing
-ls -l                 # Long format with details
-ls -la                # Include hidden files
-ls -lh                # Human-readable file sizes
-ls *.fasta            # List only FASTA files
-</code></pre>
-<p><strong>Pro tip</strong>The <code>-l</code> flag shows permissions, file sizes, and modification dates: incredibly useful for troubleshooting.</p>
-<h3>Moving Around (<code>cd</code>)</h3>
-<p>The <code>cd</code> command (change directory) is your teleportation device:</p>
-<pre><code class="language-bash">cd /path/to/directory  # Go to specific path
-cd ..                  # Go up one level
-cd ~                   # Go to home directory
-cd -                   # Go back to previous directory
-cd                     # Also goes to home directory
-</code></pre>
-<p><strong>Navigation shortcuts</strong>- <code>.</code> means "current directory"
-- <code>..</code> means "parent directory"
-- <code>~</code> means "home directory"
-- <code>/</code> means "root directory"</p>
-<h2>File and Directory Operations</h2>
-<h3>Creating Directories (<code>mkdir</code>)</h3>
-<pre><code class="language-bash">mkdir project                    # Create single directory
-mkdir -p project/data/raw       # Create nested directories
-mkdir project_{1..5}            # Create multiple directories
-</code></pre>
-<p>The <code>-p</code> flag is a lifesaver: it creates parent directories if they don't exist.</p>
-<h3>Creating Files (<code>touch</code>)</h3>
-<pre><code class="language-bash">touch analysis.txt              # Create empty file
-touch file1.txt file2.txt      # Create multiple files
-touch data/sample_{1..10}.fastq # Create numbered files
-</code></pre>
-<h3>Copying Files and Directories (<code>cp</code>)</h3>
-<pre><code class="language-bash">cp file1.txt file2.txt          # Copy file
-cp file1.txt backup/            # Copy to directory
-cp -r project/ project_backup/  # Copy directory recursively
-cp *.fasta sequences/           # Copy all FASTA files
-</code></pre>
-<p><strong>Important</strong>Use <code>-r</code> (recursive) when copying directories!</p>
-<h3>Moving and Renaming (<code>mv</code>)</h3>
-<pre><code class="language-bash">mv old_name.txt new_name.txt    # Rename file
-mv file.txt documents/          # Move file to directory
-mv *.fastq raw_data/           # Move all FASTQ files
-</code></pre>
-<p><strong>Caution</strong><code>mv</code> will overwrite existing files without warning!</p>
-<h3>Removing Files and Directories (<code>rm</code>)</h3>
-<pre><code class="language-bash">rm file.txt                     # Remove file
-rm -r directory/                # Remove directory recursively
-rm -f file.txt                  # Force removal (no confirmation)
-rm *.tmp                        # Remove all temporary files
-</code></pre>
-<p><strong>⚠️ Warning</strong>There's no "trash" in the command line: deleted files are gone forever!</p>
-<div class="mt-10 p-8 bg-gray-50 border border-gray-200 rounded-xl">
-<h3 class="text-xl font-bold text-gray-900 mb-4">Knowledge Check &amp; Assessment</h3>
-<div class="space-y-4">
-<div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-<h4 class="font-bold text-gray-800 mb-2">1. Concept Verification</h4>
-<p class="text-gray-600 text-sm">What's the difference between an absolute path, a relative path, the current directory, and the home directory?</p>
-</div>
-<div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-<h4 class="font-bold text-gray-800 mb-2">2. Practical Execution</h4>
-<p class="text-gray-600 text-sm">Create a project directory with raw-data, scripts, and results subdirectories; use pwd, ls, cd, and mkdir to verify it. </p>
-</div>
-<div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-<h4 class="font-bold text-gray-800 mb-2">3. Troubleshooting</h4>
-<p class="text-gray-600 text-sm">If a command reports "No such file or directory," how will you check the working directory, spelling, spaces, and permissions?</p>
-</div>
-</div>
-</div>
-<section aria-label="References and further reading" class="mt-10 p-6 bg-slate-50 border border-slate-200 rounded-xl">
-<h2 class="text-xl font-bold text-gray-900 mb-3">References and further reading</h2>
-<p class="text-sm text-gray-600 mb-3">Use these official resources to check current software behaviour, terminology, and production guidance. Tool versions and defaults change, so verify commands against the documentation before applying them to a research dataset.</p>
-<ul class="list-disc list-inside space-y-2 text-sm text-gray-700">
-<li><a class="text-blue-700 hover:underline" href="https://slurm.schedmd.com/documentation.html" rel="noopener" target="_blank">Slurm documentation</a></li>
-<li><a class="text-blue-700 hover:underline" href="https://man.openbsd.org/ssh" rel="noopener" target="_blank">OpenSSH manual pages</a></li>
+<h2>Why basic command-line navigation matters in bioinformatics</h2>
+<p>Bioinformatics workflows typically involve many files (raw reads, reference genomes, intermediate results, logs). Graphical file managers become cumbersome or unavailable when you are connected to a remote compute server or working inside a batch job. A small set of command-line skills makes you more reproducible, efficient, and less likely to accidentally lose data when running analysis pipelines.</p>
+<p>Examples where these skills are essential:</p>
+<ul>
+<li>Transferring files between a local laptop and a remote cluster with scp or rsync.</li>
+<li>Running containerised software (Docker/Singularity) that expects file paths as inputs.</li>
+<li>Reading and inspecting log files produced by long-running alignment or variant-calling jobs.</li>
 </ul>
-</section>
+<h2>Reproducible, sequential workflow</h2>
+<p>We will create a small project directory, add example files (empty placeholders serve for practice), and run commands that show the file-system state at each step. Replace the example paths with paths appropriate for your machine. Commands assume a Bourne-like shell (bash, zsh).</p>
+<h3>1. Start from your home directory and create a project structure</h3>
+<p>Open a terminal and run the following. These commands are non-destructive: they create directories and empty files only.</p>
+<pre><code># Move to your home directory to start from a predictable location
+cd ~
+
+# Create a reproducible project directory tree
+mkdir -p projects/basic-nav/{data,results,scripts,logs}
+
+# Create placeholder files that emulate common inputs
+touch projects/basic-nav/data/sample_R1.fastq.gz
+touch projects/basic-nav/data/sample_R2.fastq.gz
+touch projects/basic-nav/scripts/README.md
+</code></pre>
+<p>What these commands do (inputs/outputs):</p>
+<ul>
+<li><code>cd ~</code> moves to your home directory (no file creation).</li>
+<li><code>mkdir -p projects/basic-nav/{data,results,scripts,logs}</code> creates a nested folder tree <code>~/projects/basic-nav</code> with four subdirectories. The <code>-p</code> flag ensures parent directories are created as needed.</li>
+<li><code>touch</code> creates three empty files as placeholders: two compressed FASTQ names and a README. These are zero-byte files used for practice; they are not real sequencing data.</li>
+</ul>
+<h3>2. Check where you are and list contents</h3>
+<pre><code># Show the current directory (absolute path)
+pwd
+
+# List the new project folder (short and detailed views)
+ls projects/basic-nav
+ls -l projects/basic-nav
+ls -la projects/basic-nav
+</code></pre>
+<p>Expected observations:</p>
+<ul>
+<li><code>pwd</code> prints a full path such as <code>/home/yourusername</code> or <code>/Users/yourname</code>.</li>
+<li><code>ls projects/basic-nav</code> shows the subdirectories created (<code>data</code>, <code>results</code>, <code>scripts</code>, <code>logs</code>).</li>
+<li><code>ls -l projects/basic-nav</code> shows permissions, owner, size (zero for the placeholder files), and modification times. Hidden files (those starting with a dot) will be visible with <code>-a</code>.</li>
+</ul>
+<h3>3. Change directory into the project and use relative navigation</h3>
+<pre><code># Change into the project directory using a relative path
+cd projects/basic-nav
+
+# Move into the data subdirectory
+cd data
+
+# Move up to the project root using the parent shortcut
+cd ..
+
+# Quickly return to home using the tilde
+cd ~
+</code></pre>
+<p>Notes on paths:</p>
+<ul>
+<li>An absolute path begins with <code>/</code> (Linux/macOS) and names every directory from the root, for example <code>/home/youruser/projects/basic-nav</code>.</li>
+<li>A relative path is interpreted from your current working directory; for example <code>cd data</code> only works if <code>data</code> is inside your current directory.</li>
+<li>Shortcuts: <code>.</code> means current directory, <code>..</code> means parent directory, <code>~</code> means your home directory, and <code>-</code> returns to the previous directory you were in (<code>cd -</code>).</li>
+</ul>
+<h3>4. Inspect files safely (viewing without modifications)</h3>
+<pre><code># Show a short listing with human-readable sizes
+ls -lh projects/basic-nav/data
+
+# If files are text or compressed, use safe viewers
+file projects/basic-nav/data/sample_R1.fastq.gz
+zcat projects/basic-nav/data/sample_R1.fastq.gz | head -n 20   # only if the file is compressed FASTQ
+less projects/basic-nav/scripts/README.md                      # use q to quit
+</code></pre>
+<p>What these commands check:</p>
+<ul>
+<li><code>file</code> reports the file type; it helps avoid trying to read a binary file as text.</li>
+<li><code>zcat | head</code> displays the first 20 lines of a gzipped FASTQ safely so you can check headers and format without opening the entire file.</li>
+<li><code>less</code> is a pager that lets you view large files page by page.</li>
+</ul>
+<h3>5. Copy, move, and rename files with examples</h3>
+<p>Always double-check paths before running operations that change files. Here are safe examples that copy and move files inside the project.</p>
+<pre><code># Copy placeholder FASTQ files into results as a backup copy (non-destructive)
+cp projects/basic-nav/data/sample_R1.fastq.gz projects/basic-nav/results/
+
+# Rename the README to indicate it's a template (move within the same folder)
+mv projects/basic-nav/scripts/README.md projects/basic-nav/scripts/README.template.md
+
+# Move both FASTQ files into a "raw" subfolder (create it first)
+mkdir -p projects/basic-nav/data/raw
+mv projects/basic-nav/data/sample_R1.fastq.gz projects/basic-nav/data/raw/
+mv projects/basic-nav/data/sample_R2.fastq.gz projects/basic-nav/data/raw/
+</code></pre>
+<p>What to expect:</p>
+<ul>
+<li>The <code>cp</code> command duplicates the file; the original remains.</li>
+<li><code>mv</code> renames or relocates files; when used to rename it is generally fast because it alters metadata rather than copying contents (on the same filesystem).</li>
+<li>If a destination file already exists, <code>mv</code> and <code>cp</code> will overwrite it silently unless you use <code>-i</code> (interactive) or make a backup first. Consider adding <code>-i</code> or using <code>--verbose</code> to see what happens.</li>
+</ul>
+<h2>Output inspection and interpretation</h2>
+<p>After each command, inspect the file system state. Here are concrete checks and how to interpret them safely.</p>
+<ul>
+<li>After creating directories with <code>mkdir -p</code>, run <code>ls -la projects/basic-nav</code>. You should see the subdirectories; if one is missing, check for typos in the path.</li>
+<li>Use <code>ls -lh</code> on files. Placeholder files created with <code>touch</code> will show a size of 0 bytes. Real sequencing files are large (megabytes to gigabytes). If an expected FASTQ shows 0 bytes, it is not valid input for downstream tools.</li>
+<li>If <code>file</code> reports "gzip compressed data", the file is compressed; use <code>zcat</code> or <code>gunzip -c</code> to preview. If <code>file</code> reports "ASCII text" but contains FASTQ entries, the file is probably uncompressed.</li>
+</ul>
+<p>What a plausible result means and what it does not prove:</p>
+<ul>
+<li>Seeing a FASTQ header line that starts with <code>@</code> and a sequence line indicates the file is formatted like FASTQ, but it does not guarantee biological validity (e.g., correct base composition or pairing).</li>
+<li>Successful <code>cp</code> or <code>mv</code> indicates the filesystem accepted the operation; it does not validate file contents or integrity. To check integrity, compute checksums (see Troubleshooting below).</li>
+</ul>
+<h2>Troubleshooting</h2>
+<p>Common symptoms, likely causes, and fixes.</p>
+<h3>Symptom: "No such file or directory" when running cd, cp, or mv</h3>
+<ul>
+<li>Cause: typo in the path or the target has not been created.</li>
+<li>Fix: use <code>ls -la</code> on the parent directory to confirm names; consider tab-completion to avoid typos (press Tab in your shell).</li>
+</ul>
+<h3>Symptom: Files appear missing after mv</h3>
+<ul>
+<li>Cause: moved to a different directory than expected, or the mv command overwrote an existing file of the same name.</li>
+<li>Fix: use <code>cd -</code> to return to the previous directory and run <code>ls</code>. Use <code>ls -l &lt;path&gt;</code> on both source and destination to confirm. If overwriting occurred, there is no general undo; restore from a backup if available.</li>
+</ul>
+<h3>Symptom: Unexpected file sizes or zero bytes</h3>
+<ul>
+<li>Cause: transfers that terminated early, placeholder files created by mistake, or mistaken redirection that truncated a file (e.g., using a single greater-than sign).</li>
+<li>Fix: If the file came from a remote machine, re-transfer and verify checksums. Compute an MD5 or SHA256 checksum on both ends and compare:</li>
+</ul>
+<pre><code># Create a checksum on the source machine
+sha256sum sample_R1.fastq.gz &gt; sample_R1.sha256
+
+# After transfer, verify the checksum on the destination machine
+sha256sum -c sample_R1.sha256
+</code></pre>
+<h3>Symptom: Permission denied when listing or moving files</h3>
+<ul>
+<li>Cause: you do not own the file or lack read/write permission.</li>
+<li>Fix: check ownership and permissions with <code>ls -l</code>. If appropriate and you have sudo privileges, ask an administrator to change ownership (<code>chown</code>) or permission (<code>chmod</code>), or use a group with shared access. Avoid changing permissions to 777 on production systems.</li>
+</ul>
+<h2>Limitations, version and reference-data caveats, and responsible-use notes</h2>
+<p>Limitations:</p>
+<ul>
+<li>The commands shown are shell built-ins and common GNU utilities; behavior and available flags can vary between systems (for example, BSD ls differs slightly from GNU ls). If you work on macOS or a non-GNU environment, consult that system's man pages (manual pages).</li>
+<li>These examples create placeholder files with <code>touch</code>. Placeholder files are not representative of real biological data; downstream tools will fail or produce meaningless results if supplied with zero-byte files.</li>
+</ul>
+<p>Version and reference-data caveats:</p>
+<ul>
+<li>Always record the versions of key tools (bash, coreutils, samtools, etc.) and reference files (genomes, annotations) as part of project metadata. Small differences in tool versions or reference genomes can change reproducibility.</li>
+</ul>
+<p>Responsible-use notes:</p>
+<ul>
+<li>Be cautious with destructive commands (<code>rm</code>, <code>rm -rf</code>). Never run a remove command unless you are sure of the target path. Prefer making backups or moving files to a <code>trash</code> directory in the project for safe deletion workflows.</li>
+<li>When working with sensitive biological or patient data, follow your institution's data governance policies. Do not copy or expose controlled-access files to unsecured systems.</li>
+</ul>
+<h2>Concise next-step checklist</h2>
+<ol>
+<li>Confirm that you can run <code>pwd</code>, <code>ls -la</code>, and <code>cd</code> without errors in your environment.</li>
+<li>Create a new project tree under <code>~/projects</code> and add at least one real small test FASTQ (or download a small public sample) rather than placeholders.</li>
+<li>Practice safe copying and moving: use <code>cp --verbose</code> and <code>mv --backup=numbered</code> on important files.</li>
+<li>Learn how to compute and check checksums (<code>sha256sum</code>) for file integrity after transfers.</li>
+<li>Read the man pages for the commands covered: <code>man ls</code>, <code>man cp</code>, <code>man mv</code>, <code>man mkdir</code>.</li>
+</ol>
+<h2>References</h2>
+<ul>
+<li><a href="https://www.gnu.org/software/coreutils/manual/coreutils.html">GNU Coreutils manual — official documentation for ls, cp, mv, mkdir, touch</a></li>
+<li><a href="https://www.man7.org/linux/man-pages/">The Linux man-pages project — canonical manual pages for Linux system calls and library functions</a></li>
+<li><a href="https://swcarpentry.github.io/shell-novice/">Software Carpentry: The Unix Shell lesson — practical, beginner-friendly shell tutorials</a></li>
+<li><a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4559229/">Constance L. et al., Best Practices in Bioinformatics Data Management (example of data governance considerations)</a></li>
+</ul>
 </article>
 <section class="mt-12 mb-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-100">
 <div class="flex items-start gap-4">

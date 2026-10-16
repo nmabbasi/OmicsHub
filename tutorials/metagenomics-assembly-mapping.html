@@ -138,120 +138,244 @@ function toggleMobileMenu() {
 <div class="flex items-center gap-1">
 <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
 </div>
-</div>
-<div class="p-6 bg-blue-50 border border-blue-100 rounded-xl mb-8">
-<h4 class="text-lg font-bold text-blue-900 mb-2">Learning Objectives &amp; Prerequisites</h4>
-<ul class="list-disc list-inside text-blue-800 space-y-1 mb-4">
-<li><strong>Prerequisites:</strong> Complete Quality Control Fundamentals, command-line basics, and understand paired-end reads and assemblies.</li>
-<li><strong>Objective:</strong> Plan a metagenomic assembly workflow, map reads back to contigs, and interpret coverage and assembly-quality evidence.</li>
-<li><strong>Expected Output:</strong> An assembly-and-mapping report that records input reads, assembler settings, mapping rate, coverage, and quality limitations.</li>
+</div><h2>Learning objectives and prerequisites</h2>
+<p><strong>Learning objectives</strong></p>
+<ul>
+<li>Design and execute a basic metagenomic assembly pipeline using metaSPAdes (SPAdes metagenome mode).</li>
+<li>Remove host-derived reads (host screening) and retain non-host paired reads for assembly.</li>
+<li>Map reads back to assembled contigs with BWA (Burrows–Wheeler Aligner) and summarize support with Samtools.</li>
+<li>Interpret coverage patterns and assembly support; identify likely assembly artefacts and next steps.</li>
 </ul>
-</div>
-<h2>Metagenomics: Assembly and Mapping</h2>
-<h2>Introduction to Metagenomics</h2>
-<p>Metagenomics is the study of genetic material recovered directly from environmental or clinical samples. Unlike traditional genomics, which sequences a single cultured organism, metagenomics sequences the entire community (the microbiome) simultaneously.</p>
-<p>This tutorial covers a standard shotgun metagenomics workflow: assembling short reads into longer contigs using <strong>SPAdes</strong>mapping reads to a reference genome (such as Human) using <strong>BWA</strong>and visualizing the alignment with <strong>IGV</strong></p>
-<hr/>
-<h2>1. Remove Host Reads Before Assembly</h2>
-<p>When a clinical or host-associated metagenome may contain human DNA, remove host-mapping read pairs <strong>before</strong> assembly. This protects privacy, reduces non-microbial assembly content, and keeps downstream interpretation focused on the microbial fraction. For environmental samples without a host component, document why this step is not required.</p>
-<blockquote>
-<p><strong>Privacy &amp; ethics note:</strong> Human-mapping reads shouldn't be uploaded to public repositories or assembled as microbial contigs without the appropriate governance and institutional approvals.</p>
-</blockquote>
-<h3>Step 1.1: Prepare and index the host reference</h3>
-<pre><code class="language-bash"># Download a documented reference build, then preserve the URL and checksum in your project manifest.
-curl -L -o GRCh38.fa.gz "https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/001/405/GCF_000001405.40_GRCh38.p14/GCF_000001405.40_GRCh38.p14_genomic.fna.gz"
-gunzip GRCh38.fa.gz
-bwa index GRCh38.fa
-</code></pre>
-<h3>Step 1.2: Map reads and retain read pairs that don't map to the host</h3>
-<pre><code class="language-bash"># Keep the alignment for an auditable host-removal summary.
-bwa mem -t 8 GRCh38.fa sample_R1.fastq.gz sample_R2.fastq.gz   | samtools sort -o host_screened.bam
-samtools index host_screened.bam
+<p><strong>Prerequisites</strong></p>
+<ul>
+<li>Familiarity with the Unix command line (basic navigation, pipes, and redirection).</li>
+<li>Basic knowledge of paired-end sequencing and FASTQ format.</li>
+<li>Completion of a read quality-control tutorial (trimming, adapter removal) so that inputs are cleaned reads: sample_R1.fastq.gz and sample_R2.fastq.gz.</li>
+<li>Installed tools (recommended via conda/mamba): spades (includes metaSPAdes), bwa, samtools, and optionally igv (for visualization).</li>
+</ul>
+<h2>Why assembly and mapping matter in metagenomics</h2>
+<p>Shotgun metagenomics sequences DNA from an entire microbial community. Reads are short fragments (commonly 100–300 base pairs) sampled from many genomes at highly variable abundances. Two complementary operations are central to many analyses:</p>
+<ul>
+<li><strong>De novo assembly</strong> reconstructs contiguous sequences (contigs) from reads without using a single reference. Assemblies can reveal novel genes, genome fragments, and help bin genomes.</li>
+<li><strong>Read mapping back to contigs</strong> evaluates how well the observed reads support the assembled contigs. Mapping provides per-contig coverage, helps detect chimeric contigs, and quantifies abundance.</li>
+</ul>
+<p>Proper host read removal is often essential for host-associated samples (for privacy, to save computational resources, and to avoid misassembly driven by dominant host sequences). Mapping reads back to the assembled contigs also provides a reproducible audit trail documenting which contigs are supported by reads.</p>
+<h2>Inputs and assumptions</h2>
+<p>This workflow assumes you have these files in your working directory:</p>
+<ul>
+<li><code>sample_R1.fastq.gz</code> — forward reads (paired-end)</li>
+<li><code>sample_R2.fastq.gz</code> — reverse reads (paired-end)</li>
+<li>For host removal (if applicable): a host reference FASTA, named <code>host_ref.fa</code>. Preserve the source URL and checksum in your project manifest.</li>
+</ul>
+<p>All commands below use explicit input and output paths. Adjust thread (<code>-t</code>/<code>-@</code>) and memory parameters for your environment. Do not run destructive commands (like <code>rm</code>) here; if you choose to remove files, do so intentionally and after confirming paths.</p>
+<h2>Reproducible sequential workflow</h2>
+<h3>1. Prepare tools (example using mamba/conda)</h3>
+<pre><code># Create or activate a conda environment, then install tools
+mamba create -n metaenv -y python=3.11 spades bwa samtools igv -c conda-forge -c bioconda
+mamba activate metaenv
 
-# Extract pairs for which both mates are unmapped, then convert them back to paired FASTQ.
-samtools view -b -f 12 -F 256 host_screened.bam   | samtools sort -n -o nonhost.name_sorted.bam
-samtools fastq -n   -1 microbial_R1.fastq.gz   -2 microbial_R2.fastq.gz   -0 /dev/null -s /dev/null   nonhost.name_sorted.bam
+# Verify versions (record them for reproducibility)
+spades.py --version
+bwa
+samtools --version
 </code></pre>
-<p>Record the total read pairs before and after host screening. A non-empty <code>microbial_R1.fastq.gz</code> and matching <code>microbial_R2.fastq.gz</code> are the inputs for the assembly step.</p>
-<hr/>
-<h2>2. De Novo Assembly using metaSPAdes</h2>
-<p>When you sequence a metagenome, you get millions of short reads (e.g., 150bp from Illumina). <strong>De novo assembly</strong> pieces these short reads together into longer contiguous sequences (contigs) without needing a reference genome.</p>
-<p><strong>metaSPAdes</strong> is a specialized module within the SPAdes assembler designed specifically to handle the uneven coverage and complex strain variation found in metagenomic data.</p>
-<h3>Installation and Execution</h3>
-<pre><code class="language-bash"># Install SPAdes via Mamba
-mamba install -c bioconda spades
+<p>Record the exact versions printed by these commands in your project manifest for future reference.</p>
+<h3>2. Host read removal (optional but recommended for host-associated samples)</h3>
+<p>Purpose: remove read pairs where either mate maps to the host to protect privacy and reduce downstream misassembly.</p>
+<pre><code># 2.1 Download a trusted host reference and verify
+curl -L -o host_ref.fa.gz "https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/001/405/GCF_000001405.40_GRCh38.p14/GCF_000001405.40_GRCh38.p14_genomic.fna.gz"
+sha256sum host_ref.fa.gz  # copy the checksum into your manifest
+gunzip host_ref.fa.gz
+# Now host_ref.fa is present (document its URL and checksum)
 
-# Run metaSPAdes with paired-end reads
+# 2.2 Index the host reference for BWA
+bwa index host_ref.fa
+
+# 2.3 Map reads to host and save alignments (sorted BAM)
+bwa mem -t 8 host_ref.fa sample_R1.fastq.gz sample_R2.fastq.gz \
+  | samtools sort -@ 4 -o host_mapped.bam
+
+samtools index host_mapped.bam
+
+# 2.4 Extract read pairs where both mates are unmapped (retain proper pairing)
+# -f 12 keeps reads where both mates are unmapped; -F 256 excludes secondary alignments.
+samtools view -b -f 12 -F 256 host_mapped.bam \
+  | samtools sort -n -@ 4 -o nonhost.name_sorted.bam
+
+# 2.5 Convert name-sorted BAM back to paired FASTQ
+samtools fastq -n \
+  -1 microbial_R1.fastq.gz \
+  -2 microbial_R2.fastq.gz \
+  -0 /dev/null -s /dev/null \
+  nonhost.name_sorted.bam
+
+# Record read counts before/after:
+samtools view -c -f 1 sample_mapped.bam || true  # (if you had a pre-existing BAM)
+# Alternatively, count FASTQ reads:
+zcat sample_R1.fastq.gz | echo $((`wc -l`/4))  # approximate pairs before
+zcat microbial_R1.fastq.gz | echo $((`wc -l`/4))  # after
+</code></pre>
+<p>What these commands produce:</p>
+<ul>
+<li><code>host_mapped.bam</code> — primary alignment file for host mapping (sorted).</li>
+<li><code>nonhost.name_sorted.bam</code> — name-sorted BAM of read pairs where both mates were unmapped.</li>
+<li><code>microbial_R1.fastq.gz</code> and <code>microbial_R2.fastq.gz</code> — paired FASTQ files of putatively non-host reads, to use for assembly.</li>
+</ul>
+<p>Notes: if your sample is environmental and unlikely to contain host DNA, document the reasoning if you skip host removal.</p>
+<h3>3. De novo metagenomic assembly with metaSPAdes</h3>
+<p>metaSPAdes is a SPAdes mode tuned for metagenomes; it attempts to manage uneven coverage and strain variation. Provide cleaned, host-filtered paired reads as input.</p>
+<pre><code># Run metaSPAdes
 spades.py --meta \
-          -1 sample_R1.fastq.gz \
-          -2 sample_R2.fastq.gz \
-          -o spades_output/ \
-          -t 16 \
-          -m 64
-</code></pre>
-<ul>
-<li><code>--meta</code>Activates the metagenome-specific algorithm.</li>
-<li><code>-t 16</code>Uses 16 CPU threads.</li>
-<li><code>-m 64</code>Allocates 64GB of RAM.</li>
-</ul>
-<p>The most important output file will be <code>spades_output/contigs.fasta</code>which contains your assembled metagenome.</p>
-<hr/>
-<h2>3. Map the Microbial Reads Back to the Assembled Contigs</h2>
-<p>Mapping the screened reads back to <code>contigs.fasta</code> checks which contigs are supported by the observed reads and helps identify uneven coverage.</p>
-<pre><code class="language-bash"># Assemble only the non-host read pairs
-mamba install -c conda-forge -c bioconda spades samtools bwa
-spades.py --meta   -1 microbial_R1.fastq.gz   -2 microbial_R2.fastq.gz   -o spades_output/   -t 16   -m 64
+  -1 microbial_R1.fastq.gz \
+  -2 microbial_R2.fastq.gz \
+  -o spades_output \
+  -t 16 -m 64
 
-# Map the microbial reads back to assembled contigs
-bwa index spades_output/contigs.fasta
-bwa mem -t 8 spades_output/contigs.fasta microbial_R1.fastq.gz microbial_R2.fastq.gz   | samtools sort -o reads_to_contigs.bam
-samtools index reads_to_contigs.bam
-samtools flagstat reads_to_contigs.bam
-samtools depth -a reads_to_contigs.bam &gt; contig_depth.tsv
+# Important output files in spades_output/:
+# - contigs.fasta       : assembled contigs (primary file to inspect)
+# - scaffolds.fasta     : scaffolded sequences (if scaffolding ran)
+# - spades.log          : logging and assembly parameters
+# - params.txt          : parameters used (record this)
 </code></pre>
-<p>The key deliverables are <code>spades_output/contigs.fasta</code>the mapping summary from <code>samtools flagstat</code>and <code>contig_depth.tsv</code>Interpret low-support contigs cautiously, especially in uneven communities.</p>
-<hr/>
-<h2>4. Visualization with IGV</h2>
-<p>The <strong>Integrative Genomics Viewer (IGV)</strong> is an interactive tool for exploring large, integrated genomic datasets. It allows you to visually inspect how your reads aligned to the reference genome.</p>
-<h3>How to use IGV</h3>
-<ol>
-<li><strong>Download IGV:</strong> Install the desktop application from the Broad Institute website.</li>
-<li><strong>Load the Genome:</strong> Go to <code>Genomes &gt; Load Genome from File</code> and select your <code>GRCh38.fasta</code></li>
-<li><strong>Load the Data:</strong> Go to <code>File &gt; Load from File</code> and select your <code>aligned_reads_sorted.bam</code>(Ensure the <code>.bam.bai</code> index file is in the same directory).</li>
-<li><strong>Explore:</strong> Type a gene name or genomic coordinate in the search bar.</li>
-</ol>
-<h3>What to Look For</h3>
+<p>Be explicit about output: <code>spades_output/contigs.fasta</code> is the main assembled sequence file to use for downstream mapping and binning. Keep the contents of <code>spades_output/params.txt</code> with your project record.</p>
+<h3>4. Map reads back to assembled contigs</h3>
+<p>Mapping reads back to contigs quantifies support per contig and reveals coverage variation that may indicate assembly errors or multiple strains.</p>
+<pre><code># 4.1 Index assembled contigs for BWA
+bwa index spades_output/contigs.fasta
+
+# 4.2 Map the same non-host reads to contigs
+bwa mem -t 8 spades_output/contigs.fasta microbial_R1.fastq.gz microbial_R2.fastq.gz \
+  | samtools sort -@ 4 -o reads_to_contigs.bam
+
+samtools index reads_to_contigs.bam
+
+# 4.3 Summaries: overall mapping stats and per-contig depth
+samtools flagstat reads_to_contigs.bam &gt; reads_to_contigs.flagstat.txt
+samtools idxstats reads_to_contigs.bam &gt; reads_to_contigs.idxstats.txt
+
+# Per-base depth across contigs (tab-delimited: contig, position, depth)
+samtools depth -a reads_to_contigs.bam &gt; contig_depth.tsv
+
+# Per-contig average coverage (simple awk-based aggregation)
+awk '{cov[$1]+= $3; len[$1]++} END{for(c in cov) print c, cov[c]/len[c]}' contig_depth.tsv \
+  &gt; contig_mean_coverage.tsv
+</code></pre>
+<p>Files produced:</p>
 <ul>
-<li><strong>Coverage depth:</strong> The gray bar chart at the top shows how many reads cover a specific base.</li>
-<li><strong>SNPs/Variants:</strong> If a read differs from the reference genome, IGV highlights the mismatch in color (A=green, T=red, C=blue, G=orange).</li>
-<li><strong>Insertions/Deletions:</strong> Look for purple <code>I</code> symbols (insertions) or black horizontal lines within a read (deletions).</li>
+<li><code>reads_to_contigs.bam</code> — sorted BAM of alignments of reads to contigs.</li>
+<li><code>reads_to_contigs.flagstat.txt</code> — mapping summary (percent mapped, paired reads, etc.).</li>
+<li><code>contig_depth.tsv</code> — base-level depth across all contigs (can be large).</li>
+<li><code>contig_mean_coverage.tsv</code> — per-contig mean coverage estimate (simple average).</li>
 </ul>
-<p>By mastering SPAdes, BWA, and IGV, you establish the foundation for any solid genomics or metagenomics pipeline.</p>
-<div class="mt-10 p-8 bg-gray-50 border border-gray-200 rounded-xl">
-<h3 class="text-xl font-bold text-gray-900 mb-4">Knowledge Check &amp; Assessment</h3>
-<div class="space-y-4">
-<div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-<h4 class="font-bold text-gray-800 mb-2">1. Concept Verification</h4>
-<p class="text-gray-600 text-sm">Why is read mapping back to assembled contigs important before interpreting a metagenomic assembly?</p>
-</div>
-<div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-<h4 class="font-bold text-gray-800 mb-2">2. Practical Execution</h4>
-<p class="text-gray-600 text-sm">Run a small test assembly or inspect supplied contigs, then map reads and summarize mapping rate and per-contig coverage. </p>
-</div>
-<div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-<h4 class="font-bold text-gray-800 mb-2">3. Troubleshooting</h4>
-<p class="text-gray-600 text-sm">If assembly quality is poor, how will you investigate read quality, contamination, sequencing depth, k-mer settings, and uneven community abundance?</p>
-</div>
-</div>
-</div>
-<section aria-label="References and further reading" class="mt-10 p-6 bg-slate-50 border border-slate-200 rounded-xl">
-<h2 class="text-xl font-bold text-gray-900 mb-3">References and further reading</h2>
-<p class="text-sm text-gray-600 mb-3">Use these official resources to check current software behaviour, terminology, and production guidance. Tool versions and defaults change, so verify commands against the documentation before applying them to a research dataset.</p>
-<ul class="list-disc list-inside space-y-2 text-sm text-gray-700">
-<li><a class="text-blue-700 hover:underline" href="https://www.ncbi.nlm.nih.gov/genome/" rel="noopener" target="_blank">NCBI Genome and metagenome resources</a></li>
-<li><a class="text-blue-700 hover:underline" href="https://www.ebi.ac.uk/metagenomics/" rel="noopener" target="_blank">EMBL-EBI metagenomics resources</a></li>
+<h3>5. Visualize assemblies (optional but recommended)</h3>
+<p>IGV (Integrative Genomics Viewer) can display BAM alignments against the contig FASTA. Prepare an IGV session or use the desktop app to load:</p>
+<ul>
+<li>Reference: <code>spades_output/contigs.fasta</code> (ensure it is indexed by the IGV/FAI index function: <code>samtools faidx</code>).</li>
+<li>Alignment: <code>reads_to_contigs.bam</code> and its index <code>reads_to_contigs.bam.bai</code>.</li>
 </ul>
-</section>
+<pre><code># Create FASTA index for contigs (IGV and samtools need it)
+samtools faidx spades_output/contigs.fasta
+# Launch IGV (if installed locally)
+# igv.sh or igv depends on your platform; alternatively export the files for local visualization.
+</code></pre>
+<h2>Output inspection and interpretation</h2>
+<p>After running the mapping, inspect these key files:</p>
+<ul>
+<li><code>reads_to_contigs.flagstat.txt</code>: reports the total number of reads aligned, fraction mapped, and properly paired reads. High mapping percentage to contigs suggests the assembly captured many reads; low mapping percentage indicates many reads did not assemble into contigs (common in very complex or low-depth samples).</li>
+<li><code>contig_mean_coverage.tsv</code>: per-contig average coverage. Contigs with extremely low average coverage (for example, average &lt;5x depending on read length and sample complexity) are weaker evidence and more likely to be assembly artefacts.</li>
+<li><code>contig_depth.tsv</code>: used to inspect coverage variation along a contig. Sharp drops or abrupt changes can indicate chimeric joins or misassemblies.</li>
+<li><code>spades_output/contigs.fasta</code>: inspect top contigs for length distribution. Many short contigs (&lt;500 bp) are common in metagenomes and may be less informative.</li>
+</ul>
+<p>What a plausible result means (examples of interpretation):</p>
+<ul>
+<li>Contigs with consistent, even coverage and a substantial length (e.g., several kilobases) are more likely to represent true genomic sequence from a medium- to high-abundance organism.</li>
+<li>Contigs with very high coverage spikes may derive from highly conserved sequences (e.g., rRNA, mobile elements) or collapsed repeats; treat these carefully.</li>
+<li>Contigs supported by few or single paired reads at junctions are suspect; inspect paired-read orientation and insert sizes in IGV to detect misjoins.</li>
+</ul>
+<p>What the mapping does NOT prove:</p>
+<ul>
+<li>Read mapping does not guarantee the contig is a complete or correctly binned genome—it only shows reads align to that sequence.</li>
+<li>High coverage alone does not confirm correct assembly of repeats or strain-resolved sequences—complex strain mixtures can collapse into a single consensus contig.</li>
+<li>Absence of mapping for some reads may be due to low complexity regions, contaminants, or sequences too divergent to assemble, not necessarily a failed experiment.</li>
+</ul>
+<h2>Troubleshooting</h2>
+<p>Symptom: Very low fraction of reads map back to contigs (flagstat shows low mapped percentage).</p>
+<ul>
+<li>Likely causes:
+    <ul>
+<li>Insufficient sequencing depth for the community complexity.</li>
+<li>Excessive filtering or accidental trimming losses prior to assembly.</li>
+<li>Large fraction of host reads remained or were erroneously removed.</li>
+</ul>
+</li>
+<li>Fixes:
+    <ul>
+<li>Confirm pre-assembly read counts and compare with post-screening counts. Re-run host-screening with different alignment stringency if needed.</li>
+<li>Consider co-assembling multiple related samples if appropriate to boost coverage of rare members (but document the approach clearly).</li>
+<li>Evaluate alternative assemblers or adjust k-mer sizes in SPAdes (see SPAdes documentation for advanced tuning).</li>
+</ul>
+</li>
+</ul>
+<p>Symptom: Many short contigs and few long contigs.</p>
+<ul>
+<li>Likely causes:
+    <ul>
+<li>High community complexity and low per-genome coverage.</li>
+<li>Conservative assembler settings or aggressive read trimming.</li>
+</ul>
+</li>
+<li>Fixes:
+    <ul>
+<li>Increase sequencing depth or enrich target organisms if possible.</li>
+<li>Adjust SPAdes parameters: try different k-mer sizes (SPAdes picks defaults, but explicit k values can help), or try alternative assemblers specialized for low-coverage metagenomes.</li>
+</ul>
+</li>
+</ul>
+<p>Symptom: Contigs show abrupt coverage changes or conflicting paired-read orientations in IGV.</p>
+<ul>
+<li>Likely causes: chimeric assemblies or misjoins (e.g., assembler joined sequences from different strains/genomes).</li>
+<li>Fixes:
+    <ul>
+<li>Split suspect contigs at low-coverage regions or re-assemble with stricter parameters.</li>
+<li>Use long-read sequencing or proximity ligation (Hi-C) data if available to disambiguate structural joins.</li>
+</ul>
+</li>
+</ul>
+<h2>Limitations, caveats, and responsible use</h2>
+<p>Limitations and caveats:</p>
+<ul>
+<li>Assemblies from short-read metagenomes frequently collapse closely related strains into consensus contigs; strain resolution is limited without long reads or linked-read data.</li>
+<li>metaSPAdes performs well on many datasets but can be resource intensive; monitor memory and CPU usage and save logs and <code>params.txt</code> for reproducibility.</li>
+<li>Host removal relies on the quality and completeness of the host reference. If the host reference is incomplete, some host-derived reads may persist in the microbial dataset and cause spurious contigs.</li>
+</ul>
+<p>Responsible-use notes:</p>
+<ul>
+<li>For human-derived samples, do not upload raw reads or assembled contigs containing human sequences to public repositories without clear approvals and appropriate consent. Maintain a manifest recording host-reference sources and checksums.</li>
+<li>Document every major step (commands, versions, input file checksums) in a project log so results can be audited and reproduced.</li>
+</ul>
+<h2>Next-step checklist</h2>
+<ul>
+<li>Save the following in a results directory and your project manifest:
+    <ul>
+<li><code>spades_output/contigs.fasta</code></li>
+<li><code>reads_to_contigs.bam</code>, <code>reads_to_contigs.bam.bai</code></li>
+<li><code>reads_to_contigs.flagstat.txt</code>, <code>contig_mean_coverage.tsv</code></li>
+<li>Tool version outputs and host reference URL/checksum</li>
+</ul>
+</li>
+<li>Inspect contigs with high and low coverage in IGV to validate suspicious joins.</li>
+<li>Consider downstream analyses: binning (e.g., with MetaBAT, MaxBin), taxonomic classification (e.g., with Kraken2, Kaiju), and functional annotation (e.g., Prokka, eggNOG mapper).</li>
+<li>If necessary, iterate: refine host-screening thresholds, adjust SPAdes k-mer choices, or incorporate long-read data to resolve ambiguity.</li>
+</ul>
+<h2>References</h2>
+<ul>
+<li><a href="https://github.com/ablab/spades">SPAdes homepage and documentation</a></li>
+<li><a href="http://bio-bwa.sourceforge.net/">BWA: Burrows–Wheeler Aligner documentation</a></li>
+<li><a href="http://www.htslib.org/doc/samtools.html">Samtools documentation (HTSlib)</a></li>
+<li><a href="https://software.broadinstitute.org/software/igv/">IGV: Integrative Genomics Viewer</a></li>
+<li><a href="https://www.nature.com/articles/nrmicro2876">Quince et al., Shotgun metagenomics and assembly (review)</a>
+</li>
+</ul>
 </article>
 <section class="mt-12 mb-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-100">
 <div class="flex items-start gap-4">

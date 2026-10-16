@@ -138,123 +138,138 @@ function toggleMobileMenu() {
 <div class="flex items-center gap-1">
 <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
 </div>
-</div>
-<div class="p-6 bg-blue-50 border border-blue-100 rounded-xl mb-8">
-<h4 class="text-lg font-bold text-blue-900 mb-2">Learning Objectives &amp; Prerequisites</h4>
-<ul class="list-disc list-inside text-blue-800 space-y-1 mb-4">
-<li><strong>Prerequisites:</strong> Complete Basic Navigation and obtain cluster hostname, username, authentication method, and local terminal access from your institution.</li>
-<li><strong>Objective:</strong> Connect securely to an HPC cluster with SSH, transfer files appropriately, and distinguish local from remote paths.</li>
-<li><strong>Expected Output:</strong> A documented SSH configuration and a successful login to the assigned cluster without exposing credentials.</li>
-</ul>
-</div>
-<h2>Connecting with SSH (Windows)</h2>
-<h2>Windows</h2>
-<p>Download and install <a href="https://mobaxterm.mobatek.net/download.html">MobaXterm</a></p>
-<h3>Generating a pair of keys</h3>
-<p>Run MobaXterm, click on <code>Start local terminal</code>and execute the following command:</p>
-<pre><code class="language-bash">ssh-keygen -t rsa -f my_hpc_key
-</code></pre>
-<p>This command will prompt you for a <em>passphrase</em> twice and create two files: <code>my_hpc_key</code> (the private key) and <code>my_hpc_key.pub</code> (the public key). Keep both files in a protected local folder such as <code>C:\Users\XXX\Documents\MobaXterm\home\</code> (replace <code>XXX</code> with your user name).</p>
-<h3>What to do with the keys</h3>
-<blockquote>
-<p><strong>Security rule:</strong> Keep <code>my_hpc_key</code> on your local computer. Never email it, upload it to cloud storage, commit it to Git, or copy it to the cluster or another remote host. The cluster administrator authorizes the matching <strong>public</strong> key (<code>my_hpc_key.pub</code>) in your account, usually in <code>~/.ssh/authorized_keys</code></p>
-</blockquote>
-<p>When connecting from another trusted personal computer, create a separate local key pair for that device and ask the administrator to add that device's public key. Use the private key only in the SSH client running on the computer you control.</p>
-<h3>Connecting with SSH</h3>
-<p>If you want to run graphical applications from outside the university's network, or if you prefer a graphical desktop, refer to the <a href="#connecting-with-nx">Connecting with NX</a> section.</p>
-<h4>From inside the university's network</h4>
-<p>In the MobaXterm window:</p>
+</div><h2>Learning objectives and prerequisites</h2>
+<p><strong>Objectives:</strong> After completing this lesson you will be able to securely connect to a remote high-performance computing (HPC) cluster using SSH (Secure Shell), configure an SSH client on Windows and macOS/Linux, transfer files safely, and distinguish local versus remote paths. You will also be able to set up graphical access via an X/remote-desktop mechanism when permitted by your institution.</p>
+<p><strong>Prerequisites:</strong> Basic familiarity with a command line (terminal), an account on the target HPC system (hostname and username), and the authentication method required by your system administrator (password, SSH public-key, or MFA). For macOS/Linux you need a local terminal application. For Windows, this lesson assumes you will use MobaXterm (recommended) or an equivalent SSH client. If you will access the cluster from off-campus, obtain network/VPN access instructions from your institution before continuing.</p>
+<h2>Why secure cluster access matters for computational biology</h2>
+<p>Bioinformatics workflows routinely process sensitive data (human genomics, patient metadata, unpublished results) and require large-scale compute resources. Secure, reproducible remote access separates local experimental workstations from analysis environments and enforces institutional policies for data protection, auditing, and resource sharing. Using SSH keys (public-key authentication) and configuring clients consistently reduces the likelihood of credential leakage, prevents accidental operations on the wrong machine, and makes automated, scriptable workflows possible for reproducible analyses.</p>
+<h2>Step-by-step reproducible workflow</h2>
+<p>The following steps show recommended practices for creating keys, configuring clients, connecting, and transferring files. Replace the example hostnames, usernames, and file names with values your administrator provided.</p>
+<h3>Files you will create or need</h3>
 <ul>
-<li>Click on <code>Session</code> (upper left corner), then <code>SSH</code></li>
-<li>Fill the <code>Remote Host</code> field with <code>hpc.example.edu</code> (replace with your institution's HPC address).</li>
-<li>Tick the <code>Specify username</code> box and enter the login name provided by the administrator.</li>
-<li>In the <code>Advanced SSH settings</code> tab, tick the <code>Use private key</code> box and set its location to your private key file.</li>
-<li>Click <code>OK</code></li>
-<li>A new session should appear in the left panel; double-click it to connect.</li>
+<li>Local private key file (example: <code>~/.ssh/my_hpc_key</code> or <code>C:\Users\YOU\.ssh\my_hpc_key</code>) — keep this private.</li>
+<li>Local public key file (example: <code>~/.ssh/my_hpc_key.pub</code>) — you will give this to the cluster admin.</li>
+<li>Optional local SSH config (example: <code>~/.ssh/config</code>) to store host aliases and options.</li>
+<li>Data files you intend to copy (e.g., <code>~/sequencing/sample1.fastq.gz</code>) — keep local/remote paths explicit in commands.</li>
 </ul>
-<p><img alt="ssh" src="../images/ssh.webp"/></p>
-<h4>From outside the university's network</h4>
-<p>Once connected via VPN, refer to the instructions in the "From inside the university's network" section above to establish your SSH connection.</p>
-<h3>File transfer</h3>
-<p>Once connected with MobaXterm, you can easily transfer files by dragging and dropping them in the left panel.</p>
-<h2 id="connecting-with-ssh">Connecting with SSH (Linux / Mac)</h2>
-<p>If you want to run graphical applications from outside the university's network, or if you prefer a graphical desktop over the console, refer to the <a href="#connecting-with-nx">Connecting with NX</a> section.</p>
-<h3>From inside the university's network</h3>
-<p>Add the following lines to your <code>~/.ssh/config</code> file. Replace <code>your_username</code> with the login name provided by the administrator:</p>
-<pre><code>Host hpc_alias
-        Hostname hpc.example.edu
-        User your_username
-        IdentityFile ~/.ssh/my_hpc_key
+<h3>1) Generate an SSH key pair (macOS / Linux)</h3>
+<p>On macOS or Linux open your terminal, then run:</p>
+<pre><code>mkdir -p ~/.ssh
+chmod 700 ~/.ssh
+ssh-keygen -t ed25519 -f ~/.ssh/my_hpc_key -C "yourname@example.edu"
 </code></pre>
-<p><strong>Explanation:</strong>
-* <code>Host hpc_alias</code>This line defines an alias (<code>hpc_alias</code>). The options that follow this line will only be applied when <code>ssh</code> recognizes this alias.
-* <code>Hostname hpc.example.edu</code>Specifies the address of the remote host.
-* <code>User your_username</code>Defines the username to use for the connection.
-* <code>IdentityFile ~/.ssh/my_hpc_key</code>Tells <code>ssh</code> to use the specified private key for authentication.</p>
-<p>With this configuration, you can connect using:</p>
-<pre><code class="language-bash">ssh hpc_alias
-</code></pre>
-<p><strong>Important</strong>The following command will <strong>not</strong> work as expected because the <code>IdentityFile</code> option won't be used:</p>
-<pre><code class="language-bash">ssh your_username@hpc.example.edu
-</code></pre>
-<p>The alias <code>hpc_alias</code> can be changed to any name you prefer.</p>
-<h3 id="from-outside-the-universitys-network">From outside the university's network</h3>
-<p>To connect from outside the university's network, you must first request VPN access from the network administrator. Once granted, follow the instructions provided by the administrator.</p>
-<p>Alternatively, if you prefer not to use a graphical VPN client (like <code>gnome</code> or <code>network-manager</code>), you can:</p>
+<p>What these commands do:</p>
 <ul>
-<li>Install <code>openvpn</code></li>
-<li>Download the configuration files from the provided address.</li>
-<li>Extract the archive and navigate into the directory.</li>
-<li>
-<p>With root privileges, run:</p>
-<p><code>bash
-openvpn vpn-univ-TCP-443.ovpn</code></p>
-</li>
+<li><code>mkdir</code> and <code>chmod</code> ensure your <code>~/.ssh</code> directory is present and private.</li>
+<li><code>ssh-keygen</code> creates an Ed25519 key pair (preferred over old RSA). The file <code>~/.ssh/my_hpc_key</code> is the private key and <code>~/.ssh/my_hpc_key.pub</code> is the public key.</li>
 </ul>
-<p>Once connected via VPN, refer to the instructions in the "From inside the university's network" section above to establish your SSH connection.</p>
-<h2 id="connecting-with-nx">Connecting with NX</h2>
-<p>Install <a href="https://wiki.x2go.org/doku.php/doc:installation:x2goclient">x2goclient</a> It may be available as a package for your Linux/Mac distribution, or you can download it (also for Windows) from the provided link.</p>
-<p>To set up a new session:</p>
+<p>When prompted, you may set a passphrase. A passphrase encrypts your private key on disk and is recommended; you will enter it when using the key unless you configure an agent.</p>
+<h3>2) Generate a key pair (Windows with MobaXterm)</h3>
+<p>Install MobaXterm from the official site if required (see References). In MobaXterm's terminal run:</p>
+<pre><code>mkdir -p "%USERPROFILE%\.ssh"
+ssh-keygen -t ed25519 -f "%USERPROFILE%\.ssh\my_hpc_key" -C "yourname@example.edu"
+</code></pre>
+<p>Save the generated files in your user SSH folder and protect them with file permissions (MobaXterm manages Windows permissions for its environment). Do not email the private key or store it in public cloud storage.</p>
+<h3>3) Provide the public key to your administrator</h3>
+<p>Send only the public key file (<code>my_hpc_key.pub</code>) to the cluster administrator through the institution’s approved channel (ticket system, secure web form, or helpdesk). The administrator will add it to your account on the cluster (usually to <code>~/.ssh/authorized_keys</code> in your home directory on the cluster).</p>
+<h3>4) Configure a local SSH client (recommended)</h3>
+<p>Create or edit <code>~/.ssh/config</code> (on Windows, your SSH config may live in <code>%USERPROFILE%\.ssh\config</code>). A minimal entry:</p>
+<pre><code>Host myhpc
+    HostName hpc.example.edu
+    User your_username
+    IdentityFile ~/.ssh/my_hpc_key
+    ServerAliveInterval 60
+</code></pre>
+<p>What this does:</p>
 <ul>
-<li>Click on <code>Session</code>then <code>New session…</code></li>
-<li>Optionally, change the <code>Session name</code></li>
-<li>Enter <code>hpc.example.edu</code> in the <code>Host</code> field.</li>
-<li>Fill in the <code>Login</code> field with your username.</li>
-<li>Set the location of your private key in the <code>Use RSA/DSA key for ssh connection</code> field.</li>
-<li>In the <code>Session type</code> box, choose either:<ul>
-<li><code>XFCE</code> for a graphical desktop environment.</li>
-<li><code>Single application</code>then <code>Terminal</code> from the right drop-down menu for a terminal session.</li>
+<li><code>Host myhpc</code> creates a short alias so you can run <code>ssh myhpc</code>.</li>
+<li><code>HostName</code> is the cluster’s public DNS or IP address.</li>
+<li><code>User</code> supplies your cluster username automatically.</li>
+<li><code>IdentityFile</code> points to your private key.</li>
+<li><code>ServerAliveInterval</code> helps detect broken connections and avoid idle timeouts.</li>
 </ul>
-</li>
-<li>Click <code>Ok</code>The session should appear in the right panel. Click on it to connect.</li>
+<h3>5) Connect to the cluster</h3>
+<p>From macOS/Linux terminal (after adding the key to the admin’s authorized_keys):</p>
+<pre><code>ssh myhpc
+# or if you prefer explicit:
+ssh -i ~/.ssh/my_hpc_key your_username@hpc.example.edu
+</code></pre>
+<p>From Windows with MobaXterm: create a new SSH session, set the remote host to your cluster hostname, tick "Specify username", set "Advanced SSH settings" → "Use private key" to your private key file, and open the session.</p>
+<p>When you connect, you may be prompted for the key passphrase (if any) and/or a multi-factor authentication (MFA) code depending on your institution’s policy.</p>
+<h3>6) Transfer files securely</h3>
+<p>Use scp (secure copy) or sftp for command-line transfers. Example: copy a local file to your cluster home directory:</p>
+<pre><code>scp -i ~/.ssh/my_hpc_key ~/projects/sample1.fastq.gz your_username@hpc.example.edu:~/projects/
+</code></pre>
+<p>Copy from cluster to local machine:</p>
+<pre><code>scp -i ~/.ssh/my_hpc_key your_username@hpc.example.edu:~/results/alignments.bam ~/projects/results/
+</code></pre>
+<p>If you use MobaXterm, the left-hand panel provides an SFTP file browser for drag-and-drop transfers after an active session is established.</p>
+<h3>7) Optional: use SSH agent to avoid repeated passphrase entry</h3>
+<p>On macOS or Linux you can add your key to an SSH agent for a login session:</p>
+<pre><code>eval "$(ssh-agent -s)"
+ssh-add ~/.ssh/my_hpc_key
+</code></pre>
+<p>On Windows, MobaXterm includes an SSH agent that can load keys for the session. Only use agents on systems you control and trust.</p>
+<h3>8) Running graphical applications (X11 forwarding or remote desktop)</h3>
+<p>Many clusters restrict running graphical sessions. If permitted, prefer the cluster’s recommended methods (X11 forwarding for individual applications or a remote desktop/X2Go session for full desktop). X11 forwarding example:</p>
+<pre><code>ssh -X myhpc
+# Then on the cluster:
+xeyes
+</code></pre>
+<p>Note: X11 forwarding can be slow for full GUIs over the internet. For interactive desktop-like sessions consider X2Go (x2goclient) or the cluster’s provided desktop service; consult your sysadmin for allowed ports and authentication.</p>
+<h2>Output inspection and interpretation</h2>
+<p>When the connection is successful you should see:</p>
+<ul>
+<li>A login banner or shell prompt belonging to the cluster (often includes hostname and your username). Example prompt: <code>username@hpc-node:~$</code>.</li>
+<li>No requests for passwords if public-key authentication and agent are working; instead you may be asked only for the passphrase protecting your key or an MFA code.</li>
+<li>scp or sftp should produce a progress indicator and exit status 0 on successful transfer; no file should be zero-length unless the source was zero-length.</li>
 </ul>
-<p><img alt="X2GO" src="../images/Nx.webp"/></p>
-<p><strong>Important</strong>If you're outside the university's network, you must first connect to the VPN. Refer to the <a href="#from-outside-the-universitys-network">From outside the university’s network</a> section above for VPN instructions.</p>
-<div class="mt-10 p-8 bg-gray-50 border border-gray-200 rounded-xl">
-<h3 class="text-xl font-bold text-gray-900 mb-4">Knowledge Check &amp; Assessment</h3>
-<div class="space-y-4">
-<div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-<h4 class="font-bold text-gray-800 mb-2">1. Concept Verification</h4>
-<p class="text-gray-600 text-sm">What information is needed to establish an SSH connection, and why should passwords or private keys never be shared?</p>
-</div>
-<div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-<h4 class="font-bold text-gray-800 mb-2">2. Practical Execution</h4>
-<p class="text-gray-600 text-sm">Create an SSH config alias for an authorized cluster, log in, run hostname and pwd, then log out safely. </p>
-</div>
-<div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-<h4 class="font-bold text-gray-800 mb-2">3. Troubleshooting</h4>
-<p class="text-gray-600 text-sm">If SSH fails, how will you distinguish an incorrect hostname, network/VPN issue, permissions problem, and authentication failure?</p>
-</div>
-</div>
-</div>
-<section aria-label="References and further reading" class="mt-10 p-6 bg-slate-50 border border-slate-200 rounded-xl">
-<h2 class="text-xl font-bold text-gray-900 mb-3">References and further reading</h2>
-<p class="text-sm text-gray-600 mb-3">Use these official resources to check current software behaviour, terminology, and production guidance. Tool versions and defaults change, so verify commands against the documentation before applying them to a research dataset.</p>
-<ul class="list-disc list-inside space-y-2 text-sm text-gray-700">
-<li><a class="text-blue-700 hover:underline" href="https://slurm.schedmd.com/documentation.html" rel="noopener" target="_blank">Slurm documentation</a></li>
-<li><a class="text-blue-700 hover:underline" href="https://man.openbsd.org/ssh" rel="noopener" target="_blank">OpenSSH manual pages</a></li>
+<p>What success does NOT prove:</p>
+<ul>
+<li>A successful SSH login does not imply you have the correct project allocations or file permissions to read/write any particular dataset. Check group memberships and directory permissions.</li>
+<li>Being able to run a GUI via X11 does not guarantee acceptable performance for large interactive sessions; network latency and bandwidth impose limits.</li>
 </ul>
-</section>
+<h2>Troubleshooting (symptoms, likely causes, and fixes)</h2>
+<h3>Symptom: Connection refused or timed out</h3>
+<ul>
+<li>Likely cause: incorrect hostname, network firewall, or cluster not reachable from your network.</li>
+<li>Fixes: verify the hostname with your admin; try <code>ping hpc.example.edu</code> and <code>ssh -v your_username@hpc.example.edu</code> to see connection-level messages. If off-campus, ensure VPN is active if required.</li>
+</ul>
+<h3>Symptom: Permission denied (publickey)</h3>
+<ul>
+<li>Likely cause: your public key is not installed on the cluster, or the private key file is inaccessible or has wrong permissions.</li>
+<li>Fixes: confirm you gave <code>my_hpc_key.pub</code> to the admin; check local permissions (<code>chmod 600 ~/.ssh/my_hpc_key</code>). Use verbose SSH output <code>ssh -vvv -i ~/.ssh/my_hpc_key your_username@hpc.example.edu</code> to see authentication attempts.</li>
+</ul>
+<h3>Symptom: Asking repeatedly for a password despite having keys</h3>
+<ul>
+<li>Likely cause: SSH client not using the IdentityFile or the server is configured to reject key authentication.</li>
+<li>Fixes: add correct entry in <code>~/.ssh/config</code> or use <code>-i</code> explicitly. Confirm the server allows PubkeyAuthentication in its SSH configuration (ask admin).</li>
+</ul>
+<h3>Symptom: X11 forwarding not showing windows or is empty</h3>
+<ul>
+<li>Likely cause: local X server not running (Windows needs X server; MobaXterm includes one), or SSH session lacks <code>-X</code> or <code>-Y</code> option.</li>
+<li>Fixes: on Linux/macOS, ensure an X server is present (macOS may require XQuartz). Start SSH with <code>ssh -X</code> and verify environment variable <code>$DISPLAY</code> is set on the remote host.</li>
+</ul>
+<h2>Limitations, versions, and responsible-use notes</h2>
+<p>Cryptography and client software evolve. The examples here use Ed25519 keys (recommended over RSA). If your institution enforces RSA with a specific minimum size (e.g., 3072 bits), follow their guidance. Always use supported, up-to-date OpenSSH clients (OpenSSH project) and avoid deprecated algorithms.</p>
+<p>Data governance: do not store sensitive human data on local laptops without encryption or approval. Transfer only data permitted by your institution’s policies. Follow the cluster’s acceptable use policies and job scheduler limits.</p>
+<p>Automated scripts containing private key passphrases or passwords are insecure. If you must run automated jobs that need private SSH access, use dedicated service accounts and short-lived credentials where the institution supports them.</p>
+<h2>Next-step checklist</h2>
+<ul>
+<li>Confirm your administrator has installed your public key into your cluster account.</li>
+<li>Test an SSH login and save a verbose log (<code>ssh -vvv myhpc</code>) for support if needed.</li>
+<li>Transfer a small non-sensitive test file both directions with <code>scp</code> to confirm file transfer works.</li>
+<li>If you need graphical applications, verify which method (X11, X2Go, or institutional desktop service) is allowed and test a minimal GUI.</li>
+<li>Store your private key in a protected location and back up only to an encrypted device; never upload it to public or shared cloud storage.</li>
+</ul>
+<h2>References</h2>
+<ul>
+<li><a href="https://www.openssh.com/">OpenSSH official site (client and server documentation)</a></li>
+<li><a href="https://mobaxterm.mobatek.net/">MobaXterm (Windows SSH and X server)</a></li>
+<li><a href="https://wiki.x2go.org/doku.php">X2Go Project (remote desktop for Linux)</a></li>
+<li><a href="https://openvpn.net/community-resources/how-to/">OpenVPN community how-to</a></li>
+<li><a href="https://www.ssh.com/academy/ssh/config">SSH config reference (ssh.com / SSH Academy)</a></li>
+</ul>
 </article>
 <section class="mt-12 mb-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-100">
 <div class="flex items-start gap-4">

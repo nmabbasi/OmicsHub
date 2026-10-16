@@ -130,10 +130,7 @@ function toggleMobileMenu() {
 <div class="mb-12 rounded-2xl overflow-hidden shadow-lg border border-gray-100">
 <img alt="Python Fundamentals for Bioinformatics" class="w-full aspect-video object-cover" decoding="async" loading="eager" src="../images/python-bioinformatics-workstation.webp"/>
 </div>
-<article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none"><div class="mb-10 text-xl text-gray-600 leading-relaxed">
-<p>Python becomes useful in bioinformatics when it turns repeated manual inspection into a testable program. This lesson teaches a small, practical subset of Python and applies it to sequence records and tabular data.</p>
-</div>
-<div class="flex flex-wrap items-center gap-4 text-xs font-mono text-gray-500 bg-gray-50 p-3 rounded-lg border border-gray-200 mb-6">
+<article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none"><div class="flex flex-wrap items-center gap-4 text-xs font-mono text-gray-500 bg-gray-50 p-3 rounded-lg border border-gray-200 mb-6">
 <div class="flex items-center gap-1">
 <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
 <span><strong>Tested on:</strong> Python 3.11, R 4.3.2, Ubuntu 24.04</span>
@@ -141,204 +138,237 @@ function toggleMobileMenu() {
 <div class="flex items-center gap-1">
 <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
 </div>
-</div>
-<div class="p-6 bg-blue-50 border border-blue-100 rounded-xl mb-8"><h4 class="text-lg font-bold text-blue-900 mb-2">Learning Objectives &amp; Prerequisites</h4><div class="text-blue-800 space-y-2"><p><strong>By the end of this lesson, you should be able to:</strong></p><ul>
-<li>Use variables, lists, dictionaries, loops, functions, and conditions.</li>
-<li>Read text files safely and count simple sequence statistics.</li>
-<li>Use a virtual environment and record package versions.</li>
-<li>Write a small script with a clear input and output.</li>
-</ul><p><strong>Prerequisites:</strong></p><ul>
-<li>Complete <a href="command-line-part1.html">Basic Navigation</a></li>
-<li>Python 3.10 or newer and a text editor.</li>
-</ul><strong class="block mt-2 text-blue-900">Expected Output</strong><p>By the end of this lesson, you should have: <strong>A reproducible Python script that reads a FASTA file, calculates sequence lengths and GC content, and prints the statistics safely handling edge cases.</strong></p></div></div>
-<h2>1. Values and collections</h2>
-<p>Use strings for sequences, lists for ordered records, and dictionaries for keyed metadata.</p>
-<pre><code class="language-python">sequence = "ACGTACGT"
-length = len(sequence)
-gc = (sequence.count("G") + sequence.count("C")) / length
-print(f"length={length}, gc={gc:.2%}")
+</div><h2>Learning objectives and prerequisites</h2>
+<p>By the end of this lesson you will be able to:</p>
+<ul>
+<li>Use Python variables, strings, lists, dictionaries, loops, conditions, and functions for small bioinformatics tasks.</li>
+<li>Read and validate plain-text biological sequence files (FASTA) safely and compute basic statistics: sequence length and GC content.</li>
+<li>Create a reproducible, modular script with a clear input and output path, and run it inside an isolated virtual environment.</li>
+<li>Inspect results and understand what the computed statistics imply — and what they do not.</li>
+</ul>
+<p>Prerequisites:</p>
+<ul>
+<li>Basic familiarity with the command line (cd, ls) and an editor (vim, nano, VS Code).</li>
+<li>Python 3.10 or newer installed. This lesson uses explicit commands for Python 3; adjust to your system's python executable if needed.</li>
+<li>Approximately 30–60 minutes of hands-on time.</li>
+</ul>
+<h2>Why these fundamentals matter for bioinformatics</h2>
+<p>Many bioinformatics workflows reduce to repeated, describable operations on sequence text and tables: parsing files, counting characters, grouping records, filtering rows. Turning manual inspection into a small, testable Python program makes analysis reproducible and inspectable. Learning how to validate input (for example: is this a DNA sequence or corrupted text?) prevents downstream errors and silent misinterpretation. The examples here focus on FASTA sequence files and simple tabular summarization, which map directly to tasks such as quality assessment, quick filtering, and preparing data for downstream tools.</p>
+<h2>Reproducible workflow: create an environment, inspect FASTA, compute stats</h2>
+<p>The workflow below is deliberately small and reproducible. Copy each command into a terminal. All file paths are relative to a project directory; use absolute paths if you prefer.</p>
+<p>Files you should have before starting (create these or replace with your own):</p>
+<ul>
+<li>data/raw/example.fasta — a small FASTA file with one or more sequences. Example content is provided below if you need to create it.</li>
+<li>scripts/compute_fasta_stats.py — the script we will create in this lesson.</li>
+</ul>
+<h3>1. Create a project directory and a tiny example FASTA</h3>
+<pre><code># Make a project folder and create input directories
+mkdir -p ~/projects/python-bioinfo/data/raw ~/projects/python-bioinfo/scripts
+cd ~/projects/python-bioinfo
+
+# Create a small example FASTA if you do not already have one
+cat &gt; data/raw/example.fasta &lt;&lt;'EOF'
+&gt;seq1
+ACGTACGTNNACGT
+&gt;seq2
+acgtacgtacgtacgtacgt
+&gt;seq3
+AGCTTAGC--NNNN
+EOF
+
+# Confirm the file exists and show contents
+ls -l data/raw/example.fasta
+cat data/raw/example.fasta
 </code></pre>
-<h2>2. Functions and validation</h2>
-<p>Functions make repeated operations testable. Validate input before calculating a result.</p>
-<pre><code class="language-python">def gc_fraction(sequence):
-    seq = sequence.strip().upper()
-    if not seq or any(base not in "ACGTN" for base in seq):
-        raise ValueError("Expected a DNA sequence")
-    return (seq.count("G") + seq.count("C")) / len(seq)
-</code></pre>
-<h2>3. Read a small FASTA file</h2>
-<p>For production work use a tested parser such as Biopython, but a simple parser is useful for understanding the format.</p>
-<pre><code class="language-python">def fasta_records(path):
-    name, seq = None, []
-    with open(path) as handle:
-        for line in handle:
-            line=line.strip()
-            if line.startswith("&gt;"):
-                if name is not None: yield name, "".join(seq)
-                name, seq = line[1:], []
-            else: seq.append(line)
-        if name is not None: yield name, "".join(seq)
-</code></pre>
-<h2>4. Environments and tests</h2>
-<p>Keep project dependencies isolated and test a function with a known sequence.</p>
-<pre><code class="language-bash">python -m venv .venv
+<p>What this produces: a FASTA file at data/raw/example.fasta containing three sequence records. The example shows uppercase and lowercase letters, ambiguous base letters (N), and a line with non-standard characters (“-”) to demonstrate validation needs.</p>
+<h3>2. Create and activate a virtual environment</h3>
+<pre><code># Create an isolated environment (will create ~/projects/python-bioinfo/.venv)
+python3 -m venv .venv
+
+# Activate the environment (POSIX shells)
 source .venv/bin/activate
-python -m pip install biopython
-python -c "import Bio; print(Bio.__version__)"
+
+# Upgrade pip and install recommended packages (optional)
+python -m pip install --upgrade pip
+python -m pip install biopython pandas
+
+# Record exact versions for reproducibility
+python -m pip freeze &gt; envs-requirements.txt
 </code></pre>
-<h2>5. Environment Setup and Virtual Environments</h2>
-<p>Never install packages into the system Python. Always use a virtual environment or conda to isolate dependencies per project.</p>
-<pre><code class="language-bash"># Create a virtual environment
-python3 -m venv envs/bioinfo
-source envs/bioinfo/bin/activate
+<p>What this produces: a virtual environment in .venv, and envs-requirements.txt listing installed package versions. If you later want to recreate the exact environment, use pip install -r envs-requirements.txt.</p>
+<h3>3. Write a small, well-tested Python script</h3>
+<p>Create scripts/compute_fasta_stats.py. The script below is intentionally small, documents assumptions, performs input validation, and writes a CSV summary to outputs/sequence_stats.csv.</p>
+<pre><code>#!/usr/bin/env python3
+"""
+scripts/compute_fasta_stats.py
 
-# Install core bioinformatics libraries
-pip install biopython pandas matplotlib numpy
+Read a FASTA file, validate sequences, compute length and GC fraction for each record,
+and write a CSV file with summary statistics.
 
-# Verify installation
-python -c "import Bio; print(Bio.__version__)"
-# Expected: 1.83 (or your installed version)
+Usage:
+  python scripts/compute_fasta_stats.py data/raw/example.fasta outputs/sequence_stats.csv
+"""
+import sys
+import csv
+from pathlib import Path
 
-# Freeze exact versions for reproducibility
-pip freeze &gt; envs/requirements.txt
-</code></pre>
-<h2>6. Parsing Biological Files with Biopython</h2>
-<p>The most common Python task in bioinformatics is reading and writing sequence files. Biopython's <code>SeqIO</code> module handles FASTA, FASTQ, GenBank, and many other formats.</p>
-<pre><code class="language-python">from Bio import SeqIO
+VALID_BASES = set("ACGTN")  # Accept uppercase only after normalization
 
-# Parse a FASTA file and extract basic statistics
-records = list(SeqIO.parse("data/raw/sequences.fasta", "fasta"))
-print(f"Total sequences: {len(records)}")
+def normalize(seq):
+    "Strip whitespace and convert to uppercase."
+    return seq.replace(" ", "").replace("\t", "").upper().strip()
 
-for record in records[:3]:
-    print(f"  {record.id}: {len(record.seq)} bp, GC={gc_fraction(record.seq):.2%}")
+def is_valid_dna(seq):
+    "Return True if sequence contains only expected bases A,C,G,T,N."
+    return bool(seq) and all(ch in VALID_BASES for ch in seq)
 
 def gc_fraction(seq):
-    """Calculate GC content of a DNA sequence."""
-    seq = seq.upper()
-    gc = sum(1 for base in seq if base in "GC")
-    return gc / len(seq) if len(seq) &gt; 0 else 0.0
+    "Compute GC fraction safely; assumes seq is normalized uppercase."
+    if len(seq) == 0:
+        return 0.0
+    gc = sum(1 for ch in seq if ch in ("G", "C"))
+    return gc / len(seq)
 
-# Expected output:
-# Total sequences: 1542
-#   seq_001: 2341 bp, GC=42.15%
-#   seq_002: 1876 bp, GC=38.90%
-#   seq_003: 3102 bp, GC=45.22%
-</code></pre>
-<h2>7. Working with Tabular Data Using Pandas</h2>
-<p>Most bioinformatics workflows produce tabular data (count matrices, variant tables, metadata). Pandas is the standard tool for manipulating these in Python.</p>
-<pre><code class="language-python">import pandas as pd
-
-# Read a gene expression count matrix
-counts = pd.read_csv("data/raw/gene_counts.tsv", sep="\t", index_col=0)
-print(f"Shape: {counts.shape}")  # (genes, samples)
-print(counts.head())
-
-# Filter genes with low total counts
-min_total = 10
-filtered = counts[counts.sum(axis=1) &gt;= min_total]
-print(f"Genes before filtering: {counts.shape[0]}")
-print(f"Genes after filtering: {filtered.shape[0]}")
-
-# Calculate basic statistics per sample
-sample_stats = pd.DataFrame({
-    "total_reads": counts.sum(),
-    "detected_genes": (counts &gt; 0).sum(),
-    "median_count": counts.median()
-})
-print(sample_stats)
-</code></pre>
-<h2>8. Writing Functions and Modular Code</h2>
-<p>As your analyses grow, organize reusable logic into functions with type hints, docstrings, and input validation.</p>
-<pre><code class="language-python">from pathlib import Path
-
-def load_count_matrix(filepath: str, min_total: int = 10) -&gt; pd.DataFrame:
-    """Load and filter a gene count matrix.
-
-    Args:
-        filepath: Path to tab-separated count matrix.
-        min_total: Minimum total counts across all samples.
-
-    Returns:
-        Filtered DataFrame with genes as rows, samples as columns.
-
-    Raises:
-        FileNotFoundError: If the input file does not exist.
-        ValueError: If the matrix is empty after filtering.
+def fasta_records(path):
+    """Simple, memory-efficient FASTA parser.
+    Yields tuples: (header, sequence_string).
+    This parser treats any line starting with '&gt;' as header.
     """
-    path = Path(filepath)
-    if not path.exists():
-        raise FileNotFoundError(f"Count matrix not found: {path}")
+    with open(path, "r", encoding="utf-8") as fh:
+        name = None
+        parts = []
+        for raw in fh:
+            line = raw.rstrip("\n")
+            if not line:
+                continue
+            if line.startswith("&gt;"):
+                if name is not None:
+                    yield name, "".join(parts)
+                name = line[1:].strip()
+                parts = []
+            else:
+                parts.append(line)
+        if name is not None:
+            yield name, "".join(parts)
 
-    df = pd.read_csv(path, sep="\t", index_col=0)
-    filtered = df[df.sum(axis=1) &gt;= min_total]
+def main():
+    if len(sys.argv) != 3:
+        print("Usage: python scripts/compute_fasta_stats.py INPUT.fasta OUTPUT.csv", file=sys.stderr)
+        sys.exit(2)
 
-    if filtered.empty:
-        raise ValueError(f"No genes passed the min_total={min_total} filter")
+    in_path = Path(sys.argv[1])
+    out_path = Path(sys.argv[2])
+    out_path.parent.mkdir(parents=True, exist_ok=True)
 
-    return filtered
+    with open(out_path, "w", newline="", encoding="utf-8") as out_fh:
+        writer = csv.DictWriter(out_fh, fieldnames=["id", "length", "gc_fraction", "valid"])
+        writer.writeheader()
+        for header, seq in fasta_records(in_path):
+            seq_norm = normalize(seq)
+            valid = is_valid_dna(seq_norm)
+            length = len(seq_norm)
+            gc = gc_fraction(seq_norm) if valid else ""
+            writer.writerow({
+                "id": header,
+                "length": length,
+                "gc_fraction": f"{gc:.5f}" if gc != "" else "",
+                "valid": "yes" if valid else "no"
+            })
+
+if __name__ == "__main__":
+    main()
 </code></pre>
-<h2>9. Testing and Validation</h2>
-<p>Always validate your outputs before proceeding to the next analysis step:</p>
-<pre><code class="language-python"># Assertions catch silent errors early
-assert counts.shape[0] &gt; 0, "Count matrix is empty"
-assert not counts.isnull().any().any(), "NaN values detected in count matrix"
-assert (counts &gt;= 0).all().all(), "Negative counts detected"
+<p>What this produces: a script that reads a FASTA file, validates sequences against a simple DNA alphabet (A,C,G,T,N), computes length and GC fraction for each record, and writes data to the output CSV path you provide.</p>
+<h3>4. Run the script</h3>
+<pre><code># Run the script with the example FASTA and write results to outputs/
+python scripts/compute_fasta_stats.py data/raw/example.fasta outputs/sequence_stats.csv
 
-# Check for duplicate gene names
-duplicates = counts.index[counts.index.duplicated()]
-if len(duplicates) &gt; 0:
-    print(f"WARNING: {len(duplicates)} duplicate gene IDs found")
+# Show the resulting CSV
+cat outputs/sequence_stats.csv
 </code></pre>
-<div class="overflow-x-auto -mx-4 px-4">
-<table>
-<table>
-<thead>
-<tr>
-<th>Problem</th>
-<th>Likely Cause</th>
-<th>Solution</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>ModuleNotFoundError</code></td>
-<td>Package not installed in active environment</td>
-<td>Activate your venv and <code>pip install</code> the package</td>
-</tr>
-<tr>
-<td><code>FileNotFoundError</code></td>
-<td>Wrong working directory or relative path</td>
-<td>Use <code>Path(__file__).parent</code> or absolute paths</td>
-</tr>
-<tr>
-<td><code>UnicodeDecodeError</code></td>
-<td>Binary file opened as text</td>
-<td>Use <code>"rb"</code> mode or check file format</td>
-</tr>
-<tr>
-<td>Pandas silently drops rows</td>
-<td>Duplicate index values</td>
-<td>Use <code>reset_index()</code> or deduplicate explicitly</td>
-</tr>
-</tbody>
-</table>
-</table></div>
-<h2>Practical Exercise</h2>
-<p>Write <code>fasta_gc.py</code> that prints each FASTA identifier, sequence length, and GC percentage. Test it on two records, including one containing <code>N</code></p>
-<p></p>
-<h2>Troubleshooting</h2>
-<p>If imports fail, confirm the virtual environment is active. If a file is not found, print the current directory and use an explicit relative or absolute path.</p>
-<h2>Next Steps</h2>
-<p>Continue with <a href="r-tidyverse-fundamentals.html">R and Tidyverse Fundamentals</a> and <a href="biological-data-formats.html">Biological Data Formats</a>Record the software versions, dataset or example inputs, and any decisions you made.</p>
-<section aria-label="References and further reading" class="mt-10 p-6 bg-slate-50 border border-slate-200 rounded-xl">
-<h2 class="text-xl font-bold text-gray-900 mb-3">References and further reading</h2>
-<p class="text-sm text-gray-600 mb-3">Use these official resources to check current software behaviour, terminology, and production guidance. Tool versions and defaults change, so verify commands against the documentation before applying them to a research dataset.</p>
-<ul class="list-disc list-inside space-y-2 text-sm text-gray-700">
-<li><a class="text-blue-700 hover:underline" href="https://docs.python.org/3/" rel="noopener" target="_blank">Python documentation</a></li>
-<li><a class="text-blue-700 hover:underline" href="https://biopython.org/docs/" rel="noopener" target="_blank">Biopython documentation</a></li>
+<p>Expected file: outputs/sequence_stats.csv with columns: id, length, gc_fraction, valid. The exact numeric values depend on the input sequences. The CSV is safe to open in a spreadsheet or to load into pandas for downstream processing.</p>
+<h3>5. Optional: parse with Biopython for comparison</h3>
+<p>If you installed Biopython in the virtual environment, you can accomplish similar work using SeqIO. This is useful for production and supports many formats and edge cases.</p>
+<pre><code># Run an interactive one-liner (while env is activated)
+python - &lt;&lt;'PY'
+from Bio import SeqIO
+from pathlib import Path
+p = Path("data/raw/example.fasta")
+for rec in SeqIO.parse(str(p), "fasta"):
+    seq = str(rec.seq).upper()
+    gc = sum(1 for b in seq if b in "GC") / len(seq) if len(seq) &gt; 0 else 0.0
+    print(rec.id, len(seq), f"{gc:.5f}")
+PY
+</code></pre>
+<p>What this produces: console output listing record id, length, and GC fraction computed from Biopython's record objects. Biopython handles sequence objects and file formats robustly; for learning, we used a minimal parser earlier to show the format mechanics.</p>
+<h2>Output inspection and interpretation</h2>
+<p>When you open outputs/sequence_stats.csv, check the following:</p>
+<ul>
+<li>All expected record IDs are present. Missing IDs may indicate a parsing error or that the input FASTA lines were malformed.</li>
+<li>Length values reflect the number of characters after normalization (spaces, tabs removed). Very short sequences (length 0–3) should be examined manually: they may be fragments, adapter sequences, or corrupted lines.</li>
+<li>gc_fraction is the proportion of G or C bases (0.0–1.0). Values near 0.5 are common for many genomes, but expected GC content depends on organism or target (bacterial genomes can range widely).</li>
+<li>The valid column flags records where non-standard characters were found (for this lesson that means characters outside A,C,G,T,N). If valid is "no", the gc_fraction field is left blank and you should inspect the corresponding sequence in the FASTA file.</li>
 </ul>
-</section>
+<p>What a plausible result means — and what it does NOT prove:</p>
+<ul>
+<li>If a sequence has gc_fraction = 0.42, this simply means 42% of the characters are G or C in the provided string. It does not prove the sequence is error-free, nor does it guarantee biological significance (contamination, assembly artifacts, or sequencing biases can change GC).</li>
+<li>Short sequences or sequences labeled invalid may be genuine biological data (e.g., primers with ambiguous bases) or may indicate file corruption. Manual inspection or comparison to original data sources is required.</li>
+<li>Aggregate summaries (mean GC across records) are descriptive. They are not a substitute for statistical testing if you want to compare groups or draw biological conclusions.</li>
+</ul>
+<h2>Troubleshooting: symptoms, likely causes, and fixes</h2>
+<p>Symptom: The script crashes with UnicodeDecodeError when reading the FASTA.</p>
+<ul>
+<li>Cause: The input file uses a non-UTF-8 encoding (e.g., Windows-1252) or contains binary content.</li>
+<li>Fix: Convert the file to UTF-8 or open with the correct encoding. Example: iconv -f WINDOWS-1252 -t UTF-8 input.fasta -o output.fasta. Always inspect binary files (e.g., using file and head commands) before processing.</li>
+</ul>
+<p>Symptom: Many sequences are flagged valid=no.</p>
+<ul>
+<li>Cause: The input FASTA contains characters outside the accepted set (e.g., gap character '-', IUPAC codes like R/Y, or quality scores accidentally included).</li>
+<li>Fix: Decide what extended characters you want to accept (IUPAC codes: R, Y, S, W, K, M, B, D, H, V) and extend VALID_BASES accordingly. Alternatively, pre-filter or clean sequences to remove gap characters if appropriate for your analysis.</li>
+</ul>
+<p>Symptom: Output CSV is missing records or header only.</p>
+<ul>
+<li>Cause: The FASTA file may lack a trailing newline or final header handling. The simple parser expects '&gt;' to start headers; if the file is empty, nothing is written.</li>
+<li>Fix: Confirm the FASTA file contains at least one header line (beginning with '&gt;') and sequence lines. Use wc -l and grep '^&gt;' to count headers: grep -c '^&gt;' data/raw/example.fasta.</li>
+</ul>
+<p>Symptom: Incorrect GC values compared to external tools.</p>
+<ul>
+<li>Cause: Differences in normalization: some tools ignore ambiguous bases or gaps when computing fractions, others count them in the denominator.</li>
+<li>Fix: Make your normalization explicit. If you want GC fraction computed as GC / (A+C+G+T) excluding ambiguous bases, implement that rule rather than using the raw length.</li>
+</ul>
+<h2>Limitations, version and reference-data caveats, and responsible use</h2>
+<p>Limitations of this lesson and script:</p>
+<ul>
+<li>The simple parser is educational and works for most single-sequence FASTA files. It does not validate FASTA headers against any controlled schema (for example, headers with embedded tabs or spaces), nor does it support FASTQ, multi-line headers with specific metadata, or indexed formats. For production work, prefer robust libraries (Biopython SeqIO, scikit-bio).</li>
+<li>Validation here is limited to a user-defined alphabet (A, C, G, T, N). Biological sequences sometimes include IUPAC ambiguity codes or gap characters (e.g., '-'). Decide which characters your pipeline should accept and document that choice.</li>
+<li>Floating-point representation of GC fraction uses simple rounding for readability; for downstream statistical analysis you may want more precision or native numeric types (not formatted strings).</li>
+</ul>
+<p>Version and reference-data caveats:</p>
+<ul>
+<li>Different versions of Biopython, pandas, or Python may change behavior (for example, encoding defaults or CSV dialect handling). Record exact versions with pip freeze or conda list for reproducibility.</li>
+<li>Reference genome sequences and annotations can change over time. If you are comparing GC content to published values, ensure you are using the same assembly and coordinate convention as the reference.</li>
+</ul>
+<p>Responsible use notes:</p>
+<ul>
+<li>Do not assume computed statistics imply biological meaning without appropriate controls and metadata assessment (sample origin, library preparation, sequencing platform).</li>
+<li>Be cautious when sharing sequence-derived files that may include sensitive or personally identifying information. Follow institutional policies and data-use agreements.</li>
+<li>Never run or paste unreviewed code into tools that will give it network access or elevate privileges. The examples here are safe for local file processing and avoid destructive commands (no rm, mv, or system calls that touch other directories).</li>
+</ul>
+<h2>Next-step checklist</h2>
+<ol>
+<li>Run the script on your own FASTA files and confirm outputs/sequence_stats.csv contains expected rows and values.</li>
+<li>Decide how to treat ambiguous bases and update VALID_BASES and gc_fraction semantics accordingly.</li>
+<li>If you need to process large FASTA files, consider switching to Biopython SeqIO for robustness and memory-efficient streaming.</li>
+<li>Write small unit tests for gc_fraction and is_valid_dna using the pytest framework to ensure behavior is stable as you refactor.</li>
+<li>Store envs-requirements.txt in version control and add instructions for recreating the environment in your project README.</li>
+</ol>
+<h2>References</h2>
+<ul>
+<li><a href="https://docs.python.org/3/">The Python 3 documentation</a> — language reference and library documentation.</li>
+<li><a href="https://biopython.org/wiki/Documentation">Biopython documentation and SeqIO reference</a> — recommended for production parsing of biological file formats.</li>
+<li><a href="https://pandas.pydata.org/docs/">Pandas documentation</a> — for tabular data manipulation, reading/writing CSV/TSV, and summary statistics.</li>
+<li><a href="https://www.ncbi.nlm.nih.gov/genbank/">FASTA file format description at NCBI</a> — canonical description of the FASTA convention.</li>
+</ul>
 </article>
 <section class="mt-12 mb-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-100">
 <div class="flex items-start gap-4">

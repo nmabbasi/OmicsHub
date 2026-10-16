@@ -138,138 +138,170 @@ function toggleMobileMenu() {
 <div class="flex items-center gap-1">
 <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
 </div>
-</div>
-<div class="p-6 bg-blue-50 border border-blue-100 rounded-xl mb-8">
-<h4 class="text-lg font-bold text-blue-900 mb-2">Learning Objectives &amp; Prerequisites</h4>
-<ul class="list-disc list-inside text-blue-800 space-y-1 mb-4">
-<li><strong>Prerequisites:</strong> Complete scRNA-seq Basics, cell-type annotation, and sample-aware differential-expression concepts.</li>
-<li><strong>Objective:</strong> Infer candidate ligand-receptor communication programs and separate computational scores from experimentally established cell signaling.</li>
-<li><strong>Expected Output:</strong> A ranked interaction table with sender/receiver labels, database version, sample context, and validation hypothesis.</li>
+</div><h2>Learning objectives and prerequisites</h2>
+<p><strong>By the end of this lesson</strong> you will be able to:</p>
+<ul>
+<li>Run a reproducible cell–cell communication analysis pipeline on single-cell RNA-seq (scRNA-seq) data using LIANA for multi-method ligand–receptor (LR) inference and CellChat for pathway-level network modeling.</li>
+<li>Produce and inspect ranked LR tables and pathway network objects suitable for downstream visualization and experimental follow-up.</li>
+<li>Understand the assumptions, common pitfalls, and validation strategies required to interpret inferred signaling hypotheses responsibly.</li>
 </ul>
-</div>
-<h2>Cell-Cell Communication Analysis</h2>
-<h2>Introduction</h2>
-<p>In multi-cellular organisms, cells don't exist in isolation. They constantly communicate through secreted ligands and membrane-bound receptors. Single-cell RNA-seq allows us to infer these communication networks by looking at the simultaneous expression of a ligand in one cell type and its cognate receptor in another cell type.</p>
-<p>Two of the most powerful tools in R for inferring these networks are <strong>LIANA</strong> and <strong>CellChat</strong></p>
-<hr/>
-<h2>1. LIANA (Ligand-Receptor Analysis Framework)</h2>
-<p>LIANA is incredibly powerful because it's not just one method - it's a wrapper that runs <em>multiple</em> cell-cell communication methods (like CellPhoneDB, NATMI, Connectome, and SingleCellSignalR) simultaneously and aggregates the results, giving you a consensus ranking of the most likely interactions.</p>
-<h3>Running LIANA</h3>
-<pre><code class="language-r">library(liana)
-library(SCpubr)
+<p><strong>Prerequisites</strong> (complete before starting):</p>
+<ul>
+<li>Familiarity with scRNA-seq basics (normalization, dimensionality reduction) and how to annotate cell types.</li>
+<li>An R environment with Seurat v5-compatible data structures or a SingleCellExperiment object. This tutorial uses R code; basic R/Seurat experience is assumed.</li>
+<li>Installed packages (see the Software and data files section below).</li>
+</ul>
+<h2>Why infer cell–cell communication from scRNA-seq?</h2>
+<p>Cells communicate using secreted ligands, membrane-bound ligands/receptors, and downstream signaling cascades. Single-cell RNA-seq measures gene-level expression per cell, enabling hypothesis generation about which cell types could be sending ligands and which could be receiving via cognate receptors. These inferred interactions are useful to (a) prioritize candidate signaling pairs for experimental testing, (b) compare signaling between conditions (e.g., disease vs. control), and (c) integrate with spatial or proteomic validation.</p>
+<p>Important caveat: scRNA-seq measures mRNA, not protein localization, abundance, or post-translational regulation. Inference identifies candidate interactions — not proven biochemical binding or functional signaling.</p>
+<h2>Files, software, and expected inputs/outputs</h2>
+<p>Before you start, prepare the following files in a working directory (example path: <code>/project/cellcomm/</code>):</p>
+<ul>
+<li><code>seurat_obj.rds</code> — a Seurat v5 object with normalized counts, cluster or cell-type annotations in <code>Idents(seurat_obj)</code> or a metadata column named <code>cell_type</code>. The object should include per-cell metadata (sample, batch) if you plan sample-aware analyses.</li>
+<li><code>metadata.tsv</code> (optional) — tab-delimited metadata including sample, condition, and cell-type mapping if not already embedded in the Seurat object.</li>
+</ul>
+<p>Expected outputs from the analysis steps below:</p>
+<ul>
+<li><code>liana_aggregate_results.csv</code> — a table of aggregated ligand–receptor predictions with sender/receiver labels and method consensus metrics.</li>
+<li><code>cellchat_object.rds</code> — a saved CellChat object containing inferred networks and pathway-level aggregation.</li>
+<li>Figures (PNG/PDF) and intermediate tables for inspection.</li>
+</ul>
+<h2>Reproducible workflow (R): LIANA then CellChat</h2>
+<p>We present a sequential workflow: first use LIANA to get a consensus LR list across multiple methods; then use CellChat to model pathway-level communication and network topology. Commands assume an R session and working directory <code>/project/cellcomm/</code>. Install packages according to their official instructions if needed; package versions and databases can affect results (see Limitations below).</p>
+<h3>1) Load data and set up environment</h3>
+<pre><code># Working directory (change to your project path)
+setwd("/project/cellcomm/")
 
-# Run the LIANA wrapper on your Seurat or SingleCellExperiment object
-liana_output &lt;- liana_wrap(seurat_obj)
+# Load Seurat and check object
+library(Seurat)
+seurat_obj &lt;- readRDS("seurat_obj.rds")      # Input file you should have prepared
 
-# Aggregate the results across all methods to get consensus rankings
-liana_aggregate &lt;- liana_aggregate(liana_output)
-
-# Save the results
-write.csv(liana_aggregate, "liana_aggregate_results.csv", row.names = FALSE)
+# Quick checks
+stopifnot("Seurat" %in% class(seurat_obj))
+table(seurat_obj$cell_type)                  # ensure a cell_type column exists
 </code></pre>
-<h3>Visualizing LIANA Results</h3>
-<p>The <code>SCpubr</code> package works cleanly with LIANA to create publication-ready plots.</p>
-<pre><code class="language-r"># Create a DotPlot of the top Ligand-Receptor interactions
-p1 &lt;- SCpubr::do_LigandReceptorPlot(liana_output = liana_output,
-                                    top_interactions = 15)
-p1
-</code></pre>
-<hr/>
-<h2>2. CellChat</h2>
-<p>While LIANA is great for getting a consensus list of interactions, <strong>CellChat</strong> shines at pathway-level analysis and visualizing the structural topology of the communication networks (e.g., Circle plots and Hierarchy plots).</p>
-<h3>Running CellChat</h3>
-<pre><code class="language-r">library(CellChat)
+<p>What this produces: loads the Seurat object; the <code>table</code> call shows the number of cells per annotated cell type.</p>
+<h3>2) Run LIANA to generate method-aggregated LR predictions</h3>
+<p>LIANA wraps multiple inference algorithms and can produce consensus rankings. The commands below illustrate a minimal LIANA run; tune parameters (expression thresholds, aggregation strategy) to your data and questions.</p>
+<pre><code># Install and load LIANA (follow package install docs if not present)
+library(liana)
+library(dplyr)
 
-# 1. Create the CellChat object from Seurat
+# Basic LIANA run: uses Seurat object, the metadata column "cell_type" for grouping
+liana_out &lt;- liana_wrap(seurat_obj,
+                       group_by = "cell_type",
+                       exprs_values = "data",      # use normalized data assay slot name as appropriate
+                       min_cells = 10,             # require 10 cells per group, adjust as needed
+                       return_list = TRUE)
+
+# Aggregate across methods to get consensus ranking
+liana_agg &lt;- liana_aggregate(liana_out,
+                             group_by = c("source","target","ligand","receptor"),
+                             aggfun = "harmonic_mean")   # example aggregation function
+
+# Save results
+write.csv(liana_agg, "liana_aggregate_results.csv", row.names = FALSE)
+saveRDS(liana_out, "liana_raw_results.rds")
+</code></pre>
+<p>Inputs: <code>seurat_obj.rds</code>. Outputs: <code>liana_raw_results.rds</code> (per-method outputs) and <code>liana_aggregate_results.csv</code> (consensus table).</p>
+<h3>3) Inspect LIANA outputs (quick checks)</h3>
+<pre><code># Read and inspect top rows
+liana_agg &lt;- read.csv("liana_aggregate_results.csv")
+head(liana_agg)
+
+# Simple filters: top interactions by consensus score (adjust column names as LIANA version dictates)
+top_lr &lt;- liana_agg %&gt;%
+  arrange(consensus_score) %&gt;%         # lower score = higher rank in some LIANA versions
+  head(20)
+
+write.csv(top_lr, "liana_top20.csv", row.names = FALSE)
+</code></pre>
+<p>Look for columns indicating <code>source</code> (sender cell type), <code>target</code> (receiver), <code>ligand</code>, <code>receptor</code>, method-specific scores, and aggregated consensus metrics. Confirm that expected cell types are present and that extreme results are not driven by tiny cell counts.</p>
+<h3>4) Build a CellChat object for pathway-level modeling</h3>
+<p>CellChat uses curated ligand–receptor and signaling pathway databases and produces network visualizations and pathway aggregation. You can use LIANA results to inform CellChat or run CellChat independently. Below is a standard CellChat pipeline using the same Seurat object.</p>
+<pre><code>library(CellChat)
+
+# Create CellChat object
 cellchat &lt;- createCellChat(object = seurat_obj, group.by = "cell_type")
 
-# 2. Set the database (e.g., Human or Mouse)
+# Choose the organism database; replace with CellChatDB.mouse when analyzing mouse
 CellChatDB &lt;- CellChatDB.human
 cellchat@DB &lt;- CellChatDB
 
-# 3. Preprocess and infer communications
-cellchat &lt;- subsetData(cellchat)
+# Preprocessing and inference
+cellchat &lt;- subsetData(cellchat)                         # subset expression data for signaling genes
 cellchat &lt;- identifyOverExpressedGenes(cellchat)
 cellchat &lt;- identifyOverExpressedInteractions(cellchat)
+
+# Compute communication probabilities and aggregate by signaling pathway
 cellchat &lt;- computeCommunProb(cellchat)
 cellchat &lt;- computeCommunProbPathway(cellchat)
 cellchat &lt;- aggregateNet(cellchat)
-</code></pre>
-<h3>Visualizing CellChat Networks</h3>
-<pre><code class="language-r"># Visualize the communication network as a Circle Plot
-netVisual_circle(cellchat@net$count, vertex.weight = groupSize, weight.scale = T,
-                 label.edge= F, title.name = "Number of interactions")
-</code></pre>
-<h2>Summary</h2>
-<ul>
-<li>Use <strong>LIANA</strong> when you want a highly solid, consensus-driven list of specific Ligand-Receptor pairs.</li>
-<li>Use <strong>CellChat</strong> when you want to visualize pathway-level communication networks and create beautiful network topologies.</li>
-</ul>
-<hr/>
-<h2>3. Interpretation, Limitations &amp; Validation</h2>
-<h3>Interpretation Pitfalls</h3>
-<p>When interpreting LIANA or CellChat results, remember that these tools infer <em>potential</em> communication based on mRNA co-expression, <strong>not</strong> actual physical interaction.
-* <strong>High probability != guaranteed interaction:</strong> The ligand and receptor might be transcribed, but the proteins could be degraded, trapped in the Golgi, or blocked by competitive inhibitors.
-* <strong>Spatial context is missing:</strong> In standard scRNA-seq, a macrophage and a T-cell might show high communication probability, but in the actual tissue, they might be millimeters apart and unable to interact.</p>
-<h3>Validation Strategies</h3>
-<p>Because scRNA-seq only provides a hypothesis, you <strong>must</strong> validate key findings experimentally:
-1. <strong>Spatial Transcriptomics (e.g., Visium, Xenium):</strong> Verify that the sender and receiver cells are physically co-localized in the tissue.
-2. <strong>Multiplexed Immunofluorescence (mIF):</strong> Use antibodies to confirm the presence of both the ligand and receptor proteins at the tissue level.
-3. <strong>In Vitro Co-culture Assays:</strong> Isolate the sender and receiver cells, co-culture them, and block the receptor using an antagonist to observe phenotypic changes.</p>
-<h3>Software Requirements</h3>
-<ul>
-<li><strong>LIANA:</strong> Tested on R 4.3.2. Requires Seurat v5 and <code>liana</code> (v0.1.12).</li>
-<li><strong>CellChat:</strong> Tested on R 4.3.2. Requires <code>CellChat</code> (v2.1.2) and <code>ComplexHeatmap</code></li>
-</ul>
-<h3>Matched Python and R LIANA workflow</h3>
-<p>Ligand-receptor rankings are hypotheses rather than direct evidence of signaling. Use a species-appropriate resource, set the grouping column deliberately, and validate prioritized interactions experimentally or with orthogonal evidence.</p>
-<pre><code class="language-python">import liana as li
 
-li.mt.rank_aggregate(
-    adata,
-    groupby="cell_type",
-    resource_name="consensus",
-    expr_prop=0.1,
-)
-results = adata.uns["liana_res"].query("specificity_rank &lt;= 0.05")
+# Save object
+saveRDS(cellchat, "cellchat_object.rds")
 </code></pre>
-<pre><code class="language-r">library(liana)
-
-liana_res &lt;- liana_wrap(
-  seurat_obj,
-  method = c("natmi", "sca"),
-  resource = "Consensus",
-  idents_col = "cell_type",
-  expr_prop = 0.1
-)
-results &lt;- rank_aggregate(liana_res)
-head(results)
-</code></pre>
-<div class="mt-10 p-8 bg-gray-50 border border-gray-200 rounded-xl">
-<h3 class="text-xl font-bold text-gray-900 mb-4">Knowledge Check &amp; Assessment</h3>
-<div class="space-y-4">
-<div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-<h4 class="font-bold text-gray-800 mb-2">1. Concept Verification</h4>
-<p class="text-gray-600 text-sm">Why does coexpression of a ligand and receptor suggest a hypothesis rather than prove physical communication?</p>
-</div>
-<div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-<h4 class="font-bold text-gray-800 mb-2">2. Practical Execution</h4>
-<p class="text-gray-600 text-sm">Run or inspect one ligand-receptor analysis and report the sender, receiver, interaction database, score, and a proposed validation experiment. </p>
-</div>
-<div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-<h4 class="font-bold text-gray-800 mb-2">3. Troubleshooting</h4>
-<p class="text-gray-600 text-sm">If a strong interaction appears only in one sample or broad cell type, how will you inspect cell abundance, expression thresholds, replicates, and spatial context?</p>
-</div>
-</div>
-</div>
-<section aria-label="References and further reading" class="mt-10 p-6 bg-slate-50 border border-slate-200 rounded-xl">
-<h2 class="text-xl font-bold text-gray-900 mb-3">References and further reading</h2>
-<p class="text-sm text-gray-600 mb-3">Use these official resources to check current software behaviour, terminology, and production guidance. Tool versions and defaults change, so verify commands against the documentation before applying them to a research dataset.</p>
-<ul class="list-disc list-inside space-y-2 text-sm text-gray-700">
-<li><a class="text-blue-700 hover:underline" href="https://satijalab.org/seurat/" rel="noopener" target="_blank">Seurat documentation</a></li>
-<li><a class="text-blue-700 hover:underline" href="https://scanpy.readthedocs.io/en/stable/" rel="noopener" target="_blank">Scanpy documentation</a></li>
+<p>Inputs: <code>seurat_obj.rds</code>. Outputs: <code>cellchat_object.rds</code> with network slots (<code>@net</code>) and pathway results.</p>
+<h2>Output inspection and interpretation</h2>
+<p>What to examine and how to interpret results — treat all as hypotheses:</p>
+<ul>
+<li><strong>LIANA ranked table</strong>: Focus on top-ranked LR pairs that are supported by multiple methods. Columns to check: sender (<code>source</code>), receiver (<code>target</code>), ligand, receptor, per-method p-values/scores, and the aggregated consensus metric. A top-ranked pair suggests co-expression patterns consistent with possible communication.</li>
+<li><strong>CellChat pathway scores</strong>: CellChat aggregates LR interactions into signaling pathways (e.g., NOTCH, WNT). High pathway-level communication means many LR pairs within that pathway show expression consistent with signaling between cell groups.</li>
+<li><strong>Network topology</strong>: Visualizations — circle plots, heatmaps of interaction strength, hierarchy plots — help identify dominant senders or receivers. Use these to prioritize experimental tests (e.g., a cell type that is a central sender across multiple pathways).</li>
 </ul>
-</section>
+<p>What these results do NOT prove:</p>
+<ul>
+<li>That the ligand and receptor proteins are present at sufficient concentration or correctly localized.</li>
+<li>That ligand–receptor binding occurs, or that downstream signaling is triggered in the target cell.</li>
+<li>That observed differences are not due to confounders (batch effects, sample composition differences) without additional controls.</li>
+</ul>
+<h2>Troubleshooting</h2>
+<p>Below are common symptoms, likely causes, and suggested fixes.</p>
+<ul>
+<li><strong>Symptom</strong>: Very few predicted interactions or empty results.<br/>
+<strong>Likely causes</strong>: Low expression thresholds, sparse data, wrong assay slot (e.g., using raw counts vs normalized data), or group labels missing.<br/>
+<strong>Fixes</strong>: Confirm you used the correct assay name in LIANA (<code>exprs_values</code>), ensure each cell type has enough cells (<code>min_cells</code>), increase sensitivity by lowering minimum expression thresholds cautiously, or merge very small clusters.</li>
+<li><strong>Symptom</strong>: Top interactions driven by a single method while others disagree.<br/>
+<strong>Likely causes</strong>: Methods have different assumptions (e.g., thresholding, permutation).<br/>
+<strong>Fixes</strong>: Inspect per-method scores in LIANA raw output to understand disagreements; consider relying on consensus or restricting to methods appropriate for your data type.</li>
+<li><strong>Symptom</strong>: Unexpected cell types as dominant senders/receivers.<br/>
+<strong>Likely causes</strong>: Mis-annotated cell types, doublets (two-cell captures), or sample composition bias.<br/>
+<strong>Fixes</strong>: Re-check cluster annotations, run doublet detection (e.g., scDblFinder), and inspect marker gene expression for suspicious clusters.</li>
+<li><strong>Symptom</strong>: CellChat fails with database mismatch errors.<br/>
+<strong>Likely causes</strong>: Using a mouse Seurat object but setting human DB, or vice versa.<br/>
+<strong>Fixes</strong>: Use <code>CellChatDB.human</code> for human data and <code>CellChatDB.mouse</code> for mouse. Confirm gene symbols match the DB (e.g., human HGNC names vs mouse gene symbols).</li>
+</ul>
+<h2>Limitations, versioning, and responsible use</h2>
+<p>Key limitations and caveats to be explicit about:</p>
+<ul>
+<li><strong>mRNA ≠ protein or function</strong>: scRNA-seq measures transcripts; protein abundance, subcellular localization, secretion, cleavage, and inhibitors determine actual signaling. Treat LR inference as hypothesis generation.</li>
+<li><strong>Spatial information</strong>: Standard droplet scRNA-seq loses tissue spatial context. Use spatial transcriptomics or imaging-based validation to confirm proximity when proximity matters.</li>
+<li><strong>Database and version effects</strong>: Both LIANA and CellChat rely on curated LR and pathway databases. Different database versions (and organism choices) change which pairs/pathways are available and their annotations. Record database versions and package versions in your analysis metadata.</li>
+<li><strong>Methodological assumptions</strong>: Methods vary in how they score an interaction (expression thresholds, permutation strategies). Aggregated rankings can reduce method-specific biases but may also hide method-specific strengths.</li>
+<li><strong>Batch and compositional confounding</strong>: Unequal sampling or batch effects can produce apparent differences in signaling that are technical. Always check sample metadata and consider sample-aware analyses or aggregating by sample before comparing conditions.</li>
+</ul>
+<p>Responsible-use notes:</p>
+<ul>
+<li>Always treat inferred interactions as starting points for wet-lab validation (spatial transcriptomics, immunostaining, functional assays).</li>
+<li>Document all software, database versions, and parameters so results are reproducible and comparable across analyses.</li>
+<li>Be cautious about potential clinical interpretation; these are mechanistic hypotheses, not direct evidence for therapeutic targets.</li>
+</ul>
+<h2>Next-step checklist</h2>
+<ul>
+<li>Save a snapshot of your R session including package versions: <code>sessionInfo()</code> or the output of <code>renv::snapshot()</code>.</li>
+<li>Inspect <code>liana_aggregate_results.csv</code> for top-ranked LR pairs and export a prioritized candidate list for experimental follow-up.</li>
+<li>Visualize CellChat networks (circle plots, heatmaps) and export figures for the most relevant pathways.</li>
+<li>Plan validation experiments: select 3–5 high-confidence LR pairs with clear biological rationale; design spatial or protein-level validation.</li>
+<li>Record database versions and provide them alongside result tables (e.g., LIANA DB, CellChatDB version). Save seeds for random steps to improve reproducibility.</li>
+</ul>
+<h2>References and further reading</h2>
+<ul>
+<li><a href="https://github.com/saezlab/liana">LIANA GitHub repository</a> — installation instructions, usage examples, and links to supported methods.</li>
+<li><a href="https://github.com/sqjin/CellChat">CellChat GitHub repository</a> — documentation and tutorials for pathway-level analysis and plotting.</li>
+<li><a href="https://satijalab.org/seurat/">Seurat documentation</a> — seurat object format, clustering, and integration pipelines.</li>
+<li><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC11139546/">Eds H. Armingol et al., "Deciphering cell–cell interactions and communication from gene expression"</a> — review on computational and experimental considerations for inferring cell–cell interactions.</li>
+<li><a href="https://www.cell.com/cell/fulltext/S0092-8674(20)30093-9">Zhou et al., "CellPhoneDB" — example of an LR database and permutation-based testing approach (used by many tools)</a>.</li>
+</ul>
 </article>
 <section class="mt-12 mb-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-100">
 <div class="flex items-start gap-4">
