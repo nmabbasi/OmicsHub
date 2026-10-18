@@ -118,7 +118,7 @@ python -m pip install --upgrade pip
 python -m pip install langgraph autogen-agentchat
 python -c "import langgraph; print('LangGraph: OK')"
 python -m pip freeze &gt; requirements.lock.txt</code></pre>
-<p>Begin with one deterministic tool and one reviewer agent. Add biological foundation models only after you can trace the graph state, retry behavior, tool permissions, and final output. Set explicit budgets for tokens, time, and external calls.</p>
+<p>Start with one deterministic tool and one reviewer agent. Add biological foundation models only after you can trace the graph state, retry behavior, tool permissions, and the final output. Set explicit budgets for tokens, time, and external calls.</p>
 <p><strong>Success check:</strong> the workflow produces the same structured output on a toy input, exposes its intermediate states, and stops when a reviewer rejects an unsafe or unsupported result.</p>
 <h2>Biological Foundation Models</h2>
 <p>The next frontier in computational biology involves using foundation models such as ESM3 for protein design, scGPT for single-cell embeddings, and AlphaFold 3 for structural prediction. These models often require complex API orchestration to batch process sequences or single-cell data, making manual interaction tedious.</p>
@@ -173,7 +173,7 @@ app = workflow.compile()
 <p>This graph ensures that if the generated code fails to execute, the error is passed back to the <code>coder</code> node for correction, creating a self-healing bioinformatics pipeline.</p>
 <hr/>
 <h2>Conclusion</h2>
-<p>Orchestrating foundation models through agentic frameworks represents the bleeding edge of bioinformatics research. By shifting from manual scripting to building AI systems that script for you, you can drastically scale the throughput and complexity of in-silico experiments.</p>
+<p>Orchestrating foundation models through agentic frameworks is at the bleeding edge of bioinformatics research. Instead of writing scripts yourself, you build AI systems that write and run those scripts for you, which can dramatically increase the throughput and complexity of in-silico experiments.</p>
 <div class="p-6 bg-green-50 border border-green-200 rounded-xl mb-8 mt-8">
 <h3 class="text-lg font-bold text-green-900 mb-3">✅ Key Takeaways</h3>
 <ul class="list-disc list-inside text-green-800 space-y-2">
@@ -200,9 +200,7 @@ app = workflow.compile()
  A second use case is iterative single-cell analysis. A human researcher defines a broad goal, for example identifying the transcriptional programs of tumour-associated macrophages in a dataset, and the orchestrated system proposes and executes a series of analytical steps, checking the output of each step before deciding on the next. When a clustering step produces an unexpected number of clusters, the system can adjust resolution parameters and re-run without human intervention. The researcher reviews the final output rather than managing every intermediate decision.
 </p>
 <h3 class="text-xl font-semibold text-slate-900 mb-3 mt-8">Tool Use and Retrieval Augmented Generation</h3>
-<p class="text-slate-700 text-base leading-relaxed mb-4">
- A large language model used alone has fixed knowledge that stops at its training cutoff. In a rapidly evolving field like bioinformatics, this is a significant limitation: a model trained in 2024 doesn't know about tools, datasets, or methods published in 2025. Retrieval augmented generation (RAG) addresses this by connecting the model to an external knowledge base that's queried at inference time. The model generates a query, the retrieval system finds the most relevant documents, and the model generates its response conditioned on those documents.
-</p>
+<p class="text-slate-700 text-base leading-relaxed mb-4">A large language model on its own has fixed knowledge that stops at its training cutoff. In a fast-moving field like bioinformatics this is a real limitation: a model trained in 2024 won't know about tools, datasets, or methods published in 2025. Retrieval augmented generation (RAG) addresses this by connecting the model to an external knowledge base queried at inference time. The model generates a query, the retrieval system finds the most relevant documents, and the model produces its response conditioned on those documents.</p>
 <p class="text-slate-700 text-base leading-relaxed mb-4">
  For bioinformatics, a well-designed RAG system might index your institution's preprint server, picked tool documentation, and your own project notes. When you ask the system to suggest an alignment tool for a specific organism and read type, it retrieves documentation for relevant tools, compares their stated capabilities, and generates a reasoned recommendation grounded in current tool documentation rather than training data that may be months or years out of date.
 </p>

@@ -284,12 +284,12 @@ VlnPlot(seurat_obj, features = c("nFeature_RNA","nCount_RNA","percent.mt"), ncol
 <p>Meaning and limits: high average quality reduces base-calling error, but does not guarantee correct alignment if the reference is distant. Adapter presence often indicates short inserts; confirm insert-size distribution before trimming aggressively.</p>
 <h3>Mapping rate and properly paired reads</h3>
 <p>What to look for: high mapping fraction (&gt;90% in a good human WGS sample) and high properly paired percentage. Low mapping with many reads mapping to unexpected contigs (e.g., bacterial genomes) suggests contamination or wrong reference.</p>
-<p>Meaning and limits: a low mapping rate can be caused by a wrong reference build, contamination, library type mismatch (e.g., RNA reads to DNA reference) or very divergent genomes. High mapping rate alone does not validate correctness of variant calls — inspect mapping quality (MAPQ) distribution and variant-level metrics.</p>
+<p>Meaning and limits: a low mapping rate can be caused by a wrong reference build, contamination, library type mismatch (e.g., RNA reads to DNA reference), or very divergent genomes. A high mapping rate alone does not guarantee correct variant calls — also check the mapping quality (MAPQ) distribution and variant-level metrics.</p>
 <h3>Duplicate fraction and library complexity</h3>
 <p>What to look for: high duplicate fraction indicates low complexity or over-amplification. For PCR-free WGS duplicate rates should be low; targeted capture often has higher duplicates because of enrichment protocol.</p>
 <p>Meaning and limits: Marked duplicates inflate apparent coverage. Removing duplicates is appropriate for many DNA analyses but may be inappropriate for some RNA-seq quantification or UMIs (unique molecular identifiers) — treat UMI-aware processing differently.</p>
 <h3>Coverage uniformity and target dropouts</h3>
-<p>What to look for: per-target coverage reports that show consistent depth across the target set. Regions with zero or very low coverage are problematic for variant calling in those loci.</p>
+<p>What to look for: per-target coverage reports that show consistent depth across the target set. Regions with zero or very low coverage are problematic and make variant calling unreliable at those loci.</p>
 <p>Meaning and limits: average depth does not substitute for per-target depth. For clinical genes or actionable loci, document per-site coverage before making claims about negative findings.</p>
 <h3>Contamination and identity checks</h3>
 <p>What to look for: Kraken2 reporting a sizable fraction of non-target taxa; VerifyBamID reporting non-zero freemix suggestive of cross-sample contamination. Peddy and other tools can detect sample swaps using genotypes.</p>
@@ -298,7 +298,7 @@ VlnPlot(seurat_obj, features = c("nFeature_RNA","nCount_RNA","percent.mt"), ncol
 <ul>
 <li>
 <strong>Symptom:</strong> Very low mapping rate (e.g., &lt;50%)<br/>
-<strong>Likely causes:</strong> wrong reference build, contamination, unexpected sample type (e.g., microbial sample aligned to human), degraded/low-complexity library, adapter contamination or very short reads.<br/>
+<strong>Likely causes:</strong> Common causes include a wrong reference build, contamination, an unexpected sample type (e.g., a microbial sample aligned to a human reference), a degraded or low-complexity library, adapter contamination, or very short reads.<br/>
 <strong>Fixes:</strong> confirm reference fasta and its index; run Kraken2 to detect major taxa; inspect FastQC for adapters/short inserts; re-run alignment with relaxed settings if reads are from a divergent strain; consider re-sequencing.
   </li>
 <li>

@@ -148,8 +148,8 @@ function toggleMobileMenu() {
 </ul>
 </div>
 <h2>Beyond Clustering: Functional Single-Cell Biology</h2>
-<p>Once cells are clustered and annotated, the focus shifts to understanding <em>how</em> these populations function and interact. This involves interrogating <strong>Transcription Factor (TF) activity</strong>inferring <strong>Cell-Cell Communication</strong>and creating high-quality visualizations.</p>
-<p>In this tutorial, we cover the foundational tools for these advanced downstream steps across both R and Python.</p>
+<p>Once cells are clustered and annotated, the focus shifts to understanding <em>how</em> these populations function and interact. This involves interrogating <strong>Transcription Factor (TF) activity</strong> inferring <strong>Cell-Cell Communication</strong> and creating high-quality visualizations.</p>
+<p>This tutorial covers the core tools you will use for these advanced downstream steps in both R and Python.</p>
 <hr/>
 <h2>1. Cell-Cell Communication (Receptor-Ligand)</h2>
 <p>To understand how populations (e.g., T-cells and Macrophages) interact, we can map the expression of known Ligand-Receptor pairs. <strong>CellChat</strong> (R) and <strong>CellPhoneDB</strong> (Python) are the industry standards.</p>
@@ -182,7 +182,7 @@ netVisual_circle(cellchat@net$count, vertex.weight = groupSize,
                  weight.scale = T, label.edge= F, title.name = "Number of interactions")
 </code></pre><div class="mt-4 mb-8 bg-blue-50/50 border-l-4 border-blue-500 p-5 rounded-r-lg text-sm text-gray-700">
 <p class="font-bold text-gray-900 mb-2">Understanding the Output</p>
-<p class="mb-3">In this block, we pass our normalized counts and cell annotations into CellChat to compute probabilities of cell-cell communication. The algorithm uses a picked database of known receptor-ligand pairs and calculates interaction strength based on the law of mass action. We then filter out interactions involving very few cells to strip away statistical noise.</p>
+<p class="mb-3">In this code block, we pass our normalized counts and cell annotations into CellChat to compute probabilities of cell–cell communication. The algorithm uses a selected database of known receptor–ligand pairs and computes interaction strength using the law of mass action. We then remove interactions supported by very few cells to reduce statistical noise.</p>
 <p class="font-bold text-gray-900 mb-2">⚠️ Pitfalls to Avoid</p>
 <p>A common beginner mistake is forgetting to verify the species database or using raw, un-normalized counts. Also, CellChat assumes that mRNA expression directly correlates with protein surface expression, which isn't always true. Always validate surprising receptor-ligand pairs using spatial transcriptomics or protein-level assays (like flow cytometry).</p>
 </div>
@@ -256,9 +256,9 @@ DefaultAssay(pbmc) &lt;- "dorothea"
 FeaturePlot(pbmc, features = "STAT1", cols = c("blue", "white", "red"))
 </code></pre><div class="mt-4 mb-8 bg-blue-50/50 border-l-4 border-blue-500 p-5 rounded-r-lg text-sm text-gray-700">
 <p class="font-bold text-gray-900 mb-2">Understanding the Output</p>
-<p class="mb-3">Similar to the Python workflow, the R version integrates smoothly with Seurat, assigning TF activity scores as an entirely new assay. This allows you to visualize TF activity directly on your UMAP just like a regular gene feature plot.</p>
+<p class="mb-3">Like the Python workflow, the R version integrates smoothly with Seurat, adding TF activity scores as a new assay. That lets you visualize TF activity directly on your UMAP just like a regular gene feature plot.</p>
 <p class="font-bold text-gray-900 mb-2">⚠️ Pitfalls to Avoid</p>
-<p>Always remember that transcription factors are often expressed at extremely low levels or in short bursts, making them highly susceptible to drop-outs in scRNA-seq. By scoring their <em>targets</em>we bypass this dropout problem. However, never interpret these scores as absolute TF protein abundance; they represent regulatory <em>influence</em></p>
+<p>Always remember that transcription factors are often expressed at extremely low levels or in short bursts, making them highly susceptible to drop-outs in scRNA-seq. By scoring their <em>targets</em> we bypass this dropout problem. However, never interpret these scores as absolute TF protein abundance; they represent regulatory <em>influence</em></p>
 </div>
 <div class="mt-8 p-6 bg-purple-50 border-l-4 border-purple-500 rounded-r-xl shadow-sm mb-8">
 <h4 class="text-lg font-bold text-purple-900 mb-2 flex items-center gap-2">
@@ -267,9 +267,7 @@ FeaturePlot(pbmc, features = "STAT1", cols = c("blue", "white", "red"))
 </h4>
 <p class="text-purple-900 text-sm">
  In my research, I frequently encounter cell populations with ambiguous surface markers, for example, distinguishing malignant Sézary syndrome T-cells from normal regulatory T-cells when canonical markers like CD25 drop out. Gene Regulatory Networks (GRNs) solve this.
-<br/><br/>
- By computing a multivariate linear model (MLM) via decoupleR/DoRothEA, you can map the activity of master regulators like <strong>FOXP3</strong> or <strong>STAT3</strong> across your clusters. Instead of relying on a single dropout-prone transcript, you aggregate the signal of 50+ downstream targets. When visualizing these activities via heatmaps grouped by patient origin, you can often separate disease states that appear completely mixed in standard PCA/UMAP space.
-</p>
+<br/><br/>By fitting a multivariate linear model (MLM) with decoupleR/DoRothEA, you can map the activity of master regulators like<strong>FOXP3</strong> or <strong>STAT3</strong> across your clusters. Instead of relying on a single dropout-prone transcript, you aggregate the signal from 50+ downstream targets. Visualizing these activities as heatmaps grouped by patient origin often separates disease states that appear completely mixed in standard PCA or UMAP space.</p>
 </div>
 <hr/>
 <h2>3. Publication-Ready Plotting (SCpubr)</h2>
@@ -325,7 +323,7 @@ SCpubr::do_DotPlot(sample = pbmc,
 </div>
 </div>
 <h2>Conclusion</h2>
-<p>Mastering these downstream analysis techniques allows you to graduate from simply classifying cells to understanding the mechanistic networks and interactions driving tissue biology. Both R and Python offer solid, highly developed tools to accomplish these goals.</p>
+<p>Learning these downstream analysis techniques moves you beyond simply classifying cells to understanding the mechanistic networks and interactions driving tissue biology. Both R and Python provide mature, well-developed tools to accomplish this.</p>
 <div class="mt-10 p-8 bg-gray-50 border border-gray-200 rounded-xl">
 <h3 class="text-xl font-bold text-gray-900 mb-4">Knowledge Check &amp; Assessment</h3>
 <div class="space-y-4">

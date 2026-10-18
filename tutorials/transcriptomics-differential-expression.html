@@ -137,7 +137,7 @@ function toggleMobileMenu() {
 </div>
 </div><h2>Learning objectives and prerequisites</h2>
 <p><strong>You will learn:</strong> how to convert single-cell RNA-seq (scRNA-seq) counts into sample-level "pseudobulk" counts and run a statistically valid differential expression (DE) analysis using DESeq2. You will also learn how to inspect DESeq2 output, generate diagnostic plots (MA/PCA/Volcano), and interpret what the results do—and do not—prove.</p>
-<p><strong>Prerequisites:</strong> an R environment with Seurat (v4 or v5), DESeq2, and tidyverse/ggplot2 installed; a processed Seurat object containing cells from multiple biological replicates (patients/samples) and appropriate per-cell metadata fields for sample ID and cell type. Example R version: 4.3.x. This tutorial assumes you have already performed preprocessing (QC, normalization, clustering) and cell-type annotation.</p>
+<p><strong>Prerequisites:</strong> An R environment with Seurat (v4 or v5), DESeq2, and tidyverse/ggplot2 installed; and a processed Seurat object containing cells from multiple biological replicates (patients/samples) with per-cell metadata fields for sample ID and cell type. Example R version: 4.3.x. This tutorial assumes you have already performed preprocessing (QC, normalization, clustering) and cell-type annotation.</p>
 <h2>Why pseudobulk matters (biological &amp; statistical context)</h2>
 <p>Single-cell assays produce counts at the level of individual cells, but biological inference about experimental conditions (for example, disease vs control) must be based on independent biological replicates (patients, animals, or samples). Treating each cell as an independent replicate inflates the effective sample size and dramatically increases false positives because cell-to-cell variation (technical and biological) is not the same as variation between patients.</p>
 <p>Pseudobulk is a pragmatic and widely accepted approach: aggregate raw counts across cells of the same cell type within each biological sample to create one count vector per sample per cell type. The resulting matrix (genes × samples) can be analyzed with established bulk RNA-seq DE tools (DESeq2, edgeR, limma-voom) that correctly model between-sample variance. This restores the statistical unit of inference to the true biological replicate.</p>
@@ -172,7 +172,7 @@ head(seurat_obj@meta.data)
 # e.g. columns: cell, patient_id, disease_state, cell_type
 </code></pre>
 <h3>2) Subset to the cell type of interest and aggregate to pseudobulk</h3>
-<p>The following aggregates raw counts across cells grouped by sample (patient_id) and disease state. We will create group IDs like <code>Sample01_Healthy</code> so it is easy to inspect column names in downstream steps.</p>
+<p>The following aggregates raw counts across cells, grouped by sample (patient_id) and disease state. We will create group IDs like<code>Sample01_Healthy</code> so it is easy to inspect column names in downstream steps.</p>
 <pre><code># Subset to cell type (example: CD4 T cells)
 cell_type_of_interest &lt;- "CD4 T"
 subset_obj &lt;- subset(seurat_obj, idents = cell_type_of_interest)
@@ -302,8 +302,7 @@ ggsave("/output/plots/volcano.png", volcano, width = 6, height = 4)
     <br/><strong>Likely cause:</strong> Batch effects are present and not modeled.
     <br/><strong>Fix:</strong> Add batch as a covariate in the DESeq2 design (e.g. <code>design = ~ batch + condition</code>) if batches are balanced with respect to condition. Consider ComBat-Seq or removeBatchEffect for visualization only; do not remove biological signal.</li>
 <li><strong>Symptom:</strong> Warning about zero-inflation or convergence in DESeq2.
-    <br/><strong>Likely cause:</strong> Very small sample size (few biological replicates) or many genes with near-zero counts.
-    <br/><strong>Fix:</strong> Increase number of biological replicates if possible; filter out genes with very low counts before testing; consider using limma-voom with robust options for very small groups.</li>
+    <br/><strong>Likely cause:</strong> Very small sample size (few biological replicates), or many genes with near-zero counts.<br/><strong>Fix:</strong> Increase the number of biological replicates if possible. Filter out genes with very low counts before testing. For very small groups, consider using limma-voom with robust options.</li>
 <li><strong>Symptom:</strong> Unexpected direction of log2 fold-change (sign reversed).
     <br/><strong>Likely cause:</strong> Contrast order in <code>results()</code> matters (<code>contrast = c("condition", "CTCL", "Healthy")</code> returns log2(CTCL/Healthy)).
     <br/><strong>Fix:</strong> Verify the order passed to <code>results()</code> and interpret positive values as higher in the first level of the contrast.</li>
@@ -312,7 +311,7 @@ ggsave("/output/plots/volcano.png", volcano, width = 6, height = 4)
 <p>Limitations:</p>
 <ul>
 <li>Pseudobulk removes cell-to-cell variability that may be biologically informative (e.g., expression heterogeneity within a sample). It provides sample-level estimates for a given annotated cell type.</li>
-<li>Small numbers of biological replicates (n ≤ 3 per group) limit power and inflate uncertainty. Statistical tests will be poorly behaved with very few samples.</li>
+<li>Small numbers of biological replicates (n ≤ 3 per group) reduce statistical power and increase uncertainty. With very few samples, statistical tests will be poorly behaved.</li>
 <li>Cell-type misannotation or variable cell-type composition between samples can bias pseudobulk results—ensure consistent cell-type definitions and consider subsampling or weighting strategies if sample cellularity differs widely.</li>
 </ul>
 <p>Version and reference-data caveats:</p>

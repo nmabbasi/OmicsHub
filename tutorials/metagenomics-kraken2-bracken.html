@@ -150,7 +150,7 @@ function toggleMobileMenu() {
 <h2>Taxonomic Profiling with Kraken2 and Bracken</h2>
 <h2>Introduction</h2>
 <p>In shotgun metagenomics, one of the primary goals is answering: <strong>"Who is in this sample, and in what proportions?"</strong></p>
-<p>Unlike 16S amplicon sequencing, shotgun data contains fragmented DNA from every organism present. To classify millions of these short reads efficiently, we can't use traditional alignment tools like BLAST - it would take months. Instead, we use ultra-fast <strong>k-mer based classifiers</strong>with the undisputed industry standard being <strong>Kraken2</strong>followed by <strong>Bracken</strong> for abundance estimation.</p>
+<p>Unlike 16S amplicon sequencing, shotgun data contains fragmented DNA from every organism present. To classify millions of these short reads efficiently, we can't use traditional alignment tools like BLAST - it would take months. Instead, we use ultra-fast <strong>k-mer based classifiers</strong> with the undisputed industry standard being <strong>Kraken2</strong> followed by <strong>Bracken</strong> for abundance estimation.</p>
 <hr/>
 <h2>1. How Kraken2 Works</h2>
 <p>Kraken2 breaks down your reads into short sequences called <em>k-mers</em> (typically 35-mers). It then compares these k-mers against a massive pre-built database of known genomes.</p>
@@ -165,7 +165,7 @@ kraken2 --db /path/to/kraken2_database/ \
         --output kraken2_output.txt
 </code></pre>
 <p><strong>Key Outputs:</strong>
-* <code>kraken2_output.txt</code>Contains the classification for <em>every single read</em>* <code>kraken2_report.txt</code>A human-readable summary of the percentage of reads assigned to each taxonomic level.</p>
+* <code>kraken2_output.txt</code> Contains the classification for <em>every single read</em>* <code>kraken2_report.txt</code> A human-readable summary of the percentage of reads assigned to each taxonomic level.</p>
 <hr/>
 <h2>2. Correcting Abundances with Bracken</h2>
 <p>While Kraken2 is excellent at classification, its Lowest Common Ancestor (LCA) approach causes a problem: many reads are classified at higher taxonomic levels (like Genus or Family) because they match multiple species equally well.</p>
@@ -182,7 +182,7 @@ bracken -d /path/to/kraken2_database/ \
 <p><em>(Note: <code>-r 150</code> should match your Illumina read length).</em></p>
 <hr/>
 <h2>3. Visualization</h2>
-<p>Once you've your Bracken outputs across multiple samples, you can merge them and visualize the community composition.</p>
+<p>Once you have Bracken outputs from multiple samples, you can merge them and visualize the community composition.</p>
 <p>Tools like <strong>Krona</strong> create beautiful interactive HTML pie charts from Kraken2/Bracken reports.</p>
 <pre><code class="language-bash"># Install Krona tools
 mamba install -c bioconda krona
@@ -190,7 +190,7 @@ mamba install -c bioconda krona
 # Generate an interactive Krona plot from the Kraken2 report
 ktImportText kraken2_report.txt -o krona_visualization.html
 </code></pre>
-<p>By combining the blazing speed of Kraken2 with the statistical rigor of Bracken, you can profile complex microbial communities in minutes rather than months.</p>
+<p>Combining the speed of Kraken2 with the statistical rigor of Bracken lets you profile complex microbial communities in minutes instead of months.</p>
 <div class="mt-10 p-8 bg-gray-50 border border-gray-200 rounded-xl">
 <section class="prose-expansion bg-white border-t border-gray-100 mt-10 pt-10 pb-4">
 <div class="max-w-3xl mx-auto px-2">
@@ -202,9 +202,7 @@ ktImportText kraken2_report.txt -o krona_visualization.html
  This approach is extremely fast because the database lookup is essentially a hash table query. Kraken2 can classify hundreds of millions of reads per hour on a single node, which is roughly 10 to 100 times faster than alignment-based tools like Centrifuge or MetaPhlAn3 on large inputs. The trade-off is precision at the strain level: when two closely related strains share most of their k-mers, Kraken2 assigns reads to their lowest common ancestor rather than guessing a strain.
 </p>
 <h3 class="text-xl font-semibold text-slate-900 mb-3 mt-8">Why Bracken Is Necessary After Kraken2</h3>
-<p class="text-slate-700 text-base leading-relaxed mb-4">
- A common misconception is that the read counts Kraken2 produces are already abundance estimates. They're not. Kraken2 reports how many reads were classified at each node in the taxonomic tree, including reads that could not be resolved below genus or family. A species in your sample may have very few reads reported at its own level because most of its reads were pulled up to the genus or even phylum level due to shared k-mers with relatives.
-</p>
+<p class="text-slate-700 text-base leading-relaxed mb-4">A common misconception is that the read counts Kraken2 produces are already abundance estimates. They are not. Kraken2 reports how many reads were classified at each node in the taxonomic tree, including reads that could not be resolved below genus or family. A species in your sample may show few reads at its own level because most of its reads were assigned to higher ranks (genus or even phylum) when they share k-mers with related taxa.</p>
 <p class="text-slate-700 text-base leading-relaxed mb-4">
  Bracken corrects for this by redistributing reads from higher-level nodes back down to species or genus level using a Bayesian model trained on the same database. For each node in the tree, Bracken estimates what fraction of reads that landed there should have been assigned to each child node, based on the expected read length and k-mer distribution. The result is a corrected abundance table where each species or genus has a realistic estimate of its relative contribution to the sample.
 </p>
@@ -225,7 +223,7 @@ ktImportText kraken2_report.txt -o krona_visualization.html
 <div class="bg-amber-50 border border-amber-200 rounded-xl p-5 mt-6 mb-2">
 <p class="text-amber-900 font-semibold mb-2">Key Decision Points Before Running Your Analysis</p>
 <ul class="list-disc list-inside text-amber-800 space-y-1 text-sm">
-<li>Select a database that covers the organisms you expect in your samples, not just the standard RefSeq set.</li>
+<li>Choose a database that includes the organisms you expect to find in your samples, not just the standard RefSeq set.</li>
 <li>Set the Bracken read length to match your actual read length after trimming, not the sequencer nominal read length.</li>
 <li>Report confidence thresholds used for classification; the default 0.1 may need adjustment for your sample type.</li>
 <li>Always inspect the fraction of unclassified reads before interpreting composition results.</li>

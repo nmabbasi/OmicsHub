@@ -142,7 +142,7 @@ function toggleMobileMenu() {
 <p><strong>Prerequisites:</strong> basic command-line familiarity (bash or similar), a working Python 3.8+ environment, and permission to install Python packages. No prior knowledge of gget or the Ensembl/UniProt APIs is required.</p>
 <h2>Why deterministic retrieval matters in bioinformatics</h2>
 <p>Large Language Models (LLMs) are powerful at synthesizing text and generating code, but they are not authoritative sources of changing biological facts such as current Ensembl gene IDs, transcript coordinates, or canonical UniProt accessions. These facts change over time: annotations are updated, assemblies are remapped, and IDs may be deprecated. Handing an LLM a deterministic, programmatically retrieved record from a primary database before asking it to analyze or write code prevents hallucinations and provides an auditable provenance trail.</p>
-<p>gget is a small tool designed to query authoritative bioinformatics resources (Ensembl, UniProt, NCBI, AlphaFold DB, ARCHS4, Enrichr) and return structured results you can save. The workflow we teach here separates retrieval (deterministic, reproducible) from interpretation (LLM or human). Save the raw retrieval responses, the command used, and the retrieval timestamp so downstream analyses can be reproduced and validated.</p>
+<p>gget is a small tool for querying authoritative bioinformatics resources (Ensembl, UniProt, NCBI, AlphaFold DB, ARCHS4, Enrichr) and returning structured results you can save. In this tutorial we separate retrieval — which is deterministic and reproducible — from interpretation, which can be done by an LLM or a human. Save the raw retrieval responses, the exact command you ran, and the retrieval timestamp so downstream analyses can be reproduced and validated.</p>
 <h2>Reproducible, sequential workflow</h2>
 <p>The following workflow is structured so you first confirm retrieval works locally, then save and validate outputs, then hand those saved files to an LLM for interpretation. All commands assume a Unix-like shell. Replace species and identifiers as needed.</p>
 <h3>1) Create an isolated environment and install gget</h3>
@@ -164,7 +164,7 @@ echo "gget version and help saved to retrieval-results/gget-help.txt"
 <li><code>.venv/</code> — isolated Python environment (do not delete if you want reproducibility).</li>
 <li><code>retrieval-results/gget-help.txt</code> — contains the list of gget subcommands (info, seq, search, enrichr, archs4, alphafold, etc.).</li>
 </ul>
-<p>Note: pin the version number after you confirm behavior (here we used 0.28.6 as an example). If you are reproducing this tutorial at a later date, choose and record the specific version you used.</p>
+<p>Note: pin the version number after you confirm the tool behaves as expected — here we used 0.28.6 as an example. If you reproduce this tutorial later, choose and record the exact version you used.</p>
 <h3>2) Prepare a retrieval-results directory and record metadata</h3>
 <pre><code># Make a directory to hold raw retrievals and logs
 mkdir -p retrieval-results

@@ -188,7 +188,7 @@ print("Validated metadata written to metadata.validated.csv")
 <p>What the commands produce:</p>
 <ul>
 <li>Console output of a cross-tabulation of batch by condition (helps spot confounding).</li>
-<li>A file metadata.validated.csv that you can point downstream tools to.</li>
+<li>A file named metadata.validated.csv that you can provide to downstream tools.</li>
 </ul>
 <h3>3) Same validation in R</h3>
 <pre><code># R script: metadata_checks.R
@@ -208,7 +208,7 @@ write.csv(meta, "metadata.validated.csv", row.names = FALSE)
 cat("Validated metadata written to metadata.validated.csv\n")
 </code></pre>
 <h3>4) Visual checks for batch effects (R, PCA example)</h3>
-<p>If you have an expression/count matrix (rows = features, columns = samples) named counts.csv, the following R example shows a minimal reproducible workflow to produce a principal component analysis (PCA) plot colored by condition and shaped by batch. This is an exploratory check only; interpretation follows below.</p>
+<p>If you have an expression or count matrix (rows = features, columns = samples) called counts.csv, the R example below shows a minimal, reproducible workflow to produce a principal component analysis (PCA) plot colored by condition and shaped by batch. This is an exploratory check only; interpretation follows below.</p>
 <pre><code># R script: pca_check.R
 # Requires: DESeq2 or base prcomp; this example uses base prcomp after a simple log transform
 counts &lt;- as.matrix(read.csv("counts.csv", row.names = 1))
@@ -262,8 +262,8 @@ print("Randomized assignment written to metadata.randomized.csv")
 <h2>Output inspection and interpretation</h2>
 <p>After running the validation and PCA checks, here’s how to interpret common outcomes. Be explicit about what a result suggests and what it does not prove.</p>
 <ul>
-<li>Cross-tabulation with both conditions present in each batch (e.g., each lane contains controls and treated samples): this is the design goal. It reduces confounding and allows modeling both batch and condition effects simultaneously.</li>
-<li>PCA shows samples clustering primarily by condition, with no clear separation by batch: likely minimal batch-driven variation. You can proceed with differential testing that includes batch as a covariate to be conservative.</li>
+<li>The design goal is cross-tabulation, where each batch contains samples from both conditions (for example, each lane has controls and treated samples). This reduces confounding and lets you model batch and condition effects simultaneously.</li>
+<li>If the PCA shows samples clustering mainly by condition with no clear separation by batch, that suggests minimal batch-driven variation. You can proceed to differential testing but include batch as a covariate to be conservative.</li>
 <li>PCA shows samples clustering primarily by batch: this indicates a strong batch effect. If the design is balanced (both conditions in each batch), include batch in the model and consider batch-correction methods such as limma::removeBatchEffect or ComBat, after careful inspection.</li>
 <li>PCA shows that samples cluster by a covariate you did not expect (e.g., collection_date, operator): investigate and, if possible, include that covariate in downstream models or in blocking during future experiments.</li>
 <li>If the cross-tabulation shows perfect confounding (e.g., batch 1 = all controls, batch 2 = all treated), then no statistical or computational method can independently estimate both effects from the data. The correct fix is experimental: repeat sampling with a balanced design or add new replicates randomized across batches.</li>

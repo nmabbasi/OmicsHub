@@ -159,7 +159,7 @@ function toggleMobileMenu() {
 <p>Files you should have before starting (create these or replace with your own):</p>
 <ul>
 <li>data/raw/example.fasta — a small FASTA file with one or more sequences. Example content is provided below if you need to create it.</li>
-<li>scripts/compute_fasta_stats.py — the script we will create in this lesson.</li>
+<li>scripts/compute_fasta_stats.py — the script we'll create in this lesson.</li>
 </ul>
 <h3>1. Create a project directory and a tiny example FASTA</h3>
 <pre><code># Make a project folder and create input directories
@@ -288,7 +288,7 @@ cat outputs/sequence_stats.csv
 </code></pre>
 <p>Expected file: outputs/sequence_stats.csv with columns: id, length, gc_fraction, valid. The exact numeric values depend on the input sequences. The CSV is safe to open in a spreadsheet or to load into pandas for downstream processing.</p>
 <h3>5. Optional: parse with Biopython for comparison</h3>
-<p>If you installed Biopython in the virtual environment, you can accomplish similar work using SeqIO. This is useful for production and supports many formats and edge cases.</p>
+<p>If you installed Biopython in the virtual environment, you can accomplish the same work using SeqIO. That approach is better for production because it supports many formats and handles edge cases.</p>
 <pre><code># Run an interactive one-liner (while env is activated)
 python - &lt;&lt;'PY'
 from Bio import SeqIO
@@ -305,13 +305,13 @@ PY
 <p>When you open outputs/sequence_stats.csv, check the following:</p>
 <ul>
 <li>All expected record IDs are present. Missing IDs may indicate a parsing error or that the input FASTA lines were malformed.</li>
-<li>Length values reflect the number of characters after normalization (spaces, tabs removed). Very short sequences (length 0–3) should be examined manually: they may be fragments, adapter sequences, or corrupted lines.</li>
+<li>Length values reflect the number of characters after normalization (spaces and tabs removed). Very short sequences (length 0–3) should be inspected manually because they may be fragments, adapter sequences, or corrupted lines.</li>
 <li>gc_fraction is the proportion of G or C bases (0.0–1.0). Values near 0.5 are common for many genomes, but expected GC content depends on organism or target (bacterial genomes can range widely).</li>
 <li>The valid column flags records where non-standard characters were found (for this lesson that means characters outside A,C,G,T,N). If valid is "no", the gc_fraction field is left blank and you should inspect the corresponding sequence in the FASTA file.</li>
 </ul>
 <p>What a plausible result means — and what it does NOT prove:</p>
 <ul>
-<li>If a sequence has gc_fraction = 0.42, this simply means 42% of the characters are G or C in the provided string. It does not prove the sequence is error-free, nor does it guarantee biological significance (contamination, assembly artifacts, or sequencing biases can change GC).</li>
+<li>If a sequence has gc_fraction = 0.42, this simply means 42% of the characters in the provided string are G or C. It does not prove the sequence is error-free or biologically meaningful — contamination, assembly artifacts, or sequencing biases can change GC content.</li>
 <li>Short sequences or sequences labeled invalid may be genuine biological data (e.g., primers with ambiguous bases) or may indicate file corruption. Manual inspection or comparison to original data sources is required.</li>
 <li>Aggregate summaries (mean GC across records) are descriptive. They are not a substitute for statistical testing if you want to compare groups or draw biological conclusions.</li>
 </ul>

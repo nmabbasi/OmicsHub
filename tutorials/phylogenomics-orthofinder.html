@@ -150,16 +150,16 @@ function toggleMobileMenu() {
 <h2>Phylogenomics and Orthology Analysis</h2>
 <h2>Introduction</h2>
 <p>Traditional phylogenetic analysis relies on aligning a single highly conserved gene (like 16S rRNA or Cytochrome C) to determine the evolutionary relationship between species. However, single genes can be misleading due to horizontal gene transfer or differing mutation rates.</p>
-<p><strong>Phylogenomics</strong> solves this by using <em>entire genomes</em>Instead of one gene, we look at thousands of genes simultaneously. The absolute industry standard tool for identifying which genes are comparable across different genomes is <strong>OrthoFinder</strong></p>
+<p><strong>Phylogenomics</strong> solves this by using <em>entire genomes</em> Instead of one gene, we look at thousands of genes simultaneously. The absolute industry standard tool for identifying which genes are comparable across different genomes is <strong>OrthoFinder</strong></p>
 <hr/>
 <h2>1. The Concept of Orthology</h2>
 <p>To compare genomes, you must first find the matching genes across them.
 * <strong>Orthologs</strong> are genes in different species that evolved from a common ancestral gene via speciation. These are the genes you <em>want</em> to use to build a species tree.
 * <strong>Paralogs</strong> are genes related via duplication events within a genome. Comparing paralogs across species will give you an incorrect evolutionary tree.</p>
-<p>OrthoFinder automatically sorts the proteomes (all protein sequences) of your species into <strong>Orthogroups</strong>strictly separating orthologs from paralogs.</p>
+<p>OrthoFinder automatically sorts the proteomes (all protein sequences) of your species into <strong>Orthogroups</strong> strictly separating orthologs from paralogs.</p>
 <hr/>
 <h2>2. Running OrthoFinder</h2>
-<p>OrthoFinder is incredibly easy to run. You simply provide it a directory containing the <code>.faa</code> (Protein FASTA) files of the species you want to compare.</p>
+<p>OrthoFinder is very easy to run. You simply provide it with a directory containing the<code>.faa</code> (Protein FASTA) files of the species you want to compare.</p>
 <p><em>(Note: You can easily generate these <code>.faa</code> files by running PROKKA on your assembled genomes).</em></p>
 <pre><code class="language-bash"># Assuming you have a folder named 'proteomes' containing fasta files:
 # speciesA.faa, speciesB.faa, speciesC.faa
@@ -172,14 +172,14 @@ orthofinder -f proteomes/ -t 16 -a 16
 <h2>3. Key Outputs from OrthoFinder</h2>
 <p>OrthoFinder creates a highly structured <code>Results/</code> directory. The most critical outputs are:</p>
 <h3><code>Orthogroups.tsv</code></h3>
-<p>This is a matrix where each row is an orthogroup, and columns are your species. It shows exactly which genes belong to which orthogroup.</p>
+<p>This matrix has one orthogroup per row and one species per column. It shows exactly which genes belong to each orthogroup.</p>
 <h3><code>Single_Copy_Orthologue_Sequences/</code></h3>
 <p>This directory contains the absolute gold-mine for phylogenomics. A "Single-Copy Ortholog" is a gene that exists exactly once in every single species you analyzed. These are the perfect genes for building a highly solid phylogenetic tree, as there's zero ambiguity about paralogs.</p>
 <h3><code>Species_Tree/SpeciesTree_rooted.txt</code></h3>
 <p>OrthoFinder automatically concatenates the alignments of those single-copy orthologs and uses STAG and STRIDE algorithms to infer a highly accurate, rooted <strong>Species Tree</strong> in Newick format.</p>
-<p>You can instantly visualize this file using tools like <strong>iTOL</strong> (Interactive Tree Of Life) or FigTree.</p>
+<p>You can quickly visualize this file using tools like<strong>iTOL</strong> (Interactive Tree Of Life) or FigTree.</p>
 <h2>Conclusion</h2>
-<p>OrthoFinder represents a massive leap forward from single-gene phylogeny. By using the entire proteome to accurately identify orthogroups and automatically inferring a rooted species tree, you can resolve deep evolutionary relationships with unprecedented statistical confidence.</p>
+<p>OrthoFinder improves on single-gene phylogeny. By using the entire proteome to identify orthogroups accurately and by automatically inferring a rooted species tree, it lets you resolve deep evolutionary relationships with much greater statistical confidence.</p>
 <h3>Matched Python and R OrthoFinder species-tree workflow</h3>
 <p>The species tree is an OrthoFinder output. Inspect its topology and branch lengths after checking the orthogroup and single-copy-orthologue settings used to infer it.</p>
 <pre><code class="language-python">from Bio import Phylo

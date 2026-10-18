@@ -199,7 +199,7 @@ conda env export --no-builds &gt; provenance/environment.yaml
 <li><code>provenance/conda_explicit.txt</code>: exact package builds if you need bitwise reproduction</li>
 </ul>
 <h3>3. Reproducible data-access statement</h3>
-<p>Document where raw data were obtained, exact accession identifiers, and the download date. If data are public (recommended), include accession and a checksum for the downloaded files. Example text you can paste into a methods paragraph:</p>
+<p>Record where the raw data were obtained, the exact accession identifiers, and the download date. If the data are public (recommended), include the accession and a checksum for the downloaded files. Example text you can paste into a methods paragraph:</p>
 <pre><code>Data: Raw sequencing files for the 12 tumor/normal pairs were downloaded from GEO (GSE123456) on 2026-06-01. Local copies are stored in <code>data/raw/</code>; checksums recorded in <code>provenance/checksums.txt</code>.</code></pre>
 <h3>4. Example pipeline steps (alignment and counts) — reproducible commands</h3>
 <p>This example uses STAR for alignment and featureCounts for gene counting. It assumes paired FASTQ files and a local indexed GRCh38 reference in <code>reference/GRCh38/</code>.</p>
@@ -253,7 +253,7 @@ Rscript scripts/de_analysis/run_de_pipeline.R \
 <p>After running the pipeline, inspect the outputs systematically. The goal of inspection is to separate direct observations (measured facts) from interpretation (biological meaning) and to note limitations.</p>
 <h3>What to look for in QC and counts</h3>
 <ul>
-<li>Counts distribution per sample (library size): look for outliers, very low-depth libraries, or samples with anomalous mapping rates.</li>
+<li>Counts distribution per sample (library size): check for outliers, very low-depth libraries, or samples with anomalous mapping rates.</li>
 <li>Gene detection rate: number of genes with non-zero counts per sample.</li>
 <li>Principal component analysis (PCA) or multidimensional scaling: do samples cluster by expected experimental variable (e.g., condition) or by batch/donor?</li>
 <li>Differential expression: number of genes passing threshold and effect sizes (log2 fold changes) — examine volcano plots and MA plots.</li>
@@ -266,7 +266,7 @@ Rscript scripts/de_analysis/run_de_pipeline.R \
 </ul>
 <p>How to phrase interpretation and limitations:</p>
 <ul>
-<li>Interpretation: The treatment is associated with altered expression in the pathway annotated as “oxidative phosphorylation.” This is a possible biological effect consistent with the observed DE genes.</li>
+<li>Interpretation: The treatment is associated with altered expression in the pathway annotated as "oxidative phosphorylation." This is a possible biological effect consistent with the observed DE genes.</li>
 <li>Limitation: Donor is a confounding variable — PCA indicates donor explains more variance than treatment, and donors were not fully balanced across conditions. Therefore, treatment-associated signals could be influenced by donor-specific effects.</li>
 </ul>
 <p>Important: Do not state causal or definitive claims unless the design supports them. For example, do not say “treatment causes pathway activation” if the experiment is observational or if confounders were not controlled.</p>
@@ -276,7 +276,7 @@ Rscript scripts/de_analysis/run_de_pipeline.R \
 <pre><code>Figure 1. QC summary of mitochondrial read fraction by condition. Each point represents one cell/sample (n = 96). Horizontal bars indicate median and interquartile range (IQR). Mitochondrial fraction was computed as mitochondrial gene counts / total counts after filtering genes with &lt;= 1 count across all samples. Samples with mitochondrial fraction &gt; 0.2 were flagged and excluded from downstream analysis as pre-specified. Statistical comparison used Wilcoxon rank-sum test between conditions; p-values are reported without multiple-test correction. See Methods for sample metadata and thresholds.</code></pre>
 <h2>Troubleshooting</h2>
 <p>Below are common symptoms, likely causes, and suggested fixes.</p>
-<h3>Symptom: One or two samples have very low library size (few mapped reads)</h3>
+<h3>Symptom: One or two samples have very low library size (few mapped reads).</h3>
 <ul>
 <li>Likely causes: failed sequencing lane, incorrect sample demultiplexing, corrupted FASTQ files.</li>
 <li>Fixes: inspect raw FASTQ quality with FastQC; check read counts in alignment logs; re-download raw files from archive; if the sample is irrecoverable, record the exclusion with rationale and update sample counts in methods.</li>
@@ -286,7 +286,7 @@ Rscript scripts/de_analysis/run_de_pipeline.R \
 <li>Likely causes: batch effects, confounded experimental design (batch aligned with treatment).</li>
 <li>Fixes: include batch/donor in the statistical model; if confounding cannot be separated, explicitly report the limitation and avoid strong causal claims. Consider collecting additional balanced data if possible.</li>
 </ul>
-<h3>Symptom: Very few or zero differentially expressed genes</h3>
+<h3>Symptom: Very few or zero differentially expressed genes.</h3>
 <ul>
 <li>Likely causes: low statistical power (small n), over-stringent filtering, incorrect model specification.</li>
 <li>Fixes: check model design matrix for coding errors; increase sample size if possible; report negative results transparently; consider pre-specifying effect size of interest and presenting effect-size estimates with confidence intervals rather than only p-values.</li>

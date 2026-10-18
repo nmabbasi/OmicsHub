@@ -150,7 +150,7 @@ function toggleMobileMenu() {
 <h2>Spatial Transcriptomics: Bridging RNA and Anatomy</h2>
 <h2>Introduction to Spatial Biology</h2>
 <p>Traditional single-cell RNA-seq requires dissociating tissues, which destroys the physical architecture and context of the cells. <strong>Spatial Transcriptomics</strong> (such as 10x Genomics Visium or Xenium) solves this by mapping gene expression directly onto intact histological tissue slices (like H&amp;E stains).</p>
-<p>This tutorial provides the foundational workflows for processing spatial data in both R and Python.</p>
+<p>This tutorial presents foundational workflows for processing spatial data in both R and Python.</p>
 <hr/>
 <h2>1. Loading and Preprocessing Spatial Data</h2>
 <p>Spatial data objects are unique because they contain two distinct types of data: the gene expression matrix (counts) and the spatial coordinates/images.</p>
@@ -200,7 +200,7 @@ spatial_data &lt;- SCTransform(spatial_data, assay = "Spatial", verbose = FALSE)
 </div>
 <hr/>
 <h2>3. Spatial Clustering</h2>
-<p>Just like scRNA-seq, we can cluster the "spots" based on their transcriptional profiles to find spatial domains (e.g., cortical layers in a brain, or tumor microenvironments).</p>
+<p>Just like scRNA-seq, we can cluster the spots based on their transcriptional profiles to find spatial domains (e.g., cortical layers in a brain or tumor microenvironments).</p>
 <p>Spatial clustering should be compared with tissue morphology and QC patterns. In Python, construct the spatial graph explicitly before using spatial statistics.</p>
 <div class="code-tabs" data-code-tabs="">
 <div aria-label="Spatial clustering examples" class="code-tab-list" role="tablist">
@@ -224,7 +224,7 @@ SpatialDimPlot(spatial_data, label = TRUE, label.size = 3)
 </div>
 </div>
 <h2>Summary</h2>
-<p>Both ecosystems are incredibly powerful. <strong>Seurat (R)</strong> provides an easy, out-of-the-box experience that's very familiar if you already do scRNA-seq. <strong>Squidpy (Python)</strong> provides superior tools for graph-based spatial statistics, such as testing if two cell types physically co-occur in the tissue.</p>
+<p>Both ecosystems are incredibly powerful. <strong>Seurat (R)</strong> It provides an easy, out-of-the-box experience that's very familiar if you already do scRNA-seq.<strong>Squidpy (Python)</strong> provides superior tools for graph-based spatial statistics, such as testing if two cell types physically co-occur in the tissue.</p>
 <div class="mt-10 p-8 bg-gray-50 border border-gray-200 rounded-xl">
 <section class="prose-expansion bg-white border-t border-gray-100 mt-10 pt-10 pb-4">
 <div class="max-w-3xl mx-auto px-2">
@@ -243,12 +243,8 @@ SpatialDimPlot(spatial_data, label = TRUE, label.size = 3)
  For Visium data, the standard analysis stack uses Seurat in R or Squidpy and Scanpy in Python. Both load the tissue image alongside the spot-by-gene count matrix, allowing you to overlay expression patterns directly onto the histological image. The key difference from scRNA-seq is that you must decide early whether to treat spots as pseudo-cells or to deconvolve them into constituent cell types using a reference single-cell atlas.
 </p>
 <h3 class="text-xl font-semibold text-slate-900 mb-3 mt-8">Deconvolution: Recovering Cell-Type Proportions from Spots</h3>
-<p class="text-slate-700 text-base leading-relaxed mb-4">
- Because each Visium spot contains multiple cells, spatially variable genes are not necessarily cell-type-specific genes. A gene may appear enriched in a particular region simply because that region contains more of a given cell type, not because that gene is upregulated in those cells. Tools like RCTD, Spotlight, and NNLS deconvolution use a reference single-cell dataset to estimate the mixture of cell types in each spot. The result is a proportion matrix: for each spot, you obtain an estimate of how much of the signal comes from each cell type.
-</p>
-<p class="text-slate-700 text-base leading-relaxed mb-4">
- Once you've cell-type proportions, you can ask spatially resolved questions: do T cells and tumour cells co-localise? Do fibroblasts cluster near the stromal boundary? Which regions are predominantly composed of which cell types? These questions are not answerable from single-cell data alone, and they're what make spatial transcriptomics genuinely complementary rather than redundant with scRNA-seq.
-</p>
+<p class="text-slate-700 text-base leading-relaxed mb-4">Because each Visium spot contains multiple cells, spatially variable genes are not necessarily cell-type-specific. A gene may appear enriched in a region simply because that region contains more of a certain cell type, not because that gene is upregulated in those cells. Tools like RCTD, Spotlight, and NNLS deconvolution use a reference single-cell dataset to estimate the mix of cell types in each spot. The result is a proportion matrix: for each spot, you get an estimate of how much of the signal comes from each cell type.</p>
+<p class="text-slate-700 text-base leading-relaxed mb-4">Once you have cell-type proportions, you can ask spatially resolved questions: do T cells and tumour cells co-localise? Do fibroblasts cluster near the stromal boundary? Which regions are predominantly composed of which cell types? These questions are not answerable from single-cell data alone, and they are what make spatial transcriptomics genuinely complementary rather than redundant with scRNA-seq.</p>
 <h3 class="text-xl font-semibold text-slate-900 mb-3 mt-8">Common Pitfalls and How to Avoid Them</h3>
 <p class="text-slate-700 text-base leading-relaxed mb-4">
  One frequent mistake is treating spatially variable genes as differentially expressed genes without accounting for spatial autocorrelation. Standard differential expression tests assume independence between observations; adjacent spots share signal because they share cells at their edges. Tools like SpatialDE and NNSVG test for spatial variability directly, using statistical models that account for this autocorrelation.

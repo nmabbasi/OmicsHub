@@ -281,7 +281,7 @@ samtools faidx spades_output/contigs.fasta
 <h2>Output inspection and interpretation</h2>
 <p>After running the mapping, inspect these key files:</p>
 <ul>
-<li><code>reads_to_contigs.flagstat.txt</code>: reports the total number of reads aligned, fraction mapped, and properly paired reads. High mapping percentage to contigs suggests the assembly captured many reads; low mapping percentage indicates many reads did not assemble into contigs (common in very complex or low-depth samples).</li>
+<li><code>reads_to_contigs.flagstat.txt</code>: reports the total number of reads aligned, the fraction mapped, and the number of properly paired reads. A high mapping percentage to contigs means the assembly captured many reads; a low mapping percentage means many reads did not assemble into contigs (common in very complex or low-depth samples).</li>
 <li><code>contig_mean_coverage.tsv</code>: per-contig average coverage. Contigs with extremely low average coverage (for example, average &lt;5x depending on read length and sample complexity) are weaker evidence and more likely to be assembly artefacts.</li>
 <li><code>contig_depth.tsv</code>: used to inspect coverage variation along a contig. Sharp drops or abrupt changes can indicate chimeric joins or misassemblies.</li>
 <li><code>spades_output/contigs.fasta</code>: inspect top contigs for length distribution. Many short contigs (&lt;500 bp) are common in metagenomes and may be less informative.</li>
@@ -289,7 +289,7 @@ samtools faidx spades_output/contigs.fasta
 <p>What a plausible result means (examples of interpretation):</p>
 <ul>
 <li>Contigs with consistent, even coverage and a substantial length (e.g., several kilobases) are more likely to represent true genomic sequence from a medium- to high-abundance organism.</li>
-<li>Contigs with very high coverage spikes may derive from highly conserved sequences (e.g., rRNA, mobile elements) or collapsed repeats; treat these carefully.</li>
+<li>Contigs with very high coverage spikes may come from highly conserved sequences (e.g., rRNA, mobile elements) or from collapsed repeats; treat these contigs with caution.</li>
 <li>Contigs supported by few or single paired reads at junctions are suspect; inspect paired-read orientation and insert sizes in IGV to detect misjoins.</li>
 </ul>
 <p>What the mapping does NOT prove:</p>
@@ -299,7 +299,7 @@ samtools faidx spades_output/contigs.fasta
 <li>Absence of mapping for some reads may be due to low complexity regions, contaminants, or sequences too divergent to assemble, not necessarily a failed experiment.</li>
 </ul>
 <h2>Troubleshooting</h2>
-<p>Symptom: Very low fraction of reads map back to contigs (flagstat shows low mapped percentage).</p>
+<p>Symptom: a very low fraction of reads map back to contigs (flagstat shows a low mapped percentage).</p>
 <ul>
 <li>Likely causes:
     <ul>

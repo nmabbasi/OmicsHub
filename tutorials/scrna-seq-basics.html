@@ -136,7 +136,7 @@ function toggleMobileMenu() {
 <span><strong>Tested on:</strong> R 4.3.2, Seurat v5.0.1, Ubuntu 24.04</span>
 </div>
 </div><h2>Learning objectives and prerequisites</h2>
-<p><strong>Learning objectives.</strong> After completing this tutorial you will be able to:</p>
+<p><strong>Learning objectives.</strong> After completing this tutorial, you will be able to:</p>
 <ul>
 <li>Perform rigorous quality control (QC) on a 10x Genomics single-cell RNA-seq (scRNA-seq) count matrix.</li>
 <li>Normalize and identify highly variable genes (HVGs).</li>
@@ -147,7 +147,7 @@ function toggleMobileMenu() {
 <p><strong>Prerequisites.</strong> Working knowledge of the Linux command line, basic R or Python programming, familiarity with count matrices and gene identifiers, and introductory statistics (variance, correlation, dimensionality reduction). You should have either R (&gt;=4.0) with Seurat installed or Python (&gt;=3.8) with Scanpy. Example command-line utilities used: wget or curl for downloads, and unzip/tar for archive extraction.</p>
 <h2>Why this matters: biological and computational context</h2>
 <p>Single-cell RNA sequencing profiles gene expression at the level of individual cells. This enables discovery of cell types, states, and transitions that would be hidden in bulk measurements. However, the raw data are noisy: many droplets are empty or contain ambient RNA, some cells are dying and produce biased libraries, and multiplets (doublets) can create hybrid expression profiles. Robust QC and careful downstream processing (normalization, feature selection, dimensionality reduction, clustering) are essential to ensure biological interpretations reflect true biology rather than technical artefacts.</p>
-<p>Two widely used toolkits for scRNA-seq are Seurat (R) and Scanpy (Python). This tutorial provides parallel example commands for both so you can reproduce the pipeline in your preferred environment. The workflow is demonstrated on the 10x Genomics PBMC 3k dataset as a pedagogical example, but the same principles apply to other datasets; thresholds should be adapted to your tissue and experimental protocol.</p>
+<p>Two widely used toolkits for scRNA-seq are Seurat (R) and Scanpy (Python). This tutorial provides parallel example commands for both, so you can reproduce the pipeline in your preferred environment. The workflow is demonstrated on the 10x Genomics PBMC 3k dataset as a pedagogical example; the same principles apply to other datasets, but thresholds should be adapted to your tissue and experimental protocol.</p>
 <h2>Required files and workspace</h2>
 <p>Before you start, prepare a working directory and ensure you have the 10x matrix files (or your own count matrix in 10x or Matrix Market / TSV format). For the PBMC 3k example, create a directory named <code>data/pbmc3k/</code> and place the 10x filtered matrix files there (barcodes.tsv, genes.tsv or features.tsv, and matrix.mtx). The commands below assume these paths:</p>
 <ul>
@@ -288,7 +288,7 @@ adata.write("results/pbmc_scanpy.h5ad")
 <h2>Troubleshooting</h2>
 <p>Common symptoms, likely causes, and practical fixes:</p>
 <ul>
-<li><strong>Symptom:</strong> Very low median genes/cell and many cells with zero or few genes.<br/>
+<li><strong>Symptom:</strong> Very low median genes/cell and many cells with zero or very few genes.<br/>
 <strong>Likely causes:</strong> Using the raw (unfiltered) matrix that includes ambient RNA, degraded sample, or wrong file path leading to an empty object.<br/>
 <strong>Fixes:</strong> Confirm the input files (matrix.mtx, barcodes.tsv) are present and non-empty. Use the 10x filtered matrix if intended. Check sample QC at the wet-lab stage.</li>
 <li><strong>Symptom:</strong> High fraction of mitochondrial reads across most cells.<br/>

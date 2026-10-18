@@ -153,7 +153,7 @@ function toggleMobileMenu() {
 * If the pipeline crashes halfway, you've to manually figure out where to restart.
 * They don't automatically parallelize across High-Performance Computing (HPC) nodes.
 * They're difficult for other researchers to reproduce.</p>
-<p>The solution is using a <strong>Workflow Manager</strong>The two absolute industry standards in bioinformatics are <strong>Snakemake</strong> and <strong>Nextflow</strong></p>
+<p>The solution is using a <strong>Workflow Manager</strong> The two absolute industry standards in bioinformatics are <strong>Snakemake</strong> and <strong>Nextflow</strong></p>
 <hr/>
 <h2>1. Snakemake: Python-Based Pipelines</h2>
 <p><strong>Snakemake</strong> is built on top of Python. If you already know Python, the syntax will feel incredibly familiar. It uses a "make-like" logic: you define the final <em>output</em> files you want, and Snakemake works backward to find the <em>rules</em> required to create them.</p>
@@ -177,11 +177,11 @@ snakemake --cores 16
 # Submit the pipeline to an HPC cluster (Slurm)
 snakemake --profile slurm
 </code></pre>
-<p>Snakemake automatically tracks which samples have been processed. If sample 5 fails, you just re-run the exact same command, and Snakemake will <em>only</em> process sample 5!</p>
+<p>Snakemake automatically tracks which samples have been processed. If sample 5 fails, re-running the exact same command will make Snakemake rerun only the failed steps and any dependent jobs, while skipping samples that already finished.<em>only</em> process sample 5!</p>
 <hr/>
 <h2>2. Nextflow: Enterprise-Grade Scalability</h2>
 <p><strong>Nextflow</strong> uses a Groovy-based Domain Specific Language (DSL2). While the learning curve is slightly steeper than Snakemake, Nextflow is the backbone of massive institutional pipelines (such as the nf-core project).</p>
-<p>Nextflow excels at "dataflow" programming. You define <em>processes</em>and data flows between them through <em>channels</em></p>
+<p>Nextflow excels at "dataflow" programming. You define <em>processes</em> and data flows between them through <em>channels</em></p>
 <h3>Basic Structure of a Nextflow Script (<code>main.nf</code>)</h3>
 <pre><code class="language-groovy">// Define a process
 process BWA_ALIGN {
@@ -209,8 +209,7 @@ workflow {
 }
 </code></pre>
 <h3>nf-core: The True Power of Nextflow</h3>
-<p>The biggest advantage of Nextflow is <strong>nf-core</strong>a massive community repository of highly picked, peer-reviewed pipelines.
-Instead of writing your own RNA-seq pipeline, you can simply run the community standard:</p>
+<p>The biggest advantage of Nextflow is <strong>nf-core</strong> a large community repository of curated, peer-reviewed pipelines. Instead of writing your own RNA-seq pipeline, you can simply run the community standard:</p>
 <pre><code class="language-bash"># Run the gold-standard nf-core RNA-seq pipeline directly from GitHub
 nextflow run nf-core/rnaseq -profile docker --input samplesheet.csv --outdir results/
 </code></pre>
@@ -223,9 +222,7 @@ nextflow run nf-core/rnaseq -profile docker --input samplesheet.csv --outdir res
 <section class="prose-expansion bg-white border-t border-gray-100 mt-10 pt-10 pb-4">
 <div class="max-w-3xl mx-auto px-2">
 <h2 class="text-2xl font-bold text-slate-900 mb-4">Why Shell Scripts Are Not Enough</h2>
-<p class="text-slate-700 text-base leading-relaxed mb-4">
- Almost every bioinformatics project begins with a shell script. You write a few lines to trim reads, align to a reference, and count features. The script works. You run it for your 10 samples and move on to analysis. Six months later, a collaborator sends you 40 new samples and asks you to run the same pipeline. You re-run your script, and it fails partway through because one sample has a different file naming convention, one step was already completed and the output files exist but are incomplete, and you can't easily tell which samples finished successfully.
-</p>
+<p class="text-slate-700 text-base leading-relaxed mb-4">Almost every bioinformatics project starts with a shell script. You write a few lines to trim reads, align to a reference, and count features. The script works, so you run it on your 10 samples and move on to analysis. Six months later a collaborator sends 40 new samples and asks you to run the same pipeline. You re-run the script and it fails partway through because one sample uses a different file naming convention, one step had already created incomplete output files, and it’s hard to tell which samples finished successfully.</p>
 <p class="text-slate-700 text-base leading-relaxed mb-4">
  Workflow managers like Snakemake and Nextflow solve these problems by separating the description of the pipeline from the execution logic. You define rules or processes that specify inputs, outputs, and the command to run. The workflow manager handles dependency resolution, partial re-runs, job scheduling on HPC clusters, and parallel execution automatically. You never manually manage which samples need to be re-processed; the tool determines this by checking which output files exist and which are missing or out of date.
 </p>
@@ -233,16 +230,10 @@ nextflow run nf-core/rnaseq -profile docker --input samplesheet.csv --outdir res
 <p class="text-slate-700 text-base leading-relaxed mb-4">
  Snakemake is written in and extends Python. If you already write Python analysis scripts, the syntax for defining rules feels familiar. Each rule specifies an input function, an output file pattern, and a shell command or Python function. Snakemake resolves the order in which rules must run by working backwards from the target output files: it asks what files are needed to produce the final output, then what files are needed to produce those files, and so on, building a directed acyclic graph of jobs.
 </p>
-<p class="text-slate-700 text-base leading-relaxed mb-4">
- One of Snakemake's practical advantages is its integration with Conda. You can specify a Conda environment file for each rule, and Snakemake will create and activate that environment automatically when the rule runs. This means your STAR alignment step uses a pinned STAR version and your DESeq2 step uses a pinned Bioconductor version, with no manual environment management required. Combined with the <code>--use-singularity</code> flag, you can run each rule inside its own container for maximum isolation.
-</p>
+<p class="text-slate-700 text-base leading-relaxed mb-4">One of Snakemake's practical advantages is its integration with Conda. You can specify a Conda environment file for each rule, and Snakemake will create and activate that environment automatically when the rule runs. This means your STAR alignment step uses a pinned STAR version and your DESeq2 step uses a pinned Bioconductor version, without manual environment management. Combined with container support,<code>--use-singularity</code> using the appropriate flag, you can run each rule inside its own container for maximum isolation.</p>
 <h3 class="text-xl font-semibold text-slate-900 mb-3 mt-8">Nextflow: Portability Across Compute Environments</h3>
-<p class="text-slate-700 text-base leading-relaxed mb-4">
- Nextflow uses a dataflow programming model where each process consumes from input channels and emits to output channels. This is conceptually different from Snakemake's file-based dependency graph. The practical consequence is that Nextflow pipelines are often more portable across compute environments: the same Nextflow script can run locally, on AWS Batch, on Google Cloud, on Azure, or on an HPC cluster with SLURM or PBS by changing a configuration profile. No changes to the pipeline logic are required.
-</p>
-<p class="text-slate-700 text-base leading-relaxed mb-4">
- The nf-core community has built a library of over 100 peer-reviewed, community-maintained Nextflow pipelines covering standard bioinformatics workflows including RNA-seq, ChIP-seq, methylation, metagenomics, and single-cell RNA-seq. Rather than building a pipeline from scratch, you can start with an nf-core pipeline and modify it for your specific use case. Each nf-core pipeline includes automated testing, documentation, and a consistent parameter interface, which significantly reduces the time from raw data to analysed results.
-</p>
+<p class="text-slate-700 text-base leading-relaxed mb-4">Nextflow uses a dataflow programming model where each process consumes from input channels and emits to output channels, which is conceptually different from Snakemake's file-based dependency graph. In practice, that makes Nextflow pipelines more portable across compute environments: the same Nextflow script can run locally, on AWS Batch, on Google Cloud, on Azure, or on an HPC cluster with SLURM or PBS by switching a configuration profile, with no changes to the pipeline logic.</p>
+<p class="text-slate-700 text-base leading-relaxed mb-4">The nf-core community has built a library of over 100 peer-reviewed, community-maintained Nextflow pipelines covering standard bioinformatics workflows including RNA-seq, ChIP-seq, methylation, metagenomics, and single-cell RNA-seq. Rather than building a pipeline from scratch, you can start with an nf-core pipeline and adapt it to your use case. Each nf-core pipeline includes automated testing, documentation, and a consistent parameter interface, which significantly reduces the time from raw data to analysed results.</p>
 <h3 class="text-xl font-semibold text-slate-900 mb-3 mt-8">Which Tool Should You Choose?</h3>
 <p class="text-slate-700 text-base leading-relaxed mb-4">
  The choice between Snakemake and Nextflow often comes down to team familiarity and compute environment. If your team works primarily in Python and runs jobs on a single HPC cluster, Snakemake is easier to learn and deploy. If your team needs pipelines that run across multiple cloud providers or you want to use the nf-core system, Nextflow is the better investment. Both tools are actively maintained, well-documented, and widely used in the bioinformatics community.

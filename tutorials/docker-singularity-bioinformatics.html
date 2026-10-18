@@ -162,7 +162,7 @@ function toggleMobileMenu() {
 <h3>Finding Containers</h3>
 <p>You rarely need to build your own containers from scratch. The <strong>Biocontainers</strong> project automatically builds Docker images for almost every bioinformatics tool in existence.</p>
 <h3>Running a Docker Container</h3>
-<p>Instead of installing <code>bwa</code> locally, you can pull the official Biocontainer for it:</p>
+<p>Instead of installing <code>bwa</code> Locally, you can pull the official Biocontainer for it:</p>
 <pre><code class="language-bash"># Pull the container image
 docker pull quay.io/biocontainers/bwa:0.7.17--hed695b0_7
 
@@ -198,16 +198,10 @@ apptainer exec bwa_container.sif bwa mem -t 8 reference.fa reads.fq &gt; output.
 <p class="text-slate-700 text-base leading-relaxed mb-4">
  Computational biology has a reproducibility problem that predates the current conversation about AI and large language models. A pipeline that worked on one machine in 2020 often fails to produce identical results on a different machine in 2026, even when the code is unchanged. The cause is almost always the software environment: a different version of STAR, a different Bioconductor release, or a different system library that a Python package links against.
 </p>
-<p class="text-slate-700 text-base leading-relaxed mb-4">
- Containers address this by packaging the entire runtime environment, including the operating system layer, system libraries, and all software dependencies, into a single portable image. When you run a container, you run the exact same environment regardless of whether the host machine is running Ubuntu 20.04, CentOS 7, or macOS Sonoma. This is the difference between sharing a Conda environment file (which specifies what to install but depends on what the package repository looks like at install time) and sharing a container image (which contains the already-installed software).
-</p>
+<p class="text-slate-700 text-base leading-relaxed mb-4">Containers address this by packaging the entire runtime environment, including the operating system layer, system libraries, and all software dependencies, into a single portable image. When you run a container, you get the exact same environment whether the host machine is running Ubuntu 20.04, CentOS 7, or macOS Sonoma. This is the difference between sharing a Conda environment file (which specifies what to install but depends on what the package repository looks like at install time) and sharing a container image (which contains the already-installed software).</p>
 <h3 class="text-xl font-semibold text-slate-900 mb-3 mt-8">Docker vs Singularity: Why HPC Clusters Reject Docker</h3>
-<p class="text-slate-700 text-base leading-relaxed mb-4">
- Docker requires a daemon process that runs as root. On a shared HPC cluster, this is a security violation: a user who can run Docker commands can trivially mount host directories as root, escape the container, and access other users' files or the cluster file system. For this reason, virtually all academic HPC clusters prohibit Docker entirely.
-</p>
-<p class="text-slate-700 text-base leading-relaxed mb-4">
- Singularity, developed specifically for HPC, solves this by using a different container format with no persistent daemon. Singularity containers run as the user who launches them, not as root, and they respect the file permission system of the host., Singularity can pull and convert Docker images directly from Docker Hub or any container registry, which means you can build your pipeline image using Docker locally or in a CI system, push it to a registry, and then pull and run it on an HPC cluster using Singularity without any changes to the image itself.
-</p>
+<p class="text-slate-700 text-base leading-relaxed mb-4">Docker requires a daemon process that runs as root. On a shared HPC cluster, this is a security violation: a user who can run Docker commands can mount host directories as root, escape the container, and access other users' files or the cluster file system. For this reason, virtually all academic HPC clusters prohibit Docker entirely.</p>
+<p class="text-slate-700 text-base leading-relaxed mb-4">Singularity, developed specifically for HPC, solves this by using a different container format with no persistent daemon. Singularity containers run as the user who launches them, not as root, and they respect the host's file permission system. Singularity can pull and convert Docker images directly from Docker Hub or any container registry, which means you can build your pipeline image using Docker locally or in a CI system, push it to a registry, and then pull and run it on an HPC cluster using Singularity without any changes to the image itself.</p>
 <h3 class="text-xl font-semibold text-slate-900 mb-3 mt-8">Building Bioinformatics Containers That Will Last</h3>
 <p class="text-slate-700 text-base leading-relaxed mb-4">
  The most common mistake when writing a Dockerfile for a bioinformatics pipeline is using <code>apt-get install</code> or <code>conda install</code> without pinning specific versions. A Dockerfile that says <code>conda install -c bioconda star</code> will install whatever version of STAR was most recent when the image was built. Rebuild the image six months later and you may get a different version with different default parameters. Always specify exact version numbers for every tool in your Dockerfile.
@@ -220,8 +214,7 @@ apptainer exec bwa_container.sif bwa mem -t 8 reference.fa reads.fq &gt; output.
  Containers reach their full potential when combined with a workflow manager like Nextflow or Snakemake. Both support per-rule or per-process container directives, which means each step of your pipeline can use a different container image. A STAR alignment step uses a container with STAR and samtools. A DESeq2 step uses a container with R and Bioconductor. If a tool requires an incompatible Python version from another tool in your pipeline, there's no conflict because each tool runs in its own isolated environment.
 </p>
 <p class="text-slate-700 text-base leading-relaxed mb-4">
- Nextflow's <code>-with-singularity</code> and <code>-with-docker</code> flags make this switching clean: run with Docker locally for development, then run the identical pipeline on HPC with Singularity by changing one flag. No modifications to the pipeline logic are needed. This is the closest practical approximation to a truly portable, reproducible bioinformatics workflow.
-</p>
+ Nextflow's <code>-with-singularity</code> and <code>-with-docker</code> Flags make switching clean: run with Docker locally for development, then run the identical pipeline on HPC with Singularity by changing one flag. No modifications to the pipeline logic are needed. This is the closest practical approximation to a truly portable, reproducible bioinformatics workflow.</p>
 <div class="bg-green-50 border border-green-200 rounded-xl p-5 mt-6 mb-2">
 <p class="text-green-900 font-semibold mb-2">Container Best Practices Summary</p>
 <ul class="list-disc list-inside text-green-800 space-y-1 text-sm">

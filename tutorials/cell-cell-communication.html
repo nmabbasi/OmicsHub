@@ -148,7 +148,7 @@ function toggleMobileMenu() {
 <p><strong>Prerequisites</strong> (complete before starting):</p>
 <ul>
 <li>Familiarity with scRNA-seq basics (normalization, dimensionality reduction) and how to annotate cell types.</li>
-<li>An R environment with Seurat v5-compatible data structures or a SingleCellExperiment object. This tutorial uses R code; basic R/Seurat experience is assumed.</li>
+<li>An R environment with Seurat v5-compatible data structures or a SingleCellExperiment object. This tutorial uses R code and assumes basic R and Seurat experience.</li>
 <li>Installed packages (see the Software and data files section below).</li>
 </ul>
 <h2>Why infer cell–cell communication from scRNA-seq?</h2>
@@ -218,7 +218,7 @@ write.csv(top_lr, "liana_top20.csv", row.names = FALSE)
 </code></pre>
 <p>Look for columns indicating <code>source</code> (sender cell type), <code>target</code> (receiver), <code>ligand</code>, <code>receptor</code>, method-specific scores, and aggregated consensus metrics. Confirm that expected cell types are present and that extreme results are not driven by tiny cell counts.</p>
 <h3>4) Build a CellChat object for pathway-level modeling</h3>
-<p>CellChat uses curated ligand–receptor and signaling pathway databases and produces network visualizations and pathway aggregation. You can use LIANA results to inform CellChat or run CellChat independently. Below is a standard CellChat pipeline using the same Seurat object.</p>
+<p>CellChat uses curated ligand–receptor and signaling pathway databases to produce network visualizations and aggregate pathways. You can provide LIANA results to CellChat or run CellChat independently. Below is a standard CellChat pipeline using the same Seurat object.</p>
 <pre><code>library(CellChat)
 
 # Create CellChat object
@@ -258,9 +258,9 @@ saveRDS(cellchat, "cellchat_object.rds")
 <h2>Troubleshooting</h2>
 <p>Below are common symptoms, likely causes, and suggested fixes.</p>
 <ul>
-<li><strong>Symptom</strong>: Very few predicted interactions or empty results.<br/>
+<li><strong>Symptom</strong> Very few predicted interactions or empty results.<br/>
 <strong>Likely causes</strong>: Low expression thresholds, sparse data, wrong assay slot (e.g., using raw counts vs normalized data), or group labels missing.<br/>
-<strong>Fixes</strong>: Confirm you used the correct assay name in LIANA (<code>exprs_values</code>), ensure each cell type has enough cells (<code>min_cells</code>), increase sensitivity by lowering minimum expression thresholds cautiously, or merge very small clusters.</li>
+<strong>Fixes</strong>: Confirm you used the correct assay name in LIANA (<code>exprs_values</code>), ensure each cell type has enough cells (<code>min_cells</code> Increase sensitivity by cautiously lowering minimum expression thresholds, or merge very small clusters.</li>
 <li><strong>Symptom</strong>: Top interactions driven by a single method while others disagree.<br/>
 <strong>Likely causes</strong>: Methods have different assumptions (e.g., thresholding, permutation).<br/>
 <strong>Fixes</strong>: Inspect per-method scores in LIANA raw output to understand disagreements; consider relying on consensus or restricting to methods appropriate for your data type.</li>

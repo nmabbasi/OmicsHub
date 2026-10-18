@@ -156,7 +156,7 @@ function toggleMobileMenu() {
 <h2>A basic script</h2>
 <p>All options actually have short versions (e.g., <code>--job-name</code> can be replaced by <code>-J</code>). The long names are used here for clarity. Not all options in this script are mandatory, but they represent the minimum recommended for clarity.</p>
 <p>I use a generic <code>program</code> in all scripts. Replace it with your actual executable. For testing, you can simply use <code>hostname</code> or <code>ls</code></p>
-<p>I use <code>ibrain</code> as the argument for <code>--partition</code>You may not have access to it. Replace it with a partition available in the output of <code>sinfo</code></p>
+<p>I use <code>ibrain</code> as the argument for <code>--partition</code> You may not have access to it. Replace it with a partition available in the output of <code>sinfo</code></p>
 <pre><code class="language-bash">#!/bin/sh
 #SBATCH --job-name example_script
 
@@ -178,7 +178,7 @@ srun program
 <p>A few notes on the options:</p>
 <ul>
 <li>The value given to <code>--job-name</code> is used to identify the job when calling <code>squeue</code></li>
-<li>A standard Linux console output consists of the output stream and the error stream. When you use <code>sbatch</code>neither will appear on the console. Instead, they will be redirected to the file(s) specified by the <code>--output</code> and <code>--error</code> options.</li>
+<li>A standard Linux console output consists of the output stream and the error stream. When you use <code>sbatch</code> neither will appear on the console. Instead, they will be redirected to the file(s) specified by the <code>--output</code> and <code>--error</code> options.</li>
 <li>Scripts have internal variables. Here <code>%x</code> will be replaced by the job name, and <code>%j</code> will be replaced by the job ID. The job ID is automatically assigned when calling <code>sbatch</code> and appears when calling <code>squeue</code></li>
 <li>The <code>--hint=nomultithread</code> option is discussed further in the <a href="#hyperthreading">Hyperthreading</a> section. If you don't care about or understand hyperthreading, just leave it there.</li>
 </ul>
@@ -215,11 +215,11 @@ srun program
 squeue -j &lt;job_id&gt;                 # queue state
 sstat -j &lt;job_id&gt;.batch --format=JobID,MaxRSS,AveCPU
 sacct -j &lt;job_id&gt; --format=JobID,State,Elapsed,MaxRSS,AllocCPUS</code></p>
-<p>If you need an interactive diagnostic session, request one through the scheduler, for example <code>srun --pty --cpus-per-task=2 --mem=8G --time=01:00:00 bash</code>Only SSH to a compute node when your own cluster documentation explicitly permits it.</p>
+<p>If you need an interactive diagnostic session, request one through the scheduler, for example <code>srun --pty --cpus-per-task=2 --mem=8G --time=01:00:00 bash</code> Only SSH to a compute node when your own cluster documentation explicitly permits it.</p>
 <p><strong>Other note:</strong> In the current configuration, asking for 1 CPU will actually allocate 2, because Slurm allocates by the core, and cores are hyperthreaded. More details in the <a href="#hyperthreading">Hyperthreading</a> section.</p>
 </li>
 <li>
-<p>The second purpose is to be passed to the <code>srun</code> command. Unless overwritten when calling <code>srun</code>all options given with <code>#SBATCH</code> are assumed.</p>
+<p>The second purpose is to be passed to the <code>srun</code> command. Unless overwritten when calling <code>srun</code> all options given with <code>#SBATCH</code> are assumed.</p>
 </li>
 </ul>
 <p>There are many more options:</p>
@@ -228,11 +228,11 @@ sacct -j &lt;job_id&gt; --format=JobID,State,Elapsed,MaxRSS,AllocCPUS</code></p>
 <p>Any line starting with <code>#</code> but not followed by <code>SBATCH</code> is a comment. If you want to comment an option, use more than one <code>#</code></p>
 <pre><code class="language-bash">##SBATCH
 </code></pre>
-<p>To avoid confusion between comment and option when using a single <code>#</code>the comment in my example script uses two <code>#</code>even though only one is required.</p>
+<p>To avoid confusion between comment and option when using a single <code>#</code> the comment in my example script uses two <code>#</code> even though only one is required.</p>
 <h3>Shell commands</h3>
 <p>Shell commands are used to set up Linux environment variables. They should <strong>not</strong> be preceded by <code>srun</code></p>
 <h3>Run commands</h3>
-<p>Run commands are your actual computations. They should be preceded by <code>srun</code>The reason is that, as mentioned above, the options given with <code>#SBATCH</code> apply to <code>srun</code>In truth, when only one task is given with the <code>--ntasks</code> option, omitting <code>srun</code> won't change anything. Put it there anyway, for consistency.</p>
+<p>Run commands are your actual computations. They should be preceded by <code>srun</code> The reason is that, as mentioned above, the options given with <code>#SBATCH</code> apply to <code>srun</code> In truth, when only one task is given with the <code>--ntasks</code> option, omitting <code>srun</code> won't change anything. Put it there anyway, for consistency.</p>
 <h2 id="hyperthreading">Hyperthreading</h2>
 <p>Hyperthreading is activated on the nodes, meaning each core has two CPUs. However, this doesn't double computational power, as using two CPUs of the same core is less efficient than using two CPUs of different cores. With that in mind, here is how Slurm acts (with the number of CPUs you ask for being the product of <code>--ntasks</code> and <code>--cpus-per-task</code>):</p>
 <ul>
@@ -266,7 +266,7 @@ module load gcc/7.3.1
 
 srun program
 </code></pre>
-<p>Recall that the options given with <code>#SBATCH</code> are passed to <code>srun</code>In this case, a single call to <code>srun program</code> would be equivalent to <code>srun --ntasks 3 program</code>which would call <code>program</code> three times.</p>
+<p>Recall that the options given with <code>#SBATCH</code> are passed to <code>srun</code> In this case, a single call to <code>srun program</code> would be equivalent to <code>srun --ntasks 3 program</code> which would call <code>program</code> three times.</p>
 <h3>Several steps in parallel</h3>
 <p>Here is the full script.</p>
 <pre><code class="language-bash">#!/bin/sh
@@ -291,7 +291,7 @@ srun --ntasks=1 program2
 </code></pre>
 <p>Don't forget the <code>--ntasks 1</code> on the <code>srun</code> lines. If you do, <code>program0</code> will be called three times, and because three tasks are being run and you only allocated three, <code>program1</code> and <code>program2</code> won't be executed at the same time, and will have to wait for the previous tasks to end.</p>
 <h3>Arrays</h3>
-<p>This is useful when you want to use the same programs multiple times with various arguments. The requirement is that the arguments differ only by an integer number. Here is the script.</p>
+<p>This is useful when you want to run the same program multiple times with different arguments. The requirement is that the arguments differ only by an integer number. Here is the script.</p>
 <pre><code class="language-bash">#!/bin/sh
 #SBATCH --job-name example_script
 
@@ -312,18 +312,18 @@ module load gcc/7.3.1
 
 srun program --arg=$SLURM_ARRAY_TASK_ID
 </code></pre>
-<p>Here, the variable <code>$SLURM_ARRAY_TASK_ID</code> will take values from 0 to 2. The job ID will be <code>$SLURM_JOB_ID</code>and the array job ID will be <code>$SLURM_ARRAY_JOB_ID</code>The array task ID will be <code>$SLURM_ARRAY_TASK_ID</code></p>
+<p>Here, the variable <code>$SLURM_ARRAY_TASK_ID</code> will take values from 0 to 2. The job ID will be <code>$SLURM_JOB_ID</code> and the array job ID will be <code>$SLURM_ARRAY_JOB_ID</code> The array task ID will be <code>$SLURM_ARRAY_TASK_ID</code></p>
 <h2>Running an interactive session</h2>
 <pre><code class="language-bash">srun --pty --job-name interactive --partition ibrain --mem 2G --cpus-per-task 1 bash
 </code></pre>
-<p>This will give you a shell on a compute node. The options are the same as for <code>sbatch</code>The <code>--pty</code> option is needed to get a pseudo-terminal. The <code>bash</code> at the end specifies the shell to run. You can replace it with <code>sview</code> to get a graphical interface.</p>
+<p>This will give you a shell on a compute node. The options are the same as for <code>sbatch</code> The <code>--pty</code> option is needed to get a pseudo-terminal. The <code>bash</code> at the end specifies the shell to run. You can replace it with <code>sview</code> to get a graphical interface.</p>
 <h2>Running a GUI</h2>
 <pre><code class="language-bash">srun --pty --job-name gui --partition ibrain --mem 2G --cpus-per-task 1 --x11 bash
 </code></pre>
-<p>This will give you a shell on a compute node with X11 forwarding enabled. The <code>--x11</code> option is needed for X11 forwarding. You can then run graphical applications from this shell.</p>
+<p>This will give you a shell on a compute node with X11 forwarding enabled. The <code>--x11</code> This option is needed for X11 forwarding. You can then run graphical applications from this shell.</p>
 <h2>Custom Module</h2>
 <h3>Creating a custom module</h3>
-<p>If you've a program that you want to make available to others, you can create a custom module for it. This involves creating a module file that defines the environment variables and paths needed to run your program.</p>
+<p>If you have a program you want to make available to others, you can create a custom module for it. This involves creating a module file that defines the environment variables and paths needed to run your program.</p>
 <p><strong>Example module file (<code>myprogram/1.0.lua</code>):</strong></p>
 <pre><code class="language-lua">help([[This module loads MyProgram version 1.0]])
 
@@ -337,7 +337,7 @@ prepend_path("LD_LIBRARY_PATH", "/path/to/myprogram/lib")
 </code></pre>
 <h2>Conda on a Cluster</h2>
 <h3>Installing Conda</h3>
-<p>To install Conda on the cluster, you can download the Miniconda installer and run it. Choose a location in your home directory where you've write permissions.</p>
+<p>To install Conda on the cluster, download the Miniconda installer and run it. Choose a location in your home directory where you have write permissions.</p>
 <pre><code class="language-bash">wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
 bash Miniconda3-latest-Linux-x86_64.sh
 </code></pre>
@@ -397,22 +397,22 @@ conda deactivate
 <pre><code class="language-bash">tar -czvf my_directory.tar.gz my_directory/
 </code></pre>
 <ul>
-<li><code>-c</code>Create a new archive.</li>
-<li><code>-z</code>Compress the archive with <code>gzip</code></li>
-<li><code>-v</code>Verbose output (show progress).</li>
-<li><code>-f</code>Specify the archive filename.</li>
+<li><code>-c</code> Create a new archive.</li>
+<li><code>-z</code> Compress the archive with <code>gzip</code></li>
+<li><code>-v</code> Verbose output (show progress).</li>
+<li><code>-f</code> Specify the archive filename.</li>
 </ul>
 <p><strong>Decompress a directory:</strong></p>
 <pre><code class="language-bash">tar -xzvf my_directory.tar.gz
 </code></pre>
 <ul>
-<li><code>-x</code>Extract files from an archive.</li>
-<li><code>-z</code>Decompress with <code>gzip</code></li>
-<li><code>-v</code>Verbose output.</li>
-<li><code>-f</code>Specify the archive filename.</li>
+<li><code>-x</code> Extract files from an archive.</li>
+<li><code>-z</code> Decompress with <code>gzip</code></li>
+<li><code>-v</code> Verbose output.</li>
+<li><code>-f</code> Specify the archive filename.</li>
 </ul>
 <h3>Using <code>bzip2</code></h3>
-<p><code>bzip2</code> often provides better compression ratios than <code>gzip</code>but is slower.</p>
+<p><code>bzip2</code> often provides better compression ratios than <code>gzip</code> but is slower.</p>
 <p><strong>Compress a file:</strong></p>
 <pre><code class="language-bash">bzip2 my_file.txt
 </code></pre>

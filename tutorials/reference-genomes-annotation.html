@@ -260,13 +260,13 @@ tabix -p gff gencode.v46.annotation.chrstyle.gtf.gz
 <h3>3. Presence of expected chromosomes</h3>
 <p>Confirm common contigs are present (e.g., chr1/1, chrX/X, chrM/MT). Missing expected contigs often indicates a "primary assembly" vs "full assembly with patches and alt loci" mismatch. If mitochondrial or unplaced contigs are missing, downstream tools that expect them may fail or silently ignore reads mapping there.</p>
 <h3>4. Identifier spaces and mapping</h3>
-<p>Open a small section of the GTF and inspect gene_id and transcript_id attributes and their formats. For example, Ensembl uses ENSG... and ENST... stable IDs, often with versions (ENSG00000141510.16). RefSeq uses different accession patterns. A stable identifier with version implies you can track the exact feature across releases; a bare gene symbol (e.g., "TP53") is not stable for reproducible joins.</p>
+<p>Open a small section of the GTF and look at the gene_id and transcript_id attributes to see how they’re formatted. For example, Ensembl uses ENSG... and ENST... stable IDs, often with version suffixes (e.g., ENSG00000141510.16). RefSeq uses different accession patterns. A stable identifier that includes a version lets you track the exact feature across annotation releases; a bare gene symbol (for example, "TP53") is not a stable identifier for reproducible joins.</p>
 <pre><code>zcat gencode.v46.annotation.gtf.gz | awk '$3=="gene" {print $0; exit}' | sed -n '1,3p'
 # Inspect attributes to find stable and versioned IDs
 </code></pre>
-<p>What this tells you: presence of versioned IDs means you can later trace a feature to the exact annotation release. Absence of version information does not mean the annotation is wrong; it means you should store the annotation release to enable reproducibility.</p>
+<p>What this means: if IDs include version numbers, you can later trace a feature back to the exact annotation release. If version information is missing, that doesn’t mean the annotation is wrong — it means you should record which annotation release you used so others can reproduce your results.</p>
 <h2>Troubleshooting: symptoms, likely causes, and fixes</h2>
-<h3>Symptom: Alignments report no mapped reads or very few reads</h3>
+<h3>Symptom: your alignment step reports zero or very few mapped reads.</h3>
 <p>Likely causes:</p>
 <ul>
 <li>FASTQ reads were aligned to a different assembly (e.g., GRCh37 vs GRCh38) or the aligner is using an index built from a different FASTA.</li>

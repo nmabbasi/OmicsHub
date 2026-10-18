@@ -269,8 +269,7 @@ print("Global silhouette score:", sil_global)
 <h2>Troubleshooting: symptoms, likely causes, and fixes</h2>
 <ul>
 <li>
-<strong>Symptom</strong>: iLISI is very low after integration (near 1) — batches remain separated.
-    <br/><strong>Likely causes</strong>: integration step failed or was not applied to the embeddings used for LISI; wrong embedding chosen (e.g., using raw counts); batch labels are mis-specified or have many singleton levels.
+<strong>Symptom</strong> A very low iLISI after integration (near 1) means batches remain separated.<br/><strong>Likely causes</strong>: integration step failed or was not applied to the embeddings used for LISI; wrong embedding chosen (e.g., using raw counts); batch labels are mis-specified or have many singleton levels.
     <br/><strong>Fixes</strong>: verify you computed embeddings after integration (check Reductions in Seurat or adata.obsm keys); ensure batch column name is correct and has expected levels; try increasing the number of PCs used for LISI.
   </li>
 <li>
@@ -292,7 +291,7 @@ print("Global silhouette score:", sil_global)
 <h2>Limitations, version and data caveats, and responsible-use notes</h2>
 <ul>
 <li>Embedding choice matters: always run metrics on a high-dimensional representation (PCA, Harmony, or integration space). UMAP/t-SNE are visual projections and should not be used to compute LISI or silhouette.</li>
-<li>Neighborhood size (k) influences LISI: small k emphasizes very local neighborhoods; large k approaches global diversity. Report k and test sensitivity to k (e.g., k=30, 60, 90) in supplementary materials.</li>
+<li>Neighborhood size (k) affects LISI: small k focuses on very local neighborhoods, while large k reflects more global diversity. Report which k you used and test sensitivity to different k values (e.g., k=30, 60, 90) in the supplementary materials.</li>
 <li>Label quality: LISI uses provided labels. cLISI is only as reliable as your cell-type annotations. If annotations are noisy or coarse, interpret cLISI cautiously.</li>
 <li>Batch definition: how you define batches (patient, run, plate) will change iLISI. Use the biologically and technically meaningful batch granularity for your experiment and document it.</li>
 <li>Software versions: implementations and defaults may change across package versions. Record R/Python versions and package versions (e.g., lisi, Seurat, scikit-learn). Reproducibility requires recording these details.</li>

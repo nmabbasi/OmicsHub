@@ -159,9 +159,7 @@ Prerequisites:
 <p>
 Phylogenetic analysis reconstructs relationships among genes, proteins, or organisms by comparing homologous characters (nucleotides or amino acids). Trees summarize hypotheses of shared ancestry: topology (branching pattern) suggests relative relationships, branch lengths often represent estimated genetic change, and support values indicate statistical confidence in clades under the chosen model and data. Phylogenies are used in systematics, comparative genomics, functional inference, and epidemiology, but they are hypotheses, not definitive histories; results depend on the input alignment, model choice, taxon sampling, and methodological assumptions.
 </p>
-<p>
-Computationally, robust phylogenetic inference requires two main preprocessing steps: (1) generate a reliable MSA that attempts to align homologous positions across sequences, and (2) select a phylogenetic method (distance, maximum likelihood, Bayesian, or approximate methods) with a clear statement of the evolutionary model and support strategy (bootstraps, posterior probabilities). This tutorial emphasizes reproducible command-line workflows and explicit recording of settings.
-</p>
+<p>To infer phylogenies robustly, perform two main preprocessing steps: (1) generate a reliable MSA that aligns homologous positions across sequences, and (2) choose a phylogenetic method (distance, maximum likelihood, Bayesian, or approximate methods) and explicitly state the evolutionary model and the support strategy (bootstraps, posterior probabilities). This tutorial emphasizes reproducible command-line workflows and careful recording of all settings.</p>
 <h2>Reproducible workflow (sequential)</h2>
 <p>
 Overview: work in a project directory containing raw sequences, intermediate files, configuration files, and results. The commands below are realistic examples and should be run after creating an appropriate environment. Replace filenames and paths with your local names.
@@ -269,9 +267,7 @@ IQ-TREE will produce:
 <pre><code># FastTree for nucleotide sequences (default is approximately ML); use -nt for nucleotides
 FastTree -nt results/aligned_sequences.fasta &gt; results/fasttree.nwk
 </code></pre>
-<p>
-FastTree is optimized for speed and will produce one Newick tree file. It makes approximations that are appropriate for exploratory analyses of very large alignments but may not match more rigorous ML methods on smaller datasets.
-</p>
+<p>FastTree is optimized for speed and outputs a single Newick tree file. It uses approximations suitable for exploratory analyses of very large alignments, but its results may not match more rigorous ML methods on smaller datasets.</p>
 <h2>Output inspection and interpretation</h2>
 <p>
 After producing trees, inspect both the tree file contents and the associated logs to interpret meaningfully:
@@ -279,7 +275,7 @@ After producing trees, inspect both the tree file contents and the associated lo
 <ul>
 <li>Open the Newick file in a tree viewer (FigTree, iTOL, Dendroscope) or use text tools to display structure. Example: <code>cat results/iqtree_run.treefile</code>.</li>
 <li>Check support values: bootstrap percentages (IQ-TREE) or ultrafast bootstrap (UFboot) values near nodes. High support (commonly &gt;70–95% depending on method) suggests the data are consistent with that clade under the chosen model and sample of sites, but support thresholds are heuristic.</li>
-<li>Examine branch lengths: long branches indicate more inferred substitutions; very short branches can indicate unresolved relationships.</li>
+<li>Examine branch lengths: long branches indicate more inferred substitutions; very short branches may indicate unresolved relationships.</li>
 <li>Model choice: in IQ-TREE logs, ModelFinder reports the best-fitting substitution model and AIC/BIC scores. Record this model as part of your analysis provenance.</li>
 <li>Rooting: many ML methods produce unrooted trees. Root placement affects interpretation of directionality (ancestor-descendant). Rooting requires an explicit outgroup (a lineage known to be outside the ingroup) or methods like midpoint rooting; record which approach you used.</li>
 </ul>
@@ -311,8 +307,7 @@ What the tree does NOT prove:
     <br/><strong>Fix:</strong> Recreate the .mao file using the same MEGA GUI version as your MEGA-CC installation, or use IQ-TREE which is fully command-line driven and self-documenting.
   </li>
 <li>
-<strong>Symptom:</strong> Very low bootstrap support across many nodes.
-    <br/><strong>Likely cause:</strong> Insufficient informative sites, poor alignment, or wrong model class.
+<strong>Symptom:</strong> Very low bootstrap support across many nodes indicates weak confidence in those inferred relationships.<br/><strong>Likely cause:</strong> Insufficient informative sites, poor alignment, or wrong model class.
     <br/><strong>Fix:</strong> Inspect alignment for ambiguous regions, consider trimming poorly aligned columns (with caution), increase taxon sampling, or perform model testing (IQ-TREE's ModelFinder). Consider alternative loci or concatenated datasets if appropriate.
   </li>
 <li>

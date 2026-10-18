@@ -260,7 +260,7 @@ sbatch tiny_test.sbatch
 <ul>
 <li>MaxRSS close to ReqMem and a job state of FAILED or OUT_OF_MEMORY: strong evidence of an Out-Of-Memory (OOM) kill. This does not prove a memory leak in the program; it only proves the job used more memory than it was allocated.</li>
 <li>ExitCode 0:0 with State COMPLETED but missing output files: indicates the job finished normally but your job script may have redirected outputs to unexpected paths or the application silently skipped outputs. Check the script's working directory (SLURM_SUBMIT_DIR) and file paths.</li>
-<li>ExitCode 137: typically the Linux kernel killed the process (SIGKILL); on clusters this is usually due to memory exhaustion. It does not, by itself, indicate whether the memory spike was transient or related to an input file.</li>
+<li>ExitCode 137: means the Linux kernel killed the process (SIGKILL). On clusters this most often happens because the job exhausted available memory. This message alone does not tell you whether the memory spike was transient or caused by the input file.</li>
 </ul>
 <h3>Log file contents</h3>
 <ul>

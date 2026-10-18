@@ -153,11 +153,11 @@ function toggleMobileMenu() {
 <p><strong>Deconvolution</strong> is the mathematical process of taking a high-quality single-cell dataset (the reference "ingredients list") and using it to estimate the exact proportions of each cell type present in a bulk RNA-seq dataset (the "smoothie").</p>
 <hr/>
 <h2>1. The Principle of Deconvolution</h2>
-<p>If a bulk RNA-seq sample shows high expression of <em>CD8A</em> and <em>GZMB</em>is it because there are many CD8+ T cells, or because a few CD8+ T cells are expressing those genes at astronomically high levels?</p>
-<p>Deconvolution algorithms like <strong>CIBERSORTx</strong><strong>MuSiC</strong>or <strong>Cell2Location</strong> solve this by building a "signature matrix" from your single-cell reference, mapping exactly how much of each gene a typical cell of type X produces.</p>
+<p>If a bulk RNA-seq sample shows high expression of <em>CD8A</em> and <em>GZMB</em> is it because there are many CD8+ T cells, or because a few CD8+ T cells are expressing those genes at astronomically high levels?</p>
+<p>Deconvolution algorithms like <strong>CIBERSORTx</strong><strong>MuSiC</strong> or <strong>Cell2Location</strong> solve this by building a "signature matrix" from your single-cell reference, mapping exactly how much of each gene a typical cell of type X produces.</p>
 <hr/>
 <h2>2. Using MuSiC in R</h2>
-<p><strong>MuSiC</strong> (Multi-subject Single Cell deconvolution) is a fantastic tool because it accounts for biological variance across different subjects in your single-cell reference, rather than just taking a flat average.</p>
+<p><strong>MuSiC</strong> Multi-subject Single Cell deconvolution is useful because it accounts for biological variation across different subjects in your single-cell reference, instead of just using a simple average.</p>
 <h3>Preparing the Data</h3>
 <pre><code class="language-r">library(MuSiC)
 library(ExpressionSet)
@@ -206,16 +206,12 @@ ggplot(plot_data, aes(x = Bulk_Sample, y = Proportion, fill = Cell_Type)) +
 <section class="prose-expansion bg-white border-t border-gray-100 mt-10 pt-10 pb-4">
 <div class="max-w-3xl mx-auto px-2">
 <h2 class="text-2xl font-bold text-slate-900 mb-4">What Deconvolution Is and Why It Matters</h2>
-<p class="text-slate-700 text-base leading-relaxed mb-4">
- Bulk RNA sequencing measures the average gene expression across all cells in a sample. If your tumour sample contains 60 percent cancer cells, 20 percent T cells, and 20 percent fibroblasts, your bulk RNA-seq profile is a weighted average of the gene expression profiles of those three populations. A gene that's highly expressed in T cells but not in cancer cells will appear at moderate expression in the bulk profile, and without additional information you can't distinguish this from a gene that's expressed at moderate levels in every cell.
-</p>
+<p class="text-slate-700 text-base leading-relaxed mb-4">Bulk RNA sequencing measures the average gene expression across all cells in a sample. For example, if a tumour sample contains 60 percent cancer cells, 20 percent T cells, and 20 percent fibroblasts, the bulk RNA-seq profile is a weighted average of those three populations. A gene that is highly expressed in T cells but not in cancer cells will appear at a moderate level in the bulk profile, and without extra information you can’t tell that apart from a gene that is moderately expressed in every cell.</p>
 <p class="text-slate-700 text-base leading-relaxed mb-4">
  Deconvolution attempts to reverse this mixing process, estimating the cellular composition of a bulk sample using a reference that specifies the gene expression signature of each cell type. The input is the bulk expression matrix and the reference signature matrix; the output is a proportion estimate for each cell type in each sample. This allows you to ask questions that bulk RNA-seq can't answer on its own: does the fraction of cytotoxic T cells correlate with treatment response? Is the tumour macrophage proportion associated with prognosis?
 </p>
 <h3 class="text-xl font-semibold text-slate-900 mb-3 mt-8">Reference-Based vs Reference-Free Deconvolution</h3>
-<p class="text-slate-700 text-base leading-relaxed mb-4">
- Reference-based methods like CIBERSORT, MuSiC, and DWLS require a signature matrix that specifies the expected expression of each marker gene in each cell type. This signature matrix can come from a published reference built from isolated cell populations, or from your own single-cell RNA-seq data from the same tissue type. The quality of the deconvolution result depends heavily on the quality and relevance of the signature matrix. A signature built from peripheral blood mononuclear cells will perform poorly when applied to tumour-infiltrating lymphocytes, which can have very different transcriptional states from their circulating counterparts.
-</p>
+<p class="text-slate-700 text-base leading-relaxed mb-4">Reference-based methods like CIBERSORT, MuSiC, and DWLS require a signature matrix that specifies the expected expression of each marker gene in each cell type. This signature matrix can come from a published reference built from isolated cell populations or from your own single-cell RNA-seq data from the same tissue type. The quality of the deconvolution depends heavily on the quality and relevance of that signature matrix. A signature built from peripheral blood mononuclear cells will perform poorly when applied to tumour-infiltrating lymphocytes, which can have very different transcriptional states from their circulating counterparts.</p>
 <p class="text-slate-700 text-base leading-relaxed mb-4">
  Reference-free methods like NMF-based approaches don't require a pre-specified signature and instead learn the cell-type components directly from the data. They're useful when no appropriate reference exists, but the learned components are not labelled and must be interpreted post-hoc by examining which marker genes load strongly onto each component. This adds an interpretation step that can be subjective and requires domain knowledge.
 </p>

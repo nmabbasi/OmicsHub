@@ -164,9 +164,7 @@ Single-cell RNA sequencing (scRNA-seq) profiles the transcriptome, but many biol
 Weighted Nearest Neighbor (WNN) analysis (Seurat v4) addresses this by computing modality-specific neighbor graphs and learning per-cell modality weights that reflect which data type is more informative for local neighborhood structure. WNN therefore enables joint clustering and visualization that respect both modalities while adapting to cell-by-cell modality quality differences.
 </p>
 <h2>Reproducible workflow: inputs, commands, and expected outputs</h2>
-<p>
-This section gives an executable R workflow. Replace paths and filenames with your own. The commands are sequential: each produces intermediate objects saved in memory; the code includes optional file output steps so you can reproduce later runs.
-</p>
+<p>This section provides an executable R workflow. Replace paths and filenames with your own. Commands run in order: each creates intermediate objects kept in memory; the code also includes optional file output steps so you can reproduce results later.</p>
 <h3>Files you should have</h3>
 <ul>
 <li>RNA read count matrix (cells × genes), e.g. data/rna_counts.mtx or data/rna_counts.rds</li>
@@ -280,7 +278,7 @@ After running the pipeline, inspect the following elements. Do not treat any sin
 <ul>
 <li>UMAP embedding: DimPlot(seurat_obj, reduction = "wnn.umap", group.by = "seurat_clusters"). Look for coherent clusters and whether known marker proteins localize to expected clusters.</li>
 <li>Per-cell modality weights: View seurat_obj@meta.data columns named by modality.weight.name; these show how much weight WNN assigned to each modality per cell. Plot distributions: VlnPlot or FeaturePlot.</li>
-<li>Feature concordance: Compare RNA versus ADT signals for canonical markers. Example: FeaturePlot(seurat_obj, features = c("CD4", "CD8A"))—prefixing depends on assay; you can call FetchData to pull assay-specific values.</li>
+<li>Feature concordance: Compare RNA versus ADT signals for canonical markers. Example: FeaturePlot(seurat_obj, features = c("CD4", "CD8A"))—prefixing depends on the assay; you can call FetchData to pull assay-specific values.</li>
 <li>Cluster marker identification: Use FindMarkers on the integrated cluster labels but consider modality—identify markers in RNA and ADT separately to verify.</li>
 </ul>
 <h3>What to look for and what it means</h3>

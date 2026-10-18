@@ -147,7 +147,7 @@ function toggleMobileMenu() {
 <li>Recognize when line-oriented tools are appropriate versus when sequence-aware tools are required.</li>
 </ul>
 <h2>Why text processing matters in bioinformatics</h2>
-<p>Many bioinformatics data formats—FASTA, FASTQ, variant tables, gene annotation TSVs—are plain text. Efficiently filtering, extracting, and summarizing these files from the command line lets you explore data quickly, create reproducible preprocessing steps, and integrate with larger pipelines. Text tools operate line-by-line, so they are memory-efficient for very large files. However, that same line-oriented behavior means you must understand file layout (for example, whether sequence lines are wrapped) before applying a command like grep or cut.</p>
+<p>Many bioinformatics data formats—FASTA, FASTQ, variant tables, gene annotation TSVs—are plain text. Being able to filter, extract, and summarize these files from the command line lets you explore data quickly, create reproducible preprocessing steps, and plug into larger pipelines. Text tools operate line-by-line, so they are memory-efficient for very large files. That same line-oriented behavior means you must know the file layout (for example, whether sequence lines are wrapped) before running a command like grep or cut.</p>
 <h3>Key concept: line orientation vs. record orientation</h3>
 <p>Tools such as grep, sed, cut, sort, and uniq work on lines. If a biological record spans multiple lines (common in wrapped FASTA), naive line-based commands can yield incorrect results. Sequence-aware tools (for example, seqkit) treat sequences as records and should be used when format complexity matters.</p>
 <h2>Reproducible workflow: filter, extract, and summarize</h2>
@@ -185,7 +185,7 @@ grep '^&gt;' sequences.fasta | sed 's/^&gt;//' &gt; headers.txt
 </code></pre>
 <p>Explanation: grep selects header lines; sed substitutes the leading character. headers.txt is ready to be used for lookups or counts.</p>
 <h3>4) Find sequences that contain a short motif (use record-aware tool if sequences are wrapped)</h3>
-<p>If sequences are unwrapped (each sequence on a single line), you can use a line-based approach. For wrapped FASTA, use seqkit.</p>
+<p>If sequences are unwrapped (each sequence on a single line), you can use a line-based approach. If FASTA sequences are wrapped across multiple lines, use seqkit.</p>
 <pre><code># Line-based (only correct if sequences occupy a single line)
 grep -n -A 1 'ATGCG' sequences.fasta &gt; matching_lines.txt
 # Output: matching_lines.txt contains the header and the following sequence line(s) as printed by grep's -A 1 option
@@ -262,7 +262,7 @@ awk -F'\t' 'NR==FNR{a[$1]; next} ($1 in a)' genes_of_interest.txt data.tsv &gt; 
 <ul>
 <li>Cause: non-numeric characters (commas, units) in the numeric column. Fix: remove or convert non-numeric characters before numeric comparison, e.g., gsub(/,/, "", $3) inside awk.</li>
 </ul>
-<h3>Symptom: pipelines are slow on very large files</h3>
+<h3>Symptom: pipelines run slowly on very large files</h3>
 <ul>
 <li>Cause: using algorithms that are not streaming-friendly or too many intermediate writes to disk. Fix: keep operations piped where possible (avoid unnecessary temporary files), or use specialized tools (seqkit, samtools for SAM/BAM) and appropriate hardware.</li>
 </ul>
@@ -270,7 +270,7 @@ awk -F'\t' 'NR==FNR{a[$1]; next} ($1 in a)' genes_of_interest.txt data.tsv &gt; 
 <ul>
 <li>Line-based tools assume a consistent file structure. If input formats vary across files, automated scripts can silently produce incorrect outputs. Always inspect representative samples with head or less.</li>
 <li>Command behavior can vary slightly with tool versions (GNU vs BSD variants). When writing reproducible pipelines, document tool versions (for example, grep --version) and consider using a package manager (conda/mamba) to pin versions.</li>
-<li>For very large datasets, file encoding and newlines (Windows CRLF vs Unix LF) can affect pattern matching. Normalize files with dos2unix if needed.</li>
+<li>On very large datasets, file encoding and newline styles (Windows CRLF vs Unix LF) can affect pattern matching. Normalize files with dos2unix if needed.</li>
 <li>Responsible use: extracting sequence IDs or motifs does not replace proper ethical review or consent checks for sensitive genomic data. Do not share sensitive outputs without appropriate permissions.</li>
 <li>Record-aware tools (seqkit, samtools, bcftools) are preferable for formats with multi-line records or binary representations (e.g., BAM/CRAM). Prefer these when available rather than attempting complex sed/awk workarounds.</li>
 </ul>
