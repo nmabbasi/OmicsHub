@@ -4,22 +4,22 @@
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<meta content="Learn how to write and submit Slurm batch scripts on HPC clusters, allocate compute resources efficiently, and run parallel jobs at scale." name="description"/>
+<meta content="Write Slurm batch scripts for a cluster: request resources, direct logs, submit and monitor jobs, and choose between task launches and job arrays. Examples require adaptation to local cluster policy and configuration." name="description"/>
 <meta content="bioinformatics, single-cell RNA-seq, shell commands, conda, computational biology, tutorials, data analysis" name="keywords"/>
 <meta content="Nasir Mahmood Abbasi, PhD" name="author"/>
 <meta content="index, follow" name="robots"/>
 <!-- Open Graph tags for social sharing -->
-<meta content="Writing Job Scripts | The Omics Hub" property="og:title"/>
-<meta content="Learn how to write and submit Slurm batch scripts on HPC clusters, allocate compute resources efficiently, and run parallel jobs at scale." property="og:description"/>
+<meta content="Writing Slurm Job Scripts" property="og:title"/>
+<meta content="Write Slurm batch scripts for a cluster: request resources, direct logs, submit and monitor jobs, and choose between task launches and job arrays. Examples require adaptation to local cluster policy and configuration." property="og:description"/>
 <meta content="https://theomicshub.com/tutorials/hpc-submission-part1.html" property="og:url"/>
 <meta content="website" property="og:type"/>
 <meta content="https://theomicshub.com/images/hpc-writing-job-scripts.webp" property="og:image"/>
 <!-- Twitter Card tags -->
 <meta content="summary_large_image" name="twitter:card"/>
-<meta content="Writing Job Scripts | The Omics Hub" name="twitter:title"/>
-<meta content="Learn how to write and submit Slurm batch scripts on HPC clusters, allocate compute resources efficiently, and run parallel jobs at scale." name="twitter:description"/>
+<meta content="Writing Slurm Job Scripts" name="twitter:title"/>
+<meta content="Write Slurm batch scripts for a cluster: request resources, direct logs, submit and monitor jobs, and choose between task launches and job arrays. Examples require adaptation to local cluster policy and configuration." name="twitter:description"/>
 <meta content="https://theomicshub.com/images/hpc-writing-job-scripts.webp" name="twitter:image"/>
-<title>Writing Job Scripts | The Omics Hub</title><!-- Favicon -->
+<title>Writing Slurm Job Scripts | The Omics Hub</title><!-- Favicon -->
 <link href="../images/favicon.svg" rel="icon" type="image/svg+xml"/>
 <!-- Pre-fetch fonts to prevent FOUC (layout shift) -->
 <link href="https://fonts.googleapis.com" rel="preconnect"/>
@@ -45,8 +45,72 @@ gtag('consent', 'default', {
 <script async="" crossorigin="anonymous" src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2910340533244599"></script>
 <meta content="ca-pub-2910340533244599" name="google-adsense-account"/><meta content="XioIUjAyO5PEAT-N6nLrowdiDe4ATl-vKdRGmmrDHZM" name="google-site-verification"/>
 <link href="https://theomicshub.com/tutorials/hpc-submission-part1.html" rel="canonical"/>
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "TechArticle", "headline": "Writing Job Scripts", "description": "Learn how to write and submit Slurm batch scripts on HPC clusters, allocate compute resources efficiently, and run parallel jobs at scale.", "mainEntityOfPage": {"@type": "WebPage", "@id": "https://theomicshub.com/tutorials/hpc-submission-part1.html"}, "image": "https://theomicshub.com/images/hpc-writing-job-scripts.webp", "author": {"@type": "Person", "name": "Dr. Nasir Mahmood Abbasi, PhD", "jobTitle": "Computational Biologist & Bioinformatics Researcher", "url": "https://theomicshub.com/about.html", "sameAs": ["https://github.com/nmabbasi"]}, "publisher": {"@type": "Organization", "name": "The Omics Hub", "url": "https://theomicshub.com", "logo": {"@type": "ImageObject", "url": "https://theomicshub.com/images/favicon.svg"}}, "datePublished": "2026-09-06", "dateModified": "2026-10-10", "url": "https://theomicshub.com/tutorials/hpc-submission-part1.html", "name": "Writing Job Scripts | The Omics Hub", "isPartOf": {"@type": "WebSite", "name": "The Omics Hub", "url": "https://theomicshub.com/"}}</script>
-<script id="eeat-schema" type="application/ld+json">{"@context": "https://schema.org", "@type": "TechArticle", "name": "Writing Job Scripts | The Omics Hub", "description": "Learn how to write and submit Slurm batch scripts on HPC clusters, allocate compute resources efficiently, and run parallel jobs at scale.", "url": "https://theomicshub.com/tutorials/hpc-submission-part1.html", "isPartOf": {"@type": "WebSite", "name": "The Omics Hub", "url": "https://theomicshub.com/"}, "author": {"@type": "Person", "name": "Dr. Nasir Mahmood Abbasi, PhD", "jobTitle": "Computational Biologist & Bioinformatics Researcher", "url": "https://theomicshub.com/about.html", "sameAs": ["https://github.com/nmabbasi"]}, "publisher": {"@type": "Organization", "name": "The Omics Hub", "url": "https://theomicshub.com/"}, "inLanguage": "en"}</script></head>
+<script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "Writing Slurm Job Scripts",
+  "description": "Write Slurm batch scripts for a cluster: request resources, direct logs, submit and monitor jobs, and choose between task launches and job arrays. Examples require adaptation to local cluster policy and configuration.",
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://theomicshub.com/tutorials/hpc-submission-part1.html"
+  },
+  "image": "https://theomicshub.com/images/hpc-writing-job-scripts.webp",
+  "author": {
+    "@type": "Person",
+    "name": "Dr. Nasir Mahmood Abbasi, PhD",
+    "jobTitle": "Computational Biologist & Bioinformatics Researcher",
+    "url": "https://theomicshub.com/about.html",
+    "sameAs": [
+      "https://github.com/nmabbasi"
+    ]
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "The Omics Hub",
+    "url": "https://theomicshub.com",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://theomicshub.com/images/favicon.svg"
+    }
+  },
+  "datePublished": "2026-09-06",
+  "dateModified": "2026-10-21",
+  "url": "https://theomicshub.com/tutorials/hpc-submission-part1.html",
+  "name": "Writing Slurm Job Scripts",
+  "isPartOf": {
+    "@type": "WebSite",
+    "name": "The Omics Hub",
+    "url": "https://theomicshub.com/"
+  }
+}</script>
+<script id="eeat-schema" type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "name": "Writing Slurm Job Scripts",
+  "description": "Write Slurm batch scripts for a cluster: request resources, direct logs, submit and monitor jobs, and choose between task launches and job arrays. Examples require adaptation to local cluster policy and configuration.",
+  "url": "https://theomicshub.com/tutorials/hpc-submission-part1.html",
+  "isPartOf": {
+    "@type": "WebSite",
+    "name": "The Omics Hub",
+    "url": "https://theomicshub.com/"
+  },
+  "author": {
+    "@type": "Person",
+    "name": "Dr. Nasir Mahmood Abbasi, PhD",
+    "jobTitle": "Computational Biologist & Bioinformatics Researcher",
+    "url": "https://theomicshub.com/about.html",
+    "sameAs": [
+      "https://github.com/nmabbasi"
+    ]
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "The Omics Hub",
+    "url": "https://theomicshub.com/"
+  },
+  "inLanguage": "en",
+  "headline": "Writing Slurm Job Scripts"
+}</script><link href="../tutorial-library.css" rel="stylesheet"/></head>
 <body class="bg-white text-gray-900">
 <script>
 function toggleMobileMenu() {
@@ -125,29 +189,14 @@ function toggleMobileMenu() {
 <div class="container mx-auto px-4 py-8"><div class="max-w-4xl mx-auto"><div id="tutorial-content">
 <section class="mb-12">
 <div class="flex items-center gap-2 text-sm text-blue-600 font-medium mb-4"><span>High-Performance Computing (HPC)</span><span>-</span><span>2026-09-06</span></div>
-<h1 class="text-4xl md:text-5xl font-black text-gray-900 mb-6 leading-tight" id="tutorial-title">Writing Job Scripts</h1>
+<h1 class="text-4xl md:text-5xl font-black text-gray-900 mb-6 leading-tight" id="tutorial-title">Writing Slurm Job Scripts</h1>
 <div class="flex items-center gap-4"><div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 font-bold text-lg">NM</div><div><p class="font-bold text-gray-900">Nasir Mahmood Abbasi, PhD</p><p class="text-sm text-gray-500">Bioinformatics Educator</p></div></div>
 </section>
 <div class="mb-12 rounded-2xl overflow-hidden shadow-lg border border-gray-100">
 <img alt="Writing Job Scripts" class="w-full aspect-video object-cover" decoding="async" loading="eager" src="../images/hpc-writing-job-scripts.webp"/>
 </div>
-<article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none"><div class="flex flex-wrap items-center gap-4 text-xs font-mono text-gray-500 bg-gray-50 p-3 rounded-lg border border-gray-200 mb-6">
-<div class="flex items-center gap-1">
-<svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
-<span><strong>Tested on:</strong> Python 3.11, R 4.3.2, Ubuntu 24.04</span>
-</div>
-<div class="flex items-center gap-1">
-<svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
-</div>
-</div>
-<div class="p-6 bg-blue-50 border border-blue-100 rounded-xl mb-8">
-<h4 class="text-lg font-bold text-blue-900 mb-2">Learning Objectives &amp; Prerequisites</h4>
-<ul class="list-disc list-inside text-blue-800 space-y-1 mb-4">
-<li><strong>Prerequisites:</strong> Complete Basic Slurm Commands and have a lightweight test command approved for the target cluster.</li>
-<li><strong>Objective:</strong> Write, submit, monitor, and interpret a Slurm batch script with appropriate CPU, memory, time, and log settings.</li>
-<li><strong>Expected Output:</strong> A completed test job with an annotated SBATCH script and saved stdout/stderr logs.</li>
-</ul>
-</div>
+<article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--walkthrough"><p class="lesson-lead">A Slurm submission script describes the resources a batch job requests and the commands it runs after the scheduler starts it. This walkthrough builds from a small job to task launches and arrays. The examples use site-specific module names and a sample partition; confirm both with your cluster documentation before submitting.</p>
+<div class="lesson-summary"><h2>Before you submit</h2><ul><li>Complete the preceding <a href="hpc-basic-commands.html">Basic Slurm Commands</a> lesson.</li><li>Know your cluster's account, partition, time-limit, module, and data-storage requirements.</li><li>Use a small, approved test command first. A successful submission means Slurm accepted the request, not that the job has started or completed.</li></ul><p><strong>Deliverable:</strong> an adapted script, its job ID, and the scheduler-created log from a test run.</p></div>
 <div class="p-5 bg-slate-50 border border-slate-200 rounded-xl mb-8">
 <p class="text-xs font-bold tracking-[0.14em] uppercase text-slate-500 mb-2">Detailed cluster reference</p>
 <h4 class="text-lg font-bold text-slate-900 mb-2">Need a complete HPC walkthrough?</h4>
@@ -155,9 +204,8 @@ function toggleMobileMenu() {
 <a class="inline-flex items-center gap-2 px-4 py-2 bg-[#123B5D] text-white font-bold rounded-lg hover:bg-[#0B2741] transition-colors text-sm" href="https://nmabbasi.github.io/HPC/" rel="noopener noreferrer" target="_blank">Open the HPC Guide <span aria-hidden="true">-&gt;</span></a>
 </div>
 <h2>A basic script</h2>
-<p>All options actually have short versions (e.g., <code>--job-name</code> can be replaced by <code>-J</code>). The long names are used here for clarity. Not all options in this script are mandatory, but they represent the minimum recommended for clarity.</p>
-<p>I use a generic <code>program</code> in all scripts. Replace it with your actual executable. For testing, you can simply use <code>hostname</code> or <code>ls</code></p>
-<p>I use <code>ibrain</code> as the argument for <code>--partition</code> You may not have access to it. Replace it with a partition available in the output of <code>sinfo</code></p>
+<p>Long options are used below for readability; many have short forms. The resource values, account requirements, partition name, module commands, and time limits are examples, not universal defaults. Replace them with values permitted by your site.</p>
+<p>Replace <code>program</code> with your executable and its arguments. For a harmless cluster smoke test, use a command such as <code>hostname</code>; first check site policy and the relevant partition in <code>sinfo</code>.</p>
 <pre><code class="language-bash">#!/bin/sh
 #SBATCH --job-name example_script
 
@@ -167,7 +215,6 @@ function toggleMobileMenu() {
 
 #SBATCH --partition ibrain
 #SBATCH --output %x-%j.out
-#SBATCH --error %x-%j.out
 #SBATCH --hint=nomultithread
 
 
@@ -178,18 +225,18 @@ srun program
 </code></pre>
 <p>A few notes on the options:</p>
 <ul>
-<li>The value given to <code>--job-name</code> is used to identify the job when calling <code>squeue</code></li>
-<li>A standard Linux console output consists of the output stream and the error stream. When you use <code>sbatch</code> neither will appear on the console. Instead, they will be redirected to the file(s) specified by the <code>--output</code> and <code>--error</code> options.</li>
-<li>Scripts have internal variables. Here <code>%x</code> will be replaced by the job name, and <code>%j</code> will be replaced by the job ID. The job ID is automatically assigned when calling <code>sbatch</code> and appears when calling <code>squeue</code></li>
-<li>The <code>--hint=nomultithread</code> option is discussed further in the <a href="#hyperthreading">Hyperthreading</a> section. If you don't care about or understand hyperthreading, just leave it there.</li>
+<li><code>--job-name</code> labels the job in scheduler reports. Use <code>squeue -j JOB_ID</code> to inspect a pending or running job.</li>
+<li>By default, batch stdout and stderr go to <code>slurm-%j.out</code>. This example sets an explicit output filename. If you need separate streams, choose distinct paths with <code>--output</code> and <code>--error</code>; do not assume site-specific filesystem behavior.</li>
+<li>Slurm substitutes <code>%x</code> with the job name and <code>%j</code> with the job ID in output filename patterns. The ID is assigned at successful submission. Submission does not mean the job has started.</li>
+<li><code>--hint=nomultithread</code> asks Slurm to avoid using multiple hardware threads per core where supported. CPU allocation and binding depend on cluster configuration; consult local guidance before adding this hint.</li>
 </ul>
 <p>Most long versions of options have an associated variable obtained by:</p>
 <ul>
 <li>Capitalizing every letter.</li>
 <li>Replacing the leading <code>--</code> by <code>SLURM_</code></li>
-<li>Replacing the dashes by shows.</li>
+<li>Replacing each dash with an underscore.</li>
 </ul>
-<p>So, in the example above, the variables <code>$SLURM_JOB_NAME</code><code>$SLURM_NTASKS</code><code>$SLURM_CPUS_PER_TASK</code> (and more) will be defined right after their corresponding option line.</p>
+<p>Slurm sets environment variables such as <code>SLURM_JOB_NAME</code>, <code>SLURM_NTASKS</code>, and <code>SLURM_CPUS_PER_TASK</code> in the job environment. Use the documented variable names; they are not shell expansions until written with a leading <code>$</code>.</p>
 <h2>Decomposing the script</h2>
 <p>A submission script is composed of the following parts:</p>
 <ul>
@@ -210,43 +257,32 @@ srun program
 <p>They have two purposes:</p>
 <ul>
 <li>
-<p>The first is to specify resource allocation. In the example script, the combination of <code>--ntasks</code> and <code>--cpus-per-task</code> asks to allocate a single CPU, and the <code>--mem</code> option asks to allocate 2G.</p>
+<p>The directives request resources: <code>--ntasks</code> is the number of processes/tasks and <code>--cpus-per-task</code> is CPUs per task. Here their product is one CPU, and <code>--mem</code> requests 2G for the job. These are requests subject to site limits and scheduler configuration.</p>
 <p><strong>Note:</strong> Allocating a lot of resources doesn't mean that all of them will be used. If a program is not configured for parallel execution, it will use one CPU even when more are allocated. Start with a documented estimate, run a small test, then inspect actual resource use with the scheduler rather than logging directly into a compute node. For example:</p>
 <p><code>bash
 squeue -j &lt;job_id&gt;                 # queue state
 sstat -j &lt;job_id&gt;.batch --format=JobID,MaxRSS,AveCPU
 sacct -j &lt;job_id&gt; --format=JobID,State,Elapsed,MaxRSS,AllocCPUS</code></p>
 <p>If you need an interactive diagnostic session, request one through the scheduler, for example <code>srun --pty --cpus-per-task=2 --mem=8G --time=01:00:00 bash</code> Only SSH to a compute node when your own cluster documentation explicitly permits it.</p>
-<p><strong>Other note:</strong> In the current configuration, asking for 1 CPU will actually allocate 2, because Slurm allocates by the core, and cores are hyperthreaded. More details in the <a href="#hyperthreading">Hyperthreading</a> section.</p>
+<p>Actual CPU allocation and binding can differ with the cluster's select and task plugins, core/thread topology, and request options. Check the local documentation and the allocation reported for your job rather than assuming a fixed multiplier.</p>
 </li>
 <li>
-<p>The second purpose is to be passed to the <code>srun</code> command. Unless overwritten when calling <code>srun</code> all options given with <code>#SBATCH</code> are assumed.</p>
+<p>The directives configure the batch allocation. An <code>srun</code> command launches a job step inside it; do not assume every batch option maps to a step option identically. Set step-level task or CPU counts explicitly when needed and check the Slurm documentation for the particular option.</p>
 </li>
 </ul>
 <p>There are many more options:</p>
 <pre><code class="language-bash">man sbatch
 </code></pre>
-<p>Any line starting with <code>#</code> but not followed by <code>SBATCH</code> is a comment. If you want to comment an option, use more than one <code>#</code></p>
+<p>Slurm reads <code>#SBATCH</code> directives before the first non-comment, non-whitespace script line. Shell variables and expansions in those directive lines are not evaluated by the shell. To disable a directive, prefix it so it no longer begins with <code>#SBATCH</code>.</p>
 <pre><code class="language-bash">##SBATCH
 </code></pre>
 <p>To avoid confusion between comment and option when using a single <code>#</code> the comment in my example script uses two <code>#</code> even though only one is required.</p>
 <h3>Shell commands</h3>
 <p>Shell commands are used to set up Linux environment variables. They should <strong>not</strong> be preceded by <code>srun</code></p>
 <h3>Run commands</h3>
-<p>Run commands are your actual computations. They should be preceded by <code>srun</code> The reason is that, as mentioned above, the options given with <code>#SBATCH</code> apply to <code>srun</code> In truth, when only one task is given with the <code>--ntasks</code> option, omitting <code>srun</code> won't change anything. Put it there anyway, for consistency.</p>
-<h2 id="hyperthreading">Hyperthreading</h2>
-<p>Hyperthreading is activated on the nodes, meaning each core has two CPUs. However, this doesn't double computational power, as using two CPUs of the same core is less efficient than using two CPUs of different cores. With that in mind, here is how Slurm acts (with the number of CPUs you ask for being the product of <code>--ntasks</code> and <code>--cpus-per-task</code>):</p>
-<ul>
-<li>Without the <code>--hint=nomultithread</code> option, asking for an odd number <code>N</code> of CPUs or asking for <code>N+1</code> CPUs is the same: Slurm allocates the <code>N+1</code> CPUs of <code>(N+1)/2</code> cores.</li>
-<li>With the <code>--hint=nomultithread</code> option, asking for <code>N</code> CPUs will allocate the <code>2N</code> CPUs of <code>N</code> cores.</li>
-</ul>
-<p>Note that if you like to use the <code>--mem-per-cpu</code> option instead of the <code>--mem</code> option, the total allocated memory will be based on the number of CPUs actually allocated, not the number of CPUs you asked for. Examples:</p>
-<ul>
-<li>Without the <code>--hint=nomultithread</code> option, the combination of <code>--ntasks 1 --cpus-per-task 1 --mem-per-cpu 1G</code> will allocate 2G.</li>
-<li>The combination of <code>--ntasks 1 --cpus-per-task 2 --mem-per-cpu 1G --hint=nomultithread</code> will allocate 4G.</li>
-</ul>
-<p>There's really only one valid use of hyperthreading: when you want to ask for <strong>all</strong> the CPUs of a single node. In that case, remove the <code>--hint=nomultithread</code> option and allocate everything.</p>
-<p>The rest of this documentation assumes we don't use hyperthreading.</p>
+<p>Use <code>srun</code> when launching a parallel job step so Slurm starts and tracks the task or tasks within the allocation. A serial command can sometimes run directly in the batch shell, but <code>srun</code> makes the step and requested task count explicit. Match task count and CPUs per task to the program's documented parallel model.</p>
+<h2 id="hyperthreading">CPU threads and cluster policy</h2>
+<p>Slurm's CPU units, hardware threads, cores, and binding behavior depend on the site's configuration. A request for one CPU does not imply a universal number of physical cores or a fixed performance level. The example's <code>--hint=nomultithread</code> may be unsupported or may alter placement; omit or use it only according to local guidance. For memory-per-CPU requests, verify how your cluster counts allocated CPUs and applies limits.</p>
 <h2>Running things in parallel</h2>
 <h3>Calling the same program multiple times in parallel</h3>
 <pre><code class="language-bash">#!/bin/sh
@@ -258,7 +294,6 @@ sacct -j &lt;job_id&gt; --format=JobID,State,Elapsed,MaxRSS,AllocCPUS</code></p>
 
 #SBATCH --partition ibrain
 #SBATCH --output %x-%j.out
-#SBATCH --error %x-%j.out
 #SBATCH --hint=nomultithread
 
 
@@ -267,7 +302,7 @@ module load gcc/7.3.1
 
 srun program
 </code></pre>
-<p>Recall that the options given with <code>#SBATCH</code> are passed to <code>srun</code> In this case, a single call to <code>srun program</code> would be equivalent to <code>srun --ntasks 3 program</code> which would call <code>program</code> three times.</p>
+<p>Here the allocation requests three one-CPU tasks. A step that launches three tasks can start the executable three times, so use this pattern only when the program is designed for independent task launches (or is an MPI program configured for them). A single ordinary serial program may not use these resources as intended. Specify the step's task count explicitly, for example <code>srun --ntasks=3 program</code>, then follow the program's own parallelization instructions.</p>
 <h3>Several steps in parallel</h3>
 <p>Here is the full script.</p>
 <pre><code class="language-bash">#!/bin/sh
@@ -279,7 +314,6 @@ srun program
 
 #SBATCH --partition ibrain
 #SBATCH --output %x-%j.out
-#SBATCH --error %x-%j.out
 #SBATCH --hint=nomultithread
 
 
@@ -289,10 +323,11 @@ module load gcc/7.3.1
 srun --ntasks=1 program0 &amp;
 srun --ntasks=1 program1 &amp;
 srun --ntasks=1 program2
+wait
 </code></pre>
-<p>Don't forget the <code>--ntasks 1</code> on the <code>srun</code> lines. If you do, <code>program0</code> will be called three times, and because three tasks are being run and you only allocated three, <code>program1</code> and <code>program2</code> won't be executed at the same time, and will have to wait for the previous tasks to end.</p>
+<p>Each step requests one task so each command runs once. Backgrounding the first two steps allows the shell to start them without waiting; add <code>wait</code> after the final launch so the batch script does not finish before those steps. This example can still block or fail depending on step scheduling, site configuration, and each program's resource needs. Check each step's exit status and logs; for production, handle failures explicitly rather than treating the last command's status as proof that all steps succeeded.</p>
 <h3>Arrays</h3>
-<p>This is useful when you want to run the same program multiple times with different arguments. The requirement is that the arguments differ only by an integer number. Here is the script.</p>
+<p>A job array is useful for independent repetitions of the same script with an index-specific input or argument. The index values need not be consecutive; make sure your script maps every requested index to a valid input and that tasks do not overwrite one another's files.</p>
 <pre><code class="language-bash">#!/bin/sh
 #SBATCH --job-name example_script
 
@@ -304,7 +339,6 @@ srun --ntasks=1 program2
 
 #SBATCH --partition ibrain
 #SBATCH --output %x-%A-%a.out
-#SBATCH --error %x-%A-%a.out
 #SBATCH --hint=nomultithread
 
 
@@ -313,15 +347,15 @@ module load gcc/7.3.1
 
 srun program --arg=$SLURM_ARRAY_TASK_ID
 </code></pre>
-<p>Here, the variable <code>$SLURM_ARRAY_TASK_ID</code> will take values from 0 to 2. The job ID will be <code>$SLURM_JOB_ID</code> and the array job ID will be <code>$SLURM_ARRAY_JOB_ID</code> The array task ID will be <code>$SLURM_ARRAY_TASK_ID</code></p>
+<p>This array has task indices 0, 1, and 2. Slurm sets <code>SLURM_ARRAY_TASK_ID</code> to each task's index; <code>%A</code> and <code>%a</code> make the log name unique per array and task. Before scaling up, test the index-to-input mapping for the first, last, and an invalid index, and consider a concurrency cap such as <code>--array=0-2%2</code> if the site permits it. Array scheduling order is not guaranteed.</p>
 <h2>Running an interactive session</h2>
 <pre><code class="language-bash">srun --pty --job-name interactive --partition ibrain --mem 2G --cpus-per-task 1 bash
 </code></pre>
-<p>This will give you a shell on a compute node. The options are the same as for <code>sbatch</code> The <code>--pty</code> option is needed to get a pseudo-terminal. The <code>bash</code> at the end specifies the shell to run. You can replace it with <code>sview</code> to get a graphical interface.</p>
+<p><code>srun --pty</code> requests an interactive pseudo-terminal through Slurm; it may wait until requested resources become available. The final <code>bash</code> is the command started in that allocation. Use only resources and partitions allowed by local policy. A graphical session requires additional site support; do not assume replacing Bash with an application is sufficient.</p>
 <h2>Running a GUI</h2>
 <pre><code class="language-bash">srun --pty --job-name gui --partition ibrain --mem 2G --cpus-per-task 1 --x11 bash
 </code></pre>
-<p>This will give you a shell on a compute node with X11 forwarding enabled. The <code>--x11</code> This option is needed for X11 forwarding. You can then run graphical applications from this shell.</p>
+<p><code>--x11</code> requests X11 forwarding, which requires Slurm and the cluster's configuration to support it as well as a working local display setup. This command is not portable to every cluster. Follow site instructions for graphical applications, or use a supported remote visualization service.</p>
 <h2>Custom Module</h2>
 <h3>Creating a custom module</h3>
 <p>If you have a program you want to make available to others, you can create a custom module for it. This involves creating a module file that defines the environment variables and paths needed to run your program.</p>
@@ -331,7 +365,7 @@ srun program --arg=$SLURM_ARRAY_TASK_ID
 prepend_path("PATH", "/path/to/myprogram/bin")
 prepend_path("LD_LIBRARY_PATH", "/path/to/myprogram/lib")
 </code></pre>
-<p>Place this file in a directory that's part of the <code>MODULEPATH</code> environment variable. You can check your <code>MODULEPATH</code> with <code>module use</code></p>
+<p>This is a site-administered environment-modules example, not a complete user setup. Module systems differ; ask the cluster administrator how user modulefiles are enabled. The <code>module use</code> command adds a directory to the module search path; it does not simply print <code>MODULEPATH</code>.</p>
 <h3>Using a custom module</h3>
 <p>Once your custom module is created and placed in the correct location, you can load it like any other module:</p>
 <pre><code class="language-bash">module load myprogram/1.0
@@ -358,21 +392,21 @@ bash Miniconda3-latest-Linux-x86_64.sh
 <pre><code class="language-bash">conda deactivate
 </code></pre>
 <h3>Conda in Submission Scripts</h3>
-<p>To use Conda environments in your Slurm submission scripts, you need to activate the environment before running your program. Make sure to load the Conda module if necessary, or ensure Conda is in your PATH.</p>
-<pre><code class="language-bash">#!/bin/sh
+<p>This example assumes Bash and a Conda installation at the placeholder path. Replace it with your actual installation and environment name. Some clusters provide Conda through a module or document another activation method; follow that site's instructions. Activation in a non-interactive batch shell must initialize the shell function before calling <code>conda activate</code>.</p>
+<pre><code class="language-bash">#!/bin/bash
 #SBATCH --job-name conda_job
 #SBATCH --ntasks 1
 #SBATCH --cpus-per-task 1
 #SBATCH --mem 4G
 #SBATCH --partition ibrain
 #SBATCH --output %x-%j.out
-#SBATCH --error %x-%j.out
 
 # Load Conda if not in PATH
 # module load conda
 
 # Activate your Conda environment
-source /path/to/your/miniconda3/bin/activate myenv
+source /path/to/your/miniconda3/etc/profile.d/conda.sh
+conda activate myenv
 
 # Run your Python script or program
 srun python my_script.py
@@ -381,10 +415,10 @@ srun python my_script.py
 conda deactivate
 </code></pre>
 <h2>Compression of files</h2>
-<p>This document will help you to compress your files on HPC as we see we've less space on cluster its better to compress our fastq files and other result files.</p>
+<p>Compression can reduce storage for some data, but it costs CPU time and can affect downstream tools. FASTQ files are often already gzip-compressed. Check the workflow's expected input format and storage policy before recompressing or deleting any source data.</p>
 <h3>Using <code>gzip</code></h3>
 <p><code>gzip</code> is a common compression utility. It replaces the original file with a compressed version (<code>.gz</code> extension).</p>
-<p><strong>Compress a file:</strong></p>
+<p><strong>Compress a disposable or backed-up file:</strong> by default <code>gzip</code> removes the original after creating the compressed file. Keep an independent copy if the source must be retained.</p>
 <pre><code class="language-bash">gzip my_file.txt
 </code></pre>
 <p>This will create <code>my_file.txt.gz</code> and remove <code>my_file.txt</code></p>
@@ -430,7 +464,7 @@ conda deactivate
 <p><strong>Decompress a file:</strong></p>
 <pre><code class="language-bash">unxz my_file.txt.xz
 </code></pre>
-<p>Choose the compression method based on your needs for compression ratio versus speed. For large files like fastq, <code>gzip</code> is a common balance. For maximum compression, <code>xz</code> is preferred if time is not critical.</p>
+<p>Choose a format supported by the downstream tools and balance CPU time against storage savings. Do not assume <code>xz</code> is accepted by a bioinformatics workflow simply because it compresses a file; confirm the tool's input contract. Preserve original sequencing data according to project policy.</p>
 <div class="mt-10 p-8 bg-gray-50 border border-gray-200 rounded-xl">
 <h3 class="text-xl font-bold text-gray-900 mb-4">Knowledge Check &amp; Assessment</h3>
 <div class="space-y-4">
@@ -456,18 +490,7 @@ conda deactivate
 <li><a class="text-blue-700 hover:underline" href="https://man.openbsd.org/ssh" rel="noopener" target="_blank">OpenSSH manual pages</a></li>
 </ul>
 </section>
-</article>
-<section class="mt-12 mb-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-100">
-<div class="flex items-start gap-4">
-<div class="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-<svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
-</div>
-<div>
-<p class="text-sm text-gray-600 mb-2">This tutorial records the software versions used in its examples. Software and package behaviour can change. Please re-check commands against the official documentation. If a command does not work, you find an error, or the tutorial is no longer reproducible, please report it through the <a class="text-blue-600 hover:underline" href="../contact.html">Contact page</a></p>
-<p class="text-sm text-gray-500">Author: <a class="text-blue-600 hover:underline font-medium" href="../about.html">Nasir Mahmood Abbasi, PhD</a> - Category: High-Performance Computing (HPC)</p>
-</div>
-</div>
-</section>
+<aside aria-labelledby="tutorial-feedback-title" class="lesson-feedback" id="tutorial-feedback"><h2 id="tutorial-feedback-title">Help improve this tutorial</h2><p>Found an error, a broken link, or a step that needs a clearer explanation? Please <a href="../contact.html">contact me</a>. Your feedback helps me keep this resource accurate and useful.</p></aside></article>
 <section aria-label="Course sequence" class="mt-16 pt-10 border-t border-gray-100">
 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
 <h2 class="text-2xl font-black text-gray-900 tracking-tight">Continue Learning</h2>
@@ -618,8 +641,6 @@ conda deactivate
 <script src="../code-tabs.js"></script>
 <script src="../copy-code.js"></script>
 <script src="../subscribe-fab.js"></script>
-
-
 <!-- Cookie Consent Banner -->
 <div class="fixed bottom-0 inset-x-0 z-[9999] transition-transform duration-500" id="cookie-consent-banner" style="font-family:'Inter',system-ui,sans-serif;">
 <div class="mx-auto max-w-4xl px-4 pb-4 sm:px-6">

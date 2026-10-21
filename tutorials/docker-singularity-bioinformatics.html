@@ -4,22 +4,22 @@
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<meta content="Understand how containerization solves the dependency hell of bioinformatics, focusing on Docker for local use and Singularity for HPC clusters." name="description"/>
+<meta content="Compare Docker and Apptainer for bioinformatics, then trace a BWA mapping command through image selection, bind mounts, HPC execution, and reproducibility checks." name="description"/>
 <meta content="bioinformatics, single-cell RNA-seq, shell commands, conda, computational biology, tutorials, data analysis" name="keywords"/>
 <meta content="Nasir Mahmood Abbasi, PhD" name="author"/>
 <meta content="index, follow" name="robots"/>
 <!-- Open Graph tags for social sharing -->
-<meta content="Docker &amp; Singularity | The Omics Hub" property="og:title"/>
-<meta content="Understand how containerization solves the dependency hell of bioinformatics, focusing on Docker for local use and Singularity for HPC clusters." property="og:description"/>
+<meta content="Docker and Apptainer for Bioinformatics" property="og:title"/>
+<meta content="Compare Docker and Apptainer for bioinformatics, then trace a BWA mapping command through image selection, bind mounts, HPC execution, and reproducibility checks." property="og:description"/>
 <meta content="https://theomicshub.com/tutorials/docker-singularity-bioinformatics.html" property="og:url"/>
 <meta content="website" property="og:type"/>
 <meta content="https://theomicshub.com/images/docker-singularity-bioinformatics.webp" property="og:image"/>
 <!-- Twitter Card tags -->
 <meta content="summary_large_image" name="twitter:card"/>
-<meta content="Docker &amp; Singularity | The Omics Hub" name="twitter:title"/>
-<meta content="Understand how containerization solves the dependency hell of bioinformatics, focusing on Docker for local use and Singularity for HPC clusters." name="twitter:description"/>
+<meta content="Docker and Apptainer for Bioinformatics" name="twitter:title"/>
+<meta content="Compare Docker and Apptainer for bioinformatics, then trace a BWA mapping command through image selection, bind mounts, HPC execution, and reproducibility checks." name="twitter:description"/>
 <meta content="https://theomicshub.com/images/docker-singularity-bioinformatics.webp" name="twitter:image"/>
-<title>Docker &amp; Singularity | The Omics Hub</title><!-- Favicon -->
+<title>Docker and Apptainer for Bioinformatics | The Omics Hub</title><!-- Favicon -->
 <link href="../images/favicon.svg" rel="icon" type="image/svg+xml"/>
 <!-- Pre-fetch fonts to prevent FOUC (layout shift) -->
 <link href="https://fonts.googleapis.com" rel="preconnect"/>
@@ -45,8 +45,72 @@ gtag('consent', 'default', {
 <script async="" crossorigin="anonymous" src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2910340533244599"></script>
 <meta content="ca-pub-2910340533244599" name="google-adsense-account"/><meta content="XioIUjAyO5PEAT-N6nLrowdiDe4ATl-vKdRGmmrDHZM" name="google-site-verification"/>
 <link href="https://theomicshub.com/tutorials/docker-singularity-bioinformatics.html" rel="canonical"/>
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "TechArticle", "headline": "Docker & Singularity", "description": "Understand how containerization solves the dependency hell of bioinformatics, focusing on Docker for local use and Singularity for HPC clusters.", "mainEntityOfPage": {"@type": "WebPage", "@id": "https://theomicshub.com/tutorials/docker-singularity-bioinformatics.html"}, "image": "https://theomicshub.com/images/docker-singularity-bioinformatics.webp", "author": {"@type": "Person", "name": "Dr. Nasir Mahmood Abbasi, PhD", "jobTitle": "Computational Biologist & Bioinformatics Researcher", "url": "https://theomicshub.com/about.html", "sameAs": ["https://github.com/nmabbasi"]}, "publisher": {"@type": "Organization", "name": "The Omics Hub", "url": "https://theomicshub.com", "logo": {"@type": "ImageObject", "url": "https://theomicshub.com/images/favicon.svg"}}, "datePublished": "2026-08-25", "dateModified": "2026-10-10", "url": "https://theomicshub.com/tutorials/docker-singularity-bioinformatics.html", "name": "Docker & Singularity | The Omics Hub", "isPartOf": {"@type": "WebSite", "name": "The Omics Hub", "url": "https://theomicshub.com/"}}</script>
-<script id="eeat-schema" type="application/ld+json">{"@context": "https://schema.org", "@type": "TechArticle", "name": "Docker & Singularity | The Omics Hub", "description": "Understand how containerization solves the dependency hell of bioinformatics, focusing on Docker for local use and Singularity for HPC clusters.", "url": "https://theomicshub.com/tutorials/docker-singularity-bioinformatics.html", "isPartOf": {"@type": "WebSite", "name": "The Omics Hub", "url": "https://theomicshub.com/"}, "author": {"@type": "Person", "name": "Dr. Nasir Mahmood Abbasi, PhD", "jobTitle": "Computational Biologist & Bioinformatics Researcher", "url": "https://theomicshub.com/about.html", "sameAs": ["https://github.com/nmabbasi"]}, "publisher": {"@type": "Organization", "name": "The Omics Hub", "url": "https://theomicshub.com/"}, "inLanguage": "en"}</script></head>
+<script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "Docker and Apptainer for Bioinformatics",
+  "description": "Compare Docker and Apptainer for bioinformatics, then trace a BWA mapping command through image selection, bind mounts, HPC execution, and reproducibility checks.",
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://theomicshub.com/tutorials/docker-singularity-bioinformatics.html"
+  },
+  "image": "https://theomicshub.com/images/docker-singularity-bioinformatics.webp",
+  "author": {
+    "@type": "Person",
+    "name": "Dr. Nasir Mahmood Abbasi, PhD",
+    "jobTitle": "Computational Biologist & Bioinformatics Researcher",
+    "url": "https://theomicshub.com/about.html",
+    "sameAs": [
+      "https://github.com/nmabbasi"
+    ]
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "The Omics Hub",
+    "url": "https://theomicshub.com",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://theomicshub.com/images/favicon.svg"
+    }
+  },
+  "datePublished": "2026-08-25",
+  "dateModified": "2026-10-21",
+  "url": "https://theomicshub.com/tutorials/docker-singularity-bioinformatics.html",
+  "name": "Docker and Apptainer for Bioinformatics",
+  "isPartOf": {
+    "@type": "WebSite",
+    "name": "The Omics Hub",
+    "url": "https://theomicshub.com/"
+  }
+}</script>
+<script id="eeat-schema" type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "name": "Docker and Apptainer for Bioinformatics",
+  "description": "Compare Docker and Apptainer for bioinformatics, then trace a BWA mapping command through image selection, bind mounts, HPC execution, and reproducibility checks.",
+  "url": "https://theomicshub.com/tutorials/docker-singularity-bioinformatics.html",
+  "isPartOf": {
+    "@type": "WebSite",
+    "name": "The Omics Hub",
+    "url": "https://theomicshub.com/"
+  },
+  "author": {
+    "@type": "Person",
+    "name": "Dr. Nasir Mahmood Abbasi, PhD",
+    "jobTitle": "Computational Biologist & Bioinformatics Researcher",
+    "url": "https://theomicshub.com/about.html",
+    "sameAs": [
+      "https://github.com/nmabbasi"
+    ]
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "The Omics Hub",
+    "url": "https://theomicshub.com/"
+  },
+  "inLanguage": "en",
+  "headline": "Docker and Apptainer for Bioinformatics"
+}</script><link href="../tutorial-library.css" rel="stylesheet"/></head>
 <body class="bg-white text-gray-900">
 <script>
 function toggleMobileMenu() {
@@ -125,134 +189,69 @@ function toggleMobileMenu() {
 <div class="container mx-auto px-4 py-8"><div class="max-w-4xl mx-auto"><div id="tutorial-content">
 <section class="mb-12">
 <div class="flex items-center gap-2 text-sm text-blue-600 font-medium mb-4"><span>Workflow Management and Containerization</span><span>-</span><span>2026-08-25</span></div>
-<h1 class="text-4xl md:text-5xl font-black text-gray-900 mb-6 leading-tight" id="tutorial-title">Docker &amp; Singularity</h1>
+<h1 class="text-4xl md:text-5xl font-black text-gray-900 mb-6 leading-tight" id="tutorial-title">Docker and Apptainer for Bioinformatics</h1>
 <div class="flex items-center gap-4"><div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 font-bold text-lg">NM</div><div><p class="font-bold text-gray-900">Nasir Mahmood Abbasi, PhD</p><p class="text-sm text-gray-500">Bioinformatics Educator</p></div></div>
 </section>
 <div class="mb-12 rounded-2xl overflow-hidden shadow-lg border border-gray-100">
 <img alt="Docker &amp; Singularity" class="w-full aspect-video object-cover" decoding="async" loading="eager" src="../images/docker-singularity-bioinformatics.webp"/>
 </div>
-<article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none"><div class="flex flex-wrap items-center gap-4 text-xs font-mono text-gray-500 bg-gray-50 p-3 rounded-lg border border-gray-200 mb-6">
-<div class="flex items-center gap-1">
-<svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
-<span><strong>Tested on:</strong> Python 3.11, R 4.3.2, Ubuntu 24.04</span>
-</div>
-<div class="flex items-center gap-1">
-<svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
-</div>
-</div>
-<div class="p-6 bg-blue-50 border border-blue-100 rounded-xl mb-8">
-<h4 class="text-lg font-bold text-blue-900 mb-2">Learning Objectives &amp; Prerequisites</h4>
-<ul class="list-disc list-inside text-blue-800 space-y-1 mb-4">
-<li><strong>Prerequisites:</strong> Complete Conda/Mamba Environments and basic HPC concepts; use only containers authorized by your institution.</li>
-<li><strong>Objective:</strong> Explain container images, bind mounts, reproducible tool execution, and the distinction between Docker and Singularity/Apptainer contexts.</li>
-<li><strong>Expected Output:</strong> A documented container command that reads a test input through an explicit bind mount and writes a result to a project directory.</li>
-</ul>
-</div>
-<h2>Containerization in Bioinformatics</h2>
-<h2>The Dependency Hell</h2>
-<p>In bioinformatics, "Dependency Hell" is the situation where Software A requires Python 3.8 and package X version 1.2, but Software B requires Python 3.10 and package X version 2.0. Even with Conda, complex environments can break over time.</p>
-<p>Worse, if you publish a paper today, a researcher trying to run your script in 5 years might find that the underlying packages are no longer available.</p>
-<p>The ultimate solution is <strong>Containerization</strong></p>
-<hr/>
-<h2>1. What's a Container?</h2>
-<p>A container is a standalone, executable package of software that includes <strong>everything</strong> needed to run an application: the code, runtime, system tools, system libraries, and settings.</p>
-<p>When you run a bioinformatics pipeline inside a container, you're guaranteed that it will execute identically on your laptop, on an HPC cluster, or in the cloud.</p>
-<hr/>
-<h2>2. Docker: The Industry Standard</h2>
-<p><strong>Docker</strong> is the most famous container platform. It requires root (administrator) privileges to run, making it ideal for your local laptop or cloud instances (AWS/GCP).</p>
-<h3>Finding Containers</h3>
-<p>You rarely need to build your own containers from scratch. The <strong>Biocontainers</strong> project automatically builds Docker images for almost every bioinformatics tool in existence.</p>
-<h3>Running a Docker Container</h3>
-<p>Instead of installing <code>bwa</code> Locally, you can pull the official Biocontainer for it:</p>
-<pre><code class="language-bash"># Pull the container image
-docker pull quay.io/biocontainers/bwa:0.7.17--hed695b0_7
-
-# Run BWA completely isolated from your host system
-docker run -v /my/local/data:/data quay.io/biocontainers/bwa:0.7.17--hed695b0_7 bwa mem /data/ref.fa /data/reads.fq
+<article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--walkthrough">
+<p class="lesson-lead">A container can make a bioinformatics tool's software environment easier to reuse, but it does not package your reads, reference genome, scheduler policy, or every host dependency. This walkthrough follows one BWA-MEM job from a local Docker invocation to an Apptainer/Singularity-style HPC job, with attention to the files each command can actually see.</p>
+<h2>What the container does—and does not—freeze</h2>
+<p>An image bundles an application and its userspace dependencies. That is useful when tools require conflicting libraries or when you need to preserve an environment, but it does not guarantee identical results across all hosts: kernel and hardware behavior, environment variables, mounted files, command-line parameters, and external services can still matter. Record the exact image reference (prefer a digest for durable identification), input checksums, tool arguments, and relevant host/runtime details. A tag can be moved, and a container is not a substitute for workflow provenance or biological validation.</p>
+<p>Docker commonly runs through a privileged daemon, which is why shared clusters often restrict Docker. Apptainer (formerly Singularity) is designed for unprivileged HPC use, but installation, configuration, allowed registries, and bind paths remain site-specific. Follow your cluster's documentation rather than assuming Docker is universally unavailable or that Apptainer is installed.</p>
+<h2>Prepare a small, explicit project layout</h2>
+<p>The commands below assume a project directory containing <code>reference.fa</code> and <code>reads.fq</code>, with the reference indexed for BWA. These filenames stand for files you provide; this lesson does not supply biological data. First create the index with the same BWA version you will use for mapping, in the project directory:</p>
+<pre><code class="language-bash">bwa index reference.fa
 </code></pre>
-<p><em>Note: The <code>-v</code> flag mounts your local data folder into the container so the software can see your files.</em></p>
-<hr/>
-<h2>3. Singularity (Apptainer): The HPC Solution</h2>
-<p><strong>The Problem with Docker on HPC:</strong> Docker requires root access. System administrators of High-Performance Computing (HPC) clusters will <em>never</em> give users root access, as it's a massive security risk.</p>
-<p><strong>The Solution:</strong> <strong>Singularity</strong> (now rebranded as <strong>Apptainer</strong>) was built specifically for scientific computing. It allows you to run containers securely <em>without</em> root privileges.</p>
-<h3>Converting Docker to Singularity</h3>
-<p>The beauty of Singularity is that it can cleanly convert and run Docker images!</p>
-<pre><code class="language-bash"># Pull a Docker image and convert it into a Singularity Image Format (.sif) file
-apptainer pull bwa_container.sif docker://quay.io/biocontainers/bwa:0.7.17--hed695b0_7
+<p>BWA writes index sidecar files beside the reference. Keep them with the FASTA and make the directory available inside the container. BWA-MEM accepts a reference and one or two FASTQ read files; this single-read example is illustrative, not an assessment of paired-end data, read quality, or mapping suitability.</p>
+<h2>Run the tool locally with Docker</h2>
+<p>Substitute a verified image reference and run from the project directory. The example mounts that directory read-write at <code>/work</code>, so input and generated files are visible across the boundary:</p>
+<pre><code class="language-bash">IMAGE='quay.io/biocontainers/bwa:0.7.17--hed695b0_7'  # verify this tag in the registry
+mkdir -p results
+docker run --rm \
+  --mount "type=bind,src=$PWD,dst=/work" \
+  --workdir /work \
+  "$IMAGE" bwa mem -t 4 reference.fa reads.fq \
+  &gt; results/reads.sam
 </code></pre>
-<h3>Running Singularity on Slurm</h3>
-<p>Singularity works perfectly alongside HPC schedulers like Slurm.</p>
+<p>The redirection is performed by the host shell, not inside Docker; because the working directory is mounted, the SAM file lands in the host's <code>results/</code> directory. The command assumes the image can start <code>bwa</code> with this invocation and the tag exists and is accessible. Check the registry and image documentation before relying on either assumption. If the source directory is missing, Docker's explicit <code>--mount</code> form errors rather than silently creating it; check the mount path and permissions. Mounting a project read-write allows container processes to alter its contents—use a read-only input mount plus a separate writable output directory when the tool and directory layout permit.</p>
+<h2>Use the same image on a Slurm cluster</h2>
+<p>Where the cluster provides Apptainer, pull the OCI image once (often on a login or transfer node if policy permits). This converts the registry image into a local SIF file; network access, image caching, and where pulls are allowed are cluster-specific.</p>
+<pre><code class="language-bash">apptainer pull bwa.sif docker://quay.io/biocontainers/bwa:0.7.17--hed695b0_7
+</code></pre>
+<p>Save the following as a Slurm job script in the project directory and submit it using your site's procedure. It explicitly binds the current project to <code>/work</code>; the inputs and output path then refer to files the container can access.</p>
 <pre><code class="language-bash">#!/bin/bash
 #SBATCH --job-name=bwa_map
-#SBATCH --cpus-per-task=8
-#SBATCH --mem=16G
+#SBATCH --cpus-per-task=4
+#SBATCH --mem=8G
+#SBATCH --time=01:00:00
 
-# Execute the containerized software
-apptainer exec bwa_container.sif bwa mem -t 8 reference.fa reads.fq &gt; output.sam
+set -euo pipefail
+mkdir -p results
+apptainer exec --bind "$PWD:/work" --pwd /work bwa.sif \
+  bwa mem -t "$SLURM_CPUS_PER_TASK" reference.fa reads.fq \
+  &gt; results/reads.sam
 </code></pre>
-<h2>Summary</h2>
-<p>If you combine <strong>Nextflow</strong> (to handle the logic) with <strong>Singularity</strong> (to handle the software environments), you achieve the holy grail of modern computational biology: 100% reproducible, instantly scalable research.</p>
-<div class="mt-10 p-8 bg-gray-50 border border-gray-200 rounded-xl">
-<section class="prose-expansion bg-white border-t border-gray-100 mt-10 pt-10 pb-4">
-<div class="max-w-3xl mx-auto px-2">
-<h2 class="text-2xl font-bold text-slate-900 mb-4">Why Containers Solve a Real Problem in Bioinformatics</h2>
-<p class="text-slate-700 text-base leading-relaxed mb-4">
- Computational biology has a reproducibility problem that predates the current conversation about AI and large language models. A pipeline that worked on one machine in 2020 often fails to produce identical results on a different machine in 2026, even when the code is unchanged. The cause is almost always the software environment: a different version of STAR, a different Bioconductor release, or a different system library that a Python package links against.
-</p>
-<p class="text-slate-700 text-base leading-relaxed mb-4">Containers address this by packaging the entire runtime environment, including the operating system layer, system libraries, and all software dependencies, into a single portable image. When you run a container, you get the exact same environment whether the host machine is running Ubuntu 20.04, CentOS 7, or macOS Sonoma. This is the difference between sharing a Conda environment file (which specifies what to install but depends on what the package repository looks like at install time) and sharing a container image (which contains the already-installed software).</p>
-<h3 class="text-xl font-semibold text-slate-900 mb-3 mt-8">Docker vs Singularity: Why HPC Clusters Reject Docker</h3>
-<p class="text-slate-700 text-base leading-relaxed mb-4">Docker requires a daemon process that runs as root. On a shared HPC cluster, this is a security violation: a user who can run Docker commands can mount host directories as root, escape the container, and access other users' files or the cluster file system. For this reason, virtually all academic HPC clusters prohibit Docker entirely.</p>
-<p class="text-slate-700 text-base leading-relaxed mb-4">Singularity, developed specifically for HPC, solves this by using a different container format with no persistent daemon. Singularity containers run as the user who launches them, not as root, and they respect the host's file permission system. Singularity can pull and convert Docker images directly from Docker Hub or any container registry, which means you can build your pipeline image using Docker locally or in a CI system, push it to a registry, and then pull and run it on an HPC cluster using Singularity without any changes to the image itself.</p>
-<h3 class="text-xl font-semibold text-slate-900 mb-3 mt-8">Building Bioinformatics Containers That Will Last</h3>
-<p class="text-slate-700 text-base leading-relaxed mb-4">
- The most common mistake when writing a Dockerfile for a bioinformatics pipeline is using <code>apt-get install</code> or <code>conda install</code> without pinning specific versions. A Dockerfile that says <code>conda install -c bioconda star</code> will install whatever version of STAR was most recent when the image was built. Rebuild the image six months later and you may get a different version with different default parameters. Always specify exact version numbers for every tool in your Dockerfile.
-</p>
-<p class="text-slate-700 text-base leading-relaxed mb-4">
- A second consideration is image size. A naive Bioconductor installation can easily exceed 10 gigabytes. This makes images slow to pull and expensive to store. Use multi-stage builds to separate the build environment from the runtime environment, and consider Alpine-based base images for tools that don't require a full Ubuntu installation. For R-heavy pipelines, the <code>rocker</code> family of images provides well-maintained, versioned R environments as a starting point.
-</p>
-<h3 class="text-xl font-semibold text-slate-900 mb-3 mt-8">Integrating Containers with Workflow Managers</h3>
-<p class="text-slate-700 text-base leading-relaxed mb-4">
- Containers reach their full potential when combined with a workflow manager like Nextflow or Snakemake. Both support per-rule or per-process container directives, which means each step of your pipeline can use a different container image. A STAR alignment step uses a container with STAR and samtools. A DESeq2 step uses a container with R and Bioconductor. If a tool requires an incompatible Python version from another tool in your pipeline, there's no conflict because each tool runs in its own isolated environment.
-</p>
-<p class="text-slate-700 text-base leading-relaxed mb-4">
- Nextflow's <code>-with-singularity</code> and <code>-with-docker</code> Flags make switching clean: run with Docker locally for development, then run the identical pipeline on HPC with Singularity by changing one flag. No modifications to the pipeline logic are needed. This is the closest practical approximation to a truly portable, reproducible bioinformatics workflow.</p>
-<div class="bg-green-50 border border-green-200 rounded-xl p-5 mt-6 mb-2">
-<p class="text-green-900 font-semibold mb-2">Container Best Practices Summary</p>
-<ul class="list-disc list-inside text-green-800 space-y-1 text-sm">
-<li>Pin every tool version in your Dockerfile using exact version numbers.</li>
-<li>Push images to a versioned registry tag, never just latest.</li>
-<li>Use Singularity on HPC clusters; build with Docker locally.</li>
-<li>Store your Dockerfile in the same repository as your pipeline code.</li>
-<li>Test that the container produces expected outputs on a reference dataset before deploying to production.</li>
+<p>Resource values are examples, not recommendations; adjust them to the input size, cluster policy, and measured workload. The output redirection occurs in the job shell on the host filesystem. If a cluster uses the <code>singularity</code> executable rather than <code>apptainer</code>, or restricts pulls/binds, adapt the command according to local documentation. A failed pull can reflect network or registry policy; a file-not-found error inside the job commonly points to a missing bind, wrong working directory, or absent input. Also verify write permissions on <code>results/</code> and inspect the scheduler's standard output/error files.</p>
+<h2>Check the result and preserve provenance</h2>
+<ul>
+<li>Confirm the job exited successfully and that <code>results/reads.sam</code> exists and is non-empty; file existence alone does not validate alignment quality.</li>
+<li>Record the image digest if available, the BWA version reported by the image, reference and read checksums, index-generation command, full mapping command, and scheduler/runtime versions.</li>
+<li>Review the SAM header and representative records, then use a suitable downstream QC workflow to evaluate mapping rate, flags, and sample-specific expectations. No universal mapping-rate threshold or biological conclusion follows from container success.</li>
+<li>For a reproducible pipeline, version the job/workflow definition and retain immutable image identifiers. Rebuilding a Dockerfile later can change if base images or package repositories are not pinned; pinning tool packages alone does not freeze every dependency.</li>
 </ul>
-</div>
-</div>
-</section>
-<h3 class="text-xl font-bold text-gray-900 mb-4">Knowledge Check &amp; Assessment</h3>
-<div class="space-y-4">
-<div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-<h4 class="font-bold text-gray-800 mb-2">1. Concept Verification</h4>
-<p class="text-gray-600 text-sm">Why do containers improve reproducibility without eliminating the need to record image versions, inputs, and parameters?</p>
-</div>
-<div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-<h4 class="font-bold text-gray-800 mb-2">2. Practical Execution</h4>
-<p class="text-gray-600 text-sm">Run an approved containerized command on a small test input and record the image reference, bind mount, command, and output path. </p>
-</div>
-<div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-<h4 class="font-bold text-gray-800 mb-2">3. Troubleshooting</h4>
-<p class="text-gray-600 text-sm">If files are invisible inside a container, how will you inspect bind mounts, working directory, permissions, and image entrypoint behavior?</p>
-</div>
-</div>
-</div>
-<section aria-label="References and further reading" class="mt-10 p-6 bg-slate-50 border border-slate-200 rounded-xl">
-<h2 class="text-xl font-bold text-gray-900 mb-3">References and further reading</h2>
-<p class="text-sm text-gray-600 mb-3">Use these official resources to check current software behaviour, terminology, and production guidance. Tool versions and defaults change, so verify commands against the documentation before applying them to a research dataset.</p>
-<ul class="list-disc list-inside space-y-2 text-sm text-gray-700">
-<li><a class="text-blue-700 hover:underline" href="https://docs.docker.com/" rel="noopener" target="_blank">Docker documentation</a></li>
-<li><a class="text-blue-700 hover:underline" href="https://apptainer.org/docs/" rel="noopener" target="_blank">Apptainer documentation</a></li>
+<h2>Choosing between Docker and Apptainer</h2>
+<p>Use Docker where you control the host and its daemon is permitted; use Apptainer on an HPC system that supports it and documents the necessary execution policy. Both can run OCI-origin images, but runtime configuration, bind defaults, environment handling, and supported options are not identical. A successful run in one environment is not proof that another will behave identically. Workflow managers such as Nextflow can coordinate containers, but their runtime flags and configuration vary by version; consult the workflow manager's current documentation rather than assuming a particular flag is interchangeable.</p>
+<section aria-label="References and further reading" class="lesson-reference">
+<h2>Official references</h2>
+<ul>
+<li><a href="https://docs.docker.com/engine/storage/bind-mounts/" rel="noopener" target="_blank">Docker: Bind mounts</a> — source/destination paths, missing sources, and read-only mounts.</li>
+<li><a href="https://apptainer.org/docs/user/main/quick_start.html" rel="noopener" target="_blank">Apptainer user guide: Quick start</a> — pull OCI images, execute commands, and access host files.</li>
+<li><a href="https://apptainer.org/docs/user/main/cli/apptainer_exec.html" rel="noopener" target="_blank">Apptainer: exec</a> — execution syntax and bind option.</li>
 </ul>
 </section>
-</article>
+<aside aria-labelledby="tutorial-feedback-title" class="lesson-feedback" id="tutorial-feedback"><h2 id="tutorial-feedback-title">Help improve this tutorial</h2><p>Found an error, a broken link, or a step that needs a clearer explanation? Please <a href="../contact.html">contact me</a>. Your feedback helps me keep this resource accurate and useful.</p></aside></article>
 <section class="mt-12 mb-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-100">
 <div class="flex items-start gap-4">
 <div class="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
@@ -414,8 +413,6 @@ apptainer exec bwa_container.sif bwa mem -t 8 reference.fa reads.fq &gt; output.
 <script src="../code-tabs.js"></script>
 <script src="../copy-code.js"></script>
 <script src="../subscribe-fab.js"></script>
-
-
 <!-- Cookie Consent Banner -->
 <div class="fixed bottom-0 inset-x-0 z-[9999] transition-transform duration-500" id="cookie-consent-banner" style="font-family:'Inter',system-ui,sans-serif;">
 <div class="mx-auto max-w-4xl px-4 pb-4 sm:px-6">

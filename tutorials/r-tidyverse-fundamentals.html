@@ -4,20 +4,20 @@
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<meta content="Learn R vectors, data frames, factors, plots, and tidy data operations for biological analysis." name="description"/>
+<meta content="Practice reshaping a small gene-count table, checking sample identifiers, and producing a clearly labeled library-size QC table and plot." name="description"/>
 <meta content="bioinformatics, single-cell RNA-seq, shell commands, conda, computational biology, tutorials, data analysis" name="keywords"/>
 <meta content="Nasir Mahmood Abbasi, PhD" name="author"/>
 <meta content="index, follow" name="robots"/>
 <!-- Open Graph tags for social sharing -->
-<meta content="R and Tidyverse Fundamentals | The Omics Hub" property="og:title"/>
-<meta content="Learn R vectors, data frames, factors, plots, and tidy data operations for biological analysis." property="og:description"/>
+<meta content="R and Tidyverse Fundamentals" property="og:title"/>
+<meta content="Practice reshaping a small gene-count table, checking sample identifiers, and producing a clearly labeled library-size QC table and plot." property="og:description"/>
 <meta content="https://theomicshub.com/tutorials/r-tidyverse-fundamentals.html" property="og:url"/>
 <meta content="website" property="og:type"/>
 <meta content="https://theomicshub.com/images/r-tidyverse-bioinformatics-workstation.webp" property="og:image"/>
 <!-- Twitter Card tags -->
 <meta content="summary_large_image" name="twitter:card"/>
-<meta content="R and Tidyverse Fundamentals | The Omics Hub" name="twitter:title"/>
-<meta content="Learn R vectors, data frames, factors, plots, and tidy data operations for biological analysis." name="twitter:description"/>
+<meta content="R and Tidyverse Fundamentals" name="twitter:title"/>
+<meta content="Practice reshaping a small gene-count table, checking sample identifiers, and producing a clearly labeled library-size QC table and plot." name="twitter:description"/>
 <meta content="https://theomicshub.com/images/r-tidyverse-bioinformatics-workstation.webp" name="twitter:image"/>
 <title>R and Tidyverse Fundamentals | The Omics Hub</title><!-- Favicon -->
 <link href="../images/favicon.svg" rel="icon" type="image/svg+xml"/>
@@ -45,8 +45,72 @@ gtag('consent', 'default', {
 <script async="" crossorigin="anonymous" src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2910340533244599"></script>
 <meta content="ca-pub-2910340533244599" name="google-adsense-account"/><meta content="XioIUjAyO5PEAT-N6nLrowdiDe4ATl-vKdRGmmrDHZM" name="google-site-verification"/>
 <link href="https://theomicshub.com/tutorials/r-tidyverse-fundamentals.html" rel="canonical"/>
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "TechArticle", "headline": "R and Tidyverse Fundamentals", "description": "Learn R vectors, data frames, factors, plots, and tidy data operations for biological analysis.", "mainEntityOfPage": {"@type": "WebPage", "@id": "https://theomicshub.com/tutorials/r-tidyverse-fundamentals.html"}, "image": "https://theomicshub.com/images/r-tidyverse-bioinformatics-workstation.webp", "author": {"@type": "Person", "name": "Dr. Nasir Mahmood Abbasi, PhD", "jobTitle": "Computational Biologist & Bioinformatics Researcher", "url": "https://theomicshub.com/about.html", "sameAs": ["https://github.com/nmabbasi"]}, "publisher": {"@type": "Organization", "name": "The Omics Hub", "url": "https://theomicshub.com", "logo": {"@type": "ImageObject", "url": "https://theomicshub.com/images/favicon.svg"}}, "datePublished": "2026-09-05", "dateModified": "2026-10-10", "url": "https://theomicshub.com/tutorials/r-tidyverse-fundamentals.html", "name": "R and Tidyverse Fundamentals | The Omics Hub", "isPartOf": {"@type": "WebSite", "name": "The Omics Hub", "url": "https://theomicshub.com/"}}</script>
-<script id="eeat-schema" type="application/ld+json">{"@context": "https://schema.org", "@type": "TechArticle", "name": "R and Tidyverse Fundamentals | The Omics Hub", "description": "Learn R vectors, data frames, factors, plots, and tidy data operations for biological analysis.", "url": "https://theomicshub.com/tutorials/r-tidyverse-fundamentals.html", "isPartOf": {"@type": "WebSite", "name": "The Omics Hub", "url": "https://theomicshub.com/"}, "author": {"@type": "Person", "name": "Dr. Nasir Mahmood Abbasi, PhD", "jobTitle": "Computational Biologist & Bioinformatics Researcher", "url": "https://theomicshub.com/about.html", "sameAs": ["https://github.com/nmabbasi"]}, "publisher": {"@type": "Organization", "name": "The Omics Hub", "url": "https://theomicshub.com/"}, "inLanguage": "en"}</script></head>
+<script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "R and Tidyverse Fundamentals",
+  "description": "Practice reshaping a small gene-count table, checking sample identifiers, and producing a clearly labeled library-size QC table and plot.",
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://theomicshub.com/tutorials/r-tidyverse-fundamentals.html"
+  },
+  "image": "https://theomicshub.com/images/r-tidyverse-bioinformatics-workstation.webp",
+  "author": {
+    "@type": "Person",
+    "name": "Dr. Nasir Mahmood Abbasi, PhD",
+    "jobTitle": "Computational Biologist & Bioinformatics Researcher",
+    "url": "https://theomicshub.com/about.html",
+    "sameAs": [
+      "https://github.com/nmabbasi"
+    ]
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "The Omics Hub",
+    "url": "https://theomicshub.com",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://theomicshub.com/images/favicon.svg"
+    }
+  },
+  "datePublished": "2026-09-05",
+  "dateModified": "2026-10-21",
+  "url": "https://theomicshub.com/tutorials/r-tidyverse-fundamentals.html",
+  "name": "R and Tidyverse Fundamentals",
+  "isPartOf": {
+    "@type": "WebSite",
+    "name": "The Omics Hub",
+    "url": "https://theomicshub.com/"
+  }
+}</script>
+<script id="eeat-schema" type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "name": "R and Tidyverse Fundamentals",
+  "description": "Practice reshaping a small gene-count table, checking sample identifiers, and producing a clearly labeled library-size QC table and plot.",
+  "url": "https://theomicshub.com/tutorials/r-tidyverse-fundamentals.html",
+  "isPartOf": {
+    "@type": "WebSite",
+    "name": "The Omics Hub",
+    "url": "https://theomicshub.com/"
+  },
+  "author": {
+    "@type": "Person",
+    "name": "Dr. Nasir Mahmood Abbasi, PhD",
+    "jobTitle": "Computational Biologist & Bioinformatics Researcher",
+    "url": "https://theomicshub.com/about.html",
+    "sameAs": [
+      "https://github.com/nmabbasi"
+    ]
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "The Omics Hub",
+    "url": "https://theomicshub.com/"
+  },
+  "inLanguage": "en",
+  "headline": "R and Tidyverse Fundamentals"
+}</script><link href="../tutorial-library.css" rel="stylesheet"/></head>
 <body class="bg-white text-gray-900">
 <script>
 function toggleMobileMenu() {
@@ -124,203 +188,103 @@ function toggleMobileMenu() {
 <div class="page-content" id="tutorial-page">
 <div class="container mx-auto px-4 py-8"><div class="max-w-4xl mx-auto"><div id="tutorial-content">
 <section class="mb-12">
-<div class="flex items-center gap-2 text-sm text-blue-600 font-medium mb-4"><span>Foundations &amp; Prerequisites</span><span>-</span><span>2026-09-05</span></div>
+<div class="flex items-center gap-2 text-sm text-blue-600 font-medium mb-4"><span>Foundations &amp; Prerequisites</span><span>-</span><span>2026-09-05</span><span>· Updated 2026-10-21</span></div>
 <h1 class="text-4xl md:text-5xl font-black text-gray-900 mb-6 leading-tight" id="tutorial-title">R and Tidyverse Fundamentals</h1>
 <div class="flex items-center gap-4"><div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 font-bold text-lg">NM</div><div><p class="font-bold text-gray-900">Nasir Mahmood Abbasi, PhD</p><p class="text-sm text-gray-500">Bioinformatics Educator</p></div></div>
 </section>
 <div class="mb-12 rounded-2xl overflow-hidden shadow-lg border border-gray-100">
 <img alt="R and Tidyverse Fundamentals" class="w-full aspect-video object-cover" decoding="async" loading="eager" src="../images/r-tidyverse-bioinformatics-workstation.webp"/>
 </div>
-<article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none"><div class="flex flex-wrap items-center gap-4 text-xs font-mono text-gray-500 bg-gray-50 p-3 rounded-lg border border-gray-200 mb-6">
-<div class="flex items-center gap-1">
-<svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
-<span><strong>Tested on:</strong> Python 3.11, R 4.3.2, Ubuntu 24.04</span>
-</div>
-<div class="flex items-center gap-1">
-<svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
-</div>
-</div><h2>Learning objectives and prerequisites</h2>
-<p>By the end of this lesson you will be able to:</p>
-<ul>
-<li>Create and inspect basic R objects: atomic vectors, factors, and data frames.</li>
-<li.use and="" data="" filter,="" group,="" li="" reproducibly.<="" summarise="" tabular="" tidyverse="" to="" transform,="" verbs="">
-<li.convert (tidy)="" analyses.<="" and="" between="" downstream="" for="" formats="" li="" long="" plotting="" wide="">
-<li.draw (qc)="" a="" and="" annotate="" axis="" disk.<="" figure="" ggplot2,="" labels="" li="" plot="" quality-control="" save="" simple="" the="" to="" units,="" with="">
-<li.distinguish and="" before="" from="" genuine="" identifiers="" joins.<="" li="" missing="" validate="" values="" zeros="">
-</li.distinguish></li.draw></li.convert></li.use></ul>
-<p>Prerequisites:</p>
-<ul>
-<li>R (tested with R &gt;= 4.0; this tutorial uses tidyverse packages compatible with R 4.1+). Install R and optionally RStudio.</li>
-<li>Install the tidyverse and here packages: in R run <code>install.packages(c("tidyverse", "here"))</code>.</li>
-<li>A terminal or R session with working directory set to a project folder containing the example files below (see "Reproducible workflow").</li>
-</ul>
-<h2>Why these skills matter in biological data analysis</h2>
-<p>Bioinformatics workflows typically combine many tabular files: sample metadata, gene or protein counts, annotation tables, and results. Small mistakes in the shape or type of those tables (for example, treating a categorical variable as character instead of factor, or silently converting gene symbols to dates) propagate quickly and cause misleading summaries or plots. The tidyverse collection of packages gives a coherent grammar for manipulating data frames so that transformations are explicit, readable, and reproducible. Learning these fundamentals reduces time spent debugging downstream statistical steps such as differential expression or clustering.</p>
-<h2>Reproducible, sequential workflow</h2>
-<p>The following step-by-step workflow demonstrates reading a simple counts table and sample metadata, transforming data into tidy form, computing a summary QC metric (reads per million), plotting the QC, and saving outputs in a reproducible manner. Assume you have an R project with the following files (create these small example files if you are following along):</p>
-<ul>
-<li><code>data/raw/gene_counts.tsv</code> — a tab-separated table with a <code>gene</code> column and sample columns named <code>S01</code>, <code>S02</code>, ... (counts as integers).</li>
-<li><code>data/metadata/samples.tsv</code> — sample metadata with columns <code>sample_id</code>, <code>condition</code>, and any other experimental metadata.</li>
-<li>A blank directory <code>results/</code> for outputs.</li>
-</ul>
-<p>Example minimal files (you can create them using a text editor):</p>
+<article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--lab">
+<p class="lesson-lead">This short R workflow turns a wide gene-count table into one row per gene and sample, checks that the sample IDs agree with metadata, and summarizes total counts for a basic library-size check. The example is synthetic; its counts demonstrate data handling, not biological evidence.</p>
+<h2>What you need and what you will make</h2>
+<p>Use an R session with <code>tidyverse</code> and <code>here</code> installed. The script assumes the project root contains the two tab-separated files below. Each count-table row is a gene, the first column is named <code>gene</code>, and every remaining column is one sample with non-negative integer counts. Metadata has exactly one row per sample and includes <code>sample_id</code> and <code>condition</code>.</p>
 <pre><code># data/raw/gene_counts.tsv
-# gene	S01	S02	S03
+ gene	S01	S02	S03
 TP53	150	175	160
 BRCA1	320	280	305
 MYC	890	920	900
 
 # data/metadata/samples.tsv
-# sample_id	condition
+sample_id	condition
 S01	control
 S02	treated
-S03	treated
-</code></pre>
-<p>Run the following R script (save as <code>scripts/01-tidy-qc.R</code>). Each code block includes a brief note on the file produced and what the learner should inspect.</p>
-<pre><code># scripts/01-tidy-qc.R
-# Purpose: read counts and metadata, compute reads-per-million (RPM) per sample,
-# create a QC plot and save processed tables and plot.
-#
-# Required packages: tidyverse, here
-library(tidyverse)
+S03	treated</code></pre>
+<p>Save this as <code>scripts/01-tidy-qc.R</code>. It writes <code>results/sample_qc.tsv</code> and <code>results/reads_qc.png</code>. Run it from an R project; <code>here()</code> resolves paths relative to the project root.</p>
+<h2>Run the workflow</h2>
+<pre><code>library(tidyverse)
 library(here)
 
-# File paths (relative to project root)
 counts_file &lt;- here("data", "raw", "gene_counts.tsv")
 meta_file   &lt;- here("data", "metadata", "samples.tsv")
 out_table   &lt;- here("results", "sample_qc.tsv")
 out_plot    &lt;- here("results", "reads_qc.png")
 
-# 1) Read files with explicit parsing
-# show_col_types = TRUE prints the parser's decision; helpful for checks.
-counts &lt;- read_tsv(counts_file, show_col_types = TRUE)
+counts  &lt;- read_tsv(counts_file, show_col_types = TRUE)
 samples &lt;- read_tsv(meta_file, show_col_types = TRUE)
 
-# 2) Basic validation: required columns and uniqueness
-stopifnot("gene" %in% colnames(counts))
-stopifnot("sample_id" %in% colnames(samples))
-stopifnot(!anyDuplicated(samples$sample_id))
+# Check table shape and keys before reshaping or joining.
+stopifnot("gene" %in% names(counts), all(c("sample_id", "condition") %in% names(samples)))
+stopifnot(!anyNA(counts$gene), !anyDuplicated(counts$gene))
+stopifnot(!anyNA(samples$sample_id), !anyDuplicated(samples$sample_id))
+count_samples &lt;- setdiff(names(counts), "gene")
+stopifnot(length(count_samples) &gt; 0L, !anyDuplicated(count_samples))
+stopifnot(setequal(count_samples, samples$sample_id))
 
-# 3) Convert wide counts to long/tidy format
-# We assume count columns are all except the first 'gene' column.
+# Do not silently treat missing, negative, or non-numeric counts as valid counts.
+stopifnot(all(vapply(counts[count_samples], is.numeric, logical(1))))
+stopifnot(all(vapply(counts[count_samples], function(x) all(is.finite(x) &amp; x &gt;= 0), logical(1))))
+
+samples &lt;- samples %&gt;%
+  mutate(condition = factor(condition, levels = c("control", "treated")))
 long_counts &lt;- counts %&gt;%
   pivot_longer(
-    cols = -gene,
+    cols = all_of(count_samples),
     names_to = "sample_id",
     values_to = "raw_count"
   )
 
-# 4) Join counts with sample metadata. Validate join keys.
-# This join will be 1:many (each gene appears in each sample).
+# Each gene-sample row should match one metadata row; unexpected row multiplication
+# would indicate duplicate sample IDs in the metadata (checked above).
 joined &lt;- long_counts %&gt;%
-  left_join(samples, by = "sample_id")
+  left_join(samples, by = "sample_id", relationship = "many-to-one")
+stopifnot(!anyNA(joined$condition))
+stopifnot(nrow(joined) == nrow(counts) * length(count_samples))
 
-# 5) Compute per-sample totals and reads-per-million (RPM)
 sample_qc &lt;- joined %&gt;%
   group_by(sample_id, condition) %&gt;%
   summarise(
-    total_counts = sum(raw_count, na.rm = TRUE),
-    median_count  = median(raw_count, na.rm = TRUE),
+    total_counts = sum(raw_count),
+    median_gene_count = median(raw_count),
     .groups = "drop"
   ) %&gt;%
-  mutate(rpm = total_counts / 1e6)
+  mutate(total_counts_millions = total_counts / 1e6)
 
-# 6) Write QC table and plot
+dir.create(here("results"), recursive = TRUE, showWarnings = FALSE)
 write_tsv(sample_qc, out_table)
-# Create a simple QC scatter with jitter to show distribution of total_counts by condition.
-library(ggplot2)
-p &lt;- ggplot(sample_qc, aes(x = condition, y = total_counts / 1e6, color = condition)) +
+p &lt;- ggplot(sample_qc, aes(x = condition, y = total_counts_millions, colour = condition)) +
   geom_point(size = 3) +
-  labs(x = "Condition", y = "Total counts (millions)", title = "Per-sample total counts") +
+  labs(x = "Condition", y = "Sum of supplied counts (millions)",
+       title = "Per-sample count totals") +
   theme_minimal() +
   theme(legend.position = "none")
-
-ggsave(out_plot, p, width = 6, height = 4, dpi = 150)
-</code></pre>
-<p>What each command produces and where to look:</p>
-<ul>
-<li>read_tsv(...) creates two data frames in R: <code>counts</code> and <code>samples</code>. Confirm dimensions with <code>dim(counts)</code> and <code>dim(samples)</code>.</li>
-<li><code>long_counts</code> is the tidy version of the counts table; inspect the first rows with <code>head(long_counts)</code>. Each row is a gene x sample observation.</li>
-<li><code>joined</code> contains metadata columns appended to each gene-sample observation. Verify that the number of rows equals <code>n_genes * n_samples</code> (unless counts had NA rows).</li>
-<li><code>sample_qc</code> is a per-sample summary table written to <code>results/sample_qc.tsv</code>. Open this file to see <code>sample_id</code>, <code>condition</code>, <code>total_counts</code>, <code>median_count</code>, and <code>rpm</code>.</li>
-<li><code>results/reads_qc.png</code> is the plotted figure. Confirm axes show "Total counts (millions)" and condition labels.</li>
-</ul>
-<h2>Output inspection and interpretation</h2>
-<p>After running the script, open the QC table (<code>results/sample_qc.tsv</code>) and the saved plot. Things to look for and what they mean:</p>
-<ul>
-<li>total_counts (or RPM): large differences in per-sample totals may indicate library-size differences (e.g., sequencing depth). If one sample has orders-of-magnitude fewer reads, it may be a technical failure or failed library prep.</li>
-<li>median_count: for count-based data, the median raw count gives a sense of background expression across genes and is less influenced by a few highly expressed genes.</li>
-<li>Condition grouping in the plot: check that samples are grouped by the expected factor levels (see section on factors below). If groups are reversed alphabetically, set factor levels explicitly before plotting.</li>
-</ul>
-<p>Important: these summaries indicate technical properties (depth, distribution). They do not prove biological differences. For example, higher total counts in condition A vs B does not imply differential expression without proper normalization and statistical testing. Use RPM or other scaling only for QC and exploratory visualization; differential expression requires downstream normalization (e.g., TMM, DESeq2 normalization) and modeling that account for variability and experimental design.</p>
-<h2>Troubleshooting: symptoms, likely causes, and fixes</h2>
-<ul>
-<li>
-<strong>Symptom:</strong> read_tsv reports unexpected column types or drops columns.
-    <br/><strong>Likely cause:</strong> input file has inconsistent separators, embedded quotes, or header with duplicated names.
-    <br/><strong>Fix:</strong> Inspect the raw file (e.g., <code>less data/raw/gene_counts.tsv</code>), ensure it is tab-separated. Use <code>read_tsv(file, col_names = TRUE, show_col_types = TRUE)</code>. If column names are duplicated, rename them or fix the source.
-  </li>
-<li>
-<strong>Symptom:</strong> join produces NA in metadata columns after left_join.
-    <br/><strong>Likely cause:</strong> mismatched identifiers (leading/trailing whitespace, case differences, or different naming scheme).
-    <br/><strong>Fix:</strong> Compare unique ids: <code>setdiff(unique(long_counts$sample_id), unique(samples$sample_id))</code>. Use <code>trimws()</code> and <code>toupper()/tolower()</code> to standardize if appropriate. Never force-match different naming schemes without documenting the transformation.
-  </li>
-<li>
-<strong>Symptom:</strong> many genes appear to have been converted to dates after importing Excel-exported data.
-    <br/><strong>Likely cause:</strong> Excel auto-formats some gene symbols (e.g., SEPT2 → 2-Sep) when saved as XLSX and exported to CSV.
-    <br/><strong>Fix:</strong> Avoid Excel for primary tables; use CSV/TSV from authoritative sources. If you must use Excel, set column types explicitly in the import (e.g., readxl::read_excel(..., col_types = "text")) and verify gene IDs after import.
-  </li>
-<li>
-<strong>Symptom:</strong> ggplot facet or ordering is alphabetical and not the desired experimental order.
-    <br/><strong>Likely cause:</strong> categorical variable is character, or factor levels are not set.
-    <br/><strong>Fix:</strong> Convert to factor with explicit levels: <code>samples$condition &lt;- factor(samples$condition, levels = c("control", "treated"))</code>. Use factor levels deliberately to control plotting order and model reference levels.
-  </li>
-<li>
-<strong>Symptom:</strong> results directory missing or write fails.
-    <br/><strong>Likely cause:</strong> output path does not exist or you lack write permissions.
-    <br/><strong>Fix:</strong> Create directories programmatically before writing: <code>dir.create("results", showWarnings = FALSE, recursive = TRUE)</code>. Confirm your working directory with <code>here()</code> or <code>getwd()</code>.
-  </li>
-</ul>
-<h2>Key concepts, caveats and responsible use</h2>
-<p>Data types and factors: R distinguishes between character strings and factors (categorical variables). Factors carry an internal ordering (levels), which determines the reference level in models and the display order in plots. Always set factor levels explicitly when order matters.</p>
-<p>Missing values vs zeros: Missing values (<code>NA</code>) mean the measurement is absent or could not be obtained; zero is a valid measurement. Use <code>is.na()</code> to test for missingness. Treat these differently in statistical analysis—imputing or filtering should be documented and justified.</p>
-<p>File formats: prefer plain-text formats (TSV/CSV) for data exchange. Excel can silently change strings into dates or numbers; if you must read Excel files, use readxl and specify column types explicitly: <code>readxl::read_excel(path, col_types = "text")</code>.</p>
-<p>Reproducibility: record package versions and session information if you will share scripts or results. Use <code>sessionInfo()</code> or <code>sessioninfo::session_info()</code> to capture versions of R and packages. Small differences in parsing or default behaviors between versions can affect results.</p>
-<p>Responsible interpretation: QC metrics and plots are diagnostic. They help decide whether to proceed with analysis or to re-run library prep/sequencing. They do not replace rigorous statistical analysis when making biological claims. Always combine QC with appropriate downstream normalization and testing, and report methods and thresholds used.</p>
-<h2>Limitations and version/data caveats</h2>
-<ul>
-<li>Code in this lesson uses tidyverse semantics current at the time of writing. Function arguments and default behaviors may change across versions. If an argument is deprecated, consult the package NEWS or documentation.</li>
-<li>Example files are intentionally small for learning; real biological datasets are orders of magnitude larger and may need memory-aware strategies (data.table or disk-backed approaches such as arrow or HDF5-backed tools).</li>
-<li>Counts-based analyses typically require specialized normalization and modeling (e.g., DESeq2, edgeR) that account for variance and dispersion. The simple RPM used here is only for QC and visualization.</li>
-<li>Reference data (gene IDs, annotations) change over time. Annotate the version/source of any gene annotation used in downstream steps.</li>
-</ul>
-<h2>Next-step checklist</h2>
-<ul>
-<li>Run the example script and inspect <code>results/sample_qc.tsv</code> and <code>results/reads_qc.png</code>.</li>
-<li>Confirm factor order: convert grouping variables to factors with explicit levels if plotting order matters.</li>
-<li>Validate identifiers: compare sample IDs between metadata and counts and fix mismatches programmatically.</li>
-<li>Record package and R versions with <code>sessionInfo()</code> and save that alongside results.</li>
-<li>Proceed to normalization-and-testing lessons (e.g., DESeq2 or edgeR) before making claims about differential expression.</li>
-</ul>
+ggsave(out_plot, plot = p, width = 6, height = 4, dpi = 150)</code></pre>
+<h2>Check the tables and plot</h2>
+<p><code>pivot_longer()</code> makes one row for each gene-sample pair. For this three-gene, three-sample fixture, <code>long_counts</code> and <code>joined</code> each contain nine rows. The sample totals are 1,360, 1,375, and 1,365, respectively; the displayed values in millions are those totals divided by one million. The median gene counts are 320, 280, and 305. These values are arithmetic checks on the fixture, not expected results for a biological experiment.</p>
+<div class="lesson-checkpoint"><h3>Before interpreting the figure</h3><ul><li>Confirm all three sample IDs appear exactly once in the output.</li><li>Check that the plotted y-axis says supplied count totals in millions. This is not RPM; the script does not divide individual gene counts by a library-size denominator.</li><li>Look for unexpectedly small or large totals relative to the study's own design and sequencing records. No universal cutoff is implied here.</li></ul></div>
+<h2>What this QC can and cannot tell you</h2>
+<p>A per-sample sum can flag a possible library-size or data-import discrepancy. It does not establish why a sample differs, and total counts alone do not establish differential expression or other biological effects. Raw counts can be compared as a basic descriptive QC measure, but differential-expression workflows need appropriate normalization and statistical models that reflect the experiment and its variability. Do not use these totals as normalized expression values.</p>
+<p>The original workflow called <code>total_counts / 1e6</code> “RPM.” That calculation only expresses a total in millions; reads per million ordinarily describes a feature-level count divided by a sample-level library-size denominator and multiplied by one million. To avoid implying that this script computes normalized feature abundance, the code and plot now label the value as count totals in millions.</p>
+<h2>Diagnose common failures</h2>
+<ul><li><strong>Missing or extra sample columns:</strong> the <code>setequal()</code> check stops unless the count-column names and metadata IDs match exactly. Inspect <code>setdiff(count_samples, samples$sample_id)</code> and the reverse comparison. Standardize whitespace or case only when the identifier source confirms that transformation is appropriate.</li><li><strong>Duplicate metadata IDs:</strong> the uniqueness assertion stops before the join. A duplicated key can multiply gene-sample rows; correct or explain the metadata records rather than accepting inflated totals.</li><li><strong>Missing metadata after join:</strong> <code>stopifnot(!anyNA(joined$condition))</code> catches unmatched or missing condition values. Check keys and missing condition values separately; <code>left_join()</code> preserves count rows while unmatched metadata fields become missing.</li><li><strong>Counts fail validation:</strong> investigate blank values, text, non-finite values, or negative entries in the source file. A missing count is not interchangeable with zero, so do not replace missing values without a documented data-specific reason.</li><li><strong>Output write fails:</strong> this script creates <code>results/</code>, but permissions or an incorrect project root can still prevent writing. Inspect <code>here()</code> and the exact output path.</li></ul>
+<h2>R objects and data choices behind the script</h2>
+<p>Atomic vectors hold values of one basic type. A data frame stores columns of equal length, and a factor stores categorical values together with an explicit set and order of levels. Here the condition factor places <code>control</code> before <code>treated</code> in the plot; choose levels that reflect the study's intended display or model contrast rather than relying on alphabetical order.</p>
+<p>Missing values (<code>NA</code>) represent unavailable or unrecorded observations; zero is a measured count of zero. Preserve the distinction while importing and decide how to handle missingness based on the data and analysis. Text formats such as TSV avoid some spreadsheet auto-formatting, but they still require inspection of imported column types and identifiers.</p>
+<p>For reproducible work, record R and package versions with <code>sessionInfo()</code>. Larger datasets may need memory-aware tools or specialized Bioconductor workflows. Consult the package documentation and the relevant analysis method before extending this small teaching example.</p>
 <h2>References</h2>
-<ul>
-<li><a href="https://www.tidyverse.org/">The tidyverse — an opinionated collection of R packages for data science</a></li>
-<li><a href="https://ggplot2.tidyverse.org/">ggplot2 documentation — The grammar of graphics in R</a></li>
-<li><a href="https://cran.r-project.org/doc/manuals/r-release/R-data.html">R Data Import/Export manual — CRAN</a></li>
-<li><a href="https://bioconductor.org/packages/release/bioc/html/DESeq2.html">DESeq2 — differential expression analysis (Bioconductor)</a></li>
-</ul>
-</article>
-<section class="mt-12 mb-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-100">
-<div class="flex items-start gap-4">
-<div class="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-<svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
-</div>
-<div>
-<p class="text-sm text-gray-600 mb-2">This tutorial records the software versions used in its examples. Software and package behaviour can change. Please re-check commands against the official documentation. If a command does not work, you find an error, or the tutorial is no longer reproducible, please report it through the <a class="text-blue-600 hover:underline" href="../contact.html">Contact page</a></p>
-<p class="text-sm text-gray-500">Author: <a class="text-blue-600 hover:underline font-medium" href="../about.html">Nasir Mahmood Abbasi, PhD</a> - Category: Foundations &amp; Prerequisites</p>
-</div>
-</div>
-</section>
+<ul><li><a href="https://readr.tidyverse.org/reference/read_delim.html">readr: read delimited files</a></li><li><a href="https://tidyr.tidyverse.org/reference/pivot_longer.html">tidyr: pivot longer</a></li><li><a href="https://dplyr.tidyverse.org/reference/mutate-joins.html">dplyr: mutating joins</a></li><li><a href="https://ggplot2.tidyverse.org/reference/ggsave.html">ggplot2: save a plot</a></li><li><a href="https://bioconductor.org/packages/release/bioc/html/DESeq2.html">DESeq2 package documentation</a></li></ul>
+<aside aria-labelledby="tutorial-feedback-title" class="lesson-feedback" id="tutorial-feedback"><h2 id="tutorial-feedback-title">Help improve this tutorial</h2><p>Found an error, a broken link, or a step that needs a clearer explanation? Please <a href="../contact.html">contact me</a>. Your feedback helps me keep this resource accurate and useful.</p></aside></article>
+<p class="text-sm text-gray-500 mt-6">Author: <a class="text-blue-600 hover:underline font-medium" href="../about.html">Nasir Mahmood Abbasi, PhD</a> · Category: Foundations &amp; Prerequisites</p>
 <section aria-label="Course sequence" class="mt-16 pt-10 border-t border-gray-100">
 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
 <h2 class="text-2xl font-black text-gray-900 tracking-tight">Continue Learning</h2>
@@ -471,8 +435,6 @@ ggsave(out_plot, p, width = 6, height = 4, dpi = 150)
 <script src="../code-tabs.js"></script>
 <script src="../copy-code.js"></script>
 <script src="../subscribe-fab.js"></script>
-
-
 <!-- Cookie Consent Banner -->
 <div class="fixed bottom-0 inset-x-0 z-[9999] transition-transform duration-500" id="cookie-consent-banner" style="font-family:'Inter',system-ui,sans-serif;">
 <div class="mx-auto max-w-4xl px-4 pb-4 sm:px-6">

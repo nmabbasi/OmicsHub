@@ -4,22 +4,22 @@
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<meta content="Learn how to perform ultra-fast taxonomic classification of shotgun metagenomic reads using the k-mer based algorithms Kraken2 and Bracken." name="description"/>
+<meta content="Classify paired shotgun reads with Kraken2, estimate rank-specific abundances with Bracken, and interpret both outputs in context of database and sample-preparation limits." name="description"/>
 <meta content="bioinformatics, single-cell RNA-seq, shell commands, conda, computational biology, tutorials, data analysis" name="keywords"/>
 <meta content="Nasir Mahmood Abbasi, PhD" name="author"/>
 <meta content="index, follow" name="robots"/>
 <!-- Open Graph tags for social sharing -->
-<meta content="Taxonomic Profiling with Kraken2 and Bracken | The Omics Hub" property="og:title"/>
-<meta content="Learn how to perform ultra-fast taxonomic classification of shotgun metagenomic reads using the k-mer based algorithms Kraken2 and Bracken." property="og:description"/>
+<meta content="Kraken2 and Bracken: A Shotgun Metagenomics Walkthrough" property="og:title"/>
+<meta content="Classify paired shotgun reads with Kraken2, estimate rank-specific abundances with Bracken, and interpret both outputs in context of database and sample-preparation limits." property="og:description"/>
 <meta content="https://theomicshub.com/tutorials/metagenomics-kraken2-bracken.html" property="og:url"/>
 <meta content="website" property="og:type"/>
 <meta content="https://theomicshub.com/images/metagenomics-kraken2-bracken.webp" property="og:image"/>
 <!-- Twitter Card tags -->
 <meta content="summary_large_image" name="twitter:card"/>
-<meta content="Taxonomic Profiling with Kraken2 and Bracken | The Omics Hub" name="twitter:title"/>
-<meta content="Learn how to perform ultra-fast taxonomic classification of shotgun metagenomic reads using the k-mer based algorithms Kraken2 and Bracken." name="twitter:description"/>
+<meta content="Kraken2 and Bracken: A Shotgun Metagenomics Walkthrough" name="twitter:title"/>
+<meta content="Classify paired shotgun reads with Kraken2, estimate rank-specific abundances with Bracken, and interpret both outputs in context of database and sample-preparation limits." name="twitter:description"/>
 <meta content="https://theomicshub.com/images/metagenomics-kraken2-bracken.webp" name="twitter:image"/>
-<title>Taxonomic Profiling with Kraken2 and Bracken | The Omics Hub</title><!-- Favicon -->
+<title>Kraken2 and Bracken: A Shotgun Metagenomics Walkthrough | The Omics Hub</title><!-- Favicon -->
 <link href="../images/favicon.svg" rel="icon" type="image/svg+xml"/>
 <!-- Pre-fetch fonts to prevent FOUC (layout shift) -->
 <link href="https://fonts.googleapis.com" rel="preconnect"/>
@@ -45,8 +45,72 @@ gtag('consent', 'default', {
 <script async="" crossorigin="anonymous" src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2910340533244599"></script>
 <meta content="ca-pub-2910340533244599" name="google-adsense-account"/><meta content="XioIUjAyO5PEAT-N6nLrowdiDe4ATl-vKdRGmmrDHZM" name="google-site-verification"/>
 <link href="https://theomicshub.com/tutorials/metagenomics-kraken2-bracken.html" rel="canonical"/>
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "TechArticle", "headline": "Taxonomic Profiling with Kraken2 and Bracken", "description": "Learn how to perform ultra-fast taxonomic classification of shotgun metagenomic reads using the k-mer based algorithms Kraken2 and Bracken.", "mainEntityOfPage": {"@type": "WebPage", "@id": "https://theomicshub.com/tutorials/metagenomics-kraken2-bracken.html"}, "image": "https://theomicshub.com/images/metagenomics-kraken2-bracken.webp", "author": {"@type": "Person", "name": "Dr. Nasir Mahmood Abbasi, PhD", "jobTitle": "Computational Biologist & Bioinformatics Researcher", "url": "https://theomicshub.com/about.html", "sameAs": ["https://github.com/nmabbasi"]}, "publisher": {"@type": "Organization", "name": "The Omics Hub", "url": "https://theomicshub.com", "logo": {"@type": "ImageObject", "url": "https://theomicshub.com/images/favicon.svg"}}, "datePublished": "2026-09-02", "dateModified": "2026-10-10", "url": "https://theomicshub.com/tutorials/metagenomics-kraken2-bracken.html", "name": "Taxonomic Profiling with Kraken2 and Bracken | The Omics Hub", "isPartOf": {"@type": "WebSite", "name": "The Omics Hub", "url": "https://theomicshub.com/"}}</script>
-<script id="eeat-schema" type="application/ld+json">{"@context": "https://schema.org", "@type": "TechArticle", "name": "Taxonomic Profiling with Kraken2 and Bracken | The Omics Hub", "description": "Learn how to perform ultra-fast taxonomic classification of shotgun metagenomic reads using the k-mer based algorithms Kraken2 and Bracken.", "url": "https://theomicshub.com/tutorials/metagenomics-kraken2-bracken.html", "isPartOf": {"@type": "WebSite", "name": "The Omics Hub", "url": "https://theomicshub.com/"}, "author": {"@type": "Person", "name": "Dr. Nasir Mahmood Abbasi, PhD", "jobTitle": "Computational Biologist & Bioinformatics Researcher", "url": "https://theomicshub.com/about.html", "sameAs": ["https://github.com/nmabbasi"]}, "publisher": {"@type": "Organization", "name": "The Omics Hub", "url": "https://theomicshub.com/"}, "inLanguage": "en"}</script></head>
+<script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "Kraken2 and Bracken: A Shotgun Metagenomics Walkthrough",
+  "description": "Classify paired shotgun reads with Kraken2, estimate rank-specific abundances with Bracken, and interpret both outputs in context of database and sample-preparation limits.",
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://theomicshub.com/tutorials/metagenomics-kraken2-bracken.html"
+  },
+  "image": "https://theomicshub.com/images/metagenomics-kraken2-bracken.webp",
+  "author": {
+    "@type": "Person",
+    "name": "Dr. Nasir Mahmood Abbasi, PhD",
+    "jobTitle": "Computational Biologist & Bioinformatics Researcher",
+    "url": "https://theomicshub.com/about.html",
+    "sameAs": [
+      "https://github.com/nmabbasi"
+    ]
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "The Omics Hub",
+    "url": "https://theomicshub.com",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://theomicshub.com/images/favicon.svg"
+    }
+  },
+  "datePublished": "2026-09-02",
+  "dateModified": "2026-10-21",
+  "url": "https://theomicshub.com/tutorials/metagenomics-kraken2-bracken.html",
+  "name": "Kraken2 and Bracken: A Shotgun Metagenomics Walkthrough",
+  "isPartOf": {
+    "@type": "WebSite",
+    "name": "The Omics Hub",
+    "url": "https://theomicshub.com/"
+  }
+}</script>
+<script id="eeat-schema" type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "name": "Kraken2 and Bracken: A Shotgun Metagenomics Walkthrough",
+  "description": "Classify paired shotgun reads with Kraken2, estimate rank-specific abundances with Bracken, and interpret both outputs in context of database and sample-preparation limits.",
+  "url": "https://theomicshub.com/tutorials/metagenomics-kraken2-bracken.html",
+  "isPartOf": {
+    "@type": "WebSite",
+    "name": "The Omics Hub",
+    "url": "https://theomicshub.com/"
+  },
+  "author": {
+    "@type": "Person",
+    "name": "Dr. Nasir Mahmood Abbasi, PhD",
+    "jobTitle": "Computational Biologist & Bioinformatics Researcher",
+    "url": "https://theomicshub.com/about.html",
+    "sameAs": [
+      "https://github.com/nmabbasi"
+    ]
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "The Omics Hub",
+    "url": "https://theomicshub.com/"
+  },
+  "inLanguage": "en",
+  "headline": "Kraken2 and Bracken: A Shotgun Metagenomics Walkthrough"
+}</script><link href="../tutorial-library.css" rel="stylesheet"/></head>
 <body class="bg-white text-gray-900">
 <script>
 function toggleMobileMenu() {
@@ -125,138 +189,54 @@ function toggleMobileMenu() {
 <div class="container mx-auto px-4 py-8"><div class="max-w-4xl mx-auto"><div id="tutorial-content">
 <section class="mb-12">
 <div class="flex items-center gap-2 text-sm text-blue-600 font-medium mb-4"><span>Metagenomics</span><span>-</span><span>2026-09-02</span></div>
-<h1 class="text-4xl md:text-5xl font-black text-gray-900 mb-6 leading-tight" id="tutorial-title">Taxonomic Profiling with Kraken2 and Bracken</h1>
+<h1 class="text-4xl md:text-5xl font-black text-gray-900 mb-6 leading-tight" id="tutorial-title">Kraken2 and Bracken: A Shotgun Metagenomics Walkthrough</h1>
 <div class="flex items-center gap-4"><div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 font-bold text-lg">NM</div><div><p class="font-bold text-gray-900">Nasir Mahmood Abbasi, PhD</p><p class="text-sm text-gray-500">Bioinformatics Educator</p></div></div>
 </section>
 <div class="mb-12 rounded-2xl overflow-hidden shadow-lg border border-gray-100">
-<img alt="Taxonomic Profiling with Kraken2 and Bracken" class="w-full aspect-video object-cover" decoding="async" loading="eager" src="../images/metagenomics-kraken2-bracken.webp"/>
+<img alt="Kraken2 and Bracken: A Shotgun Metagenomics Walkthrough" class="w-full aspect-video object-cover" decoding="async" loading="eager" src="../images/metagenomics-kraken2-bracken.webp"/>
 </div>
-<article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none"><div class="flex flex-wrap items-center gap-4 text-xs font-mono text-gray-500 bg-gray-50 p-3 rounded-lg border border-gray-200 mb-6">
-<div class="flex items-center gap-1">
-<svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
-<span><strong>Tested on:</strong> Python 3.11, R 4.3.2, Ubuntu 24.04</span>
-</div>
-<div class="flex items-center gap-1">
-<svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
-</div>
-</div>
-<div class="p-6 bg-blue-50 border border-blue-100 rounded-xl mb-8">
-<h4 class="text-lg font-bold text-blue-900 mb-2">Learning Objectives &amp; Prerequisites</h4>
-<ul class="list-disc list-inside text-blue-800 space-y-1 mb-4">
-<li><strong>Prerequisites:</strong> Complete command-line basics and understand that taxonomic databases define the scope of possible classifications.</li>
-<li><strong>Objective:</strong> Classify shotgun metagenomic reads with Kraken2, estimate abundances with Bracken, and report database and contamination limitations.</li>
-<li><strong>Expected Output:</strong> A taxonomic abundance table paired with the exact database version, read-processing choices, and interpretation caveats.</li>
+<article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--walkthrough">
+<p class="lesson-lead">Kraken2 assigns taxonomic labels by matching read k-mers against a database. Bracken uses database-specific read-length distributions to estimate abundance at a chosen rank. This walkthrough follows one paired-end sample from classification through interpretation; the paths and thread count are placeholders for your environment.</p>
+<h2>What you need and what you will produce</h2>
+<p>Prepare quality-controlled paired FASTQ files, a built Kraken2 database, and a compatible Bracken database distribution generated for the read length you intend to analyze. Record software versions, database build/source and date, trimming settings, and the actual post-trimming read-length distribution. Bracken estimation depends on its database files being available for the selected rank and read length; running Kraken2 alone does not create them.</p>
+<p>The workflow produces a per-read Kraken output, a six-column Kraken report, and a Bracken table at species rank. These are estimates conditional on the reads, database, and settings. They do not establish organism viability, absolute cell abundance, or clinical significance.</p>
+<h2>1. Classify paired reads with Kraken2</h2>
+<p>Replace the example paths and thread count. Kraken2 accepts compressed FASTQ input. With <code>--paired</code>, give the read-1 file followed by the corresponding read-2 file. Keep mates synchronized after preprocessing.</p>
+<pre><code class="language-bash">kraken2 --db /path/to/kraken2_database \
+  --threads 16 \
+  --paired sample_R1.fastq.gz sample_R2.fastq.gz \
+  --report sample.kreport \
+  --output sample.kraken</code></pre>
+<p><code>sample.kraken</code> records each classified fragment, while <code>sample.kreport</code> aggregates counts by taxon. The report includes the percentage and fragment count for each taxon's subtree, direct-assignment count, rank code, taxid, and indented scientific name. A genus-level or higher assignment is an unresolved classification at that rank, not evidence that a specific species was detected. Check the command's exit status and logs before interpreting either file.</p>
+<h2>2. Estimate abundance with Bracken</h2>
+<p>Use the same Kraken database and its matching Bracken distribution files. Set <code>-r</code> to the read length represented by the distribution files and appropriate for your processed reads, not automatically the sequencer's nominal length. If trimming leaves variable or shorter reads, consult Bracken guidance and choose a defensible representative length; record that choice. Choose the target rank deliberately.</p>
+<pre><code class="language-bash">bracken -d /path/to/kraken2_database \
+  -i sample.kreport \
+  -o sample.bracken.S.tsv \
+  -r 150 \
+  -l S</code></pre>
+<p>Here <code>-l S</code> requests species-level estimates and <code>-r 150</code> is only an example. Bracken redistributes some reads assigned higher in the taxonomy using a model derived from the database's expected read-length k-mer classifications. Its output distinguishes Kraken-assigned reads, added reads after re-estimation, total reads after re-estimation, and fraction of total. Those adjusted counts are model-based estimates, not newly observed species-specific reads.</p>
+<aside class="lesson-warning"><p><strong>Before trusting this run:</strong> confirm the Bracken distribution file exists for the selected read length and database, and inspect the output for errors. A missing or mismatched distribution file is a setup failure, not a reason to interpret raw Kraken counts as Bracken estimates.</p></aside>
+<h2>3. Read the reports before making a biological claim</h2>
+<p>Start with the Kraken report's unclassified fraction and high-level assignments. Compare the Kraken direct and clade counts with the Bracken estimates at the chosen rank. Large unresolved fractions can reflect database coverage, sequence quality, or other pipeline factors; they do not identify a single cause. Unexpected taxa warrant checks of negative controls, database contents, host-read handling, and read quality before interpretation.</p>
+<p>Database composition defines which sequences can be recognized and can also affect ambiguous assignments. Do not assume a standard database is adequate for every environment or that adding more references always improves a particular analysis. Document the database build and assess likely contaminants, especially when custom references are used.</p>
+<p>Relative abundance describes the sequenced library after extraction, library preparation, sequencing, and classification. Biases in those steps can make it differ from the underlying community, and compositional proportions do not provide absolute abundance. Cross-sample comparisons require consistent processing and a clear rationale for normalization; cross-study comparisons add further differences in protocols and databases.</p>
+<h2>4. Visualize only after choosing a compatible input</h2>
+<p>KronaTools has importers for supported input formats. Do not pass a Kraken report to the generic <code>ktImportText</code> command as though it were a two-column taxon/weight file: the Kraken report is a six-column hierarchical format. Select the importer and input format documented for your installed KronaTools version, or convert data explicitly to its documented text format. Bracken output is also not automatically interchangeable with every importer.</p>
+<h2>Run record and interpretation checklist</h2>
+<ul>
+<li>Save Kraken2 and Bracken versions, database identity/build date, and relevant database files.</li>
+<li>Record read preprocessing, paired-file identity, Bracken read length, and target rank.</li>
+<li>Verify successful completion, report structure, unclassified fraction, and whether estimates are direct or Bracken-reestimated.</li>
+<li>Review controls and possible host contamination; describe database and technical limitations alongside any abundance table.</li>
 </ul>
-</div>
-<h2>Taxonomic Profiling with Kraken2 and Bracken</h2>
-<h2>Introduction</h2>
-<p>In shotgun metagenomics, one of the primary goals is answering: <strong>"Who is in this sample, and in what proportions?"</strong></p>
-<p>Unlike 16S amplicon sequencing, shotgun data contains fragmented DNA from every organism present. To classify millions of these short reads efficiently, we can't use traditional alignment tools like BLAST - it would take months. Instead, we use ultra-fast <strong>k-mer based classifiers</strong> with the undisputed industry standard being <strong>Kraken2</strong> followed by <strong>Bracken</strong> for abundance estimation.</p>
-<hr/>
-<h2>1. How Kraken2 Works</h2>
-<p>Kraken2 breaks down your reads into short sequences called <em>k-mers</em> (typically 35-mers). It then compares these k-mers against a massive pre-built database of known genomes.</p>
-<p>Instead of full alignment, Kraken2 maps the k-mer to the Lowest Common Ancestor (LCA) in the taxonomic tree.</p>
-<h3>Running Kraken2</h3>
-<p>Kraken2 is heavily memory-bound. You need a machine with enough RAM to hold the database you choose (the standard PlusPFP database requires ~50GB of RAM).</p>
-<pre><code class="language-bash"># Run Kraken2 on paired-end Illumina reads
-kraken2 --db /path/to/kraken2_database/ \
-        --threads 16 \
-        --paired reads_1.fastq.gz reads_2.fastq.gz \
-        --report kraken2_report.txt \
-        --output kraken2_output.txt
-</code></pre>
-<p><strong>Key Outputs:</strong>
-* <code>kraken2_output.txt</code> Contains the classification for <em>every single read</em>* <code>kraken2_report.txt</code> A human-readable summary of the percentage of reads assigned to each taxonomic level.</p>
-<hr/>
-<h2>2. Correcting Abundances with Bracken</h2>
-<p>While Kraken2 is excellent at classification, its Lowest Common Ancestor (LCA) approach causes a problem: many reads are classified at higher taxonomic levels (like Genus or Family) because they match multiple species equally well.</p>
-<p>This means your raw Species-level counts in Kraken2 are mathematically underestimated.</p>
-<p><strong>Bracken</strong> (Bayesian Reestimation of Abundance with KrakEN) fixes this. It uses Bayesian probabilities to accurately push those Genus-level assignments down to the Species level, giving you highly accurate abundance estimations.</p>
-<h3>Running Bracken</h3>
-<pre><code class="language-bash"># Run Bracken using the Kraken2 report to estimate Species level (-l S) abundances
-bracken -d /path/to/kraken2_database/ \
-        -i kraken2_report.txt \
-        -o bracken_species_abundances.tsv \
-        -r 150 \
-        -l S
-</code></pre>
-<p><em>(Note: <code>-r 150</code> should match your Illumina read length).</em></p>
-<hr/>
-<h2>3. Visualization</h2>
-<p>Once you have Bracken outputs from multiple samples, you can merge them and visualize the community composition.</p>
-<p>Tools like <strong>Krona</strong> create beautiful interactive HTML pie charts from Kraken2/Bracken reports.</p>
-<pre><code class="language-bash"># Install Krona tools
-mamba install -c bioconda krona
-
-# Generate an interactive Krona plot from the Kraken2 report
-ktImportText kraken2_report.txt -o krona_visualization.html
-</code></pre>
-<p>Combining the speed of Kraken2 with the statistical rigor of Bracken lets you profile complex microbial communities in minutes instead of months.</p>
-<div class="mt-10 p-8 bg-gray-50 border border-gray-200 rounded-xl">
-<section class="prose-expansion bg-white border-t border-gray-100 mt-10 pt-10 pb-4">
-<div class="max-w-3xl mx-auto px-2">
-<h2 class="text-2xl font-bold text-slate-900 mb-4">Understanding Taxonomic Profiling at Scale</h2>
-<p class="text-slate-700 text-base leading-relaxed mb-4">
- Shotgun metagenomic sequencing generates millions of short reads from every organism present in a sample. The central challenge is assigning each read to a taxon quickly and accurately enough to be useful at typical sequencing depths. Kraken2 solves this using exact k-mer matching against a prebuilt reference database. For each read, it queries every k-mer and records which taxon, or set of taxa, contains that k-mer in the database. The taxon with the most k-mer matches is assigned as the classification.
-</p>
-<p class="text-slate-700 text-base leading-relaxed mb-4">
- This approach is extremely fast because the database lookup is essentially a hash table query. Kraken2 can classify hundreds of millions of reads per hour on a single node, which is roughly 10 to 100 times faster than alignment-based tools like Centrifuge or MetaPhlAn3 on large inputs. The trade-off is precision at the strain level: when two closely related strains share most of their k-mers, Kraken2 assigns reads to their lowest common ancestor rather than guessing a strain.
-</p>
-<h3 class="text-xl font-semibold text-slate-900 mb-3 mt-8">Why Bracken Is Necessary After Kraken2</h3>
-<p class="text-slate-700 text-base leading-relaxed mb-4">A common misconception is that the read counts Kraken2 produces are already abundance estimates. They are not. Kraken2 reports how many reads were classified at each node in the taxonomic tree, including reads that could not be resolved below genus or family. A species in your sample may show few reads at its own level because most of its reads were assigned to higher ranks (genus or even phylum) when they share k-mers with related taxa.</p>
-<p class="text-slate-700 text-base leading-relaxed mb-4">
- Bracken corrects for this by redistributing reads from higher-level nodes back down to species or genus level using a Bayesian model trained on the same database. For each node in the tree, Bracken estimates what fraction of reads that landed there should have been assigned to each child node, based on the expected read length and k-mer distribution. The result is a corrected abundance table where each species or genus has a realistic estimate of its relative contribution to the sample.
-</p>
-<h3 class="text-xl font-semibold text-slate-900 mb-3 mt-8">Database Choice Has a Larger Effect Than Most People Expect</h3>
-<p class="text-slate-700 text-base leading-relaxed mb-4">
- One of the strongest determinants of classification accuracy is the reference database used. If an organism is not represented in the database, every read from it will be classified as unclassified. In gut microbiome samples, for example, unclassified reads can constitute 30 to 70 percent of the total depending on the database completeness. The standard Kraken2 database built from RefSeq may miss many gut-specific or environmental strains that have been sequenced more recently.
-</p>
-<p class="text-slate-700 text-base leading-relaxed mb-4">
- For most projects, the recommended approach is to build a custom database that includes NCBI RefSeq bacteria, archaea, and viruses plus the human genome for host removal, supplemented with any domain-specific sequences relevant to your samples. Database construction is time-consuming and memory-intensive, but it's a one-time cost that pays off across many projects.
-</p>
-<h3 class="text-xl font-semibold text-slate-900 mb-3 mt-8">Interpreting Relative Abundance: What the Numbers Actually Mean</h3>
-<p class="text-slate-700 text-base leading-relaxed mb-4">
- Relative abundance data from Kraken2 and Bracken describe the composition of the sequenced library, not necessarily the true microbial community. DNA extraction efficiency, PCR amplification bias, read length, and library preparation all introduce systematic distortions. Two organisms present at equal true abundance may show a 10-fold difference in estimated abundance if their DNA extracts differently or if their GC content causes differential amplification.
-</p>
-<p class="text-slate-700 text-base leading-relaxed mb-4">
- This means that relative abundance comparisons within a sample are more reliable than absolute abundance comparisons across samples, and that cross-study comparisons require careful normalisation and ideally a shared reference mock community. When reporting results, describe what your abundance estimates represent and acknowledge the key sources of technical variation in your sample preparation workflow.
-</p>
-<div class="bg-amber-50 border border-amber-200 rounded-xl p-5 mt-6 mb-2">
-<p class="text-amber-900 font-semibold mb-2">Key Decision Points Before Running Your Analysis</p>
-<ul class="list-disc list-inside text-amber-800 space-y-1 text-sm">
-<li>Choose a database that includes the organisms you expect to find in your samples, not just the standard RefSeq set.</li>
-<li>Set the Bracken read length to match your actual read length after trimming, not the sequencer nominal read length.</li>
-<li>Report confidence thresholds used for classification; the default 0.1 may need adjustment for your sample type.</li>
-<li>Always inspect the fraction of unclassified reads before interpreting composition results.</li>
-</ul>
-</div>
-</div>
-</section>
-<h3 class="text-xl font-bold text-gray-900 mb-4">Knowledge Check &amp; Assessment</h3>
-<div class="space-y-4">
-<div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-<h4 class="font-bold text-gray-800 mb-2">1. Concept Verification</h4>
-<p class="text-gray-600 text-sm">Why can a fast k-mer classification be confident yet still biologically wrong when the reference database is incomplete or contaminated?</p>
-</div>
-<div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-<h4 class="font-bold text-gray-800 mb-2">2. Practical Execution</h4>
-<p class="text-gray-600 text-sm">Run or inspect a Kraken2/Bracken result and identify the database version, assigned fraction, top taxa, and unclassified reads. </p>
-</div>
-<div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-<h4 class="font-bold text-gray-800 mb-2">3. Troubleshooting</h4>
-<p class="text-gray-600 text-sm">If unexpected taxa dominate a sample, how will you check negative controls, database composition, host contamination, and read quality?</p>
-</div>
-</div>
-</div>
-<section aria-label="References and further reading" class="mt-10 p-6 bg-slate-50 border border-slate-200 rounded-xl">
-<h2 class="text-xl font-bold text-gray-900 mb-3">References and further reading</h2>
-<p class="text-sm text-gray-600 mb-3">Use these official resources to check current software behaviour, terminology, and production guidance. Tool versions and defaults change, so verify commands against the documentation before applying them to a research dataset.</p>
-<ul class="list-disc list-inside space-y-2 text-sm text-gray-700">
-<li><a class="text-blue-700 hover:underline" href="https://www.ncbi.nlm.nih.gov/genome/" rel="noopener" target="_blank">NCBI Genome and metagenome resources</a></li>
-<li><a class="text-blue-700 hover:underline" href="https://www.ebi.ac.uk/metagenomics/" rel="noopener" target="_blank">EMBL-EBI metagenomics resources</a></li>
-</ul>
-</section>
-</article>
+<p class="lesson-exercise"><strong>Practice:</strong> For one report, write down the unclassified percentage, a taxon with a direct Kraken assignment, and its corresponding Bracken estimate if present. Explain in one sentence why the Bracken estimate is model-based and name one database or laboratory factor that could affect interpretation. Do not infer a biological finding from a synthetic or unreviewed example.</p>
+<section aria-label="References and further reading"><h2>Official documentation</h2><ul>
+<li><a href="https://github.com/DerrickWood/kraken2/wiki/Manual" rel="noopener" target="_blank">Kraken2 manual: options and report formats</a></li>
+<li><a href="https://ccb.jhu.edu/software/bracken/index.shtml?t=manual" rel="noopener" target="_blank">Bracken manual: database preparation, parameters, and file formats</a></li>
+<li><a href="https://github.com/marbl/Krona/wiki/Importing-from-supported-tools" rel="noopener" target="_blank">KronaTools: importing supported tools and formats</a></li>
+</ul></section>
+<aside aria-labelledby="tutorial-feedback-title" class="lesson-feedback" id="tutorial-feedback"><h2 id="tutorial-feedback-title">Help improve this tutorial</h2><p>Found an error, a broken link, or a step that needs a clearer explanation? Please <a href="../contact.html">contact me</a>. Your feedback helps me keep this resource accurate and useful.</p></aside></article>
 <section class="mt-12 mb-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-100">
 <div class="flex items-start gap-4">
 <div class="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
@@ -418,8 +398,6 @@ ktImportText kraken2_report.txt -o krona_visualization.html
 <script src="../code-tabs.js"></script>
 <script src="../copy-code.js"></script>
 <script src="../subscribe-fab.js"></script>
-
-
 <!-- Cookie Consent Banner -->
 <div class="fixed bottom-0 inset-x-0 z-[9999] transition-transform duration-500" id="cookie-consent-banner" style="font-family:'Inter',system-ui,sans-serif;">
 <div class="mx-auto max-w-4xl px-4 pb-4 sm:px-6">

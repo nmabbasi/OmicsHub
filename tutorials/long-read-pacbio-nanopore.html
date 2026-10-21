@@ -4,22 +4,22 @@
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<meta content="A guide to analyzing long-read sequencing data from Oxford Nanopore and PacBio platforms, focusing on isoform discovery and structural variant detection." name="description"/>
+<meta content="Compare PacBio HiFi and Oxford Nanopore long-read data, choose an analysis route for genome or transcript questions, and document the assumptions that shape QC, alignment, assembly, and isoform interpretation." name="description"/>
 <meta content="bioinformatics, single-cell RNA-seq, shell commands, conda, computational biology, tutorials, data analysis" name="keywords"/>
 <meta content="Nasir Mahmood Abbasi, PhD" name="author"/>
 <meta content="index, follow" name="robots"/>
 <!-- Open Graph tags for social sharing -->
-<meta content="Long-Read Sequencing | The Omics Hub" property="og:title"/>
-<meta content="A guide to analyzing long-read sequencing data from Oxford Nanopore and PacBio platforms, focusing on isoform discovery and structural variant detection." property="og:description"/>
+<meta content="Long-Read Sequencing: choosing a workflow" property="og:title"/>
+<meta content="Compare PacBio HiFi and Oxford Nanopore long-read data, choose an analysis route for genome or transcript questions, and document the assumptions that shape QC, alignment, assembly, and isoform interpretation." property="og:description"/>
 <meta content="https://theomicshub.com/tutorials/long-read-pacbio-nanopore.html" property="og:url"/>
 <meta content="website" property="og:type"/>
 <meta content="https://theomicshub.com/images/long-read-sequencing.webp" property="og:image"/>
 <!-- Twitter Card tags -->
 <meta content="summary_large_image" name="twitter:card"/>
-<meta content="Long-Read Sequencing | The Omics Hub" name="twitter:title"/>
-<meta content="A guide to analyzing long-read sequencing data from Oxford Nanopore and PacBio platforms, focusing on isoform discovery and structural variant detection." name="twitter:description"/>
+<meta content="Long-Read Sequencing: choosing a workflow" name="twitter:title"/>
+<meta content="Compare PacBio HiFi and Oxford Nanopore long-read data, choose an analysis route for genome or transcript questions, and document the assumptions that shape QC, alignment, assembly, and isoform interpretation." name="twitter:description"/>
 <meta content="https://theomicshub.com/images/long-read-sequencing.webp" name="twitter:image"/>
-<title>Long-Read Sequencing | The Omics Hub</title><!-- Favicon -->
+<title>Long-Read Sequencing: choosing a workflow | The Omics Hub</title><!-- Favicon -->
 <link href="../images/favicon.svg" rel="icon" type="image/svg+xml"/>
 <!-- Pre-fetch fonts to prevent FOUC (layout shift) -->
 <link href="https://fonts.googleapis.com" rel="preconnect"/>
@@ -45,8 +45,72 @@ gtag('consent', 'default', {
 <script async="" crossorigin="anonymous" src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2910340533244599"></script>
 <meta content="ca-pub-2910340533244599" name="google-adsense-account"/><meta content="XioIUjAyO5PEAT-N6nLrowdiDe4ATl-vKdRGmmrDHZM" name="google-site-verification"/>
 <link href="https://theomicshub.com/tutorials/long-read-pacbio-nanopore.html" rel="canonical"/>
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "TechArticle", "headline": "Long-Read Sequencing", "description": "A guide to analyzing long-read sequencing data from Oxford Nanopore and PacBio platforms, focusing on isoform discovery and structural variant detection.", "mainEntityOfPage": {"@type": "WebPage", "@id": "https://theomicshub.com/tutorials/long-read-pacbio-nanopore.html"}, "image": "https://theomicshub.com/images/long-read-sequencing.webp", "author": {"@type": "Person", "name": "Dr. Nasir Mahmood Abbasi, PhD", "jobTitle": "Computational Biologist & Bioinformatics Researcher", "url": "https://theomicshub.com/about.html", "sameAs": ["https://github.com/nmabbasi"]}, "publisher": {"@type": "Organization", "name": "The Omics Hub", "url": "https://theomicshub.com", "logo": {"@type": "ImageObject", "url": "https://theomicshub.com/images/favicon.svg"}}, "datePublished": "2026-09-16", "dateModified": "2026-10-10", "url": "https://theomicshub.com/tutorials/long-read-pacbio-nanopore.html", "name": "Long-Read Sequencing | The Omics Hub", "isPartOf": {"@type": "WebSite", "name": "The Omics Hub", "url": "https://theomicshub.com/"}}</script>
-<script id="eeat-schema" type="application/ld+json">{"@context": "https://schema.org", "@type": "TechArticle", "name": "Long-Read Sequencing | The Omics Hub", "description": "A guide to analyzing long-read sequencing data from Oxford Nanopore and PacBio platforms, focusing on isoform discovery and structural variant detection.", "url": "https://theomicshub.com/tutorials/long-read-pacbio-nanopore.html", "isPartOf": {"@type": "WebSite", "name": "The Omics Hub", "url": "https://theomicshub.com/"}, "author": {"@type": "Person", "name": "Dr. Nasir Mahmood Abbasi, PhD", "jobTitle": "Computational Biologist & Bioinformatics Researcher", "url": "https://theomicshub.com/about.html", "sameAs": ["https://github.com/nmabbasi"]}, "publisher": {"@type": "Organization", "name": "The Omics Hub", "url": "https://theomicshub.com/"}, "inLanguage": "en"}</script></head>
+<script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "Long-Read Sequencing: choosing a workflow",
+  "description": "Compare PacBio HiFi and Oxford Nanopore long-read data, choose an analysis route for genome or transcript questions, and document the assumptions that shape QC, alignment, assembly, and isoform interpretation.",
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://theomicshub.com/tutorials/long-read-pacbio-nanopore.html"
+  },
+  "image": "https://theomicshub.com/images/long-read-sequencing.webp",
+  "author": {
+    "@type": "Person",
+    "name": "Dr. Nasir Mahmood Abbasi, PhD",
+    "jobTitle": "Computational Biologist & Bioinformatics Researcher",
+    "url": "https://theomicshub.com/about.html",
+    "sameAs": [
+      "https://github.com/nmabbasi"
+    ]
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "The Omics Hub",
+    "url": "https://theomicshub.com",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://theomicshub.com/images/favicon.svg"
+    }
+  },
+  "datePublished": "2026-09-16",
+  "dateModified": "2026-10-21",
+  "url": "https://theomicshub.com/tutorials/long-read-pacbio-nanopore.html",
+  "name": "Long-Read Sequencing: choosing a workflow",
+  "isPartOf": {
+    "@type": "WebSite",
+    "name": "The Omics Hub",
+    "url": "https://theomicshub.com/"
+  }
+}</script>
+<script id="eeat-schema" type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "name": "Long-Read Sequencing: choosing a workflow",
+  "description": "Compare PacBio HiFi and Oxford Nanopore long-read data, choose an analysis route for genome or transcript questions, and document the assumptions that shape QC, alignment, assembly, and isoform interpretation.",
+  "url": "https://theomicshub.com/tutorials/long-read-pacbio-nanopore.html",
+  "isPartOf": {
+    "@type": "WebSite",
+    "name": "The Omics Hub",
+    "url": "https://theomicshub.com/"
+  },
+  "author": {
+    "@type": "Person",
+    "name": "Dr. Nasir Mahmood Abbasi, PhD",
+    "jobTitle": "Computational Biologist & Bioinformatics Researcher",
+    "url": "https://theomicshub.com/about.html",
+    "sameAs": [
+      "https://github.com/nmabbasi"
+    ]
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "The Omics Hub",
+    "url": "https://theomicshub.com/"
+  },
+  "inLanguage": "en",
+  "headline": "Long-Read Sequencing: choosing a workflow"
+}</script><link href="../tutorial-library.css" rel="stylesheet"/></head>
 <body class="bg-white text-gray-900">
 <script>
 function toggleMobileMenu() {
@@ -125,131 +189,47 @@ function toggleMobileMenu() {
 <div class="container mx-auto px-4 py-8"><div class="max-w-4xl mx-auto"><div id="tutorial-content">
 <section class="mb-12">
 <div class="flex items-center gap-2 text-sm text-blue-600 font-medium mb-4"><span>Long-Read Sequencing</span><span>-</span><span>2026-09-16</span></div>
-<h1 class="text-4xl md:text-5xl font-black text-gray-900 mb-6 leading-tight" id="tutorial-title">Long-Read Sequencing</h1>
+<h1 class="text-4xl md:text-5xl font-black text-gray-900 mb-6 leading-tight" id="tutorial-title">Long-Read Sequencing: choosing a workflow</h1>
 <div class="flex items-center gap-4"><div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 font-bold text-lg">NM</div><div><p class="font-bold text-gray-900">Nasir Mahmood Abbasi, PhD</p><p class="text-sm text-gray-500">Bioinformatics Educator</p></div></div>
 </section>
 <div class="mb-12 rounded-2xl overflow-hidden shadow-lg border border-gray-100">
 <img alt="Long-Read Sequencing" class="w-full aspect-video object-cover" decoding="async" loading="eager" src="../images/long-read-sequencing.webp"/>
 </div>
-<article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none"><div class="flex flex-wrap items-center gap-4 text-xs font-mono text-gray-500 bg-gray-50 p-3 rounded-lg border border-gray-200 mb-6">
-<div class="flex items-center gap-1">
-<svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
-<span><strong>Tested on:</strong> Python 3.11, R 4.3.2, Ubuntu 24.04</span>
-</div>
-<div class="flex items-center gap-1">
-<svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
-</div>
-</div>
-<div class="p-6 bg-blue-50 border border-blue-100 rounded-xl mb-8">
-<h4 class="text-lg font-bold text-blue-900 mb-2">Learning Objectives &amp; Prerequisites</h4>
-<ul class="list-disc list-inside text-blue-800 space-y-1 mb-4">
-<li><strong>Prerequisites:</strong> Complete Biological Data Formats, reference-genome concepts, and basic command-line analysis; understand read length and per-read error profiles.</li>
-<li><strong>Objective:</strong> Compare PacBio and Nanopore long-read data, choose appropriate QC/alignment/variant or isoform tools, and report platform-specific limitations.</li>
-<li><strong>Expected Output:</strong> A documented long-read analysis plan with platform, basecalling or CCS assumptions, reference version, QC metrics, and validation approach.</li>
-</ul>
-</div>
-<h2>Long-Read Sequencing Data Analysis</h2>
-<h2>Introduction</h2>
-<p>Traditional short-read sequencing (Illumina) produces reads that are 150-300 base pairs long. While highly accurate, short reads struggle to resolve complex genomic regions (like repetitive elements) or identify full-length RNA splice isoforms.</p>
-<p><strong>Long-read sequencing technologies</strong> pioneered by <strong>Oxford Nanopore Technologies (ONT)</strong> and <strong>Pacific Biosciences (PacBio)</strong> generate reads that are 10,000 to over 100,000 base pairs long. This allows researchers to sequence entire mRNA molecules from end to end without fragmentation.</p>
-<hr/>
-<h2>1. Quality Control for Long Reads</h2>
-<p>Long-read data has a different error profile than short-read data. While PacBio HiFi reads are highly accurate (~99.9%), traditional ONT reads have higher indel (insertion/deletion) error rates.</p>
-<p>The standard tool for long-read QC is <strong>NanoPlot</strong></p>
-<pre><code class="language-bash"># Install NanoPlot
-mamba install -c bioconda nanoplot
-
-# Generate quality control reports for a FASTQ file
-NanoPlot -t 8 --fastq long_reads.fastq.gz -o nanoplot_results/
-</code></pre>
-<p>NanoPlot generates beautiful interactive HTML plots showing read length distribution versus read quality (Q-score).</p>
-<hr/>
-<h2>2. Genome Assembly with Long Reads</h2>
-<p>Because long reads can span across repetitive regions, they produce vastly superior genome assemblies compared to short reads. <strong>Flye</strong> is the standard assembler for long reads.</p>
-<pre><code class="language-bash"># Install Flye
-mamba install -c bioconda flye
-
-# Assemble a bacterial genome using Nanopore reads
-flye --nano-raw long_reads.fastq.gz --out-dir flye_assembly --threads 16
-</code></pre>
-<p>Once assembled, it's highly recommended to "polish" the genome using tools like <strong>Medaka</strong> (for Nanopore) or <strong>Racon</strong> which corrects the remaining indel errors in the consensus sequence.</p>
-<hr/>
-<h2>3. Transcriptomics: Full-Length Isoform Discovery</h2>
-<p>A major advantage of long reads is detecting alternative splicing. Because a single long read can span the entire transcript, you don't have to infer isoforms statistically—you observe them directly.</p>
-<h3>Mapping Long RNA Reads</h3>
-<p><strong>Minimap2</strong> is the undisputed champion for aligning long reads. It's specifically designed to handle the high error rate and long insertions/deletions characteristic of long-read RNA-seq.</p>
-<pre><code class="language-bash"># Map long RNA reads to a reference genome (splice-aware mapping)
-minimap2 -ax splice -t 16 hg38.fasta rna_long_reads.fastq.gz &gt; aligned.sam
-</code></pre>
-<h3>Isoform Quantification</h3>
-<p>Once mapped, tools like <strong>IsoQuant</strong> or <strong>FLAMES</strong> are used to group the reads into distinct isoforms and quantify their expression.</p>
-<pre><code class="language-bash"># Example IsoQuant workflow
-isoquant.py --reference hg38.fasta \
-            --genedb hg38_annotation.gtf \
-            --bam aligned_sorted.bam \
-            --data_type nanopore \
-            --out_dir isoquant_results/
-</code></pre>
-<p>IsoQuant outputs a high-confidence set of both known and <em>novel</em> isoforms that were completely invisible to standard Illumina sequencing.</p>
-<hr/>
-<h2>Conclusion</h2>
-<p>Long-read sequencing is becoming the standard for genome assembly, structural variant detection, and full-length transcriptomics. Learning tools such as NanoPlot, Flye, and Minimap2 lets you uncover biological insights that short reads could miss.</p>
-<div class="mt-10 p-8 bg-gray-50 border border-gray-200 rounded-xl">
-<section class="prose-expansion bg-white border-t border-gray-100 mt-10 pt-10 pb-4">
-<div class="max-w-3xl mx-auto px-2">
-<h2 class="text-2xl font-bold text-slate-900 mb-4">What Long Reads Reveal That Short Reads Can't</h2>
-<p class="text-slate-700 text-base leading-relaxed mb-4">Illumina short-read sequencing produces highly accurate reads of 150 to 300 base pairs. That accuracy is enough for many routine tasks—differential expression analysis, variant calling in coding regions, and standard metagenomic profiling. But some biological questions can't be resolved with short reads alone; those are the cases where long-read platforms are essential.</p>
-<p class="text-slate-700 text-base leading-relaxed mb-4">
- The most significant limitation of short reads is their inability to resolve repetitive sequences and structural variants. The human genome contains roughly 50 percent repetitive sequence, including transposable elements, centromeric repeats, and segmental duplications. When a 150 bp read falls entirely within a repetitive region, it maps to multiple locations with equal probability, and the mapper either discards it or assigns it arbitrarily. Long reads of 10 to 50 kilobases span repetitive regions and anchor to unique flanking sequence on both ends, resolving the mapping problem entirely.
-</p>
-<h3 class="text-xl font-semibold text-slate-900 mb-3 mt-8">PacBio HiFi vs Oxford Nanopore: The Trade-off in 2026</h3>
-<p class="text-slate-700 text-base leading-relaxed mb-4">
- PacBio's HiFi reads, generated using circular consensus sequencing, achieve Illumina-level accuracy (Q30 or higher, meaning fewer than 1 error per 1,000 bases) at read lengths of 10 to 25 kilobases. They're the gold standard for applications where both read length and accuracy are required, such as diploid genome assembly, full-length isoform sequencing, and structural variant discovery with high confidence.
-</p>
-<p class="text-slate-700 text-base leading-relaxed mb-4">
- Oxford Nanopore sequencing produces reads that are longer on average (N50 of 20 to 100 kilobases depending on library preparation) but historically had higher raw error rates around 5 to 15 percent per read. Recent chemistry versions and the R10 pore have brought single-read accuracy to Q20 to Q25, which is sufficient for many applications when reads are present in sufficient depth. Nanopore's key advantages are real-time sequencing, the ability to detect base modifications (methylation, for example) directly from the electrical signal, and portability through the MinION device. PacBio's key advantages are higher per-read accuracy and better established computational tools for genome assembly.
-</p>
-<h3 class="text-xl font-semibold text-slate-900 mb-3 mt-8">Full-Length Transcript Sequencing: Resolving Isoform Complexity</h3>
-<p class="text-slate-700 text-base leading-relaxed mb-4">
- Alternative splicing affects the majority of multi-exon human genes. Short-read RNA-seq can detect which exons are present in a sample, but when a transcript has 10 exons and any 3 of them can be skipped independently, the number of possible isoforms is combinatorially large. Short reads can't determine which combinations of exon skipping events co-occur in the same transcript molecule.
-</p>
-<p class="text-slate-700 text-base leading-relaxed mb-4">
- Long-read isoform sequencing, using PacBio Iso-Seq or Nanopore direct RNA-seq, sequences full-length transcripts from the poly-A tail to the 5-prime cap. Each read represents a single transcript molecule, making it straightforward to determine exactly which combination of exons was present in that molecule. Tools like FLAMES and IsoSeq3 cluster and error-correct the resulting reads to produce a high-confidence isoform catalogue. This approach has revealed thousands of novel isoforms in human tissues that were completely invisible to short-read RNA-seq.
-</p>
-<h3 class="text-xl font-semibold text-slate-900 mb-3 mt-8">Practical Considerations Before Committing to a Long-Read Experiment</h3>
-<p class="text-slate-700 text-base leading-relaxed mb-4">
- Long-read sequencing costs considerably more per base than short-read sequencing, and the sample preparation requirements are more stringent. DNA and RNA must be of high molecular weight, as fragmented nucleic acids produce short reads that undermine the key advantage of the platform. Extraction protocols designed for short-read sequencing typically involve vortexing or bead-milling steps that shear DNA to a few kilobases; these must be replaced with gentle extraction methods such as plug-based or magnetic-bead protocols.
-</p>
-<p class="text-slate-700 text-base leading-relaxed mb-4">
- Before designing a long-read experiment, clearly define what question can't be answered with short reads. If you're doing standard differential expression analysis or SNP genotyping in well-characterised regions, short reads are less expensive and the tools are more mature. If you're assembling a new genome, resolving structural rearrangements in a cancer sample, or characterising the isoform repertoire of a tissue, long reads are justified and in many cases the only viable approach.
-</p>
-</div>
-</section>
-<h3 class="text-xl font-bold text-gray-900 mb-4">Knowledge Check &amp; Assessment</h3>
-<div class="space-y-4">
-<div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-<h4 class="font-bold text-gray-800 mb-2">1. Concept Verification</h4>
-<p class="text-gray-600 text-sm">How do long reads change the trade-off between read length, per-read error, structural context, and sequencing depth compared with short reads?</p>
-</div>
-<div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-<h4 class="font-bold text-gray-800 mb-2">2. Practical Execution</h4>
-<p class="text-gray-600 text-sm">Inspect a long-read QC or alignment summary and report read-length distribution, mapping rate, reference build, and one platform-specific caveat. </p>
-</div>
-<div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-<h4 class="font-bold text-gray-800 mb-2">3. Troubleshooting</h4>
-<p class="text-gray-600 text-sm">If mapping or variant results differ strongly from short-read evidence, how will you inspect basecalling, read quality, repeats, coverage, reference choice, and caller assumptions?</p>
-</div>
-</div>
-</div>
-<section aria-label="References and further reading" class="mt-10 p-6 bg-slate-50 border border-slate-200 rounded-xl">
-<h2 class="text-xl font-bold text-gray-900 mb-3">References and further reading</h2>
-<p class="text-sm text-gray-600 mb-3">Use these official resources to check current software behaviour, terminology, and production guidance. Tool versions and defaults change, so verify commands against the documentation before applying them to a research dataset.</p>
-<ul class="list-disc list-inside space-y-2 text-sm text-gray-700">
-<li><a class="text-blue-700 hover:underline" href="https://www.pacb.com/support/" rel="noopener" target="_blank">PacBio support and documentation</a></li>
-<li><a class="text-blue-700 hover:underline" href="https://nanoporetech.com/documentation" rel="noopener" target="_blank">Oxford Nanopore documentation</a></li>
-</ul>
-</section>
-</article>
+<article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--decision-guide"><p class="lesson-lead">Long reads help when the biological question depends on sequence context across repeats, rearrangements, or multiple exons in one RNA molecule. Choose the platform and analysis route from the input molecules and question; “long read” alone does not specify the right tool or guarantee that a feature will resolve.</p>
+<div class="lesson-summary"><h2>What you will leave with</h2><p>A short analysis plan naming the molecule type, platform and read mode, reference/annotation version, QC evidence, proposed tool route, and an independent validation step. This is a planning guide, not a tested end-to-end pipeline.</p></div>
+<h2>Start with the molecule and question</h2>
+<p>For genomic DNA, decide whether you need a de novo assembly, read-to-reference structural-variant analysis, or small-variant analysis. For long RNA, decide whether you need transcript structure discovery, transcript abundance, or both. These are different workflows even when they start from reads produced on the same instrument.</p>
+<p>PacBio HiFi reads are circular-consensus reads designed to combine long read length with high per-read accuracy. Oxford Nanopore reads are generated from electrical signals and can be produced in real time; read lengths and accuracy depend on sample preparation, chemistry, basecaller and read mode. Platform labels do not replace checking the actual FASTQ/BAM metadata and run documentation.</p>
+<div class="lesson-decision"><h3>Choose a route</h3><ul><li><strong>Genome assembly:</strong> use a de novo assembler appropriate to the input read mode and organism. Flye supports PacBio and ONT modes, but the example below is specifically raw ONT input, not a universal PacBio command.</li><li><strong>Long-read RNA alignment:</strong> use a splice-aware mapper. The minimap2 <code>splice</code> preset is intended for long-read spliced alignment; its <code>splice:hq</code> preset is documented for accurate long RNA reads such as PacBio Iso-Seq.</li><li><strong>Isoform analysis:</strong> tools such as IsoQuant accept long RNA data, including PacBio CCS and ONT cDNA/direct RNA. Supply the correct read type and matched genome; annotation can improve transcript assignment but does not make every inferred isoform biologically validated.</li></ul></div>
+<h2>Inspect read quality before analysis</h2>
+<p>NanoPlot summarizes long-read length and quality distributions from FASTQ and can also use alignment or sequencing-summary inputs. It is a descriptive QC tool, not a pass/fail rule. Compare samples and batches, check for unexpectedly short reads or quality shifts, and interpret the plots in light of the basecaller and library protocol. Do not apply one universal length or Q-score cutoff across platforms and assays.</p>
+<pre><code class="language-bash"># Example: inspect one gzipped FASTQ; choose threads for your machine
+NanoPlot --threads 4 --fastq reads.fastq.gz --outdir nanoplot_qc</code></pre>
+<p>The input path must exist and contain valid FASTQ records; the output directory is created/used for the report. NanoPlot produces summary statistics, plots, and an HTML report. If the run fails, first verify the file path, compression and FASTQ structure, then check the NanoPlot version and its help output. A good-looking QC plot does not establish mapping accuracy or variant validity.</p>
+<h2>Genome assembly and polishing</h2>
+<p>For a bacterial de novo assembly from raw Oxford Nanopore reads, Flye documents the <code>--nano-raw</code> mode. The command below illustrates the interface, not a complete project recipe: real analysis also needs an appropriate input dataset, resource allocation, version tracking, and assembly evaluation. The output is a set of contigs and run files, not proof of a complete or correct genome.</p>
+<pre><code class="language-bash"># Example only: raw ONT reads, with output written to a new directory
+flye --nano-raw reads.fastq.gz --out-dir flye_assembly --threads 4</code></pre>
+<p>Use a mode matching the read technology and accuracy profile; do not pass HiFi reads as raw ONT data. Review Flye's log and assembly statistics, then assess completeness, contamination and structural consistency using methods appropriate to the organism and study. Polishing choices depend on the platform, basecaller and available reads. Medaka is ONT-specific; Racon is a separate polishing option, not an automatic requirement or a guarantee that residual errors are removed.</p>
+<h2>Long-read RNA: alignment and isoform analysis</h2>
+<p>Long RNA reads can preserve exon linkage across an individual observed molecule, which helps distinguish splice patterns. The reads are still subject to truncation, sequencing/basecalling errors, uneven transcript representation and alignment ambiguity. A read supporting a splice pattern is evidence for that molecule, not by itself proof of a stable, expressed biological isoform or its prevalence.</p>
+<p>For long spliced reads, minimap2 documents the <code>splice</code> preset. SAM output requires <code>-a</code>; the mapper writes SAM to standard output, so shell redirection saves it. The reference must be the genome build expected by downstream analysis.</p>
+<pre><code class="language-bash"># Example: long-read RNA alignment to a genome reference
+minimap2 -ax splice -t 4 reference.fa rna_reads.fastq.gz &gt; aligned.sam</code></pre>
+<p>This creates a SAM file; it does not sort or index it. For IsoQuant's aligned-read input, provide sorted and indexed BAM files, plus the matching reference and (when using annotation) gene annotation. The original page's command used <code>isoquant.py</code> and supplied BAM without showing those preparation steps. Current upstream quick-start uses <code>isoquant</code>; check the installed release's documented CLI before adapting a command.</p>
+<pre><code class="language-bash"># Illustrative IsoQuant invocation; aligned.bam must already be sorted and indexed
+isoquant --reference reference.fa \
+  --genedb annotation.gtf \
+  --bam aligned.bam \
+  --data_type nanopore \
+  -o isoquant_results</code></pre>
+<p>Set <code>--data_type</code> to match the reads (for example, <code>nanopore</code> or <code>pacbio_ccs</code>), and confirm details against the installed release. Keep poly(A) tails when following IsoQuant's recommendations for transcript model construction. Inspect logs and output tables; compare inferred transcript structures with annotation and independent evidence before calling a transcript novel.</p>
+<h2>Record an analysis plan</h2>
+<ol class="lesson-steps"><li><strong>Define the biological question.</strong> State whether the primary output is an assembly, structural-variant evidence, or transcript/isoform catalogue and quantification.</li><li><strong>Record the input contract.</strong> Note DNA or RNA, platform and read mode (for example HiFi, ONT cDNA, or direct RNA), basecaller where relevant, file type, and any preprocessing.</li><li><strong>Check reference compatibility.</strong> Record genome assembly accession/build and annotation release. Genome and annotation must describe the same coordinate system.</li><li><strong>Review QC and alignment.</strong> Save read-length/quality summaries, mapping summaries, and failed-read/filtering decisions. Report metrics rather than silently applying a universal threshold.</li><li><strong>Validate the interpretation.</strong> For assemblies, inspect contiguity and completeness indicators and unresolved regions. For variants or isoforms, inspect supporting reads and use orthogonal or independent evidence appropriate to the claim.</li></ol>
+<div class="lesson-exercise"><h3>Exercise: choose and defend a route</h3><p>For a sample intended to discover full-length transcript structures, write one paragraph specifying whether it is genomic DNA or RNA, its platform/read mode, the reference and annotation, a splice-aware alignment and isoform-analysis route, and one limitation you would report. Check that the read type in the tool configuration matches the dataset and that your validation step goes beyond simply observing a tool-generated candidate.</p></div>
+<h2>Further reading</h2>
+<ul><li><a href="https://github.com/wdecoster/nanoplot">NanoPlot upstream documentation</a></li><li><a href="https://github.com/mikolmogorov/Flye">Flye repository and usage manual</a></li><li><a href="https://lh3.github.io/minimap2/minimap2.html">minimap2 manual</a></li><li><a href="https://github.com/ablab/IsoQuant">IsoQuant upstream documentation</a></li><li><a href="https://www.pacb.com/technology/hifi-sequencing/">PacBio HiFi sequencing overview</a></li><li><a href="https://nanoporetech.com/documentation">Oxford Nanopore documentation repository</a></li></ul>
+<aside aria-labelledby="tutorial-feedback-title" class="lesson-feedback" id="tutorial-feedback"><h2 id="tutorial-feedback-title">Help improve this tutorial</h2><p>Found an error, a broken link, or a step that needs a clearer explanation? Please <a href="../contact.html">contact me</a>. Your feedback helps me keep this resource accurate and useful.</p></aside></article>
 <section class="mt-12 mb-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-100">
 <div class="flex items-start gap-4">
 <div class="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
@@ -413,8 +393,6 @@ isoquant.py --reference hg38.fasta \
 <script src="../code-tabs.js"></script>
 <script src="../copy-code.js"></script>
 <script src="../subscribe-fab.js"></script>
-
-
 <!-- Cookie Consent Banner -->
 <div class="fixed bottom-0 inset-x-0 z-[9999] transition-transform duration-500" id="cookie-consent-banner" style="font-family:'Inter',system-ui,sans-serif;">
 <div class="mx-auto max-w-4xl px-4 pb-4 sm:px-6">

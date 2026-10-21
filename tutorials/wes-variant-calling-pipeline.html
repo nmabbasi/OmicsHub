@@ -4,20 +4,20 @@
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<meta content="A guide to Whole Exome Sequencing (WES) analysis, covering read alignment, variant calling, LiftOver, and Variant Allele Frequency (VAF) calculations." name="description"/>
+<meta content="A practical single-sample WES variant-calling walkthrough covering alignment, GATK calling and filtering, reference-build liftover, VAF calculation, and interpretation of QC evidence and limitations." name="description"/>
 <meta content="bioinformatics, single-cell RNA-seq, shell commands, conda, computational biology, tutorials, data analysis" name="keywords"/>
 <meta content="Nasir Mahmood Abbasi, PhD" name="author"/>
 <meta content="index, follow" name="robots"/>
 <!-- Open Graph tags for social sharing -->
-<meta content="Whole Exome Sequencing (WES): Variant Calling &amp; VAF | The Omics Hub" property="og:title"/>
-<meta content="A guide to Whole Exome Sequencing (WES) analysis, covering read alignment, variant calling, LiftOver, and Variant Allele Frequency (VAF) calculations." property="og:description"/>
+<meta content="Whole Exome Sequencing (WES): Variant Calling &amp; VAF" property="og:title"/>
+<meta content="A practical single-sample WES variant-calling walkthrough covering alignment, GATK calling and filtering, reference-build liftover, VAF calculation, and interpretation of QC evidence and limitations." property="og:description"/>
 <meta content="https://theomicshub.com/tutorials/wes-variant-calling-pipeline.html" property="og:url"/>
 <meta content="website" property="og:type"/>
 <meta content="https://theomicshub.com/images/wes-variant-calling.webp" property="og:image"/>
 <!-- Twitter Card tags -->
 <meta content="summary_large_image" name="twitter:card"/>
-<meta content="Whole Exome Sequencing (WES): Variant Calling &amp; VAF | The Omics Hub" name="twitter:title"/>
-<meta content="A guide to Whole Exome Sequencing (WES) analysis, covering read alignment, variant calling, LiftOver, and Variant Allele Frequency (VAF) calculations." name="twitter:description"/>
+<meta content="Whole Exome Sequencing (WES): Variant Calling &amp; VAF" name="twitter:title"/>
+<meta content="A practical single-sample WES variant-calling walkthrough covering alignment, GATK calling and filtering, reference-build liftover, VAF calculation, and interpretation of QC evidence and limitations." name="twitter:description"/>
 <meta content="https://theomicshub.com/images/wes-variant-calling.webp" name="twitter:image"/>
 <title>Whole Exome Sequencing (WES): Variant Calling &amp; VAF | The Omics Hub</title><!-- Favicon -->
 <link href="../images/favicon.svg" rel="icon" type="image/svg+xml"/>
@@ -45,8 +45,72 @@ gtag('consent', 'default', {
 <script async="" crossorigin="anonymous" src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2910340533244599"></script>
 <meta content="ca-pub-2910340533244599" name="google-adsense-account"/><meta content="XioIUjAyO5PEAT-N6nLrowdiDe4ATl-vKdRGmmrDHZM" name="google-site-verification"/>
 <link href="https://theomicshub.com/tutorials/wes-variant-calling-pipeline.html" rel="canonical"/>
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "TechArticle", "headline": "Whole Exome Sequencing (WES): Variant Calling & VAF", "description": "A guide to Whole Exome Sequencing (WES) analysis, covering read alignment, variant calling, LiftOver, and Variant Allele Frequency (VAF) calculations.", "mainEntityOfPage": {"@type": "WebPage", "@id": "https://theomicshub.com/tutorials/wes-variant-calling-pipeline.html"}, "image": "https://theomicshub.com/images/wes-variant-calling.webp", "author": {"@type": "Person", "name": "Dr. Nasir Mahmood Abbasi, PhD", "jobTitle": "Computational Biologist & Bioinformatics Researcher", "url": "https://theomicshub.com/about.html", "sameAs": ["https://github.com/nmabbasi"]}, "publisher": {"@type": "Organization", "name": "The Omics Hub", "url": "https://theomicshub.com", "logo": {"@type": "ImageObject", "url": "https://theomicshub.com/images/favicon.svg"}}, "datePublished": "2026-09-04", "dateModified": "2026-10-10", "url": "https://theomicshub.com/tutorials/wes-variant-calling-pipeline.html", "name": "Whole Exome Sequencing (WES): Variant Calling & VAF | The Omics Hub", "isPartOf": {"@type": "WebSite", "name": "The Omics Hub", "url": "https://theomicshub.com/"}}</script>
-<script id="eeat-schema" type="application/ld+json">{"@context": "https://schema.org", "@type": "TechArticle", "name": "Whole Exome Sequencing (WES): Variant Calling & VAF | The Omics Hub", "description": "A guide to Whole Exome Sequencing (WES) analysis, covering read alignment, variant calling, LiftOver, and Variant Allele Frequency (VAF) calculations.", "url": "https://theomicshub.com/tutorials/wes-variant-calling-pipeline.html", "isPartOf": {"@type": "WebSite", "name": "The Omics Hub", "url": "https://theomicshub.com/"}, "author": {"@type": "Person", "name": "Dr. Nasir Mahmood Abbasi, PhD", "jobTitle": "Computational Biologist & Bioinformatics Researcher", "url": "https://theomicshub.com/about.html", "sameAs": ["https://github.com/nmabbasi"]}, "publisher": {"@type": "Organization", "name": "The Omics Hub", "url": "https://theomicshub.com/"}, "inLanguage": "en"}</script></head>
+<script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "Whole Exome Sequencing (WES): Variant Calling & VAF",
+  "description": "A practical single-sample WES variant-calling walkthrough covering alignment, GATK calling and filtering, reference-build liftover, VAF calculation, and interpretation of QC evidence and limitations.",
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://theomicshub.com/tutorials/wes-variant-calling-pipeline.html"
+  },
+  "image": "https://theomicshub.com/images/wes-variant-calling.webp",
+  "author": {
+    "@type": "Person",
+    "name": "Dr. Nasir Mahmood Abbasi, PhD",
+    "jobTitle": "Computational Biologist & Bioinformatics Researcher",
+    "url": "https://theomicshub.com/about.html",
+    "sameAs": [
+      "https://github.com/nmabbasi"
+    ]
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "The Omics Hub",
+    "url": "https://theomicshub.com",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://theomicshub.com/images/favicon.svg"
+    }
+  },
+  "datePublished": "2026-09-04",
+  "dateModified": "2026-10-21",
+  "url": "https://theomicshub.com/tutorials/wes-variant-calling-pipeline.html",
+  "name": "Whole Exome Sequencing (WES): Variant Calling & VAF",
+  "isPartOf": {
+    "@type": "WebSite",
+    "name": "The Omics Hub",
+    "url": "https://theomicshub.com/"
+  }
+}</script>
+<script id="eeat-schema" type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "name": "Whole Exome Sequencing (WES): Variant Calling & VAF",
+  "description": "A practical single-sample WES variant-calling walkthrough covering alignment, GATK calling and filtering, reference-build liftover, VAF calculation, and interpretation of QC evidence and limitations.",
+  "url": "https://theomicshub.com/tutorials/wes-variant-calling-pipeline.html",
+  "isPartOf": {
+    "@type": "WebSite",
+    "name": "The Omics Hub",
+    "url": "https://theomicshub.com/"
+  },
+  "author": {
+    "@type": "Person",
+    "name": "Dr. Nasir Mahmood Abbasi, PhD",
+    "jobTitle": "Computational Biologist & Bioinformatics Researcher",
+    "url": "https://theomicshub.com/about.html",
+    "sameAs": [
+      "https://github.com/nmabbasi"
+    ]
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "The Omics Hub",
+    "url": "https://theomicshub.com/"
+  },
+  "inLanguage": "en",
+  "headline": "Whole Exome Sequencing (WES): Variant Calling & VAF"
+}</script><link href="../tutorial-library.css" rel="stylesheet"/></head>
 <body class="bg-white text-gray-900">
 <script>
 function toggleMobileMenu() {
@@ -131,25 +195,26 @@ function toggleMobileMenu() {
 <div class="mb-12 rounded-2xl overflow-hidden shadow-lg border border-gray-100">
 <img alt="Whole Exome Sequencing (WES): Variant Calling &amp; VAF" class="w-full aspect-video object-cover" decoding="async" loading="eager" src="../images/wes-variant-calling.webp"/>
 </div>
-<article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none"><div class="flex flex-wrap items-center gap-4 text-xs font-mono text-gray-500 bg-gray-50 p-3 rounded-lg border border-gray-200 mb-6">
+<article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--walkthrough"><div class="flex flex-wrap items-center gap-4 text-xs font-mono text-gray-500 bg-gray-50 p-3 rounded-lg border border-gray-200 mb-6">
 <div class="flex items-center gap-1">
 <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
 <span><strong>Example environment:</strong> Ubuntu 24.04, Bash 5.1 (BWA-MEM 0.7.17, GATK 4.4.0)</span>
 </div>
-</div><h2>Learning objectives &amp; prerequisites</h2>
+</div><p class="lesson-lead">Follow the data contract from paired reads to a filtered single-sample VCF, then calculate and inspect read-based allele fractions. The commands are a workflow template: paths, indexes, target intervals, software versions, and filtering decisions must match your experiment.</p>
+<h2>Learning objectives and prerequisites</h2>
 <p><strong>By the end of this lesson</strong> you will be able to:</p>
 <ul>
 <li>Run an end-to-end germline Whole Exome Sequencing (WES) variant-calling workflow from paired FASTQ to filtered VCF suitable for downstream annotation.</li>
 <li>Compute Variant Allele Frequency (VAF) from a VCF and interpret VAF distributions for germline WES data.</li>
 <li>Understand common failure modes and how to inspect intermediate files (FASTQ quality, alignment metrics, duplicate rates, depth by target).</li>
 </ul>
-<p><strong>Prerequisites</strong>: Comfortable with the Linux command line, basic knowledge of FASTQ/BAM/VCF formats, and access to a conda-enabled environment, HPC, or local installation with the following (example versions used in commands but not strictly required):</p>
+<p><strong>Prerequisites:</strong> Linux command-line experience and familiarity with FASTQ, BAM, and VCF. The example names assume paired-end reads from one sample and a GRCh38 reference; they are placeholders, not included data. Create output directories before running commands, and ensure indexes/dictionaries and all resources were built from the exact reference FASTA.</p>
 <ul>
 <li>BWA-MEM (0.7.17), samtools (1.16+), GATK (4.4+), Picard (via GATK or standalone), bcftools (1.15+), bedtools, liftover utilities (if needed), and R or Python for plotting.</li>
 <li>Reference FASTA (GRCh38 primary assembly or GRCh37 as appropriate) and matching index files, and exome interval BED (e.g., Agilent SureSelect V6 intervals).</li>
 </ul>
 <h2>Why this matters: biological and computational context</h2>
-<p>Whole Exome Sequencing targets protein-coding regions (~1–2% of the genome), enabling deep coverage across exons for cost-effective detection of germline variants. Deep coverage increases sensitivity for heterozygous variants and enables more confident VAF estimation. However, WES introduces target-capture biases (edge effects, GC bias), and many variant-calling errors arise from mapping artifacts, PCR duplicates, and systematic base-calling errors. The GATK Best Practices workflow combines careful alignment, duplicate marking, local re-assembly, and calibration to reduce false positives and produce high-quality variant calls.</p>
+<p>WES enriches selected genomic intervals, usually including many protein-coding exons. Coverage is uneven: capture design, GC content, alignment, and library preparation affect which bases are callable. HaplotypeCaller performs local haplotype assembly in active regions; marking duplicates and, where appropriate, BQSR are distinct preparation steps. None of these steps removes the need to inspect coverage and call evidence.</p>
 <p>Variant Allele Frequency (VAF) is the fraction of sequencing reads supporting the alternate allele at a locus. For a diploid germline heterozygous single-nucleotide variant (SNV) with no bias, VAF ≈ 0.5; homozygous alternate VAF ≈ 1.0; low VAFs may indicate mosaicism, contamination, subclonal variation, or sequencing error. Interpreting VAF requires considering depth, strand balance, read position, and mapping quality.</p>
 <h2>Required input files and directory layout</h2>
 <p>Before beginning, create a working directory and ensure you have these files (examples paths below):</p>
@@ -199,7 +264,7 @@ gatk ApplyBQSR \
   -O aligned/NA12878.recal.bam \
   --create-output-bam-index true
 </code></pre>
-<p>Notes: Known-sites must match the reference build. BQSR models systematic errors for the sequencer and adjusts base quality scores. For modest pipelines, you may skip BQSR, but be aware it can improve variant quality in some datasets.</p>
+<p>Notes: Known-sites must match the reference build. BQSR models systematic errors for the sequencer and adjusts base quality scores. BQSR requires known-sites resources matching the reference build and is not automatically beneficial for every data set. Compare the workflow with current project guidance; omitting it means use the duplicate-marked BAM consistently downstream.</p>
 <h3>4. Call variants with GATK HaplotypeCaller (per-sample GVCF or direct VCF)</h3>
 <pre><code># Input: aligned/NA12878.recal.bam (or aligned/NA12878.dedup.bam if skipping BQSR)
 # Output (here): vcf/NA12878_raw.vcf.gz
@@ -210,7 +275,7 @@ gatk HaplotypeCaller \
   --native-pair-hmm-threads 8 \
   -O vcf/NA12878_raw.vcf.gz
 </code></pre>
-<p>Tip: For cohort workflows, run HaplotypeCaller in GVCF mode (--emit-ref-confidence GVCF) and jointly genotype later with GenotypeGVCFs.</p>
+<p>This command produces a single-sample VCF. For cohort joint genotyping, emit one intermediate GVCF per sample with <code>-ERC GVCF</code> (also accepted as <code>--emit-ref-confidence GVCF</code>), then combine/genotype according to the GATK cohort workflow. A GVCF is not the final cohort VCF.</p>
 <h3>5. Hard-filtering (example filters; consider VQSR for larger sample sets)</h3>
 <pre><code># Input: vcf/NA12878_raw.vcf.gz
 # Output: vcf/NA12878_filtered.vcf.gz
@@ -223,7 +288,7 @@ gatk VariantFiltration \
   --filter-name "FS_gt_60" --filter-expression "FS &gt; 60.0" \
   --filter-name "MQ_lt_40" --filter-expression "MQ &lt; 40.0"
 </code></pre>
-<p>What the FILTER column means: variants tagged with FILTER=PASS (or '.') survive filters; others will have the filter name added. These thresholds are illustrative; consider dataset-specific tuning and VQSR for cohorts &amp; exome data.</p>
+<p>VariantFiltration annotates records; it does not remove failing records. A record with <code>FILTER=.</code> has not been evaluated by a filter and is not equivalent to PASS. Inspect filter labels and explicitly select PASS records before describing the result as filtered, for example: <code>gatk SelectVariants -R refs/GRCh38.fa -V vcf/NA12878_filtered.vcf.gz --exclude-filtered true -O vcf/NA12878_pass.vcf.gz</code>. The expressions here are illustrative only: confirm annotations exist in the VCF header and tune against truth data or project-specific evidence. Hard filters act on sites and can discard true calls; VQSR also has data/resource requirements and is not automatically appropriate for every exome cohort.</p>
 <h3>6. Optional: LiftOver variants between genome builds</h3>
 <p>If you need to convert coordinates between GRCh37 and GRCh38, use Picard/GATK/GATK LiftoverVcf with the chain file. Always re-annotate and validate lifted variants.</p>
 <pre><code># Input: vcf/NA12878_filtered.vcf.gz (GRCh37)
@@ -236,12 +301,12 @@ gatk LiftoverVcf \
   --REJECT vcf/NA12878_liftover_rejected.vcf.gz
 </code></pre>
 <h3>7. Compute Variant Allele Frequency (VAF)</h3>
-<p>VAF is usually computed from the AD (allelic depths) or by counting reads in the BAM. The simplest method uses the AD field in the VCF:</p>
+<p>For a sample and a biallelic genotype, a common read-based estimate is alternate AD divided by the sum of reference and alternate AD. FORMAT/AD is allele-depth data; FORMAT/DP is a separate caller field and may not equal the sum of AD. This illustration is deliberately restricted to one sample and biallelic records. Check the VCF header and genotype before interpreting values; multiallelic records have one AD value per allele, and missing values must not be silently treated as zero.</p>
 <pre><code># Input: vcf/NA12878_filtered.vcf.gz
-# Output: vcf/NA12878_filtered.withVAF.tsv (tab-delimited with CHR POS REF ALT DP AD VAF)
-bcftools query -f '%CHROM\t%POS\t%REF\t%ALT[\t%DP\t%AD]\n' vcf/NA12878_filtered.vcf.gz \
-  | awk 'BEGIN{OFS="\t"; print "CHROM","POS","REF","ALT","DP","AD","VAF"} \
-    {dp=$5; split($6,ad,","); if (ad[2]=="") ad[2]=0; v= (dp&gt;0 ? ad[2]/dp : "NA"); print $1,$2,$3,$4,dp,ad[2],v}' \
+# Output: vcf/NA12878_filtered.withVAF.tsv (one sample; CHROM POS REF ALT GT REF_AD ALT_AD VAF)
+bcftools query -f '%CHROM\t%POS\t%REF\t%ALT[\t%GT\t%AD]\n' vcf/NA12878_filtered.vcf.gz \
+  | awk 'BEGIN{OFS="\t"; print "CHROM","POS","REF","ALT","GT","REF_AD","ALT_AD","VAF"} \
+    {split($6,ad,","); if ($4 ~ /,/ || $5=="." || $5=="./." || $5==".|." || ad[1]=="" || ad[1]=="." || ad[2]=="" || ad[2]==".") {v="NA"} else {den=ad[1]+ad[2]; v=(den&gt;0 ? ad[2]/den : "NA")} print $1,$2,$3,$4,$5,ad[1],ad[2],v}' \
   &gt; vcf/NA12878_filtered.withVAF.tsv
 </code></pre>
 <p>Notes: AD format is typically REF,ALT counts. Some callers provide multiple ALT counts (e.g., multiallelic). Confirm field order with bcftools query or header inspection.</p>
@@ -252,14 +317,14 @@ Rscript -e 'd&lt;-read.delim("vcf/NA12878_filtered.withVAF.tsv", header=TRUE); \
   png("diagnostics/VAF_distribution.png", width=800, height=600); \
   hist(as.numeric(d$VAF[!is.na(d$VAF)]), breaks=100, col="steelblue", main="VAF distribution", xlab="VAF"); dev.off()'
 </code></pre>
-<p>This histogram will help you inspect modes at ~0.5 (heterozygous), ~1.0 (homozygous alt), and any unexpected low-VAF peaks.</p>
+<p>For a diploid, high-quality biallelic germline call, heterozygous and homozygous-alternate genotypes often have allele fractions near 0.5 and 1, respectively. A histogram is descriptive, not a genotype caller: depth, allele balance, ploidy, mapping/base quality, contamination, and capture bias affect the values. The included plot command assumes the table has a numeric VAF column and an existing diagnostics directory.</p>
 <h2>Output inspection and interpretation</h2>
 <p>When inspecting results, focus on both file-level metrics and per-variant signals.</p>
 <ul>
-<li><strong>BAM-level QC</strong>: examine mapping rate, insert size distribution, duplicate rate, and on-target coverage using tools such as samtools flagstat, Picard CollectHsMetrics, and MultiQC. Typical WES targets: mean target coverage often &gt;60x for reliable germline calling; many clinical WES runs aim for &gt;100x.</li>
-<li><strong>Variant counts and Ti/Tv</strong>: raw VCFs will have many false positives. After reasonable filtering, exonic Ti/Tv often approaches ~2.8–3.2; a value dramatically lower suggests noisy calls or contamination; dramatically higher is unusual and suggests filtering artifacts.</li>
-<li><strong>VAF patterns</strong>: expect two primary modes for germline WES: one near 0.5 (heterozygous) and one near 1.0 (homozygous alt). A heavy tail of low VAF variants (&lt;0.2) often indicates sequencing errors, contamination, or true mosaicism; interpretation requires depth and strand evidence.</li>
-<li><strong>Per-variant evidence</strong>: inspect DP (depth), AD (allelic depths), MQ (mapping quality), FS/ReadPosRankSum (strand and read position bias). A variant with VAF ~0.5 but very low DP (&lt;20) is less confident than the same VAF at DP 100.</li>
+<li><strong>BAM-level QC:</strong> use samtools flagstat for alignment summaries and a capture-aware metric such as Picard CollectHsMetrics for target coverage and on-target measures. Interpret coverage against the assay design and the lab/project’s validated callable-region criteria; there is no single depth threshold that guarantees reliable calling.</li>
+<li><strong>Variant counts and Ti/Tv:</strong> compare counts and transition/transversion ratios only with a like-for-like call set, genome build, target definition, variant class, and filtering protocol. These are broad QC signals, not universal thresholds or diagnoses of contamination.</li>
+<li><strong>Allele fractions:</strong> examine genotype, depth, allele-specific counts, mapping quality, and strand/read-position evidence together. Low fractions can arise from artifacts or biological mixtures; a histogram alone cannot distinguish them.</li>
+<li><strong>Per-variant evidence:</strong> inspect DP, AD, MQ, FS, and ReadPosRankSum when present, along with genotype and local read evidence. A fraction based on few reads is less stable than the same fraction supported by many reads; do not treat a fixed depth cutoff as a universal confidence rule.</li>
 </ul>
 <p>What a plausible result means and does NOT prove:</p>
 <ul>
@@ -270,11 +335,11 @@ Rscript -e 'd&lt;-read.delim("vcf/NA12878_filtered.withVAF.tsv", header=TRUE); \
 <h3>Symptom: HaplotypeCaller crashes with "No samples in header"</h3>
 <p>Likely cause: BAM lacks Read Group (RG) or SM tag. Fix: re-run BWA-MEM with -R '@RG\tID:... \tSM:... \tPL:...' or use Picard AddOrReplaceReadGroups to add RGs.</p>
 <h3>Symptom: Excessive false positives clustered near exon boundaries</h3>
-<p>Likely cause: Capture-edge mapping artifacts or incomplete target BED specification. Fix: restrict calling to padded intervals (e.g., add 50 bp padding to capture BED) or apply stricter filters for indels near target edges. Consider redoing alignment with stricter parameters or using local realignment approaches.</p>
+<p>Likely cause: Capture-edge mapping artifacts or incomplete target BED specification. Fix: confirm target/reference build and coordinate conventions, then compare edge calls with read-level evidence and the assay’s validated interval policy. Padding changes the callable region and should be justified by the design; it is not a generic repair. HaplotypeCaller already performs local assembly, so legacy local realignment is not a default fix.</p>
 <h3>Symptom: Low on-target rate or highly uneven coverage</h3>
 <p>Likely cause: Library preparation or capture failure, incorrect BED file (wrong build or coordinate system), or mislabeled sample. Fix: verify BED build matches reference, re-run capture QC, inspect insert-size distribution, and consult wet-lab team.</p>
 <h3>Symptom: Unexpected Ti/Tv ratio (very low)</h3>
-<p>Likely cause: excessive false positives from permissive filters, contamination, or misaligned reads. Fix: tighten filters (increase QD/QUAL thresholds), inspect contamination estimate (VerifyBamID), or re-evaluate alignment parameters.</p>
+<p>Likely cause: excessive false positives from permissive filters, contamination, or misaligned reads. Fix: first confirm the variant class, target region, sample, and filtering method are comparable to the benchmark. Review annotation distributions and inspect representative calls before changing thresholds; tightening filters blindly can remove true variants.</p>
 <h2>Limitations, version and reference-data caveats, and responsible use</h2>
 <ul>
 <li>Reference-build mismatch: Known-sites, interval BEDs, and chain files must match the reference FASTA. Using GRCh37 resources on GRCh38 BAMs will produce incorrect results.</li>
@@ -283,7 +348,7 @@ Rscript -e 'd&lt;-read.delim("vcf/NA12878_filtered.withVAF.tsv", header=TRUE); \
 <li>Ethical/responsible use: Do not make clinical claims based solely on this pipeline output. Clinical reporting requires validated pipelines, accredited labs, confirmatory testing, and genetic counseling.</li>
 <li>Liftover caveats: Some variants do not map cleanly between builds and will be rejected by LiftoverVcf. Re-annotation and manual review are required for lifted variants in clinically relevant loci.</li>
 </ul>
-<h2>Concise next-step checklist</h2>
+<h2>Use the results as a QC record</h2>
 <ol>
 <li>Run BAM-level QC (samtools flagstat, Picard CollectHsMetrics) and produce a MultiQC report.</li>
 <li>Confirm RG tags and reference-build consistency for all inputs.</li>
@@ -300,18 +365,7 @@ Rscript -e 'd&lt;-read.delim("vcf/NA12878_filtered.withVAF.tsv", header=TRUE); \
 <li><a href="https://www.nature.com/articles/nbt.2527">DePristo et al., "A framework for variation discovery and genotyping using next-generation DNA sequencing", Nature Genetics (GATK foundational paper)</a></li>
 <li><a href="https://www.nist.gov/programs-projects/genome-bottle">Genome in a Bottle (GIAB) benchmark resources (NA12878)</a></li>
 </ul>
-</article>
-<section class="mt-12 mb-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-100">
-<div class="flex items-start gap-4">
-<div class="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-<svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
-</div>
-<div>
-<p class="text-sm text-gray-600 mb-2">This tutorial records the software versions used in its examples. Software and package behaviour can change. Please re-check commands against the official documentation. If a command does not work, you find an error, or the tutorial is no longer reproducible, please report it through the <a class="text-blue-600 hover:underline" href="../contact.html">Contact page</a></p>
-<p class="text-sm text-gray-500">Author: <a class="text-blue-600 hover:underline font-medium" href="../about.html">Nasir Mahmood Abbasi, PhD</a> - Category: Genomics and Whole-Exome Sequencing</p>
-</div>
-</div>
-</section>
+<aside aria-labelledby="tutorial-feedback-title" class="lesson-feedback" id="tutorial-feedback"><h2 id="tutorial-feedback-title">Help improve this tutorial</h2><p>Found an error, a broken link, or a step that needs a clearer explanation? Please <a href="../contact.html">contact me</a>. Your feedback helps me keep this resource accurate and useful.</p></aside></article>
 <section aria-label="Course sequence" class="mt-16 pt-10 border-t border-gray-100">
 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
 <h2 class="text-2xl font-black text-gray-900 tracking-tight">Continue Learning</h2>
@@ -462,8 +516,6 @@ Rscript -e 'd&lt;-read.delim("vcf/NA12878_filtered.withVAF.tsv", header=TRUE); \
 <script src="../code-tabs.js"></script>
 <script src="../copy-code.js"></script>
 <script src="../subscribe-fab.js"></script>
-
-
 <!-- Cookie Consent Banner -->
 <div class="fixed bottom-0 inset-x-0 z-[9999] transition-transform duration-500" id="cookie-consent-banner" style="font-family:'Inter',system-ui,sans-serif;">
 <div class="mx-auto max-w-4xl px-4 pb-4 sm:px-6">

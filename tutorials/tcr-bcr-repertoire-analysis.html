@@ -4,22 +4,22 @@
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<meta content="A guide to analyzing T-cell and B-cell receptor (TCR/BCR) repertoires from single-cell data using scRepertoire to track clonal expansion in diseases like Sézary Syndrome." name="description"/>
+<meta content="Walk through single-cell TCR repertoire summaries and Seurat annotation, with explicit clone-definition and interpretation limits." name="description"/>
 <meta content="bioinformatics, single-cell RNA-seq, shell commands, conda, computational biology, tutorials, data analysis" name="keywords"/>
 <meta content="Nasir Mahmood Abbasi, PhD" name="author"/>
 <meta content="index, follow" name="robots"/>
 <!-- Open Graph tags for social sharing -->
-<meta content="Immune Repertoire Analysis | The Omics Hub" property="og:title"/>
-<meta content="A guide to analyzing T-cell and B-cell receptor (TCR/BCR) repertoires from single-cell data using scRepertoire to track clonal expansion in diseases like Sézary Syndrome." property="og:description"/>
+<meta content="TCR/BCR Repertoire Analysis" property="og:title"/>
+<meta content="Walk through single-cell TCR repertoire summaries and Seurat annotation, with explicit clone-definition and interpretation limits." property="og:description"/>
 <meta content="https://theomicshub.com/tutorials/tcr-bcr-repertoire-analysis.html" property="og:url"/>
 <meta content="website" property="og:type"/>
 <meta content="https://theomicshub.com/images/immune-repertoire-analysis.webp" property="og:image"/>
 <!-- Twitter Card tags -->
 <meta content="summary_large_image" name="twitter:card"/>
-<meta content="Immune Repertoire Analysis | The Omics Hub" name="twitter:title"/>
-<meta content="A guide to analyzing T-cell and B-cell receptor (TCR/BCR) repertoires from single-cell data using scRepertoire to track clonal expansion in diseases like Sézary Syndrome." name="twitter:description"/>
+<meta content="TCR/BCR Repertoire Analysis" name="twitter:title"/>
+<meta content="Walk through single-cell TCR repertoire summaries and Seurat annotation, with explicit clone-definition and interpretation limits." name="twitter:description"/>
 <meta content="https://theomicshub.com/images/immune-repertoire-analysis.webp" name="twitter:image"/>
-<title>Immune Repertoire Analysis | The Omics Hub</title><!-- Favicon -->
+<title>TCR/BCR Repertoire Analysis | The Omics Hub</title><!-- Favicon -->
 <link href="../images/favicon.svg" rel="icon" type="image/svg+xml"/>
 <!-- Pre-fetch fonts to prevent FOUC (layout shift) -->
 <link href="https://fonts.googleapis.com" rel="preconnect"/>
@@ -45,8 +45,72 @@ gtag('consent', 'default', {
 <script async="" crossorigin="anonymous" src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2910340533244599"></script>
 <meta content="ca-pub-2910340533244599" name="google-adsense-account"/><meta content="XioIUjAyO5PEAT-N6nLrowdiDe4ATl-vKdRGmmrDHZM" name="google-site-verification"/>
 <link href="https://theomicshub.com/tutorials/tcr-bcr-repertoire-analysis.html" rel="canonical"/>
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "TechArticle", "headline": "Immune Repertoire Analysis", "description": "A guide to analyzing T-cell and B-cell receptor (TCR/BCR) repertoires from single-cell data using scRepertoire to track clonal expansion in diseases like Sézary Syndrome.", "mainEntityOfPage": {"@type": "WebPage", "@id": "https://theomicshub.com/tutorials/tcr-bcr-repertoire-analysis.html"}, "image": "https://theomicshub.com/images/immune-repertoire-analysis.webp", "author": {"@type": "Person", "name": "Dr. Nasir Mahmood Abbasi, PhD", "jobTitle": "Computational Biologist & Bioinformatics Researcher", "url": "https://theomicshub.com/about.html", "sameAs": ["https://github.com/nmabbasi"]}, "publisher": {"@type": "Organization", "name": "The Omics Hub", "url": "https://theomicshub.com", "logo": {"@type": "ImageObject", "url": "https://theomicshub.com/images/favicon.svg"}}, "datePublished": "2026-08-18", "dateModified": "2026-10-10", "url": "https://theomicshub.com/tutorials/tcr-bcr-repertoire-analysis.html", "name": "Immune Repertoire Analysis | The Omics Hub", "isPartOf": {"@type": "WebSite", "name": "The Omics Hub", "url": "https://theomicshub.com/"}}</script>
-<script id="eeat-schema" type="application/ld+json">{"@context": "https://schema.org", "@type": "TechArticle", "name": "Immune Repertoire Analysis | The Omics Hub", "description": "A guide to analyzing T-cell and B-cell receptor (TCR/BCR) repertoires from single-cell data using scRepertoire to track clonal expansion in diseases like Sézary Syndrome.", "url": "https://theomicshub.com/tutorials/tcr-bcr-repertoire-analysis.html", "isPartOf": {"@type": "WebSite", "name": "The Omics Hub", "url": "https://theomicshub.com/"}, "author": {"@type": "Person", "name": "Dr. Nasir Mahmood Abbasi, PhD", "jobTitle": "Computational Biologist & Bioinformatics Researcher", "url": "https://theomicshub.com/about.html", "sameAs": ["https://github.com/nmabbasi"]}, "publisher": {"@type": "Organization", "name": "The Omics Hub", "url": "https://theomicshub.com/"}, "inLanguage": "en"}</script></head>
+<script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "TCR/BCR Repertoire Analysis",
+  "description": "Walk through single-cell TCR repertoire summaries and Seurat annotation, with explicit clone-definition and interpretation limits.",
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://theomicshub.com/tutorials/tcr-bcr-repertoire-analysis.html"
+  },
+  "image": "https://theomicshub.com/images/immune-repertoire-analysis.webp",
+  "author": {
+    "@type": "Person",
+    "name": "Dr. Nasir Mahmood Abbasi, PhD",
+    "jobTitle": "Computational Biologist & Bioinformatics Researcher",
+    "url": "https://theomicshub.com/about.html",
+    "sameAs": [
+      "https://github.com/nmabbasi"
+    ]
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "The Omics Hub",
+    "url": "https://theomicshub.com",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://theomicshub.com/images/favicon.svg"
+    }
+  },
+  "datePublished": "2026-08-18",
+  "dateModified": "2026-10-21",
+  "url": "https://theomicshub.com/tutorials/tcr-bcr-repertoire-analysis.html",
+  "name": "TCR/BCR Repertoire Analysis",
+  "isPartOf": {
+    "@type": "WebSite",
+    "name": "The Omics Hub",
+    "url": "https://theomicshub.com/"
+  }
+}</script>
+<script id="eeat-schema" type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "name": "TCR/BCR Repertoire Analysis",
+  "description": "Walk through single-cell TCR repertoire summaries and Seurat annotation, with explicit clone-definition and interpretation limits.",
+  "url": "https://theomicshub.com/tutorials/tcr-bcr-repertoire-analysis.html",
+  "isPartOf": {
+    "@type": "WebSite",
+    "name": "The Omics Hub",
+    "url": "https://theomicshub.com/"
+  },
+  "author": {
+    "@type": "Person",
+    "name": "Dr. Nasir Mahmood Abbasi, PhD",
+    "jobTitle": "Computational Biologist & Bioinformatics Researcher",
+    "url": "https://theomicshub.com/about.html",
+    "sameAs": [
+      "https://github.com/nmabbasi"
+    ]
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "The Omics Hub",
+    "url": "https://theomicshub.com/"
+  },
+  "inLanguage": "en",
+  "headline": "TCR/BCR Repertoire Analysis"
+}</script><link href="../tutorial-library.css" rel="stylesheet"/></head>
 <body class="bg-white text-gray-900">
 <script>
 function toggleMobileMenu() {
@@ -125,157 +189,90 @@ function toggleMobileMenu() {
 <div class="container mx-auto px-4 py-8"><div class="max-w-4xl mx-auto"><div id="tutorial-content">
 <section class="mb-12">
 <div class="flex items-center gap-2 text-sm text-blue-600 font-medium mb-4"><span>Advanced Single-Cell Analysis</span><span>-</span><span>2026-08-18</span></div>
-<h1 class="text-4xl md:text-5xl font-black text-gray-900 mb-6 leading-tight" id="tutorial-title">Immune Repertoire Analysis</h1>
+<h1 class="text-4xl md:text-5xl font-black text-gray-900 mb-6 leading-tight" id="tutorial-title">TCR/BCR Repertoire Analysis</h1>
 <div class="flex items-center gap-4"><div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 font-bold text-lg">NM</div><div><p class="font-bold text-gray-900">Nasir Mahmood Abbasi, PhD</p><p class="text-sm text-gray-500">Bioinformatics Educator</p></div></div>
 </section>
 <div class="mb-12 rounded-2xl overflow-hidden shadow-lg border border-gray-100">
 <img alt="Immune Repertoire Analysis" class="w-full aspect-video object-cover" decoding="async" loading="eager" src="../images/immune-repertoire-analysis.webp"/>
 </div>
-<article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none"><div class="flex flex-wrap items-center gap-4 text-xs font-mono text-gray-500 bg-gray-50 p-3 rounded-lg border border-gray-200 mb-6">
-<div class="flex items-center gap-1">
-<svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
-<span><strong>Tested on:</strong> Python 3.11, R 4.3.2, Ubuntu 24.04</span>
-</div>
-<div class="flex items-center gap-1">
-<svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
-</div>
-</div>
-<div class="p-6 bg-blue-50 border border-blue-100 rounded-xl mb-8">
-<h4 class="text-lg font-bold text-blue-900 mb-2">Learning Objectives &amp; Prerequisites</h4>
-<ul class="list-disc list-inside text-blue-800 space-y-1 mb-4">
-<li><strong>Prerequisites:</strong> Complete scRNA-seq Basics and understand TCR/BCR clonotypes, paired chains, and appropriate study-design metadata.</li>
-<li><strong>Objective:</strong> Analyze immune-receptor repertoire features while distinguishing clone abundance, diversity, expansion, and antigen specificity claims.</li>
-<li><strong>Expected Output:</strong> A repertoire summary with clonotype definition, chain handling, diversity metric, sample denominator, and cautious interpretation.</li>
-</ul>
-</div>
-<h2>Immune Repertoire Analysis</h2>
-<h2>Introduction</h2>
-<p>In immunology and oncology, tracking the expansion of specific T-cells or B-cells is important. Every T-cell has a unique T-Cell Receptor (TCR) sequence created by V(D)J recombination. When an immune cell recognizes a specific antigen (like a virus or a tumor), it rapidly clones itself.</p>
-<p>By sequencing the TCRs at the single-cell level (scTCR-seq), we can measure <strong>clonal expansion</strong> This is especially important in T-cell lymphomas, such as<strong>Sézary Syndrome</strong> where a single malignant T-cell clone expands uncontrollably.</p>
-<p>This tutorial covers the basics of analyzing V(D)J single-cell data with the<code>scRepertoire</code> package in R.</p>
-<hr/>
-<h2>1. Preparing V(D)J Data</h2>
-<p>Typically, 10x Genomics Cell Ranger provides a <code>filtered_contig_annotations.csv</code> file containing the TCR Alpha and Beta chain sequences for every cell barcode.</p>
+<article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--walkthrough">
+<p class="lesson-lead">This walkthrough follows filtered single-cell V(D)J contigs from Cell Ranger into scRepertoire, summarizes clone-size structure, and attaches receptor labels to a Seurat object. The result is a descriptive repertoire analysis. Clone expansion alone does not establish antigen specificity, malignancy, or cell function.</p>
+<h2>What you need and what you will produce</h2>
+<p>Use one filtered contig-annotation CSV per sample, produced by a compatible V(D)J workflow, plus a Seurat object containing the corresponding cells and a sample label in its metadata. This example assumes matched TCR and RNA libraries, compatible cell barcodes, and one sample per input directory. It uses R and scRepertoire; package APIs change, so check the linked reference for your installed version.</p>
+<p>At the end, record a clone-size summary and a UMAP colored by clone-size category, alongside the exact clone definition, chain handling, sample grouping, and number of receptor-bearing cells included. These are summaries to interpret, not biological findings supplied in advance.</p>
+<h2>1. Load contigs and make sample-aware clone calls</h2>
+<p>Cell Ranger's <code>filtered_contig_annotations.csv</code> contains contigs associated with high-confidence cell barcodes; it is not a table with one row per cell because a cell can have multiple receptor-chain contigs. Keep sample identity explicit: barcodes can recur between libraries, and a sample prefix prevents accidental merging of identical barcode strings.</p>
 <pre><code class="language-r">library(scRepertoire)
 library(Seurat)
+library(ggplot2)
 
-# Load the Cell Ranger V(D)J output
-contig_data &lt;- read.csv("filtered_contig_annotations.csv")
+# Replace these directories with one directory per V(D)J sample.
+sample_dirs &lt;- c("data/sample_A", "data/sample_B")
+sample_ids &lt;- c("sample_A", "sample_B")
+stopifnot(length(sample_dirs) == length(sample_ids))
 
-# Convert the contig list into a combined TCR format for scRepertoire
-combined_tcr &lt;- combineTCR(contig_data,
-                           samples = "Patient1",
-                           ID = "Timepoint1",
-                           cells = "T-AB")
-</code></pre>
-<hr/>
-<h2>2. Visualizing Clonal Expansion</h2>
-<p>Once the TCR chains are combined, we can visualize the diversity of the immune repertoire. In a healthy patient, the repertoire is highly diverse. In a Sézary Syndrome patient, you'll see massive clonal dominance.</p>
-<pre><code class="language-r"># Plot the relative abundance of the top clones
-quantContig(combined_tcr, cloneCall="gene+nt", scale = TRUE)
-
-# Visualize clonal space homeostasis (the proportion of the repertoire occupied by rare vs hyperexpanded clones)
-clonalHomeostasis(combined_tcr, cloneCall="gene+nt")
-</code></pre>
-<hr/>
-<h2>3. Integrating TCR Data with Seurat (scRNA-seq)</h2>
-<p>The true power of modern immune profiling is linking the <em>identity</em> of the clone (the TCR) with its <em>phenotype</em> (the RNA expression). We can overlay the clonal expansion data directly onto a Seurat UMAP.</p>
-<pre><code class="language-r"># Assume 'seurat_obj' is your standard processed scRNA-seq object
-# Merge the TCR data into the Seurat metadata using the cell barcodes
-seurat_obj &lt;- combineExpression(combined_tcr, seurat_obj, cloneCall="gene+nt")
-
-# The Seurat object now has a 'cloneType' column!
-# We can visualize where the highly expanded clones sit on the UMAP
-DimPlot(seurat_obj, group.by = "cloneType") + scale_color_viridis_d()
-</code></pre>
-<h3>Finding Markers of Malignant Clones</h3>
-<p>Once integrated, you can easily find the biological markers driving the disease by comparing the hyperexpanded clone against all other normal T-cells.</p>
-<pre><code class="language-r"># Set the identity to the clonal grouping
-Idents(seurat_obj) &lt;- "cloneType"
-
-# Find genes upregulated in the 'Hyperexpanded' clone compared to 'Rare' clones
-malignant_markers &lt;- FindMarkers(seurat_obj, ident.1 = "Hyperexpanded", ident.2 = "Rare")
-
-head(malignant_markers)
-</code></pre>
-<p>This workflow forms the bioinformatics foundation for identifying targetable biomarkers in cutaneous T-cell lymphomas and other immune-driven diseases.</p>
-<h3>Matched Python and R clonotype workflow</h3>
-<p>Define clonotypes before calculating expansion. Record whether the definition uses nucleotide or amino-acid sequence, which receptor chains are required, and how dual chains are handled.</p>
-<pre><code class="language-python">import scirpy as ir
-
-ir.pp.index_chains(mdata)
-ir.tl.chain_qc(mdata)
-ir.pp.ir_dist(mdata)
-ir.tl.define_clonotypes(mdata, receptor_arms="all", dual_ir="primary_only")
-ir.tl.clonal_expansion(mdata)
-</code></pre>
-<pre><code class="language-r">library(scRepertoire)
-
-combined_tcr &lt;- combineTCR(contig_list, samples = sample_ids, cells = "T-AB")
-combined_tcr &lt;- combineExpression(
+contig_list &lt;- lapply(sample_dirs, function(path) {
+  loadContigs(input = path, format = "10X")[[1]]
+})
+combined_tcr &lt;- combineTCR(
+  contig_list,
+  samples = sample_ids,
+  ID = sample_ids
+)</code></pre>
+<p>The directories must contain Cell Ranger's named filtered-contig CSV. Check that each list element loaded the intended sample, that barcode prefixes distinguish samples, and that productive chains and missing/extra chains are handled as intended. The defaults for removing or retaining incomplete and multi-chain cells are analysis choices, not neutral cleanup; inspect the package documentation before changing them.</p>
+<aside class="lesson-checkpoint"><h3>Before comparing samples</h3><p>Confirm that your RNA object's cell barcodes use the same sample-prefix convention as the combined contigs. Check which cells lack receptor calls, how many have multiple or incomplete chains, and whether the sample labels refer to the same biological units in both assays. A barcode mismatch can prevent annotation transfer.</p></aside>
+<h2>2. Compare clone-size structure</h2>
+<p>Choose a clonotype definition before interpreting an expansion plot. The example uses <code>aa</code>, amino-acid CDR3 calls. Amino-acid matching can group distinct nucleotide rearrangements that encode the same sequence; nucleotide-based definitions are more stringent for sequence identity. The package's available definitions and chain rules depend on current version and receptor type.</p>
+<pre><code class="language-r"># Summarize the fraction of each repertoire in clone-size bins.
+clonalHomeostasis(
   combined_tcr,
-  seurat_obj,
-  cloneCall = "aa",
+  clone.call = "aa",
   group.by = "sample"
 )
-clonalProportion(combined_tcr, cloneCall = "aa", group.by = "sample")
-</code></pre>
-<div class="mt-10 p-8 bg-gray-50 border border-gray-200 rounded-xl">
-<section class="prose-expansion bg-white border-t border-gray-100 mt-10 pt-10 pb-4">
-<div class="max-w-3xl mx-auto px-2">
-<h2 class="text-2xl font-bold text-slate-900 mb-4">The Biology Behind T Cell and B Cell Receptor Diversity</h2>
-<p class="text-slate-700 text-base leading-relaxed mb-4">
- The adaptive immune system's ability to recognise virtually any antigen depends on the extraordinary diversity of T cell receptors and B cell receptors. This diversity is generated during lymphocyte development through V(D)J recombination, a somatic process in which gene segments are randomly joined with additional nucleotide insertions and deletions at the junctions. The result is that each lymphocyte carries a unique receptor sequence, and the total number of possible TCR or BCR sequences in a single individual exceeds 10 to how to use 15.
-</p>
-<p class="text-slate-700 text-base leading-relaxed mb-4">
- In practice, the circulating repertoire of any individual contains between 10 million and 100 million distinct clonotypes, each representing a unique receptor sequence present on one or more cells. When an antigen is encountered, cells with receptors that bind that antigen proliferate through clonal expansion, producing a large population of identical cells from the same precursor. Repertoire analysis measures the frequency of each clonotype in a sample, allowing you to detect clonal expansion, track antigen-specific responses, and compare repertoire diversity across conditions or time points.
-</p>
-<h3 class="text-xl font-semibold text-slate-900 mb-3 mt-8">Sequencing Strategies: Bulk vs Single-Cell</h3>
-<p class="text-slate-700 text-base leading-relaxed mb-4">Once integrated, you can identify the biological markers driving the disease by comparing the hyperexpanded clone to all other normal T-cells.</p>
-<p class="text-slate-700 text-base leading-relaxed mb-4">
- Single-cell V(D)J sequencing, available through the 10x Genomics Chromium platform and others, sequences the full receptor chain sequences from individual cells alongside their whole-transcriptome gene expression profiles. This allows you to ask which transcriptional states are enriched in expanded clones, whether clonally related cells have diverged in their transcriptional programs, and whether paired heavy and light chain sequences or paired alpha and beta chain sequences share features across related clones. The cost is much higher per cell than bulk sequencing, and the clonotype depth is lower, but the paired information is unique.
-</p>
-<h3 class="text-xl font-semibold text-slate-900 mb-3 mt-8">Diversity Metrics: What They Measure and What They Do Not</h3>
-<p class="text-slate-700 text-base leading-relaxed mb-4">
- Repertoire diversity is typically summarised using metrics borrowed from ecology, including Shannon entropy, Simpson's index, and the Chao1 estimator. Shannon entropy captures both richness (number of distinct clonotypes) and evenness (how uniformly they're distributed). A sample dominated by one or two expanded clones will have low Shannon entropy even if the total number of distinct clonotypes is large. This is the expected pattern in a strong antigen-specific response.
-</p>
-<p class="text-slate-700 text-base leading-relaxed mb-4">
- A critical technical consideration is sequencing depth. Diversity estimates from shallow sequencing are strongly influenced by sampling artefacts: rare clonotypes that are present in the repertoire may simply not be sequenced, leading to underestimated richness. Rarefaction, which involves subsampling all samples to the same number of reads before calculating diversity metrics, is mandatory for fair comparisons across samples with different sequencing depths. Never compare Shannon entropy values calculated from samples with 10-fold differences in read depth without rarefaction.
-</p>
-<h3 class="text-xl font-semibold text-slate-900 mb-3 mt-8">Clonotype Tracking Across Time Points and Tissues</h3>
-<p class="text-slate-700 text-base leading-relaxed mb-4">
- One of the most powerful applications of repertoire analysis is tracking the same clonotype across multiple time points or tissue compartments. In cancer immunology, you can compare the TCR repertoire in tumour-infiltrating lymphocytes to the peripheral blood to determine whether tumour-specific clones are present in the blood at detectable frequencies. In infectious disease, you can track how the repertoire changes before, during, and after pathogen clearance to identify clones that expand and then contract after resolution.
-</p>
-<p class="text-slate-700 text-base leading-relaxed mb-4">
- Clonotype matching across samples requires careful consideration of the matching criteria. Two sequences are considered the same clonotype if their CDR3 amino acid sequences, V gene usage, and J gene usage all match. Matching on nucleotide sequence is more stringent and identifies cells from the same precursor with certainty. Matching on amino acid sequence is more permissive and groups functionally similar but independently arising clonotypes. Your choice should depend on whether you want to track identical cells or functionally convergent responses.
-</p>
-</div>
-</section>
-<h3 class="text-xl font-bold text-gray-900 mb-4">Knowledge Check &amp; Assessment</h3>
-<div class="space-y-4">
-<div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-<h4 class="font-bold text-gray-800 mb-2">1. Concept Verification</h4>
-<p class="text-gray-600 text-sm">Why does clonal expansion not by itself identify antigen specificity or functional state?</p>
-</div>
-<div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-<h4 class="font-bold text-gray-800 mb-2">2. Practical Execution</h4>
-<p class="text-gray-600 text-sm">Calculate or inspect clone-size distributions for two samples and report the clonotype definition and normalization used. </p>
-</div>
-<div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-<h4 class="font-bold text-gray-800 mb-2">3. Troubleshooting</h4>
-<p class="text-gray-600 text-sm">If one sample appears oligoclonal, how will you check sequencing depth, cell recovery, doublets, chain pairing, and technical batch effects?</p>
-</div>
-</div>
-</div>
-<section aria-label="References and further reading" class="mt-10 p-6 bg-slate-50 border border-slate-200 rounded-xl">
-<h2 class="text-xl font-bold text-gray-900 mb-3">References and further reading</h2>
-<p class="text-sm text-gray-600 mb-3">Use these official resources to check current software behaviour, terminology, and production guidance. Tool versions and defaults change, so verify commands against the documentation before applying them to a research dataset.</p>
-<ul class="list-disc list-inside space-y-2 text-sm text-gray-700">
-<li><a class="text-blue-700 hover:underline" href="https://satijalab.org/seurat/" rel="noopener" target="_blank">Seurat documentation</a></li>
-<li><a class="text-blue-700 hover:underline" href="https://scanpy.readthedocs.io/en/stable/" rel="noopener" target="_blank">Scanpy documentation</a></li>
+
+# Show clone contribution by rank; this is a different view of abundance.
+clonalProportion(
+  combined_tcr,
+  clone.call = "aa",
+  group.by = "sample"
+)</code></pre>
+<p>Homeostasis groups clones by their proportion of the selected repertoire; proportion plots rank clones into abundance groups. Neither is a diversity estimate by itself. Read the plot with its denominator and grouping in mind: the same clone may be assigned differently when the compared group changes. Record the clone-call definition, chain selection, grouping variable, and whether cells or reads underpin the input data.</p>
+<aside class="lesson-warning"><h3>Depth and sampling affect the picture</h3><p>Observed richness and rare-clone detection depend on sampling depth and cell recovery. Equalizing depth can be useful for a chosen comparison, but rarefaction is not a universal prerequisite or a cure for differences in tissue, capture, or library quality. Report the normalization or subsampling method and assess whether conclusions hold under reasonable alternatives. Do not label a large clone as antigen-specific from abundance alone.</p></aside>
+<h2>3. Attach clone labels to Seurat metadata</h2>
+<p>Make the RNA object's sample metadata agree with the sample names used above. The attachment relies on matching cell barcodes. The example groups frequencies within each sample and requests amino-acid clonotypes; inspect the resulting metadata columns rather than assuming a particular label or bin exists.</p>
+<pre><code class="language-r"># seurat_obj must contain a metadata column named "sample"
+# whose values match sample_ids, and matching cell barcodes.
+stopifnot("sample" %in% colnames(seurat_obj[[]]))
+seurat_obj &lt;- combineExpression(
+  combined_tcr,
+  seurat_obj,
+  clone.call = "aa",
+  group.by = "sample"
+)
+
+# Inspect the values actually added before plotting.
+colnames(seurat_obj[[]])
+DimPlot(seurat_obj, group.by = "cloneSize")</code></pre>
+<p>If cells are unexpectedly unannotated, compare the barcode strings on both sides, including any sample prefixes, and verify that the sample metadata column has the intended values. Also check whether filtering removed receptor-negative cells. The plot describes where labeled cells lie in the embedding; it does not demonstrate that a clone caused a transcriptional state or that the cells are malignant.</p>
+<h2>Interpreting clone-associated expression</h2>
+<p>A clone-size category is an abundance grouping, not a malignancy label. In a lymphoma study, determining whether a clone is malignant requires disease-specific evidence and study design beyond this repertoire workflow. A cell-level contrast such as <code>FindMarkers()</code> can be exploratory, but cells from the same donor are not independent biological replicates. For condition-level claims, account for between-sample variation, for example with an appropriate pseudobulk design, and validate findings independently.</p>
+<p>TCRs and BCRs share V(D)J-based diversity but differ in chain organization and biological processes. This worked code is TCR-focused. For BCR analysis, use the corresponding <code>combineBCR()</code> workflow and account for heavy/light-chain pairing and somatic hypermutation; do not assume TCR-specific chain choices or clone definitions transfer unchanged.</p>
+<h2>Decisions to report with your analysis</h2>
+<ul>
+<li><strong>Input and denominator:</strong> assay/software output, included samples, and whether abundance counts cells or another unit.</li>
+<li><strong>Clonotype definition:</strong> nucleotide or amino-acid sequence, gene requirements, selected chains, and treatment of dual or incomplete chains.</li>
+<li><strong>Comparison:</strong> sample/group variable, normalization or subsampling, and receptor-negative cell handling.</li>
+<li><strong>Interpretation:</strong> describe expansion as observed abundance. State what independent evidence would be needed for antigen specificity, function, or malignancy.</li>
 </ul>
-</section>
-</article>
+<section aria-labelledby="exercise-title" class="lesson-exercise"><h2 id="exercise-title">Exercise: audit a two-sample comparison</h2><p>Run the workflow on two of your own samples. Save the two plots and write a short caption containing the four decisions above. Then inspect barcode overlap, receptor-call recovery, chain pairing, and sample-level replication before making a biological comparison.</p><p><strong>Check your work:</strong> another analyst should be able to tell exactly how you defined a clone and what cells formed each denominator. A visually dominant category without that information is not an interpretable comparison.</p></section>
+<section aria-label="References and further reading" class="lesson-reference"><h2>Official documentation</h2><ul>
+<li><a href="https://www.borch.dev/uploads/screpertoire/reference/loadcontigs" rel="noopener" target="_blank">scRepertoire: loadContigs</a></li>
+<li><a href="https://www.borch.dev/uploads/screpertoire/articles/attaching_sc" rel="noopener" target="_blank">scRepertoire: attaching clonal information to single-cell objects</a></li>
+<li><a href="https://www.borch.dev/uploads/screpertoire/reference/clonalhomeostasis" rel="noopener" target="_blank">scRepertoire: clonalHomeostasis</a></li>
+<li><a href="https://www.10xgenomics.com/support/software/cell-ranger/latest/analysis/outputs/cr-5p-outputs-annotations-vdj" rel="noopener" target="_blank">10x Genomics: Cell Ranger V(D)J annotation outputs</a></li>
+<li><a href="https://satijalab.org/seurat/reference/findmarkers" rel="noopener" target="_blank">Seurat: FindMarkers and sample-level differential-expression caveat</a></li>
+</ul></section>
+<aside aria-labelledby="tutorial-feedback-title" class="lesson-feedback" id="tutorial-feedback"><h2 id="tutorial-feedback-title">Help improve this tutorial</h2><p>Found an error, a broken link, or a step that needs a clearer explanation? Please <a href="../contact.html">contact me</a>. Your feedback helps me keep this resource accurate and useful.</p></aside></article>
 <section class="mt-12 mb-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-100">
 <div class="flex items-start gap-4">
 <div class="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
@@ -437,8 +434,6 @@ clonalProportion(combined_tcr, cloneCall = "aa", group.by = "sample")
 <script src="../code-tabs.js"></script>
 <script src="../copy-code.js"></script>
 <script src="../subscribe-fab.js"></script>
-
-
 <!-- Cookie Consent Banner -->
 <div class="fixed bottom-0 inset-x-0 z-[9999] transition-transform duration-500" id="cookie-consent-banner" style="font-family:'Inter',system-ui,sans-serif;">
 <div class="mx-auto max-w-4xl px-4 pb-4 sm:px-6">

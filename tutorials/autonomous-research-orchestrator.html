@@ -3,11 +3,370 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"/>
-<meta content="noindex" name="robots"/>
-<meta content="0; url=advanced-ai-orchestration-bioinformatics.html" http-equiv="refresh"/>
-<link href="https://theomicshub.com/tutorials/advanced-ai-orchestration-bioinformatics.html" rel="canonical"/>
-<title>Redirecting...</title>
-<script id="eeat-schema" type="application/ld+json">{"@context": "https://schema.org", "@type": "TechArticle", "name": "Redirecting...", "description": "Redirecting... — practical, reproducible bioinformatics education from The Omics Hub.", "url": "https://theomicshub.com/tutorials/autonomous-research-orchestrator.html", "isPartOf": {"@type": "WebSite", "name": "The Omics Hub", "url": "https://theomicshub.com/"}, "author": {"@type": "Person", "name": "Dr. Nasir Mahmood Abbasi, PhD", "jobTitle": "Computational Biologist & Bioinformatics Researcher", "url": "https://theomicshub.com/about.html", "sameAs": ["https://github.com/nmabbasi"]}, "publisher": {"@type": "Organization", "name": "The Omics Hub", "url": "https://theomicshub.com/"}, "inLanguage": "en"}</script></head>
-<body>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<meta content="Build a bounded RNA-seq count-matrix QC workflow with optional CPM, validated plans, provenance checks, and a clear human-review boundary." name="description"/>
+<meta content="research orchestration, RNA-seq, quality control, Python, validated plans, AI planner, provenance" name="keywords"/>
+<meta content="Nasir Mahmood Abbasi, PhD" name="author"/>
+<meta content="index, follow" name="robots"/>
+<meta content="Autonomous Research Orchestrator" property="og:title"/>
+<meta content="Build a bounded RNA-seq count-matrix QC workflow with optional CPM, validated plans, provenance checks, and a clear human-review boundary." property="og:description"/>
+<meta content="https://theomicshub.com/tutorials/autonomous-research-orchestrator.html" property="og:url"/>
+<meta content="website" property="og:type"/>
+<meta content="https://theomicshub.com/images/autonomous-research-orchestrator.webp" property="og:image"/>
+<meta content="summary_large_image" name="twitter:card"/>
+<meta content="Autonomous Research Orchestrator" name="twitter:title"/>
+<meta content="Build a bounded RNA-seq count-matrix QC workflow with optional CPM, validated plans, provenance checks, and a clear human-review boundary." name="twitter:description"/>
+<meta content="https://theomicshub.com/images/autonomous-research-orchestrator.webp" name="twitter:image"/>
+<title>Autonomous Research Orchestrator | The Omics Hub</title>
+<link href="../images/favicon.svg" rel="icon" type="image/svg+xml"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@400;500&amp;display=block" rel="stylesheet"/>
+<link href="../tailwind.min.css" rel="stylesheet"/>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet"/>
+<link href="../style.css?v=20260818-header-brand-32" rel="stylesheet"/>
+<script src="../analytics.js"></script>
+<script>
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('consent', 'default', {
+  'ad_storage': 'denied',
+  'ad_user_data': 'denied',
+  'ad_personalization': 'denied',
+  'analytics_storage': 'denied'
+});
+</script>
+<script async="" crossorigin="anonymous" src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2910340533244599"></script>
+<meta content="ca-pub-2910340533244599" name="google-adsense-account"/>
+<meta content="XioIUjAyO5PEAT-N6nLrowdiDe4ATl-vKdRGmmrDHZM" name="google-site-verification"/>
+<link href="https://theomicshub.com/tutorials/autonomous-research-orchestrator.html" rel="canonical"/>
+<script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "Autonomous Research Orchestrator",
+  "description": "Build a bounded RNA-seq count-matrix QC workflow with optional CPM, validated plans, provenance checks, and a clear human-review boundary.",
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://theomicshub.com/tutorials/autonomous-research-orchestrator.html"
+  },
+  "image": "https://theomicshub.com/images/autonomous-research-orchestrator.webp",
+  "author": {
+    "@type": "Person",
+    "name": "Nasir Mahmood Abbasi, PhD",
+    "url": "https://theomicshub.com/about.html"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "The Omics Hub",
+    "url": "https://theomicshub.com",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://theomicshub.com/images/favicon.svg"
+    }
+  },
+  "datePublished": "2026-08-27",
+  "dateModified": "2026-10-21"
+}</script>
+<link href="../tutorial-library.css" rel="stylesheet"/></head>
+<body class="bg-white text-gray-900">
+<script>
+function toggleMobileMenu() {
+  const menu = document.getElementById("mobile-menu");
+  const trigger = document.querySelector('[aria-controls="mobile-menu"]');
+  if (!menu) return;
+  const opening = menu.classList.contains("hidden");
+  menu.classList.toggle("hidden", !opening);
+  if (trigger) {
+    trigger.setAttribute("aria-expanded", String(opening));
+    trigger.setAttribute("aria-label", opening ? "Close navigation menu" : "Open navigation menu");
+  }
+}
+</script>
+<!-- Header -->
+<header class="bg-white border-b border-gray-200 sticky top-0 z-50">
+<nav class="container mx-auto px-6 py-4">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-6">
+<div class="flex items-center space-x-3">
+<div class="w-10 h-10 rounded-lg flex items-center justify-center shadow shadow-blue-900/30" style="width:40px;height:40px;background-color:#123B5D;flex:0 0 40px">
+<svg aria-hidden="true" class="w-7 h-7" role="img" viewbox="0 0 32 32">
+<path d="M6 10 L15 16 L25 7 M15 16 L25 25 M15 16 L7 25" fill="none" stroke="#ffffff" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2"></path>
+<circle cx="6" cy="10" fill="#22D3EE" r="3.2" stroke="#ffffff" stroke-width="1.2"></circle>
+<circle cx="25" cy="7" fill="#A78BFA" r="3.2" stroke="#ffffff" stroke-width="1.2"></circle>
+<circle cx="15" cy="16" fill="#ffffff" r="3.7" stroke="#123B5D" stroke-width="1.2"></circle>
+<circle cx="25" cy="25" fill="#FBBF24" r="3.2" stroke="#ffffff" stroke-width="1.2"></circle>
+<circle cx="7" cy="25" fill="#34D399" r="3.2" stroke="#ffffff" stroke-width="1.2"></circle>
+</svg>
+</div>
+<span class="text-xl font-bold text-gray-900 tracking-tight">The Omics Hub</span>
+</div>
+<div class="hidden md:flex items-center gap-3 pl-6 border-l border-gray-200">
+<a aria-label="LinkedIn Profile" class="text-gray-400 hover:text-[#0A66C2] transition-colors duration-200" href="https://www.linkedin.com/in/nmabbasi" rel="noopener noreferrer" target="_blank" title="LinkedIn">
+<svg class="w-4 h-4" fill="currentColor" viewbox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"></path></svg>
+</a>
+<a aria-label="ORCID Profile" class="text-gray-400 hover:text-[#A6CE39] transition-colors duration-200" href="https://orcid.org/0009-0005-0083-1984" rel="noopener noreferrer" target="_blank" title="ORCID">
+<svg class="w-4 h-4" fill="currentColor" viewbox="0 0 24 24"><path d="M12 0C5.372 0 0 5.372 0 12s5.372 12 12 12 12-5.372 12-12S18.628 0 12 0zM7.369 4.378c.525 0 .947.431.947.947s-.422.947-.947.947a.95.95 0 01-.947-.947c0-.525.422-.947.947-.947zm-.722 3.038h1.444v10.041H6.647V7.416zm3.562 0h3.9c3.712 0 5.344 2.653 5.344 5.025 0 2.578-2.016 5.016-5.325 5.016h-3.919V7.416zm1.444 1.303v7.444h2.297c3.272 0 3.872-2.484 3.872-3.722 0-2.016-1.284-3.722-3.862-3.722h-2.307z"></path></svg>
+</a>
+<a aria-label="GitHub Profile" class="text-gray-400 hover:text-gray-900 transition-colors duration-200" href="https://github.com/nmabbasi" rel="noopener noreferrer" target="_blank" title="GitHub">
+<svg class="w-4 h-4" fill="currentColor" viewbox="0 0 24 24"><path d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0112 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"></path></svg>
+</a>
+</div>
+</div>
+<!-- Desktop Nav -->
+<div class="hidden md:flex items-center space-x-1">
+<a class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-blue-600 rounded-md hover:bg-gray-50 transition-all" href="../index.html" id="nav-desktop-home">Home</a>
+<a class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-blue-600 rounded-md hover:bg-gray-50 transition-all flex items-center gap-1" href="../start-here.html" id="nav-desktop-starthere">Start Here <span aria-hidden="true" class="nav-network-mark"><svg viewbox="0 0 32 32"><path d="M6 10 L15 16 L25 7 M15 16 L25 25 M15 16 L7 25" fill="none" stroke="#FFFFFF" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2"></path><circle cx="6" cy="10" fill="#22D3EE" r="3.2" stroke="#FFFFFF" stroke-width="1.1"></circle><circle cx="25" cy="7" fill="#A78BFA" r="3.2" stroke="#FFFFFF" stroke-width="1.1"></circle><circle cx="15" cy="16" fill="#FFFFFF" r="3.6" stroke="#123B5D" stroke-width="1.1"></circle><circle cx="25" cy="25" fill="#FBBF24" r="3.2" stroke="#FFFFFF" stroke-width="1.1"></circle><circle cx="7" cy="25" fill="#55C7D9" r="3.2" stroke="#FFFFFF" stroke-width="1.1"></circle></svg></span></a>
+<a aria-current="page" class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-blue-600 rounded-md hover:bg-gray-50 transition-all cursor-pointer" href="../tutorials.html" id="nav-desktop-tutorials">Tutorials</a>
+<a class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-blue-600 rounded-md hover:bg-gray-50 transition-all" href="../services.html" id="nav-desktop-services">Services</a>
+<a class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-blue-600 rounded-md hover:bg-gray-50 transition-all" href="../about.html" id="nav-desktop-about">About</a>
+<a class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-blue-600 rounded-md hover:bg-gray-50 transition-all" href="../contact.html" id="nav-desktop-contact">Contact</a>
+<!-- Legal dropdown -->
+<div class="relative group ml-2">
+<button aria-controls="legal-menu" aria-expanded="false" aria-haspopup="true" class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center gap-1 rounded-md hover:bg-gray-50 transition-all" id="legal-menu-button">
+Legal
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+</button>
+<div class="absolute right-0 top-full mt-1 w-52 bg-white border border-gray-100 rounded-xl shadow-lg opacity-0 invisible transition-all duration-200 z-50 overflow-hidden" id="legal-menu" role="menu">
+<a class="block px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors" href="../pages/privacy.html">Privacy Policy</a>
+<a class="block px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors" href="../pages/terms.html">Terms of Service</a>
+<a class="block px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors" href="../pages/disclaimer.html">Disclaimer</a>
+<a class="block px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors" href="../pages/cookie.html">Cookie Policy</a>
+</div>
+</div>
+</div>
+<!-- Mobile Button -->
+<button aria-controls="mobile-menu" aria-expanded="false" aria-label="Open navigation menu" class="md:hidden p-2 rounded-md text-gray-600 hover:bg-gray-100" onclick="toggleMobileMenu()">
+<svg class="w-6 h-6" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+</button>
+</div>
+<!-- Mobile Nav -->
+<div class="md:hidden hidden mt-4 pb-2 border-t border-gray-100" id="mobile-menu">
+<div class="flex flex-col pt-3 space-y-1">
+<a class="px-4 py-2 text-sm text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors" href="../index.html" id="nav-mobile-home">Home</a>
+<a class="px-4 py-2 text-sm text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors" href="../start-here.html" id="nav-mobile-starthere">Start Here <span aria-hidden="true" class="nav-network-mark"><svg viewbox="0 0 32 32"><path d="M6 10 L15 16 L25 7 M15 16 L25 25 M15 16 L7 25" fill="none" stroke="#FFFFFF" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2"></path><circle cx="6" cy="10" fill="#22D3EE" r="3.2" stroke="#FFFFFF" stroke-width="1.1"></circle><circle cx="25" cy="7" fill="#A78BFA" r="3.2" stroke="#FFFFFF" stroke-width="1.1"></circle><circle cx="15" cy="16" fill="#FFFFFF" r="3.6" stroke="#123B5D" stroke-width="1.1"></circle><circle cx="25" cy="25" fill="#FBBF24" r="3.2" stroke="#FFFFFF" stroke-width="1.1"></circle><circle cx="7" cy="25" fill="#55C7D9" r="3.2" stroke="#FFFFFF" stroke-width="1.1"></circle></svg></span></a>
+<a aria-current="page" class="px-4 py-2 text-sm text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors cursor-pointer" href="../tutorials.html" id="nav-mobile-tutorials">Tutorials</a>
+<a class="px-4 py-2 text-sm text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors" href="../services.html" id="nav-mobile-services">Services</a>
+<a class="px-4 py-2 text-sm text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors" href="../about.html" id="nav-mobile-about">About</a>
+<a class="px-4 py-2 text-sm text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors" href="../contact.html" id="nav-mobile-contact">Contact</a>
+<div class="px-4 pt-2 pb-1 text-xs font-semibold text-gray-400 uppercase tracking-wide">Legal</div>
+<a class="px-4 py-2 text-sm text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors" href="../pages/privacy.html">Privacy Policy</a>
+<a class="px-4 py-2 text-sm text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors" href="../pages/terms.html">Terms of Service</a>
+<a class="px-4 py-2 text-sm text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors" href="../pages/disclaimer.html">Disclaimer</a>
+<a class="px-4 py-2 text-sm text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors" href="../pages/cookie.html">Cookie Policy</a>
+</div>
+</div>
+</nav>
+</header>
+<!-- Main Content -->
+<main class="min-h-screen">
+<div class="page-content" id="tutorial-page">
+<div class="container mx-auto px-4 py-8"><div class="max-w-4xl mx-auto"><div id="tutorial-content"><section class="mb-10">
+<div class="flex flex-wrap items-center gap-2 text-sm text-blue-600 font-medium mb-4"><span>AI-Driven Research &amp; Agentic Bioinformatics</span><span aria-hidden="true">•</span><span>Updated 2026-10-21</span></div>
+<h1 class="text-4xl md:text-5xl font-black text-gray-900 mb-6 leading-tight" id="tutorial-title">Autonomous Research Orchestrator</h1>
+<p class="text-xl text-gray-700 mb-6 lesson-lead">Build and inspect a bounded workflow for descriptive RNA-seq count-matrix QC, with optional counts-per-million output and a narrowly constrained planner.</p>
+<div class="flex items-center gap-4"><div aria-hidden="true" class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 font-bold text-lg">NM</div><div><p class="font-bold text-gray-900">Nasir Mahmood Abbasi, PhD</p><p class="text-sm text-gray-500">Bioinformatics Educator</p></div></div>
+</section>
+<article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--walkthrough">
+<div class="p-6 bg-blue-50 border border-blue-100 rounded-xl mb-8 lesson-summary">
+<h2 id="outcomes">What you will build</h2>
+<p>A small orchestrator coordinates a planner, input validator, tool executor, and numerical reviewer. It checks count-table structure, computes sample-level QC, optionally calculates descriptive counts per million (CPM), records provenance, and stops for human review.</p>
+<ul><li><strong>Prerequisites:</strong> basic Python, CSV files, and terminal commands.</li><li><strong>Offline path:</strong> Python 3.10 or later; no packages, API key, network request, or paid model call is required.</li><li><strong>Optional AI path:</strong> one model call proposes an allowlisted JSON plan. It cannot write or run arbitrary code.</li><li><strong>Success:</strong> reproduce known toy results, trigger deliberate failures safely, and explain why passing software checks is not biological validation.</li></ul>
+</div>
+<p><strong>This is not an autonomous scientist.</strong> The default run is a deterministic, role-based teaching simulation—not a team of AI agents. The optional planner adds an actual language-model call, but the execution and review remain ordinary Python. This distinction lets you test orchestration mechanics before introducing model variability.</p>
+<p>For a broader introduction to agent frameworks, read <a href="advanced-ai-orchestration-bioinformatics.html">Advanced Orchestration: Agent Frameworks &amp; Foundation Models</a>. This lesson is different: its focus is a complete small workflow with files, checks, and reproducible outcomes.</p>
+<nav aria-label="Lesson contents" class="p-5 bg-gray-50 rounded-xl border border-gray-200">
+<strong>On this page</strong>
+<ol><li><a href="#download">Download and set up</a></li><li><a href="#inputs">Inspect the synthetic inputs</a></li><li><a href="#plan">Validate a plan before execution</a></li><li><a href="#qc">Run QC and read the result</a></li><li><a href="#normalization">Test successful CPM and a deliberate failure</a></li><li><a href="#ai-planner">Add an optional AI planner</a></li><li><a href="#review">Inspect provenance and review limits</a></li><li><a href="#tests">Run tests and practice</a></li></ol>
+</nav>
+<h2 id="download">1. Download and set up</h2>
+<p>Save both files into the same new folder. The workflow file is the full implementation, not a pseudocode fragment; the second file contains its automated tests.</p>
+<ul><li><a download="" href="../files/orchestrator_workflow.py">Download orchestrator_workflow.py</a></li><li><a download="" href="../files/test_orchestrator_workflow.py">Download test_orchestrator_workflow.py</a></li></ul>
+<p>Open a terminal in that folder. On macOS or Linux:</p>
+<pre><code class="language-bash">python3 --version
+python3 -m venv .venv
+source .venv/bin/activate
+python orchestrator_workflow.py --help</code></pre>
+<details><summary>Windows PowerShell</summary><pre><code class="language-powershell">py -3 --version
+py -3 -m venv .venv
+.\.venv\Scripts\python.exe orchestrator_workflow.py --help</code></pre><p>Use <code>.\.venv\Scripts\python.exe</code> instead of <code>python</code> in the remaining commands. Activation is not required; do not weaken your execution policy just to activate a virtual environment.</p></details>
+<p>Keep the offline lesson dependency-free. Only the optional provider integration below needs an extra package.</p>
+<h2 id="inputs">2. Inspect the synthetic inputs</h2>
+<pre><code class="language-bash">python orchestrator_workflow.py --make-demo demo</code></pre>
+<p>This creates a new directory containing <code>counts.csv</code>, <code>counts_positive.csv</code>, and <code>metadata.csv</code>. All values are invented for teaching. These are not a patient cohort or a downloaded GEO study.</p>
+<p><code>counts.csv</code> deliberately contains one all-zero sample:</p>
+<pre><code class="language-csv">gene_id,S1,S2,S3
+GENE1,10,20,0
+GENE2,0,5,0
+GENE3,90,75,0
+GENE4,0,0,0</code></pre>
+<pre><code class="language-csv">sample_id,group
+S1,control
+S2,case
+S3,case</code></pre>
+<p><code>counts_positive.csv</code> is a separate positive-control fixture: its S3 values are 5, 0, 45, and 0. It lets you test a valid normalization run without altering the zero-library example. <strong>Never invent replacement counts to repair a real failed sample.</strong></p>
+<p>The validator requires unique gene and sample identifiers, nonnegative integer counts, complete rectangular rows, and an exact sample-ID match between counts and metadata. Metadata order may differ: rows are joined by sample ID, never by their position. This teaching implementation accepts simple identifiers made from letters, numbers, underscores, dots, and hyphens; leading letters or digits are required. Count fields must contain 1–12 ASCII digits, with a maximum value of 999,999,999,999. It intentionally limits input size to 2 MiB per file, 10,000 genes, and 100 samples. These are software training limits, not biological thresholds.</p>
+<h2 id="plan">3. Validate a plan before execution</h2>
+<p>The orchestrator has a deliberately small tool registry. For <code>--task qc</code>, the only valid plan is <code>{"steps":["qc"]}</code>. For <code>--task normalize</code>, it is <code>{"steps":["qc","cpm"]}</code>. Unknown tools, extra or duplicate JSON keys, repeated tools, and changed ordering are rejected. A plan file is limited to 16 KiB. There is no shell tool and no generated-code execution.</p>
+<p>Start with a dry run:</p>
+<pre><code class="language-bash">python orchestrator_workflow.py --counts demo/counts.csv --metadata demo/metadata.csv --out run-plan --dry-run</code></pre>
+<p>Inspect <code>run-plan/plan.json</code>, the input manifest, and the event log. A dry run validates and records a plan but does not produce <code>sample_qc.csv</code> or <code>cpm.csv</code>. Every output directory must be new; the program refuses to overwrite a previous run.</p>
+<p>The design is intentionally conservative: an AI planner cannot remove a sample, change a threshold, select a new tool, or claim a result. The command-line task and parameters remain human choices.</p>
+<h2 id="qc">4. Run QC and read the result</h2>
+<pre><code class="language-bash">python orchestrator_workflow.py --counts demo/counts.csv --metadata demo/metadata.csv --out run-qc</code></pre>
+<p>Open <code>run-qc/sample_qc.csv</code> and <code>run-qc/report.md</code>. You should find:</p>
+<div aria-label="Scrollable table: tutorial reference data" class="overflow-x-auto lesson-table-wrap" role="region" tabindex="0"><table><thead><tr><th scope="col">Sample</th><th scope="col">Count total</th><th scope="col">Detected genes</th></tr></thead><tbody><tr><td>S1</td><td>100</td><td>2</td></tr><tr><td>S2</td><td>100</td><td>3</td></tr><tr><td>S3</td><td>0</td><td>0</td></tr></tbody></table></div>
+<p>These totals cover only the supplied four-gene matrix; they are not estimates of sequencing depth. The default low-total warning threshold is 50 counts solely to exercise the software. It is not a recommended RNA-seq QC cutoff. Warnings do not silently remove samples.</p>
+<p>The numerical reviewer checks the computed totals and detected-gene counts against the inputs. A completed run ends at <code>NEEDS_HUMAN_REVIEW</code>, not “biologically valid.” A zero-count sample is a valid software input for QC, but a warning requiring a person to investigate the source data.</p>
+<h2 id="normalization">5. Test successful CPM and a deliberate failure</h2>
+<p>First use the positive-control fixture:</p>
+<pre><code class="language-bash">python orchestrator_workflow.py --counts demo/counts_positive.csv --metadata demo/metadata.csv --out run-normalized --task normalize</code></pre>
+<p>Here the S3 total is 50, with two detected genes. Each sample column in <code>cpm.csv</code> should sum to approximately one million. The calculation is:</p>
+<pre><code class="language-text">CPM(gene, sample) = count(gene, sample) / column_total(sample) * 1,000,000</code></pre>
+<p>The reviewer checks nonnegative finite CPM values and their column sums. This descriptive scaling is not TPM, composition-bias correction, differential expression, or proof of a biological effect. Its denominator depends on the genes in the supplied matrix. Do not interpret the toy case/control labels as an experimental comparison.</p>
+<p>Now deliberately request normalization of the zero-library fixture:</p>
+<pre><code class="language-bash">python orchestrator_workflow.py --counts demo/counts.csv --metadata demo/metadata.csv --out run-zero-failure --task normalize</code></pre>
+<p>This command must fail with a nonzero exit status: dividing by a zero count-column total is undefined. Its QC output and failure event remain available for inspection, but it must not create a successful normalization report or <code>cpm.csv</code>. A useful orchestrator makes this failure explicit instead of hiding the sample or manufacturing a denominator.</p>
+<h2 id="ai-planner">6. Add an optional AI planner</h2>
+<p>Only attempt this after the offline commands and tests pass. Install the optional SDK in the virtual environment:</p>
+<pre><code class="language-bash">python -m pip install openai</code></pre>
+<p>Configure <code>OPENAI_API_KEY</code> in your environment using your provider's instructions. Select a model available in your own account that supports Chat Completions with JSON-schema structured output. Replace <code>YOUR_MODEL_ID</code> below; it is a placeholder, not a working model name.</p>
+<pre><code class="language-bash">python orchestrator_workflow.py --counts demo/counts_positive.csv --metadata demo/metadata.csv --out run-ai --task normalize --planner openai --model YOUR_MODEL_ID</code></pre>
+<p>This path makes at most one model request, with a 30-second request timeout and no automatic retries. Provider charges may apply. It sends only the selected task and generic matrix dimensions—not gene IDs, sample IDs, group labels, or raw counts. The returned JSON still passes the same local allowlist and exact-plan checks as an offline plan. A refusal, malformed response, or provider failure stops the run; there is no hidden fallback claiming that AI succeeded.</p>
+<p>For an explicitly configured OpenAI-compatible endpoint, the SDK also accepts <code>OPENAI_BASE_URL</code>. Check that provider's schema support first. The offline test suite mocks the provider adapter; that is not a guarantee of compatibility with every live model, account, SDK release, or endpoint.</p>
+<p>Why such a narrow planner? A constrained first project lets you demonstrate an important boundary: the model may propose data, but trusted code decides which actions are allowed. Add tools only after defining their schemas, budgets, test cases, and approval points.</p>
+<p>For these two fixed plans, an LLM offers no analytical advantage over the offline planner. Its optional role here is to teach the provider/validation boundary—not to make simple arithmetic appear intelligent. Prefer the offline run unless you specifically want to test that integration.</p>
+<h2 id="review">7. Inspect provenance and review limits</h2>
+<ul><li><code>plan.json</code> records the actual accepted steps.</li><li><code>manifest.json</code> records input and script SHA-256 hashes, Python version, task, parameters, and planner mode. Hashes identify file contents; they do not prove a dataset is scientifically suitable.</li><li><code>events.jsonl</code> records the roles and success/failure states. A failed run keeps its failure record when an output directory has been created.</li><li><code>sample_qc.csv</code>, optional <code>cpm.csv</code>, and <code>report.md</code> separate numerical outputs from the human-review decision.</li></ul>
+<p>Before accepting any output, a person must confirm that sample identities and units are correct, warnings have been investigated, the chosen analysis answers the research question, and no result is being inferred beyond what the data support. The numerical reviewer is a second implementation check, not an independent biological expert.</p>
+<p>This is not a security sandbox or a production workflow engine. It runs with your Python process's normal permissions. Its small input caps, fixed tool registry, new output directories, and absence of generated-code execution reduce the teaching example's scope; they do not make arbitrary untrusted software safe.</p>
+<p>For a real study, first inspect the specific files and document how they were generated. A GEO accession or Series record does not guarantee an analysis-ready raw-count matrix: GEO distinguishes raw sequencing reads, submitter-supplied processed files, metadata, and, for some studies, NCBI-generated count matrices. Check the file description and units before using it. Do not feed log-normalized expression into this integer-count example or truncate a real matrix silently to pass its training limits. <a href="https://www.ncbi.nlm.nih.gov/geo/info/faq.html">GEO's official FAQ</a> describes these data types.</p>
+<h2 id="tests">8. Run tests and practice</h2>
+<pre><code class="language-bash">python -m unittest -v test_orchestrator_workflow.py</code></pre>
+<p>The downloadable tests exercise known QC values, metadata reordering, positive CPM, the zero-library refusal, invalid counts and schemas, blocked plans, dry runs, overwrite protection, and a mocked provider call. Tests check what this small implementation promises—not the accuracy of a scientific conclusion.</p>
+<h3>Troubleshooting</h3>
+<ul><li><strong>Output directory already exists:</strong> choose a new run name. Do not delete prior evidence just to make a rerun pass.</li><li><strong>Counts rejected:</strong> check for missing fields, duplicate identifiers, non-integer values, or negative counts. Confirm you exported raw counts, not transformed expression.</li><li><strong>Sample mismatch:</strong> compare identifiers exactly. Reordering metadata is allowed; inventing or silently dropping samples is not.</li><li><strong>Zero-library normalization failure:</strong> inspect the original data and QC warning. Do not add artificial counts merely to bypass the check.</li><li><strong>Optional provider failure:</strong> verify the SDK, model ID, account access, environment configuration, and schema support. Return to a clearly labeled offline run rather than silently treating it as AI output.</li></ul>
+<h3>Practice with an observable result</h3>
+<ol><li>Reorder the three metadata rows in a copy. Rerun QC into a new directory. Sample identities and metrics should remain the same.</li><li>Create a plan file containing <code>{"steps":["qc","run_shell"]}</code> and supply it with <code>--plan blocked-plan.json</code>. The plan must be rejected before tool execution.</li><li>Add a duplicate gene or a fractional count to a copied input. Explain which validator rejects it and why silently coercing the value would be unsafe.</li><li>Compare two offline runs of unchanged inputs. Match their hashes and numerical outputs; distinguish reproducibility of computation from validity of interpretation.</li></ol>
+<details><summary>Check your understanding</summary><p><strong>Why can QC succeed when S3 has zero counts?</strong> Computing and flagging the zero total is valid; normalizing by that total is not. <strong>Does a valid model plan establish scientific correctness?</strong> No. It establishes only that the proposed tool sequence satisfies the local contract. <strong>What is the human approval point?</strong> Reviewing the evidence before using or reporting an analysis conclusion; the script never declares that approval on your behalf.</p></details>
+<h2 id="references">References and further learning</h2>
+<ul><li><a href="https://docs.python.org/3/library/csv.html">Python CSV documentation</a> — file parsing and its explicit conversion requirements.</li><li><a href="https://docs.python.org/3/library/argparse.html">Python argparse documentation</a> — CLI options, validation, and mutually exclusive arguments.</li><li><a href="https://platform.openai.com/docs/guides/structured-outputs">OpenAI structured-output guidance</a> — schemas, refusals, and incomplete responses; a schema is not a substitute for application validation.</li><li><a href="https://rdrr.io/bioc/edgeR/man/cpm.html">edgeR CPM reference</a> — descriptive CPM and the distinction between simple matrix column sums and normalized library sizes.</li></ul>
+<aside aria-labelledby="tutorial-feedback-title" class="lesson-feedback" id="tutorial-feedback"><h2 id="tutorial-feedback-title">Help improve this tutorial</h2><p>Found an error, a broken link, or a step that needs a clearer explanation? Please <a href="../contact.html">contact me</a>. Your feedback helps me keep this resource accurate and useful.</p></aside></article>
+<section aria-label="Continue learning" class="mt-12 pt-8 border-t border-gray-200"><h2 class="text-2xl font-bold text-gray-900 mb-4">Continue learning</h2><p class="text-gray-700"><a class="text-blue-700 hover:underline" href="advanced-ai-orchestration-bioinformatics.html">Explore LangGraph, AutoGen, and foundation-model orchestration</a> or <a class="text-blue-700 hover:underline" href="../tutorials.html?category=AI-Driven%20Research%20%26%20Agentic%20Bioinformatics">return to the AI tutorial category</a>.</p></section>
+</div></div></div>
+</div>
+<script>window.STATIC_RENDERED = true; window.PRELOADED_TUTORIAL_ID = "ai-coding-cursor-aider";</script>
+</main>
+<footer class="bg-gray-900 text-white mt-16">
+<div class="container mx-auto px-6 py-12">
+<div class="footer-grid gap-8 mb-8">
+<div class="footer-brand-column">
+<div class="flex items-center space-x-3 mb-3">
+<div class="w-10 h-10 rounded-lg flex items-center justify-center shadow shadow-blue-900/30" style="width:40px;height:40px;background-color:#123B5D;flex:0 0 40px">
+<svg aria-hidden="true" class="w-7 h-7" role="img" viewbox="0 0 32 32">
+<path d="M6 10 L15 16 L25 7 M15 16 L25 25 M15 16 L7 25" fill="none" stroke="#ffffff" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2"></path>
+<circle cx="6" cy="10" fill="#22D3EE" r="3.2" stroke="#ffffff" stroke-width="1.2"></circle>
+<circle cx="25" cy="7" fill="#A78BFA" r="3.2" stroke="#ffffff" stroke-width="1.2"></circle>
+<circle cx="15" cy="16" fill="#ffffff" r="3.7" stroke="#123B5D" stroke-width="1.2"></circle>
+<circle cx="25" cy="25" fill="#FBBF24" r="3.2" stroke="#ffffff" stroke-width="1.2"></circle>
+<circle cx="7" cy="25" fill="#34D399" r="3.2" stroke="#ffffff" stroke-width="1.2"></circle>
+</svg>
+</div>
+<span class="font-bold text-white">The Omics Hub</span>
+</div>
+<p class="text-gray-400 text-sm leading-relaxed mb-4">Practical, hands-on tutorials for bioinformatics, HPC, and single-cell RNA-seq analysis.</p>
+<a class="group inline-flex items-center gap-2 px-5 py-2.5 bg-white/5 text-gray-400 font-medium rounded-lg opacity-50 hover:opacity-100 hover:bg-[#FFDD00] hover:text-gray-900 hover:shadow-[0_0_20px_rgba(255,221,0,0.6)] transition-all duration-300 text-sm transform hover:-translate-y-0.5" href="https://paypal.me/nmabbasi12020?locale.x=en_US&amp;country.x=FR" rel="noopener noreferrer" target="_blank"><span class="text-base grayscale group-hover:grayscale-0">☕</span><span class="font-bold">Buy me a coffee</span></a>
+</div>
+<div>
+<h4 class="font-semibold text-white mb-3 text-sm uppercase tracking-wide">Explore</h4>
+<ul class="space-y-2 text-sm text-gray-400"><li><a class="hover:text-white transition-colors" href="../index.html">Home</a></li><li><a class="hover:text-white transition-colors" href="../start-here.html">Start Here</a></li><li><a class="hover:text-white transition-colors" href="../tutorials.html">Tutorials</a></li><li><a class="hover:text-white transition-colors" href="../services.html">Services</a></li><li><a class="hover:text-white transition-colors" href="../about.html">About</a></li><li><a class="hover:text-white transition-colors" href="../contact.html">Contact</a></li></ul>
+</div>
+<div>
+<h4 class="font-semibold text-white mb-3 text-sm uppercase tracking-wide">Policies</h4>
+<ul class="space-y-2 text-sm text-gray-400"><li><a class="hover:text-white transition-colors" href="../pages/privacy.html">Privacy Policy</a></li><li><a class="hover:text-white transition-colors" href="../pages/terms.html">Terms of Service</a></li><li><a class="hover:text-white transition-colors" href="../pages/disclaimer.html">Disclaimer</a></li><li><a class="hover:text-white transition-colors" href="../pages/cookie.html">Cookie Policy</a></li></ul>
+</div>
+</div>
+<div class="flex flex-col md:flex-row justify-between items-center mb-4 w-full gap-4">
+<a class="subscribe-community-button group inline-flex items-center gap-2 px-5 py-2.5 bg-white/5 text-gray-400 font-medium rounded-lg opacity-50 hover:opacity-100 transition-all duration-300 text-sm transform hover:-translate-y-0.5" href="../services.html#newsletter-title">
+<svg fill="none" height="18" stroke="currentColor" viewbox="0 0 24 24" width="18"><path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+<span>Subscribe &amp; Get Cheat Sheet</span>
+</a>
+</div>
+<div class="mt-8 pt-6 border-t border-gray-800 flex flex-col md:flex-row items-center justify-between gap-4">
+<div class="hidden md:block flex-1"></div>
+<div class="text-center text-gray-400 text-sm flex-1">
+<p>© 2026 The Omics Hub. All rights reserved.</p>
+</div>
+<div class="flex items-center justify-center md:justify-end gap-4 flex-1">
+<a aria-label="LinkedIn Profile" class="text-gray-400 hover:text-white transition-colors duration-200" href="https://www.linkedin.com/in/nmabbasi" rel="noopener noreferrer" target="_blank" title="LinkedIn">
+<svg class="w-6 h-6" fill="currentColor" viewbox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"></path></svg>
+</a>
+<a aria-label="ORCID Profile" class="text-gray-400 hover:text-white transition-colors duration-200" href="https://orcid.org/0009-0005-0083-1984" rel="noopener noreferrer" target="_blank" title="ORCID">
+<svg class="w-6 h-6" fill="currentColor" viewbox="0 0 24 24"><path d="M12 0C5.372 0 0 5.372 0 12s5.372 12 12 12 12-5.372 12-12S18.628 0 12 0zM7.369 4.378c.525 0 .947.431.947.947s-.422.947-.947.947a.95.95 0 01-.947-.947c0-.525.422-.947.947-.947zm-.722 3.038h1.444v10.041H6.647V7.416zm3.562 0h3.9c3.712 0 5.344 2.653 5.344 5.025 0 2.578-2.016 5.016-5.325 5.016h-3.919V7.416zm1.444 1.303v7.444h2.297c3.272 0 3.872-2.484 3.872-3.722 0-2.016-1.284-3.722-3.862-3.722h-2.307z"></path></svg>
+</a>
+<a aria-label="GitHub Profile" class="text-gray-400 hover:text-white transition-colors duration-200" href="https://github.com/nmabbasi" rel="noopener noreferrer" target="_blank" title="GitHub">
+<svg class="w-6 h-6" fill="currentColor" viewbox="0 0 24 24"><path d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0112 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"></path></svg>
+</a>
+</div>
+</div>
+</div>
+</footer>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-r.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="../script.js?v=20260818-search-clickable"></script>
+<script id="navigation-accessibility">
+(function () {
+  const legalButton = document.getElementById("legal-menu-button");
+  const legalMenu = document.getElementById("legal-menu");
+  const setLegalState = (open) => {
+    if (!legalButton || !legalMenu) return;
+    legalButton.setAttribute("aria-expanded", String(open));
+    legalMenu.classList.toggle("opacity-100", open);
+    legalMenu.classList.toggle("visible", open);
+    legalMenu.classList.toggle("opacity-0", !open);
+    legalMenu.classList.toggle("invisible", !open);
+  };
+  if (legalButton && legalMenu) {
+    legalButton.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      setLegalState(legalButton.getAttribute("aria-expanded") !== "true");
+    });
+    document.addEventListener("click", (event) => {
+      if (!legalMenu.contains(event.target) && !legalButton.contains(event.target)) setLegalState(false);
+    });
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") {
+        setLegalState(false);
+        legalButton.focus();
+      }
+    });
+  }
+})();
+</script>
+<script src="../code-tabs.js"></script>
+<script src="../copy-code.js"></script>
+<script src="../subscribe-fab.js"></script>
+<div class="fixed bottom-0 inset-x-0 z-[9999] transition-transform duration-500" id="cookie-consent-banner" style="font-family:'Inter',system-ui,sans-serif;">
+<div class="mx-auto max-w-4xl px-4 pb-4 sm:px-6">
+<div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-2xl sm:flex sm:items-start sm:gap-6">
+<div class="flex-1 min-w-0">
+<p class="text-sm font-semibold text-gray-900 mb-1">Analytics preferences</p>
+<p class="text-sm text-gray-600 leading-relaxed">
+          Allow optional Google Analytics cookies to help improve the site, or decline them. Your choice is stored in this browser. See our
+          <a class="text-blue-600 hover:underline font-medium" href="../pages/cookie.html">Cookie Policy</a> for details.
+        </p>
+</div>
+<div class="mt-4 flex flex-wrap items-center gap-2 sm:mt-0 sm:flex-shrink-0">
+<button class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500" data-cookie-choice="declined">Decline analytics</button>
+<button class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500" data-cookie-choice="accepted">Allow analytics</button>
+</div>
+</div>
+</div>
+</div>
+<script defer="" src="../cookie-consent.js"></script>
 </body>
 </html>

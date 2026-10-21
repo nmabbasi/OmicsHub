@@ -4,22 +4,22 @@
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<meta content="Build reusable bioinformatics pipelines using awk, pipes, redirects, and shell scripting best practices for reproducible research." name="description"/>
+<meta content="Write a Bash script that validates common four-line FASTQ and tab-separated annotation inputs, streams compressed files, and reports read-length or per-chromosome summaries." name="description"/>
 <meta content="bioinformatics, single-cell RNA-seq, shell commands, conda, computational biology, tutorials, data analysis" name="keywords"/>
 <meta content="Nasir Mahmood Abbasi, PhD" name="author"/>
 <meta content="index, follow" name="robots"/>
 <!-- Open Graph tags for social sharing -->
-<meta content="Advanced Shell Scripting | The Omics Hub" property="og:title"/>
-<meta content="Build reusable bioinformatics pipelines using awk, pipes, redirects, and shell scripting best practices for reproducible research." property="og:description"/>
+<meta content="Summarize FASTQ and Annotation Files with Bash" property="og:title"/>
+<meta content="Write a Bash script that validates common four-line FASTQ and tab-separated annotation inputs, streams compressed files, and reports read-length or per-chromosome summaries." property="og:description"/>
 <meta content="https://theomicshub.com/tutorials/command-line-part3.html" property="og:url"/>
 <meta content="website" property="og:type"/>
 <meta content="https://theomicshub.com/images/shell-commands-part3-workstation.webp" property="og:image"/>
 <!-- Twitter Card tags -->
 <meta content="summary_large_image" name="twitter:card"/>
-<meta content="Advanced Shell Scripting | The Omics Hub" name="twitter:title"/>
-<meta content="Build reusable bioinformatics pipelines using awk, pipes, redirects, and shell scripting best practices for reproducible research." name="twitter:description"/>
+<meta content="Summarize FASTQ and Annotation Files with Bash" name="twitter:title"/>
+<meta content="Write a Bash script that validates common four-line FASTQ and tab-separated annotation inputs, streams compressed files, and reports read-length or per-chromosome summaries." name="twitter:description"/>
 <meta content="https://theomicshub.com/images/shell-commands-part3-workstation.webp" name="twitter:image"/>
-<title>Advanced Shell Scripting | The Omics Hub</title><!-- Favicon -->
+<title>Summarize FASTQ and Annotation Files with Bash | The Omics Hub</title><!-- Favicon -->
 <link href="../images/favicon.svg" rel="icon" type="image/svg+xml"/>
 <!-- Pre-fetch fonts to prevent FOUC (layout shift) -->
 <link href="https://fonts.googleapis.com" rel="preconnect"/>
@@ -45,8 +45,72 @@ gtag('consent', 'default', {
 <script async="" crossorigin="anonymous" src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2910340533244599"></script>
 <meta content="ca-pub-2910340533244599" name="google-adsense-account"/><meta content="XioIUjAyO5PEAT-N6nLrowdiDe4ATl-vKdRGmmrDHZM" name="google-site-verification"/>
 <link href="https://theomicshub.com/tutorials/command-line-part3.html" rel="canonical"/>
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "TechArticle", "headline": "Advanced Shell Scripting", "description": "Build reusable bioinformatics pipelines using awk, pipes, redirects, and shell scripting best practices for reproducible research.", "mainEntityOfPage": {"@type": "WebPage", "@id": "https://theomicshub.com/tutorials/command-line-part3.html"}, "image": "https://theomicshub.com/images/shell-commands-part3-workstation.webp", "author": {"@type": "Person", "name": "Dr. Nasir Mahmood Abbasi, PhD", "jobTitle": "Computational Biologist & Bioinformatics Researcher", "url": "https://theomicshub.com/about.html", "sameAs": ["https://github.com/nmabbasi"]}, "publisher": {"@type": "Organization", "name": "The Omics Hub", "url": "https://theomicshub.com", "logo": {"@type": "ImageObject", "url": "https://theomicshub.com/images/favicon.svg"}}, "datePublished": "2026-08-21", "dateModified": "2026-10-10", "url": "https://theomicshub.com/tutorials/command-line-part3.html", "name": "Advanced Shell Scripting | The Omics Hub", "isPartOf": {"@type": "WebSite", "name": "The Omics Hub", "url": "https://theomicshub.com/"}}</script>
-<script id="eeat-schema" type="application/ld+json">{"@context": "https://schema.org", "@type": "TechArticle", "name": "Advanced Shell Scripting | The Omics Hub", "description": "Build reusable bioinformatics pipelines using awk, pipes, redirects, and shell scripting best practices for reproducible research.", "url": "https://theomicshub.com/tutorials/command-line-part3.html", "isPartOf": {"@type": "WebSite", "name": "The Omics Hub", "url": "https://theomicshub.com/"}, "author": {"@type": "Person", "name": "Dr. Nasir Mahmood Abbasi, PhD", "jobTitle": "Computational Biologist & Bioinformatics Researcher", "url": "https://theomicshub.com/about.html", "sameAs": ["https://github.com/nmabbasi"]}, "publisher": {"@type": "Organization", "name": "The Omics Hub", "url": "https://theomicshub.com/"}, "inLanguage": "en"}</script></head>
+<script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "Summarize FASTQ and Annotation Files with Bash",
+  "description": "Write a Bash script that validates common four-line FASTQ and tab-separated annotation inputs, streams compressed files, and reports read-length or per-chromosome summaries.",
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://theomicshub.com/tutorials/command-line-part3.html"
+  },
+  "image": "https://theomicshub.com/images/shell-commands-part3-workstation.webp",
+  "author": {
+    "@type": "Person",
+    "name": "Dr. Nasir Mahmood Abbasi, PhD",
+    "jobTitle": "Computational Biologist & Bioinformatics Researcher",
+    "url": "https://theomicshub.com/about.html",
+    "sameAs": [
+      "https://github.com/nmabbasi"
+    ]
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "The Omics Hub",
+    "url": "https://theomicshub.com",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://theomicshub.com/images/favicon.svg"
+    }
+  },
+  "datePublished": "2026-08-21",
+  "dateModified": "2026-10-21",
+  "url": "https://theomicshub.com/tutorials/command-line-part3.html",
+  "name": "Summarize FASTQ and Annotation Files with Bash",
+  "isPartOf": {
+    "@type": "WebSite",
+    "name": "The Omics Hub",
+    "url": "https://theomicshub.com/"
+  }
+}</script>
+<script id="eeat-schema" type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "name": "Summarize FASTQ and Annotation Files with Bash",
+  "description": "Write a Bash script that validates common four-line FASTQ and tab-separated annotation inputs, streams compressed files, and reports read-length or per-chromosome summaries.",
+  "url": "https://theomicshub.com/tutorials/command-line-part3.html",
+  "isPartOf": {
+    "@type": "WebSite",
+    "name": "The Omics Hub",
+    "url": "https://theomicshub.com/"
+  },
+  "author": {
+    "@type": "Person",
+    "name": "Dr. Nasir Mahmood Abbasi, PhD",
+    "jobTitle": "Computational Biologist & Bioinformatics Researcher",
+    "url": "https://theomicshub.com/about.html",
+    "sameAs": [
+      "https://github.com/nmabbasi"
+    ]
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "The Omics Hub",
+    "url": "https://theomicshub.com/"
+  },
+  "inLanguage": "en",
+  "headline": "Summarize FASTQ and Annotation Files with Bash"
+}</script><link href="../tutorial-library.css" rel="stylesheet"/></head>
 <body class="bg-white text-gray-900">
 <script>
 function toggleMobileMenu() {
@@ -125,48 +189,28 @@ function toggleMobileMenu() {
 <div class="container mx-auto px-4 py-8"><div class="max-w-4xl mx-auto"><div id="tutorial-content">
 <section class="mb-12">
 <div class="flex items-center gap-2 text-sm text-blue-600 font-medium mb-4"><span>Shell Command Basics</span><span>-</span><span>2026-08-21</span></div>
-<h1 class="text-4xl md:text-5xl font-black text-gray-900 mb-6 leading-tight" id="tutorial-title">Advanced Shell Scripting</h1>
+<h1 class="text-4xl md:text-5xl font-black text-gray-900 mb-6 leading-tight" id="tutorial-title">Summarize FASTQ and Annotation Files with Bash</h1>
 <div class="flex items-center gap-4"><div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 font-bold text-lg">NM</div><div><p class="font-bold text-gray-900">Nasir Mahmood Abbasi, PhD</p><p class="text-sm text-gray-500">Bioinformatics Educator</p></div></div>
 </section>
 <div class="mb-12 rounded-2xl overflow-hidden shadow-lg border border-gray-100">
-<img alt="Advanced Shell Scripting" class="w-full aspect-video object-cover" decoding="async" loading="eager" src="../images/shell-commands-part3-workstation.webp"/>
+<img alt="Summarize FASTQ and Annotation Files with Bash" class="w-full aspect-video object-cover" decoding="async" loading="eager" src="../images/shell-commands-part3-workstation.webp"/>
 </div>
-<article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none"><div class="flex flex-wrap items-center gap-4 text-xs font-mono text-gray-500 bg-gray-50 p-3 rounded-lg border border-gray-200 mb-6">
-<div class="flex items-center gap-1">
-<svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
-<span><strong>Tested on:</strong> Python 3.11, R 4.3.2, Ubuntu 24.04</span>
-</div>
-<div class="flex items-center gap-1">
-<svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
-</div>
-</div><h2>Learning objectives and prerequisites</h2>
-<p><strong>Prerequisites:</strong> You should be comfortable navigating the shell, using basic commands (ls, cd, cat, grep), and have completed introductory text-processing exercises. Work in a disposable test directory (do not run these commands on irreplaceable data).</p>
-<p><strong>Learning objectives:</strong> After this lesson you will be able to:</p>
-<ul>
-<li>Use awk for column-aware summarization and conditional processing.</li>
-<li>Compose robust pipelines with pipes (|) and redirection (&gt; and &gt;&gt;) for reproducible outputs.</li>
-<li>Write a documented, executable Bash script that summarizes either a FASTQ file or a tabular annotation file and produces a reproducible TSV summary.</li>
-<li>Manage permissions and background processes safely, and handle compressed files without decompressing to disk.</li>
-</ul>
-<h2>Why this matters for bioinformatics</h2>
-<p>Bioinformatics workflows often string together many small programs (grep, cut, awk, sort, uniq, samtools, etc.) to extract, transform and summarize large text-based biological data (FASTQ, GTF/GFF annotation files, VCFs). Scripts that are concise, well-documented, and use safe redirection make analyses reproducible. Using awk lets you express field-based computations (counts, lengths, simple statistics) in a single, portable tool that is available in nearly every Unix-like environment. Compressing data and streaming compressed input reduces disk usage and often simplifies pipeline integration.</p>
-<h2>Reproducible workflow: create and run a summary script</h2>
-<p>The following workflow demonstrates a sequential, reproducible script that summarizes either a FASTQ file (sequence read count and read-length stats) or a tab-delimited annotation file (feature counts per chromosome and average feature length). All commands assume you are in a fresh test directory. Create required test files or use your own paths. Replace <code>INPUT</code> and <code>OUTPUT</code> paths as appropriate.</p>
-<h3>Files the learner should have (examples)</h3>
-<ul>
-<li><code>test_data/example.fastq.gz</code> — compressed FASTQ (or use <code>example.fastq</code> uncompressed)</li>
-<li><code>test_data/annotations.tsv</code> — tab-separated annotation file with columns: <code>chr</code>, <code>start</code>, <code>end</code>, <code>feature_id</code>, <code>strand</code></li>
-<li>An empty directory <code>results/</code> where output tables will be written.</li>
-</ul>
-<p>To create minimal test files for learning, run (safe, non-destructive):</p>
-<pre><code># create test dir and minimal files
-mkdir -p ~/shell-tutorial/test_data ~/shell-tutorial/results
+<article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--walkthrough">
+<p class="lesson-lead">Build one small Bash program that streams either FASTQ reads or a tab-separated annotation table, validates the assumptions it can check, and writes a reproducible summary table. The two input types need different checks, so you select the mode explicitly rather than guessing from the first line.</p>
+<h2>Before you run the examples</h2>
+<p>You should be comfortable moving around the shell and using basic commands such as <code>ls</code>, <code>cd</code>, <code>cat</code>, and <code>grep</code>. Work in a disposable directory. This walkthrough uses Bash, awk, gzip, sort, and standard file utilities; it does not require a biological dataset.</p>
+<p>The FASTQ mode accepts the common four-line record layout: identifier line beginning with <code>@</code>, sequence, separator beginning with <code>+</code>, and quality string. This example checks record structure and equal sequence/quality lengths. FASTQ variants and multiline records need a format-aware tool rather than this deliberately narrow summarizer. The annotation mode expects tab-separated columns in this order: chromosome, start, end, feature ID, strand. It calculates inclusive interval lengths as <code>end - start + 1</code>, so use one-based inclusive coordinates or adjust the formula for your file's coordinate convention.</p>
+<h2>Make a disposable example dataset</h2>
+<p>The following files are synthetic teaching fixtures. Their values test the mechanics of the script; they are not biological observations.</p>
+<pre><code class="language-bash">mkdir -p ~/shell-tutorial/test_data ~/shell-tutorial/results
+
 cat &gt; ~/shell-tutorial/test_data/annotations.tsv &lt;&lt;'TSV'
+chr	start	end	feature_id	strand
 chr1	100	200	geneA	+
 chr1	300	350	geneB	-
 chr2	50	400	geneC	+
 TSV
-# create tiny FASTQ and compress it
+
 cat &gt; ~/shell-tutorial/test_data/example.fastq &lt;&lt;'FASTQ'
 @read1
 ACTGACTGACTG
@@ -177,162 +221,151 @@ ACTGACTG
 +
 IIIIIIII
 FASTQ
-gzip -c ~/shell-tutorial/test_data/example.fastq &gt; ~/shell-tutorial/test_data/example.fastq.gz
-</code></pre>
-<h3>Script: summarize_fastq_or_annotations.sh</h3>
-<p>Create a documented, executable Bash script that detects file type and writes a reproducible TSV summary into <code>results/</code>. Save this as <code>~/shell-tutorial/summarize_fastq_or_annotations.sh</code>.</p>
-<pre><code># safe shebang and strict settings
-#!/usr/bin/env bash
-# summarize_fastq_or_annotations.sh
-# Usage:
-#   ./summarize_fastq_or_annotations.sh /path/to/input.(fastq|fastq.gz|tsv) results/output_summary.tsv
-# Produces: a small tab-separated summary table. Non-destructive: never deletes files.
+gzip -c ~/shell-tutorial/test_data/example.fastq &gt; ~/shell-tutorial/test_data/example.fastq.gz</code></pre>
+<p><code>gzip -c</code> sends compressed bytes to standard output and leaves the uncompressed fixture in place. The annotation table includes a header so the script can skip it explicitly.</p>
+<h2>Write the summarizer</h2>
+<p>Save this as <code>~/shell-tutorial/summarize.sh</code>. Choose <code>fastq</code> or <code>annotations</code> as the first argument, then supply an input path and output path. A filename ending in <code>.gz</code> is integrity-tested and streamed through gzip; uncompressed input is streamed with <code>cat</code>. The program writes to a temporary file beside the destination and replaces the destination only after successful processing. An existing output with that name will therefore be replaced on success.</p>
+<pre><code class="language-bash">#!/usr/bin/env bash
+# Usage: summarize.sh {fastq|annotations} INPUT_FILE OUTPUT.tsv
+set -euo pipefail
 
-set -o errexit   # exit on error
-set -o nounset   # treat unset variables as error
-set -o pipefail  # catch errors in pipelines
-
-INPUT="${1:-}"
-OUTPUT="${2:-}"
-
-if [[ -z "${INPUT}" || -z "${OUTPUT}" ]]; then
-  echo "Usage: $0 INPUT_FILE OUTPUT_TSV" &gt;&amp;2
+if [[ $# -ne 3 ]]; then
+  echo "Usage: $0 {fastq|annotations} INPUT_FILE OUTPUT_TSV" &gt;&amp;2
   exit 2
 fi
+mode=$1
+input=$2
+output=$3
+if [[ $mode != fastq &amp;&amp; $mode != annotations ]]; then
+  echo "Mode must be fastq or annotations" &gt;&amp;2
+  exit 2
+fi
+if [[ $input != - &amp;&amp; ! -r $input ]]; then
+  echo "Input is not readable: $input" &gt;&amp;2
+  exit 1
+fi
+mkdir -p "$(dirname -- "$output")"
+tmp=$(mktemp "${output}.tmp.XXXXXX")
+trap 'rm -f -- "$tmp"' EXIT
 
-mkdir -p "$(dirname "${OUTPUT}")"
-
-# Helper: readable stream for possibly gzipped input
-open_stream() {
-  local file="$1"
-  if [[ "${file}" =~ \.gz$ ]]; then
-    # zcat prints to stdout; safe for gzipped text formats
-    zcat -- "${file}"
-  else
-    cat -- "${file}"
-  fi
-}
-
-# Decide mode: FASTQ if first line starts with @, else assume TSV annotation
-first_line="$(open_stream "${INPUT}" | head -n 1 || true)"
-
-if [[ "${first_line:-}" == @* ]]; then
-  mode="fastq"
+if [[ $input == *.gz ]]; then
+  gzip -t -- "$input"
+  stream=(gzip -dc -- "$input")
+elif [[ $input == - ]]; then
+  stream=(cat)
 else
-  mode="annotations"
+  stream=(cat -- "$input")
 fi
 
-if [[ "${mode}" == "fastq" ]]; then
-  # For FASTQ: compute number of reads and basic length summary (min, max, mean)
-  # We stream the file, count sequence lines (every 4th line starting at line 2)
-  # and compute length stats with awk; avoid storing full file.
-  open_stream "${INPUT}" \
-    | awk 'NR%4==2 {len=length($0); sum+=len; if(min==0||len<min) if(len="" min="len;">max) max=len; count++}
-           END{ if(count==0){print "reads\t0\tNA\tNA\tNA"; exit}
-                mean=sum/count; printf("reads\t%d\t%d\t%d\t%.2f\n", count, min, max, mean) }' \
-    &gt; "${OUTPUT}"
-
-  # Add a small header
-  sed -i '1i#type\tcount\tmin_len\tmax_len\tmean_len' "${OUTPUT}"
-
-else
-  # For annotations: expect TSV with columns: chr, start, end, feature_id, strand
-  # We produce: per-chromosome feature count and average feature length.
-  open_stream "${INPUT}" \
-    | awk -F'\t' 'BEGIN{OFS="\t"} { if($2 ~ /^[0-9]+$/ &amp;&amp; $3 ~ /^[0-9]+$/) {len=($3-$2+1); chr=$1; count[chr]++; sumlen[chr]+=len} }
-                   END{ print "#chr\tfeature_count\tavg_length"; for (c in count) printf("%s\t%d\t%.2f\n", c, count[c], sumlen[c]/count[c]) }' \
-    &gt; "${OUTPUT}"
-fi
-
-echo "Wrote summary to ${OUTPUT}" &gt;&amp;2
-</min)></code></pre>
-<p>Make the script executable and run it on the example files:</p>
-<pre><code>chmod +x ~/shell-tutorial/summarize_fastq_or_annotations.sh
-# FASTQ (gzipped input)
-~/shell-tutorial/summarize_fastq_or_annotations.sh \
+case $mode in
+  fastq)
+    {
+      printf '#type\tcount\tmin_len\tmax_len\tmean_len\n'
+      "${stream[@]}" | awk '
+        { sub(/\r$/, "") }
+        NR % 4 == 1 &amp;&amp; substr($0, 1, 1) != "@" {
+          print "Invalid FASTQ: record header must start with @ (line " NR ")" &gt; "/dev/stderr"; bad=1; exit 1
+        }
+        NR % 4 == 2 {
+          seq=$0
+          if (seq == "") { print "Invalid FASTQ: empty sequence (line " NR ")" &gt; "/dev/stderr"; bad=1; exit 1 }
+          n=length(seq); sum+=n
+          if (count==0 || n&lt;min) min=n
+          if (n&gt;max) max=n
+          count++
+        }
+        NR % 4 == 3 &amp;&amp; substr($0, 1, 1) != "+" {
+          print "Invalid FASTQ: separator line must start with + (line " NR ")" &gt; "/dev/stderr"; bad=1; exit 1
+        }
+        NR % 4 == 0 &amp;&amp; length($0) != length(seq) {
+          print "Invalid FASTQ: sequence and quality lengths differ (record " count ")" &gt; "/dev/stderr"; bad=1; exit 1
+        }
+        END {
+          if (bad) exit 1
+          if (NR == 0 || NR % 4 != 0) { print "Invalid FASTQ: empty or incomplete four-line record" &gt; "/dev/stderr"; exit 1 }
+          printf "reads\t%d\t%d\t%d\t%.2f\n", count, min, max, sum/count
+        }'
+    } &gt; "$tmp"
+    ;;
+  annotations)
+    {
+      printf '#chr\tfeature_count\tavg_length\n'
+      "${stream[@]}" | awk -F '\t' '
+        NF==0 || $0 ~ /^#/ { next }
+        tolower($1)=="chr" &amp;&amp; tolower($2)=="start" { next }
+        {
+          if (NF &lt; 3 || $1 == "" || $2 !~ /^[0-9]+$/ || $3 !~ /^[0-9]+$/ || $2 &lt; 1 || $3 &lt; $2) {
+            print "Invalid annotation at line " NR ": expected chromosome and 1-based inclusive start/end with start &lt;= end" &gt; "/dev/stderr"; bad=1; exit 1
+          }
+          if (!($1 in count)) chromosomes++
+          len=$3-$2+1; count[$1]++; sum[$1]+=len
+        }
+        END {
+          if (bad) exit 1
+          if (chromosomes==0) { print "No annotation rows found" &gt; "/dev/stderr"; exit 1 }
+          for (chr in count) printf "%s\t%d\t%.2f\n", chr, count[chr], sum[chr]/count[chr]
+        }' | sort -k1,1
+    } &gt; "$tmp"
+    ;;
+esac
+mv -f -- "$tmp" "$output"
+trap - EXIT
+echo "Wrote summary to $output" &gt;&amp;2</code></pre>
+<p>Make the file executable, then run one command per input type:</p>
+<pre><code class="language-bash">chmod 755 ~/shell-tutorial/summarize.sh
+~/shell-tutorial/summarize.sh fastq \
   ~/shell-tutorial/test_data/example.fastq.gz \
   ~/shell-tutorial/results/fastq_summary.tsv
-
-# Annotations (TSV)
-~/shell-tutorial/summarize_fastq_or_annotations.sh \
+~/shell-tutorial/summarize.sh annotations \
   ~/shell-tutorial/test_data/annotations.tsv \
-  ~/shell-tutorial/results/annotations_summary.tsv
-</code></pre>
-<h2>What each command produces</h2>
+  ~/shell-tutorial/results/annotations_summary.tsv</code></pre>
+<h2>Read the output and check the assumptions</h2>
+<p>Inspect the small tables with <code>cat</code> or a spreadsheet program:</p>
+<pre><code class="language-bash">cat ~/shell-tutorial/results/fastq_summary.tsv
+cat ~/shell-tutorial/results/annotations_summary.tsv</code></pre>
+<p>For the synthetic files above, the FASTQ table should report two reads, lengths 8 and 12, and mean length 10.00. The annotation table should report two intervals on chr1 with mean inclusive length 76.00, and one interval on chr2 with length 351.00. These are deterministic checks of the fixture arithmetic, not QC results about a sequencing experiment or genome.</p>
 <ul>
-<li><code>open_stream</code> (in the script): emits file contents to stdout, using <code>zcat</code> for .gz files and <code>cat</code> otherwise.</li>
-<li>The FASTQ branch writes a TSV with header <code>#type\tcount\tmin_len\tmax_len\tmean_len</code> and one data line describing read counts and length statistics.</li>
-<li>The annotations branch writes a header <code>#chr\tfeature_count\tavg_length</code> followed by one row per chromosome showing the number of features and average feature length.</li>
+<li>A FASTQ input with an incomplete record, a misplaced header/separator, an empty sequence, or a sequence/quality length mismatch exits with an error. The temporary output is removed rather than installed as the requested summary.</li>
+<li>A gzip file is checked with <code>gzip -t</code> before its contents are processed. A failed integrity test stops the script. Compression format and filename suffix must agree: only a <code>.gz</code> suffix triggers decompression.</li>
+<li>Annotation rows with non-numeric coordinates, a start below 1, or an end before the start fail. Comment lines beginning with <code>#</code> and the described header row are skipped. The code does not validate chromosome names, strand values, feature IDs, overlap, genome build, or biological plausibility.</li>
+<li>Read length alone says nothing about per-base quality, adapter contamination, mapping, or whether trimming was appropriate. Use a dedicated sequencing QC workflow for those questions.</li>
 </ul>
-<h2>Output inspection and interpretation</h2>
-<p>Open the produced summary files to inspect them:</p>
-<pre><code>cat ~/shell-tutorial/results/fastq_summary.tsv
-cat ~/shell-tutorial/results/annotations_summary.tsv
-</code></pre>
-<p>What to look for and what each result suggests:</p>
+<h2>Why the shell checks matter</h2>
+<p><code>set -euo pipefail</code> asks Bash to stop on many unhandled command failures, unset variables, and failed commands within a pipeline. In particular, <code>pipefail</code> prevents an upstream decompressor error from being hidden by a successful downstream command. The temporary file keeps incomplete results out of the destination, and <code>mv</code> installs the completed file only at the end.</p>
+<p>The <code>awk</code> program reads line records, checks the assumptions for its selected mode, and accumulates counts and lengths. In FASTQ mode, every fourth input line is treated as one record component; this is why wrapped or multiline sequence records are rejected rather than silently miscounted. Annotation output is sorted by chromosome name for stable row order. Bash arrays and <code>[[ ... ]]</code> are Bash features, so run the script with Bash rather than <code>sh</code>.</p>
+<h2>Common failures and safe adjustments</h2>
 <ul>
-<li>If the FASTQ summary shows <code>reads\t0</code>, the script did not find any sequence lines. This may mean the file is empty, not a valid FASTQ, or lines are wrapped differently than expected. It does NOT prove that your dataset has zero reads — check file integrity and format.</li>
-<li>Mean read length is a rough indicator of read quality or whether reads were trimmed. If the mean length is lower than expected, the reads may have been trimmed or truncated. This is not a substitute for full quality control (QC) — do not assume high quality based on length alone.</li>
-<li>Annotation per-chromosome counts reveal distribution of annotated features. Large differences across chromosomes are common for real genomes. This output does NOT validate coordinates, strandedness, or biological correctness — only counts and average sizes based on numeric start/end fields.</li>
+<li><strong><code>gzip: ... not in gzip format</code> or a failed integrity test:</strong> verify the file type and transfer integrity. Do not strip the suffix or treat a damaged compressed file as plain text without checking it.</li>
+<li><strong>FASTQ structure error:</strong> inspect the first records and confirm the file follows the four-line layout used here. FASTQ has variants; use a dedicated parser for wrapped records or other nonstandard layouts rather than weakening validation to accept ambiguous input.</li>
+<li><strong>No annotation rows found:</strong> check that the table is tab-delimited, contains the stated columns, and has at least one data row after its header/comments. Change the explicit column mapping if your file uses a different schema.</li>
+<li><strong>Lengths are off by one:</strong> confirm the source coordinate convention. The included <code>end - start + 1</code> calculation is for 1-based inclusive intervals. For zero-based half-open intervals, length is <code>end - start</code>.</li>
+<li><strong>Need to process many files:</strong> iterate over paths with a quoted loop rather than expanding a large wildcard into one command. For example, from the directory containing the inputs:</li>
 </ul>
-<h2>Troubleshooting: symptoms, likely causes, and fixes</h2>
-<ul>
-<li>
-<strong>Symptom:</strong> Script exits with "command not found: zcat".
-    <br/><strong>Cause:</strong> Busy or minimal environment lacking gzip utilities.
-    <br/><strong>Fix:</strong> Install gzip (Debian/Ubuntu: <code>sudo apt install gzip</code>) or modify the script to use <code>gzip -dc</code> if <code>zcat</code> is unavailable.
-  </li>
-<li>
-<strong>Symptom:</strong> FASTQ branch produces nonsensical counts or missing lines.
-    <br/><strong>Cause:</strong> Non-standard FASTQ where sequence lines are not at 2nd line of each 4-line record or carriage return issues (Windows CRLF line endings).
-    <br/><strong>Fix:</strong> Convert CRLF to LF using <code>dos2unix</code> or <code>tr -d '\r'</code>, or adjust awk condition to robustly detect sequences (e.g., check lines not starting with '+', but that can be error-prone).
-  </li>
-<li>
-<strong>Symptom:</strong> Annotation branch shows unexpected chromosomes or missing ones.
-    <br/><strong>Cause:</strong> The script treats the first field as the chromosome; if input has a header or different column ordering the results are incorrect.
-    <br/><strong>Fix:</strong> Pre-process the file: remove header lines (grep -v '^#' or tail -n +2 if header known) or use a column-aware tool (cut or awk with specified fields). For example, to skip a header line:
-    <pre><code>tail -n +2 annotations.tsv | ./summarize_fastq_or_annotations.sh - results/annotations_summary.tsv</code></pre>
-</li>
-<li>
-<strong>Symptom:</strong> Script fails with "Argument list too long" when using wildcards.
-    <br/><strong>Cause:</strong> Expanding many files into a single command exceeded shell limits.
-    <br/><strong>Fix:</strong> Use a safe loop or find/xargs. Example:
-    <pre><code>find data/ -name '*.fastq.gz' -print0 | xargs -0 -n1 -I{} ./summarize_fastq_or_annotations.sh {} results/{/}.summary.tsv</code></pre>
-</li>
-</ul>
-<h2>Permissions and process control tips</h2>
-<p>Make scripts executable with explicit permission modes:</p>
-<pre><code>chmod 755 ~/shell-tutorial/summarize_fastq_or_annotations.sh
-# This sets rwx for owner, rx for group/others (readable and executable; not writable by others)
+<pre><code class="language-bash">for file in data/*.fastq.gz; do
+  [[ -e $file ]] || continue
+  name=${file##*/}
+  name=${name%.fastq.gz}
+  ~/shell-tutorial/summarize.sh fastq "$file" "results/${name}.summary.tsv"
+done</code></pre>
+<p>The loop handles spaces in filenames and the no-match case; the script still checks each compressed input. Choose output names that do not collide with files you need to keep.</p>
+<h2>Permissions and longer-running jobs</h2>
+<p><code>chmod 755 summarize.sh</code> gives the owner read, write, and execute permissions and gives group and other users read and execute permissions, subject to the directory's access controls. If others should not be able to read the script, choose a narrower mode such as <code>chmod 700 summarize.sh</code>.</p>
+<p>For a long run, redirect both output streams to a log and run it in the background:</p>
+<pre><code class="language-bash">nohup ~/shell-tutorial/summarize.sh fastq large.fastq.gz \
+  results/large_summary.tsv &gt; results/large_summary.log 2&gt;&amp;1 &amp;
 </code></pre>
-<p>Run long jobs in the background but keep logs:</p>
-<pre><code>nohup ~/shell-tutorial/summarize_fastq_or_annotations.sh large.fastq.gz results/large_summary.tsv &gt; results/large_summary.log 2&gt;&amp;1 &amp;
-# Check running jobs with 'jobs' (in same shell) or 'ps aux | grep summarize_fastq_or_annotations.sh'
-</code></pre>
-<h2>Limitations, version and reference-data caveats, and responsible use</h2>
-<ul>
-<li>Awk’s built-in numeric precision and simple aggregates are fine for small-to-moderate summaries, but for large-scale statistics, prefer specialized tools or load results into R/Python for robust statistics.</li>
-<li>The script assumes numeric start/end coordinates for annotations. If a coordinate system is 0-based vs 1-based, the reported lengths will be off by 1 — check the file’s coordinate convention before interpreting average lengths.</li>
-<li>Compressed file handling relies on <code>zcat</code> or <code>gzip -dc</code>. For other compression formats (bzip2, xz), replace with <code>bzcat</code> or <code>xzcat</code>.</li>
-<li>Do not assume presence of awk extensions or GNU-specific options on non-GNU systems (macOS/FreeBSD may have different awk implementations). Use POSIX awk-compatible expressions when portability is important, or document the required awk version.</li>
-<li>Responsible use: do not run pipelines on controlled or sensitive data in public or shared machines without appropriate access controls. Avoid sending confidential data to external services, and document software versions and input file checksums for reproducibility.</li>
-</ul>
-<h2>Next-step checklist (concise)</h2>
-<ol>
-<li>Run the script on the provided test files and inspect the output files in <code>~/shell-tutorial/results</code>.</li>
-<li>Try the script on a larger FASTQ (compressed) to validate streaming behavior; monitor memory/CPU usage.</li>
-<li>Modify the annotation awk expression to handle a header line or different column order; add a command-line flag for column indices.</li>
-<li>Add logging and a <code>--dry-run</code> mode that prints the commands it would run without writing outputs.</li>
-<li>Record the script version and input file checksums (e.g., <code>sha256sum</code>) alongside the output summary to improve reproducibility.</li>
-</ol>
+<p>Record the job ID printed by the shell, inspect the log, and check completion before treating the output as finished. <code>jobs</code> lists jobs in the current shell; <code>ps</code> can inspect processes more broadly. A background process may still be running or may fail, so starting it is not evidence that the summary completed.</p>
 <h2>References</h2>
 <ul>
-<li><a href="https://www.gnu.org/software/gawk/manual/gawk.html">GNU Awk User’s Guide</a> — authoritative manual for awk (gawk) features and examples.</li>
-<li><a href="https://www.gnu.org/software/coreutils/manual/coreutils.html">GNU Coreutils Manual</a> — reference for basic Unix commands (cat, head, sed, sort, etc.).</li>
-<li><a href="https://www.gnu.org/software/gzip/manual/gzip.html">gzip manual</a> — guidance on compressing and streaming compressed files.</li>
-<li><a href="https://www.gnu.org/software/bash/manual/">Bash Reference Manual</a> — details on shell options used for robust scripting (<code>set -o errexit</code>, <code>pipefail</code>, etc.).</li>
+<li><a href="https://www.gnu.org/software/bash/manual/bash.html">Bash Reference Manual</a>: pipelines, <code>pipefail</code>, redirection, and shell behavior.</li>
+<li><a href="https://www.gnu.org/software/gawk/manual/gawk.html">GNU Awk User’s Guide</a>: records, fields, built-in functions, and output.</li>
+<li><a href="https://www.gnu.org/software/gzip/manual/gzip.html">GNU gzip manual</a>: integrity testing and decompression to standard output.</li>
+<li><a href="https://www.ncbi.nlm.nih.gov/sra/docs/submitformats/">NCBI SRA file format guide</a>: FASTQ structure and sequence/quality length relationship.</li>
+<li><a href="https://genome.ucsc.edu/FAQ/FAQformat.html">UCSC data format FAQ</a>: BED zero-based half-open coordinates and GFF one-based inclusive coordinates.</li>
 </ul>
-</article>
+<h2>Scope and reproducibility</h2>
+<p>This is a small streaming summary, not a replacement for validated parsers, large-scale statistical analysis, or biological QC. It uses simple awk arithmetic and reports arithmetic mean lengths; for analyses needing other statistics, validated input semantics, or larger numeric ranges, use tools suited to that analysis. The local example was checked on the synthetic fixtures described above. Results can differ across awk and utility implementations, so test on the target system and record tool versions when portability matters. Do not run examples on irreplaceable or controlled data without following the relevant access and data-handling rules. Record input checksums and software versions when you need an auditable workflow.</p>
+<aside aria-labelledby="tutorial-feedback-title" class="lesson-feedback" id="tutorial-feedback"><h2 id="tutorial-feedback-title">Help improve this tutorial</h2><p>Found an error, a broken link, or a step that needs a clearer explanation? Please <a href="../contact.html">contact me</a>. Your feedback helps me keep this resource accurate and useful.</p></aside></article>
 <section class="mt-12 mb-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-100">
 <div class="flex items-start gap-4">
 <div class="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
@@ -494,8 +527,6 @@ cat ~/shell-tutorial/results/annotations_summary.tsv
 <script src="../code-tabs.js"></script>
 <script src="../copy-code.js"></script>
 <script src="../subscribe-fab.js"></script>
-
-
 <!-- Cookie Consent Banner -->
 <div class="fixed bottom-0 inset-x-0 z-[9999] transition-transform duration-500" id="cookie-consent-banner" style="font-family:'Inter',system-ui,sans-serif;">
 <div class="mx-auto max-w-4xl px-4 pb-4 sm:px-6">

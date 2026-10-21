@@ -4,22 +4,22 @@
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<meta content="Learn how to mathematically prove that your batch integration worked and your clusters are reliable using LISI and Silhouette scores, rather than relying on subjective UMAP visuals." name="description"/>
+<meta content="Use LISI and silhouette scores to assess batch mixing and cluster structure in single-cell RNA-seq embeddings, with practical cautions about labels, embeddings, and interpretation." name="description"/>
 <meta content="bioinformatics, single-cell RNA-seq, shell commands, conda, computational biology, tutorials, data analysis" name="keywords"/>
 <meta content="Nasir Mahmood Abbasi, PhD" name="author"/>
 <meta content="index, follow" name="robots"/>
 <!-- Open Graph tags for social sharing -->
-<meta content="Mathematical Quality Control (LISI &amp; Silhouette) | The Omics Hub" property="og:title"/>
-<meta content="Learn how to mathematically prove that your batch integration worked and your clusters are reliable using LISI and Silhouette scores, rather than relying on subjective UMAP visuals." property="og:description"/>
+<meta content="Assessing scRNA-seq integration with LISI and silhouette" property="og:title"/>
+<meta content="Use LISI and silhouette scores to assess batch mixing and cluster structure in single-cell RNA-seq embeddings, with practical cautions about labels, embeddings, and interpretation." property="og:description"/>
 <meta content="https://theomicshub.com/tutorials/scrna-seq-quality-control.html" property="og:url"/>
 <meta content="website" property="og:type"/>
 <meta content="https://theomicshub.com/images/scrna-quality-control.webp" property="og:image"/>
 <!-- Twitter Card tags -->
 <meta content="summary_large_image" name="twitter:card"/>
-<meta content="Mathematical Quality Control (LISI &amp; Silhouette) | The Omics Hub" name="twitter:title"/>
-<meta content="Learn how to mathematically prove that your batch integration worked and your clusters are reliable using LISI and Silhouette scores, rather than relying on subjective UMAP visuals." name="twitter:description"/>
+<meta content="Assessing scRNA-seq integration with LISI and silhouette" name="twitter:title"/>
+<meta content="Use LISI and silhouette scores to assess batch mixing and cluster structure in single-cell RNA-seq embeddings, with practical cautions about labels, embeddings, and interpretation." name="twitter:description"/>
 <meta content="https://theomicshub.com/images/scrna-quality-control.webp" name="twitter:image"/>
-<title>Mathematical Quality Control (LISI &amp; Silhouette) | The Omics Hub</title><!-- Favicon -->
+<title>Assessing scRNA-seq integration with LISI and silhouette | The Omics Hub</title><!-- Favicon -->
 <link href="../images/favicon.svg" rel="icon" type="image/svg+xml"/>
 <!-- Pre-fetch fonts to prevent FOUC (layout shift) -->
 <link href="https://fonts.googleapis.com" rel="preconnect"/>
@@ -45,8 +45,72 @@ gtag('consent', 'default', {
 <script async="" crossorigin="anonymous" src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2910340533244599"></script>
 <meta content="ca-pub-2910340533244599" name="google-adsense-account"/><meta content="XioIUjAyO5PEAT-N6nLrowdiDe4ATl-vKdRGmmrDHZM" name="google-site-verification"/>
 <link href="https://theomicshub.com/tutorials/scrna-seq-quality-control.html" rel="canonical"/>
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "TechArticle", "headline": "Mathematical Quality Control (LISI & Silhouette)", "description": "Learn how to mathematically prove that your batch integration worked and your clusters are reliable using LISI and Silhouette scores, rather than relying on subjective UMAP visuals.", "mainEntityOfPage": {"@type": "WebPage", "@id": "https://theomicshub.com/tutorials/scrna-seq-quality-control.html"}, "image": "https://theomicshub.com/images/scrna-quality-control.webp", "author": {"@type": "Person", "name": "Dr. Nasir Mahmood Abbasi, PhD", "jobTitle": "Computational Biologist & Bioinformatics Researcher", "url": "https://theomicshub.com/about.html", "sameAs": ["https://github.com/nmabbasi"]}, "publisher": {"@type": "Organization", "name": "The Omics Hub", "url": "https://theomicshub.com", "logo": {"@type": "ImageObject", "url": "https://theomicshub.com/images/favicon.svg"}}, "datePublished": "2026-09-12", "dateModified": "2026-10-10", "url": "https://theomicshub.com/tutorials/scrna-seq-quality-control.html", "name": "Mathematical Quality Control (LISI & Silhouette) | The Omics Hub", "isPartOf": {"@type": "WebSite", "name": "The Omics Hub", "url": "https://theomicshub.com/"}}</script>
-<script id="eeat-schema" type="application/ld+json">{"@context": "https://schema.org", "@type": "TechArticle", "name": "Mathematical Quality Control (LISI & Silhouette) | The Omics Hub", "description": "Learn how to mathematically prove that your batch integration worked and your clusters are reliable using LISI and Silhouette scores, rather than relying on subjective UMAP visuals.", "url": "https://theomicshub.com/tutorials/scrna-seq-quality-control.html", "isPartOf": {"@type": "WebSite", "name": "The Omics Hub", "url": "https://theomicshub.com/"}, "author": {"@type": "Person", "name": "Dr. Nasir Mahmood Abbasi, PhD", "jobTitle": "Computational Biologist & Bioinformatics Researcher", "url": "https://theomicshub.com/about.html", "sameAs": ["https://github.com/nmabbasi"]}, "publisher": {"@type": "Organization", "name": "The Omics Hub", "url": "https://theomicshub.com/"}, "inLanguage": "en"}</script></head>
+<script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "Assessing scRNA-seq integration with LISI and silhouette",
+  "description": "Use LISI and silhouette scores to assess batch mixing and cluster structure in single-cell RNA-seq embeddings, with practical cautions about labels, embeddings, and interpretation.",
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://theomicshub.com/tutorials/scrna-seq-quality-control.html"
+  },
+  "image": "https://theomicshub.com/images/scrna-quality-control.webp",
+  "author": {
+    "@type": "Person",
+    "name": "Dr. Nasir Mahmood Abbasi, PhD",
+    "jobTitle": "Computational Biologist & Bioinformatics Researcher",
+    "url": "https://theomicshub.com/about.html",
+    "sameAs": [
+      "https://github.com/nmabbasi"
+    ]
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "The Omics Hub",
+    "url": "https://theomicshub.com",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://theomicshub.com/images/favicon.svg"
+    }
+  },
+  "datePublished": "2026-09-12",
+  "dateModified": "2026-10-21",
+  "url": "https://theomicshub.com/tutorials/scrna-seq-quality-control.html",
+  "name": "Assessing scRNA-seq integration with LISI and silhouette",
+  "isPartOf": {
+    "@type": "WebSite",
+    "name": "The Omics Hub",
+    "url": "https://theomicshub.com/"
+  }
+}</script>
+<script id="eeat-schema" type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "name": "Assessing scRNA-seq integration with LISI and silhouette",
+  "description": "Use LISI and silhouette scores to assess batch mixing and cluster structure in single-cell RNA-seq embeddings, with practical cautions about labels, embeddings, and interpretation.",
+  "url": "https://theomicshub.com/tutorials/scrna-seq-quality-control.html",
+  "isPartOf": {
+    "@type": "WebSite",
+    "name": "The Omics Hub",
+    "url": "https://theomicshub.com/"
+  },
+  "author": {
+    "@type": "Person",
+    "name": "Dr. Nasir Mahmood Abbasi, PhD",
+    "jobTitle": "Computational Biologist & Bioinformatics Researcher",
+    "url": "https://theomicshub.com/about.html",
+    "sameAs": [
+      "https://github.com/nmabbasi"
+    ]
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "The Omics Hub",
+    "url": "https://theomicshub.com/"
+  },
+  "inLanguage": "en",
+  "headline": "Assessing scRNA-seq integration with LISI and silhouette"
+}</script><link href="../tutorial-library.css" rel="stylesheet"/></head>
 <body class="bg-white text-gray-900">
 <script>
 function toggleMobileMenu() {
@@ -125,196 +189,130 @@ function toggleMobileMenu() {
 <div class="container mx-auto px-4 py-8"><div class="max-w-4xl mx-auto"><div id="tutorial-content">
 <section class="mb-12">
 <div class="flex items-center gap-2 text-sm text-blue-600 font-medium mb-4"><span>Single-Cell RNA-seq</span><span>-</span><span>2026-09-12</span></div>
-<h1 class="text-4xl md:text-5xl font-black text-gray-900 mb-6 leading-tight" id="tutorial-title">Mathematical Quality Control (LISI &amp; Silhouette)</h1>
+<h1 class="text-4xl md:text-5xl font-black text-gray-900 mb-6 leading-tight" id="tutorial-title">Assessing scRNA-seq integration with LISI and silhouette</h1>
 <div class="flex items-center gap-4"><div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 font-bold text-lg">NM</div><div><p class="font-bold text-gray-900">Nasir Mahmood Abbasi, PhD</p><p class="text-sm text-gray-500">Bioinformatics Educator</p></div></div>
 </section>
 <div class="mb-12 rounded-2xl overflow-hidden shadow-lg border border-gray-100">
-<img alt="Mathematical Quality Control (LISI &amp; Silhouette)" class="w-full aspect-video object-cover" decoding="async" loading="eager" src="../images/scrna-quality-control.webp"/>
+<img alt="Assessing scRNA-seq integration with LISI and silhouette" class="w-full aspect-video object-cover" decoding="async" loading="eager" src="../images/scrna-quality-control.webp"/>
 </div>
-<article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none"><div class="flex flex-wrap items-center gap-4 text-xs font-mono text-gray-500 bg-gray-50 p-3 rounded-lg border border-gray-200 mb-6">
-<div class="flex items-center gap-1">
-<svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
-<span><strong>Tested on:</strong> Python 3.11, R 4.3.2, Ubuntu 24.04</span>
-</div>
-<div class="flex items-center gap-1">
-<svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
-</div>
-</div><h2>Learning objectives &amp; prerequisites</h2>
-<p>What you will learn</p>
+<article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--lab">
+<p class="lesson-lead">Use local label diversity and cluster-distance summaries to examine two different questions: whether cells mix across technical batches, and whether annotated cell types remain locally distinct. These scores describe a chosen embedding and chosen labels; they do not prove that integration removed all technical effects or preserved every biological signal.</p>
+<h2>What you need before calculating scores</h2>
+<p>This workflow assumes that preprocessing and integration are complete and that you have a saved Seurat object or AnnData file. The object needs a cell-by-dimension embedding and cell-level metadata for the batch or sample label and, when available, a biological annotation. Choose the embedding used for downstream clustering or another scientifically justified high-dimensional representation, and record its name and dimensions. Compare integrated and unintegrated representations when the aim is to assess the effect of integration.</p>
 <ul>
-<li>How to compute iLISI (integration LISI) and cLISI (cell-type LISI) to quantify batch mixing and preservation of biological signal.</li>
-<li>How to compute silhouette widths to evaluate cluster robustness.</li>
-<li>How to interpret these metrics together — what they demonstrate and what they do not.</li>
+<li><strong>iLISI:</strong> local diversity of a categorical batch label. Higher values indicate more batch categories represented in a cell's neighborhood, up to the number of observed categories.</li>
+<li><strong>cLISI:</strong> local diversity of a categorical cell-type label. Lower values indicate greater local label purity; a value near 1 corresponds to a neighborhood dominated by one label. This is meaningful only to the extent that annotations are trustworthy.</li>
+<li><strong>Silhouette:</strong> for a supplied set of cluster labels, compares each cell's average distance to its own cluster with its average distance to the nearest other cluster. It summarizes separation in the chosen representation, not biological correctness.</li>
 </ul>
-<p>Prerequisites</p>
-<ul>
-<li>Completed a basic single-cell RNA-seq (scRNA-seq) preprocessing pipeline (normalization, variable feature selection, PCA). Familiarity with Seurat (R) or scanpy (Python) is assumed.</li>
-<li>Input files: either an R serialized Seurat object (seurat_obj.rds) or a Python AnnData file (adata.h5ad) that contain: PCA or integration embeddings, per-cell metadata columns for batch/sample (e.g., patient_id, batch) and a biological label (e.g., cell_type). Example filenames used below: <code>seurat_obj.rds</code> and <code>adata.h5ad</code>.</li>
-<li>Recommended software: R &gt;= 4.0 (example tested on R 4.3.x), Python &gt;= 3.9 (example uses scikit-learn). See the Limitations section for version notes.</li>
-</ul>
-<h2>Why mathematical QC matters: biological and computational context</h2>
-<p>UMAP or t-SNE plots are useful for hypothesis generation and for communicating results, but they are two-dimensional manifold projections that can exaggerate or hide structure. Visual inspection alone is subjective: two people can interpret the same UMAP differently. High-quality, reproducible analysis for publication or collaborative work requires quantitative, reproducible metrics that answer two distinct questions:</p>
-<ol>
-<li>Did the integration step remove (or substantially reduce) technical batch differences? (Batch mixing)</li>
-<li>Did integration preserve true biological differences between cell types or states? (Biological separation)</li>
-</ol>
-<p>iLISI (integration Local Inverse Simpson's Index) quantifies local label diversity for batch labels. High iLISI means a cell's neighborhood contains many batches (good mixing). cLISI quantifies local label diversity for biological labels: values near 1 mean local neighborhoods are dominated by a single cell-type label (good biological separation). Silhouette widths quantify cluster coherence: how similar each cell is to its assigned cluster relative to the nearest other cluster.</p>
-<h2>Reproducible workflow (sequential)</h2>
-<p>Below are explicit, reproducible steps in R (favored for LISI) and Python (silhouette examples). All commands assume you are in a working directory that contains <code>seurat_obj.rds</code> (R) or <code>adata.h5ad</code> (Python). Each code block notes expected inputs and outputs.</p>
-<h3>R: compute LISI (iLISI and cLISI) and per-cell output</h3>
-<p>Requirements: R, the <code>lisi</code> package (from GitHub), and either Seurat or a matrix of embeddings. The <code>compute_lisi</code> implementation expects a numeric matrix of embeddings (rows=cells) and a data.frame of per-cell metadata.</p>
-<pre><code># Input: seurat_obj.rds (Seurat object with PCA/harmony embeddings and metadata)
-# Output: lisi_scores.csv (per-cell iLISI/cLISI), summary printed
-
-# 1. Start R and install packages if needed (run once; non-destructive)
-# install.packages("remotes")
-# remotes::install_github("immunogenomics/lisi")
-# install.packages("Seurat")  # if you use Seurat
+<p>LISI and silhouette answer different questions. A metric cannot distinguish a technical effect from a real biological difference unless your design and labels make that distinction possible. For example, if each batch contains a different cell type, batch and biology are confounded; stronger batch mixing is not automatically a better result.</p>
+<h2>Calculate LISI in R</h2>
+<p>The <code>lisi</code> package's <code>compute_lisi()</code> takes a matrix with cells in rows and embedding dimensions in columns, plus metadata with one row per cell. It returns one score column for each requested metadata label. The code below uses existing Seurat reductions and reorders metadata to match embedding row names before calculation. Replace the example metadata keys with columns present in your object.</p>
+<pre><code># Input: seurat_obj.rds, containing an existing PCA or integration reduction
+# Output: lisi_scores.csv; the input RDS is read only
 
 library(lisi)
 library(Seurat)
 
-# 2. Load your Seurat object (do not overwrite original file)
 seurat_obj &lt;- readRDS("seurat_obj.rds")
-
-# 3. Choose a high-dimensional embedding: PCA, Harmony, or integrated space
-#    Important: do NOT use UMAP coordinates for LISI; UMAP is a low-D projection.
-#    Here we prefer Harmony if available, otherwise PCA.
-if ("harmony" %in% Reductions(seurat_obj)) {
-  emb &lt;- Embeddings(seurat_obj, "harmony")
-} else {
-  emb &lt;- Embeddings(seurat_obj, "pca")
+reduction_name &lt;- if ("harmony" %in% Reductions(seurat_obj)) "harmony" else "pca"
+if (!reduction_name %in% Reductions(seurat_obj)) {
+  stop("No selected reduction is available; inspect Reductions(seurat_obj)")
 }
-
-# 4. Prepare metadata. Replace 'patient_id' and 'cell_type' with your column names.
+emb &lt;- Embeddings(seurat_obj, reduction_name)
 meta &lt;- seurat_obj@meta.data
-# Ensure rows match the embedding row order
+if (!all(rownames(emb) %in% rownames(meta))) {
+  stop("Some embedding cell names are missing from Seurat metadata")
+}
 meta &lt;- meta[rownames(emb), , drop = FALSE]
-
-# 5. Compute LISI for both labels: batch (patient_id) and biology (cell_type)
-#    This produces a data.frame with one column per label.
-labels_to_eval &lt;- c("patient_id", "cell_type")  # update to your column names
+labels_to_eval &lt;- c("patient_id", "cell_type")  # replace with your metadata columns
+if (!all(labels_to_eval %in% colnames(meta))) {
+  stop("Update labels_to_eval: one or more metadata columns are missing")
+}
+if (anyNA(meta[, labels_to_eval, drop = FALSE])) {
+  stop("Resolve missing values in the selected labels before calculating LISI")
+}
 lisi_res &lt;- compute_lisi(emb, meta, labels_to_eval)
-
-# 6. Save per-cell LISI and print diagnostics
 write.csv(lisi_res, file = "lisi_scores.csv", row.names = TRUE)
-print(summary(lisi_res))
+summary(lisi_res)
 </code></pre>
-<p>What these files contain:</p>
-<ul>
-<li><code>lisi_scores.csv</code>: per-cell columns such as <code>patient_id</code> (iLISI) and <code>cell_type</code> (cLISI).</li>
-<li>Console summary: median, quartiles for each metric.</li>
-</ul>
-<h3>R: example interpretation helper (aggregating medians)</h3>
-<pre><code># Summarize LISI by cluster or sample
-lisi_df &lt;- read.csv("lisi_scores.csv", row.names = 1)
-meta$ilisi &lt;- lisi_df$patient_id        # change column name as applicable
+<p>Rows in the resulting CSV correspond to cells in the embedding. The selected batch-label column is used as iLISI and the cell-type column as cLISI; the software does not assign those biological meanings for you. The package uses a local-neighborhood calculation whose neighborhood scale affects the score. Check the installed package's documentation for its arguments, record the setting used, and compare a small, justified range if conclusions depend on it.</p>
+<h3>Summarize by cluster without losing cell alignment</h3>
+<p>Use the cell names written by <code>write.csv()</code> to align scores back to metadata. This example stops on mismatched cell sets rather than silently assigning scores by row position.</p>
+<pre><code>lisi_df &lt;- read.csv("lisi_scores.csv", row.names = 1, check.names = FALSE)
+if (!setequal(rownames(meta), rownames(lisi_df))) {
+  stop("LISI output cells do not match the metadata cells")
+}
+lisi_df &lt;- lisi_df[rownames(meta), , drop = FALSE]
+meta$ilisi &lt;- lisi_df$patient_id
 meta$clisi &lt;- lisi_df$cell_type
-# Compute medians across clusters
+if (!"seurat_clusters" %in% colnames(meta)) {
+  stop("Add or select a cluster-label column before summarizing")
+}
 aggregate(cbind(ilisi, clisi) ~ seurat_clusters, data = meta, median)
 </code></pre>
-<h3>Python: compute silhouette values (per-cell) on a high-dimensional embedding</h3>
-<p>Requirements: Python, scanpy or anndata, scikit-learn. The silhouette computations should be performed on PCA/Harmony/integration embeddings — not on UMAP.</p>
-<pre><code># Input: adata.h5ad (AnnData with obsm["X_pca"] or obsm["X_harmony"], and obs['leiden'] or obs['cluster'])
-# Output: adata.obs['silhouette'] written back into adata.h5ad and saved as csv.
+<h2>Calculate silhouette values in Python</h2>
+<p>Silhouette uses a feature matrix and one cluster label per cell. The example reads the file, checks required keys and missing values, and computes per-cell plus global scores. A label set with fewer than two clusters or with one cluster per observation is invalid. Pairwise distances make this calculation expensive for large cell counts; the exact full-data calculation can require quadratic distance work and memory, so do not run it blindly on a very large dataset.</p>
+<pre><code># Input: adata.h5ad with obsm['X_harmony'] or obsm['X_pca'] and obs['leiden']
+# Output: silhouette_per_cell.csv and adata_with_silhouette.h5ad
 
 import anndata
 import numpy as np
 from sklearn.metrics import silhouette_samples, silhouette_score
 
 adata = anndata.read_h5ad("adata.h5ad")
-
-# Choose an embedding: prefer 'X_harmony' if present
 if "X_harmony" in adata.obsm:
-    embedding = adata.obsm["X_harmony"]
+    embedding = np.asarray(adata.obsm["X_harmony"])
 elif "X_pca" in adata.obsm:
-    embedding = adata.obsm["X_pca"]
+    embedding = np.asarray(adata.obsm["X_pca"])
 else:
-    raise ValueError("No PCA or Harmony embedding found in adata.obsm")
+    raise KeyError("No X_harmony or X_pca embedding found in adata.obsm")
 
-# Choose cluster labels (string or integer)
-labels_key = "leiden"  # update to your obs key
-labels = adata.obs[labels_key].astype(str).values
+labels_key = "leiden"  # replace with the cluster column in adata.obs
+if labels_key not in adata.obs:
+    raise KeyError(f"Cluster label column {labels_key!r} is absent from adata.obs")
+labels = adata.obs[labels_key]
+if labels.isna().any():
+    raise ValueError("Resolve missing cluster labels before scoring")
+labels = labels.astype(str).to_numpy()
+if embedding.shape[0] != adata.n_obs:
+    raise ValueError("Embedding rows must correspond to AnnData observations")
+n_labels = np.unique(labels).size
+if not 2 &lt;= n_labels &lt;= len(labels) - 1:
+    raise ValueError("Silhouette requires 2 to n_cells - 1 distinct labels")
 
-# Compute silhouette samples (per-cell)
 sil_samples = silhouette_samples(embedding, labels, metric="euclidean")
-# Global silhouette score (mean across cells)
 sil_global = silhouette_score(embedding, labels, metric="euclidean")
-
-# Save results
 adata.obs["silhouette"] = sil_samples
-adata.obs["silhouette_global"] = sil_global
 adata.write_h5ad("adata_with_silhouette.h5ad")
 adata.obs[["silhouette"]].to_csv("silhouette_per_cell.csv")
-print("Global silhouette score:", sil_global)
+print("Mean silhouette across cells:", sil_global)
 </code></pre>
-<p>What these files contain:</p>
+<p>The input AnnData file is not overwritten: the scored object is saved under a new filename. Per-cell scores lie between -1 and 1. Positive values mean a cell is, on average, closer to its assigned cluster than to the nearest alternative; values near zero indicate overlap; negative values flag cells whose distances favor another cluster. Treat these as prompts for inspection, not automatic misassignment calls. Silhouette depends on the chosen distance, features and cluster labels, and can favor compact, well-separated clusters even when that geometry is not the biological question.</p>
+<h2>Read the results as a comparison</h2>
+<p>Compare the same cells and label definitions across the unintegrated and integrated embeddings where possible. Report medians and interquartile ranges for per-cell LISI values, and cluster-wise summaries for silhouette. Keep the embedding name and dimensions, batch and cell-type columns, cluster definition, package versions and LISI neighborhood setting with the result.</p>
 <ul>
-<li><code>adata_with_silhouette.h5ad</code>: original AnnData with a new <code>obs</code> column <code>silhouette</code>.</li>
-<li><code>silhouette_per_cell.csv</code>: per-cell silhouette values for inspection and plotting.</li>
+<li>Higher batch-label LISI alongside stable cell-type-label LISI may be consistent with improved local batch mixing while retaining annotation purity. It does not demonstrate that all technical effects are gone.</li>
+<li>Higher cell-type-label LISI means neighborhoods contain more annotation labels. Inspect annotation quality and marker expression before attributing this pattern to overcorrection.</li>
+<li>Low or negative silhouette values identify cells or clusters with weak separation under the chosen distance and representation. Review cluster sizes, labels, marker expression and the underlying embedding before changing the clustering.</li>
 </ul>
-<h2>Output inspection and interpretation</h2>
-<p>Interpret iLISI and cLISI together — they answer complementary questions.</p>
+<p>Do not interpret a single score as a pass/fail threshold. LISI is conditional on supplied categorical labels and neighborhood scale; silhouette is conditional on the supplied clusters and distance. If batches are confounded with cell identity, neither score alone can resolve that design limitation. These diagnostics do not establish causality or replace biological validation.</p>
+<h2>Troubleshoot common failures</h2>
 <ul>
-<li>iLISI (higher = better mixing): The maximum possible value is the number of unique batches in the dataset (for a perfect uniform neighborhood). Typical reporting uses median iLISI across cells and interquartile ranges. A median iLISI equal to the number of batches suggests near-perfect mixing in local neighborhoods. However, extremely high iLISI can also indicate over-correction if it coincides with poor biological separation.</li>
-<li>cLISI (lower = better biological purity; values near 1 indicate neighborhoods dominated by a single cell-type label): If median cLISI is near 1, biological labels are locally pure. If cLISI rises substantially after integration, that suggests integration may have mixed biologically distinct cell types — a red flag.</li>
-<li>Silhouette widths (range roughly -1 to +1): A cell-level silhouette &gt; 0 indicates it is closer to its own cluster than to other clusters on average. Cluster-level summaries (median or mean silhouette per cluster) help identify fragile clusters. Values near 0 suggest ambiguity between clusters; negative values indicate likely misassignment.</li>
+<li><strong>LISI reports an error or yields missing results:</strong> check that embedding rows and metadata rows refer to the same cells in the same order, the requested metadata fields exist, and labels are not missing. A missing reduction name or absent metadata field should be fixed explicitly rather than replaced with a different representation without recording the change.</li>
+<li><strong>Batch LISI remains low:</strong> confirm that the selected embedding is the integrated representation you intended, inspect batch levels and sample sizes, then compare with the unintegrated embedding. Low mixing can also be expected when batches contain genuinely different cell populations.</li>
+<li><strong>Cell-type LISI increases:</strong> check annotation granularity and uncertainty, and review marker expression and the study design. A score change alone does not establish loss of biology.</li>
+<li><strong>Silhouette calculation fails:</strong> confirm labels are present and that the number of distinct labels is between 2 and the number of cells minus 1. Reduce the dataset only with a documented sampling strategy if full pairwise calculation is too costly; a subset estimate is not the exact full-data result.</li>
+<li><strong>LISI and silhouette appear to disagree:</strong> they assess label diversity and cluster separation, respectively. Check whether they use compatible embeddings and whether cluster labels and biological annotations answer the same question before drawing a conclusion.</li>
 </ul>
-<p>Typical, cautious interpretation examples (do not invent numbers in reports):</p>
-<ul>
-<li>If median iLISI increases after integration while median cLISI remains ≈1, integration likely reduced batch effects without erasing cell-type identity.</li>
-<li>If median iLISI increases but cLISI increases (moves away from 1) and many cluster silhouettes become negative, suspect over-correction — biological structure may have been blurred.</li>
-<li>High global silhouette with uniformly positive cluster silhouettes supports that clusters represent distinct neighborhoods in the chosen embedding; still verify marker gene expression per cluster.</li>
-</ul>
-<p>Important: these metrics depend strongly on the embedding and neighborhood definition (k used implicitly in LISI). Always record and report the exact embedding and parameters (e.g., PCA with 50 PCs, LISI k = 90). Metrics calculated on UMAP are invalid for this purpose because UMAP optimizes local distances for visualization rather than preserving true high-dimensional geometry.</p>
-<h2>Troubleshooting: symptoms, likely causes, and fixes</h2>
-<ul>
-<li>
-<strong>Symptom</strong> A very low iLISI after integration (near 1) means batches remain separated.<br/><strong>Likely causes</strong>: integration step failed or was not applied to the embeddings used for LISI; wrong embedding chosen (e.g., using raw counts); batch labels are mis-specified or have many singleton levels.
-    <br/><strong>Fixes</strong>: verify you computed embeddings after integration (check Reductions in Seurat or adata.obsm keys); ensure batch column name is correct and has expected levels; try increasing the number of PCs used for LISI.
-  </li>
-<li>
-<strong>Symptom</strong>: cLISI increases substantially after integration (more mixed cell types).
-    <br/><strong>Likely causes</strong>: over-correction removed biological differences; cell_type labels are noisy or coarse; clusters are heterogeneous.
-    <br/><strong>Fixes</strong>: inspect canonical marker genes per cluster; compute LISI on a subset of markers or on unintegrated PCA to see baseline; reduce integration aggressiveness (e.g., tune Harmony theta, number of iterations, or use methods that preserve biological variation).
-  </li>
-<li>
-<strong>Symptom</strong>: many negative silhouette values in a cluster.
-    <br/><strong>Likely causes</strong>: cluster merging/splitting problems (over- or under-clustering), or embedding does not reflect the distances that define biological identity.
-    <br/><strong>Fixes</strong>: try alternate clustering resolutions; validate clusters using marker expression; compute silhouette on a different embedding (e.g., more PCs) or try other distance metrics.
-  </li>
-<li>
-<strong>Symptom</strong>: inconsistent results between LISI and silhouette (e.g., good iLISI but poor silhouettes).
-    <br/><strong>Likely causes</strong>: LISI measures label diversity in neighborhoods; silhouettes measure cluster tightness. Integration can improve batch mixing but still leave clusters poorly resolved.
-    <br/><strong>Fixes</strong>: consider whether biological labels are fine-grained; reconcile cluster labels with known biology; re-run clustering on integrated data with parameter sweeps.
-  </li>
-</ul>
-<h2>Limitations, version and data caveats, and responsible-use notes</h2>
-<ul>
-<li>Embedding choice matters: always run metrics on a high-dimensional representation (PCA, Harmony, or integration space). UMAP/t-SNE are visual projections and should not be used to compute LISI or silhouette.</li>
-<li>Neighborhood size (k) affects LISI: small k focuses on very local neighborhoods, while large k reflects more global diversity. Report which k you used and test sensitivity to different k values (e.g., k=30, 60, 90) in the supplementary materials.</li>
-<li>Label quality: LISI uses provided labels. cLISI is only as reliable as your cell-type annotations. If annotations are noisy or coarse, interpret cLISI cautiously.</li>
-<li>Batch definition: how you define batches (patient, run, plate) will change iLISI. Use the biologically and technically meaningful batch granularity for your experiment and document it.</li>
-<li>Software versions: implementations and defaults may change across package versions. Record R/Python versions and package versions (e.g., lisi, Seurat, scikit-learn). Reproducibility requires recording these details.</li>
-<li>Responsible use: these metrics are diagnostic. They do not establish causation and do not replace biological validation (marker genes, orthogonal assays). Avoid over-claiming that a single metric proves “complete” removal of batch effects.</li>
-</ul>
-<h2>Next-step checklist</h2>
-<ol>
-<li>Record and save the exact embedding and parameters used for metrics (e.g., PCA 50 PCs, Harmony with theta=X, LISI k=90).</li>
-<li>Compute iLISI and cLISI and save per-cell CSV (<code>lisi_scores.csv</code>).</li>
-<li>Compute per-cell and global silhouette scores and save (<code>silhouette_per_cell.csv</code>).</li>
-<li>Summarize medians and IQRs per cluster for iLISI, cLISI, and silhouette; include in QC table.</li>
-<li>Inspect marker gene expression for clusters flagged by low silhouette or high cLISI.</li>
-<li>Report metrics and parameter settings in the methods section of your manuscript or analysis report.</li>
-</ol>
 <h2>References</h2>
 <ul>
-<li><a href="https://github.com/immunogenomics/lisi">LISI: GitHub repository (immunogenomics/lisi)</a> — implementation and examples.</li>
-<li><a href="https://satijalab.org/seurat/">Seurat documentation</a> — recommended workflows for integration and embeddings.</li>
-<li><a href="https://scikit-learn.org/stable/modules/clustering.html#silhouette-coefficient">scikit-learn silhouette-coefficient documentation</a> — definitions and usage for silhouette scores.</li>
-<li><a href="https://www.nature.com/articles/s41592-019-0619-0">Korsunsky et al., 2019 — Harmony: fast, sensitive and accurate integration of single-cell data</a> — describes integration challenges and diagnostics.</li>
+<li><a href="https://github.com/immunogenomics/lisi">LISI package repository</a> describes the cell-by-coordinate matrix, metadata input, and effective number of local categories.</li>
+<li><a href="https://scikit-learn.org/stable/modules/clustering.html#silhouette-coefficient">scikit-learn silhouette coefficient guide</a> documents the distance-based definition and valid label-count condition.</li>
+<li><a href="https://anndata.readthedocs.io/en/latest/generated/anndata.AnnData.write_h5ad.html">AnnData write_h5ad reference</a> documents writing the scored object to a distinct file.</li>
+<li><a href="https://satijalab.org/seurat/articles/integration_introduction">Seurat integration introduction</a> explains integration reductions and evaluating shared cell states in context.</li>
+<li><a href="https://www.nature.com/articles/s41592-019-0619-0">Korsunsky et al. (2019), Harmony</a> describes the integration method cited in this tutorial.</li>
 </ul>
-</article>
+<aside aria-labelledby="tutorial-feedback-title" class="lesson-feedback" id="tutorial-feedback"><h2 id="tutorial-feedback-title">Help improve this tutorial</h2><p>Found an error, a broken link, or a step that needs a clearer explanation? Please <a href="../contact.html">contact me</a>. Your feedback helps me keep this resource accurate and useful.</p></aside></article>
 <section class="mt-12 mb-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-100">
 <div class="flex items-start gap-4">
 <div class="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
@@ -476,8 +474,6 @@ print("Global silhouette score:", sil_global)
 <script src="../code-tabs.js"></script>
 <script src="../copy-code.js"></script>
 <script src="../subscribe-fab.js"></script>
-
-
 <!-- Cookie Consent Banner -->
 <div class="fixed bottom-0 inset-x-0 z-[9999] transition-transform duration-500" id="cookie-consent-banner" style="font-family:'Inter',system-ui,sans-serif;">
 <div class="mx-auto max-w-4xl px-4 pb-4 sm:px-6">

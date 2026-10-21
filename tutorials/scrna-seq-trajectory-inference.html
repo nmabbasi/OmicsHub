@@ -4,22 +4,22 @@
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<meta content="Learn the basics of inferring cellular trajectories and pseudotime using industry-standard tools like PAGA in Python and Monocle3/Slingshot in R." name="description"/>
+<meta content="Compare PAGA with diffusion pseudotime in Scanpy and branching trajectory workflows in R. Choose a defensible root, inspect inferred lineages, and interpret pseudotime as an ordering rather than measured time." name="description"/>
 <meta content="bioinformatics, single-cell RNA-seq, shell commands, conda, computational biology, tutorials, data analysis" name="keywords"/>
 <meta content="Nasir Mahmood Abbasi, PhD" name="author"/>
 <meta content="index, follow" name="robots"/>
 <!-- Open Graph tags for social sharing -->
-<meta content="Trajectory Inference | The Omics Hub" property="og:title"/>
-<meta content="Learn the basics of inferring cellular trajectories and pseudotime using industry-standard tools like PAGA in Python and Monocle3/Slingshot in R." property="og:description"/>
+<meta content="Single-cell trajectory inference: PAGA, DPT, Slingshot and Monocle3" property="og:title"/>
+<meta content="Compare PAGA with diffusion pseudotime in Scanpy and branching trajectory workflows in R. Choose a defensible root, inspect inferred lineages, and interpret pseudotime as an ordering rather than measured time." property="og:description"/>
 <meta content="https://theomicshub.com/tutorials/scrna-seq-trajectory-inference.html" property="og:url"/>
 <meta content="website" property="og:type"/>
 <meta content="https://theomicshub.com/images/trajectory-inference-workstation.webp" property="og:image"/>
 <!-- Twitter Card tags -->
 <meta content="summary_large_image" name="twitter:card"/>
-<meta content="Trajectory Inference | The Omics Hub" name="twitter:title"/>
-<meta content="Learn the basics of inferring cellular trajectories and pseudotime using industry-standard tools like PAGA in Python and Monocle3/Slingshot in R." name="twitter:description"/>
+<meta content="Single-cell trajectory inference: PAGA, DPT, Slingshot and Monocle3" name="twitter:title"/>
+<meta content="Compare PAGA with diffusion pseudotime in Scanpy and branching trajectory workflows in R. Choose a defensible root, inspect inferred lineages, and interpret pseudotime as an ordering rather than measured time." name="twitter:description"/>
 <meta content="https://theomicshub.com/images/trajectory-inference-workstation.webp" name="twitter:image"/>
-<title>Trajectory Inference | The Omics Hub</title><!-- Favicon -->
+<title>Single-cell trajectory inference: PAGA, DPT, Slingshot and Monocle3 | The Omics Hub</title><!-- Favicon -->
 <link href="../images/favicon.svg" rel="icon" type="image/svg+xml"/>
 <!-- Pre-fetch fonts to prevent FOUC (layout shift) -->
 <link href="https://fonts.googleapis.com" rel="preconnect"/>
@@ -45,8 +45,72 @@ gtag('consent', 'default', {
 <script async="" crossorigin="anonymous" src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2910340533244599"></script>
 <meta content="ca-pub-2910340533244599" name="google-adsense-account"/><meta content="XioIUjAyO5PEAT-N6nLrowdiDe4ATl-vKdRGmmrDHZM" name="google-site-verification"/>
 <link href="https://theomicshub.com/tutorials/scrna-seq-trajectory-inference.html" rel="canonical"/>
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "TechArticle", "headline": "Trajectory Inference", "description": "Learn the basics of inferring cellular trajectories and pseudotime using industry-standard tools like PAGA in Python and Monocle3/Slingshot in R.", "mainEntityOfPage": {"@type": "WebPage", "@id": "https://theomicshub.com/tutorials/scrna-seq-trajectory-inference.html"}, "image": "https://theomicshub.com/images/trajectory-inference-workstation.webp", "author": {"@type": "Person", "name": "Dr. Nasir Mahmood Abbasi, PhD", "jobTitle": "Computational Biologist & Bioinformatics Researcher", "url": "https://theomicshub.com/about.html", "sameAs": ["https://github.com/nmabbasi"]}, "publisher": {"@type": "Organization", "name": "The Omics Hub", "url": "https://theomicshub.com", "logo": {"@type": "ImageObject", "url": "https://theomicshub.com/images/favicon.svg"}}, "datePublished": "2026-09-17", "dateModified": "2026-10-10", "url": "https://theomicshub.com/tutorials/scrna-seq-trajectory-inference.html", "name": "Trajectory Inference | The Omics Hub", "isPartOf": {"@type": "WebSite", "name": "The Omics Hub", "url": "https://theomicshub.com/"}}</script>
-<script id="eeat-schema" type="application/ld+json">{"@context": "https://schema.org", "@type": "TechArticle", "name": "Trajectory Inference | The Omics Hub", "description": "Learn the basics of inferring cellular trajectories and pseudotime using industry-standard tools like PAGA in Python and Monocle3/Slingshot in R.", "url": "https://theomicshub.com/tutorials/scrna-seq-trajectory-inference.html", "isPartOf": {"@type": "WebSite", "name": "The Omics Hub", "url": "https://theomicshub.com/"}, "author": {"@type": "Person", "name": "Dr. Nasir Mahmood Abbasi, PhD", "jobTitle": "Computational Biologist & Bioinformatics Researcher", "url": "https://theomicshub.com/about.html", "sameAs": ["https://github.com/nmabbasi"]}, "publisher": {"@type": "Organization", "name": "The Omics Hub", "url": "https://theomicshub.com/"}, "inLanguage": "en"}</script></head>
+<script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "Single-cell trajectory inference: PAGA, DPT, Slingshot and Monocle3",
+  "description": "Compare PAGA with diffusion pseudotime in Scanpy and branching trajectory workflows in R. Choose a defensible root, inspect inferred lineages, and interpret pseudotime as an ordering rather than measured time.",
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://theomicshub.com/tutorials/scrna-seq-trajectory-inference.html"
+  },
+  "image": "https://theomicshub.com/images/trajectory-inference-workstation.webp",
+  "author": {
+    "@type": "Person",
+    "name": "Dr. Nasir Mahmood Abbasi, PhD",
+    "jobTitle": "Computational Biologist & Bioinformatics Researcher",
+    "url": "https://theomicshub.com/about.html",
+    "sameAs": [
+      "https://github.com/nmabbasi"
+    ]
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "The Omics Hub",
+    "url": "https://theomicshub.com",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://theomicshub.com/images/favicon.svg"
+    }
+  },
+  "datePublished": "2026-09-17",
+  "dateModified": "2026-10-21",
+  "url": "https://theomicshub.com/tutorials/scrna-seq-trajectory-inference.html",
+  "name": "Single-cell trajectory inference: PAGA, DPT, Slingshot and Monocle3",
+  "isPartOf": {
+    "@type": "WebSite",
+    "name": "The Omics Hub",
+    "url": "https://theomicshub.com/"
+  }
+}</script>
+<script id="eeat-schema" type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "name": "Single-cell trajectory inference: PAGA, DPT, Slingshot and Monocle3",
+  "description": "Compare PAGA with diffusion pseudotime in Scanpy and branching trajectory workflows in R. Choose a defensible root, inspect inferred lineages, and interpret pseudotime as an ordering rather than measured time.",
+  "url": "https://theomicshub.com/tutorials/scrna-seq-trajectory-inference.html",
+  "isPartOf": {
+    "@type": "WebSite",
+    "name": "The Omics Hub",
+    "url": "https://theomicshub.com/"
+  },
+  "author": {
+    "@type": "Person",
+    "name": "Dr. Nasir Mahmood Abbasi, PhD",
+    "jobTitle": "Computational Biologist & Bioinformatics Researcher",
+    "url": "https://theomicshub.com/about.html",
+    "sameAs": [
+      "https://github.com/nmabbasi"
+    ]
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "The Omics Hub",
+    "url": "https://theomicshub.com/"
+  },
+  "inLanguage": "en",
+  "headline": "Single-cell trajectory inference: PAGA, DPT, Slingshot and Monocle3"
+}</script><link href="../tutorial-library.css" rel="stylesheet"/></head>
 <body class="bg-white text-gray-900">
 <script>
 function toggleMobileMenu() {
@@ -125,72 +189,73 @@ function toggleMobileMenu() {
 <div class="container mx-auto px-4 py-8"><div class="max-w-4xl mx-auto"><div id="tutorial-content">
 <section class="mb-12">
 <div class="flex items-center gap-2 text-sm text-blue-600 font-medium mb-4"><span>Single-Cell RNA-seq</span><span>-</span><span>2026-09-17</span></div>
-<h1 class="text-4xl md:text-5xl font-black text-gray-900 mb-6 leading-tight" id="tutorial-title">Trajectory Inference</h1>
+<h1 class="text-4xl md:text-5xl font-black text-gray-900 mb-6 leading-tight" id="tutorial-title">Single-cell trajectory inference: PAGA, DPT, Slingshot and Monocle3</h1>
 <div class="flex items-center gap-4"><div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 font-bold text-lg">NM</div><div><p class="font-bold text-gray-900">Nasir Mahmood Abbasi, PhD</p><p class="text-sm text-gray-500">Bioinformatics Educator</p></div></div>
 </section>
 <div class="mb-12 rounded-2xl overflow-hidden shadow-lg border border-gray-100">
-<img alt="Trajectory Inference" class="w-full aspect-video object-cover" decoding="async" loading="eager" src="../images/trajectory-inference-workstation.webp"/>
+<img alt="Single-cell trajectory inference: PAGA, DPT, Slingshot and Monocle3" class="w-full aspect-video object-cover" decoding="async" loading="eager" src="../images/trajectory-inference-workstation.webp"/>
 </div>
-<article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none"><div class="flex flex-wrap items-center gap-4 text-xs font-mono text-gray-500 bg-gray-50 p-3 rounded-lg border border-gray-200 mb-6">
+<article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--decision-guide"><div class="flex flex-wrap items-center gap-4 text-xs font-mono text-gray-500 bg-gray-50 p-3 rounded-lg border border-gray-200 mb-6">
 <div class="flex items-center gap-1">
 <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
-<span><strong>Tested on:</strong> Python 3.11, R 4.3.2, Ubuntu 24.04</span>
+<span><strong>Examples:</strong> require an already processed single-cell object; package versions are not pinned here.</span>
 </div>
 <div class="flex items-center gap-1">
 <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+<span>Updated 21 October 2026</span></div>
 </div>
-</div>
-<div class="p-6 bg-blue-50 border border-blue-100 rounded-xl mb-8">
-<h4 class="text-lg font-bold text-blue-900 mb-2">Learning Objectives &amp; Prerequisites</h4>
+<div class="lesson-lead">
+<h2>Before choosing a trajectory method</h2>
 <ul class="list-disc list-inside text-blue-800 space-y-1 mb-4">
 <li><strong>Prerequisites:</strong> Complete scRNA-seq Basics, including QC, clustering, and marker interpretation; use data with a plausible continuous process.</li>
 <li><strong>Objective:</strong> Infer and interpret pseudotime or lineage trajectories while separating computational ordering from directly observed developmental time.</li>
-<li><strong>Expected Output:</strong> A trajectory figure with root rationale, branch interpretation, gene trends, and explicit validation limits.</li>
+<li><strong>Deliverable:</strong> a trajectory plot annotated with the chosen root, the cluster labels and embedding used, observed branches, and limitations.</li>
 </ul>
 </div>
 <h2>Understanding Trajectory Inference</h2>
-<p>Single-cell RNA sequencing provides static snapshots of cellular states. However, biology is highly dynamic. Processes like differentiation, immune activation, and cellular exhaustion are continuous transitions.</p>
+<p>Single-cell RNA-seq measures cells at collection, not their histories. Trajectory inference can order cells along a transcriptional manifold when the sampled population is consistent with a continuous process. Similarity-based ordering alone does not establish that one cell becomes another, nor does it measure elapsed time.</p>
 <p><strong>Trajectory inference (TI)</strong> algorithms attempt to order cells along a learned trajectory based on their transcriptional similarities, creating a "pseudotime" axis. This allows us to track gene expression changes as cells differentiate.</p>
-<p>This tutorial covers the foundational tools for TI in both Python and R.</p>
+<p>PAGA summarizes connectivity among chosen partitions; DPT assigns graph distances relative to a root cell. Slingshot fits lineages from clusters in a reduced-dimensional space, while Monocle3 learns a principal graph. They answer related questions with different assumptions, so their outputs are not interchangeable.</p>
 <hr/>
-<h2>1. PAGA (Python)</h2>
+<h2>Scanpy: inspect partitions, then calculate DPT</h2>
 <p><strong>Partition-based Graph Abstraction (PAGA)</strong> is integrated directly into the Scanpy system. It generates a coarse-grained map of cellular connectivity and provides a solid scaffold for embedding and pseudotime calculation.</p>
 <pre><code class="language-python">import scanpy as sc
-import scvelo as scv
+import numpy as np
 
 # Assuming `adata` is already preprocessed, clustered (e.g., 'leiden'), and has a UMAP
-# We must first re-compute the neighborhood graph if it's been altered
+# Recompute only if the existing neighbor graph is absent or no longer matches this representation.
 sc.pp.neighbors(adata, n_neighbors=15, n_pcs=40)
 
 # 1. Run PAGA
 sc.tl.paga(adata, groups='leiden')
 
 # 2. Plot the coarse-grained PAGA graph
-sc.pl.paga(adata, plot=False)
+sc.pl.paga(adata)
 
 # 3. Use PAGA initialization to recompute a more continuous UMAP
 sc.tl.umap(adata, init_pos='paga')
 sc.pl.umap(adata, color=['leiden'], legend_loc='on data')
 
-# 4. Calculate Diffusion Pseudotime (DPT)
-# First, identify a root cell (e.g., the stem cell or progenitor cluster)
-# Assuming cluster '0' is the known progenitor state
-adata.uns['iroot'] = np.flatnonzero(adata.obs['leiden']  == '0')[0]
-
-# Compute pseudotime
+# DPT needs the neighbor graph, a diffusion map, and a biologically justified root.
+# Confirm that cluster '0' exists and contains the intended root population.
+root_cells = np.flatnonzero(adata.obs['leiden'].astype(str).to_numpy() == '0')
+if root_cells.size == 0:
+    raise ValueError("No cells are labelled '0'; choose a valid root cell explicitly.")
+adata.uns['iroot'] = int(root_cells[0])
+sc.tl.diffmap(adata)
 sc.tl.dpt(adata)
 
 # Visualize pseudotime progression across the manifold
 sc.pl.umap(adata, color='dpt_pseudotime', cmap='viridis')
 </code></pre><div class="mt-4 mb-8 bg-blue-50/50 border-l-4 border-blue-500 p-5 rounded-r-lg text-sm text-gray-700">
 <p class="font-bold text-gray-900 mb-2">Understanding the Output</p>
-<p class="mb-3">Partition-based Graph Abstraction (PAGA) quantifies the connectivity between predefined clusters, producing a simplified graph of cluster relationships. We then use this graph to initialize a ForceAtlas2 or UMAP layout, creating an embedding where continuous developmental trajectories are preserved rather than shattered into isolated islands.</p>
+<p class="mb-3">PAGA edge weights summarize connectivity between the chosen partitions in the neighbor graph. Initializing UMAP from PAGA can help display global topology, but the embedding remains a visualization and should not be treated as a validated lineage.</p>
 <p class="font-bold text-gray-900 mb-2">⚠️ Pitfalls to Avoid</p>
-<p>PAGA is highly sensitive to your initial clustering resolution. If you over-cluster your data (generating too many micro-clusters), the resulting PAGA graph becomes an uninterpretable hairball. Always compute PAGA on biologically meaningful partitions, and never force a trajectory calculation on populations you know are completely discrete (e.g., trying to link T-cells to Fibroblasts).</p>
+<p>The graph depends on both the neighbor graph and the partition labels. Compare reasonable clustering choices and inspect whether proposed edges have support in the underlying cells. Separate populations may be disconnected; do not force a biological connection simply to obtain a continuous plot.</p>
 </div>
 <hr/>
-<h2>2. Monocle3 &amp; Slingshot (R)</h2>
-<p>In the R system, <strong>Monocle3</strong> and <strong>Slingshot</strong> are the leading frameworks for trajectory inference. Slingshot is highly favored for its simplicity and ability to handle branching trajectories effectively from existing Seurat objects.</p>
+<h2>Slingshot: infer one or more cluster lineages</h2>
+<p>Slingshot uses cluster labels and coordinates in a reduced-dimensional space to infer a cluster-based minimum spanning tree and fit principal curves along lineages. Conversion from Seurat uses SeuratWrappers; check that the intended clustering and embedding were carried into the SingleCellExperiment object before inference.</p>
 <pre><code class="language-r">library(Seurat)
 library(slingshot)
 library(SingleCellExperiment)
@@ -211,21 +276,23 @@ plot(reducedDims(sce)$UMAP, col = plotcol, pch=16, asp = 1)
 lines(SlingshotDataSet(sce), lwd=2, col='black')
 </code></pre><div class="mt-4 mb-8 bg-blue-50/50 border-l-4 border-blue-500 p-5 rounded-r-lg text-sm text-gray-700">
 <p class="font-bold text-gray-900 mb-2">Understanding the Output</p>
-<p class="mb-3">Slingshot takes our clustered Seurat object (converted to a SingleCellExperiment) and fits principal curves through the cluster centers. This elegant approach allows us to define smooth pseudotime lineages starting from a designated root cell type, projecting cells along a continuum.</p>
+<p class="mb-3">Slingshot first uses cluster centers to infer lineage topology, then fits simultaneous principal curves. Pseudotime and curve weights are returned per lineage; cells can be unassigned to a lineage and branching cells can contribute to multiple lineages. Inspect the fitted curves and cluster paths rather than relying on the color gradient alone.</p>
 <p class="font-bold text-gray-900 mb-2">⚠️ Pitfalls to Avoid</p>
-<p>Slingshot's greatest strength is its flexibility, but that's also its greatest danger. It will happily fit a mathematical trajectory through <em>any</em> scatter of data you give it, even random noise. You must provide a biologically justified starting cluster (e.g., naive cells, progenitor stem cells); otherwise, the direction of pseudotime is entirely arbitrary and biologically meaningless.</p>
+<p>The start cluster sets the orientation of the inferred lineages; it does not validate that a lineage exists. If the start label is absent or biologically uncertain, stop and resolve that input first. Check whether the inferred paths are supported by the cells and whether plausible alternatives change the topology.</p>
 </div>
 <div class="mt-8 p-6 bg-purple-50 border-l-4 border-purple-500 rounded-r-xl shadow-sm mb-8">
 <h4 class="text-lg font-bold text-purple-900 mb-2 flex items-center gap-2">
 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path><path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
- Expert Insight: Finding Driver Genes with GAMs
+ Exploring expression along inferred lineages
 </h4>
 <p class="text-purple-900 text-sm">
- Slingshot gives you pseudotime values, but how do you find the genes driving the trajectory? In my advanced pipelines, I pair Slingshot with the <strong>tradeSeq</strong> package to fit Generalized Additive Models (GAMs) on the highly variable genes.
+ The <strong>tradeSeq</strong> package fits negative-binomial generalized additive models to count data using pseudotime and lineage weights. Its tests identify expression patterns associated with the fitted ordering; they do not establish causal driver genes.
 <br/><br/>
- For example, fitting a model with <code class="bg-purple-100 px-1 rounded">fitGAM(counts = data, pseudotime = pseudotime, cellWeights = weights, nknots = 5)</code> allows you to run powerful statistical tests like <code class="bg-purple-100 px-1 rounded">associationTest()</code> to find genes dynamically changing along the trajectory, or <code class="bg-purple-100 px-1 rounded">startVsEndTest()</code> to find genes drastically different between the progenitor state and the terminal state. This turns a simple visualization into actionable biological targets.
+ The inputs must be aligned by cell: rows of the count matrix are genes and columns are cells; pseudotime and cell-weight matrices have cells by lineages. Select the knot count with the package guidance, inspect per-gene convergence, and account for multiple testing when interpreting results. `associationTest` tests association with pseudotime; `startVsEndTest` compares fitted expression at lineage endpoints.
 </p>
 </div>
+<h2>Monocle3: learn a principal graph and choose its root</h2>
+<p>Monocle3 uses its own cell_data_set representation and workflow. A Seurat conversion is not guaranteed to preserve the intended clusters or embeddings; inspect the converted object and follow the package-specific trajectory guidance. Root selection is explicit and can be given as root principal-graph nodes or root cells supported by the data.</p>
 <pre><code class="language-r">library(monocle3)
 library(SeuratWrappers)
 
@@ -239,9 +306,10 @@ cds &lt;- cluster_cells(cds)
 # 2. Learn the principal graph (trajectory)
 cds &lt;- learn_graph(cds)
 
-# 3. Order cells in pseudotime
-# (This will open an interactive prompt to select the root nodes)
-cds &lt;- order_cells(cds)
+# 3. Inspect the learned graph and select root_pr_nodes from the graph
+# based on known early-state cells; this is not an automatic biological decision.
+# Replace ROOT_NODE with the verified principal-graph node name.
+cds &lt;- order_cells(cds, root_pr_nodes = c('ROOT_NODE'))
 
 # 4. Visualize the trajectory and pseudotime
 plot_cells(cds,
@@ -252,48 +320,13 @@ plot_cells(cds,
            graph_label_size=1.5)
 </code></pre><div class="mt-4 mb-8 bg-blue-50/50 border-l-4 border-blue-500 p-5 rounded-r-lg text-sm text-gray-700">
 <p class="font-bold text-gray-900 mb-2">Understanding the Output</p>
-<p class="mb-3">Monocle3 requires converting our standard Seurat object into a specialized CellDataSet. It uses reversed graph embedding to learn the principal graph of the data from scratch, allowing for complex trajectories with multiple branching points and fate decisions.</p>
+<p class="mb-3">Monocle3 stores expression data and cell/gene metadata in a cell_data_set object. After its preprocessing and graph-learning steps, inspect the learned graph before ordering cells. Branches are model structure, not independently confirmed fate decisions.</p>
 <p class="font-bold text-gray-900 mb-2">⚠️ Pitfalls to Avoid</p>
-<p>Unlike Slingshot, Monocle3 calculates its own UMAP and partitions by default, which frequently frustrates users trying to perfectly map their carefully picked Seurat clusters. Make sure to explicitly transfer your Seurat embeddings and clustering if you want consistency. Also, picking the "root" node in Monocle3 requires careful manual inspection of the generated graph.</p>
+<p>Monocle3 graph learning depends on its preprocessing, embedding, and partitioning choices. The example omits these input-specific decisions and does not guarantee correspondence to Seurat clusters. Inspect graph placement and partitions, then provide a root node that corresponds to a justified early state; a placeholder node name must be replaced with one present in the learned graph.</p>
 </div>
-<h3>Matched Python and R trajectory workflow</h3>
-<p>The two ecosystems use different algorithms, but both require a justified biological root and should be interpreted as an inferred ordering - not observed time. Choose the implementation that fits the anticipated lineage topology and validate the result against known biology.</p>
-<div class="code-tabs" data-code-tabs="">
-<div aria-label="Trajectory inference examples" class="code-tab-list" role="tablist">
-<button aria-controls="trajectory-python-panel" aria-selected="true" class="code-tab-button is-active" id="trajectory-python-tab" role="tab" type="button">Python | Scanpy PAGA / DPT</button>
-<button aria-controls="trajectory-r-panel" aria-selected="false" class="code-tab-button" id="trajectory-r-tab" role="tab" tabindex="-1" type="button">R | Slingshot</button>
-</div>
-<div aria-labelledby="trajectory-python-tab" class="code-tab-panel" id="trajectory-python-panel" role="tabpanel">
-<pre><code class="language-python">import numpy as np
-import scanpy as sc
-
-sc.pp.neighbors(adata, n_neighbors=15, n_pcs=40)
-sc.tl.paga(adata, groups="leiden")
-adata.uns["iroot"] = np.flatnonzero(adata.obs["leiden"] == "0")[0]
-sc.tl.dpt(adata)
-sc.pl.umap(adata, color="dpt_pseudotime", cmap="viridis")
-</code></pre><div class="mt-4 mb-8 bg-blue-50/50 border-l-4 border-blue-500 p-5 rounded-r-lg text-sm text-gray-700">
-<p class="font-bold text-gray-900 mb-2">Understanding the Output</p>
-<p class="mb-3">Both Diffusion Pseudotime (DPT) in Scanpy and Slingshot in R rely heavily on the correct identification of the root cell. Here, we define the root mathematically (finding the cell furthest along the diffusion map) or by providing a known early-stage population.</p>
-<p class="font-bold text-gray-900 mb-2">⚠️ Pitfalls to Avoid</p>
-<p>Pseudotime is not real time, it's a measure of transcriptional distance. If your dataset is suffering from severe cell cycle effects or high mitochondrial stress, trajectory algorithms will often mistakenly define the "stressed" cells or cycling cells as a distinct developmental lineage. Always regress out or carefully check cell cycle scoring before inferring trajectories.</p>
-</div>
-</div>
-<div aria-labelledby="trajectory-r-tab" class="code-tab-panel" hidden="" id="trajectory-r-panel" role="tabpanel">
-<pre><code class="language-r">library(slingshot)
-library(SingleCellExperiment)
-
-sce &lt;- as.SingleCellExperiment(pbmc)
-sce &lt;- slingshot(sce, clusterLabels = "ident", reducedDim = "UMAP", start.clus = "0")
-pseudotime &lt;- slingPseudotime(sce)
-plot(reducedDims(sce)$UMAP, col = pseudotime[, 1], pch = 16, asp = 1)
-lines(SlingshotDataSet(sce), lwd = 2, col = "black")
-</code></pre><div class="mt-4 mb-8 bg-blue-50/50 border-l-4 border-blue-500 p-5 rounded-r-lg text-sm text-gray-700">
-<p class="font-bold text-gray-900 mb-2">Understanding the Output</p>
-<p class="mb-3">This executes the final trajectory inference in the R system. By specifying the start cluster, we anchor the lineage, allowing the algorithm to assign a continuous pseudotime value to every cell along the branching paths.</p>
-</div>
-</div>
-</div>
+<h2>Compare methods and review the result</h2>
+<p>Use PAGA to inspect cluster connectivity, then use DPT when a root-relative ordering on the cell graph addresses your question. Use Slingshot when cluster labels and a reduced-dimensional representation support the lineage model you want to test. Monocle3 learns a principal graph with its own workflow. Record the input cells, representation, cluster labels, root choice, and software versions so the analysis can be reviewed.</p>
+<div class="lesson-checkpoint"><h3>Before interpreting a branch</h3><ul><li>Does the root label/node correspond to the proposed early state, and are there cells from that state?</li><li>Do changes in cell selection, clustering, batch handling, or representation alter the path?</li><li>Are known markers or independent time-course/lineage evidence consistent with the ordering?</li><li>Are disconnected populations or missing intermediate states being mistaken for a continuous process?</li></ul><p>Do not automatically regress out cell-cycle or stress signals: first determine whether they are nuisance variation or part of the biological process under study.</p></div>
 <div class="mt-12 mb-8 bg-white border border-blue-100 rounded-2xl p-8 shadow-sm">
 <div class="flex items-center gap-3 mb-4">
 <div class="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
@@ -309,8 +342,8 @@ lines(SlingshotDataSet(sce), lwd = 2, col = "black")
 </a>
 </div>
 </div>
-<h2>Conclusion</h2>
-<p>Trajectory inference shifts our perspective from discrete clusters to continuous cellular development. Whether you rely on PAGA's graph abstractions in Python or Slingshot's branching lineage logic in R, establishing a solid pseudotime framework is the key to identifying the gene regulatory networks driving cellular transitions.</p>
+<h2>Interpreting an inferred ordering</h2>
+<p>An inferred path is a model of the sampled expression structure. Report the assumptions that determine it, compare plausible roots or representations where appropriate, and treat gene-level trends as hypotheses for follow-up rather than proof of mechanism.</p>
 <div class="mt-10 p-8 bg-gray-50 border border-gray-200 rounded-xl">
 <h3 class="text-xl font-bold text-gray-900 mb-4">Knowledge Check &amp; Assessment</h3>
 <div class="space-y-4">
@@ -319,8 +352,8 @@ lines(SlingshotDataSet(sce), lwd = 2, col = "black")
 <p class="text-gray-600 text-sm">Why does pseudotime not prove that one observed cell literally becomes another?</p>
 </div>
 <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-<h4 class="font-bold text-gray-800 mb-2">2. Practical Execution</h4>
-<p class="text-gray-600 text-sm">Run or inspect a trajectory analysis, state the root choice, identify one branch, and plot expression of a relevant dynamic gene. </p>
+<h4 class="font-bold text-gray-800 mb-2">2. Practical interpretation</h4>
+<p class="text-gray-600 text-sm">Inspect a trajectory result, state the root choice, identify one branch, and plot a candidate gene across pseudotime. Explain what additional evidence would be needed before calling it a driver. </p>
 </div>
 <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
 <h4 class="font-bold text-gray-800 mb-2">3. Troubleshooting</h4>
@@ -328,26 +361,18 @@ lines(SlingshotDataSet(sce), lwd = 2, col = "black")
 </div>
 </div>
 </div>
-<section aria-label="References and further reading" class="mt-10 p-6 bg-slate-50 border border-slate-200 rounded-xl">
+<section aria-label="References and further reading" class="lesson-reference mt-10 p-6 bg-slate-50 border border-slate-200 rounded-xl">
 <h2 class="text-xl font-bold text-gray-900 mb-3">References and further reading</h2>
 <p class="text-sm text-gray-600 mb-3">Use these official resources to check current software behaviour, terminology, and production guidance. Tool versions and defaults change, so verify commands against the documentation before applying them to a research dataset.</p>
 <ul class="list-disc list-inside space-y-2 text-sm text-gray-700">
 <li><a class="text-blue-700 hover:underline" href="https://satijalab.org/seurat/" rel="noopener" target="_blank">Seurat documentation</a></li>
-<li><a class="text-blue-700 hover:underline" href="https://scanpy.readthedocs.io/en/stable/" rel="noopener" target="_blank">Scanpy documentation</a></li>
+<li><a class="text-blue-700 hover:underline" href="https://scanpy.readthedocs.io/en/stable/api/scanpy.tl.paga.html" rel="noopener" target="_blank">Scanpy PAGA API</a> and <a href="https://scanpy.readthedocs.io/en/stable/api/scanpy.tl.dpt.html" rel="noopener" target="_blank">DPT API</a></li>
+<li><a href="https://bioconductor.org/packages/devel/bioc/vignettes/slingshot/inst/doc/vignette.html" rel="noopener" target="_blank">Slingshot Bioconductor vignette</a></li>
+<li><a href="https://cole-trapnell-lab.github.io/monocle3/docs/trajectories/" rel="noopener" target="_blank">Monocle3 trajectory guide</a></li>
+<li><a href="https://www.bioconductor.org/packages/release/bioc/vignettes/tradeSeq/inst/doc/tradeSeq.html" rel="noopener" target="_blank">tradeSeq workflow vignette</a></li>
 </ul>
 </section>
-</article>
-<section class="mt-12 mb-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-100">
-<div class="flex items-start gap-4">
-<div class="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-<svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
-</div>
-<div>
-<p class="text-sm text-gray-600 mb-2">This tutorial records the software versions used in its examples. Software and package behaviour can change. Please re-check commands against the official documentation. If a command does not work, you find an error, or the tutorial is no longer reproducible, please report it through the <a class="text-blue-600 hover:underline" href="../contact.html">Contact page</a></p>
-<p class="text-sm text-gray-500">Author: <a class="text-blue-600 hover:underline font-medium" href="../about.html">Nasir Mahmood Abbasi, PhD</a> - Category: Single-Cell RNA-seq</p>
-</div>
-</div>
-</section>
+<aside aria-labelledby="tutorial-feedback-title" class="lesson-feedback" id="tutorial-feedback"><h2 id="tutorial-feedback-title">Help improve this tutorial</h2><p>Found an error, a broken link, or a step that needs a clearer explanation? Please <a href="../contact.html">contact me</a>. Your feedback helps me keep this resource accurate and useful.</p></aside></article>
 <section aria-label="Course sequence" class="mt-16 pt-10 border-t border-gray-100">
 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
 <h2 class="text-2xl font-black text-gray-900 tracking-tight">Continue Learning</h2>
@@ -498,8 +523,6 @@ lines(SlingshotDataSet(sce), lwd = 2, col = "black")
 <script src="../code-tabs.js"></script>
 <script src="../copy-code.js"></script>
 <script src="../subscribe-fab.js"></script>
-
-
 <!-- Cookie Consent Banner -->
 <div class="fixed bottom-0 inset-x-0 z-[9999] transition-transform duration-500" id="cookie-consent-banner" style="font-family:'Inter',system-ui,sans-serif;">
 <div class="mx-auto max-w-4xl px-4 pb-4 sm:px-6">

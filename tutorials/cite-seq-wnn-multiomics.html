@@ -4,20 +4,20 @@
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<meta content="Learn how to process and integrate CITE-seq data, bridging the gap between RNA expression and surface protein abundance using Weighted Nearest Neighbor (WNN) analysis." name="description"/>
+<meta content="Prepare matched RNA and antibody-derived tag count matrices, preprocess each assay in Seurat, build a weighted-neighbor graph, and interpret modality weights with appropriate caveats." name="description"/>
 <meta content="bioinformatics, single-cell RNA-seq, shell commands, conda, computational biology, tutorials, data analysis" name="keywords"/>
 <meta content="Nasir Mahmood Abbasi, PhD" name="author"/>
 <meta content="index, follow" name="robots"/>
 <!-- Open Graph tags for social sharing -->
-<meta content="Multi-Omics: CITE-seq &amp; WNN Integration | The Omics Hub" property="og:title"/>
-<meta content="Learn how to process and integrate CITE-seq data, bridging the gap between RNA expression and surface protein abundance using Weighted Nearest Neighbor (WNN) analysis." property="og:description"/>
+<meta content="Multi-Omics: CITE-seq &amp; WNN Integration" property="og:title"/>
+<meta content="Prepare matched RNA and antibody-derived tag count matrices, preprocess each assay in Seurat, build a weighted-neighbor graph, and interpret modality weights with appropriate caveats." property="og:description"/>
 <meta content="https://theomicshub.com/tutorials/cite-seq-wnn-multiomics.html" property="og:url"/>
 <meta content="website" property="og:type"/>
 <meta content="https://theomicshub.com/images/cite-seq-wnn-multiomics.webp" property="og:image"/>
 <!-- Twitter Card tags -->
 <meta content="summary_large_image" name="twitter:card"/>
-<meta content="Multi-Omics: CITE-seq &amp; WNN Integration | The Omics Hub" name="twitter:title"/>
-<meta content="Learn how to process and integrate CITE-seq data, bridging the gap between RNA expression and surface protein abundance using Weighted Nearest Neighbor (WNN) analysis." name="twitter:description"/>
+<meta content="Multi-Omics: CITE-seq &amp; WNN Integration" name="twitter:title"/>
+<meta content="Prepare matched RNA and antibody-derived tag count matrices, preprocess each assay in Seurat, build a weighted-neighbor graph, and interpret modality weights with appropriate caveats." name="twitter:description"/>
 <meta content="https://theomicshub.com/images/cite-seq-wnn-multiomics.webp" name="twitter:image"/>
 <title>Multi-Omics: CITE-seq &amp; WNN Integration | The Omics Hub</title><!-- Favicon -->
 <link href="../images/favicon.svg" rel="icon" type="image/svg+xml"/>
@@ -45,8 +45,72 @@ gtag('consent', 'default', {
 <script async="" crossorigin="anonymous" src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2910340533244599"></script>
 <meta content="ca-pub-2910340533244599" name="google-adsense-account"/><meta content="XioIUjAyO5PEAT-N6nLrowdiDe4ATl-vKdRGmmrDHZM" name="google-site-verification"/>
 <link href="https://theomicshub.com/tutorials/cite-seq-wnn-multiomics.html" rel="canonical"/>
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "TechArticle", "headline": "Multi-Omics: CITE-seq & WNN Integration", "description": "Learn how to process and integrate CITE-seq data, bridging the gap between RNA expression and surface protein abundance using Weighted Nearest Neighbor (WNN) analysis.", "mainEntityOfPage": {"@type": "WebPage", "@id": "https://theomicshub.com/tutorials/cite-seq-wnn-multiomics.html"}, "image": "https://theomicshub.com/images/cite-seq-wnn-multiomics.webp", "author": {"@type": "Person", "name": "Dr. Nasir Mahmood Abbasi, PhD", "jobTitle": "Computational Biologist & Bioinformatics Researcher", "url": "https://theomicshub.com/about.html", "sameAs": ["https://github.com/nmabbasi"]}, "publisher": {"@type": "Organization", "name": "The Omics Hub", "url": "https://theomicshub.com", "logo": {"@type": "ImageObject", "url": "https://theomicshub.com/images/favicon.svg"}}, "datePublished": "2026-08-31", "dateModified": "2026-10-10", "url": "https://theomicshub.com/tutorials/cite-seq-wnn-multiomics.html", "name": "Multi-Omics: CITE-seq & WNN Integration | The Omics Hub", "isPartOf": {"@type": "WebSite", "name": "The Omics Hub", "url": "https://theomicshub.com/"}}</script>
-<script id="eeat-schema" type="application/ld+json">{"@context": "https://schema.org", "@type": "TechArticle", "name": "Multi-Omics: CITE-seq & WNN Integration | The Omics Hub", "description": "Learn how to process and integrate CITE-seq data, bridging the gap between RNA expression and surface protein abundance using Weighted Nearest Neighbor (WNN) analysis.", "url": "https://theomicshub.com/tutorials/cite-seq-wnn-multiomics.html", "isPartOf": {"@type": "WebSite", "name": "The Omics Hub", "url": "https://theomicshub.com/"}, "author": {"@type": "Person", "name": "Dr. Nasir Mahmood Abbasi, PhD", "jobTitle": "Computational Biologist & Bioinformatics Researcher", "url": "https://theomicshub.com/about.html", "sameAs": ["https://github.com/nmabbasi"]}, "publisher": {"@type": "Organization", "name": "The Omics Hub", "url": "https://theomicshub.com/"}, "inLanguage": "en"}</script></head>
+<script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "Multi-Omics: CITE-seq & WNN Integration",
+  "description": "Prepare matched RNA and antibody-derived tag count matrices, preprocess each assay in Seurat, build a weighted-neighbor graph, and interpret modality weights with appropriate caveats.",
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://theomicshub.com/tutorials/cite-seq-wnn-multiomics.html"
+  },
+  "image": "https://theomicshub.com/images/cite-seq-wnn-multiomics.webp",
+  "author": {
+    "@type": "Person",
+    "name": "Dr. Nasir Mahmood Abbasi, PhD",
+    "jobTitle": "Computational Biologist & Bioinformatics Researcher",
+    "url": "https://theomicshub.com/about.html",
+    "sameAs": [
+      "https://github.com/nmabbasi"
+    ]
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "The Omics Hub",
+    "url": "https://theomicshub.com",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://theomicshub.com/images/favicon.svg"
+    }
+  },
+  "datePublished": "2026-08-31",
+  "dateModified": "2026-10-21",
+  "url": "https://theomicshub.com/tutorials/cite-seq-wnn-multiomics.html",
+  "name": "Multi-Omics: CITE-seq & WNN Integration",
+  "isPartOf": {
+    "@type": "WebSite",
+    "name": "The Omics Hub",
+    "url": "https://theomicshub.com/"
+  }
+}</script>
+<script id="eeat-schema" type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "name": "Multi-Omics: CITE-seq & WNN Integration",
+  "description": "Prepare matched RNA and antibody-derived tag count matrices, preprocess each assay in Seurat, build a weighted-neighbor graph, and interpret modality weights with appropriate caveats.",
+  "url": "https://theomicshub.com/tutorials/cite-seq-wnn-multiomics.html",
+  "isPartOf": {
+    "@type": "WebSite",
+    "name": "The Omics Hub",
+    "url": "https://theomicshub.com/"
+  },
+  "author": {
+    "@type": "Person",
+    "name": "Dr. Nasir Mahmood Abbasi, PhD",
+    "jobTitle": "Computational Biologist & Bioinformatics Researcher",
+    "url": "https://theomicshub.com/about.html",
+    "sameAs": [
+      "https://github.com/nmabbasi"
+    ]
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "The Omics Hub",
+    "url": "https://theomicshub.com/"
+  },
+  "inLanguage": "en",
+  "headline": "Multi-Omics: CITE-seq & WNN Integration"
+}</script><link href="../tutorial-library.css" rel="stylesheet"/></head>
 <body class="bg-white text-gray-900">
 <script>
 function toggleMobileMenu() {
@@ -131,15 +195,8 @@ function toggleMobileMenu() {
 <div class="mb-12 rounded-2xl overflow-hidden shadow-lg border border-gray-100">
 <img alt="Multi-Omics: CITE-seq &amp; WNN Integration" class="w-full aspect-video object-cover" decoding="async" loading="eager" src="../images/cite-seq-wnn-multiomics.webp"/>
 </div>
-<article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none"><div class="flex flex-wrap items-center gap-4 text-xs font-mono text-gray-500 bg-gray-50 p-3 rounded-lg border border-gray-200 mb-6">
-<div class="flex items-center gap-1">
-<svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
-<span><strong>Tested on:</strong> Python 3.11, R 4.3.2, Ubuntu 24.04</span>
-</div>
-<div class="flex items-center gap-1">
-<svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
-</div>
-</div><h2>Learning objectives &amp; prerequisites</h2>
+<article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--lab"><p class="lesson-lead">CITE-seq measures RNA and antibody-derived tags (ADTs) in the same cells. This lab follows the two assays from matched count matrices through separate preprocessing, a Seurat weighted-nearest-neighbor (WNN) graph, and checks that help you interpret modality weights without treating them as biological truth.</p>
+<h2>Learning objectives &amp; prerequisites</h2>
 <p>
 By the end of this lesson you will be able to:
 </p>
@@ -153,46 +210,55 @@ By the end of this lesson you will be able to:
 Prerequisites:
 </p>
 <ul>
-<li>Familiarity with single-cell RNA-seq basics and the Seurat R package (v4+ recommended).</li>
-<li>Installed software: R (≥4.0), Seurat (v4 or later), and tidyverse/ggplot2 for plotting. This tutorial uses canonical Seurat function names—adjust if using wrappers or older versions.</li>
-<li>Input files: an expression matrix for RNA, an ADT matrix (same barcodes), or a preconstructed Seurat object containing two assays named "RNA" and "ADT". Provide absolute or relative paths and document filenames.</li>
+<li>Familiarity with single-cell RNA-seq and R. The function names below follow Seurat v4.3 and the current Seurat reference; check the installed version if an argument or object accessor differs.</li>
+<li>Installed software: R and Seurat. ggplot2 is needed only for plotting. The code uses the Seurat v4.3 WNN API and current documented function names; it is not a record of a tested software installation.</li>
+<li>Input files: two RDS matrices, with features in rows and cell barcodes in columns. The RNA matrix has genes; the ADT matrix has antibody features. They must use the same barcode convention. This example intersects their barcodes before object construction and reports how many cells are retained. It does not load an already-built Seurat object.</li>
 </ul>
-<h2>Why integrate RNA and protein? Biological &amp; computational context</h2>
+<h2>Why analyze RNA and ADT together?</h2>
 <p>
-Single-cell RNA sequencing (scRNA-seq) profiles the transcriptome, but many biologically important cell states and identities are better defined by surface proteins (for example CD markers). CITE-seq (Cellular Indexing of Transcriptomes and Epitopes by sequencing) augments scRNA-seq with antibody-derived tags (ADTs), giving simultaneous RNA and protein measurements in the same cell. Because RNA and protein measurements have different measurement noise, dynamic ranges, and technical artefacts, naive concatenation can let one modality dominate downstream analyses.
+CITE-seq pairs transcript counts with DNA-tagged antibody counts from the same cell. RNA and ADT assays have different feature sets and measurement properties, so concatenating their features directly can make one modality dominate a distance calculation. Seurat WNN instead learns cell-specific modality weights from modality-specific reductions and builds a shared neighbor graph.
 </p>
 <p>
-Weighted Nearest Neighbor (WNN) analysis (Seurat v4) addresses this by computing modality-specific neighbor graphs and learning per-cell modality weights that reflect which data type is more informative for local neighborhood structure. WNN therefore enables joint clustering and visualization that respect both modalities while adapting to cell-by-cell modality quality differences.
+WNN is an unsupervised way to combine local neighborhood information. A weight describes the relative utility of a modality for a cell’s neighborhood in this analysis; it is not a direct measure of assay quality, biological importance, or truth. Check each assay and the experimental context independently.
 </p>
-<h2>Reproducible workflow: inputs, commands, and expected outputs</h2>
-<p>This section provides an executable R workflow. Replace paths and filenames with your own. Commands run in order: each creates intermediate objects kept in memory; the code also includes optional file output steps so you can reproduce results later.</p>
+<h2>Build the Seurat object from matched count matrices</h2>
+<p>Replace the two input paths with your RDS files. The matrices should have unique feature and barcode names, with cells in columns. The code keeps only the shared barcodes and aligns ADT columns to the RNA object before adding the second assay. Check this retained-cell count against your intended filtering before proceeding.</p>
 <h3>Files you should have</h3>
 <ul>
-<li>RNA read count matrix (cells × genes), e.g. data/rna_counts.mtx or data/rna_counts.rds</li>
-<li>ADT count matrix (cells × proteins), e.g. data/adt_counts.mtx or data/adt_counts.rds</li>
-<li>Optional: a barcode list and feature annotation files matching the matrices.</li>
+<li>RNA count matrix (genes × cells), saved as an RDS matrix</li>
+<li>ADT count matrix (ADT features × cells), saved as an RDS matrix</li>
+<li>Optional: feature annotations and a barcode list for auditing the matched inputs.</li>
 </ul>
 <h3>R script: build a Seurat CITE-seq object and preprocess</h3>
 <pre><code># Load libraries
 library(Seurat)
 library(ggplot2)
 
-# 1) Read input matrices (example uses RDS; replace with readMM/read.table as needed)
-# Expected input: matrices with identical column names (cell barcodes)
-rna_mat &lt;- readRDS("data/rna_counts.rds")  # sparse matrix: genes x cells
-adt_mat &lt;- readRDS("data/adt_counts.rds")  # matrix: proteins x cells
+# Read matrices with features in rows and cells in columns
+rna_mat &lt;- readRDS("data/rna_counts.rds")
+adt_mat &lt;- readRDS("data/adt_counts.rds")
+stopifnot(!is.null(rownames(rna_mat)), !is.null(colnames(rna_mat)),
+          !is.null(rownames(adt_mat)), !is.null(colnames(adt_mat)))
+stopifnot(!anyDuplicated(rownames(rna_mat)), !anyDuplicated(colnames(rna_mat)),
+          !anyDuplicated(rownames(adt_mat)), !anyDuplicated(colnames(adt_mat)))
 
-# 2) Create Seurat object with RNA assay
+# Keep shared cells in the same order in both matrices
+shared_cells &lt;- intersect(colnames(rna_mat), colnames(adt_mat))
+if (length(shared_cells) == 0) stop("RNA and ADT have no matching cell barcodes")
+rna_mat &lt;- rna_mat[, shared_cells, drop = FALSE]
+adt_mat &lt;- adt_mat[, shared_cells, drop = FALSE]
+message(length(shared_cells), " shared barcodes retained")
+
+# Add ADT counts after aligning to the cells retained in the RNA object
 seurat_obj &lt;- CreateSeuratObject(counts = rna_mat, assay = "RNA", project = "CITE_project")
-
-# 3) Add ADT assay. Ensure protein names are safe (no slashes); keep original names documented.
+adt_mat &lt;- adt_mat[, colnames(seurat_obj), drop = FALSE]
 seurat_obj[["ADT"]] &lt;- CreateAssayObject(counts = adt_mat)
 
-# Save intermediate object for reproducibility
+dir.create("results", showWarnings = FALSE, recursive = TRUE)
 saveRDS(seurat_obj, file = "results/seurat_initial.rds")
 </code></pre>
 <p>
-What this produces:
+Check the input checkpoint:
 </p>
 <ul>
 <li>In-memory Seurat object with assays "RNA" and "ADT". The file results/seurat_initial.rds is a reproducible checkpoint.</li>
@@ -201,7 +267,7 @@ What this produces:
 <pre><code># Basic QC: percent mitochondrial, per-cell counts, per-cell features
 seurat_obj[["percent.mt"]] &lt;- PercentageFeatureSet(seurat_obj, pattern = "^MT-")
 
-# Example thresholds: adjust to your tissue/species
+# Illustrative thresholds only: inspect QC distributions and adapt to tissue, species, chemistry, and study design
 seurat_obj &lt;- subset(seurat_obj, subset = nFeature_RNA &gt; 200 &amp; nCount_RNA &gt; 500 &amp; percent.mt &lt; 20)
 
 # Normalize and find variable features
@@ -254,7 +320,7 @@ seurat_obj &lt;- FindMultiModalNeighbors(
   seurat_obj,
   reduction.list = list("pca", "apca"),
   dims.list = list(1:30, 1:18),
-  modality.weight.name = "modality_weights"
+  modality.weight.name = c("RNA.weight", "ADT.weight")
 )
 
 # Build a UMAP on the weighted neighbor graph and cluster using the WNN graph
@@ -268,7 +334,7 @@ saveRDS(seurat_obj, file = "results/seurat_wnn_integrated.rds")
 Produces:
 </p>
 <ul>
-<li>Weighted neighbor graph stored internally (graph name "wsnn"), a UMAP reduction "wnn.umap", per-cell modality weights in meta.data under the column(s) named by "modality_weights" (e.g., RNA.weight and ADT.weight).</li>
+<li>Weighted neighbor graph stored internally (graph name "wsnn"), a UMAP reduction "wnn.umap", per-cell modality weights in metadata columns RNA.weight and ADT.weight, as named in this call.</li>
 <li>Cluster assignments stored in seurat_obj$seurat_clusters and checkpoint results/seurat_wnn_integrated.rds.</li>
 </ul>
 <h2>Output inspection and interpretation</h2>
@@ -284,11 +350,11 @@ After running the pipeline, inspect the following elements. Do not treat any sin
 </ul>
 <h3>What to look for and what it means</h3>
 <ul>
-<li>Clusters where ADT markers are sharply enriched but RNA markers are weak: WNN may give higher protein weights to these cells, which is expected for markers with low RNA-protein correlation (surface proteins with low mRNA stability).</li>
+<li>When a cell has a higher ADT weight, that says ADT contributes more to its local neighbor definition under the chosen preprocessing and dimensions. It does not by itself explain why RNA and protein differ or establish a biological mechanism.</li>
 <li>Cells with high RNA weight: indicates neighborhoods where transcriptome structure is more informative than protein measurements (for example, transcriptionally distinct states without clear surface-protein differences).</li>
-<li>Mixed-weight neighborhoods: both modalities contribute—these are places where RNA and protein agree on cell identity and WNN improves robustness.</li>
+<li>When both modality weights contribute, both reductions inform the local neighborhood. This does not demonstrate that RNA and protein agree on a cell identity; inspect the underlying measurements and markers.</li>
 </ul>
-<h3>What results do NOT prove</h3>
+<h3>What the weights and clusters do not establish</h3>
 <ul>
 <li>WNN output does not establish causality—high protein weight does not imply protein measurement is biologically ground truth; it reflects local signal-to-noise relationships.</li>
 <li>Cluster labels inferred from WNN should not be considered validated cell types without verifying canonical markers, metadata, and experimental context.</li>
@@ -324,12 +390,12 @@ Below are common issues and concrete steps to diagnose/fix them.
 </ul>
 <h3>3. WNN UMAP shows RNA-dominated structure or vice versa</h3>
 <ul>
-<li>Symptom: Joint UMAP looks identical to RNA-only UMAP.</li>
-<li>Likely causes: One modality has much higher dimensionality or signal; dims.list selection favored RNA PCs excessively.</li>
+<li>Symptom: The WNN UMAP resembles the RNA-only UMAP.</li>
+<li>Possible causes include the selected dimensions, weak or noisy ADT signal, or the UMAP projection. Similar-looking UMAPs alone do not prove that WNN ignored ADT.</li>
 <li>Fixes:
     <ul>
 <li>Re-evaluate dims.list to ensure ADT dims capture useful signal (try fewer RNA PCs or more ADT PCs if justified).</li>
-<li>Check modality weights distribution (seurat_obj$modality_weights). If weights are extreme, revisit normalization and scaling for the weaker modality.</li>
+<li>The call below names the two metadata columns `RNA.weight` and `ADT.weight`. Inspect both distributions and verify the selected reduction dimensions. Do not infer a defective assay from extreme weights alone.</li>
 </ul>
 </li>
 </ul>
@@ -339,7 +405,7 @@ Below are common issues and concrete steps to diagnose/fix them.
 <li>Likely causes: barcode naming conventions differ (prefixes/suffixes) or missing barcodes due to filtering.</li>
 <li>Fixes:
     <ul>
-<li>Harmonize barcodes prior to CreateAssayObject. Use intersect(colnames(rna_mat), colnames(adt_mat)) to get common barcodes and subset both matrices to those cells.</li>
+<li>Harmonize barcodes prior to CreateAssayObject. Use `intersect(colnames(rna_mat), colnames(adt_mat))`, then subset both matrices in that same order before object creation. Stop if no barcodes match; investigate prefixes, suffixes, and filtering rather than silently accepting an empty or unexpectedly small intersection.</li>
 <li>Document any barcode filtering steps and save filtered matrices.</li>
 </ul>
 </li>
@@ -351,8 +417,8 @@ Limitations to keep in mind:
 <ul>
 <li>WNN is an unsupervised integration method. It reflects relative local informativeness but does not correct modality-specific artifacts such as antibody cross-reactivity or ambient RNA contamination.</li>
 <li>Normalization choices (CLR margin, RNA normalization method) substantially affect results. Carefully document settings, and, where possible, test alternatives (e.g., SCTransform for RNA).</li>
-<li>Results are sensitive to dim selection (dims.list). Use variance-explained elbow plots or JackStraw (for PCA) to choose reasonable PC counts. Overfitting by including many noisy PCs can degrade neighbor quality.</li>
-<li>Seurat implementation details change between major versions. Use Seurat v4+ for the WNN API as shown; consult release notes when upgrading. Save session info (R version and package versions) with saveRDS(sessionInfo(), file="results/session_info.rds") for reproducibility.</li>
+<li>Results are sensitive to dim selection (dims.list). Inspect the available dimensions and their variance patterns before setting `dims.list`; the example values (30 RNA PCs and 18 ADT PCs) are placeholders, not validated choices for every dataset. Avoid requesting PCs that do not exist.</li>
+<li>Seurat APIs can change between versions. This workflow follows the official Seurat v4.3 example and current reference for these calls; check your installed version and save session information with `saveRDS(sessionInfo(), file = "results/session_info.rds")`.</li>
 </ul>
 <p>
 Responsible-use notes:
@@ -372,23 +438,12 @@ Responsible-use notes:
 </ol>
 <h2>References</h2>
 <ul>
-<li><a href="https://satijalab.org/seurat/articles/multimodal_vignette.html">Seurat v4: Weighted Nearest Neighbor (WNN) analysis vignette</a> — official Seurat documentation and examples.</li>
-<li><a href="https://www.nature.com/articles/nbt.3973">Stoeckius et al., 2017 — CITE-seq: Simultaneous epitope and transcriptome measurement in single cells</a> (Nature Biotechnology)</li>
+<li><a href="https://satijalab.org/seurat/articles/weighted_nearest_neighbor_analysis">Seurat Weighted Nearest Neighbor analysis vignette</a> — official Seurat documentation and examples.</li>
+<li><a href="https://www.nature.com/articles/nmeth.4380">Stoeckius et al., 2017 — Simultaneous epitope and transcriptome measurement in single cells</a> (Nature Biotechnology)</li>
 <li><a href="https://satijalab.org/seurat/">Seurat project site</a> — package documentation and release notes.</li>
-<li><a href="https://www.10xgenomics.com/support/software/cell-ranger/latest/analysis/feature-barcode-matrices">H3ABioNet / HBC training: Practical notes on ADT normalization</a> — guidance on CLR and alternative normalization approaches.</li>
+<li><a href="https://satijalab.org/seurat/reference/normalizedata">Seurat NormalizeData reference</a> — CLR margin argument and normalization methods.</li>
 </ul>
-</article>
-<section class="mt-12 mb-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-100">
-<div class="flex items-start gap-4">
-<div class="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-<svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
-</div>
-<div>
-<p class="text-sm text-gray-600 mb-2">This tutorial records the software versions used in its examples. Software and package behaviour can change. Please re-check commands against the official documentation. If a command does not work, you find an error, or the tutorial is no longer reproducible, please report it through the <a class="text-blue-600 hover:underline" href="../contact.html">Contact page</a></p>
-<p class="text-sm text-gray-500">Author: <a class="text-blue-600 hover:underline font-medium" href="../about.html">Nasir Mahmood Abbasi, PhD</a> - Category: Advanced Single-Cell Analysis</p>
-</div>
-</div>
-</section>
+<aside aria-labelledby="tutorial-feedback-title" class="lesson-feedback" id="tutorial-feedback"><h2 id="tutorial-feedback-title">Help improve this tutorial</h2><p>Found an error, a broken link, or a step that needs a clearer explanation? Please <a href="../contact.html">contact me</a>. Your feedback helps me keep this resource accurate and useful.</p></aside></article>
 <section aria-label="Course sequence" class="mt-16 pt-10 border-t border-gray-100">
 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
 <h2 class="text-2xl font-black text-gray-900 tracking-tight">Continue Learning</h2>
@@ -539,8 +594,6 @@ Responsible-use notes:
 <script src="../code-tabs.js"></script>
 <script src="../copy-code.js"></script>
 <script src="../subscribe-fab.js"></script>
-
-
 <!-- Cookie Consent Banner -->
 <div class="fixed bottom-0 inset-x-0 z-[9999] transition-transform duration-500" id="cookie-consent-banner" style="font-family:'Inter',system-ui,sans-serif;">
 <div class="mx-auto max-w-4xl px-4 pb-4 sm:px-6">
