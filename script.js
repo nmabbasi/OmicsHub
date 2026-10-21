@@ -35,6 +35,9 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     handleInitialRoute();
     setupEventListeners();
+    initCatalogueSearchState();
+    initHomeSearchCatalogue();
+    initCategoryScrollHint();
     createBackToTopButton();
 });
 
@@ -123,13 +126,28 @@ function showTutorials() {
 function setupEventListeners() {
     // Search functionality
     const searchInput = document.getElementById('search-input');
-    if (searchInput) {
-        searchInput.addEventListener('input', debounce(handleSearch, 180));
+    if (searchInput && !document.getElementById('all-tutorials-list')) {
+        const debouncedSearch = debounce(handleSearch, 180);
+        searchInput.addEventListener('input', () => { homeSearchDismissed = false; debouncedSearch(); });
+        searchInput.addEventListener('focus', () => {
+            homeSearchDismissed = false;
+            if (searchInput.value.trim()) handleSearch();
+        });
         searchInput.addEventListener('keydown', function(event) {
             if (event.key === 'Enter' && searchInput.value.trim()) {
                 event.preventDefault();
-                document.getElementById('tutorials')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                const target = new URL('tutorials.html', window.location.href);
+                target.searchParams.set('q', searchInput.value.trim());
+                window.location.assign(target.href);
             }
+            if (event.key === 'Escape') {
+                event.preventDefault();
+                dismissHomeSearchSuggestions();
+            }
+        });
+        document.addEventListener('click', event => {
+            const panel = document.getElementById('search-suggestions');
+            if (panel && !panel.contains(event.target) && !searchInput.contains(event.target)) dismissHomeSearchSuggestions();
         });
     }
 
@@ -191,7 +209,7 @@ function setupEventListeners() {
         if (hash && hash.startsWith('#tutorial-')) {
             const tutorialId = hash.substring(10);
             showTutorial(tutorialId, false); // false to prevent adding to history again
-        } else {
+        } else if (document.getElementById('tutorial-page') && document.getElementById('home-page')) {
             closeTutorialView();
         }
     });
@@ -901,17 +919,18 @@ function closeTutorialView() {
 
 // Filter tutorials by category using static HTML data-category attributes
 function filterTutorialsOnly(category) {
+    const validCategory = normalizeCategory(category);
+    category = validCategory;
+    const params = new URLSearchParams(window.location.search);
+    if (category === 'all') params.delete('category'); else params.set('category', category);
+    const query = document.getElementById('search-input')?.value.trim() || params.get('q') || '';
+    if (query) params.set('q', query); else params.delete('q');
+    const nextUrl = `${window.location.pathname}?${params.toString()}${window.location.hash}`;
+    if (window.location.pathname.endsWith('tutorials.html') && !window.__restoringCatalogueState) history.pushState({}, '', nextUrl);
     const allTutorialsList = document.getElementById('all-tutorials-list');
     if (!allTutorialsList) return;
 
-    const cards = allTutorialsList.querySelectorAll('.tutorial-grid-card');
-    cards.forEach(card => {
-        if (category === 'all' || card.getAttribute('data-category') === category) {
-            card.style.display = 'flex';
-        } else {
-            card.style.display = 'none';
-        }
-    });
+    applyCatalogueFilters(category, document.getElementById('search-input')?.value || new URLSearchParams(location.search).get('q') || '');
 
     // Update active category button with a category-specific selected color.
     document.querySelectorAll('#category-filter .category-btn').forEach(btn => {
@@ -1080,33 +1099,122 @@ function renderSearchSuggestions(matches, rawQuery, queryTerms) {
     panel.classList.remove('hidden');
 }
 
-function handleSearch() {
-    const searchInput = document.getElementById('search-input');
+let homeCatalogueCardsPromise = null;
+let homeSearchRevision = 0;
+let homeSearchDismissed = false;
+function dismissHomeSearchSuggestions() {
+    homeSearchDismissed = true;
+    homeSearchRevision++;
+    document.getElementById('search-suggestions')?.classList.add('hidden');
     const status = document.getElementById('search-results-status');
-    if (!searchInput) return;
-
-    const rawQuery = searchInput.value.trim();
-    const queryTerms = normalizeSearchText(rawQuery).split(' ').filter(Boolean);
-    const homeResults = filterTutorialCards('#tutorials-list article', queryTerms, '');
-    filterTutorialCards('#all-tutorials-list .tutorial-grid-card', queryTerms, 'flex');
-    renderSearchSuggestions(homeResults.matches, rawQuery, queryTerms);
-
-    if (!status) return;
-    if (queryTerms.length === 0) {
-        status.textContent = '';
-        status.classList.add('hidden');
-        return;
-    }
-
-    if (homeResults.matchCount === 0) {
-        status.textContent = `No tutorials match “${rawQuery}”. Try a broader term.`;
-    } else {
-        const label = homeResults.matchCount === 1 ? 'tutorial' : 'tutorials';
-        status.textContent = `${homeResults.matchCount} matching ${label}. Choose a result or press Enter to view all.`;
-    }
-    status.classList.remove('hidden');
+    if (status?.textContent === 'Loading all tutorials…') status.classList.add('hidden');
 }
-
+function handleSearch() {
+    const input = document.getElementById('search-input');
+    const status = document.getElementById('search-results-status');
+    if (!input || homeSearchDismissed) return;
+    const rawQuery = input.value.trim();
+    const revision = ++homeSearchRevision;
+    const queryTerms = normalizeSearchText(rawQuery).split(' ').filter(Boolean);
+    const currentCards = [...document.querySelectorAll('#tutorials-list article')];
+    filterTutorialCards('#tutorials-list article', queryTerms, '');
+    renderSearchSuggestions(currentCards.filter(card => searchTextMatches(normalizeSearchText(card.dataset.search || card.textContent), queryTerms)), rawQuery, queryTerms);
+    if (status) {
+        status.textContent = rawQuery ? 'Loading all tutorials…' : '';
+        status.classList.toggle('hidden', !rawQuery);
+    }
+    if (!rawQuery) return;
+    getHomeCatalogueCards().then(cards => {
+        if (revision !== homeSearchRevision || input.value.trim() !== rawQuery) return;
+        const matches = cards.filter(card => searchTextMatches(normalizeSearchText(card.dataset.search || card.textContent), queryTerms));
+        if (document.activeElement === input && !homeSearchDismissed) renderSearchSuggestions(matches, rawQuery, queryTerms);
+        if (status) status.textContent = matches.length ? `${matches.length} matching ${matches.length === 1 ? 'tutorial' : 'tutorials'}. Choose a result or press Enter to view all.` : `No tutorials match “${rawQuery}”. Try a broader term.`;
+    }).catch(() => {
+        if (revision !== homeSearchRevision || input.value.trim() !== rawQuery) return;
+        document.getElementById('search-suggestions')?.classList.add('hidden');
+        if (status) status.textContent = 'Tutorial search is temporarily unavailable. Please try again or view all tutorials.';
+    });
+}
+function getHomeCatalogueCards() {
+    if (!homeCatalogueCardsPromise) homeCatalogueCardsPromise = fetch(new URL('tutorials.html', location.href), { credentials: 'same-origin' }).then(response => {
+        if (!response.ok) throw new Error('Catalogue fetch failed');
+        return response.text();
+    }).then(html => {
+        const parsed = new DOMParser().parseFromString(html, 'text/html');
+        const cards = [...parsed.querySelectorAll('article.tutorial-grid-card')];
+        if (!cards.length) throw new Error('Catalogue cards unavailable');
+        return cards;
+    }).catch(error => {
+        homeCatalogueCardsPromise = null;
+        throw error;
+    });
+    return homeCatalogueCardsPromise;
+}
+function initHomeSearchCatalogue() {
+    if (document.getElementById('home-page') && document.getElementById('search-input')) handleSearch();
+}
+function normalizeCategory(value) {
+    const valid = new Set([...document.querySelectorAll('#category-filter .category-btn')].map(button => button.dataset.category));
+    return valid.has(value) ? value : 'all';
+}
+function applyCatalogueFilters(category, query) {
+    const list = document.getElementById('all-tutorials-list');
+    if (!list) return;
+    const terms = normalizeSearchText(query).split(' ').filter(Boolean);
+    list.querySelectorAll('.tutorial-grid-card').forEach(card => {
+        const categoryMatch = category === 'all' || card.dataset.category === category;
+        const queryMatch = searchTextMatches(normalizeSearchText(card.dataset.search || card.textContent), terms);
+        const shown = categoryMatch && queryMatch;
+        card.classList.toggle('hidden', !shown);
+        card.style.display = shown ? 'flex' : 'none';
+    });
+    const status = document.getElementById('search-results-status');
+    if (status) {
+        const count = [...list.querySelectorAll('.tutorial-grid-card')].filter(card => card.style.display !== 'none').length;
+        status.textContent = query ? `${count} matching ${count === 1 ? 'tutorial' : 'tutorials'}.` : '';
+        status.classList.toggle('hidden', !query);
+    }
+}
+function restoreCatalogueState(scrollCategory) {
+    const input = document.getElementById('search-input');
+    if (!document.getElementById('all-tutorials-list')) return;
+    const params = new URLSearchParams(location.search);
+    const category = normalizeCategory(params.get('category') || 'all');
+    const query = params.get('q') || '';
+    if (input) input.value = query;
+    window.__restoringCatalogueState = true;
+    filterTutorialsOnly(category);
+    window.__restoringCatalogueState = false;
+    applyCatalogueFilters(category, query);
+    if (scrollCategory) requestAnimationFrame(() => {
+        document.querySelector(`#category-filter .category-btn[data-category="${CSS.escape(category)}"]`)?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+    });
+}
+function initCatalogueSearchState() {
+    if (!document.getElementById('all-tutorials-list')) return;
+    restoreCatalogueState(true);
+    const input = document.getElementById('search-input');
+    if (input) input.addEventListener('input', () => {
+        const params = new URLSearchParams(location.search);
+        const query = input.value.trim();
+        if (query) params.set('q', query); else params.delete('q');
+        const category = normalizeCategory(params.get('category') || 'all');
+        if (category !== 'all') params.set('category', category); else params.delete('category');
+        history.replaceState({}, '', `${location.pathname}${params.size ? `?${params}` : ''}${location.hash}`);
+        applyCatalogueFilters(category, query);
+    });
+    window.addEventListener('popstate', () => restoreCatalogueState(true));
+    window.addEventListener('pageshow', () => restoreCatalogueState(true));
+}
+function initCategoryScrollHint() {
+    const strip = document.getElementById('category-filter');
+    const hint = document.getElementById('category-scroll-hint');
+    if (!strip || !hint) return;
+    const update = () => { hint.hidden = strip.scrollWidth <= strip.clientWidth + 2 || strip.scrollWidth - strip.clientWidth - strip.scrollLeft <= 2; };
+    strip.addEventListener('scroll', update, { passive: true });
+    window.addEventListener('resize', update);
+    update();
+}
 // Back to top button functionality
 function createBackToTopButton() {
     const backToTopBtn = document.createElement('button');
@@ -1156,6 +1264,12 @@ function closeMobileMenu() {
     }
 }
 
+document.addEventListener('keydown', function(event) {
+    if (event.key !== 'Escape' || event.defaultPrevented || document.querySelector('dialog[open]') || document.getElementById('cookie-consent-banner')?.contains(document.activeElement)) return;
+    const menu = document.getElementById('mobile-menu');
+    const toggle = document.querySelector('button[aria-controls="mobile-menu"]');
+    if (menu && !menu.classList.contains('hidden')) { closeMobileMenu(); toggle?.focus(); }
+});
 document.addEventListener('click', function(event) {
     const mobileMenu = document.getElementById("mobile-menu");
     const toggleBtn = document.querySelector('button[aria-controls="mobile-menu"]');
