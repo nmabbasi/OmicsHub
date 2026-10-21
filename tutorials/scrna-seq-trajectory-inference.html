@@ -256,6 +256,12 @@ sc.pl.umap(adata, color='dpt_pseudotime', cmap='viridis')
 <hr/>
 <h2>Slingshot: infer one or more cluster lineages</h2>
 <p>Slingshot uses cluster labels and coordinates in a reduced-dimensional space to infer a cluster-based minimum spanning tree and fit principal curves along lineages. Conversion from Seurat uses SeuratWrappers; check that the intended clustering and embedding were carried into the SingleCellExperiment object before inference.</p>
+<figure aria-labelledby="slingshot-archive-caption" class="my-8">
+<img alt="Colored CD4 T-cell UMAP clusters with numbered cluster nodes and black Slingshot cluster-level lineage connections" decoding="async" height="432" loading="lazy" src="../images/tutorial-figures/slingshot-archived-lineage-topology.png" style="display:block;width:100%;max-width:700px;height:auto;margin:0 auto" width="700"/>
+<figcaption class="text-sm text-gray-700 mt-3" id="slingshot-archive-caption"><strong>Archived example: cluster-level lineage topology.</strong> Colored points show cells in the notebook's CD4 T-cell UMAP; numbered nodes mark clusters, and black connections show the lineages drawn by <code>lines(lineages)</code> after <code>getLineages()</code>. These are cluster-level paths, not fitted principal curves or observed cell transitions. This is a separate historical analysis, not output of the PBMC code below.</figcaption>
+</figure>
+<p class="text-sm text-gray-700"><strong>Source and data context:</strong> Nasir Mahmood Abbasi, <a href="https://github.com/nmabbasi/PhD_rpubs_Notebooks/blob/8ca2a292cad948fae9002cc38c259be23c4ac9dd/Trajectory_Analysis/Trajectory_inference_using_Slingshot.html" rel="noopener noreferrer" target="_blank">Trajectory inference using Slingshot, reviewed HTML archive</a>, section “6. compute the lineages on these dataset,” third embedded image. The adjacent displayed code uses the object's UMAP coordinates and Seurat cluster labels, with <code>start.clus = "3"</code> and <code>end.clus = c("2", "6", "8")</code>. These are analyst-selected constraints, not validated biological origins or fates. The local input object is unavailable here; raw-data accessions and biological replication are not established by this example. The report retains historical errors, and the archived workflow has not been rerun here.</p>
+<p class="text-sm text-gray-700"><strong>Interpretation limits:</strong> This figure illustrates the cluster-level topology stage, before fitting principal curves. Connections and their orientation are computational inferences from a cross-sectional embedding, not lineage tracing or proof of developmental time, cell-to-cell transitions, or biological direction. Inspect sensitivity to the embedding, clustering and selected start/end clusters; visual proximity and line length on UMAP are not measures of biological time.</p>
 <pre><code class="language-r">library(Seurat)
 library(slingshot)
 library(SingleCellExperiment)
@@ -274,7 +280,8 @@ plotcol &lt;- colors[cut(sce$slingPseudotime_1, breaks=100)]
 
 plot(reducedDims(sce)$UMAP, col = plotcol, pch=16, asp = 1)
 lines(SlingshotDataSet(sce), lwd=2, col='black')
-</code></pre><div class="mt-4 mb-8 bg-blue-50/50 border-l-4 border-blue-500 p-5 rounded-r-lg text-sm text-gray-700">
+</code></pre>
+<div class="mt-4 mb-8 bg-blue-50/50 border-l-4 border-blue-500 p-5 rounded-r-lg text-sm text-gray-700">
 <p class="font-bold text-gray-900 mb-2">Understanding the Output</p>
 <p class="mb-3">Slingshot first uses cluster centers to infer lineage topology, then fits simultaneous principal curves. Pseudotime and curve weights are returned per lineage; cells can be unassigned to a lineage and branching cells can contribute to multiple lineages. Inspect the fitted curves and cluster paths rather than relying on the color gradient alone.</p>
 <p class="font-bold text-gray-900 mb-2">⚠️ Pitfalls to Avoid</p>
