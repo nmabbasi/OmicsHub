@@ -1579,7 +1579,7 @@ header nav .group > button.font-semibold.bg-blue-600.text-white:focus-visible {
     color: #ffffff !important;
 }
 
-header nav #mobile-menu .text-blue-600 { color: #123B5D !important; }
+header nav #mobile-menu .text-blue-600:not([aria-current="page"]):not(.font-semibold) { color: #123B5D !important; }
 
 /* Final active-navigation tone: a clearer near-black navy across every top tab. */
 header nav a[aria-current="page"],
@@ -1829,4 +1829,32 @@ header nav a[aria-current="page"] .nav-network-mark {
 .subscribe-community-button:focus-visible {
     outline: 2px solid #60A5FA;
     outline-offset: 3px;
+}
+
+/* Accessible analytics preferences; advertising consent is managed separately. */
+.cookie-preferences-link { background: transparent; border: 0; color: inherit; cursor: pointer; font: inherit; padding: .3rem 0; text-align: left; text-decoration: underline; text-underline-offset: .2em; }
+.cookie-preferences-link:focus-visible, .cookie-preferences-dialog button:focus-visible { outline: 3px solid #60a5fa; outline-offset: 3px; }
+.cookie-preferences-dialog { box-sizing: border-box; width: calc(100% - 2rem); max-width: 34rem; max-height: calc(100dvh - 2rem); overflow-y: auto; margin: auto; padding: 1.5rem; border: 1px solid #d1d5db; border-radius: 1rem; color: #111827; background: #fff; box-shadow: 0 24px 60px #0f172a40; font: 1rem/1.6 Inter, system-ui, sans-serif; }
+.cookie-preferences-dialog::backdrop { background: #0f172a80; }
+.cookie-preferences-dialog h2 { margin: 0 0 .75rem; font-size: 1.35rem; font-weight: 700; }
+.cookie-preferences-dialog p { margin: .75rem 0; }
+.cookie-preferences-dialog a { color: #1d4ed8; text-decoration: underline; }
+.cookie-preferences-actions { display: flex; flex-wrap: wrap; gap: .65rem; margin-top: 1rem; }
+.cookie-preferences-actions button { min-height: 44px; padding: .55rem .85rem; border: 1px solid #9ca3af; border-radius: .5rem; background: #fff; color: #111827; cursor: pointer; font: inherit; }
+.cookie-preferences-actions [data-cookie-choice="accepted"] { border-color: #1d4ed8; background: #1d4ed8; color: #fff; }
+@media (max-width: 767px) {
+  header button[aria-controls="mobile-menu"] { min-width: 44px; min-height: 44px; flex-shrink: 0; }
+  #mobile-menu { width: 100%; }
+  #mobile-menu a { display: flex; align-items: center; min-height: 44px; }
+}
+
+/* Keep the existing hero design while making its title and action easier to reach on phones. */
+@media (max-width: 639px) {
+  .hero-laptop-shell { padding: 1rem; }
+  .hero-laptop-content { padding-left: 1.25rem !important; padding-right: 1.25rem; gap: 1.25rem; }
+  .hero-laptop-content h1 { font-size: clamp(1.75rem, 7.2vw, 2.1rem); line-height: 1.15; margin-bottom: 1rem; }
+  .hero-laptop-content p { font-size: 1rem; margin-bottom: 1.25rem; }
+  .hero-laptop-content .hero-btn { font-size: 1rem; padding: .8rem 1.1rem; }
+  .legal-tabs { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; overflow: visible; }
+  .legal-tabs > a { min-width: 0; white-space: normal; height: auto; min-height: 44px; }
 }
