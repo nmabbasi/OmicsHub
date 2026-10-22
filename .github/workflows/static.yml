@@ -25,6 +25,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Validate tutorial retention, links, SEO, and accessibility markup
+        run: |
+          python3 tests/validate_tutorials.py
+          python3 -m unittest discover -s tests -v
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
