@@ -78,21 +78,12 @@ class MobileLoadingTests(unittest.TestCase):
                 self.assertIn('defer', shared)
 
     def test_tutorial_code_and_advertising_setup_are_not_removed(self):
-        legacy_without_analytics_preferences = {
-            'advanced-ai-orchestration-bioinformatics.html',
-            'ai-prompt-engineering-seurat.html',
-            'deterministic-retrieval-gget-ai.html',
-            'mcp-zotero.html', 'notebooklm-research-brain.html',
-            'protein-structure-design-alphafold.html',
-            'single-cell-foundation-models.html',
-        }
         for page in ROOT.glob('tutorials/*.html'):
             text = page.read_text(encoding='utf-8')
             with self.subTest(page=page.name):
                 self.assertIn('copy-code.js', text)
                 self.assertIn('pagead2.googlesyndication.com/pagead/js/adsbygoogle.js', text)
-                if page.name not in legacy_without_analytics_preferences:
-                    self.assertIn('cookie-consent.js', text)
+                self.assertIn('cookie-consent.js', text)
                 self.assertIn('google-adsense-account', text)
 
     def test_local_images_have_positive_intrinsic_dimensions(self):
