@@ -54,7 +54,7 @@ class LearningPromiseTests(unittest.TestCase):
     def test_homepage_description_fields_agree(self):
         parser = DescriptionParser()
         parser.feed(self.home)
-        self.assertEqual(len(parser.descriptions), 5)
+        self.assertEqual(len(parser.descriptions), 4)  # meta, Open Graph, Twitter, and one merged JSON-LD entity
         self.assertEqual(len(set(parser.descriptions)), 1)
         for word in ('hands-on labs', 'conceptual guides', 'advanced templates', 'references'):
             self.assertIn(word, parser.descriptions[0])
