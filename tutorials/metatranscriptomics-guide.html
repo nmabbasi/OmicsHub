@@ -198,11 +198,14 @@ function toggleMobileMenu() {
 <nav aria-label="Tutorial navigation" class="reader-toolbar"><a href="metagenomics-kraken2-bracken.html" title="Kraken2 and Bracken: A Shotgun Metagenomics Walkthrough">← Previous tutorial</a><a data-catalogue-return="" href="../tutorials.html">All tutorials</a><a href="metatranscriptomics-functional-pathways.html" title="Metatranscriptomic Pathway Analysis with HUMAnN 3">Next tutorial →</a></nav>
 <article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--walkthrough">
 <p class="lesson-lead">Metatranscriptomic sequencing captures RNA present in a sampled community. A useful analysis follows each read through quality control, rRNA classification, host depletion when relevant, and functional assignment, while recording how many reads remain at every stage.</p>
+<section class="lesson-summary tutorial-learning-contract" data-tutorial-format="conceptual-guide" aria-label="Learning format">
+<p><strong>Format: Conceptual guide.</strong> For readers planning or reviewing a microbial RNA-sequencing workflow: you will map each stage's input, output and decision criteria, then assess a small synthetic read-count example. No sequence files are supplied; the command patterns require the reader's own paired FASTQs, references and installed tools.</p>
+</section>
 <h2>What the data can tell you</h2>
 <p>DNA-based metagenomics describes genetic potential in a community. RNA sequencing adds a time- and place-specific view of transcripts detected in the sample. A detected transcript supports the presence of that RNA sequence in the library; it does not by itself establish organism growth, protein abundance, enzyme activity, or a causal response.</p>
 <p>Most microbial RNA can be ribosomal RNA, and host-associated material may contain many host reads. Laboratory depletion and computational filters affect the reads available for downstream profiling. Keep counts at each step, and interpret functional assignments in light of database coverage and sample handling.</p>
 <h2>Plan the read path</h2>
-<p>This example assumes paired-end FASTQ files named <code>sample_R1.fastq.gz</code> and <code>sample_R2.fastq.gz</code>. Replace paths with files that exist, create output directories first, and use compatible reference files and tool versions. These are command patterns, not a tested end-to-end pipeline. In particular, paired-read handling differs among tools; do not pass two filenames as a comma-separated HUMAnN input. Confirm the input contract of your installed version before running paired data.</p>
+<p>The command patterns assume paired-end FASTQ files named <code>sample_R1.fastq.gz</code> and <code>sample_R2.fastq.gz</code>; these are placeholders, not supplied data. Before adapting them, identify the organism(s), assay/library protocol, sample-specific host (if applicable), and matching reference/database releases. Work in a project directory with separate <code>qc_reports/</code>, <code>trimmed/</code>, <code>sortmerna_work/</code>, and <code>nonhost/</code> outputs, and preserve original reads. These are illustrative command patterns, not a tested end-to-end pipeline or installation recipe. Check that each executable is available and capture its version/help output before adopting options (for example, <code>fastqc --version</code>, <code>multiqc --version</code>, <code>fastp --version</code>, <code>sortmerna --version</code>, and <code>bowtie2 --version</code>); stop if the installed interface differs from the cited manual. Paired-read handling differs among tools: do not pass two filenames as a comma-separated HUMAnN input, and follow the HUMAnN paired-end guide linked below for the supported preparation route for the installed release.</p>
 <ol class="lesson-steps">
 <li><strong>Inspect raw reads.</strong> Run FastQC and aggregate reports with MultiQC. Review per-base quality, adapter content, and overrepresented sequences rather than treating a report score as an automatic pass/fail.</li>
 <li><strong>Trim when the QC evidence supports it.</strong> fastp accepts paired inputs using <code>-i/-I</code> and paired outputs using <code>-o/-O</code>. Its HTML and JSON reports document the filtering performed.</li>
@@ -218,7 +221,7 @@ multiqc qc_reports -o qc_reports
 fastp -i sample_R1.fastq.gz -I sample_R2.fastq.gz \
   -o trimmed/sample_R1.fastq.gz -O trimmed/sample_R2.fastq.gz \
   -h trimmed/fastp.html -j trimmed/fastp.json --thread 8</code></pre>
-<p>Expected deliverables are per-input FastQC reports, a MultiQC summary, paired trimmed FASTQ files, and fastp HTML/JSON reports. These commands require FastQC, MultiQC, and fastp already installed; they do not establish that trimming improved a particular dataset. Review pre- and post-trimming evidence in the reports.</p>
+<p>Expected deliverables are per-input FastQC reports, a MultiQC summary, paired trimmed FASTQ files, and fastp HTML/JSON reports. These commands require FastQC, MultiQC, and fastp already installed; they do not establish that trimming improved a particular dataset. Review pre- and post-trimming evidence. For gzip FASTQs, a cheap structural check is <code>gzip -t sample_R1.fastq.gz sample_R2.fastq.gz</code> followed by counting records with <code>zcat sample_R1.fastq.gz | awk 'END {print NR/4}'</code> and the equivalent R2 command; counts should agree, be positive whole numbers, and each four-line record should have valid FASTQ structure. After trimming, repeat the checks on both output mates and stop if counts differ or outputs are empty; investigate reports/logs rather than proceeding with desynchronized files.</p>
 <h3>rRNA filtering with paired input</h3>
 <pre><code>mkdir -p sortmerna_work
 sortmerna --ref /path/to/rRNA_reference.fasta \
@@ -237,6 +240,7 @@ bowtie2 -x indices/host \
   --un-conc-gz nonhost/nonhost_%.fastq.gz \
   -S host_mapped.sam 2&gt; bowtie2_host.log</code></pre>
 <p>Bowtie2's <code>--un-conc-gz</code> writes pairs that fail to align concordantly, using the percent sign in the filename for mate-specific outputs. The example does not guarantee that every host-derived read is removed: discordant mapping behavior, reference completeness, and alignment policy matter. Review the SAM summary and retain the log with the sample record.</p>
+<div class="lesson-summary"><p><strong>Planning exercise.</strong> On paper or in a sample manifest, write one row per stage (raw, trimmed, rRNA-filtered, host-depleted, profiled) with input path, output path, read or pair count, tool/database version, and the criterion for continuing. As a synthetic arithmetic check, if 1,000 read pairs enter a filter and 120 pairs are classified as rRNA, 880 pairs remain only if the filter reports pair-level counts and no pairs are lost for another reason; state the units and reconcile observed counts before interpreting the difference. Stop when mate counts disagree, a stage's output is absent, or the log cannot explain a count change.</p></div>
 <h2>Read functional outputs cautiously</h2>
 <p>HUMAnN's gene-family and pathway tables are computational estimates whose meaning depends on input preparation, reference databases, and normalization. Functional assignments can be missed or misassigned when reference coverage is limited. A raw change in table values across samples is not automatically a comparable change in transcription; choose a normalization and statistical analysis appropriate to the experimental design, then report both.</p>
 <ul>
@@ -252,9 +256,11 @@ bowtie2 -x indices/host \
 <li><strong>Few functional assignments:</strong> check read quality and length, database compatibility, and search logs before changing thresholds. Relaxing stringency may increase candidate matches while also changing false-match risk; document the rationale.</li>
 <li><strong>One sample dominates a pathway comparison:</strong> compare its depth, filtering fractions, library preparation, and normalization with other samples. Do not remove a sample solely because it disagrees with the expected biology.</li>
 </ul>
-<h2>References and version checks</h2>
+<h2>References and version capture</h2>
+<p>Record the output of each installed tool's version command alongside the analysis, together with the exact reference/database release and command line; version strings alone do not make databases or parameters reproducible.</p>
 <ul>
 <li><a href="https://github.com/biobakery/humann">HUMAnN documentation and usage</a></li>
+<li><a href="https://forum.biobakery.org/t/humann3-paired-end-reads/862">HUMAnN paired-end reads guidance</a></li>
 <li><a href="https://sortmerna.readthedocs.io/en/latest/manual4.0.html">SortMeRNA 4.0 manual</a></li>
 <li><a href="https://bowtie-bio.sourceforge.net/bowtie2/manual.shtml">Bowtie2 manual</a></li>
 <li><a href="https://github.com/OpenGene/fastp">fastp documentation</a></li>

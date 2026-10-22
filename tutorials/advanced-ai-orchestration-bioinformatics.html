@@ -156,6 +156,10 @@ function toggleMobileMenu() {
 <nav aria-label="Tutorial navigation" class="reader-toolbar"><a href="autonomous-research-orchestrator.html" title="Autonomous Research Orchestrator">← Previous tutorial</a><a data-catalogue-return="" href="../tutorials.html">All tutorials</a><a href="../start-here.html" title="Choose another learning path">Explore paths →</a></nav>
 <article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--concepts">
 <p class="lesson-lead">A multi-step AI workflow can retrieve evidence, call analysis tools, and draft a report. Its value depends on whether each step has a defined input, a checkable output, and a safe way to stop. Treat the system as an assistant for bounded exploratory tasks, not as an authority on biological interpretation.</p>
+<section class="lesson-summary tutorial-learning-contract" data-tutorial-format="conceptual-guide" aria-label="Learning format">
+<p><strong>Format: Conceptual guide.</strong> For readers comfortable with basic bioinformatics and the idea of a software workflow, this lesson develops a reviewable orchestration design on paper; no framework installation, dataset, or runnable pipeline is supplied. Python familiarity and prior agent-framework experience are not required.</p>
+</section>
+<p><strong>How to use this guide:</strong> Read the state-and-transition model, then complete the worked review-packet exercise below. The goal is to make assumptions, provenance, and stop conditions explicit—not to assign clinical significance.</p>
 <h2>Choose the task before choosing agents</h2>
 <p>Start with a task that has a clear input and an output you can verify independently. For example, a workflow might collect candidate-variant annotations from named sources and place the source records beside a draft summary. That is different from deciding whether a variant is pathogenic: a database label, evidence date, transcript choice, and interpretation criteria all matter, and an automated summary does not settle them.</p>
 <p>Likewise, an agent can propose steps for a single-cell analysis, but a clustering parameter should not be changed simply because the resulting number of clusters looks unexpected. The analyst must define what counts as an acceptable diagnostic and decide whether a rerun is justified. These are design examples, not reported experiments or validated pipelines.</p>
@@ -183,9 +187,20 @@ function toggleMobileMenu() {
 <li><strong>Test failure paths:</strong> missing identifiers, malformed inputs, empty retrieval, tool errors, invalid output schema, and exhausted retry limits.</li>
 </ul>
 <p>Before connecting an LLM provider, define what data may leave the environment, where credentials are stored, and what will be logged. Keep credentials out of code and repositories. Set limits for calls, time, and cost. A container or subprocess is not automatically a secure sandbox; isolation depends on its configuration, permissions, networking, and host environment.</p>
-<h2>Learning exercise: draw an auditable workflow</h2>
-<p>Sketch a workflow that receives a candidate-variant identifier and produces a review packet. Include input validation, a clearly named evidence retrieval step, a source-preserving summary draft, a reviewer gate, and a terminal failure path. Annotate each transition with its condition and show where a person intervenes.</p>
-<div class="lesson-result"><strong>Check your sketch:</strong> It should distinguish source records from generated interpretation, show how stale or missing evidence is handled, cap retries, and stop rather than inventing a classification when required evidence is absent. This is an architecture exercise, not a runnable clinical workflow.</div>
+<h2>Worked design exercise: draw an auditable review packet</h2>
+<p>Use this deliberately synthetic identifier, <code>DEMO:variant-001</code>. It is a teaching label, not a valid accession or a claim about a real variant. The input contract is one identifier string plus a declared evidence-source allowlist and retrieval date. A source record, if returned, should be preserved as a record rather than copied into model-authored prose:</p>
+<pre><code class="language-json">{
+  "query_id": "DEMO:variant-001",
+  "source": "ExampleSource",
+  "record_id": "demo-record-001",
+  "retrieved_at": "2026-01-15",
+  "release": "teaching-fixture-1",
+  "classification": "not provided",
+  "evidence_text": "Synthetic teaching record; no biological evidence."
+}</code></pre>
+<p>Draw these state transitions: <strong>received</strong> → <strong>validated</strong> only if the identifier is non-empty and the source is allowlisted; <strong>validated</strong> → <strong>retrieved</strong> only if a source record is returned with its identifier and retrieval metadata; <strong>retrieved</strong> → <strong>drafted</strong> with a summary that quotes or references the record and labels generated text; then <strong>drafted</strong> → <strong>human review</strong>. The review packet should contain the original query, source record (or explicit absence), retrieval date/release, draft, and unresolved questions. It must not contain an inferred classification.</p>
+<p><strong>Failure case:</strong> If retrieval returns no record, route to <em>evidence missing</em> and produce a packet that records the query and failed retrieval, then stop. Do not retry indefinitely or ask the model to fill in evidence. A reviewer may decide whether a corrected query or another approved source is appropriate.</p>
+<div class="lesson-result"><strong>Check your sketch:</strong> A successful design keeps the synthetic source record distinct from generated text, records where and when evidence came from, provides a human gate, and has a terminal missing-evidence path. The fixture demonstrates a structure and control flow only; it establishes no biological validity. This remains an architecture exercise, not a runnable clinical workflow.</div>
 <h2>Limits and further reading</h2>
 <p>Generated code can be syntactically valid and still encode a wrong assumption or parameter. Retrieved documents can be outdated or incomplete. Test software behavior on controlled examples, verify analysis outputs using appropriate domain methods, and consult original sources. Keep exploratory summaries out of clinical or manuscript claims until they have been independently checked.</p>
 <p>The <a href="https://www.nist.gov/itl/ai-risk-management-framework" rel="noopener" target="_blank">NIST AI Risk Management Framework</a> is voluntary guidance for managing AI-related risks; it is not a bioinformatics validation standard. Framework APIs and provider policies change, so check the linked official documentation when implementing a particular tool.</p>

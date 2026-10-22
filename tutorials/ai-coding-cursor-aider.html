@@ -172,22 +172,36 @@ Legal
 <nav aria-label="Tutorial navigation" class="reader-toolbar"><a href="ai-bioinformatics-github-copilot.html" title="GitHub Education and Copilot Student for Bioinformatics">← Previous tutorial</a><a data-catalogue-return="" href="../tutorials.html">All tutorials</a><a href="mcp-zotero.html" title="Connecting Zotero to an AI Client with MCP">Next tutorial →</a></nav>
 <article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--walkthrough">
 <p class="lesson-lead">Cursor is a graphical code editor with AI features; Aider is a command-line coding assistant that works with a Git repository. Both can suggest or make code changes. Neither verifies that a bioinformatics analysis is scientifically appropriate. This walkthrough sets them up around a small, reviewable change rather than a real dataset.</p>
+<section class="lesson-summary tutorial-learning-contract" data-tutorial-format="hands-on-lab" aria-label="Learning format"><p><strong>Format: Hands-on lab.</strong> Beginners with a terminal and Git will create a tiny documentation-only project, ask Cursor or Aider to make one bounded edit, inspect the diff, and restore the baseline; all project inputs are created locally below.</p></section>
 <div class="lesson-summary"><p><strong>Before you start:</strong> use a computer where you can install desktop software, a terminal, Python, and Git. You need an API key only when using Aider with a hosted provider. Provider usage may incur charges and send prompts or project context outside your computer; check the provider's current terms before sharing research material.</p></div>
 <h2>Keep the assistant inside a reviewable project</h2>
-<p>Use a disposable project or a clean branch. Before asking an assistant to edit anything, make sure the repository is under Git and inspect its state:</p>
-<pre><code class="language-bash">git status --short
-</code></pre>
-<p>If this is a new practice directory, initialize it and make a baseline commit before continuing:</p>
-<pre><code class="language-bash">git init
+<p>Use a disposable project or a clean branch. The following self-contained fixture contains no biological data. In a terminal, check that Git is available, create the project, and save a known README:</p>
+<pre><code class="language-bash">git --version
+mkdir cursor-aider-practice
+cd cursor-aider-practice
+cat &gt; README.md &lt;&lt;'EOF'
+# Sample-count helper
+
+This documentation-only project describes a tiny arithmetic example.
+
+Input: 12 reads in sample A and 8 reads in sample B.
+Expected total: 20 reads.
+EOF
+git init
 git add README.md
 git commit -m "Add project baseline"
+git status --short
 </code></pre>
-<p>The commit example assumes that you created a <code>README.md</code> first and configured Git's author identity. If you are not ready to commit, at least save a copy of the project and review <code>git status</code> before the assistant edits. Do not use a production analysis directory as a first test.</p>
+<p>Run this in a new, writable directory with Git configured with an author name and email. If the commit reports an unknown identity, configure <code>git config --global user.name</code> and <code>git config --global user.email</code> with your own values, then retry. The final status should be empty; do not continue if it shows unexpected files or changes.</p>
+<p>Before asking an assistant to edit anything, inspect the repository state:</p>
+<pre><code class="language-bash">git status --short
+</code></pre>
+<p>Do not use a production analysis directory as a first test. If any step fails, stop and resolve the directory, Git, or identity issue before launching an assistant.</p>
 <aside class="lesson-warning"><p><strong>Research data:</strong> treat prompts, indexed files, and selected context as potential disclosures to the model provider. Exclude identifiable, controlled-access, or otherwise restricted data unless your institution and the provider explicitly permit that use. An editor setting is not a substitute for data-governance review.</p></aside>
 <h2>Install Cursor</h2>
 <p>Download the desktop app from the <a href="https://cursor.com/download" rel="noopener noreferrer" target="_blank">official Cursor download page</a>. Cursor currently offers macOS, Windows, and Linux builds. The quickstart documents macOS 12 or later and Windows 10 or later, and gives Linux-specific package instructions. Installer formats and supported versions can change, so use the current download page and <a href="https://cursor.com/docs/get-started/quickstart" rel="noopener noreferrer" target="_blank">official quickstart</a>, rather than copying an old package command.</p>
 <ol class="lesson-steps">
-<li>Install and open Cursor, sign in if prompted, then open the practice project folder.</li>
+<li>Install and open Cursor, sign in if prompted, then choose <strong>File → Open Folder</strong> and open the <code>cursor-aider-practice</code> directory created above.</li>
 <li>Ask Agent to explain the project or locate a specific file. Start with a read-only question so you can see what context it uses.</li>
 <li>Request one small, bounded change. Inspect the diff before accepting it; then run the existing project checks yourself.</li>
 </ol>
@@ -201,7 +215,7 @@ aider --version
 <p>On Windows, if <code>python</code> does not resolve to Python, the Aider guide suggests trying <code>py -m pip install aider-install</code>, then running <code>aider-install</code> in that same terminal. If the executable is not found after installation, check the install guide's PATH troubleshooting before installing repeatedly.</p>
 <p>Other documented isolated options include <code>pipx install aider-chat</code> (Python 3.9–3.12) and <code>uv tool install --force --python python3.12 --with pip aider-chat@latest</code>. Direct <code>pip</code> installation should be confined to a virtual environment; avoid adding Aider's dependencies to a research environment that has a carefully managed package set. Choose one installation method and follow its current official instructions.</p>
 <h2>Configure a provider key without committing it</h2>
-<p>Aider accepts keys in environment variables, a <code>.env</code> file, command-line options, or its configuration file. The following sets a key for the current shell session only; replace the placeholder locally and never paste a real key into a shared notebook, prompt, or source file:</p>
+<p>Aider accepts keys in environment variables, a <code>.env</code> file, command-line options, or its configuration file. The following sets a key for the current shell session only; replace the placeholder locally and never paste a real key into a shared notebook, prompt, or source file. Hosted API access may incur usage charges; confirm the provider account, current model availability, price, and data terms first:</p>
 <pre><code class="language-bash"># macOS or Linux shell
 export ANTHROPIC_API_KEY="your-key"
 # Or, if using OpenAI:
@@ -214,16 +228,16 @@ $env:OPENAI_API_KEY = "your-key"
 </code></pre>
 <p>Use the variable required by your selected provider and model. Follow Aider's <a href="https://aider.chat/docs/config/api-keys.html" rel="noopener noreferrer" target="_blank">API-key documentation</a> for other providers or persistent local configuration. If you choose a <code>.env</code> file, add it to <code>.gitignore</code>, restrict access to the file, and verify it is untracked with <code>git status --short</code>. A local file is not automatically secure, and shell history or process listings may expose command-line secrets. Check provider pricing and data handling before making requests.</p>
 <h2>Make and verify one small change with Aider</h2>
-<p>Change to the Git project directory and launch Aider after its installation and provider key are available. Aider's install guide shows model-specific launch examples; model names, provider configuration, and pricing change, so use its current <a href="https://aider.chat/docs/usage.html" rel="noopener noreferrer" target="_blank">usage documentation</a> rather than assuming one model name applies to every account.</p>
-<pre><code class="language-bash">cd /path/to/your/practice-project
+<p>Change to the Git project directory and launch Aider after its installation and provider key are available. For example, Aider's <a href="https://aider.chat/docs/llms/anthropic.html" rel="noopener noreferrer" target="_blank">Anthropic setup page</a> documents <code>ANTHROPIC_API_KEY</code> and its default model; its listed model can change and availability depends on the provider account. Check that page and current provider pricing before launch. Alternatively, follow the page's <code>aider --list-models anthropic/</code> guidance and select a model currently available to you.</p>
+<pre><code class="language-bash">cd cursor-aider-practice
 aider
 </code></pre>
-<p>Ask it for a narrowly scoped code or documentation change. For example, ask for an explanation of an existing script and a proposed edit to its help text, then inspect the diff. Avoid letting a coding assistant choose biological thresholds, infer clinical meaning, or silently rewrite an analysis pipeline.</p>
+<p>For this fixture, ask exactly: <em>“Edit only README.md. Add one sentence under the input lines stating that the two sample counts sum to 20. Do not change either input number, the expected total, or any other file.”</em> Avoid letting a coding assistant choose biological thresholds, infer clinical meaning, or silently rewrite an analysis pipeline.</p>
 <div class="lesson-checkpoint"><p><strong>Review before accepting:</strong> read every changed line, look for unrelated edits and altered inputs or defaults, and check whether the change adds dependencies or writes over data. Use <code>git diff --check</code> for whitespace problems and <code>git diff</code> to inspect the patch. These checks do not establish that the code is correct.</p></div>
 <h2>Run project checks and interpret failures</h2>
 <p>Run tests or validation commands already documented by the project. For a Python project, this might be its existing test command; do not assume that a generic command exists or install new packages just to make an assistant's output appear validated. For scientific code, also verify input files, parameters, units, sample identifiers, and outputs against the analysis plan and appropriate controls.</p>
 <p>If the command fails, keep the error output, identify whether the cause is a missing dependency, an incorrect path, a code error, or an environment mismatch, and investigate before asking for a fix. If it passes, record exactly which command ran and on what test data. A passing software test does not validate biological interpretation or establish reproducibility on another platform.</p>
-<div class="lesson-exercise"><h2>Practice check</h2><p>In a disposable Git project, ask Cursor or Aider to make one small documentation change. Inspect <code>git diff</code>, run <code>git diff --check</code>, and compare the result with the original request. Your exercise is complete when you can explain every changed line and restore the baseline with Git if needed. Do not use a real research dataset for this exercise.</p></div>
+<div class="lesson-exercise"><h2>Practice check</h2><p>In the fixture, inspect <code>git diff -- README.md</code> and run <code>git diff --check</code>. Expected outcome: only README.md changes, its original counts remain 12 and 8, and its expected total remains 20; the added sentence should accurately express 12 + 8 = 20. Check with <code>grep -E '12 reads|8 reads|20 reads' README.md</code>. If the assistant edits anything else, changes a number, or makes an unsupported claim, reject the edit and retry with tighter instructions or restore it using <code>git restore README.md</code>. After reviewing, restore the baseline with <code>git restore README.md</code>, then verify <code>git status --short</code> is empty. Do not use a real research dataset for this exercise.</p></div>
 <h2>Choosing between the two tools</h2>
 <p>Use Cursor when you want an interactive editor and visual diff review. Use Aider when a terminal-based workflow in a Git repository fits better. They can also complement each other, but using both does not provide independent scientific validation: both may produce plausible, incorrect changes. Keep the decision about analysis design and biological interpretation with the researcher.</p>
 <section aria-label="References and further reading"><h2>Official documentation</h2><ul>

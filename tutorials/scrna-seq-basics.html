@@ -197,6 +197,9 @@ function toggleMobileMenu() {
 </div>
 <nav aria-label="Tutorial navigation" class="reader-toolbar"><a href="wes-variant-calling-pipeline.html" title="Whole Exome Sequencing (WES): Variant Calling &amp; VAF">← Previous tutorial</a><a data-catalogue-return="" href="../tutorials.html">All tutorials</a><a href="scrna-seq-integration-strategies.html" title="Choosing and evaluating scRNA-seq integration: Harmony, RPCA, and CCA">Next tutorial →</a></nav>
 <article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--walkthrough"><p class="lesson-lead">This walkthrough takes a filtered 10x feature-barcode matrix from input checks through cell-level QC, normalization, PCA, neighbor graphs, clustering, and UMAP. It gives parallel Seurat and Scanpy examples; it does not claim that one set of QC thresholds fits every tissue.</p>
+<section class="lesson-summary tutorial-learning-contract" data-tutorial-format="hands-on-lab" aria-label="Learning format">
+<p><strong>Format: Hands-on lab.</strong> Learners with basic R or Python experience will run one of two QC-to-clustering workflows on the public PBMC 3k matrix; commands below stage the input locally, and the analysis scripts are provided.</p>
+</section>
 <h2>Learning objectives and prerequisites</h2>
 <p><strong>Learning objectives.</strong> After completing this tutorial, you will be able to:</p>
 <ul>
@@ -206,14 +209,20 @@ function toggleMobileMenu() {
 <li>Generate 2D embeddings (UMAP) and perform graph-based clustering (Leiden or Louvain).</li>
 <li>Interpret QC metrics and common failure modes, and make principled adjustments to thresholds based on biology.</li>
 </ul>
-<p><strong>Prerequisites.</strong> You should be comfortable with the Linux command line, basic R or Python, count matrices and gene identifiers, and introductory statistics. Install either Seurat in R or Scanpy in Python before running its script. The Python example also needs Scanpy's <code>scikit-misc</code> optional dependency for the <code>seurat_v3</code> highly-variable-gene flavor and an available Leiden backend for clustering; version-specific installation details are maintained in the official documentation. The scripts read files already on disk and do not download the PBMC data.</p>
+<p><strong>Prerequisites.</strong> You should be comfortable with the Linux command line, basic R or Python, count matrices and gene identifiers, and introductory statistics. Install either Seurat in R or Scanpy in Python before running its script. The Python example also needs Scanpy's <code>scikit-misc</code> optional dependency for the <code>seurat_v3</code> highly-variable-gene flavor and an available Leiden backend for clustering; version-specific installation details are maintained in the official documentation. The next section provides a download and extraction command for the public PBMC 3k archive. Capture your environment versions with <code>sessionInfo()</code> in R or <code>python -c "import scanpy; print(scanpy.__version__)"</code> in Python.</p>
 <h2>Why this matters: biological and computational context</h2>
 <p>Single-cell RNA sequencing measures RNA molecules captured in individual barcodes. A barcode can represent a cell, an empty or background droplet, or more than one cell. Cell-level QC helps identify unusual libraries, but gene-count and mitochondrial metrics alone cannot distinguish every low-quality cell from a real rare or activated population. Keep the distributions and biological context in view when filtering.</p>
 <p>Two widely used toolkits for scRNA-seq are Seurat (R) and Scanpy (Python). This tutorial provides parallel example commands for both, so you can reproduce the pipeline in your preferred environment. The workflow is demonstrated on the 10x Genomics PBMC 3k dataset as a pedagogical example; the same principles apply to other datasets, but thresholds should be adapted to your tissue and experimental protocol.</p>
 <h2>Required files and workspace</h2>
-<p>The examples expect Cell Ranger's <code>filtered_feature_bc_matrix/</code> directory, containing a matching matrix, barcode list, and feature list. Cell Ranger v3 and later commonly gzip these files as <code>matrix.mtx.gz</code>, <code>barcodes.tsv.gz</code>, and <code>features.tsv.gz</code>; older releases use different feature-file names. Put that directory at <code>data/pbmc3k/filtered_feature_bc_matrix/</code>, or change the path in both scripts. The Scanpy example selects gene-expression features; for multimodal matrices, inspect feature types and select the intended assay. The examples do not download data for you.</p>
+<p>The official <a href="https://satijalab.org/seurat/articles/pbmc3k_tutorial">Seurat PBMC 3k tutorial</a> links a public archive from 10x Genomics. From the tutorial project root, stage its legacy <code>matrix.mtx</code>, <code>barcodes.tsv</code>, and <code>genes.tsv</code> files at the expected path (the archive extracts under <code>filtered_gene_bc_matrices/hg19/</code>):</p>
+<pre><code>mkdir -p data/pbmc3k
+curl -L --fail --output /tmp/pbmc3k_filtered.tar.gz https://cf.10xgenomics.com/samples/cell/pbmc3k/pbmc3k_filtered_gene_bc_matrices.tar.gz
+tar -xzf /tmp/pbmc3k_filtered.tar.gz -C data/pbmc3k
+mv data/pbmc3k/filtered_gene_bc_matrices/hg19 data/pbmc3k/filtered_feature_bc_matrix
+ls -lh data/pbmc3k/filtered_feature_bc_matrix</code></pre>
+<p>The Scanpy reader recognizes the legacy <code>genes.tsv</code> layout; for current Cell Ranger v3+ input, use the <code>features.tsv.gz</code> layout documented by <a href="https://scanpy.readthedocs.io/en/stable/generated/scanpy.read_10x_mtx.html">Scanpy <code>read_10x_mtx</code></a>. Do not rename files to disguise a different layout. The Scanpy example selects gene-expression features; for multimodal matrices, inspect feature types and select the intended assay.</p>
 <ul>
-<li><code>data/pbmc3k/filtered_feature_bc_matrix/</code> contains the 10x feature-barcode matrix files. The Seurat and Scanpy readers support their respective documented 10x layouts; legacy and compressed-file options differ.</li>
+<li><code>data/pbmc3k/filtered_feature_bc_matrix/</code> contains the extracted legacy matrix with <code>barcodes.tsv</code> and <code>genes.tsv</code>; for Cell Ranger v3+ use the matching compressed <code>features.tsv.gz</code> layout.</li>
 <li>For R: you will create an R object file <code>results/pbmc_seurat.rds</code>.</li>
 <li>For Python: you will create AnnData files <code>results/pbmc_scanpy.h5ad</code> and intermediate figures in <code>results/figures/</code>.</li>
 </ul>
@@ -241,7 +250,11 @@ VlnPlot(pbmc, features = c("nFeature_RNA", "nCount_RNA", "percent.mt"), ncol = 3
 dev.off()
 
 # 4) Example filtering (adjust thresholds to your experiment)
-pbmc &lt;- subset(pbmc, subset = nFeature_RNA &gt; 200 &amp; nFeature_RNA &lt; 2500 &amp; percent.mt &lt; 5)
+message("Cells before QC filters: ", ncol(pbmc))
+pbmc &lt;- subset(pbmc, subset = nFeature_RNA &gt; 200 &amp; nFeature_RNA &lt; 2500)
+message("After gene-count filters: ", ncol(pbmc))
+pbmc &lt;- subset(pbmc, subset = percent.mt &lt; 5)
+message("After mitochondrial filter: ", ncol(pbmc))
 
 # 5) Normalize, find variable features, scale
 pbmc &lt;- NormalizeData(pbmc, normalization.method = "LogNormalize", scale.factor = 10000)
@@ -307,9 +320,13 @@ sc.pl.violin(
 )
 
 # Example filters only: inspect distributions and choose criteria for this sample.
+print(f"Cells before QC filters: {adata.n_obs}")
 adata = adata[adata.obs["n_genes_by_counts"] &gt; 200].copy()
+print(f"After lower gene-count filter: {adata.n_obs}")
 adata = adata[adata.obs["n_genes_by_counts"] &lt; 2500].copy()
+print(f"After upper gene-count filter: {adata.n_obs}")
 adata = adata[adata.obs["pct_counts_mt"] &lt; 5].copy()
+print(f"After mitochondrial filter: {adata.n_obs}")
 
 # Preserve count values because seurat_v3 HVG selection expects counts.
 adata.layers["counts"] = adata.X.copy()
@@ -362,7 +379,7 @@ adata.write("results/pbmc_scanpy.h5ad")
 <ul>
 <li><strong>QC violin plots:</strong> Compare detected genes per cell, total UMI counts, and mitochondrial-count percentage. Low values can flag low-complexity barcodes; high gene or count values can flag possible multiplets. These patterns are prompts for review, not diagnoses.</li>
 <li><strong>Mitochondrial fraction (<code>percent.mt</code> in Seurat; <code>pct_counts_mt</code> in Scanpy):</strong> A high fraction can accompany stressed or damaged cells, while mitochondria-rich cell types may be expected in some tissues. Interpret the distribution against tissue, protocol, and annotation. Neither one cutoff nor a high sample-wide median proves a preparation problem.</li>
-<li><strong>Retention after QC:</strong> Record how many barcodes remain at each filtering step and inspect which cells were removed. There is no universal target retention fraction; unusually large losses warrant checking paths, metric definitions, and thresholds.</li>
+<li><strong>Retention after QC:</strong> Record how many barcodes remain at each filtering step and inspect which cells were removed. There is no universal target retention fraction; unusually large losses warrant checking paths, metric definitions, and thresholds. Each script prints the starting cell count and the retained count after each filter. Counts depend on the input and chosen cutoffs; treat them as a run checkpoint, not fixed expected biological results. If a checkpoint is zero or unexpectedly drops sharply, stop before normalization and inspect the input path, QC distributions, and threshold units.</li>
 <li><strong>Elbow plot / PCA variance:</strong> The "elbow" shows when additional PCs explain diminishing variance. Use the elbow as a guide (e.g., 10–30 PCs) but also inspect biological interpretability: do clusters separate only when you include more PCs? Visualize marker genes across PCs when uncertain.</li>
 <li><strong>UMAP/clustering:</strong> UMAP is a visualization and not a clustering algorithm. If cluster separations are weak in UMAP, check whether the clustering is driven by technical covariates (sequencing depth, percent.mt) by coloring UMAP by those metrics.</li>
 </ul>

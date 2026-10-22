@@ -198,8 +198,10 @@ function toggleMobileMenu() {
 <nav aria-label="Tutorial navigation" class="reader-toolbar"><a href="metagenomics-assembly-mapping.html" title="Metagenomic Assembly and Read Mapping">← Previous tutorial</a><a data-catalogue-return="" href="../tutorials.html">All tutorials</a><a href="metatranscriptomics-guide.html" title="Metatranscriptomics: From Reads to Functional Profiles">Next tutorial →</a></nav>
 <article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--walkthrough">
 <p class="lesson-lead">Kraken2 assigns taxonomic labels by matching read k-mers against a database. Bracken uses database-specific read-length distributions to estimate abundance at a chosen rank. This walkthrough follows one paired-end sample from classification through interpretation; the paths and thread count are placeholders for your environment.</p>
+<section class="lesson-summary tutorial-learning-contract" data-tutorial-format="advanced-template" aria-label="Learning format"><p><strong>Format: Advanced template.</strong> For learners familiar with shell commands and paired FASTQ files, this post-QC walkthrough produces Kraken2 and Bracken outputs from user-prepared reads and matching databases. A synthetic report exercise below supports practice without installing either tool.</p></section>
 <h2>What you need and what you will produce</h2>
 <p>Prepare quality-controlled paired FASTQ files, a built Kraken2 database, and a compatible Bracken database distribution generated for the read length you intend to analyze. Record software versions, database build/source and date, trimming settings, and the actual post-trimming read-length distribution. Bracken estimation depends on its database files being available for the selected rank and read length; running Kraken2 alone does not create them.</p>
+<p>This is a post-QC classification walkthrough, not an end-to-end setup lab. Database construction and read preprocessing are out of scope: use your institution's documented environment or the official Kraken2 and Bracken setup guidance below. Database storage and build time vary with its contents and available resources; check requirements before downloading or building. Before analysis, confirm <code>kraken2 --version</code> and <code>bracken --version</code>, verify both read files and the database path exist, and confirm matching Bracken distribution files are available for the selected read length.</p>
 <p>The workflow produces a per-read Kraken output, a six-column Kraken report, and a Bracken table at species rank. These are estimates conditional on the reads, database, and settings. They do not establish organism viability, absolute cell abundance, or clinical significance.</p>
 <h2>1. Classify paired reads with Kraken2</h2>
 <p>Replace the example paths and thread count. Kraken2 accepts compressed FASTQ input. With <code>--paired</code>, give the read-1 file followed by the corresponding read-2 file. Keep mates synchronized after preprocessing.</p>
@@ -224,6 +226,7 @@ function toggleMobileMenu() {
 <p>Relative abundance describes the sequenced library after extraction, library preparation, sequencing, and classification. Biases in those steps can make it differ from the underlying community, and compositional proportions do not provide absolute abundance. Cross-sample comparisons require consistent processing and a clear rationale for normalization; cross-study comparisons add further differences in protocols and databases.</p>
 <h2>4. Visualize only after choosing a compatible input</h2>
 <p>KronaTools has importers for supported input formats. Do not pass a Kraken report to the generic <code>ktImportText</code> command as though it were a two-column taxon/weight file: the Kraken report is a six-column hierarchical format. Select the importer and input format documented for your installed KronaTools version, or convert data explicitly to its documented text format. Bracken output is also not automatically interchangeable with every importer.</p>
+<p>Visualization is out of scope here: no plot is produced because importer compatibility depends on KronaTools version and input representation. Consult the linked import guide, then validate any conversion on a small input and compare its totals with the source table before interpreting a plot.</p>
 <h2>Run record and interpretation checklist</h2>
 <ul>
 <li>Save Kraken2 and Bracken versions, database identity/build date, and relevant database files.</li>
@@ -231,7 +234,16 @@ function toggleMobileMenu() {
 <li>Verify successful completion, report structure, unclassified fraction, and whether estimates are direct or Bracken-reestimated.</li>
 <li>Review controls and possible host contamination; describe database and technical limitations alongside any abundance table.</li>
 </ul>
-<p class="lesson-exercise"><strong>Practice:</strong> For one report, write down the unclassified percentage, a taxon with a direct Kraken assignment, and its corresponding Bracken estimate if present. Explain in one sentence why the Bracken estimate is model-based and name one database or laboratory factor that could affect interpretation. Do not infer a biological finding from a synthetic or unreviewed example.</p>
+<h2>Practice with a synthetic report</h2>
+<p>These invented values support arithmetic practice only; they are not biological observations. Each row gives clade percentage, clade fragments, direct fragments, rank, taxid, and name.</p>
+<pre><code class="language-text">100.00  1000  0  R  1  root
+10.00   100  0  -  0  unclassified
+90.00   900  0  D  2  Bacteria
+60.00   600  20  G  123  Examplegenus
+25.00   250  80  S  456  Example species
+35.00   350  50  S  789  Another species</code></pre>
+<p>Suppose a hypothetical matching Bracken table contains <code>Example species</code>: 80 Kraken-assigned reads, 20 added by re-estimation, 100 total, fraction 0.100; and <code>Another species</code>: 50 assigned, 10 added, 60 total, fraction 0.060. Check 80 + 20 = 100 and 50 + 10 = 60. The unclassified fraction is 10%; <em>Example species</em> has 80 direct assignments and a Bracken estimate of 100. The added 20 are model-redistributed reads, not new species-specific observations. Database representation or extraction/library bias could affect interpretation. The simplified root total is not an expected result from a real sample.</p>
+<p class="lesson-exercise"><strong>Practice:</strong> For a real report from your own prepared run, record unclassified percentage, one taxon's direct Kraken count, and its Bracken estimate if present. Explain why that estimate is model-based and name one database or laboratory factor that could affect interpretation. Without real inputs, use the synthetic exercise above; do not infer a biological finding from synthetic values.</p>
 <section aria-label="References and further reading"><h2>Official documentation</h2><ul>
 <li><a href="https://github.com/DerrickWood/kraken2/wiki/Manual" rel="noopener" target="_blank">Kraken2 manual: options and report formats</a></li>
 <li><a href="https://ccb.jhu.edu/software/bracken/index.shtml?t=manual" rel="noopener" target="_blank">Bracken manual: database preparation, parameters, and file formats</a></li>
@@ -244,7 +256,7 @@ function toggleMobileMenu() {
 <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
 </div>
 <div>
-<p class="text-sm text-gray-600 mb-2">This tutorial records the software versions used in its examples. Software and package behaviour can change. Please re-check commands against the official documentation. If a command does not work, you find an error, or the tutorial is no longer reproducible, please report it through the <a class="text-blue-600 hover:underline" href="../contact.html">Contact page</a></p>
+<p class="text-sm text-gray-600 mb-2">No software versions were recorded for this walkthrough. Capture <code>kraken2 --version</code> and <code>bracken --version</code> alongside database identity and build date when you run it; re-check commands against official documentation if software changes. Report errors or reproducibility issues through the <a class="text-blue-600 hover:underline" href="../contact.html">Contact page</a>.</p>
 <p class="text-sm text-gray-500">Author: <a class="text-blue-600 hover:underline font-medium" href="../about.html">Nasir Mahmood Abbasi, PhD</a> - Category: Metagenomics</p>
 </div>
 </div>

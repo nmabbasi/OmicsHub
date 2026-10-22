@@ -198,20 +198,25 @@ function toggleMobileMenu() {
 <nav aria-label="Tutorial navigation" class="reader-toolbar"><a href="tcr-bcr-repertoire-analysis.html" title="TCR/BCR Repertoire Analysis">← Previous tutorial</a><a data-catalogue-return="" href="../tutorials.html">All tutorials</a><a href="cell-type-annotation-methods.html" title="Choosing and Checking Cell-Type Annotation Methods">Next tutorial →</a></nav>
 <article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--walkthrough">
 <p class="lesson-lead">Cell–cell communication analysis uses ligand and receptor expression to prioritize candidate interactions between annotated cell populations. This walkthrough prepares a normalized Seurat object, runs the R LIANA consensus workflow, and explains where CellChat fits. These are transcript-based hypotheses—not evidence that proteins meet or signal in tissue.</p>
+<section class="lesson-summary tutorial-learning-contract" data-tutorial-format="advanced-template" aria-label="Learning format">
+<p><strong>Format: Advanced template.</strong> For readers familiar with R and Seurat who have their own processed single-cell object; you will check its structure, produce and inspect a LIANA consensus table, and plan whether CellChat is warranted. No dataset is supplied, and the optional CellChat path is a documented review exercise rather than a runnable script.</p>
+</section>
 <h2>Scope and prerequisites</h2>
-<p>Use this workflow for exploratory analysis of one scRNA-seq dataset when cell identities and normalized expression are already available. It assumes basic R and Seurat knowledge, a human dataset for the shown CellChat database choice, and installed compatible versions of Seurat, LIANA, CellChat, and dplyr. Install each package using its current official instructions; package APIs, databases, and defaults change, so record versions and consult the linked tutorials before adapting the code.</p>
+<p>Use the LIANA workflow for exploratory analysis of one scRNA-seq dataset when cell identities and normalized expression are already available. It assumes working knowledge of R and Seurat, and compatible versions of Seurat, LIANA, and dplyr. CellChat is optional and is not required to complete the LIANA example. Install packages using their current official instructions; package APIs, databases, and defaults change, so record the environment and consult the linked tutorials before adapting code.</p>
 <p>Before starting, confirm that the object has normalized expression in the assay/data layer LIANA will use, a non-missing <code>cell_type</code> metadata column, and adequate representation of each group for your design. Retain sample, condition, and batch metadata. An object-wide pooled analysis does not by itself provide replicate-aware condition testing.</p>
 <h2>1. Load and check the input</h2>
 <pre><code class="language-r">library(Seurat)
 seurat_obj &lt;- readRDS("seurat_obj.rds")
 stopifnot(inherits(seurat_obj, "Seurat"))
 stopifnot("cell_type" %in% colnames(seurat_obj[[]]))
-print(table(seurat_obj$cell_type, useNA = "ifany"))
+cell_counts &lt;- table(seurat_obj$cell_type, useNA = "ifany")
+print(cell_counts)
+stopifnot(!anyNA(seurat_obj$cell_type))
 
 # Inspect the assay and available layers before selecting expression input.
 Assays(seurat_obj)
 Layers(seurat_obj[[DefaultAssay(seurat_obj)]])</code></pre>
-<p>The file path is an input you supply; this is not a self-contained dataset. Check that the selected assay contains normalized values and that group labels match your intended annotations. Seurat v5 stores expression in layers; do not assume a layer called <code>data</code> exists or that the default assay is the one you intend.</p>
+<p>The file path is an input you supply; this is not a self-contained dataset. In R, save your processed Seurat object as <code>seurat_obj.rds</code> in the working directory from which you run the code, or replace the path with its actual location. Check that the selected assay contains normalized values and that group labels match your intended annotations. Seurat v5 stores expression in layers; do not assume a layer called <code>data</code> exists or that the default assay is the one you intend. The check above stops on missing group labels; investigate any very small groups before proceeding.</p>
 <aside class="lesson-checkpoint"><strong>Stop if:</strong> the cell-type table includes missing labels, unexpected tiny groups, or annotation names that do not match your analysis plan. Investigate first rather than treating a tool's minimum-cell setting as biological quality control.</aside>
 <h2>2. Run LIANA and inspect its consensus ranking</h2>
 <p>The R LIANA tutorial documents <code>liana_wrap()</code> followed by <code>liana_aggregate()</code>. The aggregation step returns consensus rank columns, including <code>aggregate_rank</code>; this is not the <code>consensus_score</code> used in some older examples. The code below follows the documented default workflow and leaves assay selection to the input object's active assay. Verify that this is appropriate for your installed LIANA/Seurat versions before running.</p>
@@ -225,29 +230,16 @@ stopifnot(all(c("source", "target", "aggregate_rank") %in% names(liana_ranked)))
 liana_ranked &lt;- dplyr::arrange(liana_ranked, aggregate_rank)
 utils::write.csv(liana_ranked, "liana_aggregate_results.csv", row.names = FALSE)
 saveRDS(liana_raw, "liana_raw_results.rds")</code></pre>
-<p>LIANA's aggregate rank is a consensus ordering/statistic across method results, not a calibrated probability that signaling occurs. Inspect per-method columns and rank agreement as well as ligand/receptor complex labels; a single consensus column can hide method disagreement. The exact output fields depend on selected methods, resources, and package version, which is why the example checks fields before using them.</p>
+<p>LIANA's <code>aggregate_rank</code> is a robust rank-aggregation statistic across method results: smaller values appear earlier in the ranking. It is not a calibrated probability that signaling occurs. Inspect per-method columns and rank agreement as well as ligand/receptor complex labels; a single consensus column can hide method disagreement. The exact output fields depend on selected methods, resources, and package version, which is why the example checks fields before using them.</p>
 <aside class="lesson-result"><strong>Deliverable:</strong> <code>liana_aggregate_results.csv</code>, a ranked table for review, and <code>liana_raw_results.rds</code> for method-level inspection. Neither file is produced until the code runs successfully in your configured R environment.</aside>
-<h2>3. Choose whether a CellChat analysis answers a different question</h2>
-<p>CellChat can model and visualize group-level communication using its curated database and analysis workflow. It is complementary, not a validation stage for LIANA: shared expression inputs and curated resources do not turn inferred edges into observed signaling. For the standard single-dataset workflow, follow the current CellChat tutorial from object creation through over-expression, communication probabilities, pathway aggregation, and network summaries. The abbreviated outline below is a workflow map, not a guaranteed drop-in script: object conversion, expression representation, database version, and function arguments depend on CellChat release and input format.</p>
+<h2>3. Decide whether CellChat adds a distinct analysis</h2>
+<p>CellChat can model and visualize group-level communication using its curated database and analysis workflow. It is complementary, not a validation stage for LIANA: shared expression inputs and curated resources do not turn inferred edges into observed signaling. This section is an optional conceptual map, not a second runnable route. The CellChat maintainers' full single-dataset tutorial and Nature Protocols workflow specify input conversion, expression representation, version-specific functions, and analysis checks; follow them rather than passing a Seurat object directly to <code>createCellChat()</code> as a generic recipe.</p>
 <ol class="lesson-steps">
-<li>Construct a CellChat input from normalized expression and the same cell-group labels; select the matching organism database and inspect gene-name compatibility.</li>
-<li>Run the documented preprocessing and over-expressed gene/interaction steps, then estimate communication probabilities using settings appropriate to the dataset.</li>
-<li>Aggregate pathways and networks; inspect the underlying tables alongside visualizations, and save the object and package/database versions.</li>
+<li>Before opening the official tutorial, write down the question and confirm that its input contract matches your assay, normalized expression, cell labels, organism, and gene identifiers.</li>
+<li>As you review its preprocessing, over-expression, communication probability, pathway aggregation, and network steps, note the expected intermediate tables/objects and which checks show that each step completed.</li>
+<li>Decide whether pathway/network summaries answer something beyond the LIANA ranking; record database/software versions and inspect underlying tables alongside visualizations. Do not treat agreement between tools as independent validation.</li>
 </ol>
-<pre><code class="language-r">library(CellChat)
-
-# Starting point for a human Seurat object; follow the current CellChat
-# tutorial for supported conversion and expression requirements.
-cellchat &lt;- createCellChat(object = seurat_obj, group.by = "cell_type")
-cellchat@DB &lt;- CellChatDB.human
-cellchat &lt;- subsetData(cellchat)
-cellchat &lt;- identifyOverExpressedGenes(cellchat)
-cellchat &lt;- identifyOverExpressedInteractions(cellchat)
-cellchat &lt;- computeCommunProb(cellchat)
-cellchat &lt;- computeCommunProbPathway(cellchat)
-cellchat &lt;- aggregateNet(cellchat)
-saveRDS(cellchat, "cellchat_object.rds")</code></pre>
-<p>This retains the commonly documented single-dataset outline, but does not establish that these calls will run unchanged for every CellChat release or Seurat object. Confirm current argument defaults, normalized expression expectations, database selection, and any recommended filtering in the linked CellChat protocol. Replace the database with the correct species resource for non-human data; gene identifiers and database coverage must also match.</p>
+<p>For the standard single-dataset route, use the <a href="https://github.com/jinworks/CellChat">official CellChat repository</a>, which links its <a href="https://htmlpreview.github.io/?https://github.com/jinworks/CellChat/blob/master/tutorial/CellChat-vignette.html">full single-dataset tutorial</a> and <a href="https://www.nature.com/articles/s41596-024-01045-4">Nature Protocols</a>. Match the database to the organism and verify gene identifiers and complex coverage. Do not compare raw LIANA and CellChat scores as though they shared a scale; consult the CellChat protocol for multi-condition analysis rather than interpreting separate pooled runs as replicate-aware tests.</p>
 <p>Do not compare raw scores between LIANA and CellChat as though they shared a scale. CellChat's probability and pathway summaries depend on its model, database and parameters. Consult the current protocol for code and for multi-condition workflows rather than interpreting separate pooled runs as a replicate-aware test.</p>
 <h2>Interpret candidates, not causal messages</h2>
 <ul>
@@ -265,7 +257,7 @@ saveRDS(cellchat, "cellchat_object.rds")</code></pre>
 <li><strong>CellChat organism/database mismatch:</strong> match database species to the input and check gene symbols and complex components against the selected database.</li>
 </ul>
 <h2>Reproducibility record</h2>
-<p>Save the exact R session information, package versions, database/resource versions, assay/layer, cell grouping, filters, and any random seeds used by stochastic steps. Keep sample and condition metadata with intermediate outputs. The example does not implement differential communication testing; use a documented sample-aware comparison design for condition claims.</p>
+<p>Save the exact R session information, package versions, database/resource versions, assay/layer, cell grouping, filters, and any random seeds used by stochastic steps. For a lightweight record after loading your packages, run <code>sessionInfo()</code> and save its output with the analysis; this captures the versions in your own environment, not a version combination tested by this page. Keep sample and condition metadata with intermediate outputs. The example does not implement differential communication testing; use a documented sample-aware comparison design for condition claims.</p>
 <h2>Further reading</h2>
 <ul>
 <li><a href="https://saezlab.github.io/liana/articles/liana_tutorial.html">LIANA R tutorial</a> — documented wrapper and aggregation workflow.</li>
@@ -280,7 +272,7 @@ saveRDS(cellchat, "cellchat_object.rds")</code></pre>
 <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
 </div>
 <div>
-<p class="text-sm text-gray-600 mb-2">This tutorial records the software versions used in its examples. Software and package behaviour can change. Please re-check commands against the official documentation. If a command does not work, you find an error, or the tutorial is no longer reproducible, please report it through the <a class="text-blue-600 hover:underline" href="../contact.html">Contact page</a></p>
+<p class="text-sm text-gray-600 mb-2">Software and package behaviour can change. Record versions from your own R session and re-check commands against the official documentation. If a command does not work or you find an error, please report it through the <a class="text-blue-600 hover:underline" href="../contact.html">Contact page</a>.</p>
 <p class="text-sm text-gray-500">Author: <a class="text-blue-600 hover:underline font-medium" href="../about.html">Nasir Mahmood Abbasi, PhD</a> - Category: Advanced Single-Cell Analysis</p>
 </div>
 </div>

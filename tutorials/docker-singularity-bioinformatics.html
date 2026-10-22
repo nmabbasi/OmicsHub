@@ -198,16 +198,42 @@ function toggleMobileMenu() {
 <nav aria-label="Tutorial navigation" class="reader-toolbar"><a href="reproducible-workflows-snakemake-nextflow.html" title="Reproducible bioinformatics workflows with Snakemake and Nextflow">← Previous tutorial</a><a data-catalogue-return="" href="../tutorials.html">All tutorials</a><a href="16s-rrna-prokka-annotation.html" title="16S Amplicon Profiling and Prokka Genome Annotation">Next tutorial →</a></nav>
 <article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--walkthrough">
 <p class="lesson-lead">A container can make a bioinformatics tool's software environment easier to reuse, but it does not package your reads, reference genome, scheduler policy, or every host dependency. This walkthrough follows one BWA-MEM job from a local Docker invocation to an Apptainer/Singularity-style HPC job, with attention to the files each command can actually see.</p>
+<section class="lesson-summary tutorial-learning-contract" data-tutorial-format="hands-on-lab" aria-label="Learning format">
+<p><strong>Format: Hands-on lab.</strong> For learners comfortable with a terminal, this short exercise creates a tiny, entirely synthetic reference and two reads, then follows their files through BWA in Docker. No biological data are supplied; a Docker-capable host and host-side BWA are needed locally, while the Slurm/Apptainer section is an optional adaptation for users with an authorized cluster account.</p>
+</section>
 <h2>What the container does—and does not—freeze</h2>
 <p>An image bundles an application and its userspace dependencies. That is useful when tools require conflicting libraries or when you need to preserve an environment, but it does not guarantee identical results across all hosts: kernel and hardware behavior, environment variables, mounted files, command-line parameters, and external services can still matter. Record the exact image reference (prefer a digest for durable identification), input checksums, tool arguments, and relevant host/runtime details. A tag can be moved, and a container is not a substitute for workflow provenance or biological validation.</p>
 <p>Docker commonly runs through a privileged daemon, which is why shared clusters often restrict Docker. Apptainer (formerly Singularity) is designed for unprivileged HPC use, but installation, configuration, allowed registries, and bind paths remain site-specific. Follow your cluster's documentation rather than assuming Docker is universally unavailable or that Apptainer is installed.</p>
 <h2>Prepare a small, explicit project layout</h2>
-<p>The commands below assume a project directory containing <code>reference.fa</code> and <code>reads.fq</code>, with the reference indexed for BWA. These filenames stand for files you provide; this lesson does not supply biological data. First create the index with the same BWA version you will use for mapping, in the project directory:</p>
+<p>For a reproducible smoke test, create the fixture below in a new project directory. It is invented sequence data for checking file flow only, not a biological sample or a test of BWA's suitability for any assay. The commands require Bash, Docker with permission to access its daemon, and host BWA for indexing. Check availability before starting:</p>
+<pre><code class="language-bash">command -v docker &amp;&amp; docker --version
+command -v bwa &amp;&amp; bwa 2&gt;&amp;1 | head -n 3
+</code></pre>
+<p>If either executable is missing, stop here and install it using the official instructions for your operating system or ask your administrator; do not proceed with an incomplete project. Record the version output in your notes. Then create the two small inputs (the reads are exact substrings of the synthetic reference):</p>
+<pre><code class="language-bash">mkdir -p bwa-container-lab/results
+cd bwa-container-lab
+cat &gt; reference.fa &lt;&lt;'EOF'
+&gt;synthetic_reference
+ACGTTGCAAGTCCTAGGATCCGATGCTAACGTAGCTTAGGCTAACCGT
+EOF
+cat &gt; reads.fq &lt;&lt;'EOF'
+@synthetic_read_1
+ACGTTGCAAGTCCTAGGATC
++
+IIIIIIIIIIIIIIIIIIII
+@synthetic_read_2
+GATGCTAACGTAGCTTAGGCT
++
+IIIIIIIIIIIIIIIIIIIII
+EOF
+wc -l reference.fa reads.fq
+</code></pre>
+<p>The final command should report 2 lines for the FASTA and 8 for FASTQ. If it does not, check that the quoted heredoc terminators were copied on their own lines. Now build the BWA index in this directory; the index files must remain beside the FASTA:</p>
 <pre><code class="language-bash">bwa index reference.fa
 </code></pre>
 <p>BWA writes index sidecar files beside the reference. Keep them with the FASTA and make the directory available inside the container. BWA-MEM accepts a reference and one or two FASTQ read files; this single-read example is illustrative, not an assessment of paired-end data, read quality, or mapping suitability.</p>
 <h2>Run the tool locally with Docker</h2>
-<p>Substitute a verified image reference and run from the project directory. The example mounts that directory read-write at <code>/work</code>, so input and generated files are visible across the boundary:</p>
+<p>Confirm the Docker daemon is reachable with <code>docker info</code>; if this fails, stop and resolve host permissions or daemon availability before attempting a pull. Verify the image tag with its registry documentation, then run from the project directory. The example mounts that directory read-write at <code>/work</code>, so input and generated files are visible across the boundary:</p>
 <pre><code class="language-bash">IMAGE='quay.io/biocontainers/bwa:0.7.17--hed695b0_7'  # verify this tag in the registry
 mkdir -p results
 docker run --rm \
@@ -218,7 +244,7 @@ docker run --rm \
 </code></pre>
 <p>The redirection is performed by the host shell, not inside Docker; because the working directory is mounted, the SAM file lands in the host's <code>results/</code> directory. The command assumes the image can start <code>bwa</code> with this invocation and the tag exists and is accessible. Check the registry and image documentation before relying on either assumption. If the source directory is missing, Docker's explicit <code>--mount</code> form errors rather than silently creating it; check the mount path and permissions. Mounting a project read-write allows container processes to alter its contents—use a read-only input mount plus a separate writable output directory when the tool and directory layout permit.</p>
 <h2>Use the same image on a Slurm cluster</h2>
-<p>Where the cluster provides Apptainer, pull the OCI image once (often on a login or transfer node if policy permits). This converts the registry image into a local SIF file; network access, image caching, and where pulls are allowed are cluster-specific.</p>
+<p>This section is optional and applies only if you have an authorized Slurm account on a cluster that provides Apptainer (or its locally supported Singularity command). Check the site documentation for resource limits, permitted image acquisition, storage paths, and submission procedures; do not install software or submit jobs on a shared system without authorization. Where permitted, pull the OCI image once (often on a login or transfer node). This converts the registry image into a local SIF file; network access, image caching, and where pulls are allowed are cluster-specific.</p>
 <pre><code class="language-bash">apptainer pull bwa.sif docker://quay.io/biocontainers/bwa:0.7.17--hed695b0_7
 </code></pre>
 <p>Save the following as a Slurm job script in the project directory and submit it using your site's procedure. It explicitly binds the current project to <code>/work</code>; the inputs and output path then refer to files the container can access.</p>
@@ -237,8 +263,8 @@ apptainer exec --bind "$PWD:/work" --pwd /work bwa.sif \
 <p>Resource values are examples, not recommendations; adjust them to the input size, cluster policy, and measured workload. The output redirection occurs in the job shell on the host filesystem. If a cluster uses the <code>singularity</code> executable rather than <code>apptainer</code>, or restricts pulls/binds, adapt the command according to local documentation. A failed pull can reflect network or registry policy; a file-not-found error inside the job commonly points to a missing bind, wrong working directory, or absent input. Also verify write permissions on <code>results/</code> and inspect the scheduler's standard output/error files.</p>
 <h2>Check the result and preserve provenance</h2>
 <ul>
-<li>Confirm the job exited successfully and that <code>results/reads.sam</code> exists and is non-empty; file existence alone does not validate alignment quality.</li>
-<li>Record the image digest if available, the BWA version reported by the image, reference and read checksums, index-generation command, full mapping command, and scheduler/runtime versions.</li>
+<li>Confirm the job exited successfully and that <code>results/reads.sam</code> exists and is non-empty. With the two synthetic reads, inspect for a SAM header and alignment records corresponding to the two input reads; exact flags and formatting are tool-version dependent. A non-empty file or matching record count checks only this smoke test, not alignment quality.</li>
+<li>Record the immutable image digest where available (for Docker, inspect the pulled image with <code>docker image inspect --format '{{json .RepoDigests}}' "$IMAGE"</code>; an empty list means no RepoDigest was recorded), the BWA version reported by the image, reference and read checksums, index-generation command, full mapping command, and scheduler/runtime versions. Capture runtime versions with <code>docker --version</code>, <code>apptainer --version</code> (or the site-supported <code>singularity --version</code>), and <code>sinfo --version</code> where available. These commands provide provenance; they are not versions tested or certified by this page.</li>
 <li>Review the SAM header and representative records, then use a suitable downstream QC workflow to evaluate mapping rate, flags, and sample-specific expectations. No universal mapping-rate threshold or biological conclusion follows from container success.</li>
 <li>For a reproducible pipeline, version the job/workflow definition and retain immutable image identifiers. Rebuilding a Dockerfile later can change if base images or package repositories are not pinned; pinning tool packages alone does not freeze every dependency.</li>
 </ul>
@@ -259,7 +285,7 @@ apptainer exec --bind "$PWD:/work" --pwd /work bwa.sif \
 <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
 </div>
 <div>
-<p class="text-sm text-gray-600 mb-2">This tutorial records the software versions used in its examples. Software and package behaviour can change. Please re-check commands against the official documentation. If a command does not work, you find an error, or the tutorial is no longer reproducible, please report it through the <a class="text-blue-600 hover:underline" href="../contact.html">Contact page</a></p>
+<p class="text-sm text-gray-600 mb-2">This page does not record tested Docker, BWA, Apptainer, or Slurm versions, and the image tag is not an immutable digest. Use the version and image-identity commands above to capture the versions available in your own environment; re-check site and tool documentation before applying the optional cluster example. If you find an error, please report it through the <a class="text-blue-600 hover:underline" href="../contact.html">Contact page</a></p>
 <p class="text-sm text-gray-500">Author: <a class="text-blue-600 hover:underline font-medium" href="../about.html">Nasir Mahmood Abbasi, PhD</a> - Category: Workflow Management and Containerization</p>
 </div>
 </div>

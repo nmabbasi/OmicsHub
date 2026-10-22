@@ -196,7 +196,7 @@ function toggleMobileMenu() {
 <img alt="Text Processing" class="w-full aspect-video object-cover" decoding="async" loading="eager" src="../images/shell-commands-part2-workstation.webp"/>
 </div>
 <nav aria-label="Tutorial navigation" class="reader-toolbar"><a href="command-line-part1.html" title="Command-Line Navigation for Bioinformatics Projects">← Previous tutorial</a><a data-catalogue-return="" href="../tutorials.html">All tutorials</a><a href="command-line-part3.html" title="Summarize FASTQ and Annotation Files with Bash">Next tutorial →</a></nav>
-<article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--walkthrough"><p class="lesson-lead">Use line-oriented shell commands for quick inspection and simple tables. For sequence records, first check whether the format and operation can safely be handled one line at a time.</p><h2>Learning objectives and prerequisites</h2>
+<article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--walkthrough"><p class="lesson-lead">Use line-oriented shell commands for quick inspection and simple tables. For sequence records, first check whether the format and operation can safely be handled one line at a time.</p><section class="lesson-summary tutorial-learning-contract" data-tutorial-format="hands-on-lab" aria-label="Learning format"><p><strong>Format: Hands-on lab.</strong> Beginners with basic shell navigation will build and inspect small synthetic TSV examples, then practise filtering and checking output. The commands below create TSV and ID-list inputs; bring a FASTA file for the sequence exercises, with FASTQ optional.</p></section><h2>Learning objectives and prerequisites</h2>
 <p><strong>Prerequisites:</strong> Completion of a basic command-line navigation tutorial (listing directories, viewing files). Have example text files ready in a working directory: a short FASTA file (sequences.fasta), a tab-delimited table (data.tsv), and a FASTQ file (reads.fastq) or equivalents. Replace filenames below with your real file paths.</p>
 <p><strong>Learning objectives:</strong> After working through this lesson, you will be able to:</p>
 <ul>
@@ -216,6 +216,15 @@ function toggleMobileMenu() {
 <li>reads.fastq — a FASTQ file of sequencing reads (optional for the FASTQ section).</li>
 <li>data.tsv — a tab-delimited table with a header line and multiple columns (e.g., gene_id, sample, count).</li>
 </ul>
+<p>To create a reproducible table and matching-ID list, start in a new working directory and run this block. The values are synthetic teaching data, not biological observations. Check the shell and basic tools before proceeding; later GNU-specific options may differ on macOS.</p>
+<pre><code>mkdir -p cli-part2-practice
+cd cli-part2-practice
+printf 'gene_id\tsample\tcount\nGENE_A\tS1\t120\nGENE_B\tS1\t45\nGENE_A\tS2\t90\nGENE_C\tS2\t200\n' &gt; data.tsv
+printf 'GENE_A\nGENE_C\n' &gt; genes_of_interest.txt
+head -n 2 data.tsv
+command -v awk cut sort uniq
+</code></pre>
+<p>Expected first two lines are the header and the GENE_A/S1/120 row, with fields separated by tabs. If <code>command -v</code> cannot find a utility, stop and use an environment where it is available. FASTA/FASTQ exercises require your own files and are optional.</p>
 <h3>1) Inspect files safely</h3>
 <p>Before running extraction commands, inspect the file to determine layout.</p>
 <pre><code># Show the first 40 lines of a FASTA to check header and wrap behavior
@@ -244,15 +253,15 @@ grep '^&gt;' sequences.fasta | sed 's/^&gt;//' &gt; headers.txt
 <p>Explanation: grep selects header lines; sed substitutes the leading character. headers.txt is ready to be used for lookups or counts.</p>
 <h3>4) Find sequences that contain a short motif (use record-aware tool if sequences are wrapped)</h3>
 <p>If sequences are unwrapped (each sequence on a single line), you can use a line-based approach. If FASTA sequences are wrapped across multiple lines, use seqkit.</p>
-<pre><code># Line-based (only correct if sequences occupy a single line)
+<pre><code># Line-based: prints the matching line and up to one following line; it does NOT retrieve the preceding FASTA header
 grep -n -A 1 'ATGCG' sequences.fasta &gt; matching_lines.txt
-# Output: matching_lines.txt contains the header and the following sequence line(s) as printed by grep's -A 1 option
+# Output: numbered matching lines and their following line, not complete records
 
 # Record-aware approach (recommended)
 seqkit grep -s -p 'ATGCG' sequences.fasta &gt; matching_records.fasta
 # Output: matching_records.fasta contains full FASTA records that include the motif
 </code></pre>
-<p>Interpretation: For seqkit, matching_records.fasta contains complete records; inspect them with seqkit stats or less. For the grep approach, ensure sequence format is compatible; otherwise you may miss matches or produce partial records.</p>
+<p>Interpretation: For seqkit, matching_records.fasta contains complete records; inspect them with seqkit stats or less. The grep command is only a line-search demonstration, not a record extractor; wrapped sequences can also split a motif across lines and evade a line match.</p>
 <h3>5) Convert a FASTQ to FASTA (simple, line-oriented conversion)</h3>
 <pre><code># Convert reads.fastq -&gt; sequences.fastq.fasta (non-destructive)
 awk 'NR%4==1{printf "&gt;%s\n", substr($0,2)} NR%4==2{print}' reads.fastq &gt; reads.fasta
@@ -272,23 +281,21 @@ cut -f 1,3 data.tsv &gt; col1_col3.tsv
 (head -n1 data.tsv &amp;&amp; awk -F'\t' 'NR&gt;1 &amp;&amp; $3&gt;100' data.tsv) &gt; filtered_counts.tsv
 # Output: filtered_counts.tsv with header plus rows where col3 &gt; 100
 
-# Count unique values in column 1 and sort by frequency
+# Count column-1 values (excluding the header); the first line must be a header
 cut -f1 data.tsv | tail -n +2 | sort | uniq -c | sort -k1,1nr &gt; gene_counts.txt
-# Output: gene_counts.txt lists unique values and their occurrence counts, sorted descending
+# Output: column-1 value frequencies in descending count order (ties are not explicitly ordered)
 </code></pre>
-<p>Notes: The parentheses around the header-preserve pipeline ensure the header is copied, then rows are filtered. Replace column indices based on your file schema.</p>
+<p>Notes: The parentheses around the header-preserve pipeline ensure the header is copied, then rows are filtered. Replace column indices based on your file schema. With the supplied table, the count filter produces GENE_A/S1/120 and GENE_C/S2/200. Column-1 frequencies are 2 for GENE_A and 1 each for GENE_B and GENE_C (the tied values may appear in either order).</p>
 <h3>7) Small example: extract records for a set of gene IDs</h3>
-<p>Given a file genes_of_interest.txt listing one gene ID per line, extract rows from data.tsv where the first column matches any of those IDs.</p>
+<p>The setup block created <code>genes_of_interest.txt</code> with two IDs that occur in the sample table. First-column matching matters: a whole-line search can match an ID in another field or as part of a longer string.</p>
 <pre><code># genes_of_interest.txt contains gene IDs, one per line
-# Create a patterns file suitable for grep (-F for fixed strings, -f reads patterns)
-grep -F -f genes_of_interest.txt data.tsv &gt; genes_subset.tsv
-# Output: genes_subset.tsv contains rows from data.tsv having any of the listed gene IDs
+# Fixed-string substring search across each entire line; not a column-exact match
+grep -F -f genes_of_interest.txt data.tsv &gt; genes_subset_grep.tsv
+# Exact match against column 1; FILENAME test also works for an empty ID list
+awk -F'\t' 'FILENAME == ARGV[1] {a[$1]=1; next} ($1 in a)' genes_of_interest.txt data.tsv &gt; genes_subset.tsv
+# Output: three matching data rows; empty if there are no matches
 </code></pre>
-<p>Caveat: If your gene IDs could match substrings in other columns, use awk to anchor the match to column 1:</p>
-<pre><code># Anchored match on column 1 (tab-separated)
-awk -F'\t' 'NR==FNR{a[$1]; next} ($1 in a)' genes_of_interest.txt data.tsv &gt; genes_subset.tsv
-# Output: genes_subset.tsv with exact column-1 matches
-</code></pre>
+<p>Inspect with <code>cat genes_subset.tsv</code>; the expected first fields are GENE_A, GENE_A, and GENE_C. To test no matches, temporarily replace the list with <code>NOT_PRESENT</code>; the output should contain zero rows. Restore the original list afterward. This result intentionally omits the TSV header.</p>
 <h2>Output inspection and interpretation</h2>
 <p>What to look for after each step:</p>
 <ul>
@@ -355,7 +362,7 @@ awk -F'\t' 'NR==FNR{a[$1]; next} ($1 in a)' genes_of_interest.txt data.tsv &gt; 
 <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
 </div>
 <div>
-<p class="text-sm text-gray-600 mb-2">This tutorial records the software versions used in its examples. Software and package behaviour can change. Please re-check commands against the official documentation. If a command does not work, you find an error, or the tutorial is no longer reproducible, please report it through the <a class="text-blue-600 hover:underline" href="../contact.html">Contact page</a></p>
+<p class="text-sm text-gray-600 mb-2">Software and package behaviour can change. Please re-check commands against the official documentation. If a command does not work, you find an error, or the tutorial is no longer reproducible, please report it through the <a class="text-blue-600 hover:underline" href="../contact.html">Contact page</a></p>
 <p class="text-sm text-gray-500">Author: <a class="text-blue-600 hover:underline font-medium" href="../about.html">Nasir Mahmood Abbasi, PhD</a> - Category: Shell Command Basics</p>
 </div>
 </div>

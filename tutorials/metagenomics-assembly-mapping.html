@@ -198,14 +198,18 @@ function toggleMobileMenu() {
 <nav aria-label="Tutorial navigation" class="reader-toolbar"><a href="16s-rrna-prokka-annotation.html" title="16S Amplicon Profiling and Prokka Genome Annotation">← Previous tutorial</a><a data-catalogue-return="" href="../tutorials.html">All tutorials</a><a href="metagenomics-kraken2-bracken.html" title="Kraken2 and Bracken: A Shotgun Metagenomics Walkthrough">Next tutorial →</a></nav>
 <article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--walkthrough">
 <p class="lesson-lead">This walkthrough follows paired-end shotgun reads from host screening (when needed) through metaSPAdes assembly and read-back mapping. It focuses on file contracts and checks that let you judge whether the outputs are usable; mapping support alone does not validate an assembly.</p>
+<section class="lesson-summary tutorial-learning-contract" data-tutorial-format="advanced-template" aria-label="Learning format">
+<p><strong>Format: Advanced template.</strong> For readers with command-line experience, QC-passed paired FASTQ files and a configured environment; you will adapt and review an assembly-and-mapping workflow. No practice dataset or host reference is supplied: prepare these inputs and choose resources for your system.</p>
+</section>
 <h2>What you need and what you will produce</h2>
 <p>Start with quality-controlled paired-end FASTQ files, <code>sample_R1.fastq.gz</code> and <code>sample_R2.fastq.gz</code>, with matching read names and mates in the same order. Adapter contamination matters to metaSPAdes, so inspect the upstream QC report before assembly. For host-associated samples, obtain an appropriate host reference FASTA and record its source and checksum. Host screening is optional for environmental samples when host contamination is not expected.</p>
-<p>Install SPAdes (including metaSPAdes), BWA, and SAMtools using a package manager or your site's supported software environment. The commands below assume their executables are on <code>PATH</code>, the files are in your current working directory, and your system has enough memory, storage, and CPU capacity for the dataset. Choose thread and memory values for your system. The example is a command template, not evidence of a completed biological run.</p>
-<p>The workflow creates <code>spades_output/contigs.fasta</code>, a coordinate-sorted and indexed BAM of reads aligned to those contigs, summary files, and an optional IGV view. Record tool versions, input checksums, reference provenance, and commands in a project log.</p>
+<p>Install SPAdes (including metaSPAdes), BWA, and SAMtools using a package manager or your site's supported software environment; installation is not covered here. From the project working directory, confirm that each executable is available and record the versions reported by <code>spades.py --version</code>, <code>bwa</code>, and <code>samtools --version</code>. Before analysis, test compressed inputs with <code>gzip -t sample_R1.fastq.gz sample_R2.fastq.gz</code> and inspect the QC report and mate-name/order agreement. Stop if a check fails or inputs are not the same validated pair. The commands assume these files are in the current directory and adequate memory, storage, and CPU capacity; choose thread and memory values for your system. This is a command template, not a completed biological run.</p>
+<p>The workflow creates <code>spades_output/contigs.fasta</code>, a coordinate-sorted and indexed BAM of reads aligned to those contigs, summary files, and an optional IGV view. Record tool versions, input checksums, reference provenance, and commands in a project log; proceed only when each command exits successfully and its expected output exists and is non-empty.</p>
 <h2>Screen host reads when appropriate</h2>
 <p>Map the paired reads to the host reference, then retain templates for which both mates are unmapped. The SAM flags <code>0x4</code> and <code>0x8</code> represent an unmapped read and an unmapped mate; <code>-f 12</code> requires both. Excluding secondary and supplementary records avoids writing alternate alignment records as if they were additional read templates.</p>
 <pre><code># Download the human GRCh38.p14 reference only when appropriate for the sample.
 # Verify the checksum against a trusted source before using the reference.
+set -euo pipefail
 curl -L -o host_ref.fa.gz "https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/001/405/GCF_000001405.40_GRCh38.p14/GCF_000001405.40_GRCh38.p14_genomic.fna.gz"
 sha256sum host_ref.fa.gz
 
@@ -215,34 +219,38 @@ bwa index host_ref.fa
 bwa mem -t 8 host_ref.fa sample_R1.fastq.gz sample_R2.fastq.gz \
   | samtools sort -@ 4 -o host_mapped.bam
 samtools index host_mapped.bam
+test -s host_mapped.bam && test -s host_mapped.bam.bai
 
 samtools view -b -f 12 -F 2304 host_mapped.bam \
   | samtools sort -n -@ 4 -o nonhost.name_sorted.bam
 samtools fastq -n \
-  -1 microbial_R1.fastq.gz \
-  -2 microbial_R2.fastq.gz \
+  -1 microbial_R1.fastq \
+  -2 microbial_R2.fastq \
   -0 /dev/null -s /dev/null \
   nonhost.name_sorted.bam
+test -s microbial_R1.fastq && test -s microbial_R2.fastq
 
 # Count FASTQ records as lines / 4 (counts reads, not pairs).
 gzip -cd sample_R1.fastq.gz | awk 'END {print NR/4}'
-gzip -cd microbial_R1.fastq.gz | awk 'END {print NR/4}'</code></pre>
+awk 'END {print NR/4}' microbial_R1.fastq</code></pre>
 <p><code>samtools fastq</code> requires reads grouped by name; the name-sort step supplies that ordering. The <code>-1</code> and <code>-2</code> outputs contain paired reads, while <code>-0</code> and <code>-s</code> send singletons and other reads to <code>/dev/null</code>. Since the filter asks for both mates unmapped, such discarded reads should not ordinarily be produced, but explicit destinations avoid mixing them into the paired outputs. Confirm the two output files have equal FASTQ record counts and that the starting pair names correspond before proceeding.</p>
 <aside class="lesson-warning"><strong>Host reference and privacy:</strong> GRCh38 is only an example for human host DNA; substitute the correct, documented host reference for another host. A reference can be incomplete or divergent, leaving host-derived reads behind. Screening is not a guarantee of de-identification. Handle human-derived reads and contigs under the applicable approvals, consent, and data-sharing rules.</aside>
 <h2>Assemble the paired reads</h2>
 <p>metaSPAdes is SPAdes's metagenomic mode. Its documented short-read input contract supports one paired-end short-read library; this example therefore assumes one sample/library represented by the R1/R2 pair. The command does not combine independent libraries. The official manual warns that adapter read-throughs can affect metaSPAdes, so upstream QC remains important.</p>
 <pre><code>spades.py --meta \
-  -1 microbial_R1.fastq.gz \
-  -2 microbial_R2.fastq.gz \
+  -1 microbial_R1.fastq \
+  -2 microbial_R2.fastq \
   -o spades_output \
   -t 16 -m 64</code></pre>
 <p>On successful completion, inspect the run log and the output directory. Use <code>spades_output/contigs.fasta</code> as the contig reference for the mapping step; retain <code>params.txt</code> and the logs with the analysis record. Do not assume that scaffolds were produced or that the assembly succeeded simply because a command was submitted. If SPAdes reports an input, memory, or output-directory error, resolve that before continuing.</p>
 <h2>Map reads back to contigs</h2>
 <p>Build the BWA index from the same contig FASTA that you will later load as the reference. Align the same paired reads used for assembly (screened reads here), sort the resulting alignments by genomic coordinate, then index the BAM. Coordinate order is required for efficient regional access and IGV viewing.</p>
-<pre><code>bwa index spades_output/contigs.fasta
-bwa mem -t 8 spades_output/contigs.fasta microbial_R1.fastq.gz microbial_R2.fastq.gz \
+<pre><code>set -euo pipefail
+bwa index spades_output/contigs.fasta
+bwa mem -t 8 spades_output/contigs.fasta microbial_R1.fastq microbial_R2.fastq \
   | samtools sort -@ 4 -o reads_to_contigs.bam
 samtools index reads_to_contigs.bam
+test -s reads_to_contigs.bam && test -s reads_to_contigs.bam.bai
 samtools flagstat reads_to_contigs.bam &gt; reads_to_contigs.flagstat.txt
 samtools idxstats reads_to_contigs.bam &gt; reads_to_contigs.idxstats.txt
 samtools depth -a reads_to_contigs.bam &gt; contig_depth.tsv</code></pre>

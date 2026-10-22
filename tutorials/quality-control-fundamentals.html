@@ -205,11 +205,14 @@ function toggleMobileMenu() {
 <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
 <span>Updated 21 October 2026</span></div>
 </div><p class="lesson-lead">QC turns a set of files and tool reports into a documented decision about what can be analyzed, what needs investigation, and why. This lesson follows a paired-end short-read example, then contrasts it with single-cell checks. Thresholds must come from the assay and study context.</p>
+<section class="lesson-summary tutorial-learning-contract" data-tutorial-format="conceptual-guide" aria-label="Learning format">
+<p><strong>Format: Conceptual guide.</strong> For learners who can read basic shell commands and sequencing reports: compare evidence across assays and complete a sample-level QC decision record. No data are supplied; use the explicitly illustrative record below or bring reports prepared for your own study.</p>
+</section>
 <h2>What you will produce</h2>
 <p>Work through the checks below and finish with a sample-level QC record: tool versions, selected metrics, a pass/review/exclude decision, its evidence, and a next action. The commands are templates, not a tested end-to-end pipeline.</p>
 <ul>
 <li>Define and interpret common quality-control (QC) metrics for sequencing experiments: per-base read quality, adapter content, mapping rate, read-pairing, duplication, coverage, contamination, and sample missingness.</li>
-<li>Differentiate technical failure from plausible biological signals and choose QC visualizations appropriate to short-read, long-read, and single-cell workflows.</li>
+<li>Differentiate technical failure from plausible biological signals and identify useful short-read, long-read, and single-cell QC views.</li>
 <li>Create a concise, reproducible QC record that lists tools and versions, key metrics, a pass/review decision, and the next action for each sample.</li>
 <li>Apply basic troubleshooting steps and document exclusions without deleting original raw data.</li>
 </ul>
@@ -277,7 +280,7 @@ fastp -i raw/sample_R1.fastq.gz -I raw/sample_R2.fastq.gz \
       --detect_adapter_for_pe --trim_front1 0 --trim_tail1 0 \
       --thread 4 --html qc/fastp_report.html --json qc/fastp_report.json
 </code></pre>
-<p>Note: adapt parameters to your platform and chemistry. Keep the fastp JSON report in logs/.</p>
+<p>Note: adapt parameters to your platform and chemistry. The HTML and JSON reports are written to <code>qc/fastp_report.html</code> and <code>qc/fastp_report.json</code>, respectively; keep these alongside the other QC reports.</p>
 <h3>4. Align, sort, and inspect the BAM</h3>
 <p>Align reads with your chosen aligner (bwa-mem2 for short-read DNA, STAR for RNA-seq, minimap2 for long reads). Here is a short-read DNA example using bwa-mem2 followed by samtools flagstat and Picard MarkDuplicates.</p>
 <pre><code># Inputs: reference/genome.fa, trimmed/*.fastq.gz (or raw if untrimmed)
@@ -353,6 +356,7 @@ VlnPlot(seurat_obj, features = c("nFeature_RNA","nCount_RNA","percent.mt"), ncol
 <h3>Per-base quality and adapter content</h3>
 <p>What to look for: consistently high Phred scores across reads; a low-quality tail at read ends suggests trimming. Adapter content above background indicates library preparation or sequencing artifacts.</p>
 <p>Meaning and limits: high average quality reduces base-calling error, but does not guarantee correct alignment if the reference is distant. Adapter presence often indicates short inserts; confirm insert-size distribution before trimming aggressively.</p>
+<p>For long reads, inspect read-length and per-read quality distributions (for example, with the platform's read-QC report) alongside mapped-read yield and coverage breadth/depth. A long-read length histogram can reveal short-fragment tails or a mixture of molecule sizes, but neither read length nor a single quality summary establishes assembly or variant-call accuracy. Compare samples prepared and sequenced with compatible chemistry, and consult platform-specific guidance before setting filters; this page does not provide a long-read processing recipe.</p>
 <h3>Mapping rate and properly paired reads</h3>
 <p>What to look for: mapping fraction and properly paired percentage in the context of the assay and comparable samples. A low mapping fraction or unexpected contig counts can prompt checks of reference build, library type, and possible contamination.</p>
 <p>Meaning and limits: a low mapping rate can be caused by a wrong reference build, contamination, library type mismatch (e.g., RNA reads to DNA reference), or very divergent genomes. A high mapping rate alone does not guarantee correct variant calls — also check the mapping quality (MAPQ) distribution and variant-level metrics.</p>
@@ -414,6 +418,11 @@ VlnPlot(seurat_obj, features = c("nFeature_RNA","nCount_RNA","percent.mt"), ncol
 <li>For single-cell data, compute per-cell QC metrics and visualize distributions before filtering.</li>
 <li>Create a QC summary file (e.g., qc/qc_summary.tsv) listing sample, tool versions, key metrics, decision (pass/review/exclude), and next action.</li>
 </ul>
+<p>Use one row per sample and write <code>NA</code> when a metric was not measured; do not treat missing evidence as a pass. The following row is illustrative, not a universal cutoff or a biological benchmark. Its review decision follows from the stated study-specific comparison: the sample's mapped fraction is below its matched batch range, so reference compatibility and read-level reports should be checked before downstream interpretation.</p>
+<pre><code>sample	tool_versions	metrics	decision	evidence	next_action
+SYNTH_A	fastp 0.23.2; samtools 1.17	reads=1,000,000; mapped=62%; proper_pairs=58%; mean_depth=18x	review	mapped fraction below matched-batch range (illustrative); controls pending	verify reference build and inspect FastQC/MultiQC reports; reassess with controls
+</code></pre>
+<p>To make the record reproducible, place it at <code>qc/qc_summary.tsv</code>, retain the corresponding reports in <code>qc/</code>, and record exact installed versions rather than copying the illustrative version labels. A completed row documents a decision and its evidence; it does not by itself validate a sample or establish a universal pass threshold.</p>
 <h2>Official tool documentation</h2>
 <ul>
 <li><a href="https://www.bioinformatics.babraham.ac.uk/projects/fastqc/">FastQC — Babraham Bioinformatics</a></li>
@@ -434,7 +443,7 @@ VlnPlot(seurat_obj, features = c("nFeature_RNA","nCount_RNA","percent.mt"), ncol
 <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
 </div>
 <div>
-<p class="text-sm text-gray-600 mb-2">This tutorial records the software versions used in its examples. Software and package behaviour can change. Please re-check commands against the official documentation. If a command does not work, you find an error, or the tutorial is no longer reproducible, please report it through the <a class="text-blue-600 hover:underline" href="../contact.html">Contact page</a></p>
+<p class="text-sm text-gray-600 mb-2">The tool versions named in examples are illustrative, not an environment tested for this page. Capture versions from the tools actually used (for example, <code>fastp --version</code>, <code>samtools --version</code>, and <code>fastqc --version</code>) and record reference/database builds with the QC outputs. Re-check syntax against official documentation; report errors through the <a class="text-blue-600 hover:underline" href="../contact.html">Contact page</a>.</p>
 <p class="text-sm text-gray-500">Author: <a class="text-blue-600 hover:underline font-medium" href="../about.html">Nasir Mahmood Abbasi, PhD</a> - Category: Foundations &amp; Prerequisites</p>
 </div>
 </div>

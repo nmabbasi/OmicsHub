@@ -197,7 +197,10 @@ function toggleMobileMenu() {
 </div>
 <nav aria-label="Tutorial navigation" class="reader-toolbar"><a href="git-github-bioinformatics.html" title="Git and GitHub for Bioinformatics">← Previous tutorial</a><a data-catalogue-return="" href="../tutorials.html">All tutorials</a><a href="r-tidyverse-fundamentals.html" title="R and Tidyverse Fundamentals">Next tutorial →</a></nav>
 <article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--lab">
-<p class="lesson-lead">Follow one small FASTA file from raw text to a checked CSV. You will see how Python strings, functions, file paths, and validation work together, then decide what a GC fraction can and cannot tell you.</p><div class="flex flex-wrap items-center gap-4 text-xs font-mono text-gray-500 bg-gray-50 p-3 rounded-lg border border-gray-200 mb-6">
+<p class="lesson-lead">Follow one small FASTA file from raw text to a checked CSV. You will see how Python strings, functions, file paths, and validation work together, then decide what a GC fraction can and cannot tell you.</p>
+<section class="lesson-summary tutorial-learning-contract" data-tutorial-format="hands-on-lab" aria-label="Learning format">
+<p><strong>Format: Hands-on lab.</strong> Beginners with basic command-line familiarity will create a synthetic FASTA, write and run a Python script, and inspect a checked CSV; all input data are supplied as copyable fixture text.</p>
+</section><div class="flex flex-wrap items-center gap-4 text-xs font-mono text-gray-500 bg-gray-50 p-3 rounded-lg border border-gray-200 mb-6">
 <div class="flex items-center gap-1">
 <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
 <span><strong>Example environment:</strong> Python 3.10 or newer; local file operations only</span>
@@ -361,19 +364,22 @@ cat outputs/sequence_stats.csv
 </code></pre>
 <p>Expected file: outputs/sequence_stats.csv with columns: id, length, gc_fraction, valid. The exact values depend on the input. For the fixture, the first record has length 14 and GC fraction 0.42857; the second has length 20 and fraction 0.50000; the third is invalid because it contains `-`, so its GC field is blank. These are arithmetic checks on synthetic strings, not empirical findings. You can load the CSV into pandas if that package is installed. Treat files from untrusted sources cautiously when opening them in spreadsheet software.</p>
 <h3>5. Optional: parse with Biopython for comparison</h3>
-<p>If you installed Biopython in the virtual environment, you can accomplish the same work using SeqIO. Biopython’s `SeqIO.parse` yields records from an iterator and supports multiple sequence formats. It is a convenient library parser, but it does not replace validating that the symbols and metadata fit your analysis.</p>
-<pre><code># Run an interactive one-liner (while env is activated)
+<p>If you installed Biopython in the virtual environment, use SeqIO to parse records, then apply the same normalization and alphabet rule as the main script. `SeqIO.parse` yields records from an iterator and supports multiple sequence formats; parsing does not replace validating that symbols and metadata fit your analysis.</p>
+<pre><code># Run an interactive comparison (while env is activated)
 python - &lt;&lt;'PY'
 from Bio import SeqIO
 from pathlib import Path
-p = Path("data/raw/example.fasta")
-for rec in SeqIO.parse(str(p), "fasta"):
-    seq = str(rec.seq).upper()
-    gc = sum(1 for b in seq if b in "GC") / len(seq) if len(seq) &gt; 0 else 0.0
-    print(rec.id, len(seq), f"{gc:.5f}")
+
+valid_bases = set("ACGTN")
+for rec in SeqIO.parse(str(Path("data/raw/example.fasta")), "fasta"):
+    seq = "".join(str(rec.seq).split()).upper()
+    valid = bool(seq) and all(base in valid_bases for base in seq)
+    gc = sum(1 for base in seq if base in "GC") / len(seq) if valid else ""
+    gc_text = f"{gc:.5f}" if valid else ""
+    print(rec.id, len(seq), gc_text, "yes" if valid else "no")
 PY
 </code></pre>
-<p>What this produces: console output listing record id, length, and GC fraction computed from Biopython's record objects. Biopython handles sequence objects and file formats robustly; for learning, we used a minimal parser earlier to show the format mechanics.</p>
+<p>What this produces: console output listing record id, normalized length, GC fraction (blank for invalid records), and validity. For the supplied fixture, seq3 is reported invalid with no GC value, matching the standard-library script. Biopython provides a maintained parser; the validity rule remains the workflow's explicit responsibility.</p>
 <h2>Output inspection and interpretation</h2>
 <p>When you open outputs/sequence_stats.csv, check the following:</p>
 <ul>
@@ -412,7 +418,7 @@ PY
 <h2>Limitations, version and reference-data caveats, and responsible use</h2>
 <p>Limitations of this lesson and script:</p>
 <ul>
-<li>The simple parser is educational and reads records incrementally, though it holds each record sequence in memory. It does not validate FASTA headers against a controlled schema, support FASTQ, or provide indexed access. It does not validate FASTA headers against any controlled schema (for example, headers with embedded tabs or spaces), For production work, use a maintained parser such as Biopython SeqIO and validate the records against the needs of your workflow.</li>
+<li>The simple parser is educational and reads records incrementally, though it holds each record sequence in memory. It does not validate FASTA headers against a controlled schema (for example, embedded tabs or spaces), support FASTQ, or provide indexed access. For production work, use a maintained parser such as Biopython SeqIO and validate records against your workflow’s requirements.</li>
 <li>Validation here is limited to a user-defined alphabet (A, C, G, T, N). Biological sequences sometimes include IUPAC ambiguity codes or gap characters (e.g., '-'). Decide which characters your pipeline should accept and document that choice.</li>
 <li>Floating-point representation of GC fraction uses simple rounding for readability; for downstream statistical analysis you may want more precision or native numeric types (not formatted strings).</li>
 </ul>

@@ -202,16 +202,19 @@ function toggleMobileMenu() {
 <span><strong>Example environment:</strong> Ubuntu 24.04, Bash 5.1 (BWA-MEM 0.7.17, GATK 4.4.0)</span>
 </div>
 </div><p class="lesson-lead">Follow the data contract from paired reads to a filtered single-sample VCF, then calculate and inspect read-based allele fractions. The commands are a workflow template: paths, indexes, target intervals, software versions, and filtering decisions must match your experiment.</p>
+<section class="lesson-summary tutorial-learning-contract" data-tutorial-format="advanced-template" aria-label="Learning format">
+<p><strong>Format: Advanced template.</strong> For learners comfortable with Linux and sequencing files, this walkthrough traces the decisions and checks in a single-sample WES workflow. It supplies command templates, not sequencing data or reference resources; readers must obtain a mutually compatible FASTQ, reference, and capture-target set.</p>
+</section>
 <h2>Learning objectives and prerequisites</h2>
 <p><strong>By the end of this lesson</strong> you will be able to:</p>
 <ul>
-<li>Run an end-to-end germline Whole Exome Sequencing (WES) variant-calling workflow from paired FASTQ to filtered VCF suitable for downstream annotation.</li>
+<li>Trace an end-to-end germline Whole Exome Sequencing (WES) workflow from paired FASTQ through a filtered single-sample VCF, identifying the inputs and decisions needed to adapt the template.</li>
 <li>Compute Variant Allele Frequency (VAF) from a VCF and interpret VAF distributions for germline WES data.</li>
-<li>Understand common failure modes and how to inspect intermediate files (FASTQ quality, alignment metrics, duplicate rates, depth by target).</li>
+<li>Inspect FASTQ quality, alignment summaries, duplicate metrics, and target-coverage metrics, and recognize when the tutorial lacks enough evidence to validate a callset.</li>
 </ul>
-<p><strong>Prerequisites:</strong> Linux command-line experience and familiarity with FASTQ, BAM, and VCF. The example names assume paired-end reads from one sample and a GRCh38 reference; they are placeholders, not included data. Create output directories before running commands, and ensure indexes/dictionaries and all resources were built from the exact reference FASTA.</p>
+<p><strong>Prerequisites:</strong> Linux command-line experience and familiarity with FASTQ, BAM, and VCF. This is an advanced template, not a bundled-data lab: the example names assume paired-end reads from one sample and a GRCh38 reference; the files are not included. The commands below require resources built for the exact FASTA and capture design, plus adaptation to installed software versions.</p>
 <ul>
-<li>BWA-MEM (0.7.17), samtools (1.16+), GATK (4.4+), Picard (via GATK or standalone), bcftools (1.15+), bedtools, liftover utilities (if needed), and R or Python for plotting.</li>
+<li>BWA-MEM (0.7.17), samtools (1.16+), FastQC, GATK (4.4+), Picard (via GATK or standalone), bcftools (1.15+), bedtools, liftover utilities (if needed), and R or Python for plotting.</li>
 <li>Reference FASTA (GRCh38 primary assembly or GRCh37 as appropriate) and matching index files, and exome interval BED (e.g., Agilent SureSelect V6 intervals).</li>
 </ul>
 <h2>Why this matters: biological and computational context</h2>
@@ -225,7 +228,22 @@ function toggleMobileMenu() {
 <li>Exome interval file: refs/SureSelect_V6_intervals.bed (BED coordinate system matching the reference)</li>
 <li>Optional: known-sites for BQSR (e.g., dbSNP, Mills indels) in GRCh38 coordinates</li>
 </ul>
+<p>To source public teaching data, begin at the <a href="https://www.internationalgenome.org/data-portal/sample/NA12878">IGSR NA12878 sample page</a>, which lists data by assay, and the <a href="https://www.nist.gov/programs-projects/genome-bottle">NIST Genome in a Bottle resources</a>. Select paired-end exome FASTQs (not WGS reads), record the run/sample and reference build, and obtain the matching capture BED from the assay provider or study. These pages are discovery points, not a preassembled compatible bundle: verify file manifests/checksums, read pairing, FASTQ sample identity, build, and BED coordinate convention before using any files here. Do not substitute a GIAB truth-region BED for the experiment's capture-target BED.</p>
 <h2>Reproducible workflow (sequential commands)</h2>
+<p>From the project root (the directory containing <code>raw/</code> and <code>refs/</code>), make the destinations and fail early if the required input paths are absent:</p>
+<pre><code>mkdir -p raw refs aligned metrics vcf diagnostics
+for f in raw/NA12878_R1.fastq.gz raw/NA12878_R2.fastq.gz refs/GRCh38.fa refs/GRCh38.fa.fai refs/GRCh38.dict refs/SureSelect_V6_intervals.bed; do
+  test -s "$f" || { echo "Missing or empty required input: $f" >&amp;2; exit 1; }
+done
+</code></pre>
+<p>Before analysis, record the versions actually installed (the environment label above is illustrative, not a tested software lock):</p>
+<pre><code>date -Is
+bwa 2&gt;&amp;1 | head -n 3
+samtools --version | head -n 1
+gatk --version
+bcftools --version | head -n 1
+R --version | head -n 1
+</code></pre>
 <p>Each command below states inputs and outputs. Adjust thread counts (-t, -@) for your environment. These commands are written to be safe (no destructive operations) and to document file provenance.</p>
 <h3>1. Alignment and on-the-fly sorting</h3>
 <pre><code># Input: raw/NA12878_R1.fastq.gz, raw/NA12878_R2.fastq.gz, refs/GRCh38.fa
@@ -320,7 +338,19 @@ Rscript -e 'd&lt;-read.delim("vcf/NA12878_filtered.withVAF.tsv", header=TRUE); \
 </code></pre>
 <p>For a diploid, high-quality biallelic germline call, heterozygous and homozygous-alternate genotypes often have allele fractions near 0.5 and 1, respectively. A histogram is descriptive, not a genotype caller: depth, allele balance, ploidy, mapping/base quality, contamination, and capture bias affect the values. The included plot command assumes the table has a numeric VAF column and an existing diagnostics directory.</p>
 <h2>Output inspection and interpretation</h2>
-<p>When inspecting results, focus on both file-level metrics and per-variant signals.</p>
+<p>When inspecting results, focus on both file-level metrics and per-variant signals. For quick read-level QC and BAM summaries, run from the project root:</p>
+<pre><code># FASTQ quality summaries; inspect the FastQC HTML reports for per-base quality/adapters.
+fastqc -o metrics raw/NA12878_R1.fastq.gz raw/NA12878_R2.fastq.gz
+samtools flagstat aligned/NA12878.dedup.bam &gt; metrics/NA12878_flagstat.txt
+# Supply the target intervals in the format required by your Picard/GATK version.
+gatk CollectHsMetrics \
+  -I aligned/NA12878.dedup.bam \
+  -O metrics/NA12878_hs_metrics.txt \
+  -R refs/GRCh38.fa \
+  -BI refs/SureSelect_V6_intervals.bed \
+  -TI refs/SureSelect_V6_intervals.bed
+</code></pre>
+<p>Success means the reports exist and parse, not that the sample passes assay QC. Check that FastQC reports correspond to both mates, flagstat has mapped reads, and the HsMetrics report contains target/coverage fields rather than an error or empty result. Investigate missing outputs, zero mapped reads, incompatible interval input, or unexpected sample/read counts before continuing. BED is not accepted as the interval-list format by every Picard/GATK release; convert it with the matching Picard interval-list tooling and use that file if required. Interpret all metrics against assay-specific validated criteria.</p>
 <ul>
 <li><strong>BAM-level QC:</strong> use samtools flagstat for alignment summaries and a capture-aware metric such as Picard CollectHsMetrics for target coverage and on-target measures. Interpret coverage against the assay design and the lab/project’s validated callable-region criteria; there is no single depth threshold that guarantees reliable calling.</li>
 <li><strong>Variant counts and Ti/Tv:</strong> compare counts and transition/transversion ratios only with a like-for-like call set, genome build, target definition, variant class, and filtering protocol. These are broad QC signals, not universal thresholds or diagnoses of contamination.</li>

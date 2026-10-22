@@ -196,7 +196,7 @@ function toggleMobileMenu() {
 <img alt="Evolutionary Phylogeny" class="w-full aspect-video object-cover" decoding="async" loading="eager" src="../images/evolutionary-phylogeny.webp"/>
 </div>
 <nav aria-label="Tutorial navigation" class="reader-toolbar"><a href="metatranscriptomics-functional-pathways.html" title="Metatranscriptomic Pathway Analysis with HUMAnN 3">← Previous tutorial</a><a data-catalogue-return="" href="../tutorials.html">All tutorials</a><a href="phylogenomics-orthofinder.html" title="Phylogenomics with OrthoFinder">Next tutorial →</a></nav>
-<article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--walkthrough"><p class="lesson-lead">This walkthrough follows one alignment from input checks through tree inference and interpretation. The commands are templates: verify each program version and analysis setting locally, then keep the resulting files and logs with your project.</p><div class="flex flex-wrap items-center gap-4 text-xs font-mono text-gray-500 bg-gray-50 p-3 rounded-lg border border-gray-200 mb-6">
+<article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--walkthrough"><p class="lesson-lead">This walkthrough follows one alignment from input checks through tree inference and interpretation. The commands are templates: verify each program version and analysis setting locally, then keep the resulting files and logs with your project.</p><section class="lesson-summary tutorial-learning-contract" data-tutorial-format="advanced-template" aria-label="Learning format"><p><strong>Format: Advanced template.</strong> For readers who can prepare homologous FASTA sequences and use a Unix-like shell, this lesson walks through alignment, tree inference with one selected program, and interpretation. You supply and validate the sequences and tool settings; no biological dataset or MEGA options file is bundled.</p></section><div class="flex flex-wrap items-center gap-4 text-xs font-mono text-gray-500 bg-gray-50 p-3 rounded-lg border border-gray-200 mb-6">
 <div class="flex items-center gap-1">
 <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
 <span><strong>Scope:</strong> command examples are not represented as end-to-end tested here.</span>
@@ -228,16 +228,37 @@ Phylogenetic analysis reconstructs relationships among genes, proteins, or organ
 <p>To infer phylogenies robustly, perform two main preprocessing steps: (1) generate a reliable MSA that aligns homologous positions across sequences, and (2) choose a phylogenetic method (distance, maximum likelihood, Bayesian, or approximate methods) and explicitly state the evolutionary model and the support strategy (bootstraps, posterior probabilities). This tutorial emphasizes reproducible command-line workflows and careful recording of all settings.</p>
 <h2>Reproducible workflow (sequential)</h2>
 <p>
-Overview: work in a project directory containing raw sequences, intermediate files, configuration files, and results. These examples use paths relative to the project directory. Replace the input filename with your own homologous, unaligned sequences; create the results directory before running analysis. Validate program flags against installed versions.
+Overview: work in a project directory containing raw sequences, intermediate files, configuration files, and results. These examples use paths relative to the project directory. Supply homologous, unaligned sequences in a single FASTA file; records should represent the same locus or a defensible set of orthologous characters, not merely sequences with similar names. Create the results directory before analysis. Validate program flags against installed versions.
 </p>
 <h3>1) Prepare a project folder and raw input</h3>
 <pre><code># Create a project directory (safe operation)
 mkdir -p ~/phylogeny-project/results
 cd ~/phylogeny-project
 
-# Place your unaligned FASTA file here (example path)
-# expected input: sequences.fasta — a plain FASTA file with sequence identifiers and sequences
-ls -l sequences.fasta
+# Place your own unaligned FASTA file here; no example biological data are supplied.
+test -s sequences.fasta && echo "Input file present" || { echo "STOP: add a non-empty sequences.fasta" >&2; exit 1; }
+
+# Check basic FASTA structure: >=3 records, unique first-token IDs, non-empty sequences.
+python3 - <<'PYFASTA'
+from pathlib import Path
+records = []
+for line in Path("sequences.fasta").read_text().splitlines():
+    line = line.strip()
+    if not line:
+        continue
+    if line.startswith(">"):
+        records.append([line[1:].split()[0], ""])
+        if not records[-1][0]:
+            raise SystemExit("STOP: empty FASTA identifier")
+    elif not records:
+        raise SystemExit("STOP: sequence text before first FASTA header")
+    else:
+        records[-1][1] += "".join(line.split())
+ids = [name for name, _ in records]
+if len(records) < 3 or len(set(ids)) != len(ids) or any(not seq for _, seq in records):
+    raise SystemExit("STOP: require >=3 records, unique IDs, and non-empty sequences")
+print(f"FASTA structure OK: {len(records)} records; confirm sequence type and homology biologically")
+PYFASTA
 </code></pre>
 <p>
 Files you should have at this stage:
@@ -276,7 +297,23 @@ head -n 200 results/aligned_sequences.fasta
 # Install seqmagick if desired: mamba install -c bioconda seqmagick
 seqmagick info results/aligned_sequences.fasta
 </code></pre>
-<aside class="lesson-checkpoint"><strong>Alignment checkpoint:</strong> downstream tree methods treat each alignment column as comparable characters. Confirm that sequences are homologous, names are unique, residues are the expected type, and suspicious gap-rich or ambiguously aligned regions have been reviewed before inference.</aside>
+<aside class="lesson-checkpoint"><strong>Alignment checkpoint:</strong> downstream tree methods treat each alignment column as comparable characters. Confirm that sequences are homologous, names are unique, residues are the expected type, and suspicious gap-rich or ambiguously aligned regions have been reviewed before inference. A structural success check is a non-empty alignment with the intended taxa and equal aligned lengths; this does not establish correct homology or biological validity.</aside>
+<pre><code># Cheap structural check: aligned FASTA records should have equal, non-zero lengths.
+python3 - &lt;&lt;'PYALIGN'
+from pathlib import Path
+seqs = []
+for line in Path("results/aligned_sequences.fasta").read_text().splitlines():
+    line = line.strip()
+    if line.startswith(">"):
+        seqs.append("")
+    elif line and seqs:
+        seqs[-1] += "".join(line.split())
+lengths = {len(seq) for seq in seqs}
+if len(seqs) < 3 or not seqs or 0 in lengths or len(lengths) != 1:
+    raise SystemExit("STOP: inspect the alignment; records must share non-zero length")
+print(f"Alignment structure OK: {len(seqs)} records x {next(iter(lengths))} columns")
+PYALIGN
+</code></pre>
 <p>Inspect these features:</p>
 <ul>
 <li>Do sequence names match expectations and are unique?</li>
@@ -367,18 +404,18 @@ What the tree does NOT prove:
     <br/><strong>Fix:</strong> Recreate the .mao file using the same MEGA GUI version as your MEGA-CC installation, or use IQ-TREE if its methods and assumptions fit the analysis; inspect its log and report rather than relying on a command alone.
   </li>
 <li>
-<strong>Symptom:</strong> Very low bootstrap support across many nodes indicates weak confidence in those inferred relationships.<br/><strong>Likely cause:</strong> Insufficient informative sites, poor alignment, or wrong model class.
-    <br/><strong>Fix:</strong> Inspect alignment for ambiguous regions, consider trimming poorly aligned columns (with caution), increase taxon sampling, or perform model testing (IQ-TREE's ModelFinder). Consider alternative loci or concatenated datasets if appropriate.
+<strong>Symptom:</strong> One or more branches have low support under the selected analysis.<br/><strong>Likely cause:</strong> The data may contain little signal for that split, or alignment, sampling, or model assumptions may be inadequate; these are distinct possibilities.
+    <br/><strong>Fix:</strong> Inspect the affected alignment region and confirm taxon/locus orthology, then assess model fit and whether sampling addresses the biological question. Add taxa or loci only when justified and analyze concatenated data with an appropriate partition/model strategy. Higher support after changing data is not, by itself, validation of the relationship.
   </li>
 <li>
 <strong>Symptom:</strong> Unexpected topologies contrasting well-established relationships.
     <br/><strong>Likely cause:</strong> Long-branch attraction, recombination, paralogy (mixing paralogous gene copies), or poor alignment.
-    <br/><strong>Fix:</strong> Check for paralogs (sequence similarity clusters), remove recombining regions, use site-heterogeneous models or partitioned analyses, and validate input sequences.
+    <br/><strong>Fix:</strong> Validate sequence identity, orthology, alignment, and taxon sampling first; investigate recombination or gene-tree/species-tree discordance where relevant. Consider partitioning only when biologically justified partitions exist (for example, distinct genes or codon positions), and assess model adequacy; a more complex model alone does not guarantee the expected topology.
   </li>
 <li>
 <strong>Symptom:</strong> Tool installation issues or missing binaries.
     <br/><strong>Likely cause:</strong> Channel mismatch or version conflicts in Conda/Mamba environment.
-    <br/><strong>Fix:</strong> Check the installation instructions for each tool and the channels available on your platform; resolve channel priority using the current Conda/Mamba documentation rather than assuming one command covers all four programs.
+    <br/><strong>Fix:</strong> Check the installation instructions for each tool and the channels available on your platform; resolve channel priority using the current Conda/Mamba documentation rather than assuming one command covers Kalign and whichever single tree-inference tool you selected. MEGA-CC is an alternative, not an additional required installation.
   </li>
 </ul>
 <h2>Limitations, version and reference-data caveats, and responsible use</h2>
@@ -409,7 +446,7 @@ Responsible use:
 <ol>
 <li>Record provenance: save copies of <code>aligned_sequences.fasta</code>, the MEGA .mao file (if used), IQ-TREE logs, and the exact commands in <code>command.txt</code>.</li>
 <li>Visualize the primary tree in a GUI (FigTree or iTOL) and annotate clades of interest.</li>
-<li>If nodes of interest have low support, consider additional loci, remove problematic sequences, or try alternative models/partitioning.</li>
+<li>If a branch has low support, diagnose signal, orthology, alignment, sampling, and model adequacy before considering more loci or justified partitioning; do not optimize support alone.</li>
 <li>Prepare a figure caption that lists alignment method, program versions, substitution model, bootstrap method and replicates, and rooting choice.</li>
 <li>Deposit alignment and tree files in an archive (e.g., Dryad, Zenodo) if publishing results to enable reproducibility.</li>
 </ol>

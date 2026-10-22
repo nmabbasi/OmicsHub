@@ -205,6 +205,9 @@ function toggleMobileMenu() {
 <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
 <span>Updated 21 October 2026</span></div>
 </div><p class="lesson-lead">Before running an omics workflow, know where its files live, what resources it can exhaust, and how to check that a transfer arrived intact. This walkthrough builds a project directory and practices safe inspection of compressed FASTQ files.</p>
+<section class="lesson-summary tutorial-learning-contract" data-tutorial-format="hands-on-lab" aria-label="Learning format">
+<p><strong>Format: Hands-on lab.</strong> For beginning command-line users: create a small synthetic paired-FASTQ fixture, organize it, and inspect its integrity and resource context. No biological inputs are supplied or required; real datasets need provider-issued checksums.</p>
+</section>
 <h2>What you will produce and what you need</h2>
 <p>By the end, you will have a documented project layout and a verification log for provider-supplied files. You will also be able to tell whether a failure points to storage, memory, permissions, or file integrity.</p>
 <ul>
@@ -228,12 +231,15 @@ function toggleMobileMenu() {
 <li>Diagnose common error messages such as “out of memory”, “disk quota exceeded”, or “permission denied”.</li>
 </ul>
 <h2>Practical, reproducible workflow</h2>
-<p>The commands below create a project structure, inspect files safely, check file compression and integrity, and record provenance. Execute them step-by-step in a terminal. Replace example filenames and URLs with your real filenames or downloads.</p>
-<p>Files you should have for this exercise (either real or small test files):</p>
-<ul>
-<li>Two compressed FASTQ files: project/data/raw/sample_R1.fastq.gz and project/data/raw/sample_R2.fastq.gz (these may be small test files or real data downloaded from a provider).</li>
-<li>A checksum manifest published by the data provider (e.g., SHA256SUMS or MD5SUMS) placed as project/data/raw/SHA256SUMS.</li>
-</ul>
+<p>The lab uses a tiny synthetic fixture so every command can be run without downloading biological data. Begin in Bash on Linux, macOS, or WSL; check that <code>bash</code>, <code>gzip</code>, and either GNU <code>sha256sum</code> or <code>shasum</code> are available (<code>command -v bash gzip sha256sum shasum</code>). Do not use synthetic checksums to validate real provider files.</p>
+<p>From any working directory, create the two compressed FASTQ files and a clearly local demonstration manifest. The sequences and identifiers below are invented teaching data.</p>
+<pre><code>mkdir -p ~/projects/my-study/data/raw
+cd ~/projects/my-study/data/raw
+printf '@demo/1\nACGT\n+\nIIII\n@demo/2\nTGCA\n+\nIIII\n' | gzip -c &gt; sample_R1.fastq.gz
+printf '@demo/1\nTGCA\n+\nIIII\n@demo/2\nACGT\n+\nIIII\n' | gzip -c &gt; sample_R2.fastq.gz
+sha256sum sample_R1.fastq.gz sample_R2.fastq.gz &gt; SHA256SUMS
+</code></pre>
+<p>On macOS without <code>sha256sum</code>, make the matching manifest with <code>shasum -a 256 sample_R1.fastq.gz sample_R2.fastq.gz &gt; SHA256SUMS</code>. This locally generated manifest is only a demonstration of checksum mechanics; for downloaded data obtain the manifest from the same provider record as the files and retain it unchanged.</p>
 <h2>Build the project directory</h2>
 <pre><code># From your home or a working directory, create a project folder and subfolders.
 mkdir -p ~/projects/my-study/{data/raw,data/processed,scripts,results,logs}
@@ -259,6 +265,16 @@ du -sh . | tee logs/disk_usage_$(date +%F).txt
 df -h .
 </code></pre>
 <div class="lesson-checkpoint"><strong>Checkpoint:</strong> Compare the project total from <code>du</code> with free space from <code>df</code>. A large input can need additional scratch space for temporary and intermediate files, so the compressed size alone is not a capacity estimate.</div>
+<h2>Inspect CPU, memory, storage, and transfer constraints</h2>
+<p>On Linux or WSL, run these read-only checks before a computational job; macOS users can use <code>sysctl -n hw.logicalcpu</code> for logical CPUs and <code>vm_stat</code> for a memory snapshot, while interpreting platform-specific units carefully.</p>
+<pre><code># Linux/WSL: visible logical CPUs and current memory/swap summary
+nproc
+free -h
+# Storage available at this project's location
+cd ~/projects/my-study
+df -h .
+</code></pre>
+<p>For example, <code>nproc</code> reporting 8 means eight logical CPUs are visible to this environment—not necessarily eight exclusively available cores. <code>free -h</code> reports memory and swap; use the available-memory field as a snapshot, since other processes and scheduler limits can change what a job may use. <code>df -h .</code> reports filesystem capacity and free space, not your quota or scratch allocation. Network bandwidth is transfer rate rather than disk capacity: compare the size of an authorized transfer with observed transfer time, and consult the cluster or provider limits; this short exercise does not benchmark the network. If memory is low, storage is nearly full, or a quota is unclear, pause and ask the system administrator or choose an approved resource before running a large workflow.</p>
 <h2>Inspect compressed FASTQ inputs</h2>
 <ul>
 <li>pwd prints your current path: useful to avoid acting in the wrong directory.</li>
@@ -285,22 +301,18 @@ zcat data/raw/sample_R1.fastq.gz | head -n 8
 <li>gzip -l lists the compressed size, uncompressed size (if recorded), and compression ratio. Note that some gzip streams may not record exact uncompressed sizes for concatenated streams.</li>
 <li>zcat (or gzcat on macOS with GNU gzip) streams uncompressed text to stdout. The FASTQ format is line-oriented: the first four lines correspond to one read record (header, sequence, + line, quality). Seeing correct FASTQ headers and no binary or error output suggests the file is intact for basic parsing.</li>
 </ul>
-<p>Use the checksum file supplied by the data provider. A manifest must list the exact filenames in the current directory; do not create expected hashes from the files you are trying to verify.</p>
-<pre><code># Example: provider published SHA256SUMS in the same directory as the FASTQ files.
-# Place the provided manifest in your raw data directory as data/raw/SHA256SUMS, then:
-cd ~/projects/my-study/data/raw
-
-# Verify every file listed in the manifest. The manifest should contain lines like:
-# &lt;hex-hash&gt;  sample_R1.fastq.gz
-# &lt;hex-hash&gt;  sample_R2.fastq.gz
+<p>For the generated teaching fixture, verify its local SHA-256 manifest as shown. For actual downloaded data, use the provider's manifest and the matching algorithm; the file names must match those listed in that manifest. Never generate a replacement expected hash from a file whose transfer you are trying to verify.</p>
+<pre><code>cd ~/projects/my-study/data/raw
 set -o pipefail
 sha256sum -c SHA256SUMS 2&gt;&amp;1 | tee ../../logs/checksum_validation_$(date +%F).log
-
+# If a real provider supplies MD5SUMS instead, use this command, not sha256sum:
+# md5sum -c MD5SUMS 2&gt;&amp;1 | tee ../../logs/checksum_validation_$(date +%F).log
+# On macOS use shasum -a 256 -c SHA256SUMS for SHA-256, or md5 -r -c MD5SUMS for MD5.
 # Also verify gzip streams can be read (non-zero exit indicates a problem).
 gzip -t sample_R1.fastq.gz sample_R2.fastq.gz
 echo "gzip exit status: $?"
 </code></pre>
-<div class="lesson-result"><strong>Interpretation:</strong> Each manifest entry should report <code>OK</code>. <code>FAILED</code> means the local bytes do not match that manifest entry. <code>gzip -t</code> then checks that each gzip stream can be read to its end. Neither check establishes sample identity, biological suitability, consent, or provenance.</div>
+<div class="lesson-result"><strong>Expected result:</strong> The two-entry synthetic manifest should print <code>sample_R1.fastq.gz: OK</code> and <code>sample_R2.fastq.gz: OK</code>; gzip exit status should be <code>0</code>. An edited/truncated file, missing manifest filename, or nonzero gzip status is a stop condition: do not proceed as though validation succeeded. A manifest match verifies bytes against that manifest; it does not establish sample identity, biological suitability, consent, or provenance.</div>
 <h2>Interpret the checks and count records</h2>
 <ul>
 <li>sha256sum -c reads the manifest and checks each listed file. For each entry you should see "OK" or "FAILED". Save the output to logs/checksum_validation_YYYY-MM-DD.log for provenance.</li>
@@ -387,7 +399,7 @@ zcat data/raw/sample_R1.fastq.gz | awk 'END {
 <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
 </div>
 <div>
-<p class="text-sm text-gray-600 mb-2">This tutorial records the software versions used in its examples. Software and package behaviour can change. Please re-check commands against the official documentation. If a command does not work, you find an error, or the tutorial is no longer reproducible, please report it through the <a class="text-blue-600 hover:underline" href="../contact.html">Contact page</a></p>
+<p class="text-sm text-gray-600 mb-2">These examples use Bash and system-provided command-line utilities rather than a pinned software environment. Record your platform and utility versions alongside an analysis by capturing <code>bash --version</code>, <code>gzip --version</code>, and <code>sha256sum --version</code> (or the relevant macOS utility's version/help output); re-check platform-specific options in the official manuals. If a command does not work, please report it through the <a class="text-blue-600 hover:underline" href="../contact.html">Contact page</a>.</p>
 <p class="text-sm text-gray-500">Author: <a class="text-blue-600 hover:underline font-medium" href="../about.html">Nasir Mahmood Abbasi, PhD</a> - Category: Foundations &amp; Prerequisites</p>
 </div>
 </div>

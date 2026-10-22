@@ -196,10 +196,10 @@ function toggleMobileMenu() {
 <img alt="Micromamba and Conda environments for bioinformatics" class="w-full aspect-video object-cover" decoding="async" loading="eager" src="../images/conda-mamba-part1-workstation.webp"/>
 </div>
 <nav aria-label="Tutorial navigation" class="reader-toolbar"><a href="command-line-part3.html" title="Summarize FASTQ and Annotation Files with Bash">← Previous tutorial</a><a data-catalogue-return="" href="../tutorials.html">All tutorials</a><a href="hpc-connection.html" title="Connecting to HPC">Next tutorial →</a></nav>
-<article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--walkthrough"><div class="flex flex-wrap items-center gap-4 text-xs font-mono text-gray-500 bg-gray-50 p-3 rounded-lg border border-gray-200 mb-6">
+<article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--walkthrough"><section class="lesson-summary tutorial-learning-contract" data-tutorial-format="hands-on-lab" aria-label="Learning format"><p><strong>Format: Hands-on lab.</strong> For learners comfortable opening a terminal, this guided exercise creates and checks a small Micromamba environment from a YAML file you save yourself; it installs software but uses no biological input data.</p></section><div class="flex flex-wrap items-center gap-4 text-xs font-mono text-gray-500 bg-gray-50 p-3 rounded-lg border border-gray-200 mb-6">
 <div class="flex items-center gap-1">
 <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
-<span><strong>Commands shown for:</strong> Linux, macOS, and Windows PowerShell; see platform notes below</span>
+<span><strong>Shell scope:</strong> Install instructions cover Linux/macOS/Git Bash and Windows PowerShell; subsequent command examples use Bash on Linux/macOS/WSL unless labeled otherwise.</span>
 </div>
 <div class="flex items-center gap-1">
 <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
@@ -208,7 +208,7 @@ function toggleMobileMenu() {
 <div class="p-6 bg-blue-50 border border-blue-100 rounded-xl mb-8">
 <h4 class="text-lg font-bold text-blue-900 mb-2">Learning Objectives &amp; Prerequisites</h4>
 <ul class="list-disc list-inside text-blue-800 space-y-1 mb-4">
-<li><strong>Prerequisites:</strong> A terminal on Linux, macOS, Windows PowerShell, or WSL, plus permission to install software in your home directory.</li>
+<li><strong>Prerequisites:</strong> Micromamba installed and initialized in Bash on Linux/macOS/WSL (or use the separately labeled PowerShell installation instructions); permission to create files and install packages in a user-owned location.</li>
 <li><strong>Objective:</strong> Install Micromamba, create and activate Conda-compatible environments, install Bioconda tools, export a reproducible specification, and diagnose common failures.</li>
 <li><strong>Expected Output:</strong> A tested <code>environment.yml</code> that documents a small bioinformatics environment without modifying the system Python installation.</li>
 </ul>
@@ -310,6 +310,12 @@ samtools --version | head -n 1</code></pre>
 <p>Do not assume that a package name is identical across ecosystems. For example, an R package may be named with an <code>r-</code> prefix and a Bioconductor package may use a <code>bioconductor-</code> prefix. Search the relevant channel and read the package recipe before adding it to a production environment.</p>
 <h2>Make the environment reproducible</h2>
 <p>An environment file is a readable record of requested packages and channels. It is not a complete record of a scientific analysis, and a broad export can contain platform-specific build details. For teaching and cross-platform sharing, start with a small, intentional specification and test it on a clean environment.</p>
+<p>Work in a project directory so the specification and exports stay together. In Bash, create and enter a directory, then save the YAML block below as <code>environment.yml</code> in that directory (for example, use a text editor; the filename and extension must match the commands that follow).</p>
+<pre><code class="language-bash">mkdir -p ~/projects/qc-environment
+cd ~/projects/qc-environment
+pwd
+ls -la</code></pre>
+<p>Before proceeding, confirm <code>pwd</code> shows the project directory. Save this specification there as <code>environment.yml</code>:</p>
 <pre><code class="language-yaml"># environment.yml
 name: qc-tools
 channels:
@@ -319,18 +325,25 @@ dependencies:
   - python=3.11
   - fastqc
   - multiqc</code></pre>
-<pre><code class="language-bash"># Create from the authored YAML specification
-micromamba create -f environment.yml -c conda-forge -c bioconda --channel-priority strict
-micromamba activate qc-tools
-
-# Export a readable record of the installed resolution
-micromamba env export -n qc-tools &gt; environment-resolved.yml
-
-# Recreate that exported environment under another name (same platform)
+<ol>
+<li>Check the file is present and inspect its beginning before creating anything: <code>ls -l environment.yml</code> and <code>sed -n '1,20p' environment.yml</code>. If the file is absent or malformed, stop and save/correct it in this directory.</li>
+<li>Create the named environment from the saved specification, explicitly retaining the documented channel order and strict priority:
+<pre><code class="language-bash">micromamba create -f environment.yml -c conda-forge -c bioconda --channel-priority strict</code></pre>
+A successful solve/install ends without an error. If solving fails, stop and inspect the error, platform support, channels, and configuration rather than continuing with later commands.</li>
+<li>Check that the environment exists and that both requested tools run:
+<pre><code class="language-bash">micromamba env list
+micromamba run -n qc-tools python --version
+micromamba run -n qc-tools fastqc --version
+micromamba run -n qc-tools multiqc --version</code></pre>
+The environment list should include <code>qc-tools</code>; the commands should print version information and return successfully. These checks establish that the commands are available, not that any biological data have been analyzed.</li>
+<li>Export the resolved environment, then recreate it under a distinct, unused name. Do not reuse <code>qc-tools</code> for the copy:
+<pre><code class="language-bash">micromamba env export -n qc-tools &gt; environment-resolved.yml
 micromamba create -n qc-tools-copy -f environment-resolved.yml -c conda-forge -c bioconda --channel-priority strict
-
-# Export only explicitly requested packages for a more portable intent file
-micromamba env export -n qc-tools --from-history &gt; environment-history.yml</code></pre>
+micromamba env list</code></pre>
+The final list should show both names. If <code>qc-tools-copy</code> already exists, choose another unused name consistently in both commands. The copied environment is a fresh solve on this platform, not a byte-identical lock.</li>
+<li>Optionally retain an intent-oriented export of explicitly requested packages:
+<pre><code class="language-bash">micromamba env export -n qc-tools --from-history &gt; environment-history.yml</code></pre></li>
+</ol>
 <p>Keep the authored specification and, when useful, a resolved export. A history export records explicitly requested packages, but still requires a fresh solve and does not guarantee identical results. A full resolved YAML can include build and platform-specific details; a successful recreation is still not necessarily byte-identical. Test recreation rather than assuming portability, and verify the CLI options available in your installed Micromamba version. Neither file captures input data, references, analysis parameters, workflow code, or all external software: reproducibility requires those records too.</p>
 <h2>Use the environment in a workflow</h2>
 <p>Activation is a shell feature, so batch systems and scripts should initialize the shell before calling <code>micromamba activate</code>. A safer alternative for one command is <code>micromamba run</code>, which does not depend on the caller's interactive prompt.</p>
@@ -442,7 +455,7 @@ echo "Environment verification completed: $(date -Iseconds)"</code></pre>
 <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
 </div>
 <div>
-<p class="text-sm text-gray-600 mb-2">This tutorial records the software versions used in its examples. Software and package behaviour can change. Please re-check commands against the official documentation. If a command does not work, you find an error, or the tutorial is no longer reproducible, please report it through the <a class="text-blue-600 hover:underline" href="../contact.html">Contact page</a></p>
+<p class="text-sm text-gray-600 mb-2">This tutorial shows requested constraints where specified (for example, Python 3.11); it does not provide a tested version matrix, and unpinned packages resolve to versions available at solve time. Record the actual installed versions and platform for your own project, and re-check commands against official documentation. If a command does not work, you find an error, or the tutorial is no longer reproducible, please report it through the <a class="text-blue-600 hover:underline" href="../contact.html">Contact page</a></p>
 <p class="text-sm text-gray-500">Author: <a class="text-blue-600 hover:underline font-medium" href="../about.html">Nasir Mahmood Abbasi, PhD</a> - Category: Package Management</p>
 </div>
 </div>

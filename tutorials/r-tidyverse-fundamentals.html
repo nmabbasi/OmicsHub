@@ -198,6 +198,9 @@ function toggleMobileMenu() {
 <nav aria-label="Tutorial navigation" class="reader-toolbar"><a href="python-fundamentals-bioinformatics.html" title="Python Fundamentals for Bioinformatics">← Previous tutorial</a><a data-catalogue-return="" href="../tutorials.html">All tutorials</a><a href="statistics-for-bioinformatics.html" title="Statistics for Bioinformatics">Next tutorial →</a></nav>
 <article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--lab">
 <p class="lesson-lead">This short R workflow turns a wide gene-count table into one row per gene and sample, checks that the sample IDs agree with metadata, and summarizes total counts for a basic library-size check. The example is synthetic; its counts demonstrate data handling, not biological evidence.</p>
+<section class="lesson-summary tutorial-learning-contract" data-tutorial-format="hands-on-lab" aria-label="Learning format">
+<p><strong>Format: Hands-on lab.</strong> Beginners with basic file and command-line skills will create two small synthetic TSV inputs, run an R script, and inspect its QC table and plot; no biological data are supplied or required.</p>
+</section>
 <h2>What you need and what you will make</h2>
 <p>Use an R session with <code>tidyverse</code> and <code>here</code> installed. The script assumes the project root contains the two tab-separated files below. Each count-table row is a gene, the first column is named <code>gene</code>, and every remaining column is one sample with non-negative integer counts. Metadata has exactly one row per sample and includes <code>sample_id</code> and <code>condition</code>.</p>
 <pre><code># data/raw/gene_counts.tsv
@@ -211,7 +214,23 @@ sample_id	condition
 S01	control
 S02	treated
 S03	treated</code></pre>
-<p>Save this as <code>scripts/01-tidy-qc.R</code>. It writes <code>results/sample_qc.tsv</code> and <code>results/reads_qc.png</code>. Run it from an R project; <code>here()</code> resolves paths relative to the project root.</p>
+<p>Use R (including <code>Rscript</code>) and the <code>tidyverse</code> and <code>here</code> packages. Start in a new project directory; these commands create the input files shown above and the script and output folders. Paste the complete R code in the next section into <code>scripts/01-tidy-qc.R</code> using a text editor.</p>
+<pre><code>mkdir -p tidy-qc/data/raw tidy-qc/data/metadata tidy-qc/scripts tidy-qc/results
+cd tidy-qc
+cat &gt; data/raw/gene_counts.tsv &lt;&lt;'EOF'
+gene	S01	S02	S03
+TP53	150	175	160
+BRCA1	320	280	305
+MYC	890	920	900
+EOF
+cat &gt; data/metadata/samples.tsv &lt;&lt;'EOF'
+sample_id	condition
+S01	control
+S02	treated
+S03	treated
+EOF
+Rscript --version</code></pre>
+<p>Confirm R is available, then install the two packages once if needed from an R session with <code>install.packages(c("tidyverse", "here"))</code>. From the <code>tidy-qc</code> project root, run <code>Rscript scripts/01-tidy-qc.R</code>. The script writes <code>results/sample_qc.tsv</code> and <code>results/reads_qc.png</code>; <code>here()</code> resolves paths relative to the project root.</p>
 <h2>Run the workflow</h2>
 <pre><code>library(tidyverse)
 library(here)
@@ -233,8 +252,11 @@ stopifnot(length(count_samples) &gt; 0L, !anyDuplicated(count_samples))
 stopifnot(setequal(count_samples, samples$sample_id))
 
 # Do not silently treat missing, negative, or non-numeric counts as valid counts.
+# In base R, is.numeric() accepts both integer and double vectors.
 stopifnot(all(vapply(counts[count_samples], is.numeric, logical(1))))
 stopifnot(all(vapply(counts[count_samples], function(x) all(is.finite(x) &amp; x &gt;= 0), logical(1))))
+# This lesson's contract is integer-valued counts, not arbitrary non-negative reals.
+stopifnot(all(vapply(counts[count_samples], function(x) all(x == floor(x)), logical(1))))
 
 samples &lt;- samples %&gt;%
   mutate(condition = factor(condition, levels = c("control", "treated")))
@@ -271,6 +293,7 @@ p &lt;- ggplot(sample_qc, aes(x = condition, y = total_counts_millions, colour =
   theme(legend.position = "none")
 ggsave(out_plot, plot = p, width = 6, height = 4, dpi = 150)</code></pre>
 <h2>Check the tables and plot</h2>
+<p>After the script finishes, confirm both files exist from the project root with <code>file.exists(c("results/sample_qc.tsv", "results/reads_qc.png"))</code> in R; both values should be <code>TRUE</code>. If either is <code>FALSE</code>, stop and check that the working directory is <code>tidy-qc</code>, the script completed without an error, and the output directory is writable.</p>
 <p><code>pivot_longer()</code> makes one row for each gene-sample pair. For this three-gene, three-sample fixture, <code>long_counts</code> and <code>joined</code> each contain nine rows. The sample totals are 1,360, 1,375, and 1,365, respectively; the displayed values in millions are those totals divided by one million. The median gene counts are 320, 280, and 305. These values are arithmetic checks on the fixture, not expected results for a biological experiment.</p>
 <div class="lesson-checkpoint"><h3>Before interpreting the figure</h3><ul><li>Confirm all three sample IDs appear exactly once in the output.</li><li>Check that the plotted y-axis says supplied count totals in millions. This is not RPM; the script does not divide individual gene counts by a library-size denominator.</li><li>Look for unexpectedly small or large totals relative to the study's own design and sequencing records. No universal cutoff is implied here.</li></ul></div>
 <h2>What this QC can and cannot tell you</h2>

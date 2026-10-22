@@ -198,12 +198,15 @@ function toggleMobileMenu() {
 <nav aria-label="Tutorial navigation" class="reader-toolbar"><a href="scrna-seq-trajectory-inference.html" title="Single-cell trajectory inference: PAGA, DPT, Slingshot and Monocle3">← Previous tutorial</a><a data-catalogue-return="" href="../tutorials.html">All tutorials</a><a href="scrna-seq-quality-control.html" title="Assessing scRNA-seq integration with LISI and silhouette">Next tutorial →</a></nav>
 <article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--lab">
 <p class="lesson-lead">Differential expression in single-cell data needs biological samples—not individual cells—as the independent replicates. This lab shows how to sum raw counts within one annotated cell type and one biological sample, fit a DESeq2 model, and inspect its estimates without treating a plot or p-value as proof of mechanism.</p>
-<p><strong>Bring:</strong> a processed Seurat object with an RNA assay containing raw counts and per-cell metadata for a cell type, a unique biological sample identifier, and condition. These identifiers must describe the experiment correctly; this example does not perform QC, normalization, annotation, or experimental-design repair. Example software versions recorded with the original lesson: R 4.3.2, Seurat 5.0.1, and DESeq2 1.42.0. Seurat argument details can differ across releases.</p>
+<section class="lesson-summary tutorial-learning-contract" data-tutorial-format="advanced-template" aria-label="Learning format">
+<p><strong>Format: Advanced template.</strong> For readers with an annotated Seurat object and an R/Bioconductor environment, this lesson guides sample-level pseudobulk aggregation and DESeq2 interpretation; readers supply and validate their own data rather than downloading a prepared object.</p>
+</section>
+<p><strong>Bring:</strong> a processed Seurat object with an RNA assay containing raw counts and per-cell metadata for a cell type, a unique biological sample identifier, and condition. The path <code>/data/seurat_objects/pbmc_processed.rds</code> below is a placeholder, not a downloadable fixture, and the later Healthy-versus-CTCL labels are illustrative—use labels actually present in your experiment. Before proceeding, confirm metadata has one row per cell, the required columns <code>sample_id</code>, <code>condition</code>, and <code>cell_type</code>, and each independent sample maps to one condition. These identifiers must describe the experiment correctly; this example does not perform QC, normalization, annotation, or experimental-design repair. Example versions recorded with the original lesson: R 4.3.2, Seurat 5.0.1, and DESeq2 1.42.0. Seurat argument details can differ across releases.</p>
 <h2>Why aggregate by biological sample?</h2>
 <p>Cells from one patient, animal, or specimen share biological and technical sources of variation. Counting thousands of cells as thousands of independent replicates understates between-sample variation and can inflate false discoveries. Pseudobulk sums raw gene counts across cells belonging to the same sample and cell type; the resulting sample profiles can then be analyzed with bulk RNA-seq methods. It does not make samples independent if the study design says otherwise, nor does it correct confounding or replace adequate biological replication.</p>
 <h2>Define the sample-level input contract</h2>
 <p>Use one stable <code>sample_id</code> per independent biological sample—not a cell barcode, sequencing lane, or arbitrary group label. Each sample must map to exactly one condition in this simple unpaired example. If the same subject contributes multiple conditions or time points, preserve the subject identifier and use an appropriate paired/repeated-measures design rather than this simple <code>~ condition</code> model. The subset below uses the metadata column directly, not active Seurat identities.</p>
-<p>Replace the example field names and cell-type label with those in your object. Output directories are created locally; use paths you control.</p>
+<p>Replace the example field names and cell-type label with those in your object. Output directories are created beneath the current working directory; use paths you control. Start R in the project directory where you want outputs, set the object path to a real local RDS file, then run the code blocks in order. Check versions in that same R session with <code>R.version.string</code>, <code>packageVersion("Seurat")</code>, and <code>packageVersion("DESeq2")</code>; record them with the analysis rather than assuming the example versions match your installation.</p>
 <h2>Aggregate raw counts within the chosen cell type</h2>
 <pre><code class="language-r">library(Seurat)
 library(DESeq2)
@@ -213,10 +216,15 @@ library(tibble)
 library(readr)
 
 seurat_obj &lt;- readRDS("/data/seurat_objects/pbmc_processed.rds")
+if (!inherits(seurat_obj, "Seurat")) stop("Input RDS must contain a Seurat object")
+if (!"RNA" %in% Assays(seurat_obj)) stop("Input object must contain an RNA assay")
 meta &lt;- seurat_obj[[]]
 required &lt;- c("sample_id", "condition", "cell_type")
 if (!all(required %in% colnames(meta))) {
   stop("Metadata must contain: ", paste(required, collapse = ", "))
+}
+if (!identical(rownames(meta), colnames(seurat_obj))) {
+  stop("Cell metadata row names must match object cell names")
 }
 
 cell_type_of_interest &lt;- "CD4 T"
@@ -286,6 +294,7 @@ res_ordered &lt;- res[order(res$padj, na.last = TRUE), ]
 dir.create("output/deseq2", recursive = TRUE, showWarnings = FALSE)
 write.csv(as.data.frame(res_ordered), "output/deseq2/cd4_DE_results.csv")</code></pre>
 <p>Before running, confirm the labels are exactly <code>Healthy</code> and <code>CTCL</code>; edit both the reference and contrast for your data. <code>results()</code> reports the specified comparison; <code>padj</code> may be <code>NA</code> for genes filtered by DESeq2 or flagged for outliers. A p-value threshold is not a biological-effect threshold, and significance does not establish causality.</p>
+<p class="lesson-checkpoint"><strong>Successful structural check:</strong> <code>output/pseudobulk/cd4_counts.csv</code> has a gene column plus one column per retained sample, and <code>sample_metadata.csv</code> has one row per same sample with its condition. The DE results file has gene-level estimates; the plot files are written under <code>output/plots/</code>. Check that the count-column names and metadata sample IDs match exactly and that there is more than one independent sample per modeled condition. These checks establish file alignment and execution, not biological validity or a required direction/significance of effects. Stop if the sample mapping, count assay, or group labels fail; return to metadata and assay provenance rather than interpreting output.</p>
 <h2>Inspect sample variation and effect estimates</h2>
 <p>Use the variance-stabilized values to visualize sample relationships, not for DE testing. This PCA helps reveal dominant structure and possible outliers; separation by condition is not guaranteed or required, and overlap does not by itself invalidate the analysis.</p>
 <pre><code class="language-r">vsd &lt;- vst(dds, blind = TRUE)
@@ -340,7 +349,7 @@ ggsave("output/plots/volcano.png", volcano, width = 6, height = 4)</code></pre>
 <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
 </div>
 <div>
-<p class="text-sm text-gray-600 mb-2">This tutorial records the software versions used in its examples. Software and package behaviour can change. Please re-check commands against the official documentation. If a command does not work, you find an error, or the tutorial is no longer reproducible, please report it through the <a class="text-blue-600 hover:underline" href="../contact.html">Contact page</a></p>
+<p class="text-sm text-gray-600 mb-2">Before analysis, record the versions actually used in your R session with <code>R.version.string</code>, <code>packageVersion("Seurat")</code>, and <code>packageVersion("DESeq2")</code>; the example versions above are not a substitute for your environment record. Re-check package-specific behavior against the official documentation. If a command does not work or you find an error, please report it through the <a class="text-blue-600 hover:underline" href="../contact.html">Contact page</a>.</p>
 <p class="text-sm text-gray-500">Author: <a class="text-blue-600 hover:underline font-medium" href="../about.html">Nasir Mahmood Abbasi, PhD</a> - Category: Single-Cell RNA-seq</p>
 </div>
 </div>

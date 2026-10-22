@@ -198,12 +198,15 @@ function toggleMobileMenu() {
 <nav aria-label="Tutorial navigation" class="reader-toolbar"><a href="r-tidyverse-fundamentals.html" title="R and Tidyverse Fundamentals">← Previous tutorial</a><a data-catalogue-return="" href="../tutorials.html">All tutorials</a><a href="experimental-design-batch-effects.html" title="Experimental Design and Batch Effects">Next tutorial →</a></nav>
 <article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--decision-guide">
 <p class="lesson-lead">A two-group test is only meaningful after you decide what counts as an independent sample. This guide uses one numeric feature measured in independent control and treated biological samples. It walks through the input contract, a Welch comparison, its uncertainty, and the separate problem of testing many features.</p>
+<section class="lesson-summary tutorial-learning-contract" data-tutorial-format="conceptual-guide" aria-label="Learning format">
+<p><strong>Format: Conceptual guide.</strong> For readers planning a two-group analysis, this guide works through a synthetic single-feature example and a multiple-testing review; prepare your own measurements only after confirming the independent experimental units.</p>
+</section>
 <h2>Start with the experimental unit</h2>
 <p>Write down the unit that was independently assigned to a condition or independently sampled from the biological population. If treatment was applied to animals, the animal may be the unit; if it was applied to cultures, the independently prepared culture may be. Multiple reads, wells, fields of view, or repeated instrument measurements from one unit do not become independent biological replicates merely because they occupy separate rows. Summarize technical repeats at the biological-unit level or use a model that represents their nesting.</p>
 <p>For a single feature, the comparison below targets the difference in group means, defined as treated minus control. It assumes independent observations within and between groups. If the same biological units are measured in both conditions, use a paired analysis with correctly matched units; the independent-samples code here is inappropriate. If samples share a litter, donor, batch, or other dependence, consider a design-aware model rather than treating each row as independent.</p>
 <div class="lesson-warning"><p><strong>Before testing:</strong> confirm the sample mapping, condition labels, biological-unit IDs, and any pairing or blocking. A small p-value cannot repair pseudoreplication or confounding.</p></div>
 <h2>Input contract and reproducible setup</h2>
-<p>The runnable Python example expects two CSV files, each with a numeric column named <code>value</code>, one row per independent biological unit, and no duplicated technical measurements. Blank values are discarded; non-numeric, infinite, missing-column, and too-small inputs stop with an error. The output directory is created if needed. The included values are synthetic teaching fixtures, not biological evidence; replace them only with measurements whose experimental-unit structure you have checked.</p>
+<p>The runnable Python example expects two CSV files, each with a numeric column named <code>value</code>, one row per independent biological unit, and no duplicated technical measurements. Genuinely blank cells are discarded and counted; nonblank values that fail numeric conversion, infinities, a missing column, fewer than two retained values, or zero variance stop with an error. The output directory is created if needed. The included values are synthetic teaching fixtures, not biological evidence; replace them only with measurements whose experimental-unit structure you have checked.</p>
 <pre><code># Run from a disposable working directory. Do not overwrite real data.
 mkdir -p data results
 printf "value\n8.9\n9.8\n10.4\n9.5\n" &gt; data/control.csv
@@ -225,10 +228,17 @@ if len(sys.argv) != 4:
 control_path, treated_path, outdir = map(Path, sys.argv[1:])
 
 def read_values(path):
-    frame = pd.read_csv(path)
+    frame = pd.read_csv(path, dtype=str, keep_default_na=False, skip_blank_lines=False)
     if "value" not in frame.columns:
         raise ValueError(f"{path}: required column 'value' is missing")
-    values = pd.to_numeric(frame["value"], errors="coerce").dropna().to_numpy(dtype=float)
+    raw = frame["value"]
+    blank = raw.isna() | raw.astype("string").str.strip().eq("")
+    try:
+        converted = pd.to_numeric(raw[~blank], errors="raise")
+    except (ValueError, TypeError) as exc:
+        raise ValueError(f"{path}: nonblank value is not numeric") from exc
+    values = converted.to_numpy(dtype=float)
+    print(f"{path}: discarded {int(blank.sum())} blank value(s)")
     if not np.isfinite(values).all():
         raise ValueError(f"{path}: values must be finite")
     if len(values) &lt; 2:
@@ -266,11 +276,16 @@ print(f"Wrote {outdir / 'comparison.csv'}")
 args &lt;- commandArgs(trailingOnly = TRUE)
 if (length(args) != 3) stop("Usage: Rscript compare_groups.R CONTROL.csv TREATED.csv OUTDIR")
 read_values &lt;- function(path) {
-  d &lt;- read.csv(path, check.names = FALSE)
+  d &lt;- read.csv(path, check.names = FALSE, colClasses = "character",
+                na.strings = character(), blank.lines.skip = FALSE)
   if (!("value" %in% names(d))) stop(paste(path, "must contain a value column"))
-  x &lt;- suppressWarnings(as.numeric(d$value))
-  x &lt;- x[!is.na(x)]
+  raw &lt;- trimws(as.character(d$value))
+  blank &lt;- is.na(d$value) | raw == ""
+  x &lt;- suppressWarnings(as.numeric(raw[!blank]))
+  if (anyNA(x)) stop(paste(path, "contains a nonblank value that is not numeric"))
+  cat(path, ": discarded ", sum(blank), " blank value(s)\n", sep = "")
   if (length(x) &lt; 2 || any(!is.finite(x))) stop(paste(path, "needs at least two finite numeric values"))
+  if (var(x) == 0) stop(paste(path, "sample variance is zero; inspect these data"))
   x
 }
 ctrl &lt;- read_values(args[1])
@@ -295,11 +310,13 @@ write.csv(data.frame(
 </ul>
 <h2>When thousands of features are tested</h2>
 <p>The example above produces one raw p-value. If a separate, appropriately specified analysis generates one valid p-value per feature, adjust the prespecified family together rather than interpreting thousands of unadjusted values as independent discoveries. The Benjamini–Hochberg procedure controls the expected false-discovery proportion under its conditions; dependence structure and analysis design matter, and the adjustment does not fix invalid p-values, confounding, or inappropriate feature filtering.</p>
-<p>For a vector of p-values in Python, this compact example writes adjusted values in the same order as the input. The sample vector is synthetic software-demo data only. For real analyses, obtain p-values from a design-appropriate model for every feature, document the tested family and filtering rules, then adjust that vector.</p>
+<p>For a vector of p-values in Python, this compact example writes adjusted values in the same order as the input. The four values below are synthetic software-demo data only. For real analyses, obtain p-values from a design-appropriate model for every feature, document the tested family and filtering rules, then adjust that vector.</p>
 <pre><code>from pathlib import Path
 import numpy as np
 from statsmodels.stats.multitest import multipletests
 
+# Create a tiny, synthetic input file in the current working directory.
+Path("pvalues_all_features.txt").write_text("0.01\n0.04\n0.20\n0.80\n")
 pvals = np.loadtxt("pvalues_all_features.txt")
 if pvals.ndim != 1 or pvals.size == 0:
     raise ValueError("Expected a non-empty one-dimensional p-value vector")
@@ -308,8 +325,10 @@ if not np.isfinite(pvals).all() or ((pvals &lt; 0) | (pvals &gt; 1)).any():
 reject, p_adjusted, _, _ = multipletests(pvals, alpha=0.05, method="fdr_bh")
 np.savetxt("pvalues_adjusted.txt", p_adjusted)
 np.savetxt("discoveries_fdr05.txt", reject.astype(int), fmt="%d")
+print("adjusted:", p_adjusted)
+print("reject:", reject.astype(int))
 </code></pre>
-<p>The input is one numeric p-value per line. The adjusted-value file preserves input order; the second file contains 1 for a rejected null and 0 otherwise at the specified alpha. Keep feature IDs in a parallel file and verify row alignment before joining results. Report the correction procedure, alpha, number and definition of tests, raw and adjusted p-values, effect estimates, and uncertainty where available.</p>
+<p>Run the block from a disposable directory with statsmodels installed. For this four-value fixture, BH-adjusted values are [0.04, 0.08, 0.2666667, 0.8] (approximately), and the rejection flags at alpha 0.05 are [1, 0, 0, 0]. Adjusted values quantify multiplicity-adjusted evidence; a rejection is not proof of a biological effect. The input is one numeric p-value per line. The adjusted-value file preserves input order; the second file contains 1 for a rejected null and 0 otherwise at the specified alpha. Keep feature IDs in a parallel file and verify row alignment before joining results. Report the correction procedure, alpha, number and definition of tests, raw and adjusted p-values, effect estimates, and uncertainty where available.</p>
 <h2>Choose a method that matches the design</h2>
 <ul>
 <li><strong>Paired measurements:</strong> analyze within-unit differences with a paired method, or fit a model that represents the repeated structure. Do not pair groups by row order.</li>
@@ -335,7 +354,7 @@ np.savetxt("discoveries_fdr05.txt", reject.astype(int), fmt="%d")
 <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
 </div>
 <div>
-<p class="text-sm text-gray-600 mb-2">This tutorial records the software versions used in its examples. Software and package behaviour can change. Please re-check commands against the official documentation. If a command does not work, you find an error, or the tutorial is no longer reproducible, please report it through the <a class="text-blue-600 hover:underline" href="../contact.html">Contact page</a></p>
+<p class="text-sm text-gray-600 mb-2">To record your environment for a reproducible run, save <code>python --version</code> and <code>python -m pip show numpy pandas scipy statsmodels</code>; for the R example, save <code>R --version</code>. These are instructions, not versions tested or claimed by this page. For package behavior, consult the linked official documentation; report errors through the <a class="text-blue-600 hover:underline" href="../contact.html">Contact page</a>.</p>
 <p class="text-sm text-gray-500">Author: <a class="text-blue-600 hover:underline font-medium" href="../about.html">Nasir Mahmood Abbasi, PhD</a> - Category: Foundations &amp; Prerequisites</p>
 </div>
 </div>

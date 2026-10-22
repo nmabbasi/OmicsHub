@@ -198,6 +198,9 @@ function toggleMobileMenu() {
 <nav aria-label="Tutorial navigation" class="reader-toolbar"><a href="hpc-support.html" title="HPC Troubleshooting and Support">← Previous tutorial</a><a data-catalogue-return="" href="../tutorials.html">All tutorials</a><a href="docker-singularity-bioinformatics.html" title="Docker and Apptainer for Bioinformatics">Next tutorial →</a></nav>
 <article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--walkthrough">
 <p class="lesson-lead">A workflow makes file dependencies explicit so a runner can determine what must run, what can run in parallel, and what outputs are missing. This walkthrough compares Snakemake and Nextflow, then builds a small file-copy workflow you can adapt before connecting real sequencing tools.</p>
+<section class="lesson-summary tutorial-learning-contract" data-tutorial-format="hands-on-lab" aria-label="Learning format">
+<p><strong>Format: Hands-on lab.</strong> Learners with basic shell and path familiarity will create tiny local text fixtures and run comparable file-copy examples in Snakemake and Nextflow; no biological inputs are supplied or required.</p>
+</section>
 <div class="lesson-summary"><p><strong>Scope and prerequisites.</strong> You should be comfortable with shell commands, paths, and the idea that each analysis step consumes files and produces files. Install either Snakemake or Nextflow in an isolated environment, and check its current installation guide. The examples below use text fixtures, not biological data; they teach workflow mechanics only.</p></div>
 <h2>Start with the file contract</h2>
 <p>Write down each step as an input-to-output contract before choosing a workflow manager. For a two-step analysis, the contract might be: raw reads plus a reference produce an alignment; the alignment plus an annotation produce a count table. Record the exact filenames, sample identifiers, software versions, parameters, and expected outputs. A workflow cannot correct a mismatched sample sheet, an incomplete reference, or an inappropriate biological method.</p>
@@ -223,7 +226,32 @@ rule copy_fixture:
 <h3>Dry runs and failures</h3>
 <p>Use <code>snakemake -n</code> before a larger run to inspect the jobs Snakemake plans to execute without running them. A missing input should stop rule planning or execution with an informative error. If a result is unexpectedly considered current, inspect the target, input paths, timestamps, and whether the rule fully declares the files it creates. A dry run checks the planned graph; it does not validate the scientific suitability of the commands.</p>
 <h2>How Nextflow represents the same work</h2>
-<p>Nextflow describes processes and connects their inputs and outputs through channels. A channel carries values or file paths; a process declares what it consumes, the command to run, and what it emits. This dataflow model differs in emphasis from Snakemake's file-target graph, although both tools can express multi-step, parallel workflows. Follow the current Nextflow DSL2 “first script” tutorial for a runnable starter, since process input declarations, channel shapes, and workflow syntax need to agree exactly.</p>
+<p>Nextflow describes processes and connects their inputs and outputs through channels. A channel carries values or file paths; a process declares what it consumes, the command to run, and what it emits. This dataflow model differs in emphasis from Snakemake's file-target graph, although both tools can express multi-step, parallel workflows. The following small DSL2 example copies the same kind of plain-text fixture; it demonstrates process input/output staging and publication, not a biological analysis.</p>
+<h3>Run the matching text-fixture workflow</h3>
+<p>Use a separate directory (for example, <code>nextflow-demo</code>) with Bash, Java 17 or later, and Nextflow installed. Check <code>java -version</code> and <code>nextflow info</code> first; follow the <a href="https://docs.seqera.io/nextflow/install" rel="noopener" target="_blank">official installation guide</a> if either command is unavailable. In that directory, create the input and save the script as <code>main.nf</code>:</p>
+<pre><code class="language-bash">mkdir -p nextflow-demo/data
+cd nextflow-demo
+printf 'fixture text for workflow practice\n' &gt; data/demo.txt</code></pre>
+<pre><code class="language-groovy">params.input = 'data/demo.txt'
+
+process COPY_FIXTURE {
+    input:
+    path source
+
+    output:
+    path 'copied.txt'
+
+    script:
+    """
+    cp "$source" copied.txt
+    """
+}
+
+workflow {
+    source_ch = channel.fromPath(params.input, checkIfExists: true)
+    COPY_FIXTURE(source_ch)
+}</code></pre>
+<p>Run <code>nextflow run main.nf</code>. A successful run should report one completed <code>COPY_FIXTURE</code> task and publish <code>copied.txt</code> under the default <code>results</code> output directory; inspect it with <code>cat results/copied.txt</code> and confirm its text matches <code>data/demo.txt</code>. The process runs in an isolated task directory, so its declared output is published rather than assumed to exist in the launch directory. If input discovery fails, stop and check that you are in <code>nextflow-demo</code>, the file exists at <code>data/demo.txt</code>, and the installed command can run. To exercise failure handling, temporarily rename the input and rerun: the checked input path should fail before the process runs; restore the filename before retrying. Nextflow resumes from its work directory by default, so use a fresh run name or <code>-resume</code> only after confirming the input is restored and the task should be reusable.</p>
 <p>For a real read-mapping workflow, specify whether reads are single-end or paired-end and keep each pair associated with its sample identifier. The source example's single-read BWA command did not correctly demonstrate paired-end handling, and its channel/process declarations were not a verified runnable contract, so that code has been removed rather than presented as executable. When converting an existing command, first run it on one sample outside the workflow, then represent the same inputs, resources, and output files in the process declaration.</p>
 <h2>Choose by workflow needs, not labels</h2>
 <div class="lesson-decision"><p><strong>Consider Snakemake</strong> when a rule-and-file dependency graph maps naturally to the way your team already describes analysis steps, or when Python-based rule definitions suit your group.</p><p><strong>Consider Nextflow</strong> when the team prefers process/channel dataflow or needs to target execution environments supported by its configuration and infrastructure. Nextflow supports local, HPC, and cloud execution, but portability still depends on configuration, available containers or packages, storage, and platform policy.</p><p><strong>Consider an nf-core pipeline</strong> when its documented inputs and analysis match your scientific question. Read the pipeline's current usage and output documentation before selecting parameters or interpreting results.</p></div>
@@ -242,7 +270,7 @@ rule copy_fixture:
 <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
 </div>
 <div>
-<p class="text-sm text-gray-600 mb-2">This tutorial records the software versions used in its examples. Software and package behaviour can change. Please re-check commands against the official documentation. If a command does not work, you find an error, or the tutorial is no longer reproducible, please report it through the <a class="text-blue-600 hover:underline" href="../contact.html">Contact page</a></p>
+<p class="text-sm text-gray-600 mb-2">These examples do not have a recorded test environment or pinned tool releases. Before adapting them, record the date, operating system, <code>snakemake --version</code> and/or <code>nextflow info</code> output, and (for Nextflow) <code>java -version</code>; consult the linked official documentation for current requirements. If an example fails, note the command and version details when reporting it through the <a class="text-blue-600 hover:underline" href="../contact.html">Contact page</a>.</p>
 <p class="text-sm text-gray-500">Author: <a class="text-blue-600 hover:underline font-medium" href="../about.html">Nasir Mahmood Abbasi, PhD</a> - Category: Workflow Management and Containerization</p>
 </div>
 </div>

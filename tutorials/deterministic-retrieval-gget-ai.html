@@ -189,7 +189,7 @@ function toggleMobileMenu() {
 <img alt="Deterministic Retrieval with gget" class="w-full aspect-video object-cover" decoding="async" loading="eager" src="../images/gget-ai.webp"/>
 </div>
 <nav aria-label="Tutorial navigation" class="reader-toolbar"><a href="notebooklm-research-brain.html" title="NotebookLM for literature review: a source-grounded workflow">← Previous tutorial</a><a data-catalogue-return="" href="../tutorials.html">All tutorials</a><a href="protein-structure-design-alphafold.html" title="Retrieve an AlphaFold DB model and assess pLDDT">Next tutorial →</a></nav>
-<article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--walkthrough"><p class="lesson-lead">Use gget to query Ensembl-linked metadata and sequence records, then preserve the raw response and enough provenance to interpret it later. Database retrieval is reproducible only when you record the software, query, source state, and response; an LLM can still misread supplied evidence.</p><h2>Learning objectives and prerequisites</h2>
+<article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--walkthrough"><p class="lesson-lead">Use gget to query Ensembl-linked metadata and sequence records, then preserve the raw response and enough provenance to interpret it later. Database retrieval is reproducible only when you record the software, query, source state, and response; an LLM can still misread supplied evidence.</p><section class="lesson-summary tutorial-learning-contract" data-tutorial-format="hands-on-lab" aria-label="Learning format"><p><strong>Format: Hands-on lab.</strong> This guided exercise is for learners comfortable with a Unix-like shell; you will install pinned gget, retrieve metadata and a protein FASTA for the supplied ACE2 Ensembl ID, and inspect saved outputs. No input files are supplied or needed; an internet connection and package-install permission are required.</p></section><h2>Learning objectives and prerequisites</h2>
 <p><strong>By the end of this lesson you will be able to:</strong></p>
 <ul>
 <li>Install gget in an isolated Python environment and record the installed version.</li>
@@ -222,6 +222,7 @@ python -m pip show gget &gt; retrieval-results/gget-package.txt
 <ul>
 <li><code>.venv/</code> — isolated Python environment (do not delete if you want reproducibility).</li>
 <li><code>retrieval-results/gget-help.txt</code> — records the CLI help output.</li>
+<li><code>retrieval-results/gget-package.txt</code> — records installed gget package metadata, including its version.</li>
 </ul>
 <p>The example pins gget 0.28.6. Check that release is compatible with your Python version and platform; do not silently substitute a newer release if reproducing an older analysis.</p>
 <h3>2) Prepare a retrieval-results directory and record metadata</h3>
@@ -235,14 +236,22 @@ date --iso-8601=seconds &gt; retrieval-results/retrieval_timestamp.txt
 <p>Files created:</p>
 <ul>
 <li><code>retrieval-results/requirements.txt</code> — installed Python distributions, not a complete lockfile of platform dependencies.</li>
-<li><code>retrieval-results/retrieval_timestamp.txt</code> — setup time, not the query time.</li>
+<li><code>retrieval-results/retrieval_timestamp.txt</code> — time the environment metadata was captured; it is not a query start or completion time.</li>
 </ul>
 <h3>3) Deterministic retrieval: get Ensembl gene metadata using gget info</h3>
 <p>Use an Ensembl gene identifier, not a gene symbol: <code>gget info</code> accepts Ensembl IDs and writes JSON to standard output by default. The official quick start uses ENSG00000130234 for ACE2.</p>
-<pre><code># Save the raw command-line JSON
-gget info ENSG00000130234 &gt; retrieval-results/ACE2_info.json
-# Record a timestamp and exact query separately
-{ date --iso-8601=seconds; echo "gget info ENSG00000130234"; } &gt;&gt; retrieval-results/commands.log
+<pre><code># Log start/end, exact command label, and exit status around each CLI query
+log_run() {
+  label=$1; shift
+  started=$(date --iso-8601=seconds)
+  "$@"
+  status=$?
+  finished=$(date --iso-8601=seconds)
+  printf 'start=%s | command=%s | exit=%s | end=%s\n' "$started" "$label" "$status" "$finished" &gt;&gt; retrieval-results/commands.log
+  return "$status"
+}
+# Save the raw command-line JSON; inspect stderr and do not interpret output if it fails
+log_run 'gget info ENSG00000130234' gget info ENSG00000130234 &gt; retrieval-results/ACE2_info.json || echo "gget info failed; inspect stderr and output file."
 
 # Python API: info returns a pandas DataFrame; export its returned columns
 python - &lt;&lt;'PY'
@@ -252,27 +261,32 @@ records.to_csv("retrieval-results/ACE2_info_python.csv", index=False)
 print("Rows:", len(records), "Columns:", list(records.columns))
 PY
 </code></pre>
-<p>The Python call is a separate live query. Compare its saved rows with the CLI response, rather than assuming the output fields or source annotations are identical. Keep the raw JSON: a summary table can omit fields needed later.</p>
+<p>The Python call is a separate live query and is not wrapped by the shell logger above. Compare its saved rows with the CLI response, rather than assuming the output fields or source annotations are identical. Keep the raw JSON: a summary table can omit fields needed later.</p>
 <h3>4) Deterministic retrieval: download a protein sequence with gget seq</h3>
-<p>Fetch the translated sequence for the same gene. With <code>--translate</code>, gget documents the amino-acid sequence as coming from UniProt; without it, the sequence is nucleotide sequence from Ensembl. A gene query returns the canonical transcript sequence by default; <code>--isoforms</code> requests known transcript isoforms.</p>
-<pre><code>gget seq --translate ENSG00000130234 &gt; retrieval-results/ACE2_protein.fasta
+<p>Fetch translated sequence output for the same gene. The gget manual states that <code>--translate</code> returns amino-acid sequences fetched from UniProt, while nucleotide sequences are fetched from Ensembl; <code>--isoforms</code> requests sequences for all known transcripts for a gene ID. The manual does not establish a canonical-selection rule for this default query, so identify any accession/isoform from the returned FASTA header and source record rather than assuming which product was selected.</p>
+<pre><code>log_run 'gget seq --translate ENSG00000130234' gget seq --translate ENSG00000130234 &gt; retrieval-results/ACE2_protein.fasta || echo "gget seq failed; inspect stderr and output file."
 
-# Confirm the first line is a FASTA header and the file is non-empty
-head -n 1 retrieval-results/ACE2_protein.fasta
-wc -c retrieval-results/ACE2_protein.fasta
+# Structural check: require a FASTA header and at least one sequence character
+python - &lt;&lt;'PY'
+from pathlib import Path
+p = Path("retrieval-results/ACE2_protein.fasta")
+lines = p.read_text().splitlines()
+if not lines or not lines[0].startswith(">") or not any(line.strip() for line in lines[1:]):
+    raise SystemExit("FAIL: expected a FASTA header followed by a non-empty sequence; inspect the file and gget error before retrying")
+print("Header:", lines[0])
+print("Sequence characters:", sum(len(line.strip()) for line in lines[1:]))
+PY
 </code></pre>
+<p>Illustrative shape only (not a promised ACE2 accession or sequence): <code>&gt;source_record_id description or isoform details</code> followed by one or more lines of amino-acid letters. A header-and-sequence check catches empty files and many error-page responses, but it does not prove the record matches the requested gene. If the check fails, inspect the file beginning and command error, verify network/service availability, and rerun only after resolving the cause. If it passes, compare the header identifier with the relevant UniProt record; report unresolved mapping or isoform identity as unknown.</p>
 <p>Files produced:</p>
 <ul>
 <li><code>retrieval-results/ACE2_protein.fasta</code> — FASTA output from gget. For translated output, gget uses UniProt; it is not a sequence fetched from Ensembl.</li>
 </ul>
 <h3>5) Save exact commands, inputs, and timestamps for provenance</h3>
-<pre><code># Record each command with its execution time
-{ date --iso-8601=seconds; echo "gget info ENSG00000130234"; } &gt;&gt; retrieval-results/commands.log
-{ date --iso-8601=seconds; echo "gget seq --translate ENSG00000130234"; } &gt;&gt; retrieval-results/commands.log
-</code></pre>
+<p>The two CLI retrievals above append start and completion timestamps, the exact command labels, and exit statuses to <code>retrieval-results/commands.log</code>. The separate Python API query is not wrapped by this logger. Times are local to the shell and bracket execution; they do not freeze upstream database state.</p>
 <p>Files produced:</p>
 <ul>
-<li><code>retrieval-results/commands.log</code> — a small provenance log mapping commands to timestamps.</li>
+<li><code>retrieval-results/commands.log</code> — start/end timestamps, exact command labels, and exit status for CLI retrievals. Times are local to the shell and bracket execution; they do not freeze upstream database state.</li>
 </ul>
 <h2>Output inspection and interpretation</h2>
 <p>After you save retrieval outputs, inspect them systematically. For each saved file ask:</p>
@@ -386,7 +400,7 @@ wc -c retrieval-results/ACE2_protein.fasta
 <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
 </div>
 <div>
-<p class="text-sm text-gray-600 mb-2">This tutorial records the software versions used in its examples. Software and package behaviour can change. Please re-check commands against the official documentation. If a command does not work, you find an error, or the tutorial is no longer reproducible, please report it through the <a class="text-blue-600 hover:underline" href="../contact.html">Contact page</a></p>
+<p class="text-sm text-gray-600 mb-2">Software and package behaviour can change. Please re-check commands against the official documentation. If a command does not work, you find an error, or the tutorial is no longer reproducible, please report it through the <a class="text-blue-600 hover:underline" href="../contact.html">Contact page</a></p>
 <p class="text-sm text-gray-500">Author: <a class="text-blue-600 hover:underline font-medium" href="../about.html">Nasir Mahmood Abbasi, PhD</a> - Category: AI-Driven Research &amp; Agentic Bioinformatics</p>
 </div>
 </div>

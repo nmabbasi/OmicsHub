@@ -198,15 +198,25 @@ function toggleMobileMenu() {
 <nav aria-label="Tutorial navigation" class="reader-toolbar"><a href="quality-control-fundamentals.html" title="Quality Control Fundamentals">← Previous tutorial</a><a data-catalogue-return="" href="../tutorials.html">All tutorials</a><a href="python-fundamentals-bioinformatics.html" title="Python Fundamentals for Bioinformatics">Next tutorial →</a></nav>
 <article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--walkthrough">
 <p class="lesson-lead">Build a small local repository, record a meaningful change, and inspect what Git has captured before deciding whether it is safe to share. The examples use a deliberately data-free project; they do not process sequencing reads or establish that an analysis is scientifically valid.</p>
+<section class="lesson-summary tutorial-learning-contract" data-tutorial-format="hands-on-lab" aria-label="Learning format">
+<p><strong>Format: Hands-on lab.</strong> Beginners with a terminal, Git, and Python 3 will build and inspect a local teaching repository, then run a tiny synthetic TSV parser check. The commands create the inputs; a GitHub account and remote are optional.</p>
+</section>
 <h2>Before you start</h2>
-<p>You need a terminal and Git. Check the installation with:</p>
-<pre><code>git --version</code></pre>
+<p>You need a terminal, Git, and Python 3 for the later script and provenance sections. Check that Git and Python are available; the pip check confirms the Python package manager if you choose the optional package inventory step:</p>
+<pre><code>git --version
+python3 --version
+python3 -m pip --version</code></pre>
+<p>If Python is missing, install Python 3 using your operating system's package manager or the official <a href="https://www.python.org/downloads/">Python downloads and installation guidance</a>, then open a new terminal and repeat the checks. No third-party Python packages are needed for the example script.</p>
 <p>A GitHub account is optional until you choose to create a remote repository. Work first in a project that contains no patient-level information, credentials, or restricted data. Git records text changes well, but ordinary Git history is a poor home for large sequencing files.</p>
 <h2>Start a local repository</h2>
-<p>Create a clean practice directory and initialize it. These commands operate only in your home directory:</p>
-<pre><code>mkdir -p ~/projects/omics-demo
-cd ~/projects/omics-demo
-git init</code></pre>
+<p>Use a dedicated practice path. The preflight below stops rather than reusing an existing directory, so it will not silently overwrite prior work. If it already exists, choose another unused name before continuing:</p>
+<pre><code>mkdir -p ~/projects
+if [ -e ~/projects/omics-demo-git-tutorial ]; then
+  echo "STOP: ~/projects/omics-demo-git-tutorial already exists; choose a new unused path." &gt;&amp;2
+else
+  mkdir ~/projects/omics-demo-git-tutorial &amp;&amp; cd ~/projects/omics-demo-git-tutorial &amp;&amp; git init
+fi</code></pre>
+<p>Continue only if <code>git init</code> ran in the new directory. The README and <code>.gitignore</code> heredocs below replace same-named files; because this directory was freshly created, they cannot overwrite files from an earlier run. If you choose a different path, verify it is new and adjust the later <code>cd</code> accordingly.</p>
 <p>Git creates a hidden <code>.git/</code> directory for repository history and settings. At this point it has no tracked project files. Run <code>git status</code> to see the current branch and working-tree state; the exact initial-branch wording depends on your Git configuration.</p>
 <h2>Describe the project and exclude common local files</h2>
 <p>A README should tell a collaborator what the repository contains, what inputs it expects, and how to run the analysis. This example documents the practice project without pretending it contains biological results.</p>
@@ -286,7 +296,21 @@ chmod +x scripts/qc_summary.py
 git add scripts/qc_summary.py
 git diff --cached
 git commit -m "Add TSV summary example"</code></pre>
-<p>For a local smoke test, create a tiny, clearly synthetic <code>samples.tsv</code> with the required header and one made-up row, then run <code>python3 scripts/qc_summary.py samples.tsv</code>. A missing or misspelled header should stop with the input-contract message. These checks show that the script handles the format; they say nothing about biological sample quality. The empty <code>results/</code> directory is not tracked by Git unless it contains a file.</p>
+<p>Create a one-row synthetic fixture, run the script from the repository root, and compare the exact output. This tests the parser's input contract only, not sequencing quality or biological validity:</p>
+<pre><code>cat &gt; samples.tsv &lt;&lt; 'EOF'
+sample	reads
+synthetic_A	1200
+EOF
+python3 scripts/qc_summary.py samples.tsv</code></pre>
+<p>Expected output:</p>
+<pre><code>synthetic_A 1200</code></pre>
+<p>Now deliberately test the missing-header failure. This replaces only the teaching fixture <code>samples.tsv</code> in the fresh practice repository; restore the valid fixture above before continuing:</p>
+<pre><code>cat &gt; samples.tsv &lt;&lt; 'EOF'
+name	reads
+synthetic_A	1200
+EOF
+python3 scripts/qc_summary.py samples.tsv</code></pre>
+<p>Expected error on standard error: <code>Input must have 'sample' and 'reads' header columns</code> (the command exits non-zero). The empty <code>results/</code> directory is not tracked by Git unless it contains a file.</p>
 <h2>Record provenance without overstating reproducibility</h2>
 <p>Capture the code snapshot used for an analysis after committing the analysis code. The first command writes the current short commit ID; subsequent commands record selected environment details. Because adding these records creates another commit, the saved ID names the code state immediately before the provenance files were committed.</p>
 <pre><code>git rev-parse --short HEAD &gt; COMMIT_HASH.txt

@@ -190,6 +190,10 @@ function toggleMobileMenu() {
 <nav aria-label="Tutorial navigation" class="reader-toolbar"><a href="ai-coding-cursor-aider.html" title="Using Cursor and Aider for Bioinformatics">← Previous tutorial</a><a data-catalogue-return="" href="../tutorials.html">All tutorials</a><a href="notebooklm-research-brain.html" title="NotebookLM for literature review: a source-grounded workflow">Next tutorial →</a></nav>
 <article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--decision-guide">
 <p class="lesson-lead">An MCP connection gives an AI client access to tools exposed by a server. Zotero itself does not define one universal MCP server or configuration: projects differ in how they access the library, what they can read or change, and whether they can retrieve attachment text. Evaluate the specific server before connecting it to a research library.</p>
+<section class="lesson-summary tutorial-learning-contract" data-tutorial-format="conceptual-guide" aria-label="Learning format">
+<p><strong>Format: Conceptual guide.</strong> For researchers assessing an MCP connection rather than installing a particular server, this guide walks through a safe review and verification plan. No server or Zotero records are supplied; use a disposable collection and the chosen server's own verified setup instructions.</p>
+</section>
+<p>This is a server-selection and safety checklist, not a universal installation walkthrough. Because server projects and their capabilities change, no single server command or configuration is prescribed here.</p>
 <h2>Decide what you need the connection to do</h2>
 <p>Start with one task, such as locating records in a test collection and returning their titles, authors, year, and stable Zotero item link. Keep the first test read-only. If you need PDF text, check separately that the chosen server supports it and how it obtains that text. A record search alone does not establish full-text access.</p>
 <div class="lesson-decision"><h3>Local library or online library?</h3><p>A server may interact with the Zotero desktop client or use Zotero's Web API. Those are distinct access paths with different setup and permission requirements. Read the server's own documentation to identify which it uses. Do not assume the MCP protocol provides Zotero access, selects a server, or guarantees read-only behavior.</p></div>
@@ -198,7 +202,8 @@ function toggleMobileMenu() {
 <li class="lesson-step"><h3>Inspect the project</h3><p>Open the project's current README and release information. Confirm its package or repository identity, supported Zotero access method, prerequisites, installation command, and whether it is maintained. The package name in a blog post is not enough to identify a server reliably.</p></li>
 <li class="lesson-step"><h3>Review permissions and data flow</h3><p>List the tools the server exposes. Check whether they can create, edit, or delete records, and whether requests or attachment contents leave your computer. Use a dedicated test collection and the narrowest available permissions. Keep API credentials out of prompts, source control, and shared configuration files.</p></li>
 <li class="lesson-step"><h3>Configure the client from verified instructions</h3><p>For local command-line servers, Cursor's current configuration uses an <code>mcpServers</code> object with a command and arguments; its documentation also describes server type and environment fields. Copy the exact command and arguments from the server project, then check that the client can start it. Do not substitute a guessed package or wrapper command.</p></li>
-<li class="lesson-step"><h3>Test with a known record</h3><p>Choose a record in the test collection whose title and author you can inspect in Zotero. Ask the client to find that record and return only identifying metadata plus the collection name. Compare every returned field with Zotero, then check that the library remains unchanged.</p></li>
+<li class="lesson-step"><h3>Prepare a disposable test collection</h3><p>In Zotero desktop, create a collection named <code>MCP-test-YYYYMMDD</code> beneath the specific library you intend to test (for example, My Library or a test group library). Add one record with a title and author you can verify; a harmless manual placeholder is sufficient for checking retrieval, but it is not a scholarly reference. Zotero's <a href="https://www.zotero.org/support/collections_and_tags" rel="noopener" target="_blank">collection guide</a> explains creating collections and adding items. Before querying, identify the account or local library configured by the server and confirm in its own documentation whether it can be restricted to this collection; a collection name in a prompt is not an access-control boundary. If the server cannot be scoped, use only a disposable library/account with no sensitive records.</p></li>
+<li class="lesson-step"><h3>Test with the known record</h3><p>Ask the client to find the exact test title and return identifying metadata plus its collection name. Compare every returned field with Zotero, verify that the result belongs to the intended library and test collection, then check that the library remains unchanged.</p></li>
 </ol>
 <div class="lesson-checkpoint"><h3>Checkpoint: confirm access scope</h3><p>Proceed only when you can identify the server project, understand its declared permissions, and confirm that the test query touched the expected collection. If the documentation does not explain its network behavior or write access, stop and ask the project maintainer before using it with sensitive or irreplaceable data.</p></div>
 <h2>Use citation keys carefully</h2>
@@ -211,16 +216,22 @@ Return its Zotero item link, title, authors, year, and whether an attachment is 
 If you cannot find an exact match, say so. Do not edit the record or summarize a paper.</code></pre>
 <p>This request separates retrieval from interpretation. Once the metadata matches, you can ask for attachment text only if the server documentation confirms that capability. Treat an AI-generated summary as a pointer back to the paper, not as a substitute for checking the methods and results yourself.</p>
 <h2>What the local citation-key script can and cannot do</h2>
-<p>The small Python example below extracts strings shaped like <code>@key</code> followed by a four-digit year from a Markdown file. It does not parse every citation syntax, resolve keys against Zotero, confirm references, or generate a bibliography. It is a quick inventory aid, and it can miss valid keys or match text that is not a citation.</p>
+<p>The small Python example below extracts strings shaped like <code>@key</code> followed by a four-digit year from a Markdown file. It does not parse every citation syntax, resolve keys against Zotero, confirm references, or generate a bibliography. It is a quick inventory aid, and it can miss valid keys or match text that is not a citation. The input below is synthetic and uses a neutral filename.</p>
 <pre><code class="language-python">import re
 from pathlib import Path
 
-text = Path("thesis_chapter3.md").read_text(encoding="utf-8")
+text = Path("sample.md").read_text(encoding="utf-8")
 keys = sorted(set(re.findall(r"@([\w-]+?\d{4}[\w-]*)", text)))
 print(f"Found {len(keys)} candidate citation keys:")
 for key in keys:
     print(f"  @{key}")</code></pre>
-<p>Run it from the directory containing <code>thesis_chapter3.md</code>, or change that path. If the file is absent or unreadable, Python raises an error rather than returning an empty citation list. Review the candidates and compare them with your library or bibliography tool.</p>
+<p>Save the script as <code>find_keys.py</code> and, in the same directory, create the example input and run it:</p>
+<pre><code class="language-bash">cat &gt; sample.md &lt;&lt;'EOF'
+Background: an illustrative citation @rivera2021.
+This sentence has no citation key.
+EOF
+python3 find_keys.py</code></pre>
+<p>Expected output for that fixture is <code>Found 1 candidate citation keys:</code> followed by <code>@rivera2021</code>. With a file containing no matching strings, the expected output is <code>Found 0 candidate citation keys:</code> and no following key lines. These checks demonstrate only the regular expression's behavior; the example key is invented and is not a real reference. If <code>sample.md</code> is absent or unreadable, Python raises an error rather than returning an empty list. Review candidates and compare them with your library or bibliography tool.</p>
 <h2>Troubleshoot by observing the failure</h2>
 <ul>
 <li><strong>The client does not show the server:</strong> validate the JSON syntax, command path, and arguments against the current client and server documentation. Check the client's MCP logs for its startup error.</li>
@@ -243,7 +254,7 @@ for key in keys:
 <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
 </div>
 <div>
-<p class="text-sm text-gray-600 mb-2">This tutorial records the software versions used in its examples. Software and package behaviour can change. Please re-check commands against the official documentation. If a command does not work, you find an error, or the tutorial is no longer reproducible, please report it through the <a class="text-blue-600 hover:underline" href="../contact.html">Contact page</a></p>
+<p class="text-sm text-gray-600 mb-2">No server, client, Zotero, or Python version was tested or recorded for this guide. Before applying a server project's instructions, note the versions of your client and Zotero, check its documented compatibility and the current client configuration reference, and validate the server's own startup procedure. If a command does not work, you find an error, or the documentation has changed, please report it through the <a class="text-blue-600 hover:underline" href="../contact.html">Contact page</a>.</p>
 <p class="text-sm text-gray-500">Author: <a class="text-blue-600 hover:underline font-medium" href="../about.html">Nasir Mahmood Abbasi, PhD</a> - Category: AI-Driven Research &amp; Agentic Bioinformatics</p>
 </div>
 </div>

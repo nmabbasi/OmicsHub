@@ -197,6 +197,9 @@ function toggleMobileMenu() {
 </div>
 <nav aria-label="Tutorial navigation" class="reader-toolbar"><a href="hpc-basic-commands.html" title="Basic Slurm Commands">← Previous tutorial</a><a data-catalogue-return="" href="../tutorials.html">All tutorials</a><a href="hpc-support.html" title="HPC Troubleshooting and Support">Next tutorial →</a></nav>
 <article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--walkthrough"><p class="lesson-lead">A Slurm submission script describes the resources a batch job requests and the commands it runs after the scheduler starts it. This walkthrough builds from a small job to task launches and arrays. The examples use site-specific module names and a sample partition; confirm both with your cluster documentation before submitting.</p>
+<section class="lesson-summary tutorial-learning-contract" data-tutorial-format="hands-on-lab" aria-label="Learning format">
+<p><strong>Format: Hands-on lab.</strong> Learners who have completed Basic Slurm Commands will adapt a small batch script, submit it on their own cluster, and check its log and final scheduler record; no input data are needed, but account and partition details must be supplied by the reader.</p>
+</section>
 <div class="lesson-summary"><h2>Before you submit</h2><ul><li>Complete the preceding <a href="hpc-basic-commands.html">Basic Slurm Commands</a> lesson.</li><li>Know your cluster's account, partition, time-limit, module, and data-storage requirements.</li><li>Use a small, approved test command first. A successful submission means Slurm accepted the request, not that the job has started or completed.</li></ul><p><strong>Deliverable:</strong> an adapted script, its job ID, and the scheduler-created log from a test run.</p></div>
 <div class="p-5 bg-slate-50 border border-slate-200 rounded-xl mb-8">
 <p class="text-xs font-bold tracking-[0.14em] uppercase text-slate-500 mb-2">Detailed cluster reference</p>
@@ -274,10 +277,9 @@ sacct -j &lt;job_id&gt; --format=JobID,State,Elapsed,MaxRSS,AllocCPUS</code></p>
 <p>There are many more options:</p>
 <pre><code class="language-bash">man sbatch
 </code></pre>
-<p>Slurm reads <code>#SBATCH</code> directives before the first non-comment, non-whitespace script line. Shell variables and expansions in those directive lines are not evaluated by the shell. To disable a directive, prefix it so it no longer begins with <code>#SBATCH</code>.</p>
-<pre><code class="language-bash">##SBATCH
+<p>Slurm reads <code>#SBATCH</code> directives before the first non-comment, non-whitespace script line. Shell variables and expansions in those directive lines are not evaluated by the shell. To disable a directive, add another <code>#</code> so the line no longer begins with <code>#SBATCH</code>; for example, <code>##SBATCH --mem=2G</code> is an ordinary shell comment, not a memory request.</p>
+<pre><code class="language-bash">##SBATCH --mem=2G
 </code></pre>
-<p>To avoid confusion between comment and option when using a single <code>#</code> the comment in my example script uses two <code>#</code> even though only one is required.</p>
 <h3>Shell commands</h3>
 <p>Shell commands are used to set up Linux environment variables. They should <strong>not</strong> be preceded by <code>srun</code></p>
 <h3>Run commands</h3>
@@ -475,7 +477,24 @@ conda deactivate
 </div>
 <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
 <h4 class="font-bold text-gray-800 mb-2">2. Practical Execution</h4>
-<p class="text-gray-600 text-sm">Submit a test batch script that requests one core and writes its hostname and date to an output file. </p>
+<p class="text-gray-600 text-sm">From a directory where you can write files, create <code>smoke-test.sbatch</code> with the following contents. Replace <code>YOUR_ALLOWED_PARTITION</code> with a partition confirmed by your cluster documentation (and add any required account directive); this script needs no modules or biological data.</p>
+<pre><code class="language-bash">#!/bin/sh
+#SBATCH --job-name=hpc-smoke
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=1
+#SBATCH --time=00:02:00
+#SBATCH --partition=YOUR_ALLOWED_PARTITION
+#SBATCH --output=hpc-smoke-%j.out
+
+hostname
+date
+</code></pre>
+<p class="text-gray-600 text-sm">Save as <code>smoke-test.sbatch</code>, submit it, and record the numeric job ID printed by <code>sbatch</code>. After it leaves the queue, replace <code>JOB_ID</code> with that number:</p>
+<pre><code class="language-bash">sbatch smoke-test.sbatch
+sacct -j JOB_ID --format=JobID,State,ExitCode
+cat hpc-smoke-JOB_ID.out
+</code></pre>
+<p class="text-gray-600 text-sm">Success means the batch record is <code>COMPLETED</code> with exit code <code>0:0</code> and the uniquely named log contains one hostname line and one date line (the exact values vary). While pending or running, use <code>squeue -j JOB_ID</code>; after completion, accounting may take a short time to appear. If submission is rejected, check the partition/account and request limits in the site's documentation; if the record fails or the log is missing, inspect the state, exit code, and log path before changing resource requests. Do not repeatedly resubmit a failing workload without resolving the reported cause.</p>
 </div>
 <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
 <h4 class="font-bold text-gray-800 mb-2">3. Troubleshooting</h4>

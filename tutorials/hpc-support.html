@@ -205,6 +205,9 @@ function toggleMobileMenu() {
 <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
 <span>Updated 21 October 2026</span></div>
 </div><p class="lesson-lead">Use the job record and its logs to narrow down a failure before changing the submission script. Slurm reports what happened to the job; the application log and your script help explain why.</p>
+<section class="lesson-summary tutorial-learning-contract" data-tutorial-format="conceptual-guide" aria-label="Learning format">
+<p><strong>Format: Conceptual guide.</strong> For cluster users with an existing job, script and logs: practise a structured diagnosis and prepare a support-ready evidence summary. You supply your own job records, approved input files and cluster-specific tool/reference paths; no data or executable test fixture is bundled.</p>
+</section>
 <h2>Learning objectives and prerequisites</h2>
 <p>
   By the end of this lesson you should be able to:
@@ -253,6 +256,7 @@ scontrol show job 1234567
 <li><code>seff</code>, when installed: a site-provided summary of resource use. Treat it as a convenience, not a substitute for site documentation.</li>
 <li><code>scontrol show job</code>: job details while retained and available. Historical records may no longer be available there; use <code>sacct</code> for accounting history where configured.</li>
 </ul>
+<p>For a job that is still pending or running, inspect the live queue with <code>squeue -j 1234567</code> (replace the example ID). Its state and, for a pending job, the displayed reason can guide the next check; queue visibility is transient and does not replace <code>sacct</code> for retained accounting history. Output and access can vary by site.</p>
 <h3>2) Inspect the job log(s)</h3>
 <p>
   Purpose: locate application errors and shell tracebacks. Slurm commonly combines output in <code>slurm-&lt;jobid&gt;.out</code> unless the script sets <code>--output</code> or <code>--error</code>. Confirm paths in the batch script; separate files are not guaranteed.
@@ -294,14 +298,26 @@ bwa 2&gt;&amp;1 | head -n 1  # consult your cluster/tool documentation for versi
 </p>
 <h3>4) Minimal re-run for debugging (short, small resource test)</h3>
 <p>
-  Purpose: avoid re-running a full job. Create a downsampled or short test that reproduces the error quickly and with low resources. Below is a generic example for an alignment pipeline that uses a small subset of reads. Adapt paths and commands for your pipeline tools.</p>
-<pre><code># Teaching example: take 2500 complete four-line FASTQ records from a gzip-compressed input. Confirm the file is valid FASTQ before using it.
-zcat data/reads.fastq.gz | head -n 10000 | gzip -c &gt; test_reads.fastq.gz
+  Purpose: avoid re-running a full job. This generic BWA illustration expects a single-end gzip-compressed FASTQ, a BWA-indexed reference, and permission to use a small subset of the data. Obtain inputs only from an approved cluster location; do not copy protected data to an unapproved workstation. Run from a scratch/work directory with enough space. First set real paths and stop if any check fails:</p>
+<pre><code># Replace these examples with paths approved for your cluster and project.
+READS="/approved/path/reads.fastq.gz"
+REF="/approved/path/ref/genome.fa"
+test -r "$READS" &amp;&amp; test -r "$REF" || { echo "STOP: input or reference is not readable"; exit 1; }
+gzip -t "$READS" || { echo "STOP: compressed input is damaged or not gzip"; exit 1; }
+for suffix in amb ann bwt pac sa; do
+  test -r "${REF}.${suffix}" || { echo "STOP: missing BWA index ${REF}.${suffix}"; exit 1; }
+done
 
-# Run the same command you used in the job locally (interactive node or small job)
-# Example: run a single-sample alignment with BWA
-# Requires BWA installed and a reference indexed with bwa index
-bwa mem -t 4 ref/genome.fa test_reads.fastq.gz &gt; test_reads.sam
+# A FASTQ record has four lines. Take 2500 records (10,000 lines), preserving record boundaries.
+zcat "$READS" | head -n 10000 | gzip -c &gt; test_reads.fastq.gz
+gzip -t test_reads.fastq.gz || { echo "STOP: subset gzip check failed"; exit 1; }
+lines=$(zcat test_reads.fastq.gz | wc -l)
+test "$lines" -gt 0 &amp;&amp; test "$((lines % 4))" -eq 0 || { echo "STOP: empty or incomplete four-line FASTQ records"; exit 1; }
+printf 'Subset contains %s complete FASTQ records\n' "$((lines / 4))"
+
+# Run only on an allowed interactive/compute node, using site-approved resources.
+# Single-end example. Keep output in scratch; check the BWA and reference conventions locally.
+bwa mem -t 4 "$REF" test_reads.fastq.gz &gt; test_reads.sam
 
 # Or submit a tiny batch job to test environment and basic resource behavior
 cat &gt; tiny_test.sbatch &lt;&lt;'SBATCH'
@@ -313,14 +329,16 @@ cat &gt; tiny_test.sbatch &lt;&lt;'SBATCH'
 #SBATCH --output=tinytest-%j.out
 
 module load bwa
-# Reference must already have the BWA index files beside it
-bwa mem -t 4 ref/genome.fa test_reads.fastq.gz &gt; tinytest.sam
+# This site-specific module name and the paths below must be checked before submission.
+REF="/approved/path/ref/genome.fa"
+test -r "$REF" || { echo "STOP: set REF to a readable reference"; exit 1; }
+bwa mem -t 4 "$REF" test_reads.fastq.gz &gt; tinytest.sam
 SBATCH
 
 sbatch tiny_test.sbatch
 </code></pre>
 <p>
-  Files produced: test_reads.fastq.gz, test_reads.sam (or tinytest-%j.out and tinytest.sam). A successful small test only shows that this particular input worked in that environment. It does not establish that the full input will fit requested resources or rule out data-specific failures.</p>
+  For paired-end reads, create R1 and R2 subsets from the same source records using a paired-aware method, then pass both files to BWA in mate order; never downsample mates independently. Adapt the command, reference/index format and resource request to the original pipeline and site policy. Files produced: test_reads.fastq.gz, test_reads.sam (or tinytest-%j.out and tinytest.sam). The FASTQ line-count check confirms only a non-empty, four-line record boundary—not that sequence, quality and header fields are biologically valid or mates match. A successful small test shows only that this particular subset worked in that environment; it does not establish that the full input fits requested resources or rule out data-specific failures. Stop and ask cluster support if paths, permitted compute location, index files, or input format cannot be verified.</p>
 <h2>Output inspection and interpretation</h2>
 <p>
   After you collect the outputs above, here are the common pieces of evidence and how to interpret them — including what a result does not prove.
@@ -436,6 +454,7 @@ Steps attempted:
 <ul>
 <li><a href="https://slurm.schedmd.com/documentation.html">Slurm official documentation (SchedMD)</a></li>
 <li><a href="https://slurm.schedmd.com/sacct.html">sacct — Slurm accounting tool</a></li>
+<li><a href="https://slurm.schedmd.com/squeue.html">squeue — view jobs in the scheduling queue</a></li>
 <li><a href="https://slurm.schedmd.com/scontrol.html">scontrol — display and manage Slurm state</a></li>
 <li><a href="https://slurm.schedmd.com/job_state_codes.html">Slurm job state codes</a></li>
 <li><a href="https://support.access-ci.org/">XSEDE: Troubleshooting jobs on HPC systems (practical guidance)</a></li>
@@ -447,7 +466,7 @@ Steps attempted:
 <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
 </div>
 <div>
-<p class="text-sm text-gray-600 mb-2">This tutorial records the software versions used in its examples. Software and package behaviour can change. Please re-check commands against the official documentation. If a command does not work, you find an error, or the tutorial is no longer reproducible, please report it through the <a class="text-blue-600 hover:underline" href="../contact.html">Contact page</a></p>
+<p class="text-sm text-gray-600 mb-2">No Slurm or BWA versions were fixed or tested for these illustrative examples. Before diagnosing a version-specific issue, record the versions available in the job environment (for example, <code>srun --version</code> and the version command documented for your installed BWA), along with the module/environment and cluster name; do not assume an interactive environment matches the batch job. Software behaviour can change, so check official and local documentation. If a command does not work or you find an error, please report it through the <a class="text-blue-600 hover:underline" href="../contact.html">Contact page</a>.</p>
 <p class="text-sm text-gray-500">Author: <a class="text-blue-600 hover:underline font-medium" href="../about.html">Nasir Mahmood Abbasi, PhD</a> - Category: High-Performance Computing (HPC)</p>
 </div>
 </div>

@@ -198,8 +198,13 @@ function toggleMobileMenu() {
 <nav aria-label="Tutorial navigation" class="reader-toolbar"><a href="advanced-visualization-packages.html" title="Visualizing single-cell data with R plotting packages">← Previous tutorial</a><a data-catalogue-return="" href="../tutorials.html">All tutorials</a><a href="cell-cell-communication.html" title="Cell-Cell Communication">Next tutorial →</a></nav>
 <article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--walkthrough">
 <p class="lesson-lead">This walkthrough follows filtered single-cell V(D)J contigs from Cell Ranger into scRepertoire, summarizes clone-size structure, and attaches receptor labels to a Seurat object. The result is a descriptive repertoire analysis. Clone expansion alone does not establish antigen specificity, malignancy, or cell function.</p>
+<section class="lesson-summary tutorial-learning-contract" data-tutorial-format="advanced-template" aria-label="Learning format">
+<p><strong>Format: Advanced template.</strong> For analysts with matched, preprocessed single-cell V(D)J and RNA data: adapt and audit a TCR clone-summary and metadata-attachment workflow. Bring one Cell Ranger filtered-contig CSV per sample and the corresponding Seurat object; no biological inputs are supplied.</p>
+</section>
 <h2>What you need and what you will produce</h2>
 <p>Use one filtered contig-annotation CSV per sample, produced by a compatible V(D)J workflow, plus a Seurat object containing the corresponding cells and a sample label in its metadata. This example assumes matched TCR and RNA libraries, compatible cell barcodes, and one sample per input directory. It uses R and scRepertoire; package APIs change, so check the linked reference for your installed version.</p>
+<p>Work from your project directory (set it explicitly with <code>setwd()</code> or use an RStudio project). Check the runtime with <code>R --version</code> in a shell, then in R record <code>R.version.string</code> and <code>packageVersion("scRepertoire")</code>, <code>packageVersion("Seurat")</code>, and <code>packageVersion("ggplot2")</code>. Install packages using current official instructions for your R version. These snippets are templates; no specific package-version combination is claimed as tested.</p>
+<p>Before loading, verify that each sample directory contains <code>filtered_contig_annotations.csv</code> with expected <code>barcode</code>, <code>chain</code>, <code>productive</code>, and CDR3 columns. Cell Ranger describes this as contig-level rows for high-confidence cells, so multiple chain rows per barcode are expected. Record the Cell Ranger run/version and reference configuration.</p>
 <p>At the end, record a clone-size summary and a UMAP colored by clone-size category, alongside the exact clone definition, chain handling, sample grouping, and number of receptor-bearing cells included. These are summaries to interpret, not biological findings supplied in advance.</p>
 <h2>1. Load contigs and make sample-aware clone calls</h2>
 <p>Cell Ranger's <code>filtered_contig_annotations.csv</code> contains contigs associated with high-confidence cell barcodes; it is not a table with one row per cell because a cell can have multiple receptor-chain contigs. Keep sample identity explicit: barcodes can recur between libraries, and a sample prefix prevents accidental merging of identical barcode strings.</p>
@@ -221,6 +226,7 @@ combined_tcr &lt;- combineTCR(
   ID = sample_ids
 )</code></pre>
 <p>The directories must contain Cell Ranger's named filtered-contig CSV. Check that each list element loaded the intended sample, that barcode prefixes distinguish samples, and that productive chains and missing/extra chains are handled as intended. The defaults for removing or retaining incomplete and multi-chain cells are analysis choices, not neutral cleanup; inspect the package documentation before changing them.</p>
+<p><strong>Barcode check before attachment:</strong> <code>samples</code> and <code>ID</code> add sample strings as prefixes in <code>combineTCR()</code>; with both set to <code>sample_A</code>, do not assume the result remains the raw 10x barcode. Inspect <code>head(combined_tcr[[1]]$barcode)</code> against <code>head(colnames(seurat_obj))</code>. If RNA barcodes are not sample-qualified, apply one documented convention consistently to both assays before combining; do not strip suffixes blindly, which can merge cells across samples. Require exact overlap and inspect unmatched counts; stop if overlap is unexpectedly low.</p>
 <aside class="lesson-checkpoint"><h3>Before comparing samples</h3><p>Confirm that your RNA object's cell barcodes use the same sample-prefix convention as the combined contigs. Check which cells lack receptor calls, how many have multiple or incomplete chains, and whether the sample labels refer to the same biological units in both assays. A barcode mismatch can prevent annotation transfer.</p></aside>
 <h2>2. Compare clone-size structure</h2>
 <p>Choose a clonotype definition before interpreting an expansion plot. The example uses <code>aa</code>, amino-acid CDR3 calls. Amino-acid matching can group distinct nucleotide rearrangements that encode the same sequence; nucleotide-based definitions are more stringent for sequence identity. The package's available definitions and chain rules depend on current version and receptor type.</p>
@@ -241,9 +247,17 @@ clonalProportion(
 <aside class="lesson-warning"><h3>Depth and sampling affect the picture</h3><p>Observed richness and rare-clone detection depend on sampling depth and cell recovery. Equalizing depth can be useful for a chosen comparison, but rarefaction is not a universal prerequisite or a cure for differences in tissue, capture, or library quality. Report the normalization or subsampling method and assess whether conclusions hold under reasonable alternatives. Do not label a large clone as antigen-specific from abundance alone.</p></aside>
 <h2>3. Attach clone labels to Seurat metadata</h2>
 <p>Make the RNA object's sample metadata agree with the sample names used above. The attachment relies on matching cell barcodes. The example groups frequencies within each sample and requests amino-acid clonotypes; inspect the resulting metadata columns rather than assuming a particular label or bin exists.</p>
-<pre><code class="language-r"># seurat_obj must contain a metadata column named "sample"
-# whose values match sample_ids, and matching cell barcodes.
-stopifnot("sample" %in% colnames(seurat_obj[[]]))
+<pre><code class="language-r"># Load your matched Seurat object, e.g.:
+# seurat_obj <- readRDS("data/combined_seurat.rds")
+# Metadata column "sample" must contain values in sample_ids.
+stopifnot(exists("seurat_obj"), "sample" %in% colnames(seurat_obj[[]]))
+stopifnot(all(unique(as.character(seurat_obj$sample)) %in% sample_ids))
+contig_barcodes <- unique(unlist(lapply(combined_tcr, `[[`, "barcode")))
+rna_barcodes <- colnames(seurat_obj)
+barcode_overlap <- intersect(contig_barcodes, rna_barcodes)
+message(length(barcode_overlap), " exact barcode matches; ",
+        length(setdiff(contig_barcodes, rna_barcodes)), " contig barcodes unmatched")
+if (length(barcode_overlap) == 0L) stop("No exact barcode overlap; resolve prefixes before attachment")
 seurat_obj &lt;- combineExpression(
   combined_tcr,
   seurat_obj,
@@ -257,7 +271,7 @@ DimPlot(seurat_obj, group.by = "cloneSize")</code></pre>
 <p>If cells are unexpectedly unannotated, compare the barcode strings on both sides, including any sample prefixes, and verify that the sample metadata column has the intended values. Also check whether filtering removed receptor-negative cells. The plot describes where labeled cells lie in the embedding; it does not demonstrate that a clone caused a transcriptional state or that the cells are malignant.</p>
 <h2>Interpreting clone-associated expression</h2>
 <p>A clone-size category is an abundance grouping, not a malignancy label. In a lymphoma study, determining whether a clone is malignant requires disease-specific evidence and study design beyond this repertoire workflow. A cell-level contrast such as <code>FindMarkers()</code> can be exploratory, but cells from the same donor are not independent biological replicates. For condition-level claims, account for between-sample variation, for example with an appropriate pseudobulk design, and validate findings independently.</p>
-<p>TCRs and BCRs share V(D)J-based diversity but differ in chain organization and biological processes. This worked code is TCR-focused. For BCR analysis, use the corresponding <code>combineBCR()</code> workflow and account for heavy/light-chain pairing and somatic hypermutation; do not assume TCR-specific chain choices or clone definitions transfer unchanged.</p>
+<p>TCRs and BCRs share V(D)J-based diversity but differ in chain organization and biology. This code is TCR-focused, not a worked BCR analysis. For BCR data, substitute <code>combineBCR()</code> on filtered contig annotations and verify productive IGH plus IGK and/or IGL chains and CDR3 fields. For <code>combineExpression()</code>, choose a BCR-appropriate <code>clone.call</code> and <code>chain</code> (documented choices include <code>IGH</code>, <code>IGL</code>, and <code>both</code>); a heavy-chain-only call does not represent paired receptors. Check barcode overlap and resulting metadata before plotting. Interpret pairing and somatic hypermutation with BCR-specific methods; this is a planning checklist, not a validated BCR recipe.</p>
 <h2>Decisions to report with your analysis</h2>
 <ul>
 <li><strong>Input and denominator:</strong> assay/software output, included samples, and whether abundance counts cells or another unit.</li>
@@ -280,7 +294,7 @@ DimPlot(seurat_obj, group.by = "cloneSize")</code></pre>
 <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
 </div>
 <div>
-<p class="text-sm text-gray-600 mb-2">This tutorial records the software versions used in its examples. Software and package behaviour can change. Please re-check commands against the official documentation. If a command does not work, you find an error, or the tutorial is no longer reproducible, please report it through the <a class="text-blue-600 hover:underline" href="../contact.html">Contact page</a></p>
+<p class="text-sm text-gray-600 mb-2">Before analysis, record <code>R.version.string</code> and installed scRepertoire, Seurat, and ggplot2 versions with <code>packageVersion()</code>; retain Cell Ranger version and reference details. Check linked documentation against those recorded versions and report reproducibility issues through the <a class="text-blue-600 hover:underline" href="../contact.html">Contact page</a>.</p>
 <p class="text-sm text-gray-500">Author: <a class="text-blue-600 hover:underline font-medium" href="../about.html">Nasir Mahmood Abbasi, PhD</a> - Category: Advanced Single-Cell Analysis</p>
 </div>
 </div>

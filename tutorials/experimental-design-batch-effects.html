@@ -198,6 +198,9 @@ function toggleMobileMenu() {
 <nav aria-label="Tutorial navigation" class="reader-toolbar"><a href="statistics-for-bioinformatics.html" title="Statistics for Bioinformatics">← Previous tutorial</a><a data-catalogue-return="" href="../tutorials.html">All tutorials</a><a href="reference-genomes-annotation.html" title="Reference Genomes and Annotation Databases">Next tutorial →</a></nav>
 <article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--decision-guide">
 <p class="lesson-lead">Before sequencing, ask whether the biological comparison can be separated from the way samples are processed. A sample sheet and a condition-by-batch table expose design problems while they can still be fixed. This guide walks through those decisions, then shows lightweight metadata checks and an exploratory expression PCA.</p>
+<section class="lesson-summary tutorial-learning-contract" data-tutorial-format="conceptual-guide" aria-label="Learning format">
+<p><strong>Format: Conceptual guide.</strong> For learners planning or reviewing an omics study: you will assess replication, batch balance, and sample-to-metadata alignment, then run an exploratory PCA on a tiny synthetic count table or your own prepared counts; no biological dataset is supplied.</p>
+</section>
 <h2>Start with the experimental unit</h2>
 <p>The experimental unit is the unit independently assigned to a treatment or condition. It is often a participant, animal, culture, or independently prepared sample. Repeated measurements from one unit and technical replicates do not create additional independent biological replicates. Keep the unit identifier in metadata so the analysis can represent pairing or repeated measurements when the design requires it.</p>
 <p>A batch is a group processed under shared technical conditions, such as a sequencing run, plate, reagent lot, operator, or processing date. Record the actual factors that could differ; a single column called <code>batch</code> may not capture all relevant sources of variation. Give each row an unambiguous sample ID, and maintain a separate, stable mapping from that ID to raw files.</p>
@@ -218,8 +221,15 @@ S01,Donor01,control,Lane1,L01,F,2024-01-12
 S02,Donor02,control,Lane2,L02,M,2024-01-13
 S03,Donor03,treated,Lane1,L03,F,2024-01-12
 S04,Donor04,treated,Lane2,L04,M,2024-01-13</code></pre>
-<p>Save this as <code>metadata.csv</code>. The rows above are illustrative; they do not demonstrate an appropriate sample size or a biological result.</p>
-<p>The Python check below requires pandas. It stops on missing required fields, blank values, or duplicate sample IDs, prints the batch-by-condition counts, and writes a validated copy. It deliberately does not reject repeated experimental-unit IDs, since repeated measurements and paired designs can be valid. Review the table for empty cells and make sure every row corresponds to the intended sample unit before using the output downstream.</p>
+<p>Use an empty working directory for these examples. Save the rows as <code>metadata.csv</code> (or create it with the shell heredoc below); they are illustrative and do not demonstrate an appropriate sample size or biological result. Check <code>python --version</code>, then verify pandas is available with <code>python -c "import pandas; print(pandas.__version__)"</code>.</p>
+<pre><code>cat &gt; metadata.csv &lt;&lt;'EOF'
+sample_id,experimental_unit,condition,batch,library_id,sex,collection_date
+S01,Donor01,control,Lane1,L01,F,2024-01-12
+S02,Donor02,control,Lane2,L02,M,2024-01-13
+S03,Donor03,treated,Lane1,L03,F,2024-01-12
+S04,Donor04,treated,Lane2,L04,M,2024-01-13
+EOF</code></pre>
+<p>Save the Python block below as <code>validate_metadata.py</code> in the working directory and run <code>python validate_metadata.py</code>. It requires pandas, stops on missing required fields, blank values, or duplicate sample IDs, prints the batch-by-condition counts, and writes <code>metadata.validated.csv</code>. It deliberately does not reject repeated experimental-unit IDs, since repeated measurements and paired designs can be valid. Review the table for empty cells and make sure every row corresponds to the intended sample unit before using the output downstream.</p>
 <pre><code>import pandas as pd
 
 meta = pd.read_csv("metadata.csv", dtype={"sample_id": "string"})
@@ -274,6 +284,15 @@ pc_df &lt;- data.frame(PC1 = pca$x[, 1], PC2 = pca$x[, 2], meta,
                     check.names = FALSE)
 write.csv(pc_df, "pca_coordinates.csv", row.names = FALSE)
 print(summary(pca))</code></pre>
+<p>To try the code without biological data, work in an empty directory and create the following clearly synthetic fixture with the same four sample IDs as the metadata example. This toy table tests file structure and code flow only; its values do not represent an assay or support biological conclusions.</p>
+<pre><code>cat &gt; counts.csv &lt;&lt;'EOF'
+feature_id,S01,S02,S03,S04
+gene_A,10,12,40,38
+gene_B,30,28,15,17
+gene_C,5,8,22,18
+gene_D,50,45,55,60
+EOF</code></pre>
+<p>Save the R block above as <code>pca.R</code> in that directory, then run <code>Rscript --version</code> and <code>Rscript pca.R</code>. It should write <code>pca_coordinates.csv</code> with four sample rows and columns <code>PC1</code>, <code>PC2</code>, and the seven metadata fields; the printed summary reports the variance represented by the components. If you see the explicit stop about matching sample IDs, align or correct the count-column names—do not bypass the check. If you substitute real data, use a count matrix produced for your assay and reference, with unique feature IDs, finite non-negative numeric entries, and columns corresponding exactly to sample IDs. The official <a href="https://bioconductor.org/packages/release/bioc/vignettes/DESeq2/inst/doc/DESeq2.html">DESeq2 worked vignette</a> explains count-matrix/sample-metadata correspondence for RNA-seq; this PCA example itself uses base R. A successful run establishes only that this input passed these checks and produced coordinates, not that the assay, design, or biological interpretation is valid.</p>
 <p>This writes sample coordinates and prints the variance summary; it does not draw a plot. Plot the coordinates with points colored by condition and shaped by batch, then inspect whether each factor tracks the visible separation. The explicit alignment and zero-library checks prevent common input mismatches; the feature filter avoids asking scaled PCA to divide constant features by zero. With <code>scale. = FALSE</code>, highly variable features can dominate, so treat this as a diagnostic view and document the transform and filtering choices.</p>
 <h2>Choose a modeling response</h2>
 <ul>
@@ -308,7 +327,7 @@ print(summary(pca))</code></pre>
 <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
 </div>
 <div>
-<p class="text-sm text-gray-600 mb-2">This tutorial records the software versions used in its examples. Software and package behaviour can change. Please re-check commands against the official documentation. If a command does not work, you find an error, or the tutorial is no longer reproducible, please report it through the <a class="text-blue-600 hover:underline" href="../contact.html">Contact page</a></p>
+<p class="text-sm text-gray-600 mb-2">Example software versions were not recorded. Before adapting the snippets, capture your environment with <code>python --version</code>, <code>python -c "import pandas; print(pandas.__version__)"</code>, and <code>R --version</code>, and record those outputs with your analysis. Re-check commands against the official documentation; report errors or broken steps through the <a class="text-blue-600 hover:underline" href="../contact.html">Contact page</a>.</p>
 <p class="text-sm text-gray-500">Author: <a class="text-blue-600 hover:underline font-medium" href="../about.html">Nasir Mahmood Abbasi, PhD</a> - Category: Foundations &amp; Prerequisites</p>
 </div>
 </div>

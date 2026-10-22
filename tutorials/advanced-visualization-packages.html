@@ -4,20 +4,20 @@
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<meta content="A practical guide to plotting Seurat single-cell data with SCpubr, scCustomize, dittoSeq, and ggplot2, with attention to scales, sample composition, and interpretation." name="description"/>
+<meta content="A practical guide to plotting Seurat single-cell data with SCpubr, dittoSeq, and ggplot2, including input checks, scale choices, sample composition, and interpretation." name="description"/>
 <meta content="bioinformatics, single-cell RNA-seq, shell commands, conda, computational biology, tutorials, data analysis" name="keywords"/>
 <meta content="Nasir Mahmood Abbasi, PhD" name="author"/>
 <meta content="index, follow" name="robots"/>
 <!-- Open Graph tags for social sharing -->
 <meta content="Visualizing single-cell data with R plotting packages" property="og:title"/>
-<meta content="A practical guide to plotting Seurat single-cell data with SCpubr, scCustomize, dittoSeq, and ggplot2, with attention to scales, sample composition, and interpretation." property="og:description"/>
+<meta content="A practical guide to plotting Seurat single-cell data with SCpubr, dittoSeq, and ggplot2, including input checks, scale choices, sample composition, and interpretation." property="og:description"/>
 <meta content="https://theomicshub.com/tutorials/advanced-visualization-packages.html" property="og:url"/>
 <meta content="website" property="og:type"/>
 <meta content="https://theomicshub.com/images/advanced-visualization-packages.webp" property="og:image"/>
 <!-- Twitter Card tags -->
 <meta content="summary_large_image" name="twitter:card"/>
 <meta content="Visualizing single-cell data with R plotting packages" name="twitter:title"/>
-<meta content="A practical guide to plotting Seurat single-cell data with SCpubr, scCustomize, dittoSeq, and ggplot2, with attention to scales, sample composition, and interpretation." name="twitter:description"/>
+<meta content="A practical guide to plotting Seurat single-cell data with SCpubr, dittoSeq, and ggplot2, including input checks, scale choices, sample composition, and interpretation." name="twitter:description"/>
 <meta content="https://theomicshub.com/images/advanced-visualization-packages.webp" name="twitter:image"/>
 <title>Visualizing single-cell data with R plotting packages | The Omics Hub</title><!-- Favicon -->
 <link href="../images/favicon.svg" rel="icon" type="image/svg+xml"/>
@@ -49,7 +49,7 @@ gtag('consent', 'default', {
   "@context": "https://schema.org",
   "@type": "TechArticle",
   "headline": "Visualizing single-cell data with R plotting packages",
-  "description": "A practical guide to plotting Seurat single-cell data with SCpubr, scCustomize, dittoSeq, and ggplot2, with attention to scales, sample composition, and interpretation.",
+  "description": "A practical guide to plotting Seurat single-cell data with SCpubr, dittoSeq, and ggplot2, including input checks, scale choices, sample composition, and interpretation.",
   "mainEntityOfPage": {
     "@type": "WebPage",
     "@id": "https://theomicshub.com/tutorials/advanced-visualization-packages.html"
@@ -87,7 +87,7 @@ gtag('consent', 'default', {
   "@context": "https://schema.org",
   "@type": "TechArticle",
   "name": "Visualizing single-cell data with R plotting packages",
-  "description": "A practical guide to plotting Seurat single-cell data with SCpubr, scCustomize, dittoSeq, and ggplot2, with attention to scales, sample composition, and interpretation.",
+  "description": "A practical guide to plotting Seurat single-cell data with SCpubr, dittoSeq, and ggplot2, including input checks, scale choices, sample composition, and interpretation.",
   "url": "https://theomicshub.com/tutorials/advanced-visualization-packages.html",
   "isPartOf": {
     "@type": "WebSite",
@@ -197,7 +197,10 @@ function toggleMobileMenu() {
 </div>
 <nav aria-label="Tutorial navigation" class="reader-toolbar"><a href="scrna-seq-quality-control.html" title="Assessing scRNA-seq integration with LISI and silhouette">← Previous tutorial</a><a data-catalogue-return="" href="../tutorials.html">All tutorials</a><a href="tcr-bcr-repertoire-analysis.html" title="TCR/BCR Repertoire Analysis">Next tutorial →</a></nav>
 <article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--walkthrough">
-<p class="lesson-lead">This walkthrough starts with a QC-reviewed Seurat object and shows how to make and inspect common plots with SCpubr, scCustomize, dittoSeq, and ggplot2. The examples are templates: replace placeholder feature names and metadata columns, then check every plot against the object and analysis question.</p>
+<p class="lesson-lead">This walkthrough starts with a QC-reviewed Seurat object and shows how to make and inspect common plots with SCpubr, dittoSeq, and ggplot2. The examples are templates: replace placeholder feature names and metadata columns, then check every plot against the object and analysis question.</p>
+<section class="lesson-summary tutorial-learning-contract" data-tutorial-format="advanced-template" aria-label="Learning format">
+<p><strong>Format: Advanced template.</strong> Readers who have completed a Seurat workflow will adapt their own QC-reviewed object, preflight its metadata, reductions, and features, then export and review exploratory figures. No dataset is supplied; bring an RDS object that meets the checks below.</p>
+</section>
 <div class="lesson-summary"><p><strong>Input contract:</strong> an RDS file containing a Seurat object, a computed UMAP reduction for the embedding examples, and metadata columns used in each grouping. You need the named R packages installed in a compatible R environment. Package versions were not run or verified for this revision, so check installed help and package release notes before adapting a call.</p></div>
 <h2>Learning objectives &amp; prerequisites</h2>
 <p><strong>By the end of this lesson</strong> you will be able to:</p>
@@ -216,7 +219,7 @@ function toggleMobileMenu() {
 <p>Exploratory plots in Seurat (DimPlot, FeaturePlot, DotPlot) are excellent for iterative analysis, but default styling is designed for quick inspection rather than publication. Well-crafted figures must communicate a specific biological message: which cell types change with condition, which genes mark a cluster, or how pathway activities distribute across cell states. Poor color choices, inconsistent legends, and cluttered axis labels can obscure biological signals or, worse, mislead the reader.</p>
 <p>These packages expose different plotting interfaces and defaults. A helper function can shorten repeated plotting code, but it does not make a palette accessible to every reader or make separate plots directly comparable. Check the data mapping, legends, and scale in each exported figure.</p>
 <h2>Reproducible, sequential workflow</h2>
-<p>The examples use <code>data/seurat_obj.rds</code> as a user-supplied input path. Create the <code>results/</code> directory in a writable working directory first. The object must contain the metadata and features named in a particular example; a saved object is not guaranteed to contain a UMAP, normalized expression, or every gene listed below.</p>
+<p>Work from the root of your analysis project, where <code>data/seurat_obj.rds</code> already exists; the examples create <code>results/</code> as needed. This is a template, not a supplied dataset. The object must contain the metadata and features named in a particular example; a saved object is not guaranteed to contain a UMAP, normalized expression, or every gene listed below.</p>
 <h3>1) Setup: load libraries and the Seurat object</h3>
 <pre><code># Input files:
 # - data/seurat_obj.rds  (Seurat object with metadata: 'cell_type', 'condition')
@@ -225,14 +228,29 @@ function toggleMobileMenu() {
 
 library(Seurat)          # core single-cell object
 library(SCpubr)         # plotting wrappers
-library(scCustomize)     # extended aesthetics
 library(dittoSeq)       # composition &amp; heatmaps
 library(ggplot2)        # underlying plotting system
 
 seurat_obj &lt;- readRDS("data/seurat_obj.rds")
 stopifnot(inherits(seurat_obj, "Seurat"))
+required_meta &lt;- c("cell_type", "condition")
+missing_meta &lt;- setdiff(required_meta, colnames(seurat_obj[[]]))
+if (length(missing_meta)) stop("Missing metadata: ", paste(missing_meta, collapse = ", "))
+if (!("umap" %in% names(seurat_obj@reductions))) stop("UMAP reduction not found")
+# patient_id is needed for step 5; set this to the metadata column for your samples.
 </code></pre>
-<p>Install each package using its current official instructions and record the resulting versions with <code>sessionInfo()</code>. This page does not pin or test a complete environment. If a namespace or function is unavailable, consult the installed package help rather than assuming every package is on CRAN.</p>
+<p>Use a project-specific R library and check current release requirements before installing. As of October 2026, the Bioconductor release page lists R 4.6 for the current dittoSeq release; use its Bioconductor-matched <code>BiocManager</code>, rather than installing dittoSeq from CRAN. Install CRAN packages separately, then verify availability and capture exact versions:</p>
+<pre><code># In R; run from the project directory. Review release requirements first.
+install.packages(c("Seurat", "SCpubr", "ggplot2", "patchwork"))
+if (!requireNamespace("BiocManager", quietly = TRUE)) install.packages("BiocManager")
+BiocManager::install("dittoSeq")
+
+stopifnot(all(vapply(c("Seurat", "SCpubr", "ggplot2", "patchwork", "dittoSeq"),
+  requireNamespace, logical(1), quietly = TRUE)))
+dir.create("results", showWarnings = FALSE)
+writeLines(capture.output(sessionInfo()), "results/session_info.txt")
+</code></pre>
+<p>These instructions identify package sources, not a tested lockfile or guaranteed compatibility set. Bioconductor release and R versions must match; for an existing project, follow its established environment rather than updating packages in place.</p></p>
 <h3>2) Standardized UMAP with SCpubr</h3>
 <pre><code># Purpose: create a dimensional-reduction plot grouped by cell type.
 # Input: seurat_obj
@@ -254,7 +272,7 @@ ggsave("results/umap_celltype.png", p_umap, width = 8, height = 6, dpi = 300)
 ggsave("results/umap_celltype.pdf", p_umap, width = 8, height = 6)
 </code></pre>
 <p class="lesson-checkpoint"><strong>Check before export:</strong> confirm <code>"umap"</code> appears in <code>names(seurat_obj@reductions)</code> and that <code>cell_type</code> is present in the object's metadata. <code>repel = TRUE</code> requests label repulsion; it does not ensure that every label will fit. Reduce label size, remove labels, or enlarge the plot if the result remains crowded.</p>
-<h3>3) Feature expression map with scCustomize / SCpubr</h3>
+<h3>3) Feature expression map with SCpubr</h3>
 <pre><code># Purpose: plot expression of a marker gene with a sequential color gradient.
 # Input: seurat_obj; feature: "GeneA" must be present (check FeaturePlot support).
 # Output: results/feature_GeneA.png
@@ -321,17 +339,17 @@ p_heat &lt;- dittoSeq::dittoHeatmap(
 ggsave("results/heatmap_top_markers.pdf", p_heat, width = 8, height = 6)
 </code></pre>
 <p>This call leaves <code>scaled.to.max</code> off, so it does not request dittoSeq's per-gene [0,1] max scaling. The function's default assay, slot, and heatmap behavior depend on the object and package version; inspect the installed help and state the actual assay and transformation in the caption. If you deliberately scale values, explain what the scale means because it changes comparisons of absolute expression.</p>
-<h3>7) Composite figure assembly</h3>
-<pre><code># Purpose: assemble UMAP + violin + heatmap into a single multi-panel figure
-# Input: p_umap, p_dot, p_heat (from prior steps)
-# Output: results/panel_figure.pdf
+<h3>7) Assemble compatible ggplot panels; export the heatmap separately</h3>
+<pre><code># Purpose: combine ggplot panels; keep the dittoSeq heatmap as a separate file
+# Input: p_umap, p_feat, p_dot (ggplot panels); p_heat exported in step 6
+# Output: results/panel_figure.pdf plus results/heatmap_top_markers.pdf
 
-library(patchwork)  # for combining ggplots
-
-combined &lt;- (p_umap + p_feat) / (p_dot + p_heat) + plot_layout(guides = "collect")
+library(patchwork)
+stopifnot(all(vapply(list(p_umap, p_feat, p_dot), inherits, logical(1), "ggplot")))
+combined &lt;- (p_umap + p_feat) / p_dot + plot_layout(guides = "collect")
 ggsave("results/panel_figure.pdf", combined, width = 12, height = 10)
 </code></pre>
-<p>Patchwork's <code>guides = "collect"</code> requests guide collection, but guides merge only when their scales are compatible. The heatmap produced by dittoSeq may not be a ggplot object accepted by patchwork's arithmetic. Check the classes returned by each function; if they differ, export compatible plots separately and assemble them with a tool designed for the returned object types. This composition example is a sketch, not a verified runnable recipe.</p>
+<p>Patchwork's <code>guides = "collect"</code> requests guide collection, but guides merge only when their scales are compatible. This example intentionally composes only objects checked as ggplots; guide collection still merges only compatible scales. The dittoSeq heatmap is saved independently in step 6 because its returned class and rendering method can vary with the installed version. Open the panel and heatmap PDFs and inspect labels, legends, cropping, and legibility at final size before treating them as a figure set. If your heatmap is a grid/grob object and you need a unified page, consult patchwork’s documented <code>wrap_elements()</code> support and test the exact returned object; this tutorial does not claim that path has been exercised.</p>
 <h2>Output inspection and interpretation</h2>
 <p>When you open the generated images, inspect the following:</p>
 <ul>
@@ -400,8 +418,7 @@ saveRDS(seurat_obj, file = "data/seurat_obj_with_umap.rds")
 <ul>
 <li><a href="https://satijalab.org/seurat/">Seurat documentation (Satija Lab)</a> — core object model and workflows.</li>
 <li><a href="https://enblacar.github.io/SCpubr-book-v1/">SCpubr book</a> — examples and function guidance for SCpubr plotting wrappers.</li>
-<li><a href="https://bioconductor.org/packages/release/bioc/html/dittoSeq.html">dittoSeq (Bioconductor)</a> — composition plots and heatmaps tuned for single-cell data.</li>
-<li><a href="https://cran.r-project.org/package=scCustomize">scCustomize (CRAN)</a> — extended ggplot2-based customizations for Seurat plots.</li>
+<li><a href="https://bioconductor.org/packages/release/bioc/html/dittoSeq.html">dittoSeq (Bioconductor)</a> — composition plots and heatmaps tuned for single-cell data; includes release-specific R requirements and installation instructions.</li>
 </ul>
 <div class="lesson-result"><p><strong>Deliverable:</strong> a set of exported exploratory plots plus a short figure caption recording the input object, assay/transformation, grouping metadata, scale or clipping, and sample counts. Before interpreting a pattern, check that plot legends and panel scales support the comparison you intend to make.</p></div>
 <aside aria-labelledby="tutorial-feedback-title" class="lesson-feedback" id="tutorial-feedback"><h2 id="tutorial-feedback-title">Help improve this tutorial</h2><p>Found an error, a broken link, or a step that needs a clearer explanation? Please <a href="../contact.html">contact me</a>. Your feedback helps me keep this resource accurate and useful.</p></aside></article>

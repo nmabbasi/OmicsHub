@@ -196,7 +196,7 @@ function toggleMobileMenu() {
 <img alt="Command-Line Navigation for Bioinformatics Projects" class="w-full aspect-video object-cover" decoding="async" loading="eager" src="../images/shell-commands-part1-workstation.webp"/>
 </div>
 <nav aria-label="Tutorial navigation" class="reader-toolbar"><a href="modern-bioinformatics-methods-2026.html" title="Choosing Methods in Modern Bioinformatics">← Previous tutorial</a><a data-catalogue-return="" href="../tutorials.html">All tutorials</a><a href="command-line-part2.html" title="Command-line text processing for bioinformatics">Next tutorial →</a></nav>
-<article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--walkthrough"><p class="lesson-lead">Build a small project directory, practice moving through it, and inspect file operations without mistaking placeholder files for usable sequencing data. The examples use a Bash-like shell and common command-line utilities.</p><h2>Learning objectives and prerequisites</h2>
+<article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--walkthrough"><p class="lesson-lead">Build a small project directory, practice moving through it, and inspect file operations without mistaking placeholder files for usable sequencing data. The examples use a Bash-like shell and common command-line utilities.</p><section class="lesson-summary tutorial-learning-contract" data-tutorial-format="hands-on-lab" aria-label="Learning format"><p><strong>Format: Hands-on lab.</strong> Beginners with terminal access will create and inspect a disposable bioinformatics-style directory tree, then practice safe copy and move operations. The commands create their own zero-byte placeholder files; no sequencing data are supplied or required.</p></section><h2>Learning objectives and prerequisites</h2>
 <p>Prerequisites: a working terminal on Linux, macOS, or Windows Subsystem for Linux (WSL). No prior shell experience required, but basic familiarity with copying and pasting text will help.</p>
 <p>By the end of this lesson you will be able to:</p>
 <ul>
@@ -247,7 +247,7 @@ ls -la projects/basic-nav
 <ul>
 <li><code>pwd</code> prints a full path such as <code>/home/yourusername</code> or <code>/Users/yourname</code>.</li>
 <li><code>ls projects/basic-nav</code> shows the subdirectories created (<code>data</code>, <code>results</code>, <code>scripts</code>, <code>logs</code>).</li>
-<li><code>ls -l projects/basic-nav</code> shows permissions, owner, size (zero for the placeholder files), and modification times. Hidden files (those starting with a dot) will be visible with <code>-a</code>.</li>
+<li><code>ls -l projects/basic-nav</code> lists the four subdirectories and their directory metadata; it does not show files nested inside them. To see the zero-byte placeholders and their sizes, run <code>ls -l projects/basic-nav/data projects/basic-nav/scripts</code>. Hidden entries (those starting with a dot) appear with <code>-a</code>.</li>
 </ul>
 <h3 class="lesson-step">3. Change directory into the project and use relative navigation</h3>
 <pre><code># Change into the project directory using a relative path
@@ -290,7 +290,7 @@ less projects/basic-nav/scripts/README.md
 </ul>
 <h3 class="lesson-step">5. Copy, move, and rename files with examples</h3>
 <p>Check the source and destination before changing files. The <code>-i</code> option asks before replacing an existing destination. These examples copy and move only the practice placeholders; they are not a backup strategy for irreplaceable data.</p>
-<pre><code># Copy placeholder FASTQ files into results as a backup copy (non-destructive)
+<pre><code># Copy only the R1 placeholder into results; the original remains in data
 cp -i projects/basic-nav/data/sample_R1.fastq.gz projects/basic-nav/results/
 
 # Rename the README to indicate it's a template (move within the same folder)
@@ -303,7 +303,7 @@ mv -i projects/basic-nav/data/sample_R2.fastq.gz projects/basic-nav/data/raw/
 </code></pre>
 <p>What to expect:</p>
 <ul>
-<li>The <code>cp</code> command duplicates the file; the original remains.</li>
+<li>The <code>cp</code> command duplicates only <code>sample_R1.fastq.gz</code> into <code>results/</code>; its original remains in <code>data/</code>. The later moves place both original mate placeholders in <code>data/raw/</code>, so <code>results/</code> contains only the copied R1 placeholder.</li>
 <li><code>mv</code> renames or relocates files; when used to rename it is generally fast because it alters metadata rather than copying contents (on the same filesystem).</li>
 <li>Without an interactive or no-clobber option, a command may replace an existing destination. Here <code>-i</code> prompts before replacement; read the prompt and answer carefully. A prompt reduces accidental overwrites but is not a backup.</li>
 </ul>

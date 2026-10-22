@@ -68,7 +68,7 @@ gtag('consent', 'default', {
     }
   },
   "datePublished": "2026-08-27",
-  "dateModified": "2026-10-21",
+  "dateModified": "2026-10-22",
   "url": "https://theomicshub.com/tutorials/ai-prompt-engineering-seurat.html",
   "name": "Prompt Engineering for Seurat and Scanpy: A Reproducible Workflow",
   "isPartOf": {
@@ -156,6 +156,7 @@ function toggleMobileMenu() {
 <nav aria-label="Tutorial navigation" class="reader-toolbar"><a href="single-cell-foundation-models.html" title="Evaluating scGPT &amp; Geneformer Embeddings">← Previous tutorial</a><a data-catalogue-return="" href="../tutorials.html">All tutorials</a><a href="autonomous-research-orchestrator.html" title="Autonomous Research Orchestrator">Next tutorial →</a></nav>
 <article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--walkthrough">
 <p class="lesson-lead">Use an AI coding assistant to draft single-cell analysis code only after you specify the data, biological question, method, and outputs. Then check its assumptions and run the script where you can inspect the results.</p>
+<section class="lesson-summary tutorial-learning-contract" data-tutorial-format="advanced-template" aria-label="Learning format"><p><strong>Format: Advanced template.</strong> For readers comfortable with basic scRNA-seq and command-line use: you will adapt and review one Scanpy QC/clustering workflow and one Seurat cluster-marker workflow. Prepare compatible AnnData and Seurat objects yourself; no dataset is bundled, and the examples are not end-to-end data-preparation labs.</p></section>
 <div class="lesson-warning"><p><strong>Scope:</strong> These scripts are starting examples, not validated analyses. Thresholds, identities, assay or layer selection, and statistical design must match your data. Cell-level marker tests do not replace sample-aware inference for condition comparisons.</p></div><div class="flex flex-wrap items-center gap-4 text-xs font-mono text-gray-500 bg-gray-50 p-3 rounded-lg border border-gray-200 mb-6">
 <div class="flex items-center gap-1">
 <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
@@ -163,7 +164,7 @@ function toggleMobileMenu() {
 </div>
 <div class="flex items-center gap-1">
 <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
-<span>Updated 21 October 2026</span></div>
+<span>Updated 22 October 2026</span></div>
 </div><h2>What you will produce</h2>
 <p>By the end, you will have a task-specific prompt, a reviewed analysis script, and a record of the files and checks it produced. Running either example requires the named software and a compatible input object.</p>
 <p><strong>Learning objectives</strong></p>
@@ -191,7 +192,7 @@ function toggleMobileMenu() {
 <li>Run the script, inspect outputs, and iterate with small changes.</li>
 </ul>
 <p>Use this prompt as a specification, not as evidence that an assistant will return correct code. Replace assumptions with facts from your object; biological results cannot be guaranteed by a minimum row count.</p>
-<pre><code>Goal: Identify marker genes for cluster 2 vs all in a PBMC dataset.
+<pre><code>Goal: Identify marker genes for cluster 2 vs all in a PBMC dataset using the Seurat example below.
 Input: RDS Seurat object at ./data/pbmc_seurat.rds; metadata column 'seurat_clusters' present; 5,000 cells expected.
 Constraints: Use R and Seurat &gt;=4; test = MAST; logfc.threshold = 0.25; return genes with p_val_adj &lt; 0.05; save a CSV report.
 Output: ./results/cluster2_markers.csv and UMAP plot ./results/umap_cluster2.png
@@ -199,9 +200,11 @@ Checks: verify the file exists, inspect actual column names and row count (zero 
 Ask: show all package imports and version prints; explain any assumptions and cite Seurat functions used.
 </code></pre>
 <h2>Reproducible, sequential workflow examples</h2>
-<p>Below are two sequential workflows: one Scanpy (Python) QC → clustering → markers example, and one Seurat (R) marker extraction example. Each step lists required input files and what the command produces.</p>
+<p>The Scanpy workflow is a separate QC → clustering → exploratory marker-ranking task; it does not implement the cluster-2 Seurat prompt above. The Seurat script implements that prompt. Both are templates for prepared objects, not a shared sequential pipeline.</p>
 <h3>Scanpy workflow (Python)</h3>
-<p>Files you should have:</p>
+<p>Prepare an AnnData file at <code>./data/adata.h5ad</code> with gene symbols in <code>var_names</code> and count-like values in <code>.X</code>; this template computes QC metrics but does not create the object. From the project root, check the input before running the workflow:</p>
+<pre><code>python -c "import scanpy as sc; a=sc.read_h5ad('./data/adata.h5ad'); print(a.shape); print(list(a.obs.columns)); print(a.var_names[:5].tolist())"</code></pre>
+<p>Confirm that the printed dimensions are nonzero, feature names are the expected organism-specific identifiers, and <code>.X</code> contains the intended count-like data. If the file is absent or the structure is different, stop and prepare or locate a compatible object rather than proceeding.</p>
 <ul>
 <li>Input AnnData file: ./data/adata.h5ad. This example expects gene symbols in var_names and count-like values in .X; it calculates n_genes_by_counts and pct_counts_mt itself.</li>
 <li>Output directory: ./results/ (create if missing)</li>
@@ -285,11 +288,13 @@ print("Wrote results to", outdir)
 <ul>
 <li>./results/qc_violins_before.png — violin plots of QC metrics before filtering.</li>
 <li>Filtered in-memory AnnData (then saved): ./results/adata_processed.h5ad</li>
-<li>UMAP images in ./results/umap_leiden_r10.png and in Scanpy's plotting default location.</li>
+<li>UMAP image: ./results/umap_leiden_r10.png (the script explicitly saves this file).</li>
 <li>Cluster ranking table: ./results/scanpy_rank_genes.csv</li>
 </ul>
 <h3>Seurat workflow (R)</h3>
-<p>Files you should have:</p>
+<p>Prepare a serialized Seurat object at <code>./data/seurat_obj.rds</code>, with an RNA expression assay and a <code>seurat_clusters</code> metadata column. Check its structure from the project root before running the workflow:</p>
+<pre><code>Rscript -e 'x &lt;- readRDS("./data/seurat_obj.rds"); print(dim(x)); print(colnames(x@meta.data)); stopifnot("seurat_clusters" %in% colnames(x@meta.data))'</code></pre>
+<p>Expect nonzero cell-by-feature dimensions and the required metadata field. This structural check does not establish that counts, assay choice, identities, or biological annotations are appropriate. If the object or required field is missing, stop and prepare a compatible object first.</p>
 <ul>
 <li>Input Seurat object: ./data/seurat_obj.rds (serialized Seurat object from saveRDS)</li>
 <li>Output directory: ./results/</li>
@@ -311,6 +316,11 @@ seurat_obj &lt;- readRDS(infile)
 cat("Seurat object dimensions (cells x genes):", dim(seurat_obj), "\n")
 cat("Available metadata columns:", paste(colnames(seurat_obj@meta.data), collapse=", "), "\n")
 
+# Validate metadata before plotting or using the cluster identities.
+if (!"seurat_clusters" %in% colnames(seurat_obj@meta.data)) {
+  stop("Required metadata column 'seurat_clusters' is missing; prepare or select the intended identities first.")
+}
+
 # Run UMAP and clustering if not present (safe checks)
 if (!"umap" %in% names(seurat_obj@reductions)) {
   seurat_obj &lt;- NormalizeData(seurat_obj, verbose = FALSE)
@@ -326,19 +336,16 @@ if (!"umap" %in% names(seurat_obj@reductions)) {
 p &lt;- DimPlot(seurat_obj, reduction = "umap", group.by = "seurat_clusters") + ggtitle("UMAP by seurat_clusters")
 ggsave(filename = file.path(outdir, "umap_seurat_clusters.png"), plot = p, width = 6, height = 5)
 
-# Select the cluster identities explicitly before comparing cluster 3 with all other cells.
-if (!"seurat_clusters" %in% colnames(seurat_obj@meta.data)) {
-  stop("Required metadata column 'seurat_clusters' is missing; set intended identities explicitly.")
-}
+# Select cluster identities for the cluster-2 task specified above.
 Idents(seurat_obj) &lt;- "seurat_clusters"
 
 # Exploratory cell-level marker test. For condition-level inference across samples,
 # use a sample-aware design rather than treating cells as replicates.
-cluster_of_interest &lt;- "3"
+cluster_of_interest &lt;- "2"
 markers &lt;- FindMarkers(seurat_obj,
                        ident.1 = cluster_of_interest,
                        test.use = "MAST",
-                       logfc.threshold = 0.5,
+                       logfc.threshold = 0.25,
                        min.pct = 0.1)
 
 # Filter by adjusted p-value
@@ -352,7 +359,7 @@ message("Wrote results to ", outdir)
 <p>What each command produces:</p>
 <ul>
 <li>./results/umap_seurat_clusters.png — UMAP colored by 'seurat_clusters'.</li>
-<li>./results/cluster3_markers.csv — differential expression results for cluster 3 filtered by adjusted p-value.</li>
+<li>./results/cluster2_markers.csv — exploratory differential-expression results for cluster 2 versus the remaining cells, filtered by adjusted p-value.</li>
 <li>./results/seurat_obj_processed.rds — Seurat object with any computed reductions and cluster assignments.</li>
 </ul>
 <h2>Output inspection and interpretation</h2>
@@ -412,7 +419,7 @@ message("Wrote results to ", outdir)
 </ul>
 <h2>Concise next-step checklist</h2>
 <ol>
-<li>Create an examples folder with a small toy dataset (example AnnData or Seurat object) to validate prompts and iterations.</li>
+<li>Before requesting code, record each prepared object's dimensions, metadata columns, feature identifiers, assay or layer, and provenance; stop if required fields or intended data are unclear.</li>
 <li>Use the prompt template at the top of this tutorial to request an initial script from your AI assistant. Require that the assistant prints package versions and lists its assumptions.</li>
 <li>Run the generated script locally, inspect the outputs listed in the prompt, and record failures or warnings.</li>
 <li>Iterate with small, targeted prompts (e.g., "change logfc.threshold to 0.25" or "use Wilcoxon instead of MAST") and rerun checks.</li>
@@ -432,7 +439,7 @@ message("Wrote results to ", outdir)
 <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
 </div>
 <div>
-<p class="text-sm text-gray-600 mb-2">This tutorial records the software versions used in its examples. Software and package behaviour can change. Please re-check commands against the official documentation. If a command does not work, you find an error, or the tutorial is no longer reproducible, please report it through the <a class="text-blue-600 hover:underline" href="../contact.html">Contact page</a></p>
+<p class="text-sm text-gray-600 mb-2">No package versions were executed or recorded for these templates. Before running them, capture your environment with <code>python -c "import scanpy, anndata; print(scanpy.__version__, anndata.__version__)"</code> or <code>Rscript -e 'sapply(c("Seurat", "MAST"), packageVersion)'</code>, and compare the installed APIs with the official documentation. If a command fails or the tutorial is no longer reproducible, please report it through the <a class="text-blue-600 hover:underline" href="../contact.html">Contact page</a>.</p>
 <p class="text-sm text-gray-500">Author: <a class="text-blue-600 hover:underline font-medium" href="../about.html">Nasir Mahmood Abbasi, PhD</a> - Category: AI-Driven Research &amp; Agentic Bioinformatics</p>
 </div>
 </div>

@@ -197,27 +197,41 @@ function toggleMobileMenu() {
 </div>
 <nav aria-label="Tutorial navigation" class="reader-toolbar"><a href="scrna-seq-basics.html" title="scRNA-seq Basics">← Previous tutorial</a><a data-catalogue-return="" href="../tutorials.html">All tutorials</a><a href="scrna-seq-downstream-analysis.html" title="Single-Cell RNA-seq Downstream Analysis">Next tutorial →</a></nav>
 <article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--lab"><p class="lesson-lead">Integration changes the representation used to compare cells. This lab compares Harmony with Seurat's anchor-based RPCA workflow, explains where CCA differs, and builds a diagnostic comparison that asks whether batch mixing improves while known biology remains recognizable.</p>
-<section aria-label="Scope and prerequisites" class="lesson-summary"><p><strong>What you will produce:</strong> baseline, Harmony, and RPCA embeddings; per-cell iLISI scores for batch and cLISI scores for known cell labels; and a written assessment that combines those diagnostics with marker expression.</p><p><strong>Prerequisites:</strong> basic scRNA-seq preprocessing (normalization, variable features, PCA, UMAP), R, and Seurat. The code below uses the classic Seurat anchor workflow with log-normalized RNA data; it is not a promise that package versions or object layouts are interchangeable. Seurat v5 also offers layer-based integration via <code>IntegrateLayers</code>. Input files are user-provided Seurat objects, not downloaded by this lesson.</p></section>
+<section class="lesson-summary tutorial-learning-contract" data-tutorial-format="advanced-template" aria-label="Learning format"><p><strong>Format: Advanced template.</strong> For readers already comfortable with Seurat preprocessing, this lesson applies alternative integration representations to two prepared Seurat RDS objects and evaluates their diagnostics; you must supply and validate those inputs, which are not bundled here.</p></section>
+<section aria-label="Scope and prerequisites" class="lesson-summary"><p><strong>What you will produce:</strong> baseline, Harmony, and RPCA embeddings; per-cell iLISI summaries for batch and cLISI summaries for trusted cell labels; marker-expression plots for those same labels; and a written comparison table. CCA is an optional anchor-finding branch described below, not an output produced by the main commands.</p><p><strong>Prerequisites:</strong> basic scRNA-seq preprocessing (normalization, variable features, PCA, UMAP), R, and Seurat. The code below uses the classic Seurat anchor workflow with log-normalized RNA data; it is not a promise that package versions or object layouts are interchangeable. Seurat v5 also offers layer-based integration via <code>IntegrateLayers</code>. Input files are user-provided Seurat objects, not downloaded by this lesson. For a worked PBMC acquisition/preparation example, see <a href="https://satijalab.org/seurat/articles/pbmc3k_tutorial.html">Seurat's PBMC 3k tutorial</a>; its object is a starting example, not a ready-made pair of matched batches for this comparison.</p></section>
 <h2>Decide whether integration is justified</h2>
 <p>Batch separation in an embedding can reflect technical effects, genuine biology, or both. Integration is useful when datasets share biological states that should be aligned for joint analysis. If a cell type occurs in only one batch, an algorithm cannot establish that it has a counterpart elsewhere; forced overlap can obscure the distinction. Keep an unintegrated analysis as a reference and do not use an integrated embedding as corrected gene-expression data for differential expression.</p>
 <div class="lesson-decision"><p><strong>Start with the unintegrated comparison.</strong> Plot cells by batch and, where available, trusted cell labels. If batches already mix within comparable cell states, integration may add little. If batch dominates shared populations, compare methods. A UMAP is a view of a chosen representation, not a formal quality test.</p></div>
 <h2>Input contract and setup</h2>
-<p>Prepare two RDS files, <code>pbmc3k.rds</code> and <code>pbmc10k.rds</code> (replace these illustrative names). Each must contain a Seurat object with a raw-count <code>RNA</code> assay and cell metadata. Objects must use compatible gene identifiers and have enough shared features and biological states for meaningful alignment. This example assigns each object one batch label; for multiple samples, use a metadata column that identifies the actual batch for every cell. Preserve original files and record package versions before analysis.</p>
+<p>Prepare two RDS files, <code>pbmc3k.rds</code> and <code>pbmc10k.rds</code> (illustrative filenames only; create or obtain these objects before running the code). Each must contain a Seurat object with an RNA assay containing raw UMI counts, a compatible feature namespace, and cell metadata. This example assigns each object one batch label; for multiple samples, use a metadata column that identifies the actual batch for every cell. Preserve original files. In R, first record the environment and inspect the object contracts:</p>
 <pre><code>library(Seurat)
 library(harmony)
 library(lisi)
 
+R.version.string
+sapply(c("Seurat", "SeuratObject", "harmony", "lisi"),
+       function(pkg) as.character(packageVersion(pkg)))
 pbmc3k &lt;- readRDS("pbmc3k.rds")
 pbmc10k &lt;- readRDS("pbmc10k.rds")
 stopifnot(inherits(pbmc3k, "Seurat"), inherits(pbmc10k, "Seurat"))
 stopifnot("RNA" %in% Assays(pbmc3k), "RNA" %in% Assays(pbmc10k))
+stopifnot(ncol(pbmc3k) &gt; 0, ncol(pbmc10k) &gt; 0)
+features3k &lt;- rownames(pbmc3k[["RNA"]])
+features10k &lt;- rownames(pbmc10k[["RNA"]])
+shared &lt;- intersect(features3k, features10k)
+cat("Shared RNA features:", length(shared), "of",
+    length(union(features3k, features10k)), "\n")
+stopifnot(length(shared) &gt; 0)
+print(head(shared))
+print(head(colnames(pbmc3k[[]])))
+print(head(colnames(pbmc10k[[]])))
 pbmc3k$batch &lt;- "v1_3k"
 pbmc10k$batch &lt;- "v3_10k"
 merged &lt;- merge(pbmc3k, y = pbmc10k, add.cell.ids = c("3k", "10k"))
 stopifnot("batch" %in% colnames(merged[[]]))
 print(table(merged$batch))
 </code></pre>
-<p>The checks catch wrong object types and absent assays; they do not prove that counts are raw, features are comparable, or labels are biologically appropriate. If <code>RNA</code> is absent, stop and identify the intended assay rather than silently switching assays. Confirm the printed cell counts and batch labels before proceeding.</p>
+<p>The feature intersection check catches disjoint identifiers, not semantic incompatibility: confirm that both objects use the same gene-ID system (for example, the same organism and symbol-versus-Ensembl convention) and inspect several expected genes. Before continuing, verify raw-count availability with the accessor appropriate to your SeuratObject version (for example, <code>LayerData(obj, assay = "RNA", layer = "counts")</code> in v5); if counts are absent or already transformed, stop and prepare valid inputs. These checks do not prove biological comparability or annotation quality. If <code>RNA</code> is absent, identify the intended assay rather than silently switching. Confirm the printed cell counts and batch labels. Run from the directory containing both RDS files, or replace the filenames with explicit paths. Do not proceed if either file fails to load, the count layer is missing, or shared feature IDs cannot be reconciled.</p>
 <h2>Build a common preprocessing baseline</h2>
 <p>Use a consistent RNA preprocessing path before branching. Here the objects are merged and normalized together; the RPCA branch below is then split by batch and each object receives PCA for reciprocal anchor finding. The choices of 3,000 variable features and 50 PCs are example settings, not universal thresholds; reduce dimensions if the data do not support them. If your Seurat v5 object has split assay layers that prevent the legacy commands from operating as intended, follow the current layer-based vignette instead of forcing this workflow.</p>
 <pre><code>DefaultAssay(merged) &lt;- "RNA"
@@ -297,12 +311,39 @@ summary(lisi_harmony_both$celltype) # cLISI direction: higher label mixing
 <li><strong>RPCA errors or high resource use:</strong> confirm each object has enough shared features and a valid PCA; reduce feature/dimension counts for exploration. Subsampling is a diagnostic, not evidence that full-data results will match.</li>
 <li><strong>LISI reports missing columns or dimension errors:</strong> check that coordinate rows and metadata rows refer to identical cells in identical order, requested label columns exist, and selected dimensions are available.</li>
 </ul>
-<p>Use marker expression and appropriate downstream analyses as checks. Integrated coordinates are not corrected counts. For differential expression, use unintegrated expression with a design that accounts for relevant covariates or an appropriate integration-aware method; do not treat embedding separation or LISI as a substitute for an inferential model. Clinical or translational equivalence requires independent evidence.</p>
+<h3>Compare marker expression in the original RNA assay</h3>
+<p>Use a small, prespecified marker panel relevant to the cell populations you already trust (the genes below are illustrative human PBMC markers, not labels to impose on another tissue). Plot the same genes on the baseline and each integrated embedding, always reading expression from <code>RNA</code>. This checks whether familiar patterns remain interpretable; it does not prove that integration is correct or provide differential-expression inference.</p>
+<pre><code># Replace the panel with markers appropriate to your organism and tissue.
+markers &lt;- c("CD3D", "MS4A1", "LYZ", "NKG7")
+present &lt;- markers[markers %in% rownames(merged[["RNA"]])]
+if (length(present) == 0) stop("None of the requested markers occur in the RNA assay")
+DefaultAssay(merged) &lt;- "RNA"
+DefaultAssay(merged_harmony) &lt;- "RNA"
+DefaultAssay(merged_rpca) &lt;- "RNA"
+FeaturePlot(merged, features = present, reduction = "umap.pca", assay = "RNA")
+FeaturePlot(merged_harmony, features = present,
+            reduction = "umap.harmony", assay = "RNA")
+FeaturePlot(merged_rpca, features = present,
+            reduction = "umap.rpca", assay = "RNA")
+# Optional: summarize marker detection/expression by trusted labels.
+if ("celltype" %in% colnames(merged[[]])) {
+  DotPlot(merged, features = present, group.by = "celltype", assay = "RNA") + RotatedAxis()
+}</code></pre>
+<p>Success means all three plots render, the gene names are found, and the same recognizable marker patterns can be compared across representations without mistaking a mixed embedding for evidence of preserved function. For each branch, record the median iLISI, median cLISI when labels exist, whether expected marker patterns remain visible, and any rare populations or continuous states that appear altered. Use marker expression and appropriate downstream analyses as checks. Integrated coordinates are not corrected counts. For differential expression, use unintegrated expression with a design that accounts for relevant covariates or an appropriate integration-aware method; do not treat embedding separation or LISI as a substitute for an inferential model. Clinical or translational equivalence requires independent evidence.</p>
+<pre><code>## Comparison worksheet (fill from your own outputs; no universal cutoff)
+## branch  median_batch_iLISI  median_celltype_cLISI  marker_observation  caveat
+## PCA     __________         __________             __________          __________
+## Harmony __________         __________             __________          __________
+## RPCA    __________         __________             __________          __________
+## Decision: retain / investigate / reject each branch, with the biological
+## reason and the diagnostics that support (or limit) that decision.</code></pre>
 <h2>Reproducibility record</h2>
-<p>Save the original objects, record R and package versions, input identities, metadata definitions, selected dimensions/features, integration settings, and the exact cell labels used for evaluation. Save each branch separately if you need to revisit it. A fixed perplexity and parameters make a comparison more reproducible, but do not make it universally optimal.</p>
+<p>Save the original objects, the version output captured in setup, input identities, metadata definitions, selected dimensions/features, integration settings, and the exact cell labels used for evaluation. Save each branch separately if you need to revisit it. A fixed perplexity and parameters make a comparison more reproducible, but do not make it universally optimal.</p>
 <h2>References</h2>
 <ul>
 <li><a href="https://satijalab.org/seurat/articles/seurat5_integration">Seurat v5 integration overview</a> and <a href="https://satijalab.org/seurat/reference/findintegrationanchors">FindIntegrationAnchors reference</a>.</li>
+<li><a href="https://satijalab.org/seurat/articles/pbmc3k_tutorial.html">Seurat PBMC 3k worked tutorial</a> for an upstream example of count-matrix preparation, clustering, markers, and visualization.</li>
+<li><a href="https://satijalab.org/seurat/reference/featureplot">Seurat FeaturePlot reference</a>.</li>
 <li><a href="https://portals.broadinstitute.org/harmony/reference/RunHarmony.html">Harmony RunHarmony reference</a>.</li>
 <li><a href="https://github.com/immunogenomics/LISI">LISI package documentation and input example</a>.</li>
 <li><a href="https://www.sc-best-practices.org/cellular_structure/integration/">Single-cell best-practices integration chapter</a>.</li>

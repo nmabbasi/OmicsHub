@@ -198,6 +198,9 @@ function toggleMobileMenu() {
 <nav aria-label="Tutorial navigation" class="reader-toolbar"><a href="infercnv-copy-number-variation.html" title="Inferring Copy Number Variation (inferCNV)">← Previous tutorial</a><a data-catalogue-return="" href="../tutorials.html">All tutorials</a><a href="cite-seq-wnn-multiomics.html" title="Multi-Omics: CITE-seq &amp; WNN Integration">Next tutorial →</a></nav>
 <article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--walkthrough">
 <p class="lesson-lead">Bulk RNA-seq combines RNA from many cells, so a change in a gene's abundance can reflect a change in cell mixture, expression within cells, or both. This walkthrough uses MuSiC to estimate composition from an annotated single-cell reference, then shows what must be checked before interpreting those estimates.</p>
+<section class="lesson-summary tutorial-learning-contract" data-tutorial-format="conceptual-guide" aria-label="Learning format">
+<p><strong>Format: Conceptual guide.</strong> For analysts with prepared bulk counts and an annotated single-cell reference, this guide walks through input review, a MuSiC fit scaffold, and interpretation checks. No data are supplied; readers must prepare both objects and their metadata.</p>
+</section>
 <div class="lesson-summary"><h2>Scope and inputs</h2><p>MuSiC is a reference-based method designed to use cross-subject single-cell data. You need bulk gene-expression measurements and a single-cell reference with gene counts, cell-type labels, and donor/sample IDs. The code below is an analysis scaffold: replace the named objects and metadata fields with your data, and verify package versions and preprocessing before running it.</p></div>
 <h2>What the estimate means</h2>
 <p>A bulk profile is modeled as a mixture of reference cell-type profiles. The estimated fractions depend on the cell types and expression states represented in that reference. If a relevant population is absent, or if reference and bulk samples differ substantially in condition, tissue, platform, or processing, the model may assign its signal to the closest represented populations. A precise decimal does not remove this ambiguity.</p>
@@ -205,13 +208,13 @@ function toggleMobileMenu() {
 <h2>Check the reference before fitting</h2>
 <ol class="lesson-steps">
 <li>Confirm cell-type annotations and donor identifiers are present for every reference cell. MuSiC uses the cell-type field as <code>clusters</code> and donor/sample field as <code>samples</code>.</li>
-<li>Check that bulk and single-cell features use the same gene identifier system. Ensure overlap is adequate and inspect duplicates and missing identifiers before fitting.</li>
+<li>Check that bulk and single-cell features use the same gene identifier system. Inspect duplicated and missing row names, then quantify shared features in both directions; investigate unexpectedly low overlap before fitting rather than relying on a universal cutoff.</li>
 <li>Review whether the reference covers the tissue, condition, and cell states in the bulk cohort. Record omitted or rare populations rather than treating the listed types as exhaustive truth.</li>
 <li>Use expression on an appropriate linear scale as expected by the method; do not pass log-transformed values simply because they are convenient for visualization. Confirm the package guidance for normalization and inputs.</li>
 </ol>
 <aside class="lesson-checkpoint"><h3>Before running</h3><p>The bulk matrix should have genes in rows and samples in columns; its row names must match the single-cell reference gene identifiers. The reference must be a <code>SingleCellExperiment</code> with counts and the metadata columns named in the call. Do not use the old <code>ExpressionSet</code>-based single-cell example: current MuSiC documentation specifies <code>sc.sce</code>.</p></aside>
 <h2>Run MuSiC with your prepared objects</h2>
-<p>The code assumes that <code>bulk_counts</code> is a genes-by-bulk-samples matrix and <code>sc_reference</code> is a prepared <code>SingleCellExperiment</code>. Both objects are supplied by you; this page does not download or fabricate biological data. Install MuSiC and its dependencies using the current package instructions, then load the package and required Bioconductor classes.</p>
+<p>The code assumes that <code>bulk_counts</code> is a genes-by-bulk-samples matrix and <code>sc_reference</code> is a prepared <code>SingleCellExperiment</code>. Both objects are supplied by you; this page does not download or fabricate biological data. MuSiC's <a href="https://xuranw.github.io/MuSiC/articles/MuSiC.html" rel="noopener" target="_blank">official vignette</a> documents installation via <code>devtools::install_github("xuranw/MuSiC")</code> and describes raw read-count inputs. In a fresh R session, first check <code>R.version.string</code>, then install/load the package and required class; record <code>packageVersion("MuSiC")</code>, <code>packageVersion("SingleCellExperiment")</code>, and <code>BiocManager::version()</code> with the run rather than assuming an untested version combination. If installation or class loading fails, stop and resolve that environment issue before fitting. For prepared-object context, follow the vignette's data-preparation example; this page does not construct these objects from files.</p>
 <pre><code class="language-r">library(MuSiC)
 library(SingleCellExperiment)
 
@@ -224,7 +227,20 @@ stopifnot(all(c("cell_type", "donor_id") %in% colnames(colData(sc_reference))))
 
 # Keep shared genes in the same order in both inputs.
 shared_genes &lt;- intersect(rownames(bulk_counts), rownames(sc_reference))
-if (length(shared_genes) == 0L) stop("No shared gene identifiers; check naming and species.")
+if (length(shared_genes) == 0L) {
+  stop("No shared gene identifiers; check naming and species.")
+}
+if (anyDuplicated(rownames(bulk_counts)) || anyDuplicated(rownames(sc_reference))) {
+  stop("Duplicate feature identifiers found; resolve them before fitting.")
+}
+if (anyNA(rownames(bulk_counts)) || anyNA(rownames(sc_reference)) ||
+    any(!nzchar(rownames(bulk_counts))) || any(!nzchar(rownames(sc_reference)))) {
+  stop("Missing or empty feature identifiers found; resolve them before fitting.")
+}
+message("Shared genes: ", length(shared_genes), " / ", nrow(bulk_counts),
+        " bulk features; ", length(shared_genes), " / ", nrow(sc_reference),
+        " reference features.")
+if (length(shared_genes) < 2L) stop("Too few shared genes to fit; investigate identifiers and inputs.")
 bulk_use &lt;- bulk_counts[shared_genes, , drop = FALSE]
 sc_use &lt;- sc_reference[shared_genes, ]
 

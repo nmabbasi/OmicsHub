@@ -198,13 +198,20 @@ function toggleMobileMenu() {
 <nav aria-label="Tutorial navigation" class="reader-toolbar"><a href="reference-genomes-annotation.html" title="Reference Genomes and Annotation Databases">← Previous tutorial</a><a data-catalogue-return="" href="../tutorials.html">All tutorials</a><a href="reproducible-project-structure.html" title="Reproducible Project Structure">Next tutorial →</a></nav>
 <article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--walkthrough">
 <p class="lesson-lead">A plot can reveal a pattern in an assay, but its appearance depends on preprocessing, model assumptions, and the samples included. This walkthrough follows common QC, sample-structure, expression-pattern, and differential-expression plots, with emphasis on what each view can and cannot support.</p>
+<section class="lesson-summary tutorial-learning-contract" data-tutorial-format="hands-on-lab" aria-label="Learning format">
+<p><strong>Format: Hands-on lab.</strong> Learners with basic Python and tabular-data familiarity will generate and inspect QC, PCA, UMAP and heatmap outputs from supplied synthetic tables; a separate R example uses a supplied synthetic DE-style table. No biological data are supplied or analyzed.</p>
+</section>
 <h2>Start with the question and the data contract</h2>
 <p>Choose a plot to answer a defined question. Distributions help compare per-sample QC metrics; PCA summarizes major linear variation among samples; UMAP emphasizes neighborhood structure in a chosen feature space; a heatmap displays selected values across genes and samples; and a volcano plot combines an effect estimate with an adjusted significance measure from a differential-expression analysis.</p>
 <ul><li>Use sample-level QC values with one row per sample and columns such as <code>sample</code>, <code>batch</code>, <code>condition</code>, <code>total_reads</code>, <code>pct_mt</code>, and <code>mapping_rate</code>. Confirm whether percentages are stored as 5.2 or 0.052 before labeling the axis.</li><li>For the expression examples, <code>counts.tsv</code> has gene IDs in its first column and one sample per remaining column. Its sample names must match the QC table. Use non-negative raw counts for a count-based differential-expression method; a visualization transform such as log-CPM is not a replacement for that method's input contract.</li><li>Examples write into <code>results/</code>, which must exist first. Replace example paths with yours. These snippets are recipes, not evidence that any biological dataset was analyzed here.</li></ul>
+<p><strong>Run the synthetic lab.</strong> Download <a href="../files/tutorial-examples/data-visualization-fundamentals/qc_metrics.tsv">qc_metrics.tsv</a>, <a href="../files/tutorial-examples/data-visualization-fundamentals/counts.tsv">counts.tsv</a>, and (for the separate volcano example) <a href="../files/tutorial-examples/data-visualization-fundamentals/deseq2_results.tsv">deseq2_results.tsv</a>. These invented teaching values are not biological observations or results from a fitted DESeq2 model. In a new project directory, create <code>data/</code> and <code>results/</code> with <code>mkdir -p data results</code>; save the first two downloads as <code>data/qc_metrics.tsv</code> and <code>data/counts.tsv</code>. The count fixture has 10 genes and six samples (S01–S06), and the QC table has one row for each same sample. From the project directory, check Python with <code>python3 --version</code> and <code>python3 -m pip --version</code>; create an isolated environment with <code>python3 -m venv .venv</code>, activate it with <code>source .venv/bin/activate</code> (Windows PowerShell: <code>.venv\Scripts\Activate.ps1</code>), then install the Python dependencies with <code>python -m pip install pandas numpy matplotlib seaborn scikit-learn umap-learn</code>. Run each Python block below in order from this project directory (or save each as a script and run <code>python script_name.py</code>). The examples produce the two QC plots, PCA coordinates and plot, UMAP coordinates and plot, and heatmap in <code>results/</code>. Stop if a validation check fails or an expected file is absent; first verify the working directory, paths, columns, and sample IDs. Capture actual installed versions with <code>python -m pip freeze</code> rather than assuming versions.</p>
+<p>The volcano block is optional and independent: it needs R and ggplot2 and plots a DE-style results table; it does not run differential-expression analysis. Save the third download as <code>results/deseq2_results.tsv</code>, install ggplot2 if needed with <code>install.packages("ggplot2")</code>, and run the R block from the project directory. It should write <code>results/volcano.png</code>. In real work, use results from a documented model and contrast, not this fixture. Record <code>R.version.string</code> and <code>packageVersion("ggplot2")</code>.</p>
+<p>Success check: verify six QC rows, six matching count columns, and six sample rows in each coordinate TSV; confirm the QC, PCA, UMAP, heatmap, and (if run) volcano images exist. The synthetic volcano table deliberately has one missing adjusted p-value, which the code filters; inspect and report exclusions rather than interpreting the toy plot biologically.</p>
 <p>Record sample count, filtering, normalization or transformation, scaling, plotting parameters, software versions, and any exclusions with each figure. QC thresholds depend on assay and protocol; do not apply a universal cutoff just because it makes a plot cleaner.</p>
 <h2>Inspect distributions before reducing dimensions</h2>
 <p>Plot points as well as summaries where the number of samples permits. A boxplot can conceal group size, overlapping observations, or a single unusual sample. The Python snippet reads a tab-separated QC table and compares mitochondrial fraction across batches; the companion histogram shows sequencing depth in millions.</p>
-<pre><code>import pandas as pd
+<pre><code>import numpy as np
+import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 from pathlib import Path
@@ -217,6 +224,11 @@ if missing:
     raise ValueError(f"QC table is missing columns: {sorted(missing)}")
 if qc["sample"].duplicated().any():
     raise ValueError("Expected one QC row per sample")
+for column in ["total_reads", "pct_mt"]:
+    qc[column] = pd.to_numeric(qc[column], errors="coerce")
+    bad = qc[column].isna() | ~np.isfinite(qc[column])
+    if bad.any():
+        raise ValueError(f"Invalid {column} for samples: {qc.loc[bad, 'sample'].tolist()}")
 
 fig, ax = plt.subplots(figsize=(8, 5))
 sns.boxplot(data=qc, x="batch", y="pct_mt", showfliers=False, ax=ax)
@@ -234,7 +246,7 @@ ax.set(xlabel="Total reads (millions)", title="Sequencing depth")
 fig.tight_layout()
 fig.savefig("results/qc_histogram.png", dpi=300)
 plt.close(fig)</code></pre>
-<p>The explicit column and uniqueness checks fail early when a table is incomplete or repeats samples. Also inspect missing values and units: the code does not decide whether a sample passes QC, and the example metric names do not define assay-specific thresholds.</p>
+<p>The code reports missing, non-numeric, or non-finite values with affected sample IDs. The boxplot shows individual observations; the histogram summarizes a distribution and cannot identify which sample is an outlier. Follow an apparent extreme back to the QC table by sample ID and inspect library size, units, and provenance. With very small groups, treat the histogram/KDE shape as descriptive only. These checks do not decide whether a sample passes QC, and metric names do not define assay-specific thresholds.</p>
 <h2>PCA: summarize broad sample variation</h2>
 <p>PCA expects observations in rows and features in columns. Here rows become samples and columns genes. The example computes a simple log2-CPM transform, filters genes by a stated variance rule, then standardizes each retained gene across samples. That last choice gives low-variance genes similar scale to high-variance genes and can amplify noise; it is an exploratory choice, not a universal RNA-seq recommendation. Compare with a suitable variance-stabilizing transform and/or without feature-wise scaling for the assay and question at hand.</p>
 <pre><code>import numpy as np
@@ -254,8 +266,15 @@ if (counts &lt; 0).any().any() or not np.isfinite(counts.to_numpy()).all():
     raise ValueError("Counts must be finite and non-negative")
 if (counts.sum(axis=0) == 0).any():
     raise ValueError("A sample has zero library size")
+if qc.index.has_duplicates:
+    raise ValueError("QC sample IDs must be unique")
 if set(counts.columns) != set(qc.index):
-    raise ValueError("Counts and QC table must contain the same sample IDs")
+    missing_qc = sorted(set(counts.columns) - set(qc.index))
+    extra_qc = sorted(set(qc.index) - set(counts.columns))
+    raise ValueError(f"Counts/QC sample IDs differ; missing QC: {missing_qc}; extra QC: {extra_qc}")
+qc = qc.reindex(counts.columns)
+if not qc.index.equals(counts.columns):
+    raise ValueError("QC metadata could not be aligned to count-matrix sample order")
 
 cpm = counts.div(counts.sum(axis=0), axis=1) * 1e6
 logcpm = np.log2(cpm + 1)
@@ -296,8 +315,15 @@ pc_scores = pd.read_csv("results/pca_full.tsv", sep="\t", index_col="sample")
 qc = pd.read_csv("data/qc_metrics.tsv", sep="\t").set_index("sample")
 if len(pc_scores) &lt; 3:
     raise ValueError("UMAP needs more observations than this example provides")
-if not pc_scores.index.equals(qc.index) and set(pc_scores.index) != set(qc.index):
-    raise ValueError("PCA and QC sample IDs do not match")
+if pc_scores.index.has_duplicates or qc.index.has_duplicates:
+    raise ValueError("PCA and QC sample IDs must each be unique")
+if set(pc_scores.index) != set(qc.index):
+    missing_qc = sorted(set(pc_scores.index) - set(qc.index))
+    extra_qc = sorted(set(qc.index) - set(pc_scores.index))
+    raise ValueError(f"PCA/QC sample IDs differ; missing QC: {missing_qc}; extra QC: {extra_qc}")
+qc = qc.reindex(pc_scores.index)
+if not qc.index.equals(pc_scores.index):
+    raise ValueError("QC metadata could not be aligned to PCA sample order")
 n_neighbors = min(15, len(pc_scores) - 1)
 reducer = umap.UMAP(n_neighbors=n_neighbors, min_dist=0.1,
                     n_components=2, metric="euclidean", random_state=7)

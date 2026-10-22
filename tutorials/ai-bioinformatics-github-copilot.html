@@ -172,10 +172,13 @@ Legal
 <nav aria-label="Tutorial navigation" class="reader-toolbar"><a href="long-read-pacbio-nanopore.html" title="Long-Read Sequencing: choosing a workflow">← Previous tutorial</a><a data-catalogue-return="" href="../tutorials.html">All tutorials</a><a href="ai-coding-cursor-aider.html" title="Using Cursor and Aider for Bioinformatics">Next tutorial →</a></nav>
 <article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--lab">
 <p class="lesson-lead">Use this short lab to apply for GitHub Education, check whether the Copilot Student benefit is available, and practice reviewing an AI-generated change without putting research data or credentials into an assistant.</p>
+<section class="lesson-summary tutorial-learning-contract" data-tutorial-format="hands-on-lab" aria-label="Learning format">
+<p><strong>Format: Hands-on lab.</strong> Learners familiar with basic terminal use will check Education eligibility and review a small AI-proposed Python file. The application requires your own enrollment evidence; the coding exercise uses a synthetic TSV you create locally.</p>
+</section>
 <section aria-label="Scope and prerequisites" class="lesson-summary">
 <h2>What you need</h2>
-<ul><li>A personal GitHub account and evidence of current enrollment in an eligible degree- or diploma-granting program.</li><li>Visual Studio Code and Git for the optional local practice exercise. GitHub Education application and Copilot activation happen on GitHub's website.</li></ul>
-<p>Verification and Copilot activation are separate decisions. Approval and feature availability depend on GitHub's current eligibility rules and terms. The commands below create local toy data only; they do not install bioinformatics software or run an analysis.</p>
+<ul><li>A personal GitHub account and evidence of current enrollment in an eligible degree- or diploma-granting program.</li><li>Visual Studio Code, Git, and Python 3 for the local practice exercise. The GitHub Education application and Copilot activation happen on GitHub's website.</li></ul>
+<p>In a terminal, check that Python is available with <code>python --version</code> (on some systems use <code>python3 --version</code> or Windows' <code>py --version</code>). Use Python 3; if none of these commands works, install Python from <a href="https://www.python.org/downloads/" rel="noopener" target="_blank">python.org/downloads</a> and reopen the terminal. Verification and Copilot activation are separate decisions. Approval and feature availability depend on GitHub's current eligibility rules and terms. The commands below create local toy data only; they do not install bioinformatics software or run an analysis.</p>
 </section>
 <h2>1. Apply for GitHub Education</h2>
 <ol class="lesson-steps">
@@ -201,12 +204,16 @@ git init
 echo "# Copilot practice" &gt; README.md
 printf 'gene\tcount\nTP53\t12\nBRCA1\t8\n' &gt; data/toy_counts.tsv
 git status --short</code></pre>
-<p>In Copilot Chat, try a request with an explicit input contract, for example: “Write a short Python script that reads this tab-separated file with columns gene and count, rejects missing or non-integer/negative counts, and writes a TSV with the same columns sorted by count descending. Explain each validation check. Do not assume this toy file represents normalized counts.” Treat the response as a proposal. Read the script and diff before running it.</p>
+<p>In Copilot Chat, try a request with an explicit input contract, for example: “Write a short Python 3 script using only the standard library. Save it as <code>scripts/sort_counts.py</code>. It must accept input and output file paths as command-line arguments, require the exact tab-separated header <code>gene</code> and <code>count</code>, reject blank gene names and missing, non-integer, or negative counts, and write a TSV with the same columns sorted by count descending. On invalid input, print a useful error to standard error, exit nonzero, and do not create/replace the output. Explain each validation check. This toy file is not normalized biological data.” Treat the response as a proposal: save the reviewed file at that path, inspect the full script and Git diff, and confirm how it handles ties before running it.</p>
+<p>Run the script from the <code>omics-copilot-practice</code> directory. Use <code>python</code> below, or substitute the working command you used for the version check:</p>
+<pre><code class="language-bash">python scripts/sort_counts.py data/toy_counts.tsv results/sorted_counts.tsv
+cat results/sorted_counts.tsv</code></pre>
+<p>For this fixture, success means the output has the two-column header <code>gene</code> and <code>count</code>, followed by the TSV rows <code>TP53</code> with count <code>12</code> and <code>BRCA1</code> with count <code>8</code>, in that order. The script's accepted contract is strict: malformed input should fail with a nonzero status and an explanatory message, and must leave the input unchanged. Before each negative test, remove any prior output so a stale result cannot be mistaken for a fresh one.</p>
 <ol>
-<li>Check whether the code uses the stated path and preserves the two named columns.</li>
-<li>Test ordinary rows, a missing count, a negative count, and a malformed header. Decide what the script should do for each case before accepting its behavior.</li>
-<li>Run only against this disposable fixture. Inspect the output and confirm that the source file was not overwritten.</li>
-<li>Record Python and package versions in the README if you add dependencies. Save the prompt, reviewed code, and test inputs if you need to reproduce the exercise later.</li>
+<li>Check that the code reads the supplied path, preserves both named columns, and does not overwrite its input.</li>
+<li>Test a missing count with <code>printf 'gene\tcount\nTP53\t\n' &gt; data/bad.tsv</code>, a negative value with <code>printf 'gene\tcount\nTP53\t-1\n' &gt; data/bad.tsv</code>, and a malformed header with <code>printf 'symbol\tcount\nTP53\t12\n' &gt; data/bad.tsv</code>. For each test, run <code>rm -f results/bad.tsv</code> first, then run <code>python scripts/sort_counts.py data/bad.tsv results/bad.tsv</code>. Require a nonzero exit, a useful error, no output file, and an unchanged <code>data/bad.tsv</code>. If any invalid case exits successfully or writes output, stop and revise the code rather than trusting its result.</li>
+<li>After testing, compare <code>data/toy_counts.tsv</code> with its original two rows and inspect <code>git diff</code> so the source fixture was not overwritten.</li>
+<li>Record the interpreter version from <code>python --version</code> (or your equivalent) in the README; if you add a dependency, record its version too. Save the prompt, reviewed code, and test inputs if you need to reproduce the exercise later.</li>
 </ol>
 <aside class="lesson-result"><h3>Completion check</h3><p>You should be able to explain the accepted input format, describe how invalid rows are handled, inspect the generated diff, and reproduce any output from the saved code and toy input. These checks establish software behavior on a fixture; they do not validate a biological analysis.</p></aside>
 <h2>Use the same review process on research code</h2>

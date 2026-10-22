@@ -197,7 +197,8 @@ function toggleMobileMenu() {
 </div>
 <nav aria-label="Tutorial navigation" class="reader-toolbar"><a href="reproducible-project-structure.html" title="Reproducible Project Structure">← Previous tutorial</a><a data-catalogue-return="" href="../tutorials.html">All tutorials</a><a href="introduction-to-bioinformatics.html" title="Introduction to Bioinformatics">Next tutorial →</a></nav>
 <article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--walkthrough"><p class="lesson-lead">A useful omics result has a traceable path from input data and analysis choices to the figure and the claim. Use the worked reporting workflow below to document that path, then check that each interpretation stays within what the design can support.</p>
-arning objectives and prerequisites
+<section class="lesson-summary tutorial-learning-contract" data-tutorial-format="conceptual-guide" aria-label="Learning format"><p><strong>Format: Conceptual guide.</strong> For learners who already have a small omics result or QC plot, this lesson walks you through documenting its provenance, drafting a figure legend, and separating observation from interpretation and limitation. You supply your project and analysis artifacts; the commands are illustrative patterns, not a supplied or executable end-to-end dataset.</p></section>
+<h2>Learning objectives and prerequisites</h2>
 <p>By the end of this lesson you will be able to:</p>
 <ul>
 <li>Write a concise, reproducible methods paragraph that lists data provenance, software and version numbers, key parameters, and where scripts are stored.</li>
@@ -211,6 +212,7 @@ arning objectives and prerequisites
 <li>A small analysis result or QC plot to describe (for example: a per-sample QC table and one summary plot).</li>
 <li>Basic command-line familiarity and a git repository for your project.</li>
 </ul>
+<p><strong>Before you begin:</strong> use the project root as your working directory and confirm the inputs listed below exist, substituting your actual project paths. This lesson does not supply a sample sheet, counts, plot, STAR index, or project-specific differential-expression script. If you do not have analysis outputs yet, complete an analysis workflow first; do not treat the placeholder accessions, observations, or filenames below as real data.</p>
 <h2>Why reproducible reporting and careful interpretation matter</h2>
 <p>Computational analyses generate outputs, but a result only becomes scientific knowledge when other researchers can (1) identify the exact inputs and steps used, (2) reproduce the outputs, and (3) see how the evidence supports — or fails to support — the claims. Poor reporting creates barriers to reuse, obscures sources of error, and inflates confidence in tentative findings.</p>
 <p>Clear reporting also helps reviewers and collaborators evaluate whether a finding is robust across software versions, reference data, or parameter choices. In omics, differences in reference genomes, annotation releases, normalization methods, or filtering rules can change results substantially. The goal of this lesson is to give practical, reproducible guidance for writing methods, figure legends, and interpretation text that are useful, honest, and actionable.</p>
@@ -223,7 +225,7 @@ arning objectives and prerequisites
 <li><code>results/counts/gene_counts.tsv</code> — gene-level counts (or a script that generates it)</li>
 <li><code>results/figures/qc_plot.png</code> — example QC plot to describe</li>
 <li><code>scripts/</code> — analysis scripts (R, Python, shell)</li>
-<li><code>environment.yaml</code> — conda environment spec or <code>renv.lock</code>/<code>sessionInfo.txt</code> describing R packages</li>
+<li><code>provenance/environment.yaml</code> — conda environment spec (created in step 2), or <code>renv.lock</code>/<code>sessionInfo.txt</code> describing R packages</li>
 </ul>
 <h3>1. Record provenance: capture the repository state and checksums</h3>
 <p>Record the commit used for the analysis, whether the working tree had changes, and checksums for selected outputs. Run these commands at the same code revision that generated the results; for older results, check out the actual generating revision first. Create the provenance directory. Keep sensitive paths and metadata out of public files; review records before sharing.</p>
@@ -237,7 +239,7 @@ git status --porcelain &gt; provenance/git_status.txt
 # record the latest commit message(s)
 git log --oneline -n 5 &gt; provenance/git_log_recent.txt
 
-# compute SHA-256 checksums for important outputs (non-identifiable)
+# compute SHA-256 checksums for important outputs (integrity only; not anonymization)
 sha256sum results/counts/gene_counts.tsv &gt; provenance/checksums.txt
 sha256sum results/figures/qc_plot.png &gt;&gt; provenance/checksums.txt
 </code></pre>
@@ -247,6 +249,7 @@ sha256sum results/figures/qc_plot.png &gt;&gt; provenance/checksums.txt
 <li><code>provenance/git_status.txt</code>: indicates whether working tree had uncommitted changes</li>
 <li><code>provenance/checksums.txt</code>: checksums used to verify file integrity</li>
 </ul>
+<p>A checksum does not anonymize a file or establish that it is safe to share. Review the underlying outputs, filenames, paths, and accompanying metadata for sensitive or identifying information before distribution.</p>
 <h3>2. Export software environment and versions</h3>
 <p>For R-based analysis, capture package versions with <code>sessionInfo()</code> or an <code>renv.lock</code>. For conda, save an environment specification and, when useful, a platform-specific explicit package list. `--no-builds` omits build strings; it does not make an environment platform-independent. Example:</p>
 <pre><code># from your conda environment named 'omics-env'; explicit specs are platform-specific
@@ -258,6 +261,7 @@ conda env export --no-builds &gt; provenance/environment.yaml
 <li><code>provenance/environment.yaml</code>: environment specification without package build strings; it can be easier to resolve elsewhere, but it does not guarantee the same solve or bitwise reproduction</li>
 <li><code>provenance/conda_explicit.txt</code>: explicit package builds tied to the exporting platform and channels; portability to another operating system or architecture is limited</li>
 </ul>
+<p><strong>Check before continuing:</strong> inspect <code>provenance/environment.yaml</code> and confirm it names the intended environment and packages; compare the recorded package versions with those used for the analysis. A successful export documents an environment specification, not that it can be recreated or that the analysis is validated. Stop if you cannot identify the environment that generated the result, and resolve that provenance gap before claiming reproducibility. For R projects, record the actual output of <code>sessionInfo()</code> or the lockfile used rather than assuming these conda commands capture R dependencies.</p>
 <h3>3. Reproducible data-access statement</h3>
 <p>Record where the raw data were obtained, the exact accession identifiers, and the download date. If the data are public (recommended), include the accession and a checksum for the downloaded files. Example text you can paste into a methods paragraph:</p>
 <pre><code>Data: Raw sequencing files for the 12 tumor/normal pairs were downloaded from GEO (GSE123456) on 2026-06-01. Local copies are stored in data/raw/; checksums recorded in provenance/checksums.txt.</code></pre>

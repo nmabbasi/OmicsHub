@@ -198,8 +198,15 @@ function toggleMobileMenu() {
 <nav aria-label="Tutorial navigation" class="reader-toolbar"><a href="command-line-part2.html" title="Command-line text processing for bioinformatics">← Previous tutorial</a><a data-catalogue-return="" href="../tutorials.html">All tutorials</a><a href="conda-mamba-part1.html" title="Micromamba Environments for Bioinformatics">Next tutorial →</a></nav>
 <article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--walkthrough">
 <p class="lesson-lead">Build one small Bash program that streams either FASTQ reads or a tab-separated annotation table, validates the assumptions it can check, and writes a reproducible summary table. The two input types need different checks, so you select the mode explicitly rather than guessing from the first line.</p>
+<section class="lesson-summary tutorial-learning-contract" data-tutorial-format="hands-on-lab" aria-label="Learning format">
+<p><strong>Format: Hands-on lab.</strong> Shell users with basic command-line familiarity will create synthetic FASTQ and annotation fixtures, save and run a Bash summarizer, and check its output against known arithmetic. All inputs are created by the learner using the commands below; no biological data are needed.</p>
+</section>
 <h2>Before you run the examples</h2>
-<p>You should be comfortable moving around the shell and using basic commands such as <code>ls</code>, <code>cd</code>, <code>cat</code>, and <code>grep</code>. Work in a disposable directory. This walkthrough uses Bash, awk, gzip, sort, and standard file utilities; it does not require a biological dataset.</p>
+<p>You should be comfortable moving around the shell and using basic commands such as <code>ls</code>, <code>cd</code>, <code>cat</code>, and <code>grep</code>. Work in a disposable directory. This walkthrough uses Bash, awk, gzip, sort, and standard file utilities; it does not require a biological dataset. Confirm that the tools are available before starting:</p>
+<pre><code class="language-bash">bash --version | head -n 1
+command -v awk gzip sort
+gzip --version | head -n 1</code></pre>
+<p>The script uses Bash-specific arrays and syntax. Run it with Bash as shown, not with <code>sh</code>. To record your environment alongside a result, save the output of the commands above and note your operating system; awk implementations do not share one portable version flag, so identify the executable with <code>command -v awk</code> and consult its local manual or supported version option.</p>
 <p>The FASTQ mode accepts the common four-line record layout: identifier line beginning with <code>@</code>, sequence, separator beginning with <code>+</code>, and quality string. This example checks record structure and equal sequence/quality lengths. FASTQ variants and multiline records need a format-aware tool rather than this deliberately narrow summarizer. The annotation mode expects tab-separated columns in this order: chromosome, start, end, feature ID, strand. It calculates inclusive interval lengths as <code>end - start + 1</code>, so use one-based inclusive coordinates or adjust the formula for your file's coordinate convention.</p>
 <h2>Make a disposable example dataset</h2>
 <p>The following files are synthetic teaching fixtures. Their values test the mechanics of the script; they are not biological observations.</p>
@@ -373,7 +380,7 @@ done</code></pre>
 <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
 </div>
 <div>
-<p class="text-sm text-gray-600 mb-2">This tutorial records the software versions used in its examples. Software and package behaviour can change. Please re-check commands against the official documentation. If a command does not work, you find an error, or the tutorial is no longer reproducible, please report it through the <a class="text-blue-600 hover:underline" href="../contact.html">Contact page</a></p>
+<p class="text-sm text-gray-600 mb-2">This tutorial does not pin Bash, awk, gzip, or operating-system versions; use the version and executable checks in “Before you run the examples” to record your local environment when reproducibility matters. Software behaviour can change. Please re-check commands against the official documentation. If a command does not work, you find an error, or the tutorial is no longer reproducible, please report it through the <a class="text-blue-600 hover:underline" href="../contact.html">Contact page</a></p>
 <p class="text-sm text-gray-500">Author: <a class="text-blue-600 hover:underline font-medium" href="../about.html">Nasir Mahmood Abbasi, PhD</a> - Category: Shell Command Basics</p>
 </div>
 </div>

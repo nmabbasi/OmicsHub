@@ -196,7 +196,7 @@ function toggleMobileMenu() {
 <img alt="Inferring Copy Number Variation (inferCNV)" class="w-full aspect-video object-cover" decoding="async" loading="eager" src="../images/infercnv-copy-number-variation-workstation.webp"/>
 </div>
 <nav aria-label="Tutorial navigation" class="reader-toolbar"><a href="advanced-ai-single-cell.html" title="AI-Assisted Cell-Type Annotation: Models, Limits, and Review">← Previous tutorial</a><a data-catalogue-return="" href="../tutorials.html">All tutorials</a><a href="single-cell-deconvolution.html" title="Bulk RNA-seq cell-type deconvolution with MuSiC">Next tutorial →</a></nav>
-<article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--walkthrough"><div class="flex flex-wrap items-center gap-4 text-xs font-mono text-gray-500 bg-gray-50 p-3 rounded-lg border border-gray-200 mb-6">
+<article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--walkthrough lesson-format--advanced-template"><div class="flex flex-wrap items-center gap-4 text-xs font-mono text-gray-500 bg-gray-50 p-3 rounded-lg border border-gray-200 mb-6">
 <div class="flex items-center gap-1">
 <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
 <span><strong>Scope:</strong> command examples require local R/package validation before analysis</span>
@@ -204,13 +204,16 @@ function toggleMobileMenu() {
 <div class="flex items-center gap-1">
 <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
 <span>Updated 21 October 2026</span></div>
-</div><p class="lesson-lead">This walkthrough prepares the three inferCNV inputs, constructs an R analysis object, and gives you a checklist for interpreting the resulting expression patterns without treating them as DNA copy-number measurements.</p>
+</div><p class="lesson-lead">This tutorial is a prepared-input template: it validates the three inferCNV inputs, constructs an R analysis object, and guides inspection of expression patterns without treating them as DNA copy-number measurements.</p>
+<section class="lesson-summary tutorial-learning-contract" data-tutorial-format="advanced-template" aria-label="Learning format">
+<p><strong>Format: Advanced template.</strong> For readers with prior scRNA-seq and R experience who already have filtered raw counts, cell annotations, and assembly-matched gene coordinates; you will validate these inputs, run inferCNV, and review its outputs. No dataset is supplied, so prepare the inputs before starting.</p>
+</section>
 <h2>Learning objectives and prerequisites</h2>
 <p>By the end of this lesson you will be able to:</p>
 <ul>
-<li>Prepare the three canonical inputs required by inferCNV (raw counts matrix, cell annotations, and gene ordering).</li>
+<li>Validate prepared raw counts, cell annotations, and assembly-matched gene ordering, including the degree of gene overlap.</li>
 <li>Create an inferCNV object and run the core pipeline in R with reproducible commands.</li>
-<li>Inspect and interpret inferCNV outputs, including heatmaps and per-cell CNV scores, while understanding caveats that prevent over-interpretation.</li>
+<li>Locate and critically inspect the run heatmap and available outputs, while understanding caveats that prevent over-interpretation.</li>
 <li>Recognize common failure modes and apply practical troubleshooting steps.</li>
 </ul>
 <p>Prerequisites:</p>
@@ -228,21 +231,24 @@ function toggleMobileMenu() {
 <li>Reference selection is the most critical factor: if the reference set contains cells with copy-number lesions, inferences will be biased.</li>
 </ul>
 <h2>Reproducible workflow</h2>
-<p>The steps below describe a minimal, reproducible inferCNV run in R. Each step explicitly states expected inputs and outputs. Adjust paths and parameters for your environment. These commands are non-destructive: they read input files and write results to an output directory.</p>
+<p>This is a run template, not an end-to-end reproducible dataset: it requires three prepared files and does not download or construct them. Before running, set the working directory to the folder containing those files, verify the identifier and genome-assembly contract below, and use the official <a href="https://github.com/broadinstitute/inferCNV/wiki/File-Definitions">file definitions</a> to prepare missing inputs. The commands read inputs and write files in that directory.
+<p>Check the installed R and package versions before analysis with <code>R --version</code> and, in R, <code>packageVersion("infercnv")</code>. The examples assume raw, unnormalized gene-by-cell counts; do not substitute normalized or scaled expression. Record these versions with the assembly and identifier mapping.</p>
 <h3>Required files (inputs)</h3>
 <ul>
 <li>Raw counts matrix in R format or as an on-disk matrix: counts_matrix.rds (genes x cells). Rows named by gene symbols (HGNC-style preferred).</li>
 <li>Cell annotations: a table with <code>cell_id</code> and <code>cell_type</code> columns, one row per cell. IDs must match the count-matrix column names; the package input written below is headerless.</li>
-<li>Gene ordering: gene_ordering.tsv with one row per gene and chromosome, start, and end coordinates from a declared assembly. The inferCNV input file below is headerless and ordered as gene, chromosome, start, end.</li>
+<li>Gene ordering: gene_ordering.tsv with gene, chromosome, start, and end coordinates from a declared assembly (the example metadata table has headers). Use the same gene identifiers as the count-matrix row names and document the source, assembly, and any identifier conversion; only overlapping genes are analyzed.</li>
 </ul>
 <h3>Example R session</h3>
-<pre><code># Start an R session. Install infercnv if you have not already:
-# install.packages("BiocManager")
-# BiocManager::install("infercnv")
-
+<pre><code># Start R in the directory containing the three prepared input files.
+# Do not install inside this analysis script; follow official Bioconductor
+# installation instructions, then record R.version.string and packageVersion().
+stopifnot(requireNamespace("infercnv", quietly = TRUE))
+message("R: ", R.version.string, "; infercnv: ", as.character(packageVersion("infercnv")))
 library(infercnv)
 
-# 1) Load inputs. Replace paths with your files.
+# 1) Load inputs. Replace filenames as needed; record assembly and mapping.
+# gene_ordering.tsv coordinates must match the identifiers/assembly of counts.
 counts &lt;- readRDS("counts_matrix.rds")             # gene x cell matrix (raw counts)
 annotations &lt;- read.delim("cell_annotations.tsv", header=TRUE, stringsAsFactors=FALSE)
 gene_order &lt;- read.delim("gene_ordering.tsv", header=TRUE, stringsAsFactors=FALSE)
@@ -250,11 +256,29 @@ gene_order &lt;- read.delim("gene_ordering.tsv", header=TRUE, stringsAsFactors=F
 # Check cell IDs and coordinate metadata before writing headerless package inputs.
 stopifnot(!anyDuplicated(colnames(counts)), !anyDuplicated(annotations$cell_id))
 stopifnot(setequal(colnames(counts), annotations$cell_id))
+stopifnot(all(c("cell_id", "cell_type") %in% names(annotations)))
+stopifnot(!anyNA(annotations$cell_type), all(nzchar(annotations$cell_type)))
+stopifnot(is.matrix(counts) || inherits(counts, "Matrix"))
+stopifnot(all(is.finite(counts)), all(counts >= 0), all(counts == floor(counts)))
 stopifnot(all(c("gene_symbol", "chromosome", "start", "end") %in% names(gene_order)))
 stopifnot(!anyDuplicated(gene_order$gene_symbol))
-stopifnot(any(rownames(counts) %in% gene_order$gene_symbol))
+stopifnot(!anyNA(gene_order$gene_symbol), all(nzchar(gene_order$gene_symbol)))
+stopifnot(!anyNA(gene_order$chromosome), all(nzchar(gene_order$chromosome)))
 stopifnot(all(is.finite(gene_order$start)), all(is.finite(gene_order$end)))
-stopifnot(all(gene_order$start &lt;= gene_order$end))
+stopifnot(all(gene_order$start &gt;= 1), all(gene_order$start &lt;= gene_order$end))
+matched_genes &lt;- intersect(rownames(counts), gene_order$gene_symbol)
+coverage &lt;- length(matched_genes) / nrow(counts)
+message(sprintf("Gene-order overlap: %d / %d count genes (%.1f%%)",
+                length(matched_genes), nrow(counts), 100 * coverage))
+if (length(matched_genes) == 0L) stop("No shared genes: inspect identifiers, mapping, and assembly before proceeding")
+unmatched_genes &lt;- setdiff(rownames(counts), matched_genes)
+if (length(unmatched_genes) &gt; 0L) {
+    print(utils::head(unmatched_genes, 10))
+    warning("Unmatched count genes remain: review the reported IDs and document exclusions before analysis")
+}
+# Review chromosome distribution and why genes are absent before continuing.
+# Neither the overlap percentage nor a fixed gene count establishes adequate
+# genomic coverage or biological validity; no universal cutoff is imposed here.
 
 # 2) Write annotation file required by inferCNV (if not already in file form)
 # inferCNV expects cell_id and group, without a header row.
@@ -293,12 +317,13 @@ infercnv_obj &lt;- infercnv::run(
     HMM = TRUE
 )
 
-# 6) After run, key outputs live in out_dir.
-# Examples:
-# Inspect files written in out_dir rather than assuming a fixed set across versions.
-# Common documented outputs include infercnv.png (final heatmap),
-# infercnv.preliminary.png, infercnv.observations.txt, and saved RDS stage objects.
-# HMM-specific outputs depend on the run options and package version.
+# 6) Basic completion checkpoint: verify the run returned and inspect the directory.
+stopifnot(dir.exists(out_dir), length(list.files(out_dir, all.files = TRUE)) &gt; 2)
+print(list.files(out_dir, recursive = TRUE))
+# Documented examples include infercnv.png (final heatmap) and
+# infercnv.preliminary.png; filenames and optional HMM outputs vary by release.
+# If no output appears or the run errors, stop and inspect the R error/log,
+# installed-version documentation, input overlap, and available disk/memory.
 </code></pre>
 <p>Notes on parameters:</p>
 <ul>
@@ -309,8 +334,10 @@ infercnv_obj &lt;- infercnv::run(
 <h3>Alternative: infercnvpy in Python</h3>
 <pre><code># infercnvpy is a distinct Python implementation. Unlike the R workflow above,
 # its documented input is normalized, log-transformed expression.
-# Prepare adata.var with chromosome, start, and end coordinate columns,
-# and adata.obs["cell_type"] with reference/query labels.
+# This is an API sketch, not a runnable preparation recipe: adata must already
+# contain filtered cells and normalized, log-transformed X, coordinate columns
+# in adata.var, and cell labels in adata.obs. See the official input guide:
+# https://infercnvpy.readthedocs.io/en/latest/infercnv.html
 
 import infercnvpy as cnv
 
@@ -339,7 +366,7 @@ cnv_matrix = adata.obsm["X_cnv"]
 <ul>
 <li>Look for broad, contiguous expression shifts across genes in genomic order. A regional pattern is a candidate signal to investigate, not a CNV call by itself.</li>
 <li>Ask whether a broad pattern recurs across cells and is compatible with the reference and sample design. Shared expression patterns can still arise from cell state or other confounding, so they do not establish clonality.</li>
-<li>Concordance between HMM states and the continuous heatmap: HMM should roughly align with prominent heatmap patterns if denoising and reference selection were appropriate.</li>
+<li>Compare HMM states with continuous heatmap patterns where both are present. Agreement is a consistency check within related model outputs, not independent validation; disagreement warrants review of assumptions and parameters.</li>
 </ul>
 <p>What a plausible positive result means:</p>
 <ul>
@@ -435,7 +462,7 @@ cnv_matrix = adata.obsm["X_cnv"]
 <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
 </div>
 <div>
-<p class="text-sm text-gray-600 mb-2">This tutorial records the software versions used in its examples. Software and package behaviour can change. Please re-check commands against the official documentation. If a command does not work, you find an error, or the tutorial is no longer reproducible, please report it through the <a class="text-blue-600 hover:underline" href="../contact.html">Contact page</a></p>
+<p class="text-sm text-gray-600 mb-2">No fixed software versions or dataset are supplied here. Before analysis, record <code>R.version.string</code>, <code>packageVersion("infercnv")</code>, the genome assembly, and identifier mapping; consult the official documentation for your installed release. Report errors through the <a class="text-blue-600 hover:underline" href="../contact.html">Contact page</a></p>
 <p class="text-sm text-gray-500">Author: <a class="text-blue-600 hover:underline font-medium" href="../about.html">Nasir Mahmood Abbasi, PhD</a> - Category: Advanced Single-Cell Analysis</p>
 </div>
 </div>

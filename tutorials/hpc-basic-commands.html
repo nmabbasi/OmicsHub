@@ -198,6 +198,9 @@ function toggleMobileMenu() {
 <nav aria-label="Tutorial navigation" class="reader-toolbar"><a href="hpc-connection.html" title="Connecting to HPC">← Previous tutorial</a><a data-catalogue-return="" href="../tutorials.html">All tutorials</a><a href="hpc-submission-part1.html" title="Writing Slurm Job Scripts">Next tutorial →</a></nav>
 <article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--reference">
 <p class="lesson-lead">Use Slurm commands to inspect the resources your cluster exposes, submit a small batch job, and find out why a job is waiting or failed. Slurm versions and local policies differ; replace example partitions, module names, paths, and resource limits with values documented by your HPC site.</p>
+<section class="lesson-summary tutorial-learning-contract" data-tutorial-format="reference" aria-label="Learning format">
+<p><strong>Format: Reference.</strong> For learners with a Slurm account and SSH access, this guide demonstrates partition/job inspection, a small Python batch smoke test, and basic diagnosis. The test script and input are created by the commands; cluster-specific settings must be supplied from local documentation.</p>
+</section>
 <h2>Before you start</h2>
 <p>You need an account on a Slurm cluster, SSH access, and permission to submit jobs. This lesson assumes you are on the cluster's login node. Do not run computational workloads there; use the scheduler. Commands below are examples and have not been executed on a live cluster.</p>
 <h2>Check software modules</h2>
@@ -207,7 +210,7 @@ module list
 </code></pre>
 <p><code>module avail</code> lists software made available by the site; <code>module list</code> shows modules loaded in this shell. Names and versions are site-specific. After checking the local documentation, load only modules your job needs, for example:</p>
 <pre><code>module load python/3.11</code></pre>
-<p>To make a batch job reproducible, put its module commands in the batch script. A login-shell environment should not be assumed to carry over to the compute-node job. Use <code>module purge</code> only if your site's guidance supports that practice and you understand which inherited modules it removes.</p>
+<p>To make a batch job reproducible, put its module commands in the batch script. A login-shell environment should not be assumed to carry over to the compute-node job. Use <code>module purge</code> only if your site's guidance supports that practice and you understand which inherited modules it removes. If <code>python/3.11</code> is not provided, use the Python module name documented by your site; omit the <code>module load</code> line only when Python is already available in the batch environment. In either case, print <code>python --version</code> in the job log so you can record which interpreter actually ran.</p>
 <h2>Inspect partitions, nodes, and jobs</h2>
 <p>A partition is a configured scheduling pool, not necessarily a distinct physical cluster. Start with:</p>
 <pre><code>sinfo
@@ -246,7 +249,8 @@ cat &gt; test.sbatch &lt;&lt;'SBATCH'
 #SBATCH --time=00:05:00
 #SBATCH --mem=1G
 
-module load python/3.11
+module load python/3.11  # replace with your site's module, or omit if Python is preconfigured
+python --version
 python hello.py
 SBATCH
 
@@ -254,14 +258,16 @@ sbatch test.sbatch</code></pre>
 <p>Slurm reads <code>#SBATCH</code> directives before running the script. Keep them before the first executable shell command, and avoid shell variables or inline explanatory comments in directive values: Slurm parses these lines itself. The example requests one node, one task, one CPU for five minutes, and 1 GiB of memory. Adjust requests to site policy and the real workload.</p>
 <p>On successful submission, <code>sbatch</code> returns a job ID. This means Slurm accepted the request, not that the job has started or succeeded. The explicit output and error patterns create <code>slurm-JOBID.out</code> and <code>slurm-JOBID.err</code> in the job's working directory, subject to site configuration. Check progress and inspect logs:</p>
 <pre><code>squeue -u "$USER"
-cat slurm-JOB_ID.out
-cat slurm-JOB_ID.err</code></pre>
+# Illustrative ID only: replace 12345 with the numeric ID printed by sbatch
+cat slurm-12345.out
+cat slurm-12345.err</code></pre>
 <p>Replace <code>JOB_ID</code> with the numeric ID. If the job has already left the queue, check its final state with <code>sacct</code> where available. For a successful run of this particular fixture, stdout should include the Python host name and <code>Sum 1..100: 5050</code>; this expected value follows from the Python expression and does not validate any cluster configuration.</p>
 <h2>Interactive allocations</h2>
 <p>For a brief debugging session, request a small allocation using a partition and limits approved by your site:</p>
 <pre><code>salloc --time=00:15:00 --partition=PARTITION_NAME --nodes=1 --ntasks=1 --mem=1G</code></pre>
 <p>When the allocation is granted, <code>salloc</code> runs your default shell unless you provide another command. Within that allocation, use <code>srun</code> to launch a command on allocated resources, for example:</p>
-<pre><code>srun --pty bash -i</code></pre>
+<pre><code>srun --ntasks=1 --pty bash -i</code></pre>
+<p>The step requests one task; if you need more tasks or CPUs, request them within the granted allocation and follow your site's interactive-job policy. Do not assume this example grants resources beyond the allocation.</p>
 <p>When finished, exit the shell/command started under the allocation; <code>salloc</code> then releases the allocation. If your site has a different interactive workflow, follow its documentation. Interactive sessions consume scheduled resources while active.</p>
 <h2>Troubleshoot from the job state and logs</h2>
 <ul>
@@ -290,7 +296,7 @@ cat slurm-JOB_ID.err</code></pre>
 <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
 </div>
 <div>
-<p class="text-sm text-gray-600 mb-2">This tutorial records the software versions used in its examples. Software and package behaviour can change. Please re-check commands against the official documentation. If a command does not work, you find an error, or the tutorial is no longer reproducible, please report it through the <a class="text-blue-600 hover:underline" href="../contact.html">Contact page</a></p>
+<p class="text-sm text-gray-600 mb-2">The commands here are illustrative and were not run on a live cluster; no cluster software versions are asserted. For your run, save <code>sinfo --version</code>, <code>python --version</code>, and <code>module list</code> output alongside the job ID and logs, then check site documentation for version-specific behavior. If a command or link needs correction, please report it through the <a class="text-blue-600 hover:underline" href="../contact.html">Contact page</a>.</p>
 <p class="text-sm text-gray-500">Author: <a class="text-blue-600 hover:underline font-medium" href="../about.html">Nasir Mahmood Abbasi, PhD</a> - Category: High-Performance Computing (HPC)</p>
 </div>
 </div>

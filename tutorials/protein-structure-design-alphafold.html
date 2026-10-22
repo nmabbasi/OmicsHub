@@ -189,6 +189,9 @@ function toggleMobileMenu() {
 <nav aria-label="Tutorial navigation" class="reader-toolbar"><a href="deterministic-retrieval-gget-ai.html" title="Deterministic Retrieval with gget">← Previous tutorial</a><a data-catalogue-return="" href="../tutorials.html">All tutorials</a><a href="single-cell-foundation-models.html" title="Evaluating scGPT &amp; Geneformer Embeddings">Next tutorial →</a></nav>
 <article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--walkthrough">
 <p class="lesson-lead">Use a UniProt accession to retrieve a precomputed AlphaFold Database (AlphaFold DB) structure, keep a record of which file you analyzed, and summarize its per-residue confidence. The workflow does not predict a new structure or design a protein.</p>
+<section class="lesson-summary tutorial-learning-contract" data-tutorial-format="conceptual-guide" aria-label="Learning format">
+<p><strong>Format: Conceptual guide.</strong> For learners who can run basic shell and Python commands: retrieve the supplied public UniProt example and review its provenance and pLDDT summary. The workflow fetches its inputs from AlphaFold DB; no local structure fixture is supplied.</p>
+</section>
 <nav aria-label="On this page"><strong>On this page</strong><ul><li><a href="#objectives">Goal and prerequisites</a></li><li><a href="#concept">Database retrieval and prediction</a></li><li><a href="#workflow">Retrieve and inspect a model</a></li><li><a href="#worked-example">Worked example</a></li><li><a href="#interpret">Interpret pLDDT</a></li><li><a href="#limits">Scope and limitations</a></li><li><a href="#sources">Official sources</a></li></ul></nav>
 <h2 id="objectives">Goal and prerequisites</h2>
 <p>By the end, you will have an API response, the PDB file advertised for the selected entry, and a JSON report containing its source URL, file hash, chain/residue identifiers, and summary of Cα B-factor values. For a verified AlphaFold-predicted file, those B-factor values represent pLDDT. The report is an inspection aid, not a biological validation.</p>
@@ -202,6 +205,9 @@ function toggleMobileMenu() {
 cd afdb-qc
 curl -fL https://theomicshub.com/files/protein_structure_workflow.py -o protein_structure_workflow.py
 python3 protein_structure_workflow.py fetch P69905 --outdir results</code></pre>
+<p>To repeat the retrieval without disturbing the original files, stay in <code>afdb-qc/</code> and choose a new output directory. The first run remains available for comparison; do not delete its API response, PDB, or QC report if you need to retain that run's provenance.</p>
+<pre><code class="language-bash">python3 protein_structure_workflow.py fetch P69905 --outdir results-rerun</code></pre>
+<p>Use the new run's report and PDB together when checking its recorded hash and residue summary. If either directory already exists from a prior run, select another fresh name rather than overwriting or removing evidence.</p>
 <p>You can also download <a href="../files/protein_structure_workflow.py">protein_structure_workflow.py</a>. The accession identifies the API lookup; the response supplies the model URL and version metadata. If you already have a PDB file, skip the network request:</p>
 <pre><code class="language-bash">python3 protein_structure_workflow.py analyze path/to/model.pdb
 # Optional report file; fails rather than overwriting an existing report:
@@ -250,7 +256,7 @@ PY</code></pre>
 <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
 </div>
 <div>
-<p class="text-sm text-gray-600 mb-2">This tutorial records the software versions used in its examples. Software and package behaviour can change. Please re-check commands against the official documentation. If a command does not work, you find an error, or the tutorial is no longer reproducible, please report it through the <a class="text-blue-600 hover:underline" href="../contact.html">Contact page</a></p>
+<p class="text-sm text-gray-600 mb-2">Software and package behaviour can change. Please re-check commands against the official documentation. If a command does not work, you find an error, or the tutorial is no longer reproducible, please report it through the <a class="text-blue-600 hover:underline" href="../contact.html">Contact page</a></p>
 <p class="text-sm text-gray-500">Author: <a class="text-blue-600 hover:underline font-medium" href="../about.html">Nasir Mahmood Abbasi, PhD</a> - Category: AI-Driven Research &amp; Agentic Bioinformatics</p>
 </div>
 </div>

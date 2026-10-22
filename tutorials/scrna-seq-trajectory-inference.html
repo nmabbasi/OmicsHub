@@ -213,6 +213,9 @@ function toggleMobileMenu() {
 <li><strong>Deliverable:</strong> a trajectory plot annotated with the chosen root, the cluster labels and embedding used, observed branches, and limitations.</li>
 </ul>
 </div>
+<section class="lesson-summary tutorial-learning-contract" data-tutorial-format="conceptual-guide" aria-label="Learning format">
+<p><strong>Format: Conceptual guide.</strong> For learners who already have a quality-controlled, clustered single-cell object, this guide compares trajectory assumptions and walks through method-specific inspection examples. Bring your own processed data and justify its root, representation, and cluster labels; no dataset is supplied.</p>
+</section>
 <h2>Understanding Trajectory Inference</h2>
 <p>Single-cell RNA-seq measures cells at collection, not their histories. Trajectory inference can order cells along a transcriptional manifold when the sampled population is consistent with a continuous process. Similarity-based ordering alone does not establish that one cell becomes another, nor does it measure elapsed time.</p>
 <p><strong>Trajectory inference (TI)</strong> algorithms attempt to order cells along a learned trajectory based on their transcriptional similarities, creating a "pseudotime" axis. This allows us to track gene expression changes as cells differentiate.</p>
@@ -246,8 +249,15 @@ adata.uns['iroot'] = int(root_cells[0])
 sc.tl.diffmap(adata)
 sc.tl.dpt(adata)
 
-# Visualize pseudotime progression across the manifold
-sc.pl.umap(adata, color='dpt_pseudotime', cmap='viridis')
+# Plot the chosen root explicitly; label the embedding and partition in the figure.
+import matplotlib.pyplot as plt
+sc.pl.umap(adata, color='dpt_pseudotime', cmap='viridis', show=False)
+ax = plt.gca()
+root_xy = adata.obsm['X_umap'][adata.uns['iroot']]
+ax.scatter(*root_xy, marker='*', s=180, facecolors='none', edgecolors='black', linewidths=1.5, label='chosen root (cluster 0)')
+ax.legend(loc='best', title='Root marker')
+ax.set_title('DPT pseudotime | UMAP; partitions: leiden')
+plt.show()
 </code></pre><div class="mt-4 mb-8 bg-blue-50/50 border-l-4 border-blue-500 p-5 rounded-r-lg text-sm text-gray-700">
 <p class="font-bold text-gray-900 mb-2">Understanding the Output</p>
 <p class="mb-3">PAGA edge weights summarize connectivity between the chosen partitions in the neighbor graph. Initializing UMAP from PAGA can help display global topology, but the embedding remains a visualization and should not be treated as a validated lineage.</p>
@@ -270,10 +280,23 @@ sce &lt;- as.SingleCellExperiment(pbmc)
 sce &lt;- slingshot(sce, clusterLabels = 'ident', reducedDim = 'UMAP', start.clus = '0')
 
 # 2. Extract pseudotime and plot
-colors &lt;- colorRampPalette(brewer.pal(11, 'Spectral'))[-11]
-plotcol &lt;- colors[cut(sce$slingPseudotime_1, breaks=100)]
-
-plot(reducedDims(sce)$UMAP, col = plotcol, pch=16, asp = 1)
+# Palette factory must be called; NA pseudotimes remain visibly unassigned.
+pt &lt;- slingPseudotime(sce)[, 1]
+colors &lt;- colorRampPalette(brewer.pal(11, 'Spectral')[-6])(100)
+plotcol &lt;- rep('grey80', length(pt))
+finite &lt;- is.finite(pt)
+if (!any(finite)) stop('No finite pseudotime values; inspect the inferred lineage.')
+scaled &lt;- (pt[finite] - min(pt[finite])) / (max(pt[finite]) - min(pt[finite]))
+if (max(pt[finite]) == min(pt[finite])) scaled[] &lt;- 0.5
+plotcol[finite] &lt;- colors[pmax(1, pmin(100, floor(scaled * 99) + 1))]
+xy &lt;- reducedDims(sce)$UMAP
+plot(xy, col = plotcol, pch=16, asp = 1,
+     main = 'Slingshot lineage 1 | UMAP; clusters: ident',
+     xlab = 'UMAP 1', ylab = 'UMAP 2')
+root_idx &lt;- which(as.character(colData(sce)$ident) == '0')
+if (!length(root_idx)) stop("Start cluster '0' is absent; choose a supported root.")
+points(xy[root_idx, , drop=FALSE], pch=8, cex=1.4, lwd=1.5, col='black')
+text(median(xy[root_idx, 1]), median(xy[root_idx, 2]), labels='root: cluster 0', pos=3, cex=0.8)
 lines(SlingshotDataSet(sce), lwd=2, col='black')
 </code></pre><div class="mt-4 mb-8 bg-blue-50/50 border-l-4 border-blue-500 p-5 rounded-r-lg text-sm text-gray-700">
 <p class="font-bold text-gray-900 mb-2">Understanding the Output</p>
@@ -326,6 +349,7 @@ plot_cells(cds,
 <p>Monocle3 graph learning depends on its preprocessing, embedding, and partitioning choices. The example omits these input-specific decisions and does not guarantee correspondence to Seurat clusters. Inspect graph placement and partitions, then provide a root node that corresponds to a justified early state; a placeholder node name must be replaced with one present in the learned graph.</p>
 </div>
 <h2>Compare methods and review the result</h2>
+<p>For each saved figure, record the root (including how it was chosen), embedding and coordinate fields, clustering/partition field, and the observed lineage or branch labels. Label the root on the plot and distinguish fitted paths from cluster-level connectivity. Add a caption stating that pseudotime is relative ordering, identify disconnected or unassigned cells, and note which plausible root, cell-selection, batch, clustering, or representation alternatives were checked. A plot that omits these details is not a complete review record.</p>
 <p>Use PAGA to inspect cluster connectivity, then use DPT when a root-relative ordering on the cell graph addresses your question. Use Slingshot when cluster labels and a reduced-dimensional representation support the lineage model you want to test. Monocle3 learns a principal graph with its own workflow. Record the input cells, representation, cluster labels, root choice, and software versions so the analysis can be reviewed.</p>
 <div class="lesson-checkpoint"><h3>Before interpreting a branch</h3><ul><li>Does the root label/node correspond to the proposed early state, and are there cells from that state?</li><li>Do changes in cell selection, clustering, batch handling, or representation alter the path?</li><li>Are known markers or independent time-course/lineage evidence consistent with the ordering?</li><li>Are disconnected populations or missing intermediate states being mistaken for a continuous process?</li></ul><p>Do not automatically regress out cell-cycle or stress signals: first determine whether they are nuisance variation or part of the biological process under study.</p></div>
 <div class="mt-12 mb-8 bg-white border border-blue-100 rounded-2xl p-8 shadow-sm">

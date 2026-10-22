@@ -180,6 +180,9 @@ Legal
 <nav aria-label="Tutorial navigation" class="reader-toolbar"><a href="cell-type-annotation-methods.html" title="Choosing and Checking Cell-Type Annotation Methods">← Previous tutorial</a><a data-catalogue-return="" href="../tutorials.html">All tutorials</a><a href="infercnv-copy-number-variation.html" title="Inferring Copy Number Variation (inferCNV)">Next tutorial →</a></nav>
 <article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--walkthrough">
 <p class="lesson-lead">Cell annotation tools assign labels by comparing a query dataset with learned classes, reference profiles, or embedded representations. Treat each assignment as a proposal: its usefulness depends on what the model or reference contains and whether the evidence fits your cells.</p>
+<section class="lesson-summary tutorial-learning-contract" data-tutorial-format="advanced-template" aria-label="Learning format">
+<p><strong>Format: Advanced template.</strong> For readers familiar with Python and AnnData who already have an authorized, human immune-cell <code>.h5ad</code> query with documented raw counts and gene symbols. You will run one CellTypist prediction, save reviewable labels and diagnostics, and inspect reference fit; the input is prepared by you, not supplied here.</p>
+</section>
 <h2>Choose a method by its input and comparison</h2>
 <p>These methods do not share one interchangeable “AI annotation” interface. CellTypist is a logistic-regression classifier with downloadable or custom models. SingleR transfers labels by comparing query expression with a labeled reference. The published CELLama method converts ranked expressed genes, and optionally metadata, into text for sentence-transformer embeddings; the study evaluates embedding-based cell typing against reference cells. Geneformer and scGPT are separate projects with distinct representations and task workflows. A model's general-purpose or foundation-model label does not establish support for every annotation task.</p>
 <div aria-label="Scrollable table: What is being compared, and what to check before trusting a label" class="lesson-table-wrap" role="region" tabindex="0"><table><caption>What is being compared, and what to check before trusting a label</caption><thead><tr><th scope="col">Approach</th><th scope="col">Comparison</th><th scope="col">Review before interpretation</th></tr></thead><tbody>
@@ -189,16 +192,34 @@ Legal
 </tbody></table></div>
 <p class="lesson-caption">A shared output label does not make the methods' scores equivalent. Compare each result using its own documented diagnostics.</p>
 <h2>Run and inspect a CellTypist prediction</h2>
-<p>The example assumes <code>my_data.h5ad</code> is an AnnData object with cells in rows and genes in columns, unique gene-symbol feature names, and raw counts in <code>X</code>. It copies counts to a layer before normalizing <code>X</code>. If your object is already normalized, identify the actual count source first; do not normalize log-expression a second time. The selected built-in model below is an example for human immune annotation, not a universal model.</p>
-<pre><code class="language-python">import scanpy as sc
+<p>This advanced template expects a reader-prepared <code>my_data.h5ad</code>: AnnData with cells in rows, genes in columns, unique human gene-symbol feature names, and an explicitly documented raw-count matrix. Start in a dedicated working directory, create an isolated Python environment, and install the two packages (the current releases and dependency resolution may change):</p>
+<pre><code class="language-bash">mkdir -p celltypist-review
+cd celltypist-review
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+python -m pip install scanpy celltypist
+python -c "import scanpy, celltypist; print('scanpy', scanpy.__version__, 'celltypist', celltypist.__version__)"
+# Put your authorized input here; this template will write results beside it:
+# celltypist-review/my_data.h5ad</code></pre>
+<p>Record the environment actually used with <code>python -m pip freeze &gt; requirements-record.txt</code>; this captures your resolved environment and is not a tested or guaranteed version lock. For an official worked AnnData/count-layer example, see Scanpy’s <a href="https://scanpy.readthedocs.io/en/stable/tutorials/basics/clustering.html" rel="noopener noreferrer" target="_blank">preprocessing and clustering tutorial</a>, which demonstrates saving counts before normalization. Use its documented public dataset only if appropriate and authorized for your purpose—this page does not bundle a compatible CellTypist fixture. The selected built-in model below is an example for human immune annotation, not a universal model.</p>
+<p>Before running, inspect the object’s provenance and layer names in your own preparation notebook. The code below deliberately requires a <code>counts</code> layer with verified raw counts; if absent, establish the correct source from the upstream pipeline rather than guessing from values. Stop if counts are unavailable, transformed, negative, non-finite, or not integer-like. Numerical checks can reject obvious violations, but cannot prove count provenance.</p>
+<pre><code class="language-python">import numpy as np
+import scanpy as sc
 import celltypist
 from celltypist import models
 
 adata = sc.read_h5ad("my_data.h5ad")
-assert adata.n_obs &gt; 0 and adata.n_vars &gt; 0
-assert adata.var_names.is_unique
-# Confirm these are raw counts before creating the preserved count layer.
-adata.layers["counts"] = adata.X.copy()
+assert adata.n_obs &gt; 0 and adata.n_vars &gt; 0, "Empty input: stop and check the file"
+assert adata.var_names.is_unique, "Duplicate feature names: resolve before prediction"
+assert "counts" in adata.layers, "No verified raw-count layer; stop rather than infer provenance"
+# User must verify from upstream records that this layer is untransformed raw counts.
+counts = adata.layers["counts"]
+values = counts.data if hasattr(counts, "data") and hasattr(counts, "indptr") else np.asarray(counts)
+assert np.isfinite(values).all() and (values &gt;= 0).all(), "Counts contain invalid values"
+assert np.allclose(values, np.rint(values)), "Values are not integer-like raw counts"
+adata.X = counts.copy()
+# This changes X only; the verified count layer remains available for provenance.
 sc.pp.normalize_total(adata, target_sum=1e4)
 sc.pp.log1p(adata)
 
@@ -209,10 +230,23 @@ model = models.Model.load("Immune_All_Low.pkl")
 pred = celltypist.annotate(adata, model=model, majority_voting=True)
 adata.obs["celltypist_label"] = pred.predicted_labels["majority_voting"].to_numpy()
 adata.obs["celltypist_cell_label"] = pred.predicted_labels["predicted_labels"].to_numpy()
-# Use scores/probability outputs as diagnostics, not calibrated biological certainty.
-print(pred.probability_matrix.shape)
+# Keep both cell-level and majority-vote labels for comparison.
+prob = pred.probability_matrix
+assert prob.shape[0] == adata.n_obs, "Prediction rows do not match input cells"
+assert prob.shape[1] >= 2, "Need at least two model classes to calculate a margin"
+ordered = np.sort(np.asarray(prob), axis=1)
+adata.obs["celltypist_top_probability"] = ordered[:, -1]
+adata.obs["celltypist_probability_margin"] = ordered[:, -1] - ordered[:, -2]
+# Compact review table keyed by original cell IDs; labels remain proposals.
+review = adata.obs[["celltypist_label", "celltypist_cell_label",
+                    "celltypist_top_probability", "celltypist_probability_margin"]].copy()
+review.index.name = "cell_id"
+review.to_csv("celltypist-review.csv")
+adata.write_h5ad("celltypist-annotated.h5ad")
+print(review.head())
+print("probability matrix:", prob.shape)
 </code></pre>
-<p>CellTypist expects gene symbols and supports AnnData input. Its <code>annotate</code> function returns an AnnotationResult, including predicted labels, decision scores, and a probability matrix. Majority voting is optional and uses over-clustering when no clustering assignment is supplied; inspect the clustering/refinement and retain the unrefined cell-level labels for comparison. The probability matrix is a model output, not proof that a cell belongs to that type.</p>
+<p>CellTypist expects gene symbols and supports AnnData input. Its <code>annotate</code> function returns an AnnotationResult, including predicted labels, decision scores, and a probability matrix. The review CSV and annotated H5AD are written in the working directory; the preview should show original cell IDs, both label versions, and two per-cell diagnostics, while the matrix row count must equal the number of cells. A successful run establishes only that input was processed and outputs were written—not that labels are biologically correct. If an assertion fails or output is empty, stop and inspect the input/model compatibility rather than weakening checks. Majority voting is optional and may use heuristic over-clustering when none is supplied; inspect its basis and retain the unrefined cell-level labels. Scores are diagnostics, not calibrated biological certainty. Follow the saved table with marker, cluster-coherence, and reference-context review before accepting assignments.</p>
 <aside class="lesson-warning"><h3>Stop if the input contract is unclear</h3><p>Do not silently convert Ensembl IDs to symbols by trimming version suffixes or assume symbols are species-correct. Resolve identifiers with an appropriate mapping, check duplicates and gene overlap, and confirm which layer contains raw counts. A wrong feature mapping or unsuitable model can produce plausible-looking labels with little biological relevance.</p></aside>
 <h2>Review predictions against independent evidence</h2>
 <p>For each cluster or cell group under review, make a small decision record. Include the model's label, an appropriate marker panel, the tissue/species/condition covered by the reference, and a reason to accept, revise, or leave the label unresolved. Marker panels are context-dependent; use positive and counter-markers where possible, and examine whether a cluster mixes distinct populations. A label match alone does not validate a novel cell state or biological mechanism.</p>

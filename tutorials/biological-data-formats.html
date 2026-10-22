@@ -197,6 +197,9 @@ function toggleMobileMenu() {
 </div>
 <nav aria-label="Tutorial navigation" class="reader-toolbar"><a href="computer-data-fundamentals.html" title="Computer and Data Fundamentals for Biologists">← Previous tutorial</a><a data-catalogue-return="" href="../tutorials.html">All tutorials</a><a href="quality-control-fundamentals.html" title="Quality Control Fundamentals">Next tutorial →</a></nav>
 <article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--reference"><p class="lesson-lead">Before a pipeline reads a file, check what it represents, how records are encoded, and which reference or sample metadata it assumes. These inspections can catch format mismatches early; they cannot establish biological validity.</p>
+<section class="lesson-summary tutorial-learning-contract" data-tutorial-format="reference" aria-label="Learning format">
+<p><strong>Format: Reference.</strong> For learners who can run basic shell commands and have their own sequencing or expression files, this guide demonstrates read-only structural checks and how to interpret their limits; no input dataset is supplied.</p>
+</section>
 <p>Use this guide to identify the common sequencing and expression files, run small read-only checks, and decide what evidence to seek when a check passes or fails. Commands use example filenames and require the listed tools and your own files. The examples are not an end-to-end workflow.</p>
 <h2>Start with the file's role</h2>
 <div aria-label="Scrollable table: Common file types and the first question to ask" class="lesson-table-wrap" role="region" tabindex="0"><table><caption>Common file types and the first question to ask</caption><thead><tr><th scope="col">Format</th><th scope="col">What it represents</th><th scope="col">Inspect first</th></tr></thead><tbody>
@@ -238,7 +241,32 @@ zcat reads_R1.fastq.gz | sed -n '1,12p'
 # Optional summary, if seqkit is installed
 seqkit stats reads_R1.fastq.gz</code></pre>
 <p>In the conventional FASTQ layout, each record has a header beginning with <code>@</code>, a sequence, a <code>+</code> separator, and a quality string of matching length. A nonzero line-count remainder is a warning, not a complete parser-level validation. This quick check assumes unwrapped four-line records; malformed wrapping can invalidate that assumption. <code>pipefail</code> makes a decompression failure visible through the pipeline status in common shells such as Bash.</p>
-<p>For paired-end data, compare record counts and read-name identifiers in R1 and R2. Equal counts alone do not show that mates are in the same order or correctly paired. Do not treat quality scores as comparable across files until the encoding and instrument/pipeline provenance are known.</p>
+<p>For paired-end data, compare record counts and read-name identifiers in R1 and R2. Equal counts alone do not show that mates are in the same order or correctly paired. The following Bash/Python check reads both gzip-compressed files in lockstep, verifies four-line records and equal sequence/quality lengths, and compares the first header token after removing a terminal <code>/1</code> or <code>/2</code>. It assumes the remaining token is identical between mates; if your provider uses a different naming convention (for example, mate labels in a second header field), inspect its documentation and adapt the normalization rather than accepting a mismatch blindly.</p>
+<pre><code>python3 - reads_R1.fastq.gz reads_R2.fastq.gz &lt;&lt;'PY'
+import gzip, itertools, sys
+
+def records(path):
+    with gzip.open(path, "rt") as f:
+        while True:
+            block = list(itertools.islice(f, 4))
+            if not block:
+                return
+            if len(block) != 4:
+                raise ValueError(f"{path}: incomplete four-line record")
+            name, seq, plus, qual = (line.rstrip("\r\n") for line in block)
+            if not name.startswith("@") or not plus.startswith("+") or len(seq) != len(qual):
+                raise ValueError(f"{path}: malformed record near {name!r}")
+            yield name[1:].split()[0].removesuffix("/1").removesuffix("/2")
+
+n = 0
+for n, (a, b) in enumerate(itertools.zip_longest(records(sys.argv[1]), records(sys.argv[2])), 1):
+    if a is None or b is None:
+        raise SystemExit(f"FAIL: files have different record counts (first unmatched record {n})")
+    if a != b:
+        raise SystemExit(f"FAIL: mate identifiers/order differ at record {n}: {a!r} vs {b!r}")
+print(f"PASS: {n} paired records; normalized identifiers match in order" if n else "PASS: both files are empty")
+PY</code></pre>
+<p>A <code>PASS</code> establishes only that the parsed records have matching normalized identifiers in order under the stated convention; it does not establish sample identity or biological validity. Any malformed record, count difference, or identifier mismatch stops the check with the first location to investigate. This small Python check assumes readable gzip inputs; adapt the opener for uncompressed FASTQ. Do not treat quality scores as comparable across files until the encoding and instrument/pipeline provenance are known.</p>
 <h2>Check alignments and variants against their references</h2>
 <h3>SAM/BAM/CRAM: headers and file integrity</h3>
 <pre><code># Header metadata, including @SQ sequence dictionary and @RG read groups
