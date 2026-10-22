@@ -1,5 +1,7 @@
 // OmicsHub Website JavaScript
 
+const OMICS_SITE_ROOT = new URL(".", document.currentScript.src);
+
 // Global variables
 let tutorials = [];
 let currentPage = 'home';
@@ -17,7 +19,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 const page = document.getElementById(pageId);
                 if (page) page.classList.add('hidden');
             });
-            window.scrollTo(0, 0);
             
             // Highlight code blocks
             if (window.hljs) {
@@ -38,7 +39,6 @@ document.addEventListener('DOMContentLoaded', function() {
     initCatalogueSearchState();
     initHomeSearchCatalogue();
     initCategoryScrollHint();
-    createBackToTopButton();
 });
 
 // Handle initial routing after tutorials load
@@ -69,20 +69,20 @@ function handleInitialRoute() {
     if (hash) {
         if (hash.startsWith('#tutorial-')) {
             const tutorialId = hash.substring(10); // Remove '#tutorial-'
-            window.location.href = `${tutorialId}.html`; // Redirect to real page
+            window.location.href = new URL(`tutorials/${encodeURIComponent(tutorialId)}.html`, OMICS_SITE_ROOT).href; // Preserve native page navigation
         } else if (hash === '#all-tutorials') {
             showTutorials();
         } else if (hash === '#tutorials') {
-            showHome(true, true); // Prevent scroll to top
+            showHome(false); // Let the anchor determine the position
             setTimeout(() => {
                 const el = document.getElementById('tutorials');
                 if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }, 100);
         } else {
-            showHome(); // Default to home if hash is not recognized
+            showHome(false); // Preserve native anchor positioning
         }
     } else {
-        showHome();
+        showHome(false);
     }
 }
 
@@ -93,7 +93,7 @@ function showHome(scrollToTop = true) {
     // When dynamic sections are unavailable (e.g., static tutorial pages),
     // return users to the main homepage.
     if (!homePage) {
-        window.location.href = 'index.html';
+        window.location.href = new URL('index.html', OMICS_SITE_ROOT).href;
         return;
     }
 
@@ -114,7 +114,7 @@ function showHome(scrollToTop = true) {
 function showTutorials() {
     const allTutorialsList = document.getElementById('all-tutorials-list');
     if (!allTutorialsList) {
-        window.location.href = 'tutorials.html';
+        window.location.href = new URL('tutorials.html', OMICS_SITE_ROOT).href;
         return;
     }
 
@@ -154,7 +154,7 @@ function setupEventListeners() {
     // Accessible Legal dropdown: support click, Escape, and outside-click dismissal.
     const legalButton = document.getElementById('legal-menu-button');
     const legalMenu = document.getElementById('legal-menu');
-    if (legalButton && legalMenu) {
+    if (legalButton && legalMenu && !document.getElementById("navigation-accessibility")) {
         let closeTimer = null;
 
         const setLegalState = (open) => {
@@ -200,8 +200,6 @@ function setupEventListeners() {
         });
     }
     
-    // Back to top button
-    window.addEventListener('scroll', handleScroll);
 
     // Handle browser back/forward buttons
     window.addEventListener('popstate', function(event) {
@@ -925,8 +923,10 @@ function filterTutorialsOnly(category) {
     if (category === 'all') params.delete('category'); else params.set('category', category);
     const query = document.getElementById('search-input')?.value.trim() || params.get('q') || '';
     if (query) params.set('q', query); else params.delete('q');
-    const nextUrl = `${window.location.pathname}?${params.toString()}${window.location.hash}`;
-    if (window.location.pathname.endsWith('tutorials.html') && !window.__restoringCatalogueState) history.pushState({}, '', nextUrl);
+    const nextUrl = `${window.location.pathname}${params.size ? `?${params}` : ''}${window.location.hash}`;
+    if (window.location.pathname.endsWith('tutorials.html') && !window.__restoringCatalogueState && nextUrl !== `${location.pathname}${location.search}${location.hash}`) history.pushState({}, '', nextUrl);
+    const compactSelect = document.getElementById('catalogue-category');
+    if (compactSelect) compactSelect.value = category;
     const allTutorialsList = document.getElementById('all-tutorials-list');
     if (!allTutorialsList) return;
 
@@ -1088,10 +1088,8 @@ function renderSearchSuggestions(matches, rawQuery, queryTerms) {
             categoryLine.className = 'mt-0.5 block text-xs font-medium text-blue-700';
             categoryLine.textContent = category;
             link.replaceChildren(titleLine, categoryLine);
-            link.addEventListener('click', (event) => {
-                event.preventDefault();
+            link.addEventListener('click', () => {
                 panel.classList.add('hidden');
-                window.location.assign(link.href);
             });
             panel.appendChild(link);
         });
@@ -1171,8 +1169,8 @@ function applyCatalogueFilters(category, query) {
     const status = document.getElementById('search-results-status');
     if (status) {
         const count = [...list.querySelectorAll('.tutorial-grid-card')].filter(card => card.style.display !== 'none').length;
-        status.textContent = query ? `${count} matching ${count === 1 ? 'tutorial' : 'tutorials'}.` : '';
-        status.classList.toggle('hidden', !query);
+        status.textContent = `${count} ${query ? 'matching ' : ''}${count === 1 ? 'tutorial' : 'tutorials'}.`;
+        status.classList.remove('hidden');
     }
 }
 function restoreCatalogueState(scrollCategory) {
@@ -1187,12 +1185,14 @@ function restoreCatalogueState(scrollCategory) {
     window.__restoringCatalogueState = false;
     applyCatalogueFilters(category, query);
     if (scrollCategory) requestAnimationFrame(() => {
-        document.querySelector(`#category-filter .category-btn[data-category="${CSS.escape(category)}"]`)?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+        const strip = document.getElementById('category-filter');
+        const selected = strip?.querySelector(`[data-category="${CSS.escape(category)}"]`);
+        if (strip && selected && strip.scrollWidth > strip.clientWidth) strip.scrollLeft = selected.offsetLeft - strip.offsetLeft;
     });
 }
 function initCatalogueSearchState() {
     if (!document.getElementById('all-tutorials-list')) return;
-    restoreCatalogueState(true);
+    restoreCatalogueState(false);
     const input = document.getElementById('search-input');
     if (input) input.addEventListener('input', () => {
         const params = new URLSearchParams(location.search);
@@ -1204,7 +1204,7 @@ function initCatalogueSearchState() {
         applyCatalogueFilters(category, query);
     });
     window.addEventListener('popstate', () => restoreCatalogueState(true));
-    window.addEventListener('pageshow', () => restoreCatalogueState(true));
+    window.addEventListener('pageshow', () => restoreCatalogueState(false));
 }
 function initCategoryScrollHint() {
     const strip = document.getElementById('category-filter');
@@ -1215,38 +1215,13 @@ function initCategoryScrollHint() {
     window.addEventListener('resize', update);
     update();
 }
-// Back to top button functionality
-function createBackToTopButton() {
-    const backToTopBtn = document.createElement('button');
-    backToTopBtn.id = 'back-to-top';
-    backToTopBtn.className = 'fixed bottom-8 right-8 bg-blue-600 text-white p-3 rounded-full shadow-lg hover:bg-blue-700 transition-all duration-300 hidden z-50';
-    backToTopBtn.innerHTML = `
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path>
-        </svg>
-    `;
-    document.body.appendChild(backToTopBtn);
-
-    backToTopBtn.addEventListener('click', () => {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    });
-}
-
-function handleScroll() {
-    const backToTopBtn = document.getElementById('back-to-top');
-    if (backToTopBtn) {
-        if (window.scrollY > 300) {
-            backToTopBtn.classList.remove('hidden');
-        } else {
-            backToTopBtn.classList.add('hidden');
-        }
-    }
-}
+// Back-to-top is an in-flow action in subscribe-fab.js.
 
 // Mobile menu toggle
 function toggleMobileMenu() {
     const mobileMenu = document.getElementById("mobile-menu");
     const toggle = document.querySelector('button[aria-controls="mobile-menu"]');
+    if (!mobileMenu) return;
     const isOpen = mobileMenu.classList.toggle("hidden") === false;
     if (toggle) {
         toggle.setAttribute("aria-expanded", String(isOpen));
