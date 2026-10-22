@@ -25,6 +25,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Verify generated homepage stylesheet
+        run: |
+          npm ci --prefix tools --no-audit --no-fund
+          npm run --prefix tools build:home-css
+          git diff --exit-code -- home-page.min.css
+          rm -rf tools/node_modules
+
       - name: Validate tutorial retention, links, SEO, and accessibility markup
         run: |
           python3 tests/validate_tutorials.py

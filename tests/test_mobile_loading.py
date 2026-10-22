@@ -3,6 +3,7 @@
 from html.parser import HTMLParser
 from pathlib import Path
 from urllib.parse import urlsplit
+import hashlib
 import re
 import unittest
 
@@ -106,6 +107,28 @@ class MobileLoadingTests(unittest.TestCase):
                 with self.subTest(page=page.name, image=attrs['src']):
                     self.assertGreater(int(attrs.get('width', '0')), 0)
                     self.assertGreater(int(attrs.get('height', '0')), 0)
+
+    def test_homepage_uses_smaller_css_without_replacing_tutorial_styles(self):
+        homepage = (ROOT / 'index.html').read_text(encoding='utf-8')
+        self.assertIn('href="home-page.min.css?', homepage)
+        shared = ROOT / 'style.css'
+        subset = ROOT / 'home-page.min.css'
+        self.assertLess(subset.stat().st_size, shared.stat().st_size * 0.4)
+        css = subset.read_text(encoding='utf-8')
+        for selector in ['subscribe-community-button', 'hero-laptop-content', 'footer', 'html']:
+            self.assertIn(selector, css)
+        for page in ROOT.glob('tutorials/*.html'):
+            self.assertIn('../style.css', page.read_text(encoding='utf-8'))
+
+    def test_homepage_css_source_fingerprint_is_current(self):
+        digest = hashlib.sha256()
+        files = ['style.css', 'index.html', 'script.js', 'subscribe-fab.js',
+                 'cookie-consent.js', 'mobile-navigation.js']
+        for name in files:
+            digest.update((ROOT / name).read_bytes())
+        css = (ROOT / 'home-page.min.css').read_text(encoding='utf-8')
+        self.assertIn('Source SHA256: ' + digest.hexdigest(), css,
+                      'Rebuild with npm run --prefix tools build:home-css before publication')
 
 if __name__ == '__main__':
     unittest.main()
