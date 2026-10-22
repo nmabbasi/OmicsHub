@@ -94,7 +94,12 @@ class HeroPerformanceTests(unittest.TestCase):
                      'images/hero-image-light-navy-clean-1200.webp']:
             self.assertEqual(old(name), (ROOT / name).read_bytes(), name)
         for p in (ROOT / 'tutorials').glob('*.html'):
-            self.assertEqual(old('tutorials/' + p.name), p.read_bytes(), p.name)
+            current_bytes = p.read_bytes()
+            if p.name == 'scrna-seq-basics.html':
+                # Reverse only the exact PBMC proposal; keep every other byte guarded.
+                from test_pbmc_worked_example import restore_only_reviewed_pbmc_changes
+                current_bytes = restore_only_reviewed_pbmc_changes(current_bytes)
+            self.assertEqual(old('tutorials/' + p.name), current_bytes, p.name)
 
 if __name__ == '__main__':
     unittest.main()
