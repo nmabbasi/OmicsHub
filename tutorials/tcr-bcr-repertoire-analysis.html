@@ -248,13 +248,13 @@ clonalProportion(
 <h2>3. Attach clone labels to Seurat metadata</h2>
 <p>Make the RNA object's sample metadata agree with the sample names used above. The attachment relies on matching cell barcodes. The example groups frequencies within each sample and requests amino-acid clonotypes; inspect the resulting metadata columns rather than assuming a particular label or bin exists.</p>
 <pre><code class="language-r"># Load your matched Seurat object, e.g.:
-# seurat_obj <- readRDS("data/combined_seurat.rds")
+# seurat_obj &lt;- readRDS("data/combined_seurat.rds")
 # Metadata column "sample" must contain values in sample_ids.
 stopifnot(exists("seurat_obj"), "sample" %in% colnames(seurat_obj[[]]))
 stopifnot(all(unique(as.character(seurat_obj$sample)) %in% sample_ids))
-contig_barcodes <- unique(unlist(lapply(combined_tcr, `[[`, "barcode")))
-rna_barcodes <- colnames(seurat_obj)
-barcode_overlap <- intersect(contig_barcodes, rna_barcodes)
+contig_barcodes &lt;- unique(unlist(lapply(combined_tcr, `[[`, "barcode")))
+rna_barcodes &lt;- colnames(seurat_obj)
+barcode_overlap &lt;- intersect(contig_barcodes, rna_barcodes)
 message(length(barcode_overlap), " exact barcode matches; ",
         length(setdiff(contig_barcodes, rna_barcodes)), " contig barcodes unmatched")
 if (length(barcode_overlap) == 0L) stop("No exact barcode overlap; resolve prefixes before attachment")

@@ -236,10 +236,10 @@ mkdir -p ~/phylogeny-project/results
 cd ~/phylogeny-project
 
 # Place your own unaligned FASTA file here; no example biological data are supplied.
-test -s sequences.fasta && echo "Input file present" || { echo "STOP: add a non-empty sequences.fasta" >&2; exit 1; }
+test -s sequences.fasta &amp;&amp; echo "Input file present" || { echo "STOP: add a non-empty sequences.fasta" >&amp;2; exit 1; }
 
 # Check basic FASTA structure: >=3 records, unique first-token IDs, non-empty sequences.
-python3 - <<'PYFASTA'
+python3 - &lt;&lt;'PYFASTA'
 from pathlib import Path
 records = []
 for line in Path("sequences.fasta").read_text().splitlines():
@@ -255,7 +255,7 @@ for line in Path("sequences.fasta").read_text().splitlines():
     else:
         records[-1][1] += "".join(line.split())
 ids = [name for name, _ in records]
-if len(records) < 3 or len(set(ids)) != len(ids) or any(not seq for _, seq in records):
+if len(records) &lt; 3 or len(set(ids)) != len(ids) or any(not seq for _, seq in records):
     raise SystemExit("STOP: require >=3 records, unique IDs, and non-empty sequences")
 print(f"FASTA structure OK: {len(records)} records; confirm sequence type and homology biologically")
 PYFASTA
@@ -309,7 +309,7 @@ for line in Path("results/aligned_sequences.fasta").read_text().splitlines():
     elif line and seqs:
         seqs[-1] += "".join(line.split())
 lengths = {len(seq) for seq in seqs}
-if len(seqs) < 3 or not seqs or 0 in lengths or len(lengths) != 1:
+if len(seqs) &lt; 3 or not seqs or 0 in lengths or len(lengths) != 1:
     raise SystemExit("STOP: inspect the alignment; records must share non-zero length")
 print(f"Alignment structure OK: {len(seqs)} records x {next(iter(lengths))} columns")
 PYALIGN

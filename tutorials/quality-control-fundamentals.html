@@ -301,7 +301,7 @@ samtools idxstats aligned/sample.bam 2&gt;&amp;1 | tee qc/alignment_idxstats.txt
 picard MarkDuplicates I=aligned/sample.bam O=aligned/sample.dedup.bam \
       M=qc/picard_markdup_metrics.txt CREATE_INDEX=true
 </code></pre>
-<p><p>flagstat summarizes alignment flag categories, including mapped reads, proper pairs, and records marked duplicate; interpret categories in light of the tool and input. idxstats reports counts by reference sequence after indexing. Picard MarkDuplicates writes metrics and marks duplicates in a new BAM. These outputs can flag questions for follow-up, but unusual contig counts alone do not prove contamination.</p></p>
+<p>flagstat summarizes alignment flag categories, including mapped reads, proper pairs, and records marked duplicate; interpret categories in light of the tool and input. idxstats reports counts by reference sequence after indexing. Picard MarkDuplicates writes metrics and marks duplicates in a new BAM. These outputs can flag questions for follow-up, but unusual contig counts alone do not prove contamination.</p>
 <h3>5. Check depth where the assay needs it</h3>
 <pre><code># Input: aligned/sample.dedup.bam
 # Output: qc/coverage_mean_depth.txt
@@ -350,7 +350,7 @@ seurat_obj &lt;- CreateSeuratObject(counts = seurat_obj)
 seurat_obj[["percent.mt"]] &lt;- PercentageFeatureSet(seurat_obj, pattern = "^MT-")
 VlnPlot(seurat_obj, features = c("nFeature_RNA","nCount_RNA","percent.mt"), ncol=3, pt.size=0.1)
 </code></pre>
-<p><p>Inspect distributions of genes and counts per cell, mitochondrial fraction, and relationships between metrics across samples. The Scanpy <code>save</code> argument writes beneath Scanpy’s figures directory unless configured otherwise; create or move outputs intentionally rather than assuming it writes to <code>qc/</code>. Seurat’s <code>^MT-</code> pattern is appropriate only when feature names use that human-style convention. Use plots to evaluate candidate filters; do not copy thresholds from another study without justification.</p></p>
+<p>Inspect distributions of genes and counts per cell, mitochondrial fraction, and relationships between metrics across samples. The Scanpy <code>save</code> argument writes beneath Scanpy’s figures directory unless configured otherwise; create or move outputs intentionally rather than assuming it writes to <code>qc/</code>. Seurat’s <code>^MT-</code> pattern is appropriate only when feature names use that human-style convention. Use plots to evaluate candidate filters; do not copy thresholds from another study without justification.</p>
 <h2>Read the reports as comparisons, not verdicts</h2>
 <p>Below are common metrics, what they mean, and important caveats.</p>
 <h3>Per-base quality and adapter content</h3>
