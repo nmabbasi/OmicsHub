@@ -73,7 +73,7 @@ gtag('consent', 'default', {
     }
   },
   "datePublished": "2026-09-05",
-  "dateModified": "2026-10-23",
+  "dateModified": "2026-10-24",
   "url": "https://theomicshub.com/tutorials/r-tidyverse-fundamentals.html",
   "name": "R and Tidyverse Fundamentals",
   "isPartOf": {
@@ -160,7 +160,7 @@ function toggleMobileMenu() {
 <div class="page-content" id="tutorial-page">
 <div class="container mx-auto px-4 py-8"><div class="max-w-4xl mx-auto"><div id="tutorial-content">
 <section class="mb-12">
-<div class="flex items-center gap-2 text-sm text-blue-600 font-medium mb-4"><span>Foundations &amp; Prerequisites</span><span>-</span><span>2026-09-05</span><span>· Updated 2026-10-23</span></div>
+<div class="flex items-center gap-2 text-sm text-blue-600 font-medium mb-4"><span>Foundations &amp; Prerequisites</span><span>-</span><span>2026-09-05</span><span>· Updated 2026-10-24</span></div>
 <h1 class="text-4xl md:text-5xl font-black text-gray-900 mb-6 leading-tight" id="tutorial-title">R and Tidyverse Fundamentals</h1>
 <div class="flex items-center gap-4"><div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 font-bold text-lg">NM</div><div><p class="font-bold text-gray-900">Nasir Mahmood Abbasi, PhD</p><p class="text-sm text-gray-500">Bioinformatics Educator</p></div></div>
 </section>
@@ -174,7 +174,8 @@ function toggleMobileMenu() {
 <p><strong>Format: Hands-on lab.</strong> Beginners with basic file and command-line skills will create two small synthetic TSV inputs, run an R script, and inspect its QC table and plot; no biological data are supplied or required.</p>
 </section>
 <h2>What you need and what you will make</h2>
-<p>Use an R session with <code>tidyverse</code> and <code>here</code> installed. The complete synthetic lab was checked on Ubuntu 24.04.4 with R 4.3.3, Tidyverse 2.0.0, dplyr 1.2.1, here 1.0.2, and ggplot2 3.4.4. This is a recorded working combination, not a lockfile or a promise that every package release and operating system works. The script assumes the project root contains the two tab-separated files below. Each count-table row is a gene, the first column is named <code>gene</code>, and every remaining column is one sample with non-negative integer counts. Metadata has exactly one row per sample and includes <code>sample_id</code> and <code>condition</code>.</p>
+<p>Use an R session with <code>tidyverse</code> and <code>here</code> installed. The fresh Ubuntu setup and complete synthetic lab were checked on Ubuntu 24.04.4 with R 4.3.3, Tidyverse 2.0.0, dplyr 1.2.1, here 1.0.2, and ggplot2 4.0.3. This is a recorded working combination, not a lockfile or a promise that every package release and operating system works.</p>
+<p>The script assumes the project root contains the two tab-separated files below. Each count-table row is a gene, the first column is named <code>gene</code>, and every remaining column is one sample with non-negative integer counts. Metadata has exactly one row per sample and includes <code>sample_id</code> and <code>condition</code>.</p>
 <pre><code># data/raw/gene_counts.tsv
  gene	S01	S02	S03
 TP53	150	175	160
@@ -186,6 +187,17 @@ sample_id	condition
 S01	control
 S02	treated
 S03	treated</code></pre>
+<h3 id="tidyverse-ubuntu-setup">Ubuntu 24.04: install R and system prerequisites first</h3>
+<p>This Bash block is for Ubuntu 24.04 with administrator access. It installs R, standard build tools, development headers and a basic font before any R package compilation. It changes system packages, not just this project. On a shared server, ask its administrator to provide these prerequisites; do not assume you can use sudo. If R and the packages already load in a managed environment, keep that environment and skip this system-installation step.</p>
+<pre id="tidyverse-ubuntu-prerequisites"><code>sudo apt-get update &amp;&amp;
+sudo apt-get install -y --no-install-recommends \
+  r-base r-base-dev build-essential pkg-config ca-certificates \
+  libcurl4-openssl-dev libssl-dev libxml2-dev libuv1-dev \
+  libfontconfig1-dev libfreetype6-dev libharfbuzz-dev libfribidi-dev \
+  libpng-dev libtiff-dev libjpeg-dev libwebp-dev libicu-dev zlib1g-dev \
+  fonts-dejavu-core</code></pre>
+<p>The libraries cover HTTPS and XML imports (<code>curl</code>, <code>openssl</code>, <code>xml2</code>), filesystem support (<code>fs</code>), and plot text and images (<code>systemfonts</code>, <code>textshaping</code>, <code>ragg</code>).</p>
+<p>Fontconfig and FreeType find and draw fonts; HarfBuzz and FriBidi support text shaping; PNG, TIFF, JPEG and WebP libraries support image output. The ICU headers allow <code>stringi</code> to use system ICU rather than build its bundled fallback, and DejaVu supplies a basic runtime font on minimal Ubuntu. System requirements can change with package releases; consult the maintainers' <a href="https://pak.r-lib.org/reference/sysreqs.html">system-requirement guidance</a>. These libraries do not replace the R-package installation below.</p>
 <p>Use R (including <code>Rscript</code>) and the <code>tidyverse</code> and <code>here</code> packages. Start in a fresh practice directory, not a directory containing research files you need to keep; these commands write the named input files and create the script and output folders. Paste the complete R code in the next section into <code>scripts/01-tidy-qc.R</code> using a text editor.</p>
 <pre id="tidyverse-fixture-setup"><code>mkdir -p tidy-qc/data/raw tidy-qc/data/metadata tidy-qc/scripts tidy-qc/results
 cd tidy-qc
@@ -209,24 +221,37 @@ Rscript --version</code></pre>
 <p>Keep <code>.r-library/</code> out of Git and create a fresh library when changing R versions or operating systems. Record the loaded versions with the readiness check below; copying installed packages is not an environment lockfile.</p>
 <pre id="tidyverse-package-install"><code>R_LIBS_USER="$PWD/.r-library" Rscript --vanilla -e '
 lib &lt;- Sys.getenv("R_LIBS_USER")
-options(repos = c(CRAN = "https://cloud.r-project.org"))
+options(repos = c(CRAN = "https://cloud.r-project.org"),
+        timeout = max(600, getOption("timeout")), Ncpus = 2)
 install.packages("dplyr", lib = lib)
 install.packages(c("tidyverse", "here"), lib = lib)
+required &lt;- c("dplyr", "tidyverse", "here")
+loaded &lt;- vapply(required, function(pkg) {
+  requireNamespace(pkg, lib.loc = lib, quietly = TRUE)
+}, logical(1))
+if (!all(loaded)) {
+  stop("Installation incomplete: ", paste(required[!loaded], collapse = ", "))
+}
+stopifnot(packageVersion("dplyr", lib.loc = lib) &gt;= "1.1.1")
 '</code></pre>
+<p><strong>Do not treat exit code 0 from <code>install.packages()</code> alone as success.</strong> R package compilation or downloads can fail with warnings while R itself exits successfully. The installation block above checks that the required packages actually load from the project library and stops on an incomplete installation. A ten-minute download timeout and two build workers make the source-install route less fragile; use one worker on a resource-limited machine. A stable network is still required.</p>
 <p>Next, start a fresh R process with the same library selection. The join argument <code>relationship</code> requires dplyr 1.1.1 or newer; that is an API minimum, not a guarantee that every newer dependency combination is compatible. Expected evidence is successful package loading, the loaded versions and library paths, not just an installer exit code.</p>
 <pre id="tidyverse-package-preflight"><code>R_LIBS_USER="$PWD/.r-library" Rscript --vanilla -e '
 stopifnot(requireNamespace("tidyverse", quietly = TRUE),
           requireNamespace("here", quietly = TRUE))
 stopifnot(packageVersion("dplyr") &gt;= "1.1.1")
+suppressPackageStartupMessages(library(tidyverse))
+suppressPackageStartupMessages(library(here))
 for (pkg in c("tidyverse", "dplyr", "here", "ggplot2")) {
   cat(pkg, as.character(packageVersion(pkg)), "\n")
 }
 print(.libPaths())
 sessionInfo()
 '</code></pre>
-<p><strong>If setup fails:</strong> read the first failed dependency in the installation log. In the Ubuntu check, <code>xml2</code> lacked XML development headers; providing <code>libxml2-dev</code> headers and libraries resolved that error. On Ubuntu with administrator access, <code>sudo apt-get install libxml2-dev</code> is the corresponding system-package remedy, not an R command or a complete list of every possible source-build dependency. Without administrator access, ask the system administrator or use a managed environment rather than changing system libraries blindly.</p>
+<p><strong>If setup fails:</strong> stop before the analysis and find the first failed package in the log. An XML-only remedy was insufficient in the independent minimal-Ubuntu check: <code>curl</code> also needed libcurl headers, <code>openssl</code> needed OpenSSL headers, <code>fs</code> needed libuv, and <code>systemfonts</code> needed Fontconfig and FreeType. The Ubuntu prerequisite block includes these libraries and the downstream text/image build dependencies, rather than repairing packages one at a time.</p>
+<p>If the error is a download timeout or unavailable mirror, distinguish it from a missing-header or compiler error. After restoring the network, rerun the same package-installation block and the separate readiness check; do not skip readiness because some packages compiled. If the readiness check fails, the lab is not ready to run. Do not fix source-build failures by deleting another project's package library or changing research inputs.</p>
 <p>A second failure involved a newer dbplyr importing <code>filter_out</code> from an older dplyr 1.1.4. Updating dplyr in the dedicated library before reinstalling the failed packages resolved that combination. Restart a previously opened R session after updates, and inspect <code>.libPaths()</code>, <code>find.package("dplyr")</code> and <code>packageVersion("dplyr")</code> if the old copy still loads.</p>
-<p>The successful audit used locally supplied XML headers; a clean Ubuntu installation of the system-package command above was not separately tested. See the <a href="https://xml2.r-lib.org/">xml2 documentation</a> and R's <a href="https://stat.ethz.ch/R-manual/R-devel/library/base/html/libPaths.html">library-path documentation</a> for the underlying requirements and search rules.</p>
+<p>The complete Ubuntu prerequisite route above was checked separately from the earlier repaired-library result; the earlier XML-only remedy was not a complete setup. See the <a href="https://tidyverse.tidyverse.org/">Tidyverse installation guidance</a>, <a href="https://xml2.r-lib.org/">xml2 documentation</a> and R's <a href="https://stat.ethz.ch/R-manual/R-devel/library/base/html/libPaths.html">library-path documentation</a> for system requirements and library selection. R's <a href="https://stat.ethz.ch/R-manual/R-devel/library/utils/html/install.packages.html">installation documentation</a> explains parallel builds and dependencies; the <a href="https://stat.ethz.ch/R-manual/R-devel/library/utils/html/download.file.html">download documentation</a> explains timeouts.</p>
 <h3 id="tidyverse-project-root">Keep this lab inside its own project root</h3>
 <p><code>touch .here</code> creates a local root marker before R starts. This matters if <code>tidy-qc</code> is inside another Git project: automatic discovery can otherwise select the ancestor instead. The workflow also declares <code>here::i_am("scripts/01-tidy-qc.R")</code> before any file paths, so an already loaded here session is reset to the script's intended project. Save the complete script at that exact relative path and run from <code>tidy-qc</code>; a wrong location should stop with a root error, not send you looking for inputs in an unrelated directory.</p>
 <p>After saving the R code below, run this Bash command from <code>tidy-qc</code>. Repeat the library selection in a new terminal; <code>.here</code> selects file paths, not R packages.</p>
@@ -309,7 +334,9 @@ ggsave(out_plot, plot = p, width = 6, height = 4, dpi = 150, bg = "white")</code
 <p>Missing values (<code>NA</code>) represent unavailable or unrecorded observations; zero is a measured count of zero. Preserve the distinction while importing and decide how to handle missingness based on the data and analysis. Text formats such as TSV avoid some spreadsheet auto-formatting, but they still require inspection of imported column types and identifiers.</p>
 <p>For reproducible work, record R and package versions with <code>sessionInfo()</code>. Larger datasets may need memory-aware tools or specialized Bioconductor workflows. Consult the package documentation and the relevant analysis method before extending this small teaching example.</p>
 <h2>Validation boundary</h2>
-<p>The Ubuntu audit executed the full script on the invented inputs, checked the expected table and plot objects, rejected 12 invalid-input cases without creating result files, accepted valid zero counts and reordered metadata, and recovered after correcting failed input. The revised root handling and opaque PNG export are checked again on the same Linux host; this is not a cross-platform or independent-hardware claim.</p>
+<p>The fresh-install check began with a new Ubuntu 24.04.4 base filesystem without R or a reused R package library. The displayed system prerequisites installed R and its standard recommended packages from Ubuntu; the displayed R commands then compiled the lab packages from CRAN into the new project library. The installation check, separate fresh-process readiness check and complete workflow all exited successfully without an additional dependency repair or retry.</p>
+<p>On that fresh installation, the full script produced the expected QC table, nine-row reshaped/joined objects and three-point plot. It rejected all 12 invalid-input cases without creating result files, accepted valid zero counts and reordered metadata, and recovered after correcting failed input. The 900 by 600 PNG had an opaque white background. These are checks on invented inputs, not biological validation.</p>
+<p>This was minimal Ubuntu userspace in an isolated filesystem on the same Linux host, sharing its kernel. A full desktop VM, other operating systems and independent hardware remain untested.</p>
 <h2>References</h2>
 <ul><li><a href="https://here.r-lib.org/reference/i_am.html">here: declare a script location</a></li><li><a href="https://here.r-lib.org/reference/set_here.html">here: project marker behavior</a></li><li><a href="https://readr.tidyverse.org/reference/read_delim.html">readr: read delimited files</a></li><li><a href="https://tidyr.tidyverse.org/reference/pivot_longer.html">tidyr: pivot longer</a></li><li><a href="https://dplyr.tidyverse.org/reference/mutate-joins.html">dplyr: mutating joins</a></li><li><a href="https://ggplot2.tidyverse.org/reference/ggsave.html">ggplot2: save a plot</a></li><li><a href="https://bioconductor.org/packages/release/bioc/html/DESeq2.html">DESeq2 package documentation</a></li></ul>
 <aside aria-labelledby="tutorial-feedback-title" class="lesson-feedback" id="tutorial-feedback"><h2 id="tutorial-feedback-title">Help improve this tutorial</h2><p>Found an error, a broken link, or a step that needs a clearer explanation? Please <a href="../contact.html">contact me</a>. Your feedback helps me keep this resource accurate and useful.</p></aside></article>

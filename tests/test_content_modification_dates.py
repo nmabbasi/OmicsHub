@@ -34,6 +34,8 @@ MODIFIED = {
     "tutorials/experimental-design-batch-effects.html": "2026-09-01",
     "tutorials/r-tidyverse-fundamentals.html": "2026-09-05",
 }
+TIDYVERSE_TARGET = "tutorials/r-tidyverse-fundamentals.html"
+TARGET_MODIFIED_DATE = "2026-10-24"
 # These earlier PR changes only propagate adjacent-lesson title updates;
 # they remain navigation-only, unlike the six newly revised lessons above.
 NAVIGATION_ONLY = (
@@ -62,8 +64,9 @@ class ContentModificationDateTests(unittest.TestCase):
         for relative_path, published in MODIFIED.items():
             with self.subTest(page=relative_path):
                 entity = self.entity(relative_path)
+                modified = TARGET_MODIFIED_DATE if relative_path == TIDYVERSE_TARGET else "2026-10-23"
                 self.assertEqual(entity["datePublished"], published)
-                self.assertEqual(entity["dateModified"], "2026-10-23")
+                self.assertEqual(entity["dateModified"], modified)
                 page_html = (ROOT / relative_path).read_text(encoding="utf-8")
                 visible_dates = re.findall(
                     r"Updated\s+(\d{1,2} [A-Za-z]+ \d{4})", page_html
@@ -71,10 +74,10 @@ class ContentModificationDateTests(unittest.TestCase):
                 for visible_date in visible_dates:
                     self.assertEqual(
                         datetime.strptime(visible_date, "%d %B %Y").date().isoformat(),
-                        entity["dateModified"],
+                        modified,
                     )
                 self.assertEqual(
-                    self.sitemap_dates[SITE + relative_path], "2026-10-23"
+                    self.sitemap_dates[SITE + relative_path], modified
                 )
 
     def test_catalogue_about_and_beginner_path_dates_reflect_content_revision(self):
@@ -115,11 +118,16 @@ class ContentModificationDateTests(unittest.TestCase):
         self.assertTrue(all(url.startswith(SITE) for url in urls))
         self.assertTrue(all("?" not in url for url in urls))
         expected_updated = {SITE + path for path in MODIFIED}
+        expected_updated.remove(SITE + TIDYVERSE_TARGET)
         expected_updated.update({SITE + "about.html", SITE + "tutorials.html", SITE + "start-here.html"})
         expected_updated.update({SITE + "pages/privacy.html", SITE + "pages/cookie.html"})
         self.assertEqual(
             {url for url, lastmod in self.sitemap_dates.items() if lastmod == "2026-10-23"},
             expected_updated,
+        )
+        self.assertEqual(
+            {url for url, lastmod in self.sitemap_dates.items() if lastmod == TARGET_MODIFIED_DATE},
+            {SITE + TIDYVERSE_TARGET},
         )
         tutorial_urls = [url for url in urls if "/tutorials/" in url]
         self.assertEqual(len(tutorial_urls), 58)

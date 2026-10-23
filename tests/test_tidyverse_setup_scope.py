@@ -11,6 +11,7 @@ from tidyverse_setup_baseline import (
     normalize_tidyverse_setup_revision,
     published_tidyverse_page,
 )
+from ubuntu_tidyverse_baseline import normalize_ubuntu_tidyverse_revision
 
 SITE = "https://theomicshub.com/"
 SCRIPT = re.compile(r"<script\b[^>]*>.*?</script\s*>", re.S | re.I)
@@ -51,7 +52,7 @@ def scripts(text, executable_only=False):
 
 def normalize_jsonld_date(block):
     matches = list(DATE_MODIFIED.finditer(block))
-    if len(matches) != 1 or matches[0].group(2) not in {"2026-10-21", "2026-10-23"}:
+    if len(matches) != 1 or matches[0].group(2) not in {"2026-10-21", "2026-10-23", "2026-10-24"}:
         raise AssertionError("expected one approved JSON-LD dateModified value")
     match = matches[0]
     return block[:match.start(2)] + "__DATE_MODIFIED__" + block[match.end(2):]
@@ -67,23 +68,30 @@ class TidyverseSetupScopeTests(unittest.TestCase):
         self.assertEqual(new_articles[0].group("open"), old_articles[0].group("open"))
         self.assertEqual(new_articles[0].group("close"), old_articles[0].group("close"))
         self.assertEqual(
-            normalize_tidyverse_setup_revision(TIDYVERSE_SETUP_ARTICLE, current), original,
+            normalize_tidyverse_setup_revision(
+                TIDYVERSE_SETUP_ARTICLE,
+                normalize_ubuntu_tidyverse_revision(TIDYVERSE_SETUP_ARTICLE, current),
+            ), original,
             "only the target inner article body and its two date labels may change",
         )
         self.assertEqual(DATE_MODIFIED.findall(original)[0][1], "2026-10-21")
-        self.assertEqual(DATE_MODIFIED.findall(current)[0][1], "2026-10-23")
+        self.assertEqual(DATE_MODIFIED.findall(current)[0][1], "2026-10-24")
         self.assertEqual(UPDATED.findall(original), ["2026-10-21"])
-        self.assertEqual(UPDATED.findall(current), ["2026-10-23"])
+        self.assertEqual(UPDATED.findall(current), ["2026-10-24"])
 
     def test_restorer_does_not_mask_wrappers_navigation_or_other_metadata(self):
         original = published_tidyverse_page()
-        normalized = normalize_tidyverse_setup_revision(TIDYVERSE_SETUP_ARTICLE, original)
+        normalized = normalize_tidyverse_setup_revision(
+            TIDYVERSE_SETUP_ARTICLE, original,
+        )
         self.assertEqual(normalized, original)
         body_change = original.replace(
             "</article>", "<p>authorized article-body change</p></article>", 1
         )
         self.assertEqual(
-            normalize_tidyverse_setup_revision(TIDYVERSE_SETUP_ARTICLE, body_change), original
+            normalize_tidyverse_setup_revision(
+                TIDYVERSE_SETUP_ARTICLE, body_change,
+            ), original
         )
         outside_changes = (
             original.replace('aria-labelledby="tutorial-title"',
@@ -157,7 +165,7 @@ class TidyverseSetupScopeTests(unittest.TestCase):
         row = rows[0].group(0)
         self.assertEqual(row.count(b"<lastmod>2026-10-21</lastmod>"), 1)
         updated_row = row.replace(b"<lastmod>2026-10-21</lastmod>",
-                                  b"<lastmod>2026-10-23</lastmod>", 1)
+                                  b"<lastmod>2026-10-24</lastmod>", 1)
         expected = original[:rows[0].start()] + updated_row + original[rows[0].end():]
         self.assertEqual(current, expected,
                          "the complete sitemap must match PR10 except this one lastmod")
