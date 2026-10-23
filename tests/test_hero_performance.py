@@ -123,6 +123,20 @@ class HeroPerformanceTests(unittest.TestCase):
             current_text = strip_cookie_banner(
                 p.read_text(encoding='utf-8'), allow_missing=True
             )
+            if p.name in ('cell-type-annotation-methods.html', 'scrna-seq-integration-strategies.html'):
+                # Authorized public-data lesson rewrites have dedicated integrity tests.
+                # Keep the surrounding body, hero, navigation and scripts unchanged.
+                def surrounding_body(text):
+                    body = text[text.index('<body'):]
+                    body = re.sub(r'<article\b[^>]*>.*?</article>', '__WORKED_LESSON__', body, count=1, flags=re.S)
+                    body = body.replace('<p class="text-sm text-gray-500 mt-4">Worked example updated <time datetime="2026-10-23">23 October 2026</time>.</p>\n', '', 1)
+                    return body
+                self.assertEqual(surrounding_body(baseline_text), surrounding_body(current_text), p.name)
+                def executable_scripts(text):
+                    return [script for script in re.findall(r'<script\b[^>]*>.*?</script>', text, re.S)
+                            if 'application/ld+json' not in script.split('>', 1)[0]]
+                self.assertEqual(executable_scripts(baseline_text), executable_scripts(current_text), p.name)
+                continue
             self.assertEqual(
                 normalize_reviewed_content(relative_path, baseline_text),
                 normalize_reviewed_content(relative_path, current_text),

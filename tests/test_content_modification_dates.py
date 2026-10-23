@@ -10,6 +10,8 @@ from urllib.parse import urlsplit
 ROOT = Path(__file__).resolve().parents[1]
 SITE = "https://theomicshub.com/"
 MODIFIED = {
+    "tutorials/cell-type-annotation-methods.html": "2026-08-20",
+    "tutorials/scrna-seq-integration-strategies.html": "2026-09-04",
     "tutorials/advanced-visualization-packages.html": "2026-08-26",
     "tutorials/ai-prompt-engineering-seurat.html": "2026-08-27",
     "tutorials/command-line-part3.html": "2026-08-21",
