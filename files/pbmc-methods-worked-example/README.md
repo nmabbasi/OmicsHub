@@ -28,6 +28,18 @@ Other operating systems require a manually prepared environment with the recorde
 
 Python uses only its standard library. The public input download is 58,634,290 bytes (about 59 MB decimal); package installation needs additional bandwidth and disk space. Measured run time and memory, excluding installation, are recorded in `observed/reproduction_check.json`. These are observations from one machine, not a performance guarantee or minimum hardware specification.
 
+## Tested environment and figure reproducibility
+
+An independent run of the original, pre-font-pin lab reproduced all 14 CSV files byte-for-byte in a fresh official Ubuntu Base 24.04.4 root filesystem with no pre-existing R or analysis packages. It ran in a chroot on the same underlying host, kernel and hardware—not on a separate physical machine. The only bootstrap steps were configuring DNS and device nodes and installing `sudo` in the minimal root filesystem; the documented setup and analysis were then run unchanged.
+
+In that original audit, all four PNGs regenerated, but none was pixel-identical to its published counterpart. Noto Sans and DejaVu Sans defaults were found in the compared environments. Inspection of the UMAP showed typography and layout differences despite byte-identical UMAP coordinates; this does not establish that fonts account for every changed pixel in all four figures.
+
+The current revision explicitly pins DejaVu Sans regular and bold (checked by SHA-256 using fontconfig), the theme and geom text settings, and the base-R Cairo PNG device. Missing or mismatched fonts fail clearly in the environment checker and analysis. `setup_ubuntu.sh` installs `fontconfig` and `fonts-dejavu-core`; font hashes are listed in `inputs.json`, and the actual font hashes and graphics-library versions are recorded in `observed/run_summary.json` for the saved run. A rerun records them in its own `run_summary.json`.
+
+A follow-up run of this font-pinned script in the original environment and the separately installed Ubuntu filesystem from the audit produced byte-identical copies of all 14 CSVs and all four PNGs, including identical decoded pixels. The 14 CSVs also remain byte-identical to the original published numerical outputs. This follow-up reused the installed environments; it was not another installation-from-zero or a different-hardware test. Details are in `observed/reproduction_check.json`. These measures improve consistency but are not a complete graphics or environment lock, and do not promise universal pixel identity.
+
+Windows, macOS, different hardware or physical machines, and the RPCA/CCA extensions remain untested.
+
 ## Public input and attribution
 
 The input is [`pbmcsca.SeuratData` 3.0.0](https://seurat.nygenome.org/src/contrib/pbmcsca.SeuratData_3.0.0.tar.gz), distributed by [SeuratData / Satija Lab](https://github.com/satijalab/seurat-data). Its `DESCRIPTION` declares **CC BY 4.0**. The original study is [Ding et al. (2020), *Systematic comparison of single-cell and single-nucleus RNA-sequencing methods*](https://doi.org/10.1038/s41587-020-0465-8). The paper links public RNA-seq to GEO **GSE132044** and the Broad Single Cell Portal, including PBMC study **SCP424**.
