@@ -97,7 +97,14 @@ class HeroPerformanceTests(unittest.TestCase):
         self.assertEqual(body, original[original.index('<body'):])
         old_ads = re.search(r'<script[^>]+adsbygoogle\.js[^>]+></script>', original).group()
         self.assertIn(old_ads, current, 'Keep the provider script exactly unchanged')
-        for name in ['analytics.js', 'cookie-consent.js', 'style.css', 'subscribe-fab.js',
+        consent = (ROOT / 'cookie-consent.js').read_bytes()
+        advertising_marker = '\n// BEGIN ADVERTISING CONSENT MODULE — independent from the analytics IIFE.\n'.encode('utf-8')
+        analytics_prefix, marker, advertising_module = consent.partition(advertising_marker)
+        self.assertEqual(analytics_prefix, old('cookie-consent.js'), 'Original analytics controls changed')
+        self.assertEqual(marker, advertising_marker, 'Expected the isolated advertising module')
+        self.assertEqual(consent.count(advertising_marker), 1)
+        self.assertTrue(advertising_module.endswith(b'// END ADVERTISING CONSENT MODULE\n'))
+        for name in ['analytics.js', 'style.css', 'subscribe-fab.js',
                      'images/hero-image-light-navy-clean.webp',
                      'images/hero-image-light-navy-clean-480.webp',
                      'images/hero-image-light-navy-clean-768.webp',

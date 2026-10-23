@@ -132,3 +132,111 @@
     if (banner) banner.classList.add('hidden');
   }
 })();
+
+// BEGIN ADVERTISING CONSENT MODULE — independent from the analytics IIFE.
+(function () {
+  'use strict';
+
+  // Advertising consent is managed by Google's CMP, independently of analytics.
+  // Keep any Google-provided namespace and callback queue intact.
+  var googlefc = window.googlefc;
+  if (!googlefc || (typeof googlefc !== 'object' && typeof googlefc !== 'function')) {
+    googlefc = {};
+    window.googlefc = googlefc;
+  }
+  if (typeof googlefc.callbackQueue === 'undefined') googlefc.callbackQueue = [];
+  var advertisingQueue = googlefc.callbackQueue;
+  var advertisingState = window.__omicsHubAdvertisingConsentControl;
+  if (!advertisingState || typeof advertisingState !== 'object') {
+    advertisingState = { ready: false, readinessRegistered: false, clickHandlerInstalled: false };
+    window.__omicsHubAdvertisingConsentControl = advertisingState;
+  }
+
+  var advertisingControl = document.querySelector('[data-advertising-preferences]');
+  var advertisingStatus = document.querySelector('[data-advertising-consent-status]');
+  if (!advertisingControl) {
+    advertisingControl = document.createElement('button');
+    advertisingControl.type = 'button';
+    advertisingControl.className = 'cookie-preferences-link advertising-consent-link';
+    advertisingControl.setAttribute('data-advertising-preferences', '');
+    advertisingControl.setAttribute('aria-describedby', 'advertising-consent-status');
+    advertisingControl.textContent = 'Privacy and cookie settings (advertising)';
+    var advertisingFooter = document.querySelector('footer');
+    var advertisingPolicy = advertisingFooter && advertisingFooter.querySelector('a[href*="cookie.html"]');
+    if (advertisingPolicy && advertisingPolicy.closest('li')) {
+      var advertisingItem = document.createElement('li');
+      advertisingItem.appendChild(advertisingControl);
+      advertisingPolicy.closest('li').parentElement.appendChild(advertisingItem);
+      advertisingStatus = document.createElement('span');
+      advertisingStatus.id = 'advertising-consent-status';
+      advertisingStatus.setAttribute('data-advertising-consent-status', '');
+      advertisingStatus.setAttribute('role', 'status');
+      advertisingStatus.setAttribute('aria-live', 'polite');
+      advertisingItem.appendChild(advertisingStatus);
+    } else {
+      var advertisingContainer = document.createElement('div');
+      advertisingContainer.appendChild(advertisingControl);
+      advertisingStatus = document.createElement('span');
+      advertisingStatus.id = 'advertising-consent-status';
+      advertisingStatus.setAttribute('data-advertising-consent-status', '');
+      advertisingStatus.setAttribute('role', 'status');
+      advertisingStatus.setAttribute('aria-live', 'polite');
+      advertisingContainer.appendChild(advertisingStatus);
+      (advertisingFooter || document.body).appendChild(advertisingContainer);
+    }
+  } else if (!advertisingStatus) {
+    advertisingStatus = document.createElement('span');
+    advertisingStatus.id = 'advertising-consent-status';
+    advertisingStatus.setAttribute('data-advertising-consent-status', '');
+    advertisingStatus.setAttribute('role', 'status');
+    advertisingStatus.setAttribute('aria-live', 'polite');
+    advertisingControl.parentElement.appendChild(advertisingStatus);
+  }
+  advertisingState.statusNode = advertisingStatus;
+
+  function updateAdvertisingStatus(message) {
+    if (advertisingState.statusNode) advertisingState.statusNode.textContent = message;
+  }
+
+  function markAdvertisingApiReady() {
+    var api = window.googlefc;
+    advertisingState.ready = Boolean(api && typeof api.showRevocationMessage === 'function');
+    updateAdvertisingStatus(advertisingState.ready
+      ? 'Google advertising consent settings are available.'
+      : 'Google advertising consent settings are not available right now.');
+  }
+
+  if (!advertisingState.readinessRegistered && advertisingQueue && typeof advertisingQueue.push === 'function') {
+    advertisingState.readinessRegistered = true;
+    try {
+      advertisingQueue.push({ CONSENT_API_READY: markAdvertisingApiReady });
+    } catch (error) {
+      advertisingState.readinessRegistered = false;
+    }
+  }
+
+  if (!advertisingState.clickHandlerInstalled) {
+    advertisingState.clickHandlerInstalled = true;
+    document.addEventListener('click', function (event) {
+      var target = event.target;
+      var control = target && typeof target.closest === 'function'
+        ? target.closest('[data-advertising-preferences]') : null;
+      if (!control) return;
+
+      var api = window.googlefc;
+      var queue = api && api.callbackQueue;
+      if (advertisingState.ready && api && typeof api.showRevocationMessage === 'function' &&
+          queue && typeof queue.push === 'function') {
+        try {
+          // Google documents callbackQueue.push(showRevocationMessage) as its revocation flow.
+          queue.push(api.showRevocationMessage);
+          return;
+        } catch (error) {
+          // Report the failure without claiming that the preference was changed.
+        }
+      }
+      updateAdvertisingStatus('Google advertising consent settings could not be opened. No change to your advertising choice is confirmed. Please try again later.');
+    });
+  }
+})();
+// END ADVERTISING CONSENT MODULE

@@ -19,6 +19,7 @@ from reviewed_tutorial_baseline import (
 ROOT = Path(__file__).resolve().parents[1]
 TUTORIALS = ROOT / "tutorials"
 BASELINE = "9782b635269171240c65abb942bd9bdf400e03d0"
+COOKIE_CONSENT_BASELINE = "65e1c470355e1f8ba8a30faba7167e1bf2e8e081"
 UPDATED_PAGES = {
     "advanced-ai-orchestration-bioinformatics.html",
     "ai-prompt-engineering-seurat.html",
@@ -172,16 +173,29 @@ class AnalyticsPreferencesTests(unittest.TestCase):
 
     def test_existing_shared_scripts_unchanged_and_analytics_not_ad_grants(self):
         if self.baseline_available:
-            for name in ("analytics.js", "cookie-consent.js"):
-                baseline = git_file(BASELINE, name)
-                self.assertIsNotNone(baseline)
-                self.assertEqual(baseline, (ROOT / name).read_text(encoding="utf-8"), f"{name} changed")
+            baseline = git_file(BASELINE, "analytics.js")
+            self.assertIsNotNone(baseline)
+            self.assertEqual(baseline, (ROOT / "analytics.js").read_text(encoding="utf-8"), "analytics.js changed")
         analytics = (ROOT / "analytics.js").read_text(encoding="utf-8")
         self.assertNotRegex(analytics, r"ad_storage\s*[:=]")
         self.assertNotRegex(analytics, r"ad_user_data\s*[:=]")
         self.assertNotRegex(analytics, r"ad_personalization\s*[:=]")
         self.assertNotRegex(analytics, r"'ads(?:_storage|_user_data|_personalization)'\s*:\s*'granted'")
-        consent = (ROOT / "cookie-consent.js").read_text(encoding="utf-8")
+        consent_bytes = (ROOT / "cookie-consent.js").read_bytes()
+        original_analytics_iife = git_file(COOKIE_CONSENT_BASELINE, "cookie-consent.js")
+        self.assertIsNotNone(original_analytics_iife, "origin/main cookie-consent.js baseline is required")
+        original_analytics_iife_bytes = original_analytics_iife.encode("utf-8")
+        self.assertTrue(
+            consent_bytes.startswith(original_analytics_iife_bytes),
+            "the original analytics IIFE must remain byte-identical to origin/main",
+        )
+        advertising_append = consent_bytes[len(original_analytics_iife_bytes):].decode("utf-8")
+        self.assertRegex(
+            advertising_append,
+            r"(?s:\A\n// BEGIN ADVERTISING CONSENT MODULE — independent from the analytics IIFE\.\n\(function \(\) \{.*\n\}\)\(\);\n// END ADVERTISING CONSENT MODULE\n)\Z",
+            "only one explicitly marked advertising module may follow the unchanged analytics IIFE",
+        )
+        consent = consent_bytes.decode("utf-8")
         self.assertNotRegex(consent, r"['\"]?ad_(?:storage|user_data|personalization)['\"]?\s*:\s*['\"]granted")
 
     def test_seven_page_changes_preserve_all_baseline_content(self):
