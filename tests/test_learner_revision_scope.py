@@ -14,6 +14,7 @@ from reviewed_tutorial_baseline import (
     normalize_reviewed_content,
 )
 from reader_typography_baseline import normalize_reader_typography
+from six_lesson_revision_baseline import normalize_six_lesson_revision
 
 ROOT = Path(__file__).resolve().parents[1]
 PUBLISHED_BASELINE = "49cb63d91b508ae3c3e4a6b0a11ac2bb10d48fa1"
@@ -51,6 +52,8 @@ class LearnerRevisionScopeTests(unittest.TestCase):
                 after = (ROOT / relative).read_text(encoding="utf-8")
                 # One legacy page nests the continuation nav inside its article.
                 # For these 54 pages the helper masks navs, never article content.
+                before = normalize_six_lesson_revision(relative, before)
+                after = normalize_six_lesson_revision(relative, after)
                 self.assertEqual(
                     ARTICLE.findall(normalize_learner_revision(
                         relative, normalize_reader_typography(relative, before)
@@ -66,6 +69,9 @@ class LearnerRevisionScopeTests(unittest.TestCase):
         for relative, before in self.baseline.items():
             with self.subTest(page=relative):
                 after = (ROOT / relative).read_text(encoding="utf-8")
+                raw_before, raw_after = before, after
+                before = normalize_six_lesson_revision(relative, before)
+                after = normalize_six_lesson_revision(relative, after)
                 self.assertEqual(
                     normalize_learner_revision(relative, normalize_reviewed_content(
                         relative, normalize_reader_typography(relative, before)
@@ -77,7 +83,7 @@ class LearnerRevisionScopeTests(unittest.TestCase):
                 def executable_scripts(text):
                     return [item for item in SCRIPT.findall(text)
                             if 'application/ld+json' not in item.split(">", 1)[0]]
-                self.assertEqual(executable_scripts(before), executable_scripts(after))
+                self.assertEqual(executable_scripts(raw_before), executable_scripts(raw_after))
 
     def test_scope_normalizer_does_not_hide_unapproved_article_or_header_changes(self):
         relative = "tutorials/command-line-part1.html"

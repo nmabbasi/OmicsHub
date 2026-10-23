@@ -7,6 +7,8 @@ import re
 import subprocess
 import unittest
 
+from six_lesson_revision_baseline import normalize_six_lesson_revision
+
 ROOT = Path(__file__).resolve().parents[1]
 BASE = 'c030bc62bf6e4a4ad21f9ff64cb630c152157692'
 FIXTURE = ROOT / 'tests/fixtures/reader-copy-edits.json'
@@ -68,27 +70,36 @@ class ReaderPunctuationTests(unittest.TestCase):
                     expected = expected.replace(pair['before'], pair['after'])
                 for pair in self.manifest['stylesheet_versions']:
                     expected = expected.replace(pair['before'], pair['after'])
-                self.assertEqual((ROOT/relative).read_text(), expected)
+                expected = normalize_six_lesson_revision(relative, expected)
+                current = normalize_six_lesson_revision(relative, (ROOT/relative).read_text())
+                self.assertEqual(current, expected)
 
     def test_all_pre_inline_code_and_executable_script_blocks_remain_byte_identical(self):
-        patterns = [r'<pre\b[^>]*>.*?</pre>', r'<code\b[^>]*>.*?</code>',
-                    r'<script\b[^>]*>.*?</script>']
+        patterns = [r'<pre\b[^>]*>.*?</pre>', r'<code\b[^>]*>.*?</code>']
         for relative, before in self.old.items():
-            after = (ROOT/relative).read_text()
+            before = normalize_six_lesson_revision(relative, before)
+            after = normalize_six_lesson_revision(relative, (ROOT/relative).read_text())
             for pattern in patterns:
                 with self.subTest(path=relative, pattern=pattern):
                     old_blocks, new_blocks = re.findall(pattern, before, re.S), re.findall(pattern, after, re.S)
-                    if pattern.startswith('<script'):
-                        # JSON-LD is reader/search metadata, not executable logic;
-                        # its exact permitted copy edit is checked independently above.
-                        old_blocks = [block for block in old_blocks if 'type="application/ld+json"' not in block]
-                        new_blocks = [block for block in new_blocks if 'type="application/ld+json"' not in block]
                     self.assertEqual(old_blocks, new_blocks)
+            # Executable JavaScript is checked on the raw pages. Do not restore
+            # target articles first, or a script placed inside one could hide.
+            raw_after = (ROOT/relative).read_text()
+            old_scripts = [block for block in re.findall(
+                r'<script\b[^>]*>.*?</script>', self.old[relative], re.S
+            ) if 'type="application/ld+json"' not in block]
+            new_scripts = [block for block in re.findall(
+                r'<script\b[^>]*>.*?</script>', raw_after, re.S
+            ) if 'type="application/ld+json"' not in block]
+            with self.subTest(path=relative, pattern='raw executable scripts'):
+                self.assertEqual(old_scripts, new_scripts)
 
     def test_links_anchor_ids_and_modification_metadata_are_unchanged(self):
         for relative, before in self.old.items():
             with self.subTest(path=relative):
-                after = (ROOT/relative).read_text()
+                before = normalize_six_lesson_revision(relative, before)
+                after = normalize_six_lesson_revision(relative, (ROOT/relative).read_text())
                 old, new = LinkAndIdParser(before), LinkAndIdParser(after)
                 self.assertEqual(old.links, new.links)
                 self.assertEqual(old.ids, new.ids)
@@ -96,10 +107,25 @@ class ReaderPunctuationTests(unittest.TestCase):
                 self.assertEqual(re.findall(pattern, before), re.findall(pattern, after))
 
     def test_analysis_downloads_research_examples_images_and_site_scripts_are_unchanged(self):
+        # The newer six-lesson scope suite checks the exact six sitemap dates
+        # and every other XML field against PR8; typography assets stay strict.
         changed = subprocess.check_output(
             ['git', 'diff', '--name-only', BASE, '--', 'files/', 'images/',
-             'tutorials/examples/', '*.js', 'sitemap.xml'], cwd=ROOT, text=True).splitlines()
-        self.assertEqual(changed, [], 'Reader-copy edits must not modify analysis/data artifacts or site-script behavior')
+             'tutorials/examples/', '*.js'], cwd=ROOT, text=True).splitlines()
+        baseline_files = set(subprocess.check_output(
+            ['git', 'ls-tree', '-r', '--name-only', BASE, '--', 'files/'], cwd=ROOT, text=True
+        ).splitlines())
+        allowed_prefixes = (
+            'files/text-processing-lesson/', 'files/micromamba-lesson/',
+            'files/slurm-basics-lesson/', 'files/trajectory-contract-lesson/',
+            'files/annotation-preflight-lesson/', 'files/coding-assistant-lesson/',
+        )
+        fixture_changes = [path for path in changed if path.startswith('files/')]
+        forbidden = [path for path in changed if not path.startswith('files/')]
+        invalid_fixtures = [path for path in fixture_changes
+                            if path in baseline_files or not path.startswith(allowed_prefixes)]
+        self.assertEqual(forbidden, [], 'Reader-copy edits must not modify images, research examples or site scripts')
+        self.assertEqual(invalid_fixtures, [], 'Only new files in the six approved teaching-fixture folders are permitted')
 
     def test_generated_navigation_copy_cannot_reintroduce_em_dashes(self):
         for relative in ['tools/learning-paths.json', 'tools/generate_learning_paths.py', 'script.js']:
