@@ -130,6 +130,7 @@ class PbmcWorkedExampleTests(unittest.TestCase):
             'tutorials/computer-data-fundamentals.html',
             'tutorials/statistics-for-bioinformatics.html',
             'tutorials/experimental-design-batch-effects.html',
+            'tutorials/r-tidyverse-fundamentals.html',
             'start-here.html',
             'about.html',
             'tutorials.html',

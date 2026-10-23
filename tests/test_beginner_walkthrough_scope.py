@@ -9,6 +9,11 @@ from beginner_walkthrough_baseline import (
     PUBLISHED_PR9,
     normalize_beginner_walkthrough_revision,
 )
+from tidyverse_setup_baseline import (
+    PUBLISHED_PR10,
+    TIDYVERSE_SETUP_ARTICLE,
+    normalize_tidyverse_setup_revision,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = re.compile(r"<script\b[^>]*>.*?</script\s*>", re.S | re.I)
@@ -112,7 +117,7 @@ class BeginnerWalkthroughScopeTests(unittest.TestCase):
                 )
                 current_jsonld = jsonld_scripts(page.read_text(encoding="utf-8"))
                 old_jsonld = jsonld_scripts(old_bytes.decode("utf-8"))
-                if relative in BEGINNER_WALKTHROUGH_ARTICLES:
+                if relative in BEGINNER_WALKTHROUGH_ARTICLES or relative == TIDYVERSE_SETUP_ARTICLE:
                     current_jsonld = [normalize_jsonld_date(block) for block in current_jsonld]
                     old_jsonld = [normalize_jsonld_date(block) for block in old_jsonld]
                 self.assertEqual(current_jsonld, old_jsonld)
@@ -133,6 +138,19 @@ class BeginnerWalkthroughScopeTests(unittest.TestCase):
                         ),
                         old_bytes.decode("utf-8"),
                         "target page changes must be confined to its article body/date",
+                    )
+                elif relative == TIDYVERSE_SETUP_ARTICLE:
+                    published = subprocess.run(
+                        ["git", "show", f"{PUBLISHED_PR10}:{relative}"], cwd=ROOT,
+                        stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, check=False,
+                    )
+                    self.assertEqual(published.returncode, 0, relative)
+                    self.assertEqual(
+                        normalize_tidyverse_setup_revision(
+                            relative, current_path.read_text(encoding="utf-8")
+                        ),
+                        published.stdout.decode("utf-8"),
+                        "the separate PR10 authorization permits only the tidyverse body and dates",
                     )
                 else:
                     self.assertEqual(

@@ -73,7 +73,7 @@ gtag('consent', 'default', {
     }
   },
   "datePublished": "2026-09-05",
-  "dateModified": "2026-10-21",
+  "dateModified": "2026-10-23",
   "url": "https://theomicshub.com/tutorials/r-tidyverse-fundamentals.html",
   "name": "R and Tidyverse Fundamentals",
   "isPartOf": {
@@ -160,7 +160,7 @@ function toggleMobileMenu() {
 <div class="page-content" id="tutorial-page">
 <div class="container mx-auto px-4 py-8"><div class="max-w-4xl mx-auto"><div id="tutorial-content">
 <section class="mb-12">
-<div class="flex items-center gap-2 text-sm text-blue-600 font-medium mb-4"><span>Foundations &amp; Prerequisites</span><span>-</span><span>2026-09-05</span><span>· Updated 2026-10-21</span></div>
+<div class="flex items-center gap-2 text-sm text-blue-600 font-medium mb-4"><span>Foundations &amp; Prerequisites</span><span>-</span><span>2026-09-05</span><span>· Updated 2026-10-23</span></div>
 <h1 class="text-4xl md:text-5xl font-black text-gray-900 mb-6 leading-tight" id="tutorial-title">R and Tidyverse Fundamentals</h1>
 <div class="flex items-center gap-4"><div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 font-bold text-lg">NM</div><div><p class="font-bold text-gray-900">Nasir Mahmood Abbasi, PhD</p><p class="text-sm text-gray-500">Bioinformatics Educator</p></div></div>
 </section>
@@ -174,7 +174,7 @@ function toggleMobileMenu() {
 <p><strong>Format: Hands-on lab.</strong> Beginners with basic file and command-line skills will create two small synthetic TSV inputs, run an R script, and inspect its QC table and plot; no biological data are supplied or required.</p>
 </section>
 <h2>What you need and what you will make</h2>
-<p>Use an R session with <code>tidyverse</code> and <code>here</code> installed. The script assumes the project root contains the two tab-separated files below. Each count-table row is a gene, the first column is named <code>gene</code>, and every remaining column is one sample with non-negative integer counts. Metadata has exactly one row per sample and includes <code>sample_id</code> and <code>condition</code>.</p>
+<p>Use an R session with <code>tidyverse</code> and <code>here</code> installed. The complete synthetic lab was checked on Ubuntu 24.04.4 with R 4.3.3, Tidyverse 2.0.0, dplyr 1.2.1, here 1.0.2, and ggplot2 3.4.4. This is a recorded working combination, not a lockfile or a promise that every package release and operating system works. The script assumes the project root contains the two tab-separated files below. Each count-table row is a gene, the first column is named <code>gene</code>, and every remaining column is one sample with non-negative integer counts. Metadata has exactly one row per sample and includes <code>sample_id</code> and <code>condition</code>.</p>
 <pre><code># data/raw/gene_counts.tsv
  gene	S01	S02	S03
 TP53	150	175	160
@@ -186,9 +186,11 @@ sample_id	condition
 S01	control
 S02	treated
 S03	treated</code></pre>
-<p>Use R (including <code>Rscript</code>) and the <code>tidyverse</code> and <code>here</code> packages. Start in a new project directory; these commands create the input files shown above and the script and output folders. Paste the complete R code in the next section into <code>scripts/01-tidy-qc.R</code> using a text editor.</p>
-<pre><code>mkdir -p tidy-qc/data/raw tidy-qc/data/metadata tidy-qc/scripts tidy-qc/results
+<p>Use R (including <code>Rscript</code>) and the <code>tidyverse</code> and <code>here</code> packages. Start in a fresh practice directory, not a directory containing research files you need to keep; these commands write the named input files and create the script and output folders. Paste the complete R code in the next section into <code>scripts/01-tidy-qc.R</code> using a text editor.</p>
+<pre id="tidyverse-fixture-setup"><code>mkdir -p tidy-qc/data/raw tidy-qc/data/metadata tidy-qc/scripts tidy-qc/results
 cd tidy-qc
+touch .here
+mkdir -p .r-library
 cat &gt; data/raw/gene_counts.tsv &lt;&lt;'EOF'
 gene	S01	S02	S03
 TP53	150	175	160
@@ -202,10 +204,38 @@ S02	treated
 S03	treated
 EOF
 Rscript --version</code></pre>
-<p>Confirm R is available, then install the two packages once if needed from an R session with <code>install.packages(c("tidyverse", "here"))</code>. From the <code>tidy-qc</code> project root, run <code>Rscript scripts/01-tidy-qc.R</code>. The script writes <code>results/sample_qc.tsv</code> and <code>results/reads_qc.png</code>; <code>here()</code> resolves paths relative to the project root.</p>
+<h3 id="tidyverse-package-setup">Check the package setup before running the lab</h3>
+<p>The commands below are Bash terminal commands, run from <code>tidy-qc</code>. They put a writable project package library first without replacing system-wide packages. Install dplyr before the other packages so a preinstalled copy does not silently decide the dependency versions. Downloads and source compilation can take time; do not continue past an installation error. If the packages already load in a suitable managed environment, skip installation but run the readiness check there and keep using that environment.</p>
+<p>Keep <code>.r-library/</code> out of Git and create a fresh library when changing R versions or operating systems. Record the loaded versions with the readiness check below; copying installed packages is not an environment lockfile.</p>
+<pre id="tidyverse-package-install"><code>R_LIBS_USER="$PWD/.r-library" Rscript --vanilla -e '
+lib &lt;- Sys.getenv("R_LIBS_USER")
+options(repos = c(CRAN = "https://cloud.r-project.org"))
+install.packages("dplyr", lib = lib)
+install.packages(c("tidyverse", "here"), lib = lib)
+'</code></pre>
+<p>Next, start a fresh R process with the same library selection. The join argument <code>relationship</code> requires dplyr 1.1.1 or newer; that is an API minimum, not a guarantee that every newer dependency combination is compatible. Expected evidence is successful package loading, the loaded versions and library paths, not just an installer exit code.</p>
+<pre id="tidyverse-package-preflight"><code>R_LIBS_USER="$PWD/.r-library" Rscript --vanilla -e '
+stopifnot(requireNamespace("tidyverse", quietly = TRUE),
+          requireNamespace("here", quietly = TRUE))
+stopifnot(packageVersion("dplyr") &gt;= "1.1.1")
+for (pkg in c("tidyverse", "dplyr", "here", "ggplot2")) {
+  cat(pkg, as.character(packageVersion(pkg)), "\n")
+}
+print(.libPaths())
+sessionInfo()
+'</code></pre>
+<p><strong>If setup fails:</strong> read the first failed dependency in the installation log. In the Ubuntu check, <code>xml2</code> lacked XML development headers; providing <code>libxml2-dev</code> headers and libraries resolved that error. On Ubuntu with administrator access, <code>sudo apt-get install libxml2-dev</code> is the corresponding system-package remedy, not an R command or a complete list of every possible source-build dependency. Without administrator access, ask the system administrator or use a managed environment rather than changing system libraries blindly.</p>
+<p>A second failure involved a newer dbplyr importing <code>filter_out</code> from an older dplyr 1.1.4. Updating dplyr in the dedicated library before reinstalling the failed packages resolved that combination. Restart a previously opened R session after updates, and inspect <code>.libPaths()</code>, <code>find.package("dplyr")</code> and <code>packageVersion("dplyr")</code> if the old copy still loads.</p>
+<p>The successful audit used locally supplied XML headers; a clean Ubuntu installation of the system-package command above was not separately tested. See the <a href="https://xml2.r-lib.org/">xml2 documentation</a> and R's <a href="https://stat.ethz.ch/R-manual/R-devel/library/base/html/libPaths.html">library-path documentation</a> for the underlying requirements and search rules.</p>
+<h3 id="tidyverse-project-root">Keep this lab inside its own project root</h3>
+<p><code>touch .here</code> creates a local root marker before R starts. This matters if <code>tidy-qc</code> is inside another Git project: automatic discovery can otherwise select the ancestor instead. The workflow also declares <code>here::i_am("scripts/01-tidy-qc.R")</code> before any file paths, so an already loaded here session is reset to the script's intended project. Save the complete script at that exact relative path and run from <code>tidy-qc</code>; a wrong location should stop with a root error, not send you looking for inputs in an unrelated directory.</p>
+<p>After saving the R code below, run this Bash command from <code>tidy-qc</code>. Repeat the library selection in a new terminal; <code>.here</code> selects file paths, not R packages.</p>
+<pre id="tidyverse-run"><code>R_LIBS_USER="$PWD/.r-library" Rscript --vanilla scripts/01-tidy-qc.R</code></pre>
+<p>The script writes <code>results/sample_qc.tsv</code> and <code>results/reads_qc.png</code>. If you chose an existing managed R environment instead, run <code>Rscript --vanilla scripts/01-tidy-qc.R</code> from its active shell without selecting the project library.</p>
 <h2>Run the workflow</h2>
-<pre><code>library(tidyverse)
+<pre id="tidyverse-workflow"><code>library(tidyverse)
 library(here)
+here::i_am("scripts/01-tidy-qc.R")
 
 counts_file &lt;- here("data", "raw", "gene_counts.tsv")
 meta_file   &lt;- here("data", "metadata", "samples.tsv")
@@ -263,8 +293,9 @@ p &lt;- ggplot(sample_qc, aes(x = condition, y = total_counts_millions, colour =
        title = "Per-sample count totals") +
   theme_minimal() +
   theme(legend.position = "none")
-ggsave(out_plot, plot = p, width = 6, height = 4, dpi = 150)</code></pre>
+ggsave(out_plot, plot = p, width = 6, height = 4, dpi = 150, bg = "white")</code></pre>
 <h2>Check the tables and plot</h2>
+<p>The PNG is exported with an explicit white background so its dark labels remain readable in dark-background viewers. This changes the saved image background only, not the counts, scale or statistical meaning.</p>
 <p>After the script finishes, confirm both files exist from the project root with <code>file.exists(c("results/sample_qc.tsv", "results/reads_qc.png"))</code> in R; both values should be <code>TRUE</code>. If either is <code>FALSE</code>, stop and check that the working directory is <code>tidy-qc</code>, the script completed without an error, and the output directory is writable.</p>
 <p><code>pivot_longer()</code> makes one row for each gene-sample pair. For this three-gene, three-sample fixture, <code>long_counts</code> and <code>joined</code> each contain nine rows. The sample totals are 1,360, 1,375, and 1,365, respectively; the displayed values in millions are those totals divided by one million. The median gene counts are 320, 280, and 305. These values are arithmetic checks on the fixture, not expected results for a biological experiment.</p>
 <div class="lesson-checkpoint"><h3>Before interpreting the figure</h3><ul><li>Confirm all three sample IDs appear exactly once in the output.</li><li>Check that the plotted y-axis says supplied count totals in millions. This is not RPM; the script does not divide individual gene counts by a library-size denominator.</li><li>Look for unexpectedly small or large totals relative to the study's own design and sequencing records. No universal cutoff is implied here.</li></ul></div>
@@ -272,13 +303,15 @@ ggsave(out_plot, plot = p, width = 6, height = 4, dpi = 150)</code></pre>
 <p>A per-sample sum can flag a possible library-size or data-import discrepancy. It does not establish why a sample differs, and total counts alone do not establish differential expression or other biological effects. Raw counts can be compared as a basic descriptive QC measure, but differential-expression workflows need appropriate normalization and statistical models that reflect the experiment and its variability. Do not use these totals as normalized expression values.</p>
 <p>The original workflow called <code>total_counts / 1e6</code> “RPM.” That calculation only expresses a total in millions; reads per million ordinarily describes a feature-level count divided by a sample-level library-size denominator and multiplied by one million. To avoid implying that this script computes normalized feature abundance, the code and plot now label the value as count totals in millions.</p>
 <h2>Diagnose common failures</h2>
-<ul><li><strong>Missing or extra sample columns:</strong> the <code>setequal()</code> check stops unless the count-column names and metadata IDs match exactly. Inspect <code>setdiff(count_samples, samples$sample_id)</code> and the reverse comparison. Standardize whitespace or case only when the identifier source confirms that transformation is appropriate.</li><li><strong>Duplicate metadata IDs:</strong> the uniqueness assertion stops before the join. A duplicated key can multiply gene-sample rows; correct or explain the metadata records rather than accepting inflated totals.</li><li><strong>Missing metadata after join:</strong> <code>stopifnot(!anyNA(joined$condition))</code> catches unmatched or missing condition values. Check keys and missing condition values separately; <code>left_join()</code> preserves count rows while unmatched metadata fields become missing.</li><li><strong>Counts fail validation:</strong> investigate blank values, text, non-finite values, or negative entries in the source file. A missing count is not interchangeable with zero, so do not replace missing values without a documented data-specific reason.</li><li><strong>Output write fails:</strong> this script creates <code>results/</code>, but permissions or an incorrect project root can still prevent writing. Inspect <code>here()</code> and the exact output path.</li></ul>
+<ul><li><strong>Missing or extra sample columns:</strong> the <code>setequal()</code> check stops unless the count-column names and metadata IDs match exactly. Inspect <code>setdiff(count_samples, samples$sample_id)</code> and the reverse comparison. Standardize whitespace or case only when the identifier source confirms that transformation is appropriate.</li><li><strong>Duplicate metadata IDs:</strong> the uniqueness assertion stops before the join. A duplicated key can multiply gene-sample rows; correct or explain the metadata records rather than accepting inflated totals.</li><li><strong>Missing metadata after join:</strong> <code>stopifnot(!anyNA(joined$condition))</code> catches unmatched or missing condition values. Check keys and missing condition values separately; <code>left_join()</code> preserves count rows while unmatched metadata fields become missing.</li><li><strong>Counts fail validation:</strong> investigate blank values, text, non-finite values, or negative entries in the source file. A missing count is not interchangeable with zero, so do not replace missing values without a documented data-specific reason.</li><li><strong>Root or input path is wrong:</strong> check <code>getwd()</code>, the local <code>.here</code> file and the script location. Rerun the complete script from <code>tidy-qc</code>; <code>here::i_am()</code> should resolve this lab even inside an ancestor Git repository. If you move or rename the script, update that declaration to match.</li><li><strong>Output write fails:</strong> this script creates <code>results/</code>, but permissions or an incorrect project root can still prevent writing. Inspect <code>here()</code> and the exact output path.</li></ul>
 <h2>R objects and data choices behind the script</h2>
 <p>Atomic vectors hold values of one basic type. A data frame stores columns of equal length, and a factor stores categorical values together with an explicit set and order of levels. Here the condition factor places <code>control</code> before <code>treated</code> in the plot; choose levels that reflect the study's intended display or model contrast rather than relying on alphabetical order.</p>
 <p>Missing values (<code>NA</code>) represent unavailable or unrecorded observations; zero is a measured count of zero. Preserve the distinction while importing and decide how to handle missingness based on the data and analysis. Text formats such as TSV avoid some spreadsheet auto-formatting, but they still require inspection of imported column types and identifiers.</p>
 <p>For reproducible work, record R and package versions with <code>sessionInfo()</code>. Larger datasets may need memory-aware tools or specialized Bioconductor workflows. Consult the package documentation and the relevant analysis method before extending this small teaching example.</p>
+<h2>Validation boundary</h2>
+<p>The Ubuntu audit executed the full script on the invented inputs, checked the expected table and plot objects, rejected 12 invalid-input cases without creating result files, accepted valid zero counts and reordered metadata, and recovered after correcting failed input. The revised root handling and opaque PNG export are checked again on the same Linux host; this is not a cross-platform or independent-hardware claim.</p>
 <h2>References</h2>
-<ul><li><a href="https://readr.tidyverse.org/reference/read_delim.html">readr: read delimited files</a></li><li><a href="https://tidyr.tidyverse.org/reference/pivot_longer.html">tidyr: pivot longer</a></li><li><a href="https://dplyr.tidyverse.org/reference/mutate-joins.html">dplyr: mutating joins</a></li><li><a href="https://ggplot2.tidyverse.org/reference/ggsave.html">ggplot2: save a plot</a></li><li><a href="https://bioconductor.org/packages/release/bioc/html/DESeq2.html">DESeq2 package documentation</a></li></ul>
+<ul><li><a href="https://here.r-lib.org/reference/i_am.html">here: declare a script location</a></li><li><a href="https://here.r-lib.org/reference/set_here.html">here: project marker behavior</a></li><li><a href="https://readr.tidyverse.org/reference/read_delim.html">readr: read delimited files</a></li><li><a href="https://tidyr.tidyverse.org/reference/pivot_longer.html">tidyr: pivot longer</a></li><li><a href="https://dplyr.tidyverse.org/reference/mutate-joins.html">dplyr: mutating joins</a></li><li><a href="https://ggplot2.tidyverse.org/reference/ggsave.html">ggplot2: save a plot</a></li><li><a href="https://bioconductor.org/packages/release/bioc/html/DESeq2.html">DESeq2 package documentation</a></li></ul>
 <aside aria-labelledby="tutorial-feedback-title" class="lesson-feedback" id="tutorial-feedback"><h2 id="tutorial-feedback-title">Help improve this tutorial</h2><p>Found an error, a broken link, or a step that needs a clearer explanation? Please <a href="../contact.html">contact me</a>. Your feedback helps me keep this resource accurate and useful.</p></aside></article>
 <p class="text-sm text-gray-500 mt-6">Author: <a class="text-blue-600 hover:underline font-medium" href="../about.html">Nasir Mahmood Abbasi, PhD</a> · Category: Foundations &amp; Prerequisites</p>
 <nav aria-label="Learning path continuation" class="reader-sequence" id="reader-course-navigation">

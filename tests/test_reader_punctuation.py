@@ -9,6 +9,7 @@ import unittest
 
 from beginner_walkthrough_baseline import normalize_beginner_walkthrough_revision
 from six_lesson_revision_baseline import normalize_six_lesson_revision
+from tidyverse_setup_baseline import normalize_tidyverse_setup_revision
 
 ROOT = Path(__file__).resolve().parents[1]
 BASE = 'c030bc62bf6e4a4ad21f9ff64cb630c152157692'
@@ -75,6 +76,8 @@ class ReaderPunctuationTests(unittest.TestCase):
                 current = normalize_beginner_walkthrough_revision(relative, (ROOT/relative).read_text())
                 expected = normalize_six_lesson_revision(relative, expected)
                 current = normalize_six_lesson_revision(relative, current)
+                expected = normalize_tidyverse_setup_revision(relative, expected)
+                current = normalize_tidyverse_setup_revision(relative, current)
                 self.assertEqual(current, expected)
 
     def test_all_pre_inline_code_and_executable_script_blocks_remain_byte_identical(self):
@@ -84,6 +87,8 @@ class ReaderPunctuationTests(unittest.TestCase):
             after = normalize_beginner_walkthrough_revision(relative, (ROOT/relative).read_text())
             before = normalize_six_lesson_revision(relative, before)
             after = normalize_six_lesson_revision(relative, after)
+            before = normalize_tidyverse_setup_revision(relative, before)
+            after = normalize_tidyverse_setup_revision(relative, after)
             for pattern in patterns:
                 with self.subTest(path=relative, pattern=pattern):
                     old_blocks, new_blocks = re.findall(pattern, before, re.S), re.findall(pattern, after, re.S)
@@ -107,6 +112,8 @@ class ReaderPunctuationTests(unittest.TestCase):
                 after = normalize_beginner_walkthrough_revision(relative, (ROOT/relative).read_text())
                 before = normalize_six_lesson_revision(relative, before)
                 after = normalize_six_lesson_revision(relative, after)
+                before = normalize_tidyverse_setup_revision(relative, before)
+                after = normalize_tidyverse_setup_revision(relative, after)
                 old, new = LinkAndIdParser(before), LinkAndIdParser(after)
                 self.assertEqual(old.links, new.links)
                 self.assertEqual(old.ids, new.ids)
