@@ -68,6 +68,26 @@ if (length(version_mismatch)) {
   fail("Pinned runtime version mismatch: %s", paste(sprintf("%s=%s (expected %s)", version_mismatch,
     actual_versions[version_mismatch], expected_versions[version_mismatch]), collapse = "; "))
 }
+# Do not silently substitute the machine's default sans-serif face or PNG backend.
+plot_font <- "DejaVu Sans"
+if (!isTRUE(capabilities("cairo"))) fail("Plotting requires R Cairo support; use the documented Ubuntu setup")
+font_match <- Sys.which("fc-match")
+if (!nzchar(font_match)) fail("Plotting requires fontconfig and fonts-dejavu-core; run setup_ubuntu.sh")
+font_patterns <- c(regular = plot_font, bold = paste0(plot_font, ":style=Bold"))
+font_sha256 <- c(regular = "ae7b7855e115a5966d8b1b3f80f254ccc117ec86f9965e202ee2940453837280",
+                 bold = "5c1247acef7f2b8522a31742c76d6adcb5569bacc0be7ceaa4dc39dd252ce895")
+font_files <- vapply(font_patterns, function(pattern) {
+  match <- suppressWarnings(system2(font_match, c("-f", shQuote("%{file}"), shQuote(pattern)), stdout = TRUE, stderr = FALSE))
+  if (length(match) != 1L || !is.null(attr(match, "status")) || !file.exists(match))
+    fail("Cannot resolve the required plotting font: %s", pattern)
+  match
+}, character(1))
+actual_font_sha256 <- vapply(font_files, function(path) digest::digest(file = path, algo = "sha256"), character(1))
+if (!identical(unname(actual_font_sha256), unname(font_sha256)))
+  fail("Plotting font hash mismatch; expected DejaVu Sans regular/bold from fonts-dejavu-core 2.37-8, not a fallback font")
+graphics_provenance <- list(font_family = plot_font, device = "grDevices::png", type = "cairo",
+  fonts = lapply(names(font_files), function(face) list(face = face, file = basename(font_files[[face]]),
+    sha256 = actual_font_sha256[[face]])), library_versions = as.list(grDevices::grSoftVersion()))
 if (!grepl("^[[:xdigit:]]{64}$", expected_sha256)) fail("Expected SHA-256 must contain 64 hexadecimal characters")
 package_sha256 <- digest::digest(file = package_path, algo = "sha256")
 if (!identical(package_sha256, expected_sha256))
@@ -289,16 +309,16 @@ conf <- as.data.frame(table(SingleR_pruned = ann$SingleR_pruned_label,
 conf <- conf[conf$Freq > 0, , drop = FALSE]
 p_conf <- ggplot2::ggplot(conf, ggplot2::aes(x = Seurat, y = SingleR_pruned, fill = Freq)) +
   ggplot2::geom_tile(color = "white", linewidth = 0.25) +
-  ggplot2::geom_text(ggplot2::aes(label = Freq, color = Freq < 40), size = 3, show.legend = FALSE) +
+  ggplot2::geom_text(ggplot2::aes(label = Freq, color = Freq < 40), family = plot_font, size = 3, show.legend = FALSE) +
   ggplot2::scale_color_manual(values = c("TRUE" = "white", "FALSE" = "#111827"), guide = "none") +
   ggplot2::scale_fill_viridis_c(option = "C", trans = "sqrt", name = "Cells") +
   ggplot2::labs(title = "Reference-label method comparison", subtitle = "SingleR pruned vs Seurat transfer; counts, not accuracy",
                 x = "Seurat predicted label", y = "SingleR pruned label") +
-  ggplot2::theme_minimal(base_size = 12) + ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 40, hjust = 1),
+  ggplot2::theme_minimal(base_size = 12, base_family = plot_font) + ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 40, hjust = 1),
     panel.grid = ggplot2::element_blank(), plot.title = ggplot2::element_text(face = "bold"))
 ggplot2::ggsave(file.path(out_path, "annotation_confusion.png"), p_conf,
                 width = max(8, 1 + 0.9 * length(unique(conf$Seurat))), height = max(6, 1 + 0.65 * length(unique(conf$SingleR_pruned))),
-                dpi = 180, bg = "white", limitsize = FALSE)
+                dpi = 180, bg = "white", limitsize = FALSE, device = grDevices::png, type = "cairo", family = plot_font)
 
 # Audit per-cell normalized RNA evidence for conventional lineage marker genes.
 marker_candidates <- c("CD3D", "MS4A1", "LYZ", "NKG7", "PPBP")
@@ -316,12 +336,12 @@ p_dot <- Seurat::DotPlot(query, features = markers, group.by = "method_source_la
   ggplot2::labs(title = "Public PBMC RNA marker evidence",
                 subtitle = "Dot size: percent expressing; color: per-gene scaled average expression",
                 x = "RNA marker", y = "Method | supplied CellType") +
-  ggplot2::theme_minimal(base_size = 11) + ggplot2::theme(axis.text.y = ggplot2::element_text(size = 8),
+  ggplot2::theme_minimal(base_size = 11, base_family = plot_font) + ggplot2::theme(axis.text.y = ggplot2::element_text(size = 8),
     axis.text.x = ggplot2::element_text(angle = 35, hjust = 1), plot.title = ggplot2::element_text(face = "bold"),
     plot.title.position = "plot", plot.subtitle = ggplot2::element_text(size = 10))
 ggplot2::ggsave(file.path(out_path, "marker_dotplot.png"), p_dot,
                 width = 8, height = max(6, 0.34 * length(unique(query$method_source_label)) + 2),
-                dpi = 180, bg = "white", limitsize = FALSE)
+                dpi = 180, bg = "white", limitsize = FALSE, device = grDevices::png, type = "cairo", family = plot_font)
 
 # Query-only integration comparison: one common normalized object, PCA baseline vs Harmony.
 query_counts_before <- SeuratObject::GetAssayData(query, assay = "RNA", layer = "counts")
@@ -402,9 +422,10 @@ p_lisi <- ggplot2::ggplot(lisi_plot_data, ggplot2::aes(x = reduction, y = score,
   ggplot2::facet_wrap(~score_type, scales = "free_y", ncol = 2) +
   ggplot2::scale_fill_manual(values = c(PCA = "#5278A5", Harmony = "#D17A42")) +
   ggplot2::labs(title = "Per-cell LISI distributions", subtitle = "Scores computed in 20-D PCA/Harmony spaces; UMAP is not used for scoring", x = NULL, y = "LISI score") +
-  ggplot2::theme_minimal(base_size = 12) + ggplot2::theme(legend.position = "none", panel.grid.minor = ggplot2::element_blank(),
+  ggplot2::theme_minimal(base_size = 12, base_family = plot_font) + ggplot2::theme(legend.position = "none", panel.grid.minor = ggplot2::element_blank(),
     plot.title = ggplot2::element_text(face = "bold"))
-ggplot2::ggsave(file.path(out_path, "lisi_distributions.png"), p_lisi, width = 9, height = 5.5, dpi = 180, bg = "white")
+ggplot2::ggsave(file.path(out_path, "lisi_distributions.png"), p_lisi, width = 9, height = 5.5, dpi = 180, bg = "white",
+                device = grDevices::png, type = "cairo", family = plot_font)
 
 # Same UMAP algorithm/parameters/seeds, shown only as a qualitative 2-D illustration.
 umap_frames <- list()
@@ -431,12 +452,13 @@ p_umap <- ggplot2::ggplot(umap_plot_data, ggplot2::aes(x = UMAP_1, y = UMAP_2, c
   ggplot2::facet_grid(facet_row ~ reduction, scales = "free") +
   ggplot2::labs(title = "Query UMAPs before and after Harmony", subtitle = "Same selected cells and UMAP settings; visualization only (LISI uses 20 dimensions)",
                 x = "UMAP 1", y = "UMAP 2", color = NULL) +
-  ggplot2::theme_minimal(base_size = 12) + ggplot2::theme(panel.grid = ggplot2::element_blank(),
+  ggplot2::theme_minimal(base_size = 12, base_family = plot_font) + ggplot2::theme(panel.grid = ggplot2::element_blank(),
     plot.title = ggplot2::element_text(face = "bold"), strip.text = ggplot2::element_text(face = "bold"),
     legend.position = "bottom", legend.key.height = grid::unit(3, "mm")) +
   ggplot2::guides(color = ggplot2::guide_legend(override.aes = list(size = 2.2, alpha = 1), nrow = 2))
 ggplot2::ggsave(file.path(out_path, "umap_before_after.png"), p_umap,
-                width = 12, height = 8, dpi = 180, bg = "white", limitsize = FALSE)
+                width = 12, height = 8, dpi = 180, bg = "white", limitsize = FALSE,
+                device = grDevices::png, type = "cairo", family = plot_font)
 
 # Machine-readable run settings/summaries and software provenance; no private paths are emitted.
 package_names <- c("Seurat", "SeuratObject", "ggplot2", "SingleR", "scuttle", "scran", "harmony", "lisi", "Matrix", "jsonlite", "BiocParallel", "RhpcBLASctl", "digest")
@@ -459,7 +481,8 @@ summary <- list(
   runtime = list(R = as.character(getRversion()), seed = seed, rng_kind = RNGkind(), threads = 1L,
                  elapsed_seconds = unname(proc.time()[["elapsed"]] - run_started),
                  nfeatures = 2000L, pcs = 20L, harmony = list(group_by = "batch", theta = 2, lambda = 1, max_iter = 10L),
-                 lisi_perplexity = perplexity, umap = list(n_neighbors = 30L, min_dist = 0.3, metric = "cosine", seed = seed)),
+                 lisi_perplexity = perplexity, umap = list(n_neighbors = 30L, min_dist = 0.3, metric = "cosine", seed = seed),
+                 graphics = graphics_provenance),
   metadata_columns = list(group = group_col, supplied_label = label_col),
   filter = list(feature_rule = "nFeature_RNA > 200", excluded_label_rule = "missing, empty, Unknown, or Unassigned", per_group_cell_type_cap = cap,
                 selected_query_cells = length(query_ids), selected_reference_cells = length(reference_ids),

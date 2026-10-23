@@ -10,7 +10,7 @@ cd -- "$(dirname -- "${BASH_SOURCE[0]}")"
 printf 'Installing documented R and compiler prerequisites in this Ubuntu environment.\n'
 sudo apt-get update
 sudo DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-  python3 ca-certificates r-base-core r-base-dev \
+  python3 ca-certificates fontconfig fonts-dejavu-core r-base-core r-base-dev \
   gfortran libblas-dev liblapack-dev \
   r-cran-seurat r-bioc-singler r-bioc-scuttle r-bioc-scran \
   r-cran-ggplot2 r-cran-jsonlite r-cran-digest \

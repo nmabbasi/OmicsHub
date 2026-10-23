@@ -9,6 +9,7 @@ import math
 from pathlib import Path
 import statistics
 import struct
+import sys
 import tempfile
 import unittest
 from unittest import mock
@@ -20,6 +21,10 @@ OBSERVED = EXAMPLE / "observed"
 SPEC = importlib.util.spec_from_file_location("pbmc_prepare_inputs", EXAMPLE / "prepare_inputs.py")
 PREPARE = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(PREPARE)
+INSTALL_SPEC = importlib.util.spec_from_file_location("pbmc_install_sources", EXAMPLE / "install_r_sources.py")
+INSTALL = importlib.util.module_from_spec(INSTALL_SPEC)
+with mock.patch.dict(sys.modules, {"prepare_inputs": PREPARE}):
+    INSTALL_SPEC.loader.exec_module(INSTALL)
 
 
 def rows(name):
@@ -75,6 +80,39 @@ class PublicInputPreparerTests(unittest.TestCase):
                     PREPARE.prepare(Path(temporary), dict(self.source, **changed))
 
 
+class GraphicsPrerequisiteTests(unittest.TestCase):
+    def test_missing_fontconfig_is_rejected(self):
+        with mock.patch.object(INSTALL.shutil, "which", return_value=None):
+            with self.assertRaisesRegex(ValueError, "fontconfig is missing"):
+                INSTALL.check_graphics({"graphics": {}})
+
+    def test_missing_cairo_is_rejected(self):
+        with mock.patch.object(INSTALL.shutil, "which", return_value="/unit/fc-match"), mock.patch.object(INSTALL, "r_output", return_value="no"):
+            with self.assertRaisesRegex(ValueError, "Cairo support"):
+                INSTALL.check_graphics({"graphics": {}})
+
+    def test_matching_font_hash_is_accepted_and_pattern_is_one_argument(self):
+        # Software-unit fixture, not a font used to render any scientific output.
+        content = b"font checksum unit fixture\n"
+        with tempfile.TemporaryDirectory() as temporary:
+            font = Path(temporary) / "unit.ttf"
+            font.write_bytes(content)
+            face = {"face": "regular", "pattern": "DejaVu Sans", "sha256": hashlib.sha256(content).hexdigest()}
+            manifest = {"graphics": {"font_family": "DejaVu Sans", "faces": [face]}}
+            with mock.patch.object(INSTALL.shutil, "which", return_value="/unit/fc-match"), mock.patch.object(INSTALL, "r_output", return_value="yes"), mock.patch.object(INSTALL.subprocess, "check_output", return_value=str(font)) as match:
+                INSTALL.check_graphics(manifest)
+                match.assert_called_once_with(["/unit/fc-match", "-f", "%{file}", "DejaVu Sans"], text=True)
+
+    def test_fallback_font_with_wrong_hash_is_rejected(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            font = Path(temporary) / "fallback.ttf"
+            font.write_bytes(b"different unit fixture\n")
+            manifest = {"graphics": {"font_family": "DejaVu Sans", "faces": [{"face": "regular", "pattern": "DejaVu Sans", "sha256": "0" * 64}]}}
+            with mock.patch.object(INSTALL.shutil, "which", return_value="/unit/fc-match"), mock.patch.object(INSTALL, "r_output", return_value="yes"), mock.patch.object(INSTALL.subprocess, "check_output", return_value=str(font)):
+                with self.assertRaisesRegex(ValueError, "font hash mismatch"):
+                    INSTALL.check_graphics(manifest)
+
+
 class PbmcWorkedExampleTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -98,6 +136,31 @@ class PbmcWorkedExampleTests(unittest.TestCase):
             self.assertRegex(source["sha256"], r"^[a-f0-9]{64}$")
         self.assertEqual(self.manifest["tested_direct_versions"]["harmony"], "1.2.3")
         self.assertEqual(self.manifest["tested_direct_versions"]["scran"], "1.30.2")
+
+    def test_font_pin_matches_code_manifest_and_observed_graphics(self):
+        graphics = self.manifest["graphics"]
+        observed = self.summary["runtime"]["graphics"]
+        self.assertEqual(graphics["font_family"], "DejaVu Sans")
+        for key in ("font_family", "device", "type"):
+            self.assertEqual(observed[key], graphics[key])
+        faces = {face["face"]: face for face in observed["fonts"]}
+        source = (EXAMPLE / "run_example.R").read_text()
+        for face in graphics["faces"]:
+            self.assertEqual(faces[face["face"]]["sha256"], face["sha256"])
+            self.assertEqual(faces[face["face"]]["file"], face["file"])
+            self.assertIn(face["sha256"], source)
+        self.assertEqual(source.count("base_family = plot_font"), 4)
+        self.assertEqual(source.count("device = grDevices::png"), 4)
+        self.assertIn("family = plot_font, size = 3", source)
+        self.assertIn("Plotting font hash mismatch", source)
+        self.assertIn("fonts-dejavu-core", (EXAMPLE / "setup_ubuntu.sh").read_text())
+        self.assertIn("cairo", observed["library_versions"])
+
+    def test_environment_note_does_not_overstate_platform_or_image_reproduction(self):
+        note = (EXAMPLE / "README.md").read_text()
+        for text in ("all 14 CSV", "Ubuntu Base 24.04.4", "same underlying host", "none was pixel-identical",
+                     "Windows", "macOS", "RPCA/CCA", "remain untested", "universal pixel identity"):
+            self.assertIn(text, note)
 
     def test_selected_roles_are_disjoint_and_capped_before_scoring(self):
         self.assertEqual(len(self.cells), len({r["cell_id"] for r in self.cells}))
@@ -170,11 +233,13 @@ class PbmcWorkedExampleTests(unittest.TestCase):
         self.assertEqual(check["successful_runs"], 2)
         self.assertTrue(check["identical_csvs"])
         self.assertEqual(check["different_csvs"], [])
+        self.assertEqual(len(check["identical_figures"]), 4)
+        self.assertEqual(check["same_script_sha256"], self.summary["dataset"]["script_sha256"])
 
     def test_bundle_and_hands_on_promises(self):
         archive = ROOT / "downloads/pbmc-methods-worked-example.zip"
         with zipfile.ZipFile(archive) as bundle:
-            for relative in ("run_example.R", "prepare_inputs.py", "inputs.json", "README.md", "observed/run_summary.json", "observed/selected_cells.csv"):
+            for relative in ("run_example.R", "prepare_inputs.py", "install_r_sources.py", "setup_ubuntu.sh", "inputs.json", "README.md", "observed/run_summary.json", "observed/selected_cells.csv", "observed/reproduction_check.json"):
                 member = "pbmc-methods-worked-example/" + relative
                 self.assertEqual(bundle.read(member), (EXAMPLE / relative).read_bytes())
             self.assertFalse(any(name.endswith((".rds", ".rda", ".tar.gz")) for name in bundle.namelist()))

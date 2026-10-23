@@ -1,6 +1,6 @@
 {
   "successful_runs": 2,
-  "same_script_sha256": "bfdb2a342a25bff787f0c27bbdceab86011a2272cf3a6dd141f5e6f4c0426bd2",
+  "same_script_sha256": "eb63ef94b4ff263c91a944a3ef9cc20b524da3892a04d0496ac1f41c497de09b",
   "same_input_sha256": "5161e0e81ed72bb8d6f96b5cc776e04cce738600a3b439b1658fe648c2faf6cb",
   "identical_csvs": [
     "annotation.csv",
@@ -20,12 +20,14 @@
   ],
   "different_csvs": [],
   "run_1": {
-    "wall_seconds": 83.47,
-    "peak_rss_kib": 2243124
+    "environment": "Original Ubuntu 24.04 environment",
+    "wall_seconds": 82.51,
+    "peak_rss_kib": 2242648
   },
   "run_2": {
-    "wall_seconds": 80.96000000000001,
-    "peak_rss_kib": 2242884
+    "environment": "Separately installed Ubuntu 24.04.4 root filesystem from the original audit",
+    "wall_seconds": 75.81,
+    "peak_rss_kib": 6508
   },
   "identical_figures": [
     "annotation_confusion.png",
@@ -33,9 +35,68 @@
     "marker_dotplot.png",
     "umap_before_after.png"
   ],
+  "different_figures": [],
+  "pixel_identical_figures": [
+    "annotation_confusion.png",
+    "lisi_distributions.png",
+    "marker_dotplot.png",
+    "umap_before_after.png"
+  ],
+  "unchanged_published_csvs": [
+    "annotation.csv",
+    "annotation_grouped_counts.csv",
+    "annotation_label_counts.csv",
+    "embeddings_harmony.csv",
+    "embeddings_pca.csv",
+    "filtering_counts.csv",
+    "lisi_by_label.csv",
+    "lisi_paired_differences.csv",
+    "lisi_per_cell.csv",
+    "lisi_summary.csv",
+    "marker_expression_per_cell.csv",
+    "packages.csv",
+    "selected_cells.csv",
+    "umap_coordinates.csv"
+  ],
+  "font_substitution_negative_test": "Analysis rejected a substitute font with a hash-mismatch error before data extraction.",
   "notes": [
-    "Two separate R processes on the same machine and tested software environment; each uses one core.",
-    "The two verification runs were launched concurrently; elapsed times are observations, not benchmarks or hardware requirements.",
-    "Exact CSV identity here does not guarantee bitwise identity on every platform."
-  ]
+    "Two separate R processes in independently installed Ubuntu filesystems on the same underlying host/kernel/hardware; each uses one core.",
+    "This font-pinned follow-up reused the installed environments; it was not another installation-from-zero test.",
+    "The verification runs were launched concurrently; timings are observations, not benchmarks or hardware requirements.",
+    "All 14 CSVs and four PNG files matched byte for byte across these two runs; decoded figure pixels matched too.",
+    "The numerical outputs also match the original pre-font-pin published CSVs.",
+    "Fonts and PNG backend are pinned, but system graphics libraries are not completely locked; no universal pixel-identity promise.",
+    "Windows, macOS, different hardware/physical machines and the RPCA/CCA extensions remain untested."
+  ],
+  "original_pre_font_pin_clean_install_audit": {
+    "root_filesystem": "Official Ubuntu Base 24.04.4 with no pre-existing R or analysis packages",
+    "isolation": "Chroot on the same underlying host/kernel/hardware, not a separate physical machine",
+    "bootstrap": "DNS and device nodes configured; sudo installed, then the documented setup and unmodified analysis ran unchanged",
+    "published_zip_sha256": "2217e1c72dd4aba45a39a053d9cf932f4a7ed582368d592818de6635719788f3",
+    "script_sha256": "bfdb2a342a25bff787f0c27bbdceab86011a2272cf3a6dd141f5e6f4c0426bd2",
+    "input_sha256": "5161e0e81ed72bb8d6f96b5cc776e04cce738600a3b439b1658fe648c2faf6cb",
+    "identical_csvs": [
+      "annotation.csv",
+      "annotation_grouped_counts.csv",
+      "annotation_label_counts.csv",
+      "embeddings_harmony.csv",
+      "embeddings_pca.csv",
+      "filtering_counts.csv",
+      "lisi_by_label.csv",
+      "lisi_paired_differences.csv",
+      "lisi_per_cell.csv",
+      "lisi_summary.csv",
+      "marker_expression_per_cell.csv",
+      "packages.csv",
+      "selected_cells.csv",
+      "umap_coordinates.csv"
+    ],
+    "nonidentical_pngs": [
+      "annotation_confusion.png",
+      "lisi_distributions.png",
+      "marker_dotplot.png",
+      "umap_before_after.png"
+    ],
+    "figure_finding": "All four PNGs regenerated with matching dimensions but different pixels. Noto Sans versus DejaVu Sans defaults were found; the inspected UMAP showed font/layout differences with byte-identical coordinates, not proof that every changed pixel in all four was font-caused."
+  }
 }

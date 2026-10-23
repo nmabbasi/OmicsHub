@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 from pathlib import Path
+import shutil
 import subprocess
 import sys
 
@@ -17,6 +19,23 @@ def r_output(expression: str, *arguments: str) -> str:
 
 def installed(package: str) -> str:
     return r_output('p <- commandArgs(TRUE)[1]; cat(tryCatch(as.character(packageVersion(p)), error=function(e) "missing"))', package)
+
+
+def check_graphics(manifest: dict) -> None:
+    graphics = manifest["graphics"]
+    matcher = shutil.which("fc-match")
+    if matcher is None:
+        raise ValueError("fontconfig is missing; run the documented Ubuntu setup")
+    if r_output('cat(if (isTRUE(capabilities("cairo"))) "yes" else "no")') != "yes":
+        raise ValueError("R Cairo support is required for the pinned PNG backend")
+    for face in graphics["faces"]:
+        resolved = subprocess.check_output([matcher, "-f", "%{file}", face["pattern"]], text=True).strip()
+        font = Path(resolved)
+        if not resolved or not font.is_file():
+            raise ValueError(f"Cannot resolve plotting font: {face['pattern']}")
+        if hashlib.sha256(font.read_bytes()).hexdigest() != face["sha256"]:
+            raise ValueError(f"Plotting font hash mismatch for {face['face']}; do not use a fallback font")
+        print(f"Font verified: {graphics['font_family']} {face['face']} (SHA-256)")
 
 
 def main() -> int:
@@ -50,6 +69,7 @@ def main() -> int:
                 mismatches.append(f"{package}: need {expected}, found {actual}")
         if mismatches:
             raise ValueError("Tested environment does not match: " + "; ".join(mismatches))
+        check_graphics(manifest)
     except (OSError, ValueError, subprocess.CalledProcessError) as error:
         print(f"Environment setup stopped: {error}", file=sys.stderr)
         return 1
