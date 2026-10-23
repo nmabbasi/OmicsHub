@@ -16,6 +16,8 @@ REVIEWED_DATE_MODIFICATIONS = {
     "tutorials/single-cell-foundation-models.html": ("2026-10-21", "2026-10-23"),
     "tutorials/spatial-transcriptomics-r-python.html": ("2026-10-21", "2026-10-23"),
     "tutorials/wes-variant-calling-pipeline.html": ("2026-10-21", "2026-10-23"),
+    "tutorials/hpc-submission-part1.html": ("2026-10-21", "2026-10-23"),
+    "tutorials/reproducible-workflows-snakemake-nextflow.html": ("2026-10-21", "2026-10-23"),
 }
 _VISIBLE_DATE_PATH = "tutorials/ai-prompt-engineering-seurat.html"
 _VISIBLE_DATE_VALUES = ("22 October 2026", "23 October 2026")
@@ -48,4 +50,41 @@ def strip_cookie_banner(text, allow_missing=False):
     text, count = _COOKIE_BANNER.subn("", text, count=1)
     if count != 1 and not (allow_missing and count == 0):
         raise AssertionError("expected exactly one marked cookie-consent banner")
+    return text
+
+
+# Dedicated execution/contract tests cover the four owner-authorized article
+# changes below. All other article bodies and all surrounding scripts remain
+# protected; only the two existing reader-navigation blocks are excluded.
+LEARNER_REVISION_ARTICLES = frozenset({
+    "tutorials/ai-prompt-engineering-seurat.html",
+    "tutorials/hpc-submission-part1.html",
+    "tutorials/reproducible-workflows-snakemake-nextflow.html",
+    "tutorials/wes-variant-calling-pipeline.html",
+})
+_READER_NAVIGATION = (
+    re.compile(r'<nav\b(?=[^>]*\bclass="[^"]*\breader-toolbar\b)[^>]*>.*?</nav>', re.S),
+    re.compile(r'<nav\b(?=[^>]*\bid="reader-course-navigation")[^>]*>.*?</nav>', re.S),
+)
+
+
+def normalize_learner_revision(relative_path, text):
+    """Mask only reviewed article/navigation deltas, never whole page bodies."""
+    for index, pattern in enumerate(_READER_NAVIGATION):
+        text, count = pattern.subn(f"__REVIEWED_READER_NAV_{index}__", text)
+        if count != 1:
+            raise AssertionError(f"expected one reader nav {index} in {relative_path}")
+    if relative_path in LEARNER_REVISION_ARTICLES:
+        text, count = re.subn(
+            r'<article\b[^>]*>.*?</article>', "__REVIEWED_PRIORITY_ARTICLE__", text, flags=re.S
+        )
+        if count != 1:
+            raise AssertionError(f"expected one reviewed article in {relative_path}")
+    if relative_path == "tutorials/reproducible-workflows-snakemake-nextflow.html":
+        text, count = re.subn(
+            r'<p class="text-sm text-gray-600 mb-2">(?:These examples do not have a recorded test environment|Validation boundary:).*?</p>',
+            "__REVIEWED_NEXTFLOW_EXECUTION_NOTE__", text, flags=re.S
+        )
+        if count != 1:
+            raise AssertionError("expected the single reviewed Nextflow validation note")
     return text

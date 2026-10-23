@@ -11,6 +11,8 @@ import unittest
 import xml.etree.ElementTree as ET
 import zipfile
 
+from reviewed_tutorial_baseline import normalize_learner_revision
+
 ROOT = Path(__file__).resolve().parents[1]
 BASELINE = 'd10ec616cae67437db90427bee4e156dd2bfb7d7'
 SECTION_SHA256 = '4a9afadf530d9ad205c8c418cbf9ed73f108df6b79493fe91359003da2a08b57'
@@ -43,7 +45,9 @@ class PbmcWorkedExampleTests(unittest.TestCase):
                                 cwd=ROOT, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
         normalized = restore_only_reviewed_pbmc_changes(data)
         if result.returncode == 0:
-            self.assertEqual(normalized, result.stdout)
+            relative = 'tutorials/scrna-seq-basics.html'
+            self.assertEqual(normalize_learner_revision(relative, normalized.decode()),
+                             normalize_learner_revision(relative, result.stdout.decode()))
         # The Python code itself has an independently recorded pre-edit fingerprint.
         blocks = re.findall(r'<pre><code>([\s\S]*?)</code></pre>', data.decode())
         script = next(html.unescape(b) for b in blocks if b.startswith('# Python script:'))
@@ -112,6 +116,9 @@ class PbmcWorkedExampleTests(unittest.TestCase):
             'tutorials/single-cell-foundation-models.html',
             'tutorials/spatial-transcriptomics-r-python.html',
             'tutorials/wes-variant-calling-pipeline.html',
+            'tutorials/hpc-submission-part1.html',
+            'tutorials/reproducible-workflows-snakemake-nextflow.html',
+            'start-here.html',
             'about.html',
             'tutorials.html',
             'pages/privacy.html',

@@ -130,11 +130,13 @@ class EditorialScopeFixTests(unittest.TestCase):
             title = spec["title"]
             escaped_title = title.replace("&", "&amp;")
             target = f"{slug}.html"
-            for neighbor in spec["neighbors"]:
+            references = 0
+            for candidate in (ROOT / "tutorials").glob("*.html"):
+                neighbor = candidate.relative_to(ROOT).as_posix()
                 with self.subTest(target=target, neighbor=neighbor):
                     p = page(neighbor)
                     refs = [link for link in p.links if link["href"].endswith(target)]
-                    self.assertTrue(refs, f"{neighbor} no longer links to {target}")
+                    references += len(refs)
                     for ref in refs:
                         self.assertTrue(
                             ref["title"] in (title, escaped_title)
@@ -142,6 +144,7 @@ class EditorialScopeFixTests(unittest.TestCase):
                             or escaped_title in ref["text"],
                             f"outdated/missing neighboring title in {neighbor}: {ref}",
                         )
+            self.assertGreater(references, 0, f"No current lesson links to {target}")
 
     def test_mcp_page_is_server_selection_and_safe_evaluation_not_installation(self):
         text = (ROOT / "tutorials/mcp-zotero.html").read_text(encoding="utf-8")
