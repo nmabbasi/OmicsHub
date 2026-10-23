@@ -161,7 +161,7 @@ function toggleMobileMenu() {
 <div class="mb-12 rounded-2xl overflow-hidden shadow-lg border border-gray-100">
 <img alt="Prompt Engineering for Data Analysis" class="w-full aspect-video object-cover" decoding="async" loading="eager" src="../images/prompt-engineering-seurat-scanpy.webp" width="1920" height="1920"/>
 </div>
-<nav aria-label="Tutorial navigation" class="reader-toolbar"><a href="single-cell-foundation-models.html" title="Evaluating External scGPT &amp; Geneformer Embeddings">← Previous tutorial</a><a data-catalogue-return="" href="../tutorials.html">All tutorials</a><a href="autonomous-research-orchestrator.html" title="Autonomous Research Orchestrator">Next tutorial →</a></nav>
+<nav aria-label="Learning path navigation" class="reader-toolbar"><a href="cell-type-annotation-methods.html" rel="prev">← Prerequisite: Choosing and Checking Cell-Type Annotation Methods</a><a data-catalogue-return="" href="../tutorials.html">All tutorials</a><a href="autonomous-research-orchestrator.html" rel="next">Explore: Autonomous Research Orchestrator</a></nav>
 <article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--walkthrough">
 <p class="lesson-lead">Use an AI coding assistant to draft single-cell analysis code only after you specify the data, biological question, method, and outputs. Then check its assumptions and run the script where you can inspect the results.</p>
 <section class="lesson-summary tutorial-learning-contract" data-tutorial-format="advanced-template" aria-label="Learning format"><p><strong>Format: Advanced template.</strong> For readers comfortable with basic scRNA-seq and command-line use: you will adapt and review one Scanpy QC/clustering workflow and one Seurat cluster-marker workflow. Prepare compatible AnnData and Seurat objects yourself; no dataset is bundled, and the examples are not end-to-end data-preparation labs.</p></section>
@@ -256,15 +256,26 @@ adata = adata[adata.obs['pct_counts_mt'] &lt; max_mt_pct, :]
 
 sc.pp.filter_genes(adata, min_cells=3)
 
-# Normalization, variable genes, PCA, neighbors, UMAP, clustering
+# Normalize counts, then preserve an unscaled log-normalized source before HVG selection.
 sc.pp.normalize_total(adata, target_sum=1e4)
 sc.pp.log1p(adata)
-sc.pp.highly_variable_genes(adata, n_top_genes=2000, subset=True)
-sc.pp.scale(adata, max_value=10)
-sc.tl.pca(adata, svd_solver='arpack')
-sc.pp.neighbors(adata, n_neighbors=10, n_pcs=40)
-sc.tl.umap(adata)
-sc.tl.leiden(adata, key_added='leiden_r10')
+adata.layers["log1p_norm"] = adata.X.copy()
+# Keep adata full-gene for ranking; use an HVG-only copy for scaled embeddings.
+# Any input .raw is deliberately ignored by the explicit layer selection below.
+sc.pp.highly_variable_genes(adata, n_top_genes=min(2000, adata.n_vars), subset=False)
+adata_hvg = adata[:, adata.var["highly_variable"]].copy()
+sc.pp.scale(adata_hvg, max_value=10)
+available_pcs = min(adata_hvg.n_obs - 1, adata_hvg.n_vars - 1)
+if available_pcs &lt; 2:
+    raise ValueError("Need at least two available PCs after cell and HVG filtering.")
+n_pcs = min(40, available_pcs)
+sc.tl.pca(adata_hvg, n_comps=n_pcs, svd_solver='arpack')
+sc.pp.neighbors(adata_hvg, n_neighbors=10, n_pcs=n_pcs)
+sc.tl.umap(adata_hvg)
+sc.tl.leiden(adata_hvg, key_added='leiden_r10')
+# Carry embedding labels and coordinates back to the full-gene object.
+adata.obs['leiden_r10'] = adata_hvg.obs['leiden_r10'].copy()
+adata.obsm['X_umap'] = adata_hvg.obsm['X_umap'].copy()
 
 # Save UMAP plot directly to the requested results path.
 sc.pl.umap(adata, color='leiden_r10', show=False)
@@ -273,7 +284,10 @@ plt.close()
 
 # Exploratory cell-level ranking for each Leiden group versus the remaining cells.
 # For replicated condition-level inference use a sample-aware design, often pseudobulk.
-sc.tl.rank_genes_groups(adata, 'leiden_r10', method='t-test_overestim_var')
+# Rank all genes retained after filtering from the saved, unscaled log1p-normalized layer.
+# Explicit use_raw=False prevents a pre-existing .raw from silently changing the source.
+sc.tl.rank_genes_groups(adata, 'leiden_r10', method='t-test_overestim_var',
+                        reference='rest', layer='log1p_norm', use_raw=False)
 # Convert to a readable table and save
 import pandas as pd
 r = adata.uns['rank_genes_groups']
@@ -297,12 +311,12 @@ print("Wrote results to", outdir)
 <li>./results/qc_violins_before.png — violin plots of QC metrics before filtering.</li>
 <li>Filtered in-memory AnnData (then saved): ./results/adata_processed.h5ad</li>
 <li>UMAP image: ./results/umap_leiden_r10.png (the script explicitly saves this file).</li>
-<li>Cluster ranking table: ./results/scanpy_rank_genes.csv</li>
+<li>Cluster ranking table: ./results/scanpy_rank_genes.csv (all genes retained after filtering, not only HVGs; computed from the log1p_norm layer).</li>
 </ul>
 <h3>Seurat workflow (R)</h3>
 <p>Prepare a serialized Seurat object at <code>./data/seurat_obj.rds</code>, with an RNA expression assay and a <code>seurat_clusters</code> metadata column. Check its structure from the project root before running the workflow:</p>
 <pre><code>Rscript -e 'x &lt;- readRDS("./data/seurat_obj.rds"); print(dim(x)); print(colnames(x@meta.data)); stopifnot("seurat_clusters" %in% colnames(x@meta.data))'</code></pre>
-<p>Expect nonzero cell-by-feature dimensions and the required metadata field. This structural check does not establish that counts, assay choice, identities, or biological annotations are appropriate. If the object or required field is missing, stop and prepare a compatible object first.</p>
+<p>Expect nonzero feature-by-cell dimensions and the required metadata field. This structural check does not establish that counts, assay choice, identities, or biological annotations are appropriate. If the object or required field is missing, stop and prepare a compatible object first. The existing <code>seurat_clusters</code> labels define the marker comparison; if UMAP is absent, the script computes a visualization without reclustering or replacing those labels.</p>
 <ul>
 <li>Input Seurat object: ./data/seurat_obj.rds (serialized Seurat object from saveRDS)</li>
 <li>Output directory: ./results/</li>
@@ -329,38 +343,70 @@ if (!"seurat_clusters" %in% colnames(seurat_obj@meta.data)) {
   stop("Required metadata column 'seurat_clusters' is missing; prepare or select the intended identities first.")
 }
 
-# Run UMAP and clustering if not present (safe checks)
+# Record the incoming biological labels and intended marker comparison.
+incoming_cluster_labels &lt;- unname(as.character(seurat_obj[[]][["seurat_clusters"]]))
+if (anyNA(incoming_cluster_labels)) {
+  stop("Required metadata column 'seurat_clusters' contains missing labels.")
+}
+cluster_of_interest &lt;- "2"
+comparison_metadata &lt;- list(
+  identity_field = "seurat_clusters",
+  cluster_of_interest = cluster_of_interest,
+  ident.1 = cluster_of_interest,
+  ident.2 = NULL,
+  reference = "all other cells",
+  test = "MAST",
+  assay = DefaultAssay(seurat_obj),
+  logfc.threshold = 0.25,
+  min.pct = 0.1
+)
+
+# Compute a visualization only when missing. Do not call FindClusters here:
+# a new clustering would silently replace the required marker-comparison labels.
 if (!"umap" %in% names(seurat_obj@reductions)) {
   seurat_obj &lt;- NormalizeData(seurat_obj, verbose = FALSE)
   seurat_obj &lt;- FindVariableFeatures(seurat_obj, selection.method = "vst", nfeatures = 2000, verbose = FALSE)
   seurat_obj &lt;- ScaleData(seurat_obj, verbose = FALSE)
   seurat_obj &lt;- RunPCA(seurat_obj, verbose = FALSE)
-  seurat_obj &lt;- FindNeighbors(seurat_obj, dims = 1:20, verbose = FALSE)
-  seurat_obj &lt;- FindClusters(seurat_obj, resolution = 0.5, verbose = FALSE)
-  seurat_obj &lt;- RunUMAP(seurat_obj, dims = 1:20, verbose = FALSE)
+  available_pcs &lt;- ncol(Embeddings(seurat_obj, reduction = "pca"))
+  if (available_pcs &lt; 2L) {
+    stop("At least two PCA dimensions are needed to compute the UMAP visualization.")
+  }
+  umap_dims &lt;- seq_len(min(20L, available_pcs))
+  seurat_obj &lt;- FindNeighbors(seurat_obj, dims = umap_dims, verbose = FALSE)
+  seurat_obj &lt;- RunUMAP(seurat_obj, dims = umap_dims, verbose = FALSE)
+}
+
+# Visualization work must leave the input biological labels unchanged.
+if (!identical(unname(as.character(seurat_obj[[]][["seurat_clusters"]])), incoming_cluster_labels)) {
+  stop("The incoming seurat_clusters labels changed while preparing the UMAP.")
 }
 
 # Save UMAP plot (colored by clusters)
 p &lt;- DimPlot(seurat_obj, reduction = "umap", group.by = "seurat_clusters") + ggtitle("UMAP by seurat_clusters")
 ggsave(filename = file.path(outdir, "umap_seurat_clusters.png"), plot = p, width = 6, height = 5)
 
-# Select cluster identities for the cluster-2 task specified above.
-Idents(seurat_obj) &lt;- "seurat_clusters"
+# Select and persist the explicitly intended comparison metadata.
+Idents(seurat_obj) &lt;- comparison_metadata$identity_field
+comparison_metadata$observed_identity_labels &lt;- sort(unique(as.character(seurat_obj[[]][["seurat_clusters"]])))
+seurat_obj@misc$cluster2_marker_comparison &lt;- comparison_metadata
+print(comparison_metadata)
 
 # Exploratory cell-level marker test. For condition-level inference across samples,
 # use a sample-aware design rather than treating cells as replicates.
-cluster_of_interest &lt;- "2"
 markers &lt;- FindMarkers(seurat_obj,
-                       ident.1 = cluster_of_interest,
-                       test.use = "MAST",
-                       logfc.threshold = 0.25,
-                       min.pct = 0.1)
+                       ident.1 = comparison_metadata$ident.1,
+                       ident.2 = comparison_metadata$ident.2,
+                       assay = comparison_metadata$assay,
+                       test.use = comparison_metadata$test,
+                       logfc.threshold = comparison_metadata$logfc.threshold,
+                       min.pct = comparison_metadata$min.pct)
 
 # Filter by adjusted p-value
 significant_markers &lt;- markers %&gt;% rownames_to_column(var = "gene") %&gt;% filter(p_val_adj &lt; 0.05)
 write.csv(significant_markers, file = file.path(outdir, paste0("cluster", cluster_of_interest, "_markers.csv")), row.names = FALSE)
 
-# Save processed seurat object
+# Save computed reductions, unchanged incoming labels, and comparison metadata.
 saveRDS(seurat_obj, file = file.path(outdir, "seurat_obj_processed.rds"))
 message("Wrote results to ", outdir)
 </code></pre>
@@ -368,8 +414,12 @@ message("Wrote results to ", outdir)
 <ul>
 <li>./results/umap_seurat_clusters.png — UMAP colored by 'seurat_clusters'.</li>
 <li>./results/cluster2_markers.csv — exploratory differential-expression results for cluster 2 versus the remaining cells, filtered by adjusted p-value.</li>
-<li>./results/seurat_obj_processed.rds — Seurat object with any computed reductions and cluster assignments.</li>
+<li>./results/seurat_obj_processed.rds — Seurat object with any computed reductions, unchanged incoming cluster labels, and the recorded cluster-2 comparison metadata.</li>
 </ul>
+<h3>Check your reasoning: labels and expression scale</h3>
+<p><strong>Task.</strong> Your Seurat input already has <code>seurat_clusters</code> values <code>0, 1, 2</code>, but no UMAP. Which labels define cluster 2 versus the reference group after the visualization step? For Scanpy, which values feed marker ranking if the input already has a <code>.raw</code> field?</p>
+<details><summary>Show the answer and feedback</summary><p>The Seurat script saves the incoming <code>seurat_clusters</code> vector, makes only a PCA/neighbor/UMAP visualization, checks that the vector is unchanged, then records <code>identity_field = "seurat_clusters"</code>, <code>ident.1 = "2"</code>, and <code>ident.2 = NULL</code> (all other cells). It does not recluster. In Scanpy, ranking explicitly reads <code>layer="log1p_norm"</code> with <code>use_raw=False</code>: values are total-count normalized to 10,000 per cell and log1p-transformed, but not scaled. The layer is saved before HVG selection; ranking covers all genes retained after filtering, whereas scaled HVGs are used only to build embeddings. Neither task establishes sample-level condition effects or biological validation.</p></details>
+<p><strong>Validation boundary:</strong> focused synthetic checks exercised label preservation with R 4.3.3/Seurat 5.0.1 and expression-source selection/full-retained-gene ranking with Python 3.12.3/Scanpy 1.11.5. The Seurat check substituted Wilcoxon for MAST because MAST was unavailable. Neither complete script nor the MAST path was executed; these remain advanced templates, not biologically validated analyses.</p>
 <h2>Output inspection and interpretation</h2>
 <p>After running a generated script, inspect outputs with these checks and interpret them cautiously.</p>
 <ul>
@@ -452,15 +502,14 @@ message("Wrote results to ", outdir)
 </div>
 </div>
 </section>
-<nav aria-label="Course sequence" class="reader-sequence" id="reader-course-navigation">
-<h2>Continue learning</h2>
-<p class="reader-sequence-position">Tutorial 56 of 58 · AI-Driven Research &amp; Agentic Bioinformatics</p>
+<nav aria-label="Learning path continuation" class="reader-sequence" id="reader-course-navigation">
+<h2>Choose a relevant next step</h2>
+<p class="reader-sequence-position"><strong>Learning route:</strong> AI methods · single-cell prompting. Suggested links are not a completion tracker or a required linear course.</p>
 <div class="reader-sequence-grid">
-<a href="single-cell-foundation-models.html" rel="prev"><small>← Previous tutorial</small><strong>Evaluating External scGPT &amp; Geneformer Embeddings</strong></a>
+<a href="cell-type-annotation-methods.html" rel="prev" class="reader-path-card"><small>Relevant prerequisite / back to path</small><strong>← Choosing and Checking Cell-Type Annotation Methods</strong></a>
 <a data-catalogue-return="" href="../tutorials.html"><small>Tutorial library</small><strong>All tutorials</strong></a>
-<a href="autonomous-research-orchestrator.html" rel="next"><small>Next tutorial →</small><strong>Autonomous Research Orchestrator</strong></a>
-</div>
-</nav>
+<a href="autonomous-research-orchestrator.html" rel="next" class="reader-path-card"><small>Suggested next step</small><strong>Autonomous Research Orchestrator</strong><span>Optional extension: examine orchestration risks and audit controls.</span></a>
+</div></nav>
 </div></div></div>
 </div>
 <script>window.STATIC_RENDERED = true; window.PRELOADED_TUTORIAL_ID = "ai-prompt-engineering-seurat";</script>

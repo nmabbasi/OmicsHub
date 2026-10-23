@@ -167,7 +167,7 @@ function toggleMobileMenu() {
 <div class="mb-12 rounded-2xl overflow-hidden shadow-lg border border-gray-100">
 <img alt="Whole Exome Sequencing (WES): Variant Calling &amp; VAF" class="w-full aspect-video object-cover" decoding="async" loading="eager" src="../images/wes-variant-calling.webp" width="1024" height="1024"/>
 </div>
-<nav aria-label="Tutorial navigation" class="reader-toolbar"><a href="phylogenomics-orthofinder.html" title="Phylogenomics with OrthoFinder">← Previous tutorial</a><a data-catalogue-return="" href="../tutorials.html">All tutorials</a><a href="scrna-seq-basics.html" title="scRNA-seq Basics">Next tutorial →</a></nav>
+<nav aria-label="Learning path navigation" class="reader-toolbar"><a href="reference-genomes-annotation.html" rel="prev">← Prerequisite: Reference Genomes and Annotation Databases</a><a data-catalogue-return="" href="../tutorials.html">All tutorials</a><a href="../start-here.html#sh-genomics" rel="next">Choose a genomics next step</a></nav>
 <article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--walkthrough"><div class="flex flex-wrap items-center gap-4 text-xs font-mono text-gray-500 bg-gray-50 p-3 rounded-lg border border-gray-200 mb-6">
 <div class="flex items-center gap-1">
 <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
@@ -196,7 +196,7 @@ function toggleMobileMenu() {
 <p>Before beginning, create a working directory and ensure you have these files (examples paths below):</p>
 <ul>
 <li>Raw paired FASTQ: raw/NA12878_R1.fastq.gz and raw/NA12878_R2.fastq.gz</li>
-<li>Reference FASTA: refs/GRCh38.fa (with fasta index .fai and dictionary .dict)</li>
+<li>Reference FASTA: refs/GRCh38.fa (with fasta index .fai and dictionary .dict); the BWA FM-index files (.amb, .ann, .bwt, .pac, .sa) are checked and prepared in the alignment step. The .fai and dictionary are not BWA indexes.</li>
 <li>Exome interval file: refs/SureSelect_V6_intervals.bed (BED coordinate system matching the reference)</li>
 <li>Optional: known-sites for BQSR (e.g., dbSNP, Mills indels) in GRCh38 coordinates</li>
 </ul>
@@ -220,13 +220,33 @@ R --version | head -n 1
 <h3>1. Alignment and on-the-fly sorting</h3>
 <pre><code># Input: raw/NA12878_R1.fastq.gz, raw/NA12878_R2.fastq.gz, refs/GRCh38.fa
 # Output: aligned/NA12878.sorted.bam (coordinate-sorted BAM)
-bwa mem -t 16 -R '@RG\tID:NA12878\tSM:NA12878\tPL:ILLUMINA' refs/GRCh38.fa \
+set -euo pipefail
+# BWA-MEM needs its own FM-index for this exact FASTA; .fai/.dict are not substitutes.
+# If refs/GRCh38.fa has changed since indexing, remove/rebuild its BWA index before running.
+# GRCh38 is human-genome-sized; use BWA's bwtsw index builder rather than the &lt;=2 GB IS algorithm.
+bwa_index_missing=false
+for suffix in amb ann bwt pac sa; do
+  if [[ ! -s "refs/GRCh38.fa.${suffix}" ]]; then
+    bwa_index_missing=true
+  fi
+done
+if [[ "$bwa_index_missing" == true ]]; then
+  echo "Preparing BWA FM-index from refs/GRCh38.fa (rebuild if this FASTA changes)." >&amp;2
+  bwa index -a bwtsw refs/GRCh38.fa
+fi
+for suffix in amb ann bwt pac sa; do
+  test -s "refs/GRCh38.fa.${suffix}" || { echo "Missing BWA FM-index refs/GRCh38.fa.${suffix}; alignment stopped." >&amp;2; exit 1; }
+done
+if ! bwa mem -t 16 -R '@RG\tID:NA12878\tSM:NA12878\tPL:ILLUMINA' refs/GRCh38.fa \
   raw/NA12878_R1.fastq.gz raw/NA12878_R2.fastq.gz \
-  | samtools sort -@ 8 -o aligned/NA12878.sorted.bam -T aligned/tmp.NA12878
+  | samtools sort -@ 8 -o aligned/NA12878.sorted.bam -T aligned/tmp.NA12878; then
+  echo "Alignment pipeline failed (BWA or samtools sort); stopping before BAM indexing." >&amp;2
+  exit 1
+fi
 # Index the sorted BAM
 samtools index aligned/NA12878.sorted.bam
 </code></pre>
-<p>Notes: Include a proper Read Group (-R) string: ID (read group ID), SM (sample name), PL (platform). GATK requires SM to be present in the BAM header.</p>
+<p>Notes: Run this alignment block as a Bash script: <code>set -euo pipefail</code> plus the explicit pipeline check propagates a BWA failure through samtools and stops before indexing. If the reference FASTA changes, rebuild the BWA FM-index from that exact FASTA; an existing .fai or dictionary does not replace the five BWA index files. Include a proper Read Group (-R) string: ID (read group ID), SM (sample name), PL (platform). GATK requires SM to be present in the BAM header.</p>
 <h3>2. Mark duplicates</h3>
 <pre><code># Input: aligned/NA12878.sorted.bam
 # Output: aligned/NA12878.dedup.bam, metrics/NA12878_dup_metrics.txt
@@ -279,7 +299,15 @@ gatk VariantFiltration \
   --filter-name "FS_gt_60" --filter-expression "FS &gt; 60.0" \
   --filter-name "MQ_lt_40" --filter-expression "MQ &lt; 40.0"
 </code></pre>
-<p>VariantFiltration annotates records; it does not remove failing records. A record with <code>FILTER=.</code> has not been evaluated by a filter and is not equivalent to PASS. Inspect filter labels and explicitly select PASS records before describing the result as filtered, for example: <code>gatk SelectVariants -R refs/GRCh38.fa -V vcf/NA12878_filtered.vcf.gz --exclude-filtered true -O vcf/NA12878_pass.vcf.gz</code>. The expressions here are illustrative only: confirm annotations exist in the VCF header and tune against truth data or project-specific evidence. Hard filters act on sites and can discard true calls; VQSR also has data/resource requirements and is not automatically appropriate for every exome cohort.</p>
+<p>VariantFiltration annotates records; it does not remove failing records. A record with <code>FILTER=.</code> has not been evaluated by a filter and is not equivalent to PASS. Preserve the annotated file for review, then use the explicit PASS-only handoff below before describing downstream records as filtered. The expressions here are illustrative only: confirm annotations exist in the VCF header and tune against truth data or project-specific evidence. Hard filters act on sites and can discard true calls; VQSR also has data/resource requirements and is not automatically appropriate for every exome cohort.</p>
+<h3>5a. Create an explicit PASS-only VCF for downstream VAF</h3>
+<p>This handoff retains only records whose FILTER field is PASS; failing labels and unreviewed <code>.</code> records are excluded. The original annotated VCF remains the audit trail.</p>
+<pre><code># Input: vcf/NA12878_filtered.vcf.gz (FILTER annotations retained)
+# Output: vcf/NA12878_pass.vcf.gz (only records with FILTER=PASS)
+set -euo pipefail
+bcftools view --apply-filters PASS --output-type z \
+  --output vcf/NA12878_pass.vcf.gz vcf/NA12878_filtered.vcf.gz
+</code></pre>
 <h3>6. Optional: LiftOver variants between genome builds</h3>
 <p>The calling and filtering commands above use GRCh38, so their output does not need this conversion. If you instead start with a separate VCF already called against GRCh37, this optional Picard/GATK LiftoverVcf example converts that GRCh37 input to GRCh38 using an hg19-to-hg38 chain and the GRCh38 target reference. Always re-annotate and validate lifted variants.</p>
 <pre><code># Separate input: this VCF was called against GRCh37; it is not produced above.
@@ -292,19 +320,31 @@ gatk LiftoverVcf \
   --REJECT vcf/NA12878_GRCh37_liftover_rejected.vcf.gz
 </code></pre>
 <h3>7. Compute Variant Allele Frequency (VAF)</h3>
-<p>For a sample and a biallelic genotype, a common read-based estimate is alternate AD divided by the sum of reference and alternate AD. FORMAT/AD is allele-depth data; FORMAT/DP is a separate caller field and may not equal the sum of AD. This illustration is deliberately restricted to one sample and biallelic records. Check the VCF header and genotype before interpreting values; multiallelic records have one AD value per allele, and missing values must not be silently treated as zero.</p>
-<pre><code># Input: vcf/NA12878_filtered.vcf.gz
-# Output: vcf/NA12878_filtered.withVAF.tsv (one sample; CHROM POS REF ALT GT REF_AD ALT_AD VAF)
-bcftools query -f '%CHROM\t%POS\t%REF\t%ALT[\t%GT\t%AD]\n' vcf/NA12878_filtered.vcf.gz \
-  | awk 'BEGIN{OFS="\t"; print "CHROM","POS","REF","ALT","GT","REF_AD","ALT_AD","VAF"} \
-    {split($6,ad,","); if ($4 ~ /,/ || $5=="." || $5=="./." || $5==".|." || ad[1]=="" || ad[1]=="." || ad[2]=="" || ad[2]==".") {v="NA"} else {den=ad[1]+ad[2]; v=(den&gt;0 ? ad[2]/den : "NA")} print $1,$2,$3,$4,$5,ad[1],ad[2],v}' \
-  &gt; vcf/NA12878_filtered.withVAF.tsv
+<p>For a sample and a biallelic genotype, a common read-based estimate is alternate AD divided by the sum of reference and alternate AD. FORMAT/AD is allele-depth data; FORMAT/DP is a separate caller field and may not equal the sum of AD. This example reads the explicit PASS-only VCF and prints FILTER so the handoff stays inspectable. It is deliberately restricted to one sample and biallelic records: multiallelic records and missing values are reported as <code>NA</code>, not silently coerced into a biallelic estimate.</p>
+<pre><code># Input: vcf/NA12878_pass.vcf.gz
+# Output: vcf/NA12878_pass.withVAF.tsv (one sample; FILTER and FORMAT/DP shown)
+set -euo pipefail
+sample_count=$(bcftools query -l vcf/NA12878_pass.vcf.gz | wc -l)
+if [[ "$sample_count" -ne 1 ]]; then
+  echo "Expected exactly one VCF sample; select and review a sample before computing VAF." >&amp;2
+  exit 1
+fi
+bcftools query -f '%CHROM\t%POS\t%REF\t%ALT\t%FILTER[\t%GT\t%AD\t%DP]\n' vcf/NA12878_pass.vcf.gz \
+  | awk 'BEGIN{OFS="\t"; print "CHROM","POS","REF","ALT","FILTER","GT","REF_AD","ALT_AD","FORMAT_DP","VAF"} \
+    {split($7,ad,","); if ($5!="PASS" || $4 ~ /,/ || $6=="." || $6=="./." || $6==".|." || ad[1]=="" || ad[1]=="." || ad[2]=="" || ad[2]==".") {v="NA"} else {den=ad[1]+ad[2]; v=(den&gt;0 ? ad[2]/den : "NA")} print $1,$2,$3,$4,$5,$6,ad[1],ad[2],$8,v}' \
+  &gt; vcf/NA12878_pass.withVAF.tsv
 </code></pre>
-<p>Notes: AD format is typically REF,ALT counts. Some callers provide multiple ALT counts (e.g., multiallelic). Confirm field order with bcftools query or header inspection.</p>
+<p>Notes: AD is emitted as one value per allele (REF, then each ALT); this simple output intentionally marks multiallelic records NA. FORMAT/DP is displayed for inspection but is not the VAF denominator. Confirm sample count, field declarations, and AD order in the VCF header.</p>
+<p><strong>Synthetic contract example (toy records, not biological data):</strong> A PASS biallelic row with <code>GT:AD:DP=0/1:18,12:33</code> has AD sum 30 and VAF <code>12/(18+12)=0.4</code>; DP remains 33. A <code>QD_lt_2</code> record and a <code>FILTER=.</code> record are excluded by the PASS-only step. A PASS multiallelic row with <code>AD=10,5,3</code> is retained for inspection but its VAF is <code>NA</code>, because the displayed two-allele calculation is not valid for it. The tiny VCF contract test uses these toy rows and checks this exact output:</p>
+<pre><code>CHROM  POS  REF  ALT  FILTER  GT   REF_AD  ALT_AD  FORMAT_DP  VAF
+chrToy 2    C    T    PASS    0/1  18      12      33         0.4
+chrToy 6    A    C,G  PASS    1/2  10      5       19         NA
+</code></pre>
+<div class="lesson-exercise"><h4>Try the small contract before using research data</h4><p>Download the <a download="filter_status_ad_dp.vcf" href="../files/wes-contract-fixture/filter_status_ad_dp.vcf">invented four-record VCF</a>. In a new disposable project, compress it with bcftools into <code>vcf/NA12878_filtered.vcf.gz</code>, then run only steps 5a and 7. Those example filenames do not make this toy file NA12878 research data. Do not run alignment or GATK on the toy fixture.</p><p><strong>Check your answer:</strong> the table should contain only the two PASS rows shown above. The failed-filter and unreviewed-dot rows must be absent; the multiallelic VAF must be NA. Adding a second sample should stop the VAF block with an explicit error, not silently report the first sample. These checks demonstrate filter and table mechanics only.</p></div>
 <h3>8. Quick VAF distribution plot (example in R)</h3>
-<pre><code># Input: vcf/NA12878_filtered.withVAF.tsv
+<pre><code># Input: vcf/NA12878_pass.withVAF.tsv
 # Output: diagnostics/VAF_distribution.png
-Rscript -e 'd&lt;-read.delim("vcf/NA12878_filtered.withVAF.tsv", header=TRUE); \
+Rscript -e 'd&lt;-read.delim("vcf/NA12878_pass.withVAF.tsv", header=TRUE); \
   png("diagnostics/VAF_distribution.png", width=800, height=600); \
   hist(as.numeric(d$VAF[!is.na(d$VAF)]), breaks=100, col="steelblue", main="VAF distribution", xlab="VAF"); dev.off()'
 </code></pre>
@@ -369,15 +409,14 @@ gatk CollectHsMetrics \
 <li><a href="https://www.nist.gov/programs-projects/genome-bottle">Genome in a Bottle (GIAB) benchmark resources (NA12878)</a></li>
 </ul>
 <aside aria-labelledby="tutorial-feedback-title" class="lesson-feedback" id="tutorial-feedback"><h2 id="tutorial-feedback-title">Help improve this tutorial</h2><p>Found an error, a broken link, or a step that needs a clearer explanation? Please <a href="../contact.html">contact me</a>. Your feedback helps me keep this resource accurate and useful.</p></aside></article>
-<nav aria-label="Course sequence" class="reader-sequence" id="reader-course-navigation">
-<h2>Continue learning</h2>
-<p class="reader-sequence-position">Tutorial 32 of 58 · Genomics and Whole-Exome Sequencing</p>
+<nav aria-label="Learning path continuation" class="reader-sequence" id="reader-course-navigation">
+<h2>Choose a relevant next step</h2>
+<p class="reader-sequence-position"><strong>Learning route:</strong> Genomics · whole-exome variants. Suggested links are not a completion tracker or a required linear course.</p>
 <div class="reader-sequence-grid">
-<a href="phylogenomics-orthofinder.html" rel="prev"><small>← Previous tutorial</small><strong>Phylogenomics with OrthoFinder</strong></a>
+<a href="reference-genomes-annotation.html" rel="prev" class="reader-path-card"><small>Relevant prerequisite / back to path</small><strong>← Reference Genomes and Annotation Databases</strong></a>
 <a data-catalogue-return="" href="../tutorials.html"><small>Tutorial library</small><strong>All tutorials</strong></a>
-<a href="scrna-seq-basics.html" rel="next"><small>Next tutorial →</small><strong>scRNA-seq Basics</strong></a>
-</div>
-</nav>
+<a href="../start-here.html#sh-genomics" rel="next" class="reader-path-card"><small>Suggested next step</small><strong>Choose a genomics next step</strong><span>Review the question, reference and variant-filter decisions before choosing another prepared-input template. WES does not supply the scRNA-seq inputs needed by inferCNV.</span></a>
+</div></nav>
 </div></div></div>
 </div>
 <script>window.STATIC_RENDERED = true; window.PRELOADED_TUTORIAL_ID = "wes-variant-calling-pipeline";</script>

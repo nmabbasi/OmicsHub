@@ -8,6 +8,7 @@ import unittest
 
 from reviewed_tutorial_baseline import (
     APPROVED_MAIN,
+    normalize_learner_revision,
     normalize_reviewed_content,
     strip_cookie_banner,
 )
@@ -123,6 +124,8 @@ class HeroPerformanceTests(unittest.TestCase):
             current_text = strip_cookie_banner(
                 p.read_text(encoding='utf-8'), allow_missing=True
             )
+            baseline_text = normalize_learner_revision(relative_path, normalize_reviewed_content(relative_path, baseline_text))
+            current_text = normalize_learner_revision(relative_path, normalize_reviewed_content(relative_path, current_text))
             if p.name in ('cell-type-annotation-methods.html', 'scrna-seq-integration-strategies.html'):
                 # Authorized public-data lesson rewrites have dedicated integrity tests.
                 # Keep the surrounding body, hero, navigation and scripts unchanged.
@@ -138,8 +141,8 @@ class HeroPerformanceTests(unittest.TestCase):
                 self.assertEqual(executable_scripts(baseline_text), executable_scripts(current_text), p.name)
                 continue
             self.assertEqual(
-                normalize_reviewed_content(relative_path, baseline_text),
-                normalize_reviewed_content(relative_path, current_text),
+                baseline_text,
+                current_text,
                 p.name,
             )
 

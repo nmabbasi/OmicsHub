@@ -12,6 +12,7 @@ import unittest
 
 from reviewed_tutorial_baseline import (
     APPROVED_MAIN,
+    normalize_learner_revision,
     normalize_reviewed_content,
     strip_cookie_banner,
 )
@@ -211,11 +212,11 @@ class AnalyticsPreferencesTests(unittest.TestCase):
             with self.subTest(page=name):
                 baseline_without_banner = strip_cookie_banner(baseline)
                 current_without_banner = strip_cookie_banner(current)
-                baseline_normalized = normalize_reviewed_content(
-                    relative_path, baseline_without_banner
+                baseline_normalized = normalize_learner_revision(
+                    relative_path, normalize_reviewed_content(relative_path, baseline_without_banner)
                 )
-                current_normalized = normalize_reviewed_content(
-                    relative_path, current_without_banner
+                current_normalized = normalize_learner_revision(
+                    relative_path, normalize_reviewed_content(relative_path, current_without_banner)
                 )
                 self.assertEqual(
                     baseline_normalized,

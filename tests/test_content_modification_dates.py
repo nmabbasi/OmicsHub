@@ -21,6 +21,8 @@ MODIFIED = {
     "tutorials/single-cell-foundation-models.html": "2026-08-23",
     "tutorials/spatial-transcriptomics-r-python.html": "2026-08-19",
     "tutorials/wes-variant-calling-pipeline.html": "2026-09-04",
+    "tutorials/hpc-submission-part1.html": "2026-09-06",
+    "tutorials/reproducible-workflows-snakemake-nextflow.html": "2026-09-21",
 }
 # These PR changes only propagate adjacent-lesson title updates in navigation;
 # they are intentionally not represented as content revisions.
@@ -66,12 +68,13 @@ class ContentModificationDateTests(unittest.TestCase):
                     self.sitemap_dates[SITE + relative_path], "2026-10-23"
                 )
 
-    def test_catalogue_and_about_sitemap_dates_reflect_content_revision(self):
-        for relative_path in ("about.html", "tutorials.html"):
+    def test_catalogue_about_and_beginner_path_dates_reflect_content_revision(self):
+        for relative_path in ("about.html", "tutorials.html", "start-here.html"):
             with self.subTest(page=relative_path):
                 self.assertEqual(
                     self.sitemap_dates[SITE + relative_path], "2026-10-23"
                 )
+        self.assertEqual(self.entity("start-here.html")["dateModified"], "2026-10-23")
 
     def test_consent_policy_revision_dates_match_the_sitemap(self):
         for relative_path in ("pages/privacy.html", "pages/cookie.html"):
@@ -103,7 +106,7 @@ class ContentModificationDateTests(unittest.TestCase):
         self.assertTrue(all(url.startswith(SITE) for url in urls))
         self.assertTrue(all("?" not in url for url in urls))
         expected_updated = {SITE + path for path in MODIFIED}
-        expected_updated.update({SITE + "about.html", SITE + "tutorials.html"})
+        expected_updated.update({SITE + "about.html", SITE + "tutorials.html", SITE + "start-here.html"})
         expected_updated.update({SITE + "pages/privacy.html", SITE + "pages/cookie.html"})
         self.assertEqual(
             {url for url, lastmod in self.sitemap_dates.items() if lastmod == "2026-10-23"},

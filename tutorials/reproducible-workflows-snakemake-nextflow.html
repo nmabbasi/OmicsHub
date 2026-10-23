@@ -73,7 +73,7 @@ gtag('consent', 'default', {
     }
   },
   "datePublished": "2026-09-21",
-  "dateModified": "2026-10-21",
+  "dateModified": "2026-10-23",
   "url": "https://theomicshub.com/tutorials/reproducible-workflows-snakemake-nextflow.html",
   "name": "Reproducible bioinformatics workflows with Snakemake and Nextflow",
   "isPartOf": {
@@ -167,7 +167,7 @@ function toggleMobileMenu() {
 <div class="mb-12 rounded-2xl overflow-hidden shadow-lg border border-gray-100">
 <img alt="Reproducible bioinformatics workflows with Snakemake and Nextflow" class="w-full aspect-video object-cover" decoding="async" loading="eager" src="../images/reproducible-workflows-snakemake-nextflow.webp" width="1024" height="1024"/>
 </div>
-<nav aria-label="Tutorial navigation" class="reader-toolbar"><a href="hpc-support.html" title="HPC Troubleshooting and Support">← Previous tutorial</a><a data-catalogue-return="" href="../tutorials.html">All tutorials</a><a href="docker-singularity-bioinformatics.html" title="Docker and Apptainer for Bioinformatics">Next tutorial →</a></nav>
+<nav aria-label="Learning path navigation" class="reader-toolbar"><a href="reproducible-project-structure.html" rel="prev">← Prerequisite: Reproducible Project Structure</a><a data-catalogue-return="" href="../tutorials.html">All tutorials</a><a href="../start-here.html#sh-routes" rel="next">Return to analysis routes</a></nav>
 <article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--walkthrough">
 <p class="lesson-lead">A workflow makes file dependencies explicit so a runner can determine what must run, what can run in parallel, and what outputs are missing. This walkthrough compares Snakemake and Nextflow, then builds a small file-copy workflow you can adapt before connecting real sequencing tools.</p>
 <section class="lesson-summary tutorial-learning-contract" data-tutorial-format="hands-on-lab" aria-label="Learning format">
@@ -200,13 +200,15 @@ rule copy_fixture:
 <h2>How Nextflow represents the same work</h2>
 <p>Nextflow describes processes and connects their inputs and outputs through channels. A channel carries values or file paths; a process declares what it consumes, the command to run, and what it emits. This dataflow model differs in emphasis from Snakemake's file-target graph, although both tools can express multi-step, parallel workflows. The following small DSL2 example copies the same kind of plain-text fixture; it demonstrates process input/output staging and publication, not a biological analysis.</p>
 <h3>Run the matching text-fixture workflow</h3>
-<p>Use a separate directory (for example, <code>nextflow-demo</code>) with Bash, Java 17 or later, and Nextflow installed. Check <code>java -version</code> and <code>nextflow info</code> first; follow the <a href="https://docs.seqera.io/nextflow/install" rel="noopener" target="_blank">official installation guide</a> if either command is unavailable. In that directory, create the input and save the script as <code>main.nf</code>:</p>
+<p>Use Bash, Nextflow, and a Java release supported by your installed Nextflow version; this text fixture was checked with Nextflow 26.10.3 and Java 21 on Ubuntu Linux. Check <code>java -version</code> and <code>nextflow info</code> first; follow the <a href="https://docs.seqera.io/nextflow/install" rel="noopener" target="_blank">official installation guide</a> if either command is unavailable. Starting from your working directory, create a separate project and save the following Groovy script there as <code>main.nf</code>:</p>
 <pre><code class="language-bash">mkdir -p nextflow-demo/data
 cd nextflow-demo
 printf 'fixture text for workflow practice\n' &gt; data/demo.txt</code></pre>
 <pre><code class="language-groovy">params.input = 'data/demo.txt'
 
 process COPY_FIXTURE {
+    publishDir 'results', mode: 'copy'
+
     input:
     path source
 
@@ -223,7 +225,10 @@ workflow {
     source_ch = channel.fromPath(params.input, checkIfExists: true)
     COPY_FIXTURE(source_ch)
 }</code></pre>
-<p>Run <code>nextflow run main.nf</code>. A successful run should report one completed <code>COPY_FIXTURE</code> task and publish <code>copied.txt</code> under the default <code>results</code> output directory; inspect it with <code>cat results/copied.txt</code> and confirm its text matches <code>data/demo.txt</code>. The process runs in an isolated task directory, so its declared output is published rather than assumed to exist in the launch directory. If input discovery fails, stop and check that you are in <code>nextflow-demo</code>, the file exists at <code>data/demo.txt</code>, and the installed command can run. To exercise failure handling, temporarily rename the input and rerun: the checked input path should fail before the process runs; restore the filename before retrying. Nextflow resumes from its work directory by default, so use a fresh run name or <code>-resume</code> only after confirming the input is restored and the task should be reusable.</p>
+<p>Run <code>nextflow run main.nf</code>. In the process, <code>source</code> is the staged path for the file found by <code>channel.fromPath</code>; <code>cp "$source" copied.txt</code> writes the declared output in the task directory. The <code>publishDir 'results', mode: 'copy'</code> directive copies that declared output to <code>results/copied.txt</code> in the launch directory.</p>
+<div class="lesson-checkpoint"><p><strong>Success check:</strong> run <code>cmp -- data/demo.txt results/copied.txt</code>. It should print nothing and return exit status 0: the result has exactly the input bytes. This checks copying and publication, not the suitability of a biological analysis.</p></div>
+<p><strong>Try one failure:</strong> run <code>nextflow run main.nf --input data/missing.txt</code>. It should fail before the process runs and name the missing path. This command does not rename or delete the original input; rerun the original command to use <code>data/demo.txt</code> again.</p>
+<p>Nextflow records task cache entries on each run, but reuses them only when you explicitly pass <code>-resume</code>. Use <code>nextflow run main.nf -resume</code> to request reuse when the task is eligible; keep the associated cache and work directories. See the official <a href="https://docs.seqera.io/nextflow/cache-and-resume" rel="noopener" target="_blank">caching and resuming guide</a> and <a href="https://docs.seqera.io/nextflow/reference/process/directives/publish-dir" rel="noopener" target="_blank">publication directive reference</a>.</p>
 <p>For a real read-mapping workflow, specify whether reads are single-end or paired-end and keep each pair associated with its sample identifier. The source example's single-read BWA command did not correctly demonstrate paired-end handling, and its channel/process declarations were not a verified runnable contract, so that code has been removed rather than presented as executable. When converting an existing command, first run it on one sample outside the workflow, then represent the same inputs, resources, and output files in the process declaration.</p>
 <h2>Choose by workflow needs, not labels</h2>
 <div class="lesson-decision"><p><strong>Consider Snakemake</strong> when a rule-and-file dependency graph maps naturally to the way your team already describes analysis steps, or when Python-based rule definitions suit your group.</p><p><strong>Consider Nextflow</strong> when the team prefers process/channel dataflow or needs to target execution environments supported by its configuration and infrastructure. Nextflow supports local, HPC, and cloud execution, but portability still depends on configuration, available containers or packages, storage, and platform policy.</p><p><strong>Consider an nf-core pipeline</strong> when its documented inputs and analysis match your scientific question. Read the pipeline's current usage and output documentation before selecting parameters or interpreting results.</p></div>
@@ -242,20 +247,19 @@ workflow {
 <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
 </div>
 <div>
-<p class="text-sm text-gray-600 mb-2">These examples do not have a recorded test environment or pinned tool releases. Before adapting them, record the date, operating system, <code>snakemake --version</code> and/or <code>nextflow info</code> output, and (for Nextflow) <code>java -version</code>; consult the linked official documentation for current requirements. If an example fails, note the command and version details when reporting it through the <a class="text-blue-600 hover:underline" href="../contact.html">Contact page</a>.</p>
+<p class="text-sm text-gray-600 mb-2">Validation boundary: the displayed Nextflow text fixture was executed with Nextflow 26.10.3 (build 14229) and Java 21 on Ubuntu Linux; exact-byte publication and missing-input failure were checked. The Snakemake example was not executed in this revision, and no biological workflow was run. Record your own operating system, <code>snakemake --version</code> and/or <code>nextflow info</code>, and <code>java -version</code> before adapting the examples. Report failures with command and version details through the <a class="text-blue-600 hover:underline" href="../contact.html">Contact page</a>.</p>
 <p class="text-sm text-gray-500">Author: <a class="text-blue-600 hover:underline font-medium" href="../about.html">Nasir Mahmood Abbasi, PhD</a> - Category: Workflow Management and Containerization</p>
 </div>
 </div>
 </section>
-<nav aria-label="Course sequence" class="reader-sequence" id="reader-course-navigation">
-<h2>Continue learning</h2>
-<p class="reader-sequence-position">Tutorial 23 of 58 · Workflow Management and Containerization</p>
+<nav aria-label="Learning path continuation" class="reader-sequence" id="reader-course-navigation">
+<h2>Choose a relevant next step</h2>
+<p class="reader-sequence-position"><strong>Learning route:</strong> Reproducible computing · workflow automation. Suggested links are not a completion tracker or a required linear course.</p>
 <div class="reader-sequence-grid">
-<a href="hpc-support.html" rel="prev"><small>← Previous tutorial</small><strong>HPC Troubleshooting and Support</strong></a>
+<a href="reproducible-project-structure.html" rel="prev" class="reader-path-card"><small>Relevant prerequisite / back to path</small><strong>← Reproducible Project Structure</strong></a>
 <a data-catalogue-return="" href="../tutorials.html"><small>Tutorial library</small><strong>All tutorials</strong></a>
-<a href="docker-singularity-bioinformatics.html" rel="next"><small>Next tutorial →</small><strong>Docker and Apptainer for Bioinformatics</strong></a>
-</div>
-</nav>
+<a href="../start-here.html#sh-routes" rel="next" class="reader-path-card"><small>Suggested next step</small><strong>Return to analysis routes</strong><span>Workflow tools organize an existing analysis; they do not define its scientific validity.</span></a>
+</div></nav>
 </div></div></div>
 </div>
 <script>window.STATIC_RENDERED = true; window.PRELOADED_TUTORIAL_ID = "reproducible-workflows-snakemake-nextflow";</script>

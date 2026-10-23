@@ -73,7 +73,7 @@ gtag('consent', 'default', {
     }
   },
   "datePublished": "2026-09-06",
-  "dateModified": "2026-10-21",
+  "dateModified": "2026-10-23",
   "url": "https://theomicshub.com/tutorials/hpc-submission-part1.html",
   "name": "Writing Slurm Job Scripts",
   "isPartOf": {
@@ -167,52 +167,44 @@ function toggleMobileMenu() {
 <div class="mb-12 rounded-2xl overflow-hidden shadow-lg border border-gray-100">
 <img alt="Writing Job Scripts" class="w-full aspect-video object-cover" decoding="async" loading="eager" src="../images/hpc-writing-job-scripts.webp" width="1024" height="1024"/>
 </div>
-<nav aria-label="Tutorial navigation" class="reader-toolbar"><a href="hpc-basic-commands.html" title="Basic Slurm Commands">← Previous tutorial</a><a data-catalogue-return="" href="../tutorials.html">All tutorials</a><a href="hpc-support.html" title="HPC Troubleshooting and Support">Next tutorial →</a></nav>
-<article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--walkthrough"><p class="lesson-lead">A Slurm submission script describes the resources a batch job requests and the commands it runs after the scheduler starts it. This walkthrough builds from a small job to task launches and arrays. The examples use site-specific module names and a sample partition; confirm both with your cluster documentation before submitting.</p>
+<nav aria-label="Learning path navigation" class="reader-toolbar"><a href="hpc-basic-commands.html" rel="prev">← Prerequisite: Basic Slurm Commands</a><a data-catalogue-return="" href="../tutorials.html">All tutorials</a><a href="hpc-support.html" rel="next">Explore: HPC Troubleshooting and Support</a></nav>
+<article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--walkthrough"><p class="lesson-lead">A Slurm submission script describes the resources a batch job requests and the commands it runs after the scheduler starts it. This walkthrough starts with a small smoke test; later optional examples cover task launches and arrays. Some optional examples use site-specific module names and partition values; confirm any such values with your cluster documentation before adapting or submitting those examples.</p>
 <section class="lesson-summary tutorial-learning-contract" data-tutorial-format="hands-on-lab" aria-label="Learning format">
 <p><strong>Format: Hands-on lab.</strong> Learners who have completed Basic Slurm Commands will adapt a small batch script, submit it on their own cluster, and check its log and final scheduler record; no input data are needed, but account and partition details must be supplied by the reader.</p>
 </section>
-<div class="lesson-summary"><h2>Before you submit</h2><ul><li>Complete the preceding <a href="hpc-basic-commands.html">Basic Slurm Commands</a> lesson.</li><li>Know your cluster's account, partition, time-limit, module, and data-storage requirements.</li><li>Use a small, approved test command first. A successful submission means Slurm accepted the request, not that the job has started or completed.</li></ul><p><strong>Deliverable:</strong> an adapted script, its job ID, and the scheduler-created log from a test run.</p></div>
+<nav aria-label="First-job learning route" class="lesson-summary">
+<h2>First-job route</h2>
+<ol><li><a href="#before-submit">Check before submitting</a></li><li><a href="#smoke-job">Adapt the safe smoke-test script</a></li><li><a href="#resources">Understand its resource request</a></li><li><a href="#submit-job">Submit and capture the job ID</a></li><li><a href="#job-state">Inspect the log and final state</a></li></ol>
+<p>After this first job, optional topics are available: <a href="#optional-parallel">parallel steps and arrays</a>, <a href="#optional-x11">X11</a>, <a href="#optional-custom-modules">custom modules</a>, <a href="#optional-conda">Conda</a>, and <a href="#optional-compression">compression</a>.</p>
+</nav>
+<div class="lesson-summary" id="before-submit"><h2>Before you submit</h2><ul><li>Complete the preceding <a href="hpc-basic-commands.html">Basic Slurm Commands</a> lesson.</li><li>Check your cluster's account, allowed partition, time limit, output-file location, and submission rules. Add an account directive only if your site requires one.</li><li>Start with the harmless hostname/date smoke test below; do not substitute a research workload until you understand its input, resource, and storage requirements.</li></ul><p><strong>Deliverable:</strong> an adapted script, its submitted job ID, the log, and the final scheduler state. A job ID means Slurm accepted the submission; it does not mean the job started or completed.</p></div>
 <div class="p-5 bg-slate-50 border border-slate-200 rounded-xl mb-8">
 <p class="text-xs font-bold tracking-[0.14em] uppercase text-slate-500 mb-2">Detailed cluster reference</p>
 <h4 class="text-lg font-bold text-slate-900 mb-2">Need a complete HPC walkthrough?</h4>
 <p class="text-sm text-slate-700 mb-3">For expanded guidance on secure access, modules, Slurm submission scripts, Conda on a cluster, and practical support routes, visit the dedicated HPC Guide.</p>
 <a class="inline-flex items-center gap-2 px-4 py-2 bg-[#123B5D] text-white font-bold rounded-lg hover:bg-[#0B2741] transition-colors text-sm" href="https://nmabbasi.github.io/HPC/" rel="noopener noreferrer" target="_blank">Open the HPC Guide <span aria-hidden="true">-&gt;</span></a>
 </div>
-<h2>A basic script</h2>
-<p>Long options are used below for readability; many have short forms. The resource values, account requirements, partition name, module commands, and time limits are examples, not universal defaults. Replace them with values permitted by your site.</p>
-<p>Replace <code>program</code> with your executable and its arguments. For a harmless cluster smoke test, use a command such as <code>hostname</code>; first check site policy and the relevant partition in <code>sinfo</code>.</p>
+<h2 id="smoke-job">First job: a safe smoke test</h2>
+<p>This one-task example uses only <code>hostname</code> and <code>date</code>; it needs no biological data or software modules. Replace <code>YOUR_ALLOWED_PARTITION</code> with a partition confirmed in your site documentation (for example, use <code>sinfo</code> if your site permits it). Add an account directive only when local policy requires it. The short time limit and resource values are illustrative, not guarantees or universal defaults.</p>
 <pre><code class="language-bash">#!/bin/sh
-#SBATCH --job-name example_script
+#SBATCH --job-name=hpc-smoke
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=1
+#SBATCH --time=00:02:00
+#SBATCH --partition=YOUR_ALLOWED_PARTITION
+#SBATCH --output=hpc-smoke-%j.out
 
-#SBATCH --ntasks 1
-#SBATCH --cpus-per-task 1
-#SBATCH --mem 2G
-
-#SBATCH --partition ibrain
-#SBATCH --output %x-%j.out
-#SBATCH --hint=nomultithread
-
-
-module purge
-module load gcc/7.3.1
-
-srun program
+hostname
+date
 </code></pre>
-<p>A few notes on the options:</p>
+<h3 id="resources">What the resource request means</h3>
+<p><code>--ntasks=1</code> requests one task (typically one process); <code>--cpus-per-task=1</code> requests one CPU for that task. Neither directive makes an application multithreaded: a threaded program must also be configured according to its own documentation, and its thread count should fit the CPUs requested. Here the two simple diagnostic commands need no parallel configuration. A time limit and partition are site-policy choices; consult local documentation rather than copying another cluster's settings.</p>
+<p>A few other details:</p>
 <ul>
 <li><code>--job-name</code> labels the job in scheduler reports. Use <code>squeue -j JOB_ID</code> to inspect a pending or running job.</li>
-<li>By default, batch stdout and stderr go to <code>slurm-%j.out</code>. This example sets an explicit output filename. If you need separate streams, choose distinct paths with <code>--output</code> and <code>--error</code>; do not assume site-specific filesystem behavior.</li>
-<li>Slurm substitutes <code>%x</code> with the job name and <code>%j</code> with the job ID in output filename patterns. The ID is assigned at successful submission. Submission does not mean the job has started.</li>
-<li><code>--hint=nomultithread</code> asks Slurm to avoid using multiple hardware threads per core where supported. CPU allocation and binding depend on cluster configuration; consult local guidance before adding this hint.</li>
+<li>Slurm substitutes <code>%j</code> in the output filename with the job ID. The log is useful only if the chosen path is writable and visible as expected under your site's filesystem rules.</li>
 </ul>
-<p>Most long versions of options have an associated variable obtained by:</p>
-<ul>
-<li>Capitalizing every letter.</li>
-<li>Replacing the leading <code>--</code> by <code>SLURM_</code></li>
-<li>Replacing each dash with an underscore.</li>
-</ul>
-<p>Slurm sets environment variables such as <code>SLURM_JOB_NAME</code>, <code>SLURM_NTASKS</code>, and <code>SLURM_CPUS_PER_TASK</code> in the job environment. Use the documented variable names; they are not shell expansions until written with a leading <code>$</code>.</p>
+<p>Slurm documents job environment variables individually; there is <strong>no general rule</strong> that uppercases every long option and transforms it into an environment-variable name. Examples in the official list include <code>SLURM_JOB_ID</code>, <code>SLURM_JOB_NAME</code>, and <code>SLURM_SUBMIT_DIR</code>. <code>SLURM_NTASKS</code> is set when <code>--ntasks</code> or an <code>--ntasks-per-*</code> option is specified; <code>SLURM_CPUS_PER_TASK</code> is set only when <code>--cpus-per-task</code> or <code>--tres-per-task=cpu=#</code> is specified; <code>SLURM_ARRAY_TASK_ID</code> is set for array tasks. <code>SLURM_JOB_NODELIST</code> describes nodes allocated to the job, so it is meaningful once an allocation exists. Names and conditions vary by variable: use the <a href="https://slurm.schedmd.com/sbatch.html#SECTION_OUTPUT-ENVIRONMENT-VARIABLES" rel="noopener noreferrer" target="_blank">official sbatch output environment-variable list</a>, not a guessed conversion. In shell code, a documented variable is expanded with a leading <code>$</code>.</p>
 <h2>Decomposing the script</h2>
 <p>A submission script is composed of the following parts:</p>
 <ul>
@@ -233,7 +225,7 @@ srun program
 <p>They have two purposes:</p>
 <ul>
 <li>
-<p>The directives request resources: <code>--ntasks</code> is the number of processes/tasks and <code>--cpus-per-task</code> is CPUs per task. Here their product is one CPU, and <code>--mem</code> requests 2G for the job. These are requests subject to site limits and scheduler configuration.</p>
+<p>The directives request resources: <code>--ntasks</code> is the number of processes/tasks and <code>--cpus-per-task</code> is CPUs per task. In the smoke test, one task times one CPU per task requests one CPU total; that script does not specify a memory amount. These are requests subject to site limits and scheduler configuration.</p>
 <p><strong>Note:</strong> Allocating a lot of resources doesn't mean that all of them will be used. If a program is not configured for parallel execution, it will use one CPU even when more are allocated. Start with a documented estimate, run a small test, then inspect actual resource use with the scheduler rather than logging directly into a compute node. For example:</p>
 <p><code>bash
 squeue -j &lt;job_id&gt;                 # queue state
@@ -257,8 +249,8 @@ sacct -j &lt;job_id&gt; --format=JobID,State,Elapsed,MaxRSS,AllocCPUS</code></p>
 <h3>Run commands</h3>
 <p>Use <code>srun</code> when launching a parallel job step so Slurm starts and tracks the task or tasks within the allocation. A serial command can sometimes run directly in the batch shell, but <code>srun</code> makes the step and requested task count explicit. Match task count and CPUs per task to the program's documented parallel model.</p>
 <h2 id="hyperthreading">CPU threads and cluster policy</h2>
-<p>Slurm's CPU units, hardware threads, cores, and binding behavior depend on the site's configuration. A request for one CPU does not imply a universal number of physical cores or a fixed performance level. The example's <code>--hint=nomultithread</code> may be unsupported or may alter placement; omit or use it only according to local guidance. For memory-per-CPU requests, verify how your cluster counts allocated CPUs and applies limits.</p>
-<h2>Running things in parallel</h2>
+<p>Slurm's CPU units, hardware threads, cores, and binding behavior depend on the site's configuration. A request for one CPU does not imply a universal number of physical cores or a fixed performance level. The optional <code>--hint=nomultithread</code> setting may be unsupported or may alter placement; use it only according to local guidance. For memory-per-CPU requests, verify how your cluster counts allocated CPUs and applies limits.</p>
+<h2 id="optional-parallel">Optional advanced topic: parallel steps and arrays</h2>
 <h3>Calling the same program multiple times in parallel</h3>
 <pre><code class="language-bash">#!/bin/sh
 #SBATCH --job-name example_script
@@ -296,11 +288,21 @@ module purge
 module load gcc/7.3.1
 
 srun --ntasks=1 program0 &amp;
+step0_pid=$!
 srun --ntasks=1 program1 &amp;
+step1_pid=$!
 srun --ntasks=1 program2
-wait
+step2_status=$?
+wait "$step0_pid"
+step0_status=$?
+wait "$step1_pid"
+step1_status=$?
+if [ "$step0_status" -ne 0 ] || [ "$step1_status" -ne 0 ] || [ "$step2_status" -ne 0 ]; then
+  echo "At least one parallel step failed (program0=$step0_status, program1=$step1_status, program2=$step2_status)." &gt;&amp;2
+  exit 1
+fi
 </code></pre>
-<p>Each step requests one task so each command runs once. Backgrounding the first two steps allows the shell to start them without waiting; add <code>wait</code> after the final launch so the batch script does not finish before those steps. This example can still block or fail depending on step scheduling, site configuration, and each program's resource needs. Check each step's exit status and logs; for production, handle failures explicitly rather than treating the last command's status as proof that all steps succeeded.</p>
+<p>This is an optional advanced pattern, not a first-job script. Each step requests one task so each command runs once; the shell records and waits for both background process IDs and checks the foreground command too. Any failed step makes the script exit nonzero instead of silently treating the final command's status as proof that all steps succeeded. Scheduling, site configuration, and program resource needs still matter. Use this only for independent work designed to run this way, and consult site and application guidance.</p>
 <h3>Arrays</h3>
 <p>A job array is useful for independent repetitions of the same script with an index-specific input or argument. The index values need not be consecutive; make sure your script maps every requested index to a valid input and that tasks do not overwrite one another's files.</p>
 <pre><code class="language-bash">#!/bin/sh
@@ -323,15 +325,15 @@ module load gcc/7.3.1
 srun program --arg=$SLURM_ARRAY_TASK_ID
 </code></pre>
 <p>This array has task indices 0, 1, and 2. Slurm sets <code>SLURM_ARRAY_TASK_ID</code> to each task's index; <code>%A</code> and <code>%a</code> make the log name unique per array and task. Before scaling up, test the index-to-input mapping for the first, last, and an invalid index, and consider a concurrency cap such as <code>--array=0-2%2</code> if the site permits it. Array scheduling order is not guaranteed.</p>
-<h2>Running an interactive session</h2>
+<h2>Optional: running an interactive session</h2>
 <pre><code class="language-bash">srun --pty --job-name interactive --partition ibrain --mem 2G --cpus-per-task 1 bash
 </code></pre>
 <p><code>srun --pty</code> requests an interactive pseudo-terminal through Slurm; it may wait until requested resources become available. The final <code>bash</code> is the command started in that allocation. Use only resources and partitions allowed by local policy. A graphical session requires additional site support; do not assume replacing Bash with an application is sufficient.</p>
-<h2>Running a GUI</h2>
+<h2 id="optional-x11">Optional advanced topic: running a GUI with X11</h2>
 <pre><code class="language-bash">srun --pty --job-name gui --partition ibrain --mem 2G --cpus-per-task 1 --x11 bash
 </code></pre>
 <p><code>--x11</code> requests X11 forwarding, which requires Slurm and the cluster's configuration to support it as well as a working local display setup. This command is not portable to every cluster. Follow site instructions for graphical applications, or use a supported remote visualization service.</p>
-<h2>Custom Module</h2>
+<h2 id="optional-custom-modules">Optional advanced topic: custom modules</h2>
 <h3>Creating a custom module</h3>
 <p>If you have a program you want to make available to others, you can create a custom module for it. This involves creating a module file that defines the environment variables and paths needed to run your program.</p>
 <p><strong>Example module file (<code>myprogram/1.0.lua</code>):</strong></p>
@@ -345,7 +347,7 @@ prepend_path("LD_LIBRARY_PATH", "/path/to/myprogram/lib")
 <p>Once your custom module is created and placed in the correct location, you can load it like any other module:</p>
 <pre><code class="language-bash">module load myprogram/1.0
 </code></pre>
-<h2>Conda on a Cluster</h2>
+<h2 id="optional-conda">Optional advanced topic: Conda on a cluster</h2>
 <h3>Installing Conda</h3>
 <p>To install Conda on the cluster, download the Miniconda installer and run it. Choose a location in your home directory where you have write permissions.</p>
 <pre><code class="language-bash">wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
@@ -389,7 +391,7 @@ srun python my_script.py
 # Deactivate environment (optional, but good practice)
 conda deactivate
 </code></pre>
-<h2>Compression of files</h2>
+<h2 id="optional-compression">Optional advanced topic: compression of files</h2>
 <p>Compression can reduce storage for some data, but it costs CPU time and can affect downstream tools. FASTQ files are often already gzip-compressed. Check the workflow's expected input format and storage policy before recompressing or deleting any source data.</p>
 <h3>Using <code>gzip</code></h3>
 <p><code>gzip</code> is a common compression utility. It replaces the original file with a compressed version (<code>.gz</code> extension).</p>
@@ -448,25 +450,19 @@ conda deactivate
 <p class="text-gray-600 text-sm">Which Slurm directives control resources, output logging, job naming, and the executable command?</p>
 </div>
 <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-<h4 class="font-bold text-gray-800 mb-2">2. Practical Execution</h4>
-<p class="text-gray-600 text-sm">From a directory where you can write files, create <code>smoke-test.sbatch</code> with the following contents. Replace <code>YOUR_ALLOWED_PARTITION</code> with a partition confirmed by your cluster documentation (and add any required account directive); this script needs no modules or biological data.</p>
-<pre><code class="language-bash">#!/bin/sh
-#SBATCH --job-name=hpc-smoke
-#SBATCH --ntasks=1
-#SBATCH --cpus-per-task=1
-#SBATCH --time=00:02:00
-#SBATCH --partition=YOUR_ALLOWED_PARTITION
-#SBATCH --output=hpc-smoke-%j.out
-
-hostname
-date
+<h4 class="font-bold text-gray-800 mb-2" id="submit-job">2. Practical Execution</h4>
+<p class="text-gray-600 text-sm">Save the smoke-test script above as <code>smoke-test.sbatch</code> in a suitable working directory. Replace the placeholder partition before submitting. This command captures the actual numeric ID; <code>--parsable</code> can include an optional cluster suffix, which the parameter expansion removes:</p>
+<pre><code class="language-bash">SUBMISSION=$(sbatch --parsable smoke-test.sbatch) || exit 1
+JOB_ID=${SUBMISSION%%;*}
+printf 'Submitted job ID: %s\n' "$JOB_ID"
+squeue -j "$JOB_ID"
 </code></pre>
-<p class="text-gray-600 text-sm">Save as <code>smoke-test.sbatch</code>, submit it, and record the numeric job ID printed by <code>sbatch</code>. After it leaves the queue, replace <code>JOB_ID</code> with that number:</p>
-<pre><code class="language-bash">sbatch smoke-test.sbatch
-sacct -j JOB_ID --format=JobID,State,ExitCode
-cat hpc-smoke-JOB_ID.out
+<h5 id="job-state">Check the final state and log</h5>
+<p class="text-gray-600 text-sm">A returned ID means submission was accepted, not that the job has started or finished. Use <code>squeue</code> while it is pending or running. Once it leaves the queue, inspect the accounting record (it can take time to appear) and the job log:</p>
+<pre><code class="language-bash">sacct -j "$JOB_ID" --format=JobID,State,ExitCode
+cat "hpc-smoke-${JOB_ID}.out"
 </code></pre>
-<p class="text-gray-600 text-sm">Success means the batch record is <code>COMPLETED</code> with exit code <code>0:0</code> and the uniquely named log contains one hostname line and one date line (the exact values vary). While pending or running, use <code>squeue -j JOB_ID</code>; after completion, accounting may take a short time to appear. If submission is rejected, check the partition/account and request limits in the site's documentation; if the record fails or the log is missing, inspect the state, exit code, and log path before changing resource requests. Do not repeatedly resubmit a failing workload without resolving the reported cause.</p>
+<p class="text-gray-600 text-sm">For this exercise, a successful result is a final batch state of <code>COMPLETED</code> and exit code <code>0:0</code>, with exactly two output lines: a hostname, then a date (their values and date formatting vary). A <code>PENDING</code> record is waiting, not a failure; a missing log while pending or before the job starts is not by itself a diagnosis. A submission rejection means no accepted job ID was returned: check the partition, any required account, and request limits in local guidance. If the final state is <code>FAILED</code> or the exit code is nonzero, inspect the state, exit code, log contents, and log path; for this command pair, a missing hostname/date line points to a command or script failure. Do not infer completion from an ID or repeatedly resubmit without resolving the reported cause.</p>
 </div>
 <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
 <h4 class="font-bold text-gray-800 mb-2">3. Troubleshooting</h4>
@@ -474,6 +470,7 @@ cat hpc-smoke-JOB_ID.out
 </div>
 </div>
 </div>
+<p><strong>Validation boundary:</strong> local shell-syntax and mocked-command checks exercised the smoke, array and parallel-step examples, including a failed parallel step. No job was submitted to a real Slurm cluster, and no site's scheduler configuration or policy was validated. Confirm local requirements before submitting your own first job.</p>
 <section aria-label="References and further reading" class="mt-10 p-6 bg-slate-50 border border-slate-200 rounded-xl">
 <h2 class="text-xl font-bold text-gray-900 mb-3">References and further reading</h2>
 <p class="text-sm text-gray-600 mb-3">Use these official resources to check current software behaviour, terminology, and production guidance. Tool versions and defaults change, so verify commands against the documentation before applying them to a research dataset.</p>
@@ -483,15 +480,14 @@ cat hpc-smoke-JOB_ID.out
 </ul>
 </section>
 <aside aria-labelledby="tutorial-feedback-title" class="lesson-feedback" id="tutorial-feedback"><h2 id="tutorial-feedback-title">Help improve this tutorial</h2><p>Found an error, a broken link, or a step that needs a clearer explanation? Please <a href="../contact.html">contact me</a>. Your feedback helps me keep this resource accurate and useful.</p></aside></article>
-<nav aria-label="Course sequence" class="reader-sequence" id="reader-course-navigation">
-<h2>Continue learning</h2>
-<p class="reader-sequence-position">Tutorial 21 of 58 · High-Performance Computing (HPC)</p>
+<nav aria-label="Learning path continuation" class="reader-sequence" id="reader-course-navigation">
+<h2>Choose a relevant next step</h2>
+<p class="reader-sequence-position"><strong>Learning route:</strong> Optional HPC · job submission. Suggested links are not a completion tracker or a required linear course.</p>
 <div class="reader-sequence-grid">
-<a href="hpc-basic-commands.html" rel="prev"><small>← Previous tutorial</small><strong>Basic Slurm Commands</strong></a>
+<a href="hpc-basic-commands.html" rel="prev" class="reader-path-card"><small>Relevant prerequisite / back to path</small><strong>← Basic Slurm Commands</strong></a>
 <a data-catalogue-return="" href="../tutorials.html"><small>Tutorial library</small><strong>All tutorials</strong></a>
-<a href="hpc-support.html" rel="next"><small>Next tutorial →</small><strong>HPC Troubleshooting and Support</strong></a>
-</div>
-</nav>
+<a href="hpc-support.html" rel="next" class="reader-path-card"><small>Suggested next step</small><strong>HPC Troubleshooting and Support</strong><span>Use the troubleshooting guide when cluster setup or jobs fail.</span></a>
+</div></nav>
 </div></div></div>
 </div>
 <script>window.STATIC_RENDERED = true; window.PRELOADED_TUTORIAL_ID = "hpc-submission-part1";</script>
