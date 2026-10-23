@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Read-only checks for responsive assets and nonblocking font delivery."""
 from html.parser import HTMLParser
+import json
 from pathlib import Path
 from urllib.parse import urlsplit
 import hashlib
@@ -8,6 +9,8 @@ import re
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
+REDIRECT_MANIFEST = json.loads((ROOT / 'tools' / 'legacy-redirects.json').read_text(encoding='utf-8'))
+REDIRECT_PATHS = set(REDIRECT_MANIFEST['migration_root_urls']) | set(REDIRECT_MANIFEST['historical_aliases'])
 
 class Tags(HTMLParser):
     def __init__(self, text):
@@ -21,6 +24,8 @@ class MobileLoadingTests(unittest.TestCase):
     def test_every_html_page_uses_existing_local_font_resources(self):
         pages = list(ROOT.glob('*.html')) + list(ROOT.glob('pages/*.html')) + list(ROOT.glob('tutorials/*.html'))
         for page in pages:
+            if '/' + page.relative_to(ROOT).as_posix() in REDIRECT_PATHS:
+                continue
             text = page.read_text(encoding='utf-8')
             with self.subTest(page=page.relative_to(ROOT).as_posix()):
                 self.assertNotIn('https://fonts.googleapis.com', text)

@@ -13,10 +13,14 @@ jobs:
     steps:
       - name: Check out review branch
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      - name: Verify generated legacy redirects
+        run: python3 tools/generate_legacy_redirects.py --check
       - name: Validate tutorial contracts and local links
         run: python3 tests/validate_tutorials.py
       - name: Run offline regression tests
