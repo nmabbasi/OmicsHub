@@ -224,6 +224,10 @@ if [[ $input != - &amp;&amp; ! -r $input ]]; then
   echo "Input is not readable: $input" &gt;&amp;2
   exit 1
 fi
+if [[ $input != - &amp;&amp; ( $input == "$output" || $input -ef $output ) ]]; then
+  echo "Input and output must be different files: $input" &gt;&amp;2
+  exit 1
+fi
 mkdir -p "$(dirname -- "$output")"
 tmp=$(mktemp "${output}.tmp.XXXXXX")
 trap 'rm -f -- "$tmp"' EXIT

@@ -281,15 +281,15 @@ gatk VariantFiltration \
 </code></pre>
 <p>VariantFiltration annotates records; it does not remove failing records. A record with <code>FILTER=.</code> has not been evaluated by a filter and is not equivalent to PASS. Inspect filter labels and explicitly select PASS records before describing the result as filtered, for example: <code>gatk SelectVariants -R refs/GRCh38.fa -V vcf/NA12878_filtered.vcf.gz --exclude-filtered true -O vcf/NA12878_pass.vcf.gz</code>. The expressions here are illustrative only: confirm annotations exist in the VCF header and tune against truth data or project-specific evidence. Hard filters act on sites and can discard true calls; VQSR also has data/resource requirements and is not automatically appropriate for every exome cohort.</p>
 <h3>6. Optional: LiftOver variants between genome builds</h3>
-<p>If you need to convert coordinates between GRCh37 and GRCh38, use Picard/GATK/GATK LiftoverVcf with the chain file. Always re-annotate and validate lifted variants.</p>
-<pre><code># Input: vcf/NA12878_filtered.vcf.gz (GRCh37)
-# Output: vcf/NA12878_filtered.GRCh38.vcf.gz
+<p>The calling and filtering commands above use GRCh38, so their output does not need this conversion. If you instead start with a separate VCF already called against GRCh37, this optional Picard/GATK LiftoverVcf example converts that GRCh37 input to GRCh38 using an hg19-to-hg38 chain and the GRCh38 target reference. Always re-annotate and validate lifted variants.</p>
+<pre><code># Separate input: this VCF was called against GRCh37; it is not produced above.
+# Output: vcf/NA12878_GRCh37input_liftedToGRCh38.vcf.gz
 gatk LiftoverVcf \
-  -I vcf/NA12878_filtered.vcf.gz \
-  -O vcf/NA12878_filtered.GRCh38.vcf.gz \
+  -I vcf/NA12878_GRCh37_filtered.vcf.gz \
+  -O vcf/NA12878_GRCh37input_liftedToGRCh38.vcf.gz \
   -CHAIN refs/hg19ToHg38.over.chain.gz \
   -R refs/GRCh38.fa \
-  --REJECT vcf/NA12878_liftover_rejected.vcf.gz
+  --REJECT vcf/NA12878_GRCh37_liftover_rejected.vcf.gz
 </code></pre>
 <h3>7. Compute Variant Allele Frequency (VAF)</h3>
 <p>For a sample and a biallelic genotype, a common read-based estimate is alternate AD divided by the sum of reference and alternate AD. FORMAT/AD is allele-depth data; FORMAT/DP is a separate caller field and may not equal the sum of AD. This illustration is deliberately restricted to one sample and biallelic records. Check the VCF header and genotype before interpreting values; multiallelic records have one AD value per allele, and missing values must not be silently treated as zero.</p>

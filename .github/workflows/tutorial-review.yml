@@ -1,0 +1,23 @@
+name: Tutorial review checks
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out review branch
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Validate tutorial contracts and local links
+        run: python3 tests/validate_tutorials.py
+      - name: Run offline regression tests
+        run: python3 -m unittest discover -s tests -v

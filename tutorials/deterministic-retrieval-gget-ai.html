@@ -182,9 +182,9 @@ mkdir -p retrieval-results
 python3 -m venv .venv
 source .venv/bin/activate
 
-# Upgrade pip and install a pinned gget version for reproducibility
+# Install the direct dependency set exercised in the recorded Linux/Python 3.12.3 run
 python -m pip install --upgrade pip
-python -m pip install "gget==0.28.6"
+python -m pip install "gget==0.28.6" "numpy==1.26.4" "pandas==2.2.3"
 
 # Verify installation and save the help output
 gget --help &gt; retrieval-results/gget-help.txt 2&gt;&amp;1
@@ -196,14 +196,14 @@ python -m pip show gget &gt; retrieval-results/gget-package.txt
 <li><code>retrieval-results/gget-help.txt</code> — records the CLI help output.</li>
 <li><code>retrieval-results/gget-package.txt</code> — records installed gget package metadata, including its version.</li>
 </ul>
-<p>The example pins gget 0.28.6. Check that release is compatible with your Python version and platform; do not silently substitute a newer release if reproducing an older analysis.</p>
+<p>The example pins gget 0.28.6 with NumPy 1.26.4 and pandas 2.2.3, exercised on Linux with Python 3.12.3. An initial install with current unconstrained dependencies failed because this gget release calls <code>np.NaN</code>, removed in NumPy 2. The <a href="../files/gget-example/requirements-direct.txt">direct constraints</a> and <a href="../files/gget-example/observed/requirements.txt">full observed environment</a> preserve what worked; they are not cross-platform guarantees. Do not silently replace versions when reproducing this run.</p>
 <h3>2) Prepare a retrieval-results directory and record metadata</h3>
 <pre><code># Make a directory to hold raw retrievals and logs
 mkdir -p retrieval-results
 # Record the environment and Python package list for provenance
 python -m pip freeze &gt; retrieval-results/requirements.txt
 python --version &gt; retrieval-results/python-version.txt
-date --iso-8601=seconds &gt; retrieval-results/retrieval_timestamp.txt
+date -u '+%Y-%m-%dT%H:%M:%SZ' &gt; retrieval-results/retrieval_timestamp.txt
 </code></pre>
 <p>Files created:</p>
 <ul>
@@ -215,10 +215,10 @@ date --iso-8601=seconds &gt; retrieval-results/retrieval_timestamp.txt
 <pre><code># Log start/end, exact command label, and exit status around each CLI query
 log_run() {
   label=$1; shift
-  started=$(date --iso-8601=seconds)
+  started=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
   "$@"
   status=$?
-  finished=$(date --iso-8601=seconds)
+  finished=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
   printf 'start=%s | command=%s | exit=%s | end=%s\n' "$started" "$label" "$status" "$finished" &gt;&gt; retrieval-results/commands.log
   return "$status"
 }
@@ -255,11 +255,22 @@ PY
 <li><code>retrieval-results/ACE2_protein.fasta</code> — FASTA output from gget. For translated output, gget uses UniProt; it is not a sequence fetched from Ensembl.</li>
 </ul>
 <h3>5) Save exact commands, inputs, and timestamps for provenance</h3>
-<p>The two CLI retrievals above append start and completion timestamps, the exact command labels, and exit statuses to <code>retrieval-results/commands.log</code>. The separate Python API query is not wrapped by this logger. Times are local to the shell and bracket execution; they do not freeze upstream database state.</p>
+<p>The two CLI retrievals above append UTC start and completion timestamps, the exact command labels, and exit statuses to <code>retrieval-results/commands.log</code>. The portable <code>date -u</code> format works with GNU and BSD/macOS date; it does not require GNU's <code>--iso-8601</code> option. The separate Python API query is not wrapped by this logger. Times bracket execution; they do not freeze upstream database state.</p>
 <p>Files produced:</p>
 <ul>
-<li><code>retrieval-results/commands.log</code> — start/end timestamps, exact command labels, and exit status for CLI retrievals. Times are local to the shell and bracket execution; they do not freeze upstream database state.</li>
+<li><code>retrieval-results/commands.log</code> — UTC start/end timestamps, exact command labels, and exit status for CLI retrievals. These timestamps bracket execution; they do not freeze upstream database state.</li>
 </ul>
+<section id="observed-ace2-retrieval" aria-labelledby="observed-ace2-title">
+<h2 id="observed-ace2-title">Observed example: an actual ACE2 retrieval</h2>
+<p>On 23 October 2026 UTC, both CLI queries above completed with exit status zero in the constrained environment. They were executed using the downloadable <a href="../files/gget-example/run_retrieval.py">bounded query runner</a>, which saves raw stdout/stderr, versions, hashes and UTC timestamps and refuses an existing results directory. See its <a href="../files/gget-example/README.md">reproduction notes</a> and <a href="../files/gget-example/observed/manifest.json">actual run manifest</a>. The separate Python API export above was not part of this recorded run.</p>
+<table><caption>Selected fields from the saved response, not a promise about future queries</caption><thead><tr><th scope="col">Returned field</th><th scope="col">Observed value</th><th scope="col">How to read it</th></tr></thead><tbody>
+<tr><td>Ensembl ID / species</td><td><code>ENSG00000130234.15</code> / <code>homo_sapiens</code></td><td>A versioned gene record, not a transcript or protein ID.</td></tr>
+<tr><td>Assembly / region / strand</td><td><code>GRCh38</code> / <code>X</code> / <code>-1</code></td><td>The returned coordinate context; do not assign another build by assumption.</td></tr>
+<tr><td>Canonical transcript field</td><td><code>ENST00000252519.8</code></td><td>This field is reported by the gene response; it is not a universal gget sequence-selection rule.</td></tr>
+<tr><td>FASTA header / sequence</td><td><code>ENST00000252519</code>, UniProt <code>Q9BYF1</code>, 805 amino acids</td><td>The saved header and counted sequence agree on length; that does not validate protein function.</td></tr>
+</tbody></table>
+<p>Inspect the <a href="../files/gget-example/observed/ACE2_info.json">complete raw gene response</a> and <a href="../files/gget-example/observed/ACE2_protein.fasta">returned FASTA</a> rather than relying on this table. The response does not establish an explicit annotation release, and missing NCBI/PDB fields are not evidence that no such records exist. These are dated database retrievals, not experimental results or clinical claims.</p>
+</section>
 <h2>Output inspection and interpretation</h2>
 <p>After you save retrieval outputs, inspect them systematically. For each saved file ask:</p>
 <ul>
@@ -288,7 +299,7 @@ PY
 <li>Fixes:
     <ol>
 <li>Activate the virtual environment: <code>source .venv/bin/activate</code>.</li>
-<li>Reinstall: <code>python -m pip install gget==0.28.6</code> and check <code>python -m pip freeze | grep gget</code>.</li>
+<li>Reinstall the tested direct constraints: <code>python -m pip install "gget==0.28.6" "numpy==1.26.4" "pandas==2.2.3"</code>, then check <code>python -m pip freeze</code>.</li>
 <li>Check that the active environment contains gget with <code>python -m pip show gget</code>; the CLI is invoked as <code>gget info ENSG00000130234</code>.</li>
 </ol>
 </li>
