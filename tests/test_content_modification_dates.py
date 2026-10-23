@@ -23,11 +23,16 @@ MODIFIED = {
     "tutorials/wes-variant-calling-pipeline.html": "2026-09-04",
     "tutorials/hpc-submission-part1.html": "2026-09-06",
     "tutorials/reproducible-workflows-snakemake-nextflow.html": "2026-09-21",
+    "tutorials/command-line-part2.html": "2026-09-16",
+    "tutorials/conda-mamba-part1.html": "2026-08-30",
+    "tutorials/hpc-basic-commands.html": "2026-09-11",
+    "tutorials/scrna-seq-trajectory-inference.html": "2026-09-17",
+    "tutorials/advanced-ai-single-cell.html": "2026-08-25",
+    "tutorials/ai-coding-cursor-aider.html": "2026-09-08",
 }
-# These PR changes only propagate adjacent-lesson title updates in navigation;
-# they are intentionally not represented as content revisions.
+# These earlier PR changes only propagate adjacent-lesson title updates;
+# they remain navigation-only, unlike the six newly revised lessons above.
 NAVIGATION_ONLY = (
-    "tutorials/ai-coding-cursor-aider.html",
     "tutorials/notebooklm-research-brain.html",
     "tutorials/protein-structure-design-alphafold.html",
 )

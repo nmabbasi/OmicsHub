@@ -73,7 +73,7 @@ gtag('consent', 'default', {
     }
   },
   "datePublished": "2026-09-17",
-  "dateModified": "2026-10-21",
+  "dateModified": "2026-10-23",
   "url": "https://theomicshub.com/tutorials/scrna-seq-trajectory-inference.html",
   "name": "Single-cell trajectory inference: PAGA, DPT, Slingshot and Monocle3",
   "isPartOf": {
@@ -175,7 +175,7 @@ function toggleMobileMenu() {
 </div>
 <div class="flex items-center gap-1">
 <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
-<span>Updated 21 October 2026</span></div>
+<span>Updated 23 October 2026</span></div>
 </div>
 <div class="lesson-lead">
 <h2>Before choosing a trajectory method</h2>
@@ -191,54 +191,136 @@ function toggleMobileMenu() {
 <h2>Understanding Trajectory Inference</h2>
 <p>Single-cell RNA-seq measures cells at collection, not their histories. Trajectory inference can order cells along a transcriptional manifold when the sampled population is consistent with a continuous process. Similarity-based ordering alone does not establish that one cell becomes another, nor does it measure elapsed time.</p>
 <p><strong>Trajectory inference (TI)</strong> algorithms attempt to order cells along a learned trajectory based on their transcriptional similarities, creating a "pseudotime" axis. This allows us to track gene expression changes as cells differentiate.</p>
-<p>PAGA summarizes connectivity among chosen partitions; DPT assigns graph distances relative to a root cell. Slingshot fits lineages from clusters in a reduced-dimensional space, while Monocle3 learns a principal graph. They answer related questions with different assumptions, so their outputs are not interchangeable.</p>
+<p>PAGA summarizes connectivity among chosen partitions; DPT assigns a diffusion-based ordering relative to a named root cell. Slingshot fits lineages from clusters in a reduced-dimensional space, while Monocle3 learns a principal graph. They answer related questions with different assumptions, so their outputs are not interchangeable. For inference, use a reviewed high-dimensional representation such as PCA or the expression space appropriate to the analysis. UMAP is a display, not a substitute for that inference space.</p>
 <hr/>
 <h2>Scanpy: inspect partitions, then calculate DPT</h2>
 <p><strong>Partition-based Graph Abstraction (PAGA)</strong> is integrated directly into the Scanpy system. It generates a coarse-grained map of cellular connectivity and provides a solid scaffold for embedding and pseudotime calculation.</p>
 <pre><code class="language-python">import scanpy as sc
 import numpy as np
+from importlib.metadata import version
+from scipy.sparse.csgraph import connected_components
 
-# Assuming `adata` is already preprocessed, clustered (e.g., 'leiden'), and has a UMAP
-# Recompute only if the existing neighbor graph is absent or no longer matches this representation.
-sc.pp.neighbors(adata, n_neighbors=15, n_pcs=40)
+# `adata` is preprocessed and clustered, with reviewed PCA coordinates in obsm
+# and an existing UMAP only for display. Verify the intended cells and columns first.
+GRAPH_KEY = "trajectory_pca30"          # exact graph key checked below
+REP_KEY = "X_pca"
+N_PCS = 30
+N_NEIGHBORS = 15
+METHOD = "umap"
+METRIC = "euclidean"
+RANDOM_STATE = 0
+APPROVE_REBUILD_NEIGHBORS = False       # change only after reviewing the old graph
 
-# 1. Run PAGA
-sc.tl.paga(adata, groups='leiden')
+if REP_KEY not in adata.obsm:
+    raise ValueError(f"Missing reviewed representation {REP_KEY!r}; do not fall back to UMAP.")
+coords = np.asarray(adata.obsm[REP_KEY])
+if coords.ndim != 2 or coords.shape[0] != adata.n_obs or coords.shape[1] &lt; N_PCS:
+    raise ValueError(f"{REP_KEY} must have one row per cell and at least {N_PCS} dimensions.")
+if not np.isfinite(coords[:, :N_PCS]).all():
+    raise ValueError(f"{REP_KEY} has non-finite values in the requested dimensions.")
 
-# 2. Plot the coarse-grained PAGA graph
+expected = {"use_rep": REP_KEY, "n_pcs": N_PCS, "n_neighbors": N_NEIGHBORS,
+            "method": METHOD, "metric": METRIC, "random_state": RANDOM_STATE}
+connectivity_key = f"{GRAPH_KEY}_connectivities"
+distance_key = f"{GRAPH_KEY}_distances"
+params = adata.uns.get(GRAPH_KEY, {}).get("params", {})
+keys_present = connectivity_key in adata.obsp and distance_key in adata.obsp
+matches = keys_present and all(params.get(k) == v for k, v in expected.items())
+
+if matches:
+    graph_action = "reused: graph key, representation, dimensions, and settings match"
+else:
+    if not APPROVE_REBUILD_NEIGHBORS:
+        raise ValueError("Neighbor graph is absent or does not match the declared contract. "
+                         "Inspect it, then explicitly approve rebuilding before rerunning.")
+    if adata.n_obs &lt;= N_NEIGHBORS:
+        raise ValueError("Need more cells than N_NEIGHBORS to rebuild this graph.")
+    sc.pp.neighbors(adata, n_neighbors=N_NEIGHBORS, use_rep=REP_KEY, n_pcs=N_PCS,
+                    method=METHOD, metric=METRIC, random_state=RANDOM_STATE,
+                    key_added=GRAPH_KEY)
+    graph_action = "rebuilt with explicit approval"
+
+adata.uns["trajectory_provenance"] = {
+    "scanpy_version": version("scanpy"), "graph_key": GRAPH_KEY,
+    "representation": REP_KEY, "available_dimensions": int(coords.shape[1]),
+    "dimensions_used": N_PCS, "n_neighbors": N_NEIGHBORS,
+    "method": METHOD, "metric": METRIC, "random_state": RANDOM_STATE,
+    "graph_action": graph_action,
+}
+
+# PAGA summarizes the declared graph. Keep the existing UMAP as a view only.
+sc.tl.paga(adata, groups="leiden", neighbors_key=GRAPH_KEY)
 sc.pl.paga(adata)
+sc.pl.umap(adata, color="leiden", legend_loc="on data")
 
-# 3. Use PAGA initialization to recompute a more continuous UMAP
-sc.tl.umap(adata, init_pos='paga')
-sc.pl.umap(adata, color=['leiden'], legend_loc='on data')
+# Declare two distinct, named cells supported as the same early state.
+# Replace these IDs and rationales after reviewing markers, sample context,
+# and any independent time-course evidence. Never select the first row of a cluster.
+ROOT_STATE_KEY = "state"
+EXPECTED_ROOT_STATE = "early"
+ROOTS = {
+    "primary": {"obs_name": "REPLACE_WITH_REVIEWED_EARLY_CELL_A",
+                "rationale": "Replace with evidence for the proposed starting state."},
+    "sensitivity": {"obs_name": "REPLACE_WITH_REVIEWED_EARLY_CELL_B",
+                    "rationale": "A distinct plausible cell from the same supported early state."},
+}
+if not adata.obs_names.is_unique:
+    raise ValueError("Cell names must be unique so named roots resolve unambiguously.")
+if ROOTS["primary"]["obs_name"] == ROOTS["sensitivity"]["obs_name"]:
+    raise ValueError("Sensitivity check requires a second, distinct named root cell.")
+if ROOT_STATE_KEY not in adata.obs:
+    raise ValueError(f"Add the declared root-state annotation {ROOT_STATE_KEY!r} first.")
+root_indices = {}
+for label, spec in ROOTS.items():
+    cell_id = spec["obs_name"]
+    if cell_id.startswith("REPLACE_") or cell_id not in adata.obs_names:
+        raise ValueError(f"Choose an existing, reviewed cell name for {label!r}.")
+    if not spec["rationale"].strip() or "Replace with" in spec["rationale"]:
+        raise ValueError(f"Record the evidence-based rationale for root {label!r}.")
+    state = str(adata.obs.loc[cell_id, ROOT_STATE_KEY])
+    if state != EXPECTED_ROOT_STATE:
+        raise ValueError(f"Root {cell_id!r} has state {state!r}, not {EXPECTED_ROOT_STATE!r}.")
+    root_indices[label] = int(adata.obs_names.get_loc(cell_id))
 
-# DPT needs the neighbor graph, a diffusion map, and a biologically justified root.
-# Confirm that cluster '0' exists and contains the intended root population.
-root_cells = np.flatnonzero(adata.obs['leiden'].astype(str).to_numpy() == '0')
-if root_cells.size == 0:
-    raise ValueError("No cells are labelled '0'; choose a valid root cell explicitly.")
-adata.uns['iroot'] = int(root_cells[0])
-sc.tl.diffmap(adata)
-sc.tl.dpt(adata)
+sc.tl.diffmap(adata, neighbors_key=GRAPH_KEY)
+n_components, component = connected_components(
+    adata.obsp[connectivity_key], directed=False, return_labels=True
+)
+root_records = {}
+for label, spec in ROOTS.items():
+    root_index = root_indices[label]
+    adata.uns["iroot"] = root_index
+    sc.tl.dpt(adata, neighbors_key=GRAPH_KEY)
+    values = adata.obs["dpt_pseudotime"].to_numpy(copy=True)
+    # Other graph components have no root-relative ordering; mark them unassigned.
+    values[component != component[root_index]] = np.nan
+    adata.obs[f"dpt_{label}"] = values
+    root_records[label] = {
+        "cell_id": spec["obs_name"], "obs_index": root_index,
+        "state": EXPECTED_ROOT_STATE, "rationale": spec["rationale"],
+        "connected_component": int(component[root_index]),
+    }
+adata.uns["trajectory_roots"] = root_records
+adata.uns["trajectory_provenance"]["connected_components"] = int(n_components)
+adata.uns["iroot"] = root_indices["primary"]
 
-# Plot the chosen root explicitly; label the embedding and partition in the figure.
-import matplotlib.pyplot as plt
-sc.pl.umap(adata, color='dpt_pseudotime', cmap='viridis', show=False)
-ax = plt.gca()
-root_xy = adata.obsm['X_umap'][adata.uns['iroot']]
-ax.scatter(*root_xy, marker='*', s=180, facecolors='none', edgecolors='black', linewidths=1.5, label='chosen root (cluster 0)')
-ax.legend(loc='best', title='Root marker')
-ax.set_title('DPT pseudotime | UMAP; partitions: leiden')
-plt.show()
+# Color the display embedding by root-relative DPT. UMAP geometry is not fit or
+# interpreted as a trajectory here; grey cells are disconnected from this root.
+ax = sc.pl.umap(adata, color="dpt_primary", cmap="viridis", na_color="lightgrey", show=False)
+root_xy = adata.obsm["X_umap"][root_indices["primary"]]
+ax.scatter(*root_xy, marker="*", s=180, facecolors="none", edgecolors="black",
+           linewidths=1.5, label="named primary root")
+ax.legend(loc="best", title="Root marker")
+ax.set_title("DPT from named root | UMAP display only; grey = disconnected")
 </code></pre><div class="mt-4 mb-8 bg-blue-50/50 border-l-4 border-blue-500 p-5 rounded-r-lg text-sm text-gray-700">
 <p class="font-bold text-gray-900 mb-2">Understanding the Output</p>
-<p class="mb-3">PAGA edge weights summarize connectivity between the chosen partitions in the neighbor graph. Initializing UMAP from PAGA can help display global topology, but the embedding remains a visualization and should not be treated as a validated lineage.</p>
+<p class="mb-3">PAGA edge weights summarize connectivity between the chosen partitions in the explicitly named neighbor graph. The DPT graph is built from reviewed PCA coordinates here. UMAP is used only to display cells colored by DPT; its two-dimensional distances and apparent paths are not the fitted trajectory. The code reuses the graph only when Scanpy's stored key, representation, PC count, neighbor count, method, metric, and random state all match. Otherwise it stops until you explicitly approve rebuilding, and it records the graph action and settings.</p>
 <p class="font-bold text-gray-900 mb-2">⚠️ Pitfalls to Avoid</p>
-<p>The graph depends on both the neighbor graph and the partition labels. Compare reasonable clustering choices and inspect whether proposed edges have support in the underlying cells. Separate populations may be disconnected; do not force a biological connection simply to obtain a continuous plot.</p>
+<p>The graph depends on both the neighbor graph and the partition labels. Compare reasonable clustering choices and inspect whether proposed edges have support in the underlying cells. The example validates two named root cells against a declared early-state annotation, records each rationale, and compares both rootings. It masks cells outside each root's connected component as unassigned for this interpretation; it does not turn a disconnected population into a continuous path.</p>
 </div>
 <hr/>
 <h2>Slingshot: infer one or more cluster lineages</h2>
-<p>Slingshot uses cluster labels and coordinates in a reduced-dimensional space to infer a cluster-based minimum spanning tree and fit principal curves along lineages. Conversion from Seurat uses SeuratWrappers; check that the intended clustering and embedding were carried into the SingleCellExperiment object before inference.</p>
+<p>Slingshot uses cluster labels and coordinates in a reduced-dimensional space to infer a cluster-based minimum spanning tree and fit principal curves along lineages. This example fits in reviewed PCA coordinates. It then colors a separate UMAP display by the returned pseudotime without drawing PCA-fit curves in UMAP geometry. Conversion from Seurat uses SeuratWrappers; check that the intended clustering and both named representations were carried into the SingleCellExperiment object before inference.</p>
 <pre><code class="language-r">library(Seurat)
 library(slingshot)
 library(SingleCellExperiment)
@@ -247,13 +329,25 @@ library(RColorBrewer)
 # Convert Seurat object to SingleCellExperiment (SCE)
 sce &lt;- as.SingleCellExperiment(pbmc)
 
-# 1. Run Slingshot
-# We use the existing UMAP embedding and specify a starting cluster
-sce &lt;- slingshot(sce, clusterLabels = 'ident', reducedDim = 'UMAP', start.clus = '0')
+# Confirm conversion preserved the reviewed inference space, display space, and labels.
+if (!all(c('PCA', 'UMAP') %in% reducedDimNames(sce))) stop('Expected both PCA and UMAP reductions.')
+if (!'ident' %in% colnames(colData(sce))) stop("Expected the intended cluster labels in colData(sce)$ident.")
+START_CLUSTER &lt;- 'REPLACE_WITH_SUPPORTED_START_CLUSTER'
+if (START_CLUSTER == 'REPLACE_WITH_SUPPORTED_START_CLUSTER' ||
+    !START_CLUSTER %in% as.character(colData(sce)$ident)) {
+  stop('Choose a present start cluster supported by the biological question.')
+}
 
-# 2. Extract pseudotime and plot
+# 1. Infer lineages and fit curves in PCA, not in the UMAP display embedding.
+sce &lt;- slingshot(sce, clusterLabels = 'ident', reducedDim = 'PCA', start.clus = START_CLUSTER)
+
+# 2. Preview one explicitly selected lineage; other lineages are not shown.
+# Inspect colnames(pt_all) and slingLineages(sce), then choose the intended index.
 # Palette factory must be called; NA pseudotimes remain visibly unassigned.
-pt &lt;- slingPseudotime(sce)[, 1]
+pt_all &lt;- slingPseudotime(sce)
+LINEAGE_INDEX &lt;- 1L
+if (LINEAGE_INDEX &lt; 1L || LINEAGE_INDEX &gt; ncol(pt_all)) stop('Choose a present lineage index.')
+pt &lt;- pt_all[, LINEAGE_INDEX]
 colors &lt;- colorRampPalette(brewer.pal(11, 'Spectral')[-6])(100)
 plotcol &lt;- rep('grey80', length(pt))
 finite &lt;- is.finite(pt)
@@ -263,18 +357,17 @@ if (max(pt[finite]) == min(pt[finite])) scaled[] &lt;- 0.5
 plotcol[finite] &lt;- colors[pmax(1, pmin(100, floor(scaled * 99) + 1))]
 xy &lt;- reducedDims(sce)$UMAP
 plot(xy, col = plotcol, pch=16, asp = 1,
-     main = 'Slingshot lineage 1 | UMAP; clusters: ident',
+     main = paste0('Slingshot lineage ', LINEAGE_INDEX, ' of ', ncol(pt_all),
+                   ' | UMAP display only; fit in PCA'),
      xlab = 'UMAP 1', ylab = 'UMAP 2')
-root_idx &lt;- which(as.character(colData(sce)$ident) == '0')
-if (!length(root_idx)) stop("Start cluster '0' is absent; choose a supported root.")
+root_idx &lt;- which(as.character(colData(sce)$ident) == START_CLUSTER)
 points(xy[root_idx, , drop=FALSE], pch=8, cex=1.4, lwd=1.5, col='black')
-text(median(xy[root_idx, 1]), median(xy[root_idx, 2]), labels='root: cluster 0', pos=3, cex=0.8)
-lines(SlingshotDataSet(sce), lwd=2, col='black')
+text(median(xy[root_idx, 1]), median(xy[root_idx, 2]), labels=paste('start cluster:', START_CLUSTER), pos=3, cex=0.8)
 </code></pre><div class="mt-4 mb-8 bg-blue-50/50 border-l-4 border-blue-500 p-5 rounded-r-lg text-sm text-gray-700">
 <p class="font-bold text-gray-900 mb-2">Understanding the Output</p>
-<p class="mb-3">Slingshot first uses cluster centers to infer lineage topology, then fits simultaneous principal curves. Pseudotime and curve weights are returned per lineage; cells can be unassigned to a lineage and branching cells can contribute to multiple lineages. Inspect the fitted curves and cluster paths rather than relying on the color gradient alone.</p>
+<p class="mb-3">Slingshot uses cluster centers to infer lineage topology, then fits simultaneous principal curves in the selected PCA coordinates. Pseudotime and curve weights are returned per lineage; cells can be unassigned to a lineage and branching cells can contribute to multiple lineages. This preview shows only the explicitly selected lineage; other inferred lineages are not shown. Inspect each relevant lineage separately rather than treating the first column as the complete trajectory. The plot colors UMAP by pseudotime only: it intentionally does not overlay curves fitted in PCA as though they followed UMAP geometry.</p>
 <p class="font-bold text-gray-900 mb-2">⚠️ Pitfalls to Avoid</p>
-<p>The start cluster sets the orientation of the inferred lineages; it does not validate that a lineage exists. If the start label is absent or biologically uncertain, stop and resolve that input first. Check whether the inferred paths are supported by the cells and whether plausible alternatives change the topology.</p>
+<p>The explicitly selected start cluster sets orientation; it does not validate that a lineage exists. Replace the placeholder only after stating why that cluster is a plausible start, confirm it is present, and compare defensible alternatives. PCA distances and UMAP distances are not interchangeable, so inspect fitted curves in their fitted PCA representation if curve geometry is needed.</p>
 </div>
 <div class="mt-8 p-6 bg-purple-50 border-l-4 border-purple-500 rounded-r-xl shadow-sm mb-8">
 <h4 class="text-lg font-bold text-purple-900 mb-2 flex items-center gap-2">
@@ -320,6 +413,14 @@ plot_cells(cds,
 <p class="font-bold text-gray-900 mb-2">⚠️ Pitfalls to Avoid</p>
 <p>Monocle3 graph learning depends on its preprocessing, embedding, and partitioning choices. The example omits these input-specific decisions and does not guarantee correspondence to Seurat clusters. Inspect graph placement and partitions, then provide a root node that corresponds to a justified early state; a placeholder node name must be replaced with one present in the learned graph.</p>
 </div>
+<section class="lesson-checkpoint" aria-labelledby="toy-graph-contract">
+<h2 id="toy-graph-contract">Mini contract exercise: a known invented graph</h2>
+<p>This teaching-only graph has edges A0 to A1, A1 to M, M to L, and M to R, plus a disconnected component X to Y. A0 and A1 are both annotated as the supported early state; M is intermediate, and L/R are two terminal sampled groups. No biological data are represented.</p>
+<p><strong>Predict before reading on:</strong> If A0 is the named root, which cells are reachable and what broad ordering would you expect? If A1 is a second defensible root from the same early state, what changes? Which cells must not receive a root-relative interpretation?</p>
+<details><summary>Worked answer and explanation</summary>
+<p>For ordinary shortest-path distance on this invented unweighted graph, root A0 gives A0:0, A1:1, M:2, and L/R:3. Root A1 gives A1:0, A0 and M:1, and L/R:2. These integer distances are only a hand-check of graph reachability and root sensitivity, not the numeric output promised by DPT, which uses diffusion geometry. X and Y remain disconnected from either root and are unassigned for that root-relative interpretation. A changed ordering after changing roots is expected sensitivity, not evidence of a changed biological clock. Even a stable ordering is a model of sampled expression structure, not observed time, cell ancestry, or future fate.</p>
+</details>
+</section>
 <h2>Compare methods and review the result</h2>
 <p>For each saved figure, record the root (including how it was chosen), embedding and coordinate fields, clustering/partition field, and the observed lineage or branch labels. Label the root on the plot and distinguish fitted paths from cluster-level connectivity. Add a caption stating that pseudotime is relative ordering, identify disconnected or unassigned cells, and note which plausible root, cell-selection, batch, clustering, or representation alternatives were checked. A plot that omits these details is not a complete review record.</p>
 <p>Use PAGA to inspect cluster connectivity, then use DPT when a root-relative ordering on the cell graph addresses your question. Use Slingshot when cluster labels and a reduced-dimensional representation support the lineage model you want to test. Monocle3 learns a principal graph with its own workflow. Record the input cells, representation, cluster labels, root choice, and software versions so the analysis can be reviewed.</p>
@@ -363,8 +464,8 @@ plot_cells(cds,
 <p class="text-sm text-gray-600 mb-3">Use these official resources to check current software behaviour, terminology, and production guidance. Tool versions and defaults change, so verify commands against the documentation before applying them to a research dataset.</p>
 <ul class="list-disc list-inside space-y-2 text-sm text-gray-700">
 <li><a class="text-blue-700 hover:underline" href="https://satijalab.org/seurat/" rel="noopener" target="_blank">Seurat documentation</a></li>
-<li><a class="text-blue-700 hover:underline" href="https://scanpy.readthedocs.io/en/stable/api/scanpy.tl.paga.html" rel="noopener" target="_blank">Scanpy PAGA API</a> and <a href="https://scanpy.readthedocs.io/en/stable/api/scanpy.tl.dpt.html" rel="noopener" target="_blank">DPT API</a></li>
-<li><a href="https://bioconductor.org/packages/devel/bioc/vignettes/slingshot/inst/doc/vignette.html" rel="noopener" target="_blank">Slingshot Bioconductor vignette</a></li>
+<li><a class="text-blue-700 hover:underline" href="https://scanpy.readthedocs.io/en/1.11.x/api/generated/scanpy.pp.neighbors.html" rel="noopener" target="_blank">Scanpy neighbors API</a>, <a href="https://scanpy.readthedocs.io/en/stable/api/scanpy.tl.dpt.html" rel="noopener" target="_blank">DPT API</a>, and <a href="https://scanpy.readthedocs.io/en/stable/api/scanpy.tl.paga.html" rel="noopener" target="_blank">PAGA API</a></li>
+<li><a href="https://bioconductor.org/packages/release/bioc/vignettes/slingshot/inst/doc/vignette.html" rel="noopener" target="_blank">Slingshot Bioconductor vignette</a></li>
 <li><a href="https://cole-trapnell-lab.github.io/monocle3/docs/trajectories/" rel="noopener" target="_blank">Monocle3 trajectory guide</a></li>
 <li><a href="https://www.bioconductor.org/packages/release/bioc/vignettes/tradeSeq/inst/doc/tradeSeq.html" rel="noopener" target="_blank">tradeSeq workflow vignette</a></li>
 </ul>

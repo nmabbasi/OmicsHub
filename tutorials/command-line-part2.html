@@ -73,7 +73,7 @@ gtag('consent', 'default', {
     }
   },
   "datePublished": "2026-09-16",
-  "dateModified": "2026-10-21",
+  "dateModified": "2026-10-23",
   "url": "https://theomicshub.com/tutorials/command-line-part2.html",
   "name": "Command-line text processing for bioinformatics",
   "isPartOf": {
@@ -168,8 +168,8 @@ function toggleMobileMenu() {
 <img alt="Text Processing" class="w-full aspect-video object-cover" decoding="async" loading="eager" src="../images/shell-commands-part2-workstation.webp" width="1024" height="1024"/>
 </div>
 <nav aria-label="Learning path navigation" class="reader-toolbar"><a href="command-line-part1.html" rel="prev">← Prerequisite: Command-Line Navigation for Bioinformatics Projects</a><a data-catalogue-return="" href="../tutorials.html">All tutorials</a><a href="command-line-part3.html" rel="next">Explore: Summarize FASTQ and Annotation Files with Bash</a></nav>
-<article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--walkthrough"><p class="lesson-lead">Use line-oriented shell commands for quick inspection and simple tables. For sequence records, first check whether the format and operation can safely be handled one line at a time.</p><section class="lesson-summary tutorial-learning-contract" data-tutorial-format="hands-on-lab" aria-label="Learning format"><p><strong>Format: Hands-on lab.</strong> Beginners with basic shell navigation will build and inspect small synthetic TSV examples, then practise filtering and checking output. The commands below create TSV and ID-list inputs; bring a FASTA file for the sequence exercises, with FASTQ optional.</p></section><h2>Learning objectives and prerequisites</h2>
-<p><strong>Prerequisites:</strong> Completion of a basic command-line navigation tutorial (listing directories, viewing files). Have example text files ready in a working directory: a short FASTA file (sequences.fasta), a tab-delimited table (data.tsv), and a FASTQ file (reads.fastq) or equivalents. Replace filenames below with your real file paths.</p>
+<article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--walkthrough"><p class="lesson-lead">Use line-oriented shell commands for quick inspection and simple tables. For sequence records, first check whether the format and operation can safely be handled one line at a time.</p><section class="lesson-summary tutorial-learning-contract" data-tutorial-format="hands-on-lab" aria-label="Learning format"><p><strong>Format: Hands-on lab.</strong> Beginners with basic shell navigation will create and inspect five invented inputs: a TSV, an ID list, a wrapped FASTA, a valid four-line FASTQ, and a deliberately malformed FASTQ. Predict the results, compare line-based and record-aware searches, and reject a broken record. No personal dataset is needed; SeqKit is required for the record-aware sections.</p></section><h2>Learning objectives and prerequisites</h2>
+<p><strong>Prerequisites:</strong> Basic shell navigation, a Bash terminal, the usual text utilities, and SeqKit. Start in a fresh practice directory, not a directory containing research data: the setup writes the five named teaching files. The table exercises need only the shell utilities; complete the SeqKit preflight before the sequence-aware exercises.</p>
 <p><strong>Learning objectives:</strong> After working through this lesson, you will be able to:</p>
 <ul>
 <li>Use grep (global regular expression print), sed (stream editor), cut, sort, uniq, and pipes to filter and reshape biological text files.</li>
@@ -184,19 +184,53 @@ function toggleMobileMenu() {
 <p>Below is a sequential workflow demonstrating typical tasks. Each code block lists the expected input files and what each command produces. Use exact paths if your files are in another directory (for example, /home/user/data/sequences.fasta).</p>
 <h3>Files used in this example</h3>
 <ul>
-<li>sequences.fasta: a FASTA file containing sequence records. The file may be wrapped (long sequences on multiple lines) or unwrapped (each sequence on a single line).</li>
-<li>reads.fastq: a FASTQ file of sequencing reads (optional for the FASTQ section).</li>
+<li><code>sequences.fasta</code>: three invented records, including one whose motif is split across two sequence lines.</li>
+<li><code>reads.fastq</code>: two invented eight-base reads, with equal sequence and quality lengths. <code>malformed.fastq</code> deliberately has four bases but only three quality characters.</li>
 <li>data.tsv: a tab-delimited table with a header line and multiple columns (e.g., gene_id, sample, count).</li>
 </ul>
-<p>To create a reproducible table and matching-ID list, start in a new working directory and run this block. The values are synthetic teaching data, not biological observations. Check the shell and basic tools before proceeding; later GNU-specific options may differ on macOS.</p>
-<pre><code>mkdir -p cli-part2-practice
+<p>Run the setup in a fresh practice area. These sequences, IDs, counts and quality characters are invented solely for this lesson; they are not biological observations. To rerun setup while inside <code>cli-part2-practice</code>, first run <code>cd ..</code> to return to its parent directory and check <code>pwd</code>; otherwise the setup creates a nested practice directory. Re-running from the same parent overwrites the five teaching filenames. For comparison or recovery, the same inputs are available as <a href="../files/text-processing-lesson/sequences.fasta">FASTA</a>, <a href="../files/text-processing-lesson/reads.fastq">valid FASTQ</a>, <a href="../files/text-processing-lesson/malformed.fastq">malformed FASTQ</a>, <a href="../files/text-processing-lesson/data.tsv">TSV</a>, and <a href="../files/text-processing-lesson/genes_of_interest.txt">ID list</a>.</p>
+<pre id="cli-part2-setup"><code>mkdir -p cli-part2-practice
 cd cli-part2-practice
 printf 'gene_id\tsample\tcount\nGENE_A\tS1\t120\nGENE_B\tS1\t45\nGENE_A\tS2\t90\nGENE_C\tS2\t200\n' &gt; data.tsv
 printf 'GENE_A\nGENE_C\n' &gt; genes_of_interest.txt
+cat &gt; sequences.fasta &lt;&lt;'FASTA'
+&gt;gene_A_unwrapped forward_motif
+ATGCGTAA
+&gt;gene_B_wrapped split_motif
+CCA
+TGCGTT
+&gt;gene_C_negative no_forward_motif
+TTTTAAAA
+FASTA
+cat &gt; reads.fastq &lt;&lt;'FASTQ'
+@read_1
+ATGCGTAA
++
+IIIIIIII
+@read_2
+CCATGCGT
++
+IIIIIIII
+FASTQ
+cat &gt; malformed.fastq &lt;&lt;'BAD_FASTQ'
+@bad_length
+ATGC
++
+III
+BAD_FASTQ
 head -n 2 data.tsv
-command -v awk cut sort uniq
 </code></pre>
-<p>Expected first two lines are the header and the GENE_A/S1/120 row, with fields separated by tabs. If <code>command -v</code> cannot find a utility, stop and use an environment where it is available. FASTA/FASTQ exercises require your own files and are optional.</p>
+<p>The first two TSV lines should be its header and <code>GENE_A/S1/120</code>, separated by tabs. Inspect the fixtures before processing them. The split sequence <code>CCA</code> followed by <code>TGCGTT</code> is one record, not two reads.</p>
+<details><summary>Need SeqKit?</summary><p>Follow the <a href="conda-mamba-part1.html">Micromamba environment lesson</a> first if you do not yet have an initialized Micromamba shell. In an initialized shell, this creates a separate environment; do not install into a research environment just for the exercise.</p>
+<pre id="cli-part2-install"><code>micromamba create -n cli-sequences --override-channels -c conda-forge -c bioconda --strict-channel-priority seqkit
+micromamba activate cli-sequences
+seqkit version
+</code></pre>
+<p>This package-manager route is preparation guidance, not the route used in the recorded SeqKit test. The local test used the official Linux SeqKit 2.14.0 binary; record your own installed version.</p></details>
+<pre id="cli-part2-preflight"><code>command -v awk cut sort uniq grep sed seqkit
+seqkit version
+</code></pre>
+<p>Stop if a required command is missing. Expected evidence is a resolved path for each utility and a SeqKit version, not merely the presence of a downloaded file.</p>
 <h3>1) Inspect files safely</h3>
 <p>Before running extraction commands, inspect the file to determine layout.</p>
 <pre><code># Show the first 40 lines of a FASTA to check header and wrap behavior
@@ -211,37 +245,67 @@ less sequences.fasta
 <pre><code># Count FASTA headers (sequences.fasta -&gt; counts to stdout)
 grep -c '^&gt;' sequences.fasta
 </code></pre>
-<p>Output: one integer, the number of lines beginning with `&gt;`. This is a record count only when the file follows the usual FASTA convention of one `&gt;` header per record. It does not check whether the records are valid or IDs unique.</p>
+<p><strong>Predict, then check:</strong> the supplied FASTA should give <code>3</code>. This counts header lines, not sequence lines. It is a record count only under the usual FASTA convention of one header per record; it does not validate the sequences, their provenance, or ID uniqueness.</p>
 <p>If you prefer a sequence-aware count using seqkit (recommended for complex FASTA files):</p>
 <pre><code># Requires seqkit installed; replace path or install in your environment
 seqkit stats sequences.fasta
 </code></pre>
-<p>SeqKit reports sequence count and length statistics for parsed FASTA/Q records. Inspect errors and the input format; a parser cannot establish that the file represents the intended biological data.</p>
+<p>SeqKit should report three FASTA records and a total length of 25 bases for this fixture. Inspect errors and the input format; successful parsing cannot establish that the file represents the intended biological data.</p>
 <h3>3) Extract headers and tidy them (remove the leading &gt;)</h3>
 <pre><code># Extract header lines and remove the leading '&gt;'
 grep '^&gt;' sequences.fasta | sed 's/^&gt;//' &gt; headers.txt
 # Output: headers.txt contains one header per line (header text only)
 </code></pre>
 <p>Explanation: grep selects header lines; sed substitutes the leading character. headers.txt is ready to be used for lookups or counts.</p>
-<h3>4) Find sequences that contain a short motif (use record-aware tool if sequences are wrapped)</h3>
-<p>If sequences are unwrapped (each sequence on a single line), you can use a line-based approach. If FASTA sequences are wrapped across multiple lines, use seqkit.</p>
-<pre><code># Line-based: prints the matching line and up to one following line; it does NOT retrieve the preceding FASTA header
+<h3>4) Compare a line hit with a complete record</h3>
+<p><strong>Predict:</strong> will a line search and a sequence-record search find the same two motif-containing records? Read <code>sequences.fasta</code> before running either command.</p>
+<pre id="cli-part2-motif"><code># Line search: includes the following line, not the preceding record header
+# The next line may actually be the NEXT record's header.
 grep -n -A 1 'ATGCG' sequences.fasta &gt; matching_lines.txt
-# Output: numbered matching lines and their following line, not complete records
 
-# Record-aware approach (recommended)
-seqkit grep -s -p 'ATGCG' sequences.fasta &gt; matching_records.fasta
-# Output: matching_records.fasta contains full FASTA records that include the motif
+# Record search: join wrapped sequence lines and search only the forward strand
+seqkit grep -s -P -p 'ATGCG' sequences.fasta &gt; matching_records.fasta
+seqkit seq -n -i matching_records.fasta
 </code></pre>
-<p>Interpretation: For seqkit, matching_records.fasta contains complete records; inspect them with seqkit stats or less. The grep command is only a line-search demonstration, not a record extractor; wrapped sequences can also split a motif across lines and evade a line match.</p>
-<h3>5) Convert a FASTQ to FASTA (simple, line-oriented conversion)</h3>
-<pre><code># Convert reads.fastq -&gt; sequences.fastq.fasta (non-destructive)
-awk 'NR%4==1{printf "&gt;%s\n", substr($0,2)} NR%4==2{print}' reads.fastq &gt; reads.fasta
-# Output: reads.fasta with &gt;header lines and sequence lines
+<p><strong>Worked result:</strong> the line search finds only <code>ATGCGTAA</code> on line 2; its extra context line is the next record's header, not the matching record's header. SeqKit returns <code>gene_A_unwrapped</code> and <code>gene_B_wrapped</code>. The second motif crosses <code>CCA</code> and <code>TGCGTT</code>, so it cannot appear in a single-line match.</p>
+<p><code>-s</code> searches sequence content; <code>-P</code> restricts this exercise to the forward strand. Without <code>-P</code>, SeqKit also searches the reverse complement by default. Neither a motif match nor a matching record count establishes function or experimental validity.</p>
+<h3>5) Convert the toy FASTQ, then challenge the assumption</h3>
+<p>The supplied valid FASTQ has exactly four lines per record. The following AWK example is a demonstration for that fixture only, not a validator or a general FASTQ parser. It copies the header and sequence while discarding quality information.</p>
+<pre id="cli-part2-fastq-toy"><code># Demonstration ONLY for the supplied valid four-line teaching fixture
+awk 'NR%4==1{printf "&gt;%s\n", substr($0,2)} NR%4==2{print}' reads.fastq &gt; reads.toy.fasta
 </code></pre>
-<p>Explanation: FASTQ has four-line records: header, sequence, plus-line, quality. This AWK one-liner assumes valid four-line FASTQ records in which each record has a header, sequence, plus line, and quality line. It copies the header text after `@` and the sequence, discarding plus and quality lines. It does not validate record structure, sequence/quality length agreement, or quality scores; use a FASTQ-aware tool for untrusted or production files.</p>
+<p>Expect two FASTA records, <code>read_1</code> and <code>read_2</code>, each eight bases long. A plausible output does not prove the original FASTQ was valid: the AWK command never checked its plus lines or sequence/quality length agreement.</p>
+<p>For general FASTQ conversion, use the record-aware parser. It can fail after reading part of a file, so this block writes to a temporary file and publishes the final filename only after a successful exit. This is format handling, not biological quality control.</p>
+<pre id="cli-part2-fastq-record-aware"><code># Run in a child Bash shell so a parse failure stops before publishing output.
+bash &lt;&lt;'BASH'
+set -euo pipefail
+input=reads.fastq
+output=reads.checked.fasta
+tmp=$(mktemp "${output}.tmp.XXXXXX")
+trap 'rm -f "$tmp"' EXIT
+seqkit fq2fa "$input" &gt; "$tmp"
+mv "$tmp" "$output"
+BASH
+</code></pre>
+<p>For the valid fixture, <code>reads.checked.fasta</code> should match <code>reads.toy.fasta</code>. Quality characters are intentionally lost in both outputs; keep the original FASTQ when downstream steps need quality scores.</p>
+<p><strong>Deliberate failure:</strong> <code>malformed.fastq</code> has four bases and three quality characters. Predict what each method will do, then run:</p>
+<pre id="cli-part2-malformed"><code># This creates plausible-looking FASTA even though the supplied FASTQ is broken.
+# It is a counterexample, NOT a conversion method for unknown inputs.
+awk 'NR%4==1{printf "&gt;%s\n", substr($0,2)} NR%4==2{print}' malformed.fastq &gt; misleading.fasta
+
+# The record-aware parser must reject this malformed fixture.
+if seqkit fq2fa malformed.fastq &gt; rejected.fasta.tmp; then
+  rm -f rejected.fasta.tmp
+  printf 'Unexpected acceptance: stop and inspect the parser/input.\n' &gt;&amp;2
+  false
+else
+  rm -f rejected.fasta.tmp
+  printf 'Rejected the malformed FASTQ as expected.\n'
+fi
+</code></pre>
+<p><strong>Worked result:</strong> AWK writes <code>&gt;bad_length</code> and <code>ATGC</code> and exits successfully. SeqKit rejects the unequal sequence and quality lengths with a nonzero exit; the exact numeric error code can vary. The expected final message is <code>Rejected the malformed FASTQ as expected.</code> Do not use partial output from a failed parse, and do not treat parser acceptance as proof of correct samples, quality encoding or biological provenance.</p>
 <h3>6) Work with tab-delimited data (column selection, filtering, counting)</h3>
-<pre><code># Show header and first 5 rows (safe inspection)
+<pre id="cli-part2-tables"><code># Show header and first 5 rows (safe inspection)
 head -n 6 data.tsv
 
 # Extract columns 1 and 3 to a new file (tab-delimited)
@@ -260,7 +324,7 @@ cut -f1 data.tsv | tail -n +2 | sort | uniq -c | sort -k1,1nr &gt; gene_counts.t
 <p>Notes: The parentheses around the header-preserve pipeline ensure the header is copied, then rows are filtered. Replace column indices based on your file schema. With the supplied table, the count filter produces GENE_A/S1/120 and GENE_C/S2/200. Column-1 frequencies are 2 for GENE_A and 1 each for GENE_B and GENE_C (the tied values may appear in either order).</p>
 <h3>7) Small example: extract records for a set of gene IDs</h3>
 <p>The setup block created <code>genes_of_interest.txt</code> with two IDs that occur in the sample table. First-column matching matters: a whole-line search can match an ID in another field or as part of a longer string.</p>
-<pre><code># genes_of_interest.txt contains gene IDs, one per line
+<pre id="cli-part2-gene-ids"><code># genes_of_interest.txt contains gene IDs, one per line
 # Fixed-string substring search across each entire line; not a column-exact match
 grep -F -f genes_of_interest.txt data.tsv &gt; genes_subset_grep.tsv
 # Exact match against column 1; FILENAME test also works for an empty ID list
@@ -282,6 +346,11 @@ awk -F'\t' 'FILENAME == ARGV[1] {a[$1]=1; next} ($1 in a)' genes_of_interest.txt
 <li>A high read count or many matching records may indicate biological signal or contamination; text processing alone cannot distinguish these possibilities.</li>
 <li>Counting headers gives the number of records in the file, but not the uniqueness of IDs. Use uniq or additional checks to test for duplicated IDs.</li>
 </ul>
+<h2>Try a variation and explain the result</h2>
+<ol><li>Change the forward-strand motif from <code>ATGCG</code> to <code>TTTT</code>. Predict the matching ID before running the record-aware command.</li><li>Repeat the checked-conversion block in a fresh practice directory with <code>input=malformed.fastq</code> and <code>output=must-not-publish.fasta</code>. Predict the exit status and whether that final file should exist.</li></ol>
+<details><summary>Compare your reasoning</summary><p>The new motif selects only <code>gene_C_negative</code>; its name meant no hit for the original motif, not a biological negative control. The checked conversion must fail, remove its temporary file, and leave no new final output. If an older output already exists, it is not evidence that the failed run succeeded. Describe both what a command checks and what it does not check.</p></details>
+<h2>What was checked</h2>
+<p>The displayed fixture setup, table filters and ID matching, wrapped-motif comparison, both valid conversions and malformed-record rejection were run on invented inputs under Ubuntu Linux x86_64 with Bash 5.2.21, mawk 1.3.4 (20240123), GNU grep 3.11, GNU Coreutils 9.4, and SeqKit 2.14.0. The failed checked-conversion variation was tested for temporary-file cleanup and no new final output. The Micromamba preparation route, other operating systems, performance on large files and biological analyses were not tested here.</p>
 <h2>Troubleshooting</h2>
 <p>Below are common symptoms, likely causes, and suggested fixes.</p>
 <h3>Symptom: grep returns no matches, but you expect hits</h3>
@@ -324,7 +393,7 @@ awk -F'\t' 'FILENAME == ARGV[1] {a[$1]=1; next} ($1 in a)' genes_of_interest.txt
 <li><a href="https://www.gnu.org/software/grep/manual/grep.html">GNU grep manual</a>: documentation and options for pattern searching.</li>
 <li><a href="https://www.gnu.org/software/sed/manual/sed.html">GNU sed manual</a>: stream editor reference for substitution and simple text transformations.</li>
 <li><a href="https://www.gnu.org/software/coreutils/manual/coreutils.html">GNU Coreutils (cut, sort, uniq, wc)</a>: authoritative reference for standard text-processing utilities.</li>
-<li><a href="https://bioinf.shenwei.me/seqkit">seqkit documentation</a>: a fast toolkit for FASTA/Q manipulation with record-aware operations.</li>
+<li><a href="https://bioinf.shenwei.me/seqkit/usage/">SeqKit usage documentation</a>: a fast toolkit for FASTA/Q manipulation with record-aware operations.</li>
 <li><a href="https://www.ncbi.nlm.nih.gov/nuccore/">FASTA format FAQ (NCBI)</a>: practical notes about the FASTA format and common format pitfalls.</li>
 </ul>
 <aside aria-labelledby="tutorial-feedback-title" class="lesson-feedback" id="tutorial-feedback"><h2 id="tutorial-feedback-title">Help improve this tutorial</h2><p>Found an error, a broken link, or a step that needs a clearer explanation? Please <a href="../contact.html">contact me</a>. Your feedback helps me keep this resource accurate and useful.</p></aside></article>

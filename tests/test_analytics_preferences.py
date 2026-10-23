@@ -17,6 +17,7 @@ from reviewed_tutorial_baseline import (
     strip_cookie_banner,
 )
 from reader_typography_baseline import normalize_reader_typography
+from six_lesson_revision_baseline import normalize_six_lesson_revision
 
 ROOT = Path(__file__).resolve().parents[1]
 TUTORIALS = ROOT / "tutorials"
@@ -213,6 +214,12 @@ class AnalyticsPreferencesTests(unittest.TestCase):
             with self.subTest(page=name):
                 baseline_without_banner = strip_cookie_banner(baseline)
                 current_without_banner = strip_cookie_banner(current)
+                baseline_without_banner = normalize_six_lesson_revision(
+                    relative_path, baseline_without_banner
+                )
+                current_without_banner = normalize_six_lesson_revision(
+                    relative_path, current_without_banner
+                )
                 baseline_without_banner = normalize_reader_typography(
                     relative_path, baseline_without_banner
                 )

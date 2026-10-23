@@ -64,7 +64,7 @@ gtag('consent', 'default', {
     }
   },
   "datePublished": "2026-09-08",
-  "dateModified": "2026-10-21"
+  "dateModified": "2026-10-23"
 }</script>
 <link href="../tutorial-library.css" rel="stylesheet"/></head>
 <body class="bg-white text-gray-900">
@@ -170,11 +170,11 @@ Legal
 </div>
 <nav aria-label="Learning path navigation" class="reader-toolbar"><a href="ai-bioinformatics-github-copilot.html" rel="prev">← Prerequisite: GitHub Education and Copilot Student for Bioinformatics</a><a data-catalogue-return="" href="../tutorials.html">All tutorials</a><a href="ai-prompt-engineering-seurat.html" rel="next">Explore: Prompt Engineering for Seurat and Scanpy: A Reproducible Workflow</a></nav>
 <article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--walkthrough">
-<p class="lesson-lead">Cursor is a graphical code editor with AI features; Aider is a command-line coding assistant that works with a Git repository. Both can suggest or make code changes. Neither verifies that a bioinformatics analysis is scientifically appropriate. This walkthrough sets them up around a small, reviewable change rather than a real dataset.</p>
-<section class="lesson-summary tutorial-learning-contract" data-tutorial-format="hands-on-lab" aria-label="Learning format"><p><strong>Format: Hands-on lab.</strong> Beginners with a terminal and Git will create a tiny documentation-only project, ask Cursor or Aider to make one bounded edit, inspect the diff, and restore the baseline; all project inputs are created locally below.</p></section>
-<div class="lesson-summary"><p><strong>Before you start:</strong> use a computer where you can install desktop software, a terminal, Python, and Git. You need an API key only when using Aider with a hosted provider. Provider usage may incur charges and send prompts or project context outside your computer; check the provider's current terms before sharing research material.</p></div>
+<p class="lesson-lead">Cursor is a graphical code editor with AI features; Aider is a command-line coding assistant that works with a Git repository. This hands-on lab is for beginners who know how to use a terminal and Git. By the end, you will compare the same one-sentence edit in two disposable copies, inspect the exact diff, and reject anything outside the request. No biological data or analysis is involved, and neither assistant validates scientific reasoning.</p>
+<section class="lesson-summary tutorial-learning-contract" data-tutorial-format="hands-on-lab" aria-label="Learning format"><p><strong>Format: Hands-on lab.</strong> The offline Git fixture and Python standard-library validator work without installing either editor or contacting a model provider. Trying the actual assistants is optional and requires the accounts, provider setup, and software access you choose to use.</p></section>
+<div class="lesson-summary"><p><strong>Before you start:</strong> have Git and Python 3 available. For the optional live comparison, install Cursor or Aider from its official documentation. Cursor account and feature availability depend on its current terms and plan. Aider needs a model provider you choose; hosted model use may cost money. Prompts, selected files, and related repository context can be sent to a provider. Review current privacy, retention, analytics, and pricing terms first. You can skip both accounts and both model calls and still complete the offline validation.</p></div>
 <h2>Keep the assistant inside a reviewable project</h2>
-<p>Use a disposable project or a clean branch. The following self-contained fixture contains no biological data. In a terminal, check that Git is available, create the project, and save a known README:</p>
+<p>Use only this disposable, documentation-only project, which contains invented arithmetic and no biological data. Download <a href="../files/coding-assistant-lesson/check_diff.py">the offline Git diff validator</a> and save it as <code>check_diff.py</code> in the project folder before committing the baseline. Then create the known README and commit both files:</p>
 <pre><code class="language-bash">git --version
 mkdir cursor-aider-practice
 cd cursor-aider-practice
@@ -187,61 +187,67 @@ Input: 12 reads in sample A and 8 reads in sample B.
 Expected total: 20 reads.
 EOF
 git init
-git add README.md
+git add README.md check_diff.py
 git commit -m "Add project baseline"
 git status --short
 </code></pre>
-<p>Run this in a new, writable directory with Git configured with an author name and email. If the commit reports an unknown identity, configure <code>git config --global user.name</code> and <code>git config --global user.email</code> with your own values, then retry. The final status should be empty; do not continue if it shows unexpected files or changes.</p>
-<p>Before asking an assistant to edit anything, inspect the repository state:</p>
-<pre><code class="language-bash">git status --short
+<p>Run this in a new, writable directory. Git must be configured to make a local commit; if it is not, use Git's local repository identity instructions and a placeholder identity for this disposable fixture rather than changing global settings. The final status should be empty. Stop if it shows unexpected files or changes.</p>
+<p>Create two independent copies from that committed baseline so the comparison starts from the same text. From inside <code>cursor-aider-practice</code>, run:</p>
+<pre><code class="language-bash">git clone . ../cursor-practice
+git clone . ../aider-practice
+git -C ../cursor-practice status --short
+git -C ../aider-practice status --short
 </code></pre>
-<p>Do not use a production analysis directory as a first test. If any step fails, stop and resolve the directory, Git, or identity issue before launching an assistant.</p>
-<aside class="lesson-warning"><p><strong>Research data:</strong> treat prompts, indexed files, and selected context as potential disclosures to the model provider. Exclude identifiable, controlled-access, or otherwise restricted data unless your institution and the provider explicitly permit that use. An editor setting is not a substitute for data-governance review.</p></aside>
+<p>Both status commands should print nothing. Do not put research files, credentials, private outputs, or unrelated project files in either copy. Before each live trial, inspect its status again and stop if it is not clean.</p>
+<aside class="lesson-warning"><p><strong>Research data:</strong> treat prompts, indexed files, and selected context as potential disclosures to a model provider. Exclude identifiable, controlled-access, or otherwise restricted data unless your institution and the provider explicitly permit that use. An editor setting is not a substitute for data-governance review.</p></aside>
 <h2>Install Cursor</h2>
-<p>Download the desktop app from the <a href="https://cursor.com/download" rel="noopener noreferrer" target="_blank">official Cursor download page</a>. Cursor currently offers macOS, Windows, and Linux builds. The quickstart documents macOS 12 or later and Windows 10 or later, and gives Linux-specific package instructions. Installer formats and supported versions can change, so use the current download page and <a href="https://cursor.com/docs/get-started/quickstart" rel="noopener noreferrer" target="_blank">official quickstart</a>, rather than copying an old package command.</p>
+<p>Download the desktop app from the <a href="https://cursor.com/download" rel="noopener noreferrer" target="_blank">official Cursor download page</a>. Cursor's current quickstart lists macOS 12 or later, Windows 10 or later, and Linux installation options. Installer formats and supported versions can change, so follow the current <a href="https://cursor.com/docs/get-started/quickstart" rel="noopener noreferrer" target="_blank">official quickstart</a>. Install and sign in only if you choose to try the live comparison and the app requires it; no account is needed for the offline fixture.</p>
 <ol class="lesson-steps">
-<li>Install and open Cursor, sign in if prompted, then choose <strong>File → Open Folder</strong> and open the <code>cursor-aider-practice</code> directory created above.</li>
-<li>Ask Agent to explain the project or locate a specific file. Start with a read-only question so you can see what context it uses.</li>
-<li>Request one small, bounded change. Inspect the diff before accepting it; then run the existing project checks yourself.</li>
+<li>Open Cursor and choose <strong>File → Open Folder</strong>, then open the <code>cursor-practice</code> copy.</li>
+<li>Open Agent and use the exact shared task below. Review the proposed diff before accepting changes into the working tree.</li>
+<li>Run the offline validator yourself; do not treat the editor's review interface as proof that the change is correct.</li>
 </ol>
-<p>Cursor's current quickstart describes opening Agent with <kbd>Cmd</kbd>+<kbd>I</kbd> and reviewing the diff after an edit. Key bindings and interface labels can change; consult the quickstart if the shortcut differs in your installation. Cursor is based on VS Code, but extension compatibility and remote features should be checked against the current Cursor documentation before relying on them.</p>
+<p>Cursor's quickstart describes opening Agent with <kbd>Cmd</kbd>+<kbd>I</kbd>. Key bindings and labels can change, so consult the quickstart if the shortcut differs. Cursor's <a href="https://cursor.com/data-use" rel="noopener noreferrer" target="_blank">data-use documentation</a> describes handling based on privacy settings; it also states that requests go through Cursor's backend even when you use your own API key. Review current settings and terms before sharing any project context.</p>
 <h2>Install Aider in an isolated environment</h2>
-<p>Aider's installation guide recommends its <code>aider-install</code> bootstrap. The guide currently supports an existing Python 3.8–3.13 for this bootstrap; it creates a separate environment and may install a separate Python 3.12 for Aider. In a terminal, run:</p>
+<p>For the optional live comparison, Aider's current installation guide recommends its <code>aider-install</code> bootstrap with an existing Python 3.8 to 3.13. It installs Aider in a separate environment and may install a separate Python 3.12. Follow the current <a href="https://aider.chat/docs/install.html" rel="noopener noreferrer" target="_blank">official installation guide</a>; do not install it into a carefully managed research environment. The offline fixture does not require Aider.</p>
 <pre><code class="language-bash">python -m pip install aider-install
 aider-install
 aider --version
 </code></pre>
-<p>On Windows, if <code>python</code> does not resolve to Python, the Aider guide suggests trying <code>py -m pip install aider-install</code>, then running <code>aider-install</code> in that same terminal. If the executable is not found after installation, check the install guide's PATH troubleshooting before installing repeatedly.</p>
-<p>Other documented isolated options include <code>pipx install aider-chat</code> (Python 3.9–3.12) and <code>uv tool install --force --python python3.12 --with pip aider-chat@latest</code>. Direct <code>pip</code> installation should be confined to a virtual environment; avoid adding Aider's dependencies to a research environment that has a carefully managed package set. Choose one installation method and follow its current official instructions.</p>
-<h2>Configure a provider key without committing it</h2>
-<p>Aider accepts keys in environment variables, a <code>.env</code> file, command-line options, or its configuration file. The following sets a key for the current shell session only; replace the placeholder locally and never paste a real key into a shared notebook, prompt, or source file. Hosted API access may incur usage charges; confirm the provider account, current model availability, price, and data terms first:</p>
-<pre><code class="language-bash"># macOS or Linux shell
-export ANTHROPIC_API_KEY="your-key"
-# Or, if using OpenAI:
-export OPENAI_API_KEY="your-key"
+<p>Optional isolated alternatives include <code>pipx</code> and <code>uv</code>, as described in the current installation guide. Choose one documented method only. Version support and commands can change.</p>
+<h2>Provider, cost, and data flow are your choice</h2>
+<p>You may skip provider setup and the model call. If you choose to use Aider, select and configure a provider yourself using its current <a href="https://aider.chat/docs/config/api-keys.html" rel="noopener noreferrer" target="_blank">API-key documentation</a>. Hosted requests may incur charges. Confirm the selected model, current price, provider data terms, and Aider's optional analytics settings before a request. Aider sends files added to its chat and may include related repository context; add only <code>README.md</code> for this fixture. Never put a real key in source code, a prompt, command history, or a shared notebook, and never log or print secrets. An environment variable or ignored local file can still be exposed by the machine or shell.</p>
+<h2>Make the same bounded edit in both copies</h2>
+<p>For both tools, use this exact prompt, without adding biological context:</p>
+<p><strong>Prompt:</strong> <code>Edit only README.md. Immediately after the Input line, add exactly this sentence: "The two sample counts sum to 20 reads." Do not alter any existing text, the values 12, 8, or 20, or any other file; do not add dependencies, inspect or expose secrets, or access data outside this folder.</code></p>
+<p>In Cursor, open Agent in <code>cursor-practice</code> and submit that prompt. In Aider, start from the separate <code>aider-practice</code> copy, add only <code>README.md</code>, and disable automatic commits so the edit stays inspectable as a working-tree change:</p>
+<pre><code class="language-bash">cd ../aider-practice
+aider --no-auto-commits README.md
 </code></pre>
-<pre><code class="language-powershell"># Windows PowerShell session
-$env:ANTHROPIC_API_KEY = "your-key"
-# Or, if using OpenAI:
-$env:OPENAI_API_KEY = "your-key"
-</code></pre>
-<p>Use the variable required by your selected provider and model. Follow Aider's <a href="https://aider.chat/docs/config/api-keys.html" rel="noopener noreferrer" target="_blank">API-key documentation</a> for other providers or persistent local configuration. If you choose a <code>.env</code> file, add it to <code>.gitignore</code>, restrict access to the file, and verify it is untracked with <code>git status --short</code>. A local file is not automatically secure, and shell history or process listings may expose command-line secrets. Check provider pricing and data handling before making requests.</p>
-<h2>Make and verify one small change with Aider</h2>
-<p>Change to the Git project directory and launch Aider after its installation and provider key are available. For example, Aider's <a href="https://aider.chat/docs/llms/anthropic.html" rel="noopener noreferrer" target="_blank">Anthropic setup page</a> documents <code>ANTHROPIC_API_KEY</code> and its default model; its listed model can change and availability depends on the provider account. Check that page and current provider pricing before launch. Alternatively, follow the page's <code>aider --list-models anthropic/</code> guidance and select a model currently available to you.</p>
-<pre><code class="language-bash">cd cursor-aider-practice
-aider
-</code></pre>
-<p>For this fixture, ask exactly: <em>“Edit only README.md. Add one sentence under the input lines stating that the two sample counts sum to 20. Do not change either input number, the expected total, or any other file.”</em> Avoid letting a coding assistant choose biological thresholds, infer clinical meaning, or silently rewrite an analysis pipeline.</p>
-<div class="lesson-checkpoint"><p><strong>Review before accepting:</strong> read every changed line, look for unrelated edits and altered inputs or defaults, and check whether the change adds dependencies or writes over data. Use <code>git diff --check</code> for whitespace problems and <code>git diff</code> to inspect the patch. These checks do not establish that the code is correct.</p></div>
+<p>Aider's documentation says normal Git integration commits edits automatically; <code>--no-auto-commits</code> disables that behavior for this comparison. If your installed version does not recognize the option, stop and check its current help instead of proceeding with a different workflow.</p>
+<p>The only acceptable change is this insertion between the existing Input and Expected total lines:</p>
+<pre><code class="language-diff"> Input: 12 reads in sample A and 8 reads in sample B.
++The two sample counts sum to 20 reads.
+ Expected total: 20 reads.</code></pre>
+<div class="lesson-checkpoint"><p><strong>Review before accepting:</strong> inspect the full visual diff in Cursor or run <code>git diff --check</code> and <code>git diff -- README.md</code> in Aider's copy. Reject the proposal if any file besides <code>README.md</code> changes, any original text or value changes, a dependency is added, or a secret or outside data is accessed. Never accept an unrelated edit just because a diff is small. The offline validator checks the working tree against the exact expected content:</p><pre><code class="language-bash">python3 check_diff.py
+</code></pre><p>It must print PASS. If it rejects the change, do not accept it. Inspect the report, then restore only the known README edit with <code>git restore README.md</code>; review unexpected files manually rather than deleting them automatically. Run the validator separately in each copy. It checks Git hygiene and exact fixture text, not model identity, scientific correctness, or biological validity.</p></div>
 <h2>Run project checks and interpret failures</h2>
-<p>Run tests or validation commands already documented by the project. For a Python project, this might be its existing test command; do not assume that a generic command exists or install new packages just to make an assistant's output appear validated. For scientific code, also verify input files, parameters, units, sample identifiers, and outputs against the analysis plan and appropriate controls.</p>
-<p>If the command fails, keep the error output, identify whether the cause is a missing dependency, an incorrect path, a code error, or an environment mismatch, and investigate before asking for a fix. If it passes, record exactly which command ran and on what test data. A passing software test does not validate biological interpretation or establish reproducibility on another platform.</p>
-<div class="lesson-exercise"><h2>Practice check</h2><p>In the fixture, inspect <code>git diff -- README.md</code> and run <code>git diff --check</code>. Expected outcome: only README.md changes, its original counts remain 12 and 8, and its expected total remains 20; the added sentence should accurately express 12 + 8 = 20. Check with <code>grep -E '12 reads|8 reads|20 reads' README.md</code>. If the assistant edits anything else, changes a number, or makes an unsupported claim, reject the edit and retry with tighter instructions or restore it using <code>git restore README.md</code>. After reviewing, restore the baseline with <code>git restore README.md</code>, then verify <code>git status --short</code> is empty. Do not use a real research dataset for this exercise.</p></div>
+<p>Run tests or validation commands already documented by the project. Do not assume a generic command exists or install new packages just to make an assistant's output appear validated. For scientific code, verify input files, parameters, units, sample identifiers, and outputs against the analysis plan and appropriate controls.</p>
+<p>If a command fails, identify whether the cause is a missing dependency, an incorrect path, a code error, or an environment mismatch before asking for a fix. If it passes, record exactly which command ran and on what test data. A passing software test does not validate biological interpretation or establish reproducibility on another platform.</p>
+<div class="lesson-exercise"><h2>Practice check</h2><p>Predict the validator result before running it. It should pass only when the single expected sentence is added and both copies remain otherwise untouched. A changed number, missing sentence, extra file, staged edit, or other README wording must be rejected. Then restore the baseline in each copy with <code>git restore README.md</code> and check <code>git status --short</code> is empty. This fixture test is scripted and offline. It does not mean either assistant or a hosted model was run.</p></div>
+<h2>Optional next exercise: inspect a synthetic count table</h2>
+<p>This exercise uses only an invented three-gene by two-sample table. Download the <a href="../files/coding-assistant-lesson/counts.tsv">synthetic TSV</a> and <a href="../files/coding-assistant-lesson/inspect_counts.py">standard-library checker</a> into one folder, then run:</p>
+<pre><code class="language-bash">python3 inspect_counts.py counts.tsv
+</code></pre>
+<p>Before running it, predict the orientation and sample totals. The first column is gene identifiers, rows are genes and columns are samples. The checker requires a rectangular table with unique identifiers and finite, nonnegative integers, then sums each sample column. The expected column sums are <code>sample_A: 16</code> and <code>sample_B: 12</code>; the arithmetic total is 28.</p>
+<p><strong>Deliberately faulty proposal:</strong> “Each row is a sample, so the sample totals are 20, 3, and 5.” Reject it. Those are row sums for genes because the table is genes by samples, not per-sample totals. The correct response is to report the column sums above and explain the orientation.</p>
+<p><strong>Answer rubric:</strong> identify genes as rows and samples as columns; report 16 and 12 by summing columns; reject negative values, decimals, NaN, and infinity as not nonnegative integer counts; and state that shape, integer, and sum checks do not prove that values are truly raw counts, have correct provenance, preserve sample identity, represent independent samples, or support any biological conclusion. The example is synthetic arithmetic only. Do not infer biology from it.</p>
+<p><strong>Verification boundary:</strong> the linked helper scripts use only the Python standard library and Git. They were checked locally with Python 3.12.3 and Git 2.43.0. Cursor, Aider, hosted providers, and model responses were not installed or run; no model request or paid call was made.</p>
 <h2>Choosing between the two tools</h2>
-<p>Use Cursor when you want an interactive editor and visual diff review. Use Aider when a terminal-based workflow in a Git repository fits better. They can also complement each other, but using both does not provide independent scientific validation: both may produce plausible, incorrect changes. Keep the decision about analysis design and biological interpretation with the researcher.</p>
+<p>Use Cursor when an interactive editor and visual diff review fit your work. Use Aider when a terminal workflow in a Git repository fits better. They can complement each other, but using both does not provide independent scientific validation: both may produce plausible, incorrect changes. Keep analysis design and biological interpretation with the researcher.</p>
 <section aria-label="References and further reading"><h2>Official documentation</h2><ul>
-<li><a href="https://cursor.com/download" rel="noopener noreferrer" target="_blank">Cursor downloads</a> and <a href="https://cursor.com/docs/get-started/quickstart" rel="noopener noreferrer" target="_blank">Cursor quickstart</a></li>
-<li><a href="https://aider.chat/docs/install.html" rel="noopener noreferrer" target="_blank">Aider installation</a>, <a href="https://aider.chat/docs/config/api-keys.html" rel="noopener noreferrer" target="_blank">API keys</a>, and <a href="https://aider.chat/docs/usage.html" rel="noopener noreferrer" target="_blank">usage</a></li>
+<li><a href="https://cursor.com/download" rel="noopener noreferrer" target="_blank">Cursor downloads</a>, <a href="https://cursor.com/docs/get-started/quickstart" rel="noopener noreferrer" target="_blank">quickstart</a>, <a href="https://cursor.com/data-use" rel="noopener noreferrer" target="_blank">data use and privacy</a>, and <a href="https://cursor.com/learn/reviewing-testing" rel="noopener noreferrer" target="_blank">reviewing and testing changes</a></li>
+<li><a href="https://aider.chat/docs/install.html" rel="noopener noreferrer" target="_blank">Aider installation</a>, <a href="https://aider.chat/docs/config/api-keys.html" rel="noopener noreferrer" target="_blank">provider configuration</a>, <a href="https://aider.chat/docs/usage.html" rel="noopener noreferrer" target="_blank">usage and file context</a>, <a href="https://aider.chat/docs/git.html" rel="noopener noreferrer" target="_blank">Git integration</a>, and <a href="https://aider.chat/docs/more/analytics.html" rel="noopener noreferrer" target="_blank">analytics controls</a></li>
 </ul><p>Software interfaces and provider policies change. Check these sources when installing or configuring a current release.</p></section>
 <aside aria-labelledby="tutorial-feedback-title" class="lesson-feedback" id="tutorial-feedback"><h2 id="tutorial-feedback-title">Help improve this tutorial</h2><p>Found an error, a broken link, or a step that needs a clearer explanation? Please <a href="../contact.html">contact me</a>. Your feedback helps me keep this resource accurate and useful.</p></aside></article>
 <section class="mt-12 mb-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-100">

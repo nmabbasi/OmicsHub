@@ -73,7 +73,7 @@ gtag('consent', 'default', {
     }
   },
   "datePublished": "2026-08-30",
-  "dateModified": "2026-10-21",
+  "dateModified": "2026-10-23",
   "url": "https://theomicshub.com/tutorials/conda-mamba-part1.html",
   "name": "Micromamba Environments for Bioinformatics",
   "isPartOf": {
@@ -175,7 +175,7 @@ function toggleMobileMenu() {
 </div>
 <div class="flex items-center gap-1">
 <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
-<span>Updated 21 October 2026</span></div>
+<span>Updated 23 October 2026</span></div>
 </div>
 <div class="p-6 bg-blue-50 border border-blue-100 rounded-xl mb-8">
 <h4 class="text-lg font-bold text-blue-900 mb-2">Learning Objectives &amp; Prerequisites</h4>
@@ -225,19 +225,19 @@ micromamba --version</code></pre>
 micromamba --version</code></pre>
 <p>Check this output before troubleshooting: it reports the root prefix, environment directories, package cache, configuration files, and detected platform. The command examples below are documentation-based; package solving and installation depend on your operating system, channel metadata, and current package availability. No successful biological analysis follows from creating an environment.</p>
 <h2>Configure channels deliberately</h2>
-<p>Use the same channel policy when creating, exporting, and recreating an environment. For Bioconda packages, the documented order and strict priority matter; avoid mixing in additional channels casually.</p>
+<p>Use the same explicit channel policy when creating or recreating an environment, and preserve channel intent in the authored specification and resolved export. For Bioconda packages, the documented order and strict priority matter; avoid mixing in additional channels casually.</p>
 <p>A channel is a repository of package metadata and package archives. For many bioinformatics workflows, <strong>conda-forge</strong> provides general dependencies and <strong>bioconda</strong> provides many domain-specific tools. Channel configuration affects the solver, so keep it explicit and avoid mixing unrelated defaults without understanding the consequences.</p>
-<p>For this lesson, keep channel choices on each command instead of changing a shared <code>.condarc</code>/<code>.mambarc</code>. Bioconda currently recommends <code>conda-forge</code> before <code>bioconda</code> on the command line (higher priority first) and strict priority. In particular, do not add Anaconda <code>defaults</code> implicitly: use the documented community channels for these examples.</p>
+<p>For this lesson, keep channel choices on each command instead of changing a shared <code>.condarc</code>/<code>.mambarc</code>. Bioconda recommends <code>conda-forge</code> before <code>bioconda</code> on the command line (higher priority first) and strict priority. Each create command below therefore uses both <code>--override-channels</code> and <code>--channel-priority strict</code>: the first prevents configured default channels from silently joining the solve, while the second enforces the declared order. In particular, do not add Anaconda <code>defaults</code> implicitly.</p>
 <pre><code class="language-bash">micromamba create -n qc-tools \
-  -c conda-forge -c bioconda --channel-priority strict \
+  --override-channels -c conda-forge -c bioconda --channel-priority strict \
   fastqc multiqc</code></pre>
-<p>The same channel options should be included when a command must be reproducible independently of machine-level configuration. Check active settings with <code>micromamba config list</code> and <code>micromamba info</code>; a user configuration file may still supply channels unless you deliberately isolate/override configuration. Strict priority constrains solver choices; it cannot make unavailable packages or unsupported platforms work.</p>
+<p>Include these options on every create command to make its channel selection independent of machine-level channel configuration. <code>micromamba config list</code> and <code>micromamba info</code> are useful for inspecting configured values, but <code>--override-channels</code> governs these invocations. Strict priority constrains solver choices; it cannot make unavailable packages or unsupported platforms work.</p>
 <p>When a package cannot be solved, first check its availability, platform support, channel choice, and version constraints. Do not immediately add many channels or remove all version pins; that can create a solution that is difficult to reproduce.</p>
 <h2>Create, activate, and remove environments</h2>
 <p>Use one environment for one coherent workflow. Keep the base or root prefix small. The example below creates a Python environment for inspecting sequencing quality and reporting results.</p>
 <pre><code class="language-bash"># Create an environment with all initial requirements together
 micromamba create -n qc-tools \
-  -c conda-forge -c bioconda \
+  --override-channels -c conda-forge -c bioconda --channel-priority strict \
   python=3.11 fastqc multiqc
 
 # Activate it in the current shell
@@ -258,7 +258,7 @@ micromamba deactivate</code></pre>
 <pre><code class="language-bash">mkdir -p ~/projects/qc-demo
 cd ~/projects/qc-demo
 micromamba create -p ./env \
-  -c conda-forge -c bioconda \
+  --override-channels -c conda-forge -c bioconda --channel-priority strict \
   python=3.11 fastqc
 micromamba activate ./env
 micromamba deactivate</code></pre>
@@ -269,7 +269,7 @@ micromamba deactivate</code></pre>
 <h2>Install Python, R, and command-line tools safely</h2>
 <p>Prefer packages from the Conda-compatible channels when a suitable package exists. Use <code>pip</code> only for packages that are not available through the selected Conda channels, and install it after the compiled Conda dependencies. Record those pip requirements in the environment file.</p>
 <pre><code class="language-bash">micromamba create -n single-cell \
-  -c conda-forge -c bioconda \
+  --override-channels -c conda-forge -c bioconda --channel-priority strict \
   python=3.11 \
   scanpy anndata \
   r-base r-seurat \
@@ -282,13 +282,11 @@ samtools --version | head -n 1</code></pre>
 <p>Do not assume that a package name is identical across ecosystems. For example, an R package may be named with an <code>r-</code> prefix and a Bioconductor package may use a <code>bioconductor-</code> prefix. Search the relevant channel and read the package recipe before adding it to a production environment.</p>
 <h2>Make the environment reproducible</h2>
 <p>An environment file is a readable record of requested packages and channels. It is not a complete record of a scientific analysis, and a broad export can contain platform-specific build details. For teaching and cross-platform sharing, start with a small, intentional specification and test it on a clean environment.</p>
-<p>Work in a project directory so the specification and exports stay together. In Bash, create and enter a directory, then save the YAML block below as <code>environment.yml</code> in that directory (for example, use a text editor; the filename and extension must match the commands that follow).</p>
+<p>Work in a project directory so the authored specification and later exports stay together. In Bash, create and enter a directory, then use the displayed here-document to write the exact YAML file; it does not install anything or prove that a solve will succeed.</p>
 <pre><code class="language-bash">mkdir -p ~/projects/qc-environment
 cd ~/projects/qc-environment
 pwd
-ls -la</code></pre>
-<p>Before proceeding, confirm <code>pwd</code> shows the project directory. Save this specification there as <code>environment.yml</code>:</p>
-<pre><code class="language-yaml"># environment.yml
+cat &gt; environment.yml &lt;&lt;'YAML'
 name: qc-tools
 channels:
   - conda-forge
@@ -296,11 +294,16 @@ channels:
 dependencies:
   - python=3.11
   - fastqc
-  - multiqc</code></pre>
+  - multiqc
+YAML</code></pre>
+<p>Before creating an environment, predict: which Python minor version is requested, and what do the two channel lines control? Then confirm <code>pwd</code> is your project directory and inspect exactly what you saved:</p>
+<pre><code class="language-bash">ls -l environment.yml
+sed -n '1,20p' environment.yml</code></pre>
+<p>The YAML is an <strong>authored request</strong>, not evidence of a successful dependency solve or installation. It records direct package requests and channel intent; the solver still chooses compatible builds using current metadata for your platform.</p>
 <ol>
-<li>Check the file is present and inspect its beginning before creating anything: <code>ls -l environment.yml</code> and <code>sed -n '1,20p' environment.yml</code>. If the file is absent or malformed, stop and save/correct it in this directory.</li>
+<li>If <code>environment.yml</code> is absent or malformed, stop and return to the save step before creating anything.</li>
 <li>Create the named environment from the saved specification, explicitly retaining the documented channel order and strict priority:
-<pre><code class="language-bash">micromamba create -f environment.yml -c conda-forge -c bioconda --channel-priority strict</code></pre>
+<pre><code class="language-bash">micromamba create -f environment.yml --override-channels -c conda-forge -c bioconda --channel-priority strict</code></pre>
 A successful solve/install ends without an error. If solving fails, stop and inspect the error, platform support, channels, and configuration rather than continuing with later commands.</li>
 <li>Check that the environment exists and that both requested tools run:
 <pre><code class="language-bash">micromamba env list
@@ -308,11 +311,23 @@ micromamba run -n qc-tools python --version
 micromamba run -n qc-tools fastqc --version
 micromamba run -n qc-tools multiqc --version</code></pre>
 The environment list should include <code>qc-tools</code>; the commands should print version information and return successfully. These checks establish that the commands are available, not that any biological data have been analyzed.</li>
-<li>Export the resolved environment, then recreate it under a distinct, unused name. Do not reuse <code>qc-tools</code> for the copy:
+<li>Export the resolved environment, keep the original as an audit record, and prepare a reviewed copy before recreating it under a distinct, unused name:
 <pre><code class="language-bash">micromamba env export -n qc-tools &gt; environment-resolved.yml
-micromamba create -n qc-tools-copy -f environment-resolved.yml -c conda-forge -c bioconda --channel-priority strict
+cp environment-resolved.yml environment-resolved-reviewed.yml
+sed -n '1,12p' environment-resolved-reviewed.yml</code></pre>
+In a text editor, make the reviewed copy's <code>channels:</code> block exactly the three lines below. Keep every exported dependency entry unchanged, and remove any top-level <code>prefix:</code> line so the file does not carry a machine-local path. This is a header fragment, not a complete environment file:
+<pre><code class="language-yaml">channels:
+  - conda-forge
+  - bioconda</code></pre>
+Check the edited file before continuing. An export can reorder channels; do not assume it preserved the authored request or that CLI flags make its own channel block irrelevant. Do not reuse <code>qc-tools</code> for the copy:
+<pre><code class="language-bash">micromamba create -n qc-tools-copy -f environment-resolved-reviewed.yml --override-channels -c conda-forge -c bioconda --channel-priority strict
+micromamba run -n qc-tools-copy python --version
+micromamba run -n qc-tools-copy fastqc --version
+micromamba run -n qc-tools-copy multiqc --version
 micromamba env list</code></pre>
-The final list should show both names. If <code>qc-tools-copy</code> already exists, choose another unused name consistently in both commands. The copied environment is a fresh solve on this platform, not a byte-identical lock.</li>
+The final list should show both names, and all three version checks must succeed. If <code>qc-tools-copy</code> already exists, choose another unused name consistently. The copied environment is a fresh solve on this platform, not a byte-identical lock. If it fails, retain the error and investigate pins and channel order rather than automatically switching to flexible priority.</li>
+<li>Compare your observation with the prediction: Python should report a 3.11 release, and FastQC and MultiQC should each print a version and exit successfully. The environment list should contain both names. This is evidence only that these tools were installed and callable for this platform; no FASTQ was supplied and no biological quality assessment was performed. If any step fails, stop at that step, retain its full error and the output of <code>micromamba info</code>, and report the OS/architecture, executable version, channels, and exact command. Do not label the YAML tested just because it was saved.</li>
+<li>Small variation: make a copy of the authored file, change only <code>python=3.11</code> to <code>python=3.12</code>, and solve into a distinct new name using the same strict channel flags. Predict what version the Python check should show. If solving succeeds, verify that plus both tool versions; if not, the solve may reflect platform/package compatibility or current metadata, not a syntax error by itself. Restore the known-good file rather than loosening channels indiscriminately.</li>
 <li>Optionally retain an intent-oriented export of explicitly requested packages:
 <pre><code class="language-bash">micromamba env export -n qc-tools --from-history &gt; environment-history.yml</code></pre></li>
 </ol>
@@ -344,7 +359,7 @@ micromamba config list
 micromamba info
 
 # Test the request without changing the environment
-micromamba create -n qc-dry-run -c conda-forge -c bioconda \
+micromamba create -n qc-dry-run --override-channels -c conda-forge -c bioconda --channel-priority strict \
   python=3.11 fastqc --dry-run
 
 # Search the selected channels
@@ -364,19 +379,24 @@ df -h "$HOME"
 quota -s 2&gt;/dev/null || true</code></pre>
 <p>Do not use <code>sudo</code> to install packages into a user-owned environment. On a cluster, request a project storage location if the home directory has a small quota, then initialize Micromamba with a root prefix there.</p>
 <h2>A complete current example</h2>
-<p>This short workflow creates a clean environment, runs a tool, exports the result, and records a verification line. It is intentionally modest: start with the tools required for one step of an analysis rather than installing every program used by a laboratory.</p>
+<p>This workflow uses the authored <code>environment.yml</code> saved above for two fresh solves, checks the tools in each environment, and retains a resolved export as an audit record. Unlike the reviewed-snapshot exercise, its second solve uses the original package requests and may select different compatible versions. Start with one analysis step rather than installing every program used by a laboratory.</p>
 <pre><code class="language-bash">set -euo pipefail
 
-micromamba create -n reproducible-qc \
-  -c conda-forge -c bioconda --channel-priority strict \
-  python=3.11 fastqc multiqc -y
+test -s environment.yml
+micromamba create -n reproducible-qc -f environment.yml \
+  --override-channels -c conda-forge -c bioconda --channel-priority strict \
+  -y
 
+micromamba run -n reproducible-qc python --version
 micromamba run -n reproducible-qc fastqc --version
 micromamba run -n reproducible-qc multiqc --version
 micromamba env export -n reproducible-qc &gt; reproducible-qc-resolved.yml
-# Recreate on the same platform (a fresh solve, not a byte-identical lock)
-micromamba create -n reproducible-qc-copy -f reproducible-qc-resolved.yml \
-  -c conda-forge -c bioconda --channel-priority strict -y
+# Fresh solve from the authored request, not the unreviewed export.
+micromamba create -n reproducible-qc-copy -f environment.yml \
+  --override-channels -c conda-forge -c bioconda --channel-priority strict -y
+micromamba run -n reproducible-qc-copy python --version
+micromamba run -n reproducible-qc-copy fastqc --version
+micromamba run -n reproducible-qc-copy multiqc --version
 
 # Keep the command output, YAML file, and input/reference metadata with the project.
 echo "Environment verification completed: $(date -Iseconds)"</code></pre>
@@ -394,7 +414,7 @@ echo "Environment verification completed: $(date -Iseconds)"</code></pre>
 <p>Apply this environment pattern to the <a href="scrna-seq-basics.html">single-cell RNA-seq tutorial</a>, the <a href="wes-variant-calling-pipeline.html">WES variant-calling pipeline</a>, or the <a href="reproducible-workflows-snakemake-nextflow.html">reproducible workflow tutorial</a>. Each analysis still needs biological quality control and documented reference data; package installation is only one part of reproducible research.</p>
 <section aria-label="References and further reading" class="mt-10 p-6 bg-slate-50 border border-slate-200 rounded-xl">
 <h2 class="text-xl font-bold text-gray-900 mb-3">References and further reading</h2>
-<p class="text-sm text-gray-600 mb-3">The commands here are based on the cited official documentation; they were not executed as an end-to-end package installation in this review. Micromamba and package/channel metadata change, and availability varies by platform. Re-check official instructions and package support before production use.</p>
+<p class="text-sm text-gray-600 mb-3">Recorded bounded check: the authored YAML completed a fresh-name create under Ubuntu Linux x86_64 with Micromamba 2.9.0, explicit channel override and strict priority. Python 3.11.17, FastQC 0.13.0 and MultiQC 1.35 each ran their version command. The raw resolved export listed Bioconda before conda-forge, and its fresh solve failed with a libdeflate build conflict. A reviewed copy retained the package pins, restored conda-forge before Bioconda and removed the local prefix; fresh-name recreation and all three version checks then succeeded with the same versions on the same host. This checks neither byte-identical restoration nor another OS/architecture, the other installation routes, biological quality control or a production workflow. Package/channel metadata and availability change, so inspect and test your own result.</p>
 <ul class="list-disc list-inside space-y-2 text-sm text-gray-700">
 <li><a class="text-blue-700 hover:underline" href="https://mamba.readthedocs.io/en/latest/installation/micromamba-installation.html" rel="noopener" target="_blank">Mamba documentation: Micromamba Installation</a></li>
 <li><a class="text-blue-700 hover:underline" href="https://mamba.readthedocs.io/en/latest/developer_zone/changes-2.0.html" rel="noopener" target="_blank">Mamba documentation: Mamba 2.0 Changes</a></li>

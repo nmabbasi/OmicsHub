@@ -71,7 +71,7 @@ gtag('consent', 'default', {
     }
   },
   "datePublished": "2026-08-25",
-  "dateModified": "2026-10-21"
+  "dateModified": "2026-10-23"
 }</script>
 <link href="../tutorial-library.css" rel="stylesheet"/></head>
 <body class="bg-white text-gray-900">
@@ -191,7 +191,7 @@ Legal
 </tbody></table></div>
 <p class="lesson-caption">A shared output label does not make the methods' scores equivalent. Compare each result using its own documented diagnostics.</p>
 <h2>Run and inspect a CellTypist prediction</h2>
-<p>This advanced template expects a reader-prepared <code>my_data.h5ad</code>: AnnData with cells in rows, genes in columns, unique human gene-symbol feature names, and an explicitly documented raw-count matrix. Start in a dedicated working directory, create an isolated Python environment, and install the two packages (the current releases and dependency resolution may change):</p>
+<p>This advanced template expects a reader-prepared <code>my_data.h5ad</code>: AnnData with cells in rows, genes in columns, and an explicitly documented raw-count matrix. Start in a dedicated working directory, create an isolated Python environment, and install the two packages (current releases and dependency resolution may change):</p>
 <pre><code class="language-bash">mkdir -p celltypist-review
 cd celltypist-review
 python3 -m venv .venv
@@ -199,54 +199,212 @@ source .venv/bin/activate
 python -m pip install --upgrade pip
 python -m pip install scanpy celltypist
 python -c "import scanpy, celltypist; print('scanpy', scanpy.__version__, 'celltypist', celltypist.__version__)"
-# Put your authorized input here; this template will write results beside it:
-# celltypist-review/my_data.h5ad</code></pre>
-<p>Record the environment actually used with <code>python -m pip freeze &gt; requirements-record.txt</code>; this captures your resolved environment and is not a tested or guaranteed version lock. For an official worked AnnData/count-layer example, see Scanpy’s <a href="https://scanpy.readthedocs.io/en/stable/tutorials/basics/clustering.html" rel="noopener noreferrer" target="_blank">preprocessing and clustering tutorial</a>, which demonstrates saving counts before normalization. Use its documented public dataset only if appropriate and authorized for your purpose; this page does not bundle a compatible CellTypist fixture. The selected built-in model below is an example for human immune annotation, not a universal model.</p>
-<p>Before running, inspect the object’s provenance and layer names in your own preparation notebook. The code below deliberately requires a <code>counts</code> layer with verified raw counts; if absent, establish the correct source from the upstream pipeline rather than guessing from values. Stop if counts are unavailable, transformed, negative, non-finite, or not integer-like. Numerical checks can reject obvious violations, but cannot prove count provenance.</p>
-<pre><code class="language-python">import numpy as np
-import scanpy as sc
+# Put your authorized input and selected model here.</code></pre>
+<p>Record the environment actually used with <code>python -m pip freeze &gt; requirements-record.txt</code>; this captures the resolved environment, not a tested or guaranteed lock. Download a selected model from the official <a href="https://www.celltypist.org/models" rel="noopener noreferrer" target="_blank">CellTypist model catalog</a> into this working directory as <code>Immune_All_Low.pkl</code>. Inspect its catalog description and confirm the species, reference scope, tissue and assay suitability for your question. This model is only an example, not a universal choice. The code hashes the exact local model file so the run can be identified even if a catalog version label is absent.</p>
+<p>Before execution, establish from upstream records that <code>counts</code> contains untransformed raw counts. The declared species and identifier conventions below are assertions you supply from provenance and model documentation. They are not inferred from feature names. Unique names only rule out duplicates: they do not establish species, symbol convention, or model compatibility. The exact feature overlap is measured against the loaded model before normalization or annotation.</p>
+<h3>Preflight and annotate</h3>
+<p>Set the query and model declarations to match documented provenance. Supply a pre-existing <code>review_overcluster</code> observation column whose clustering choices you have reviewed. Confirm that query and model tissue, condition, assay and reference scope suit the question, then set the explicit review flag in the code; this compatibility check is a documented human decision, not automatic inference. The 25% model-feature overlap cutoff is a configurable teaching refusal gate: it rejects a run with very sparse direct matches, but it is not a universal biological validity threshold. Calibrate a defensible cutoff for the selected model and assay before interpreting real data. Identifier-pattern checking below flags a common Ensembl-versus-symbol mismatch only; it does not infer species or validate arbitrary identifiers.</p>
+<pre><code class="language-python">from datetime import datetime, timezone
+from pathlib import Path
+import hashlib
+import json
+import re
+import sys
+
+import anndata as ad
 import celltypist
+import numpy as np
+import scanpy as sc
 from celltypist import models
 
-adata = sc.read_h5ad("my_data.h5ad")
-assert adata.n_obs &gt; 0 and adata.n_vars &gt; 0, "Empty input: stop and check the file"
-assert adata.var_names.is_unique, "Duplicate feature names: resolve before prediction"
-assert "counts" in adata.layers, "No verified raw-count layer; stop rather than infer provenance"
-# User must verify from upstream records that this layer is untransformed raw counts.
+INPUT_PATH = Path("my_data.h5ad")
+MODEL_PATH = Path("Immune_All_Low.pkl")
+INPUT_SPECIES = "human"                 # Set from input provenance, never inferred
+MODEL_SPECIES = "human"                 # Verify against the official model description
+INPUT_FEATURE_ID_CONVENTION = "HGNC gene symbols"
+MODEL_FEATURE_ID_CONVENTION = "HGNC gene symbols"  # Verify catalog/model context
+INPUT_CONTEXT_NOTE = "Human immune-cell query; replace with documented tissue and condition"
+MODEL_CONTEXT_NOTE = "Human immune-cell reference; review tissue and assay coverage"
+CONTEXT_COMPATIBILITY_REVIEWED = False  # Set True only after comparing query/model context
+MODEL_SOURCE_URL = "https://www.celltypist.org/models"
+OVER_CLUSTERING_KEY = "review_overcluster"  # Required, reviewed AnnData obs column
+MIN_MODEL_FEATURE_FRACTION = 0.25  # Teaching gate only, not a biological standard
+MANIFEST_PATH = Path("celltypist-run-manifest.json")
+
+if not INPUT_PATH.is_file() or not MODEL_PATH.is_file():
+    raise FileNotFoundError("Place the authorized input and selected model in this directory")
+if not INPUT_SPECIES.strip() or not MODEL_SPECIES.strip():
+    raise ValueError("Declare both input and model species from documented provenance")
+if INPUT_SPECIES.casefold() != MODEL_SPECIES.casefold():
+    raise ValueError("Declared input/model species differ; stop and select a compatible model")
+if not INPUT_FEATURE_ID_CONVENTION.strip() or not MODEL_FEATURE_ID_CONVENTION.strip():
+    raise ValueError("Declare both input and model feature identifier conventions")
+if INPUT_FEATURE_ID_CONVENTION.casefold() != MODEL_FEATURE_ID_CONVENTION.casefold():
+    raise ValueError("Declared input/model identifier conventions differ; map IDs explicitly")
+if not INPUT_CONTEXT_NOTE.strip() or not MODEL_CONTEXT_NOTE.strip() or not MODEL_SOURCE_URL.strip():
+    raise ValueError("Record the query context, model context, and model source")
+if CONTEXT_COMPATIBILITY_REVIEWED is not True:
+    raise ValueError("Review query/model context and explicitly set CONTEXT_COMPATIBILITY_REVIEWED = True")
+if not 0 &lt; MIN_MODEL_FEATURE_FRACTION &lt;= 1:
+    raise ValueError("The overlap policy must be a fraction in (0, 1]")
+
+input_sha256 = hashlib.sha256(INPUT_PATH.read_bytes()).hexdigest()
+model_sha256 = hashlib.sha256(MODEL_PATH.read_bytes()).hexdigest()
+adata = sc.read_h5ad(INPUT_PATH)
+if adata.n_obs == 0 or adata.n_vars == 0:
+    raise ValueError("Empty input: stop and check the file")
+if not adata.var_names.is_unique:
+    raise ValueError("Duplicate feature names: resolve before prediction")
+if "counts" not in adata.layers:
+    raise ValueError("No verified raw-count layer; stop rather than infer provenance")
+if OVER_CLUSTERING_KEY not in adata.obs:
+    raise ValueError("Add a reviewed over-clustering column before majority voting")
+if adata.obs[OVER_CLUSTERING_KEY].isna().any():
+    raise ValueError("Over-clustering labels are missing for one or more cells")
+
+model = models.Model.load(str(MODEL_PATH))
+query_features = list(map(str, adata.var_names))
+model_features = list(map(str, model.features))
+if not model_features:
+    raise ValueError("Loaded model reports no features; stop for manual inspection")
+matched_features = sorted(set(query_features).intersection(model_features))
+model_feature_fraction = len(matched_features) / len(model_features)
+query_feature_fraction = len(matched_features) / len(query_features)
+ensembl_like = sum(bool(re.fullmatch(r"ENS[A-Z]*G\d+(?:\.\d+)?", name))
+                   for name in query_features) / len(query_features)
+issues = []
+if "symbol" in INPUT_FEATURE_ID_CONVENTION.casefold() and ensembl_like &gt;= 0.5:
+    issues.append("Most query IDs resemble Ensembl gene IDs despite the declared symbol convention")
+if model_feature_fraction &lt; MIN_MODEL_FEATURE_FRACTION:
+    issues.append("Direct model-feature overlap is below the configured refusal threshold")
+
+description = model.description
+if not description:
+    raise ValueError("Loaded model has no description; establish model context before prediction")
+manifest = {
+    "started_at_utc": datetime.now(timezone.utc).isoformat(),
+    "status": "refused_preflight" if issues else "preflight_passed_pending_count_checks",
+    "input_file": INPUT_PATH.name,
+    "input_sha256": input_sha256,
+    "input_species_declared": INPUT_SPECIES,
+    "input_feature_id_convention_declared": INPUT_FEATURE_ID_CONVENTION,
+    "model_identifier": MODEL_PATH.name,
+    "model_sha256": model_sha256,
+    "model_species_declared": MODEL_SPECIES,
+    "model_feature_id_convention_declared": MODEL_FEATURE_ID_CONVENTION,
+    "model_description": description,
+    "input_context_note": INPUT_CONTEXT_NOTE,
+    "model_context_note": MODEL_CONTEXT_NOTE,
+    "context_compatibility_reviewed": CONTEXT_COMPATIBILITY_REVIEWED,
+    "model_source": MODEL_SOURCE_URL,
+    "software_versions": {
+        "python": sys.version.split()[0],
+        "anndata": getattr(ad, "__version__", "not reported"),
+        "celltypist": getattr(celltypist, "__version__", "not reported"),
+        "numpy": getattr(np, "__version__", "not reported"),
+        "scanpy": getattr(sc, "__version__", "not reported"),
+    },
+    "preprocessing_choices": {
+        "counts_layer": "counts, provenance verified by the user",
+        "X_before_annotation": "copy of counts, then normalize_total(target_sum=10000) and log1p",
+        "majority_voting": True,
+        "over_clustering_obs_key": OVER_CLUSTERING_KEY,
+    },
+    "overlap_policy": {
+        "metric": "exact shared feature IDs divided by model feature count",
+        "minimum_fraction": MIN_MODEL_FEATURE_FRACTION,
+        "threshold_status": "configurable teaching refusal gate, not universal biology",
+    },
+    "overlap_report": {
+        "query_feature_count": len(query_features),
+        "model_feature_count": len(model_features),
+        "exact_matched_feature_count": len(matched_features),
+        "model_feature_fraction_matched": model_feature_fraction,
+        "query_feature_fraction_matched": query_feature_fraction,
+        "matched_examples": matched_features[:20],
+        "query_only_examples": sorted(set(query_features) - set(model_features))[:20],
+        "model_only_examples": sorted(set(model_features) - set(query_features))[:20],
+        "ensembl_like_query_fraction_pattern_check_only": ensembl_like,
+    },
+    "preflight_issues": issues,
+}
+MANIFEST_PATH.write_text(json.dumps(manifest, indent=2, default=str) + "\n", encoding="utf-8")
+if not MANIFEST_PATH.is_file():
+    raise RuntimeError("Run manifest was not written; stop before annotation")
+print("Preflight report:", json.dumps(manifest["overlap_report"], indent=2))
+if issues:
+    raise RuntimeError("Preflight refused annotation: " + "; ".join(issues))
+
+# Numerical checks reject obvious count violations, but cannot prove provenance.
 counts = adata.layers["counts"]
 values = counts.data if hasattr(counts, "data") and hasattr(counts, "indptr") else np.asarray(counts)
-assert np.isfinite(values).all() and (values &gt;= 0).all(), "Counts contain invalid values"
-assert np.allclose(values, np.rint(values)), "Values are not integer-like raw counts"
+if not np.isfinite(values).all() or (values &lt; 0).any():
+    raise ValueError("Counts contain invalid values")
+if not np.allclose(values, np.rint(values)):
+    raise ValueError("Values are not integer-like raw counts")
+manifest["status"] = "preflight_passed"
+MANIFEST_PATH.write_text(json.dumps(manifest, indent=2, default=str) + "\n", encoding="utf-8")
+if not MANIFEST_PATH.is_file():
+    raise RuntimeError("Validated preflight manifest is missing; stop before annotation")
 adata.X = counts.copy()
-# This changes X only; the verified count layer remains available for provenance.
 sc.pp.normalize_total(adata, target_sum=1e4)
 sc.pp.log1p(adata)
 
-# Inspect available models and choose one for the query's species and context.
-print(models.models_description())
-models.download_models(force_update=False)
-model = models.Model.load("Immune_All_Low.pkl")
-pred = celltypist.annotate(adata, model=model, majority_voting=True)
-adata.obs["celltypist_label"] = pred.predicted_labels["majority_voting"].to_numpy()
-adata.obs["celltypist_cell_label"] = pred.predicted_labels["predicted_labels"].to_numpy()
-# Keep both cell-level and majority-vote labels for comparison.
+pred = celltypist.annotate(
+    adata, model=model, majority_voting=True, over_clustering=OVER_CLUSTERING_KEY
+)
+labels = pred.predicted_labels
+expected_ids = list(map(str, adata.obs_names))
+def require_same_cell_order(frame, name):
+    if list(map(str, frame.index)) != expected_ids:
+        raise RuntimeError(name + " cell IDs/order do not match the input")
+
+require_same_cell_order(labels, "Predicted labels")
+if not {"predicted_labels", "majority_voting"}.issubset(labels.columns):
+    raise RuntimeError("CellTypist did not return both cell and majority-vote labels")
 prob = pred.probability_matrix
-assert prob.shape[0] == adata.n_obs, "Prediction rows do not match input cells"
-assert prob.shape[1] >= 2, "Need at least two model classes to calculate a margin"
-ordered = np.sort(np.asarray(prob), axis=1)
-adata.obs["celltypist_top_probability"] = ordered[:, -1]
-adata.obs["celltypist_probability_margin"] = ordered[:, -1] - ordered[:, -2]
-# Compact review table keyed by original cell IDs; labels remain proposals.
-review = adata.obs[["celltypist_label", "celltypist_cell_label",
-                    "celltypist_top_probability", "celltypist_probability_margin"]].copy()
+decision = pred.decision_matrix
+require_same_cell_order(prob, "Probability matrix")
+require_same_cell_order(decision, "Decision matrix")
+if prob.shape[0] != adata.n_obs or prob.shape[1] &lt; 2:
+    raise RuntimeError("Probability matrix has unexpected dimensions")
+if decision.shape != prob.shape:
+    raise RuntimeError("Decision and probability matrices have different dimensions")
+
+# The documented result method supplies majority-vote confidence in obs.
+result_adata = pred.to_adata(
+    insert_labels=True, insert_conf=True, insert_conf_by="majority_voting",
+    prefix="celltypist_"
+)
+if list(map(str, result_adata.obs_names)) != expected_ids:
+    raise RuntimeError("Result AnnData cell IDs/order do not match the input")
+if "celltypist_conf_score" not in result_adata.obs:
+    raise RuntimeError("Expected majority-vote confidence score is absent")
+prob_sorted = np.sort(prob.to_numpy(), axis=1)
+decision_sorted = np.sort(decision.to_numpy(), axis=1)
+review = labels[["predicted_labels", "majority_voting"]].copy()
+review["cell_probability_top"] = prob_sorted[:, -1]
+review["cell_probability_margin"] = prob_sorted[:, -1] - prob_sorted[:, -2]
+review["cell_decision_top"] = decision_sorted[:, -1]
+review["cell_decision_margin"] = decision_sorted[:, -1] - decision_sorted[:, -2]
+review["majority_voting_conf_score"] = result_adata.obs["celltypist_conf_score"].to_numpy()
 review.index.name = "cell_id"
 review.to_csv("celltypist-review.csv")
-adata.write_h5ad("celltypist-annotated.h5ad")
+prob.to_csv("celltypist-probabilities.csv")
+decision.to_csv("celltypist-decision-scores.csv")
+result_adata.write_h5ad("celltypist-annotated.h5ad")
+manifest["status"] = "outputs_written"
+manifest["outputs"] = ["celltypist-review.csv", "celltypist-probabilities.csv",
+                       "celltypist-decision-scores.csv", "celltypist-annotated.h5ad"]
+manifest["completed_at_utc"] = datetime.now(timezone.utc).isoformat()
+MANIFEST_PATH.write_text(json.dumps(manifest, indent=2, default=str) + "\n", encoding="utf-8")
+if not MANIFEST_PATH.is_file():
+    raise RuntimeError("Completed run manifest is missing")
 print(review.head())
-print("probability matrix:", prob.shape)
+print("Saved manifest and cell-aligned diagnostics for", adata.n_obs, "cells")
 </code></pre>
-<p>CellTypist expects gene symbols and supports AnnData input. Its <code>annotate</code> function returns an AnnotationResult, including predicted labels, decision scores, and a probability matrix. The review CSV and annotated H5AD are written in the working directory; the preview should show original cell IDs, both label versions, and two per-cell diagnostics, while the matrix row count must equal the number of cells. A successful run establishes only that input was processed and outputs were written, not that labels are biologically correct. If an assertion fails or output is empty, stop and inspect the input/model compatibility rather than weakening checks. Majority voting is optional and may use heuristic over-clustering when none is supplied; inspect its basis and retain the unrefined cell-level labels. Scores are diagnostics, not calibrated biological certainty. Follow the saved table with marker, cluster-coherence, and reference-context review before accepting assignments.</p>
-<aside class="lesson-warning"><h3>Stop if the input contract is unclear</h3><p>Do not silently convert Ensembl IDs to symbols by trimming version suffixes or assume symbols are species-correct. Resolve identifiers with an appropriate mapping, check duplicates and gene overlap, and confirm which layer contains raw counts. A wrong feature mapping or unsuitable model can produce plausible-looking labels with little biological relevance.</p></aside>
+<p>The preflight manifest is written and checked before the refusal gate; a refused run records the overlap and reason without calling <code>annotate</code>. On success, preserve the original cell IDs in the review table, both label columns, per-cell probability and decision margins, majority-vote confidence, and full probability/decision matrices. The annotated H5AD retains the input observations and count layer. The manifest records input and model SHA256 checksums, model description and source, timestamp, package versions, preprocessing, declarations, overlap policy and report. These scores are diagnostics, not calibrated biological certainty. A successful run only establishes that the computational checks and outputs completed, not that labels are biologically correct.</p>
+<aside class="lesson-warning"><h3>Stop if context or identifiers are uncertain</h3><p>Do not infer species from arbitrary names, silently strip Ensembl version suffixes, or equate uniqueness with compatibility. The example checks a common Ensembl-like mismatch and exact model feature overlap; it cannot validate species, symbol namespace, assay suitability or biological reference fit. Resolve IDs using an appropriate documented mapping, then rerun the preflight. A low-overlap example should stop before prediction and leave a refusal manifest.</p></aside>
 <h2>Review predictions against independent evidence</h2>
 <p>For each cluster or cell group under review, make a small decision record. Include the model's label, an appropriate marker panel, the tissue/species/condition covered by the reference, and a reason to accept, revise, or leave the label unresolved. Marker panels are context-dependent; use positive and counter-markers where possible, and examine whether a cluster mixes distinct populations. A label match alone does not validate a novel cell state or biological mechanism.</p>
 <ol class="lesson-steps">
@@ -256,18 +414,22 @@ print("probability matrix:", prob.shape)
 <li><strong>Write the disposition.</strong> Save the predicted label, evidence, reference limitation and decision (accept, revise, unresolved). Revisit the call when improved references or orthogonal evidence become available.</li>
 </ol>
 <div class="lesson-exercise"><h3>Practice: build an annotation review row</h3><p>Choose one cluster from a non-sensitive dataset you are authorized to use. Record its proposed label, the reference/model and version, two supporting markers and any conflicting marker evidence, a score/ambiguity observation, and an accept/revise/unresolved decision with one-sentence rationale.</p><p><strong>Check:</strong> The row is reproducible and makes the evidence and reference limitation visible. If no compatible reference or informative markers are available, “unresolved” is a defensible outcome.</p></div>
+<div class="lesson-exercise"><h3>Worked review row: decide without forcing a label</h3><p><strong>Invented teaching example, not a CellTypist result:</strong> a hypothetical cluster is proposed as “CD8 T cell.” Supporting evidence: <code>CD3D</code> and <code>CD8A</code> are detected and the cells occur in a lymphocyte-rich sample. Conflicting evidence: <code>NKG7</code> and <code>GNLY</code> are also prominent, so an NK-like or mixed population remains plausible. The hypothetical top probability is 0.54 and the top-two margin is 0.06; these values are illustrative diagnostics, not calibrated confidence. The reference description covers human immune cells but does not resolve this cluster’s tissue-specific state. <strong>Exercise:</strong> accept, revise, or leave unresolved, and name one discriminating check. <strong>Review answer:</strong> unresolved is currently best supported. Inspect a broader positive and counter-marker panel, cluster purity and reference fit; do not turn these limited markers and a narrow margin into a final biological call. A coherent independent T-cell marker pattern could support revision to a T-cell subtype, while persistent NK/T mixed evidence remains unresolved.</p></div>
 <h2>Failure cases worth checking</h2>
 <ul>
 <li><strong>Unmapped or duplicated genes:</strong> inspect feature identifiers and overlap with the model/reference. Unexpectedly low overlap can make predictions unreliable or fail outright.</li>
+<li><strong>Declared context or overlap gate fails:</strong> a synthetic low-overlap query should produce a refusal manifest and no predictions. Investigate the ID namespace and selected model; do not lower the cutoff solely to make a run pass.</li>
 <li><strong>Reference mismatch:</strong> a human immune model is not suitable simply because the query contains immune cells; species, tissue, disease and assay context affect transfer.</li>
 <li><strong>Strong scores with contradictory markers:</strong> investigate preprocessing, doublets, mixed clusters and classes missing from the reference. A classifier still assigns the closest available class in best-match mode.</li>
 <li><strong>Majority-vote labels erase heterogeneity:</strong> compare refined labels with per-cell predictions and the clustering used for refinement. The result depends on over-clustering choices.</li>
 <li><strong>External processing of sensitive data:</strong> keep patient-linked counts, metadata and cell identifiers within approved systems; do not send them to a third-party service without institutional authorization.</li>
 </ul>
 <h2>References and version checks</h2>
-<p>Check current project documentation before running the code: APIs, model inventories and defaults may change. The code here is an instructional example, not a claim that the current site environment or a biological dataset was executed.</p>
+<p>CellTypist documentation pages were checked on 2026-10-23: the <code>annotate</code> and <code>Model</code> pages were the current <code>latest</code> docs, and the prediction-result page was the <code>stable</code> docs identified as version 1.7.1. The example records installed package versions at runtime instead of promising a fixed version lock. Validation here is limited to syntax and an invented low-overlap preflight fixture using a synthetic model adapter; CellTypist is not installed in the test environment, so no real model was loaded and no predictions were run. Recheck APIs, model inventory and defaults before use.</p>
 <ul>
 <li><a href="https://celltypist.readthedocs.io/en/latest/celltypist.annotate.html" rel="noopener noreferrer" target="_blank">CellTypist prediction function</a>: accepted inputs, model selection, majority voting and result object.</li>
+<li><a href="https://celltypist.readthedocs.io/en/latest/celltypist.models.Model.html" rel="noopener noreferrer" target="_blank">CellTypist Model structure</a>: documented <code>features</code> and <code>description</code> properties used by the preflight.</li>
+<li><a href="https://celltypist.readthedocs.io/en/stable/celltypist.classifier.AnnotationResult.html" rel="noopener noreferrer" target="_blank">CellTypist prediction result</a>: predicted labels, decision/probability matrices, and <code>to_adata</code> confidence-score options. Documentation reviewed 2026-10-23; APIs and model metadata can change.</li>
 <li><a href="https://celltypist.readthedocs.io/en/latest/" rel="noopener noreferrer" target="_blank">CellTypist documentation</a>: tool overview and current documentation entry point.</li>
 <li><a href="https://www.bioconductor.org/packages/release/bioc/vignettes/SingleR/inst/doc/SingleR.html" rel="noopener noreferrer" target="_blank">SingleR Bioconductor vignette</a>: reference-based annotation, score diagnostics and pruning.</li>
 <li><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC12866849/" rel="noopener noreferrer" target="_blank">CELLama primary paper</a>: ranked-gene sentence construction, embeddings and study evaluation. Results in that paper do not establish performance on an unrelated dataset.</li>

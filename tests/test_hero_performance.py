@@ -13,6 +13,7 @@ from reviewed_tutorial_baseline import (
     strip_cookie_banner,
 )
 from reader_typography_baseline import normalize_reader_typography
+from six_lesson_revision_baseline import normalize_six_lesson_revision
 
 ROOT = Path(__file__).resolve().parents[1]
 BASELINE = 'e7037f1b9a9eea8f4338e7b6696f791d8172f844'
@@ -127,6 +128,8 @@ class HeroPerformanceTests(unittest.TestCase):
             current_text = strip_cookie_banner(
                 p.read_text(encoding='utf-8'), allow_missing=True
             )
+            baseline_text = normalize_six_lesson_revision(relative_path, baseline_text)
+            current_text = normalize_six_lesson_revision(relative_path, current_text)
             baseline_text = normalize_reader_typography(relative_path, baseline_text)
             current_text = normalize_reader_typography(relative_path, current_text)
             baseline_text = normalize_learner_revision(relative_path, normalize_reviewed_content(relative_path, baseline_text))

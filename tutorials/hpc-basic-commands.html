@@ -73,7 +73,7 @@ gtag('consent', 'default', {
     }
   },
   "datePublished": "2026-09-11",
-  "dateModified": "2026-10-21",
+  "dateModified": "2026-10-23",
   "url": "https://theomicshub.com/tutorials/hpc-basic-commands.html",
   "name": "Basic Slurm Commands",
   "isPartOf": {
@@ -174,91 +174,131 @@ function toggleMobileMenu() {
 <p><strong>Format: Reference.</strong> For learners with a Slurm account and SSH access, this guide demonstrates partition/job inspection, a small Python batch smoke test, and basic diagnosis. The test script and input are created by the commands; cluster-specific settings must be supplied from local documentation.</p>
 </section>
 <h2>Before you start</h2>
-<p>You need an account on a Slurm cluster, SSH access, and permission to submit jobs. This lesson assumes you are on the cluster's login node. Do not run computational workloads there; use the scheduler. Commands below are examples and have not been executed on a live cluster.</p>
-<h2>Check software modules</h2>
-<p>Many clusters use environment modules to select software installations. The <code>module</code> command is supplied by the site's module system, commonly Lmod or Environment Modules.</p>
-<pre><code>module avail
-module list
-</code></pre>
-<p><code>module avail</code> lists software made available by the site; <code>module list</code> shows modules loaded in this shell. Names and versions are site-specific. After checking the local documentation, load only modules your job needs, for example:</p>
-<pre><code>module load python/3.11</code></pre>
-<p>To make a batch job reproducible, put its module commands in the batch script. A login-shell environment should not be assumed to carry over to the compute-node job. Use <code>module purge</code> only if your site's guidance supports that practice and you understand which inherited modules it removes. If <code>python/3.11</code> is not provided, use the Python module name documented by your site; omit the <code>module load</code> line only when Python is already available in the batch environment. In either case, print <code>python --version</code> in the job log so you can record which interpreter actually ran.</p>
-<h2>Inspect partitions, nodes, and jobs</h2>
-<p>A partition is a configured scheduling pool, not necessarily a distinct physical cluster. Start with:</p>
+<p>This reference is for learners who already know basic shell commands and have an account with SSH access to a Slurm cluster. Work from the login node only for setup and submission, not for compute work. The cluster examples below require your site's current user documentation. They have not been run on a real cluster.</p>
+<h2>Check the module environment</h2>
+<p>Sites may provide software through Environment Modules, Lmod, another environment manager, or a preconfigured batch environment. The <code>module</code> command is often a shell function created by shell-specific initialization. A non-interactive batch shell may not initialize it the same way as your interactive login shell. Check what the site documents for batch scripts; do not guess or copy a generic initialization-file path.</p>
+<pre><code>if command -v module &gt;/dev/null 2&gt;&amp;1; then
+  module avail
+  module list
+else
+  echo "No module command in this shell; check site instructions for batch-shell initialization."
+fi</code></pre>
+<p>Module names, versions, shell setup, and Python executable names are site-specific. Do not assume that <code>python/3.11</code> or any example module name exists. If the site documents a module for the batch environment, use that exact name and initialize Modules as directed by the site. A failed module load must stop the job rather than quietly using another Python. If the site does not use modules, use the alternative in the script only after its documentation confirms which Python is available in non-interactive batch jobs.</p>
+<h2>Inspect partitions and your queue</h2>
+<p>Use the cluster's own output to discover partition names and node states; an idle node does not guarantee that your account or request is eligible to run there. Replace <code>PARTITION_NAME</code> with a name reported by your site. State and resource fields describe scheduler configuration, not a promise of availability.</p>
 <pre><code>sinfo
 sinfo --Node --long
-</code></pre>
-<p>Look at the partition availability and node state fields. For example, <code>idle</code> means a node is unallocated; <code>mix</code> means it has both allocated and idle CPUs (or a suspended job holding resources). An <code>idle</code> node does not guarantee your job can start: account access, requested resources, reservations, limits, and scheduling policy also matter. A <code>drain</code> or <code>down</code> node is unavailable for new work.</p>
-<p>To inspect a partition by name, substitute one shown by your cluster:</p>
-<pre><code>sinfo -p PARTITION_NAME
-</code></pre>
-<p>For detailed information about a particular node, first obtain its actual name from <code>sinfo</code>, then run:</p>
-<pre><code>scontrol show node NODE_NAME</code></pre>
-<p>Check only your own jobs with <code>squeue</code>. A compact state field uses codes such as <code>PD</code> (pending), <code>R</code> (running), <code>CG</code> (completing), <code>CD</code> (completed), and <code>F</code> (failed). A completed job may disappear from <code>squeue</code>; use accounting when available.</p>
-<pre><code>squeue -u "$USER"
-squeue -u "$USER" -o "%.18i %.9P %.30j %.10u %.2t %.10M %.6D %R"
-sacct -j JOB_ID --format=JobID,State,ExitCode,Elapsed,MaxRSS</code></pre>
-<p><code>%R</code> reports a pending reason for pending jobs, but the exact information available depends on Slurm and site configuration. Replace <code>JOB_ID</code> with the ID printed by <code>sbatch</code>. Accounting fields may be unavailable or delayed if the cluster does not retain accounting data.</p>
-<h2>Submit a small batch job</h2>
-<p>Choose a writable project or scratch directory according to your site's storage guidance, then create a small test script there. The calculation below is a software smoke test, not a biological analysis. The <code>short</code> partition, module name, time, and memory request are examples only; verify each locally before submission.</p>
-<pre><code>mkdir -p "$HOME/slurm-smoke-test"
-cd "$HOME/slurm-smoke-test"
-cat &gt; hello.py &lt;&lt;'PY'
-import platform
-print("Python is running on", platform.node())
-print("Sum 1..100:", sum(range(1, 101)))
-PY
+sinfo -p PARTITION_NAME</code></pre>
+<p>To see your jobs and a compact pending reason, use:</p>
+<pre><code>squeue -u "$USER" -o "%.18i %.9P %.30j %.10u %.2t %.10M %.6D %R"</code></pre>
+<p>Common compact states include <code>PD</code> (pending), <code>R</code> (running), <code>CG</code> (completing), <code>CD</code> (completed), and <code>F</code> (failed). The <code>%R</code> field shows a reason for pending jobs and, for other states, may show allocated nodes or a failure explanation. A completed job may disappear from <code>squeue</code>; consult accounting when the site provides it.</p>
+<h2>Try a tiny local synthetic script</h2>
+<p>This Python-only exercise needs no account, scheduler, module system, third-party package, or research data. Save it as <code>local-smoke.py</code> and run <code>python3 local-smoke.py</code> on a Linux or macOS machine with Python 3. It prints the interpreter, version, host, and a predictable arithmetic result.</p>
+<pre><code>import platform
+import sys
 
-cat &gt; test.sbatch &lt;&lt;'SBATCH'
-#!/bin/bash
+print(f"Selected Python: {sys.executable}")
+print(f"Python version: {platform.python_version()}")
+print(f"Hostname: {platform.node()}")
+print(f"Sum 1..100: {sum(range(1, 101))}")</code></pre>
+<p>Expected output includes a Python executable path, a version, a host name, and <code>Sum 1..100: 5050</code>. The host and version vary by machine. This invented fixture is only a smoke test; it says nothing about Slurm or scientific results.</p>
+<h2>Prepare a small batch script</h2>
+<p>On the cluster, follow site storage guidance and move to a permitted working directory. Create <code>hello.py</code> there with the same five lines of Python shown above. Create a batch script next to it:</p>
+<pre><code>#!/usr/bin/env bash
 #SBATCH --job-name=python-smoke
 #SBATCH --output=slurm-%j.out
 #SBATCH --error=slurm-%j.err
-#SBATCH --partition=short
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
 #SBATCH --time=00:05:00
 #SBATCH --mem=1G
 
-module load python/3.11  # replace with your site's module, or omit if Python is preconfigured
-python --version
-python hello.py
-SBATCH
+set -euo pipefail
 
-sbatch test.sbatch</code></pre>
-<p>Slurm reads <code>#SBATCH</code> directives before running the script. Keep them before the first executable shell command, and avoid shell variables or inline explanatory comments in directive values: Slurm parses these lines itself. The example requests one node, one task, one CPU for five minutes, and 1 GiB of memory. Adjust requests to site policy and the real workload.</p>
-<p>On successful submission, <code>sbatch</code> returns a job ID. This means Slurm accepted the request, not that the job has started or succeeded. The explicit output and error patterns create <code>slurm-JOBID.out</code> and <code>slurm-JOBID.err</code> in the job's working directory, subject to site configuration. Check progress and inspect logs:</p>
-<pre><code>squeue -u "$USER"
-# Illustrative ID only: replace 12345 with the numeric ID printed by sbatch
-cat slurm-12345.out
-cat slurm-12345.err</code></pre>
-<p>Replace <code>JOB_ID</code> with the numeric ID. If the job has already left the queue, check its final state with <code>sacct</code> where available. For a successful run of this particular fixture, stdout should include the Python host name and <code>Sum 1..100: 5050</code>; this expected value follows from the Python expression and does not validate any cluster configuration.</p>
-<h2>Interactive allocations</h2>
-<p>For a brief debugging session, request a small allocation using a partition and limits approved by your site:</p>
-<pre><code>salloc --time=00:15:00 --partition=PARTITION_NAME --nodes=1 --ntasks=1 --mem=1G</code></pre>
-<p>When the allocation is granted, <code>salloc</code> runs your default shell unless you provide another command. Within that allocation, use <code>srun</code> to launch a command on allocated resources, for example:</p>
-<pre><code>srun --ntasks=1 --pty bash -i</code></pre>
-<p>The step requests one task; if you need more tasks or CPUs, request them within the granted allocation and follow your site's interactive-job policy. Do not assume this example grants resources beyond the allocation.</p>
-<p>When finished, exit the shell/command started under the allocation; <code>salloc</code> then releases the allocation. If your site has a different interactive workflow, follow its documentation. Interactive sessions consume scheduled resources while active.</p>
-<h2>Troubleshoot from the job state and logs</h2>
-<ul>
-<li><strong>Pending (<code>PD</code>):</strong> inspect the reason in <code>squeue</code>'s last field and compare the request with partition limits and account access. An apparently idle node does not establish that the request is eligible. Ask the cluster support team about site-specific limits or priority if the reason is unclear.</li>
-<li><strong>Immediate submission error:</strong> confirm the partition name, account/partition authorization, and directive syntax. Use <code>sinfo</code> to see configured partitions, then consult local policy.</li>
-<li><strong>Module or import error:</strong> inspect both log files. Confirm the module is available and loaded inside the batch script, and that the executable or environment is accessible from compute nodes.</li>
-<li><strong>Out of memory or time limit:</strong> check the final state and accounting data if available. Profile a small representative input, then request resources justified by that measurement or reduce memory use. Do not guess a universal memory request.</li>
-<li><strong>Job completed but no expected result:</strong> check the exit code and stderr, confirm paths are valid from the job's working directory, and verify the program's output contract. A zero exit code alone does not establish scientific correctness.</li>
-</ul>
-<h2>Practice and limits</h2>
-<p>On your cluster, identify one usable partition, inspect its reported node states, submit the smoke-test job after replacing site-specific values, and record its job ID, final state, exit code, and output. If submission is denied or the example module is absent, do not keep retrying unchanged: use local documentation or ask administrators for permitted values.</p>
-<p>Slurm commands, module systems, partition names, accounting availability, and storage paths depend on version and site configuration. Check your cluster's guidance before using shared or node-local scratch. Cancel only your own unneeded jobs with <code>scancel JOB_ID</code>, after checking the ID. Never treat a short smoke test as evidence that a larger bioinformatics workload has adequate memory, runtime, or scientific validity.</p>
+# Replace this placeholder with a Python module name documented by your site.
+if ! command -v module &gt;/dev/null 2&gt;&amp;1; then
+  echo "module is not initialized in this batch shell; follow site batch-shell instructions." &gt;&amp;2
+  exit 127
+fi
+if ! module load REPLACE_WITH_SITE_DOCUMENTED_PYTHON_MODULE; then
+  echo "Python module load failed; refusing to use an unrelated interpreter." &gt;&amp;2
+  exit 1
+fi
+
+if ! python_path=$(command -v python3); then
+  echo "python3 is not available after the documented module load." &gt;&amp;2
+  exit 127
+fi
+printf 'Selected Python: %s\n' "$python_path"
+python3 --version
+hostname
+python3 hello.py</code></pre>
+<p>Save this block as <code>smoke.sbatch</code>, replacing the module placeholder before submission. The resource limits shown are examples, not portable recommendations. Check whether your site requires a partition, account, quality-of-service, storage path, or other directive, and add only values it documents for your account. Slurm reads <code>#SBATCH</code> directives before executing the script, so keep them above shell commands and do not put shell variables in their values.</p>
+<p>If your site explicitly documents that modules are not used and that <code>python3</code> is present in non-interactive batch jobs, replace the module check/load block with a fail-fast <code>command -v python3</code> check. Do not retain a fallback chain between <code>python</code>, <code>python3</code>, module names, or environments: choose the documented setup and print the selected executable as this example does.</p>
+<h2>Submit once and keep the returned identifier</h2>
+<p>Run submission from the directory containing the script and <code>hello.py</code>. Keep the following commands in the same Bash shell. <code>sbatch --parsable</code> returns the identifier assigned by Slurm; a federated or cluster-qualified response may be <code>JOB_ID;CLUSTER</code>. The validation accepts a numeric identifier and optional non-empty cluster suffix, and rejects unexpected output instead of building a log filename from it.</p>
+<pre><code>if ! submission=$(sbatch --parsable smoke.sbatch); then
+  echo "Submission failed; check the site policy and error above. No job ID was captured." &gt;&amp;2
+  exit 1
+fi
+if [[ "$submission" =~ ^([0-9]+)(;([^;[:space:]]+))?$ ]]; then
+  JOB_ID=${BASH_REMATCH[1]}
+  CLUSTER=${BASH_REMATCH[3]:-}
+else
+  printf 'Unexpected sbatch --parsable response: %s\n' "$submission" &gt;&amp;2
+  exit 1
+fi
+printf 'Slurm accepted job %s' "$JOB_ID"
+if [[ -n "$CLUSTER" ]]; then printf ' on cluster %s' "$CLUSTER"; fi
+printf '\n'</code></pre>
+<p>An assigned ID means the controller accepted the submission, not that the job started or succeeded. A pending state means it is waiting; it is not a failed run. Use the same captured ID to check the queue and accounting. A federated response includes a cluster suffix, which the commands below pass to Slurm's <code>-M</code> option.</p>
+<pre><code>if [[ -n "$CLUSTER" ]]; then
+  squeue -M "$CLUSTER" -j "$JOB_ID"
+  if ! accounting=$(sacct -M "$CLUSTER" --noheader --parsable2 --jobs="$JOB_ID" --format=JobID,State,ExitCode); then
+    echo "Accounting query unavailable; check site documentation and try later." &gt;&amp;2
+    exit 1
+  fi
+else
+  squeue -j "$JOB_ID"
+  if ! accounting=$(sacct --noheader --parsable2 --jobs="$JOB_ID" --format=JobID,State,ExitCode); then
+    echo "Accounting query unavailable; check site documentation and try later." &gt;&amp;2
+    exit 1
+  fi
+fi
+printf 'Accounting rows (job and possibly step records):\n%s\n' "$accounting"
+allocation=$(printf '%s\n' "$accounting" | awk -F'|' -v id="$JOB_ID" '$1 == id { print $2 "|" $3; exit }')
+if [[ -z "$allocation" ]]; then
+  echo "No allocation accounting row yet. This is not evidence of failure; wait or ask the site about accounting." &gt;&amp;2
+  exit 1
+fi
+if [[ "$allocation" != "COMPLETED|0:0" ]]; then
+  printf 'Success is not confirmed (allocation record: %s). Pending or unavailable records do not prove failure.\n' "$allocation" &gt;&amp;2
+  echo "Do not resubmit automatically. Check the state and site guidance first." &gt;&amp;2
+  exit 1
+fi
+if grep -Fq 'Sum 1..100: 5050' "slurm-${JOB_ID}.out"; then
+  echo "Confirmed COMPLETED/0:0 and expected synthetic output."
+else
+  echo "Job reports COMPLETED/0:0 but the expected output line is absent; inspect the job output and working directory." &gt;&amp;2
+  exit 1
+fi</code></pre>
+<p>Use the allocation row whose <code>JobID</code> exactly matches <code>$JOB_ID</code>, not a step row such as <code>.batch</code>. The success check above requires both <code>COMPLETED</code> and exit code <code>0:0</code> before checking the expected output in <code>slurm-$JOB_ID.out</code>. A zero exit code alone does not validate a scientific workflow.</p>
+<p><strong>Worked reading:</strong> if the row for your captured ID reads <code>ID|PENDING|0:0</code>, the state is still pending, so the success check correctly refuses to inspect success output. Wait and check again according to site guidance. If a terminal row instead reads <code>ID|FAILED|1:0</code>, the job failed with a non-zero exit status; after recording that final state, inspect <code>slurm-$JOB_ID.err</code> and the job's output to diagnose it. These rows are illustrative, not results from a real job.</p>
+<p>If the job is pending, it may not have created logs yet. If the queue no longer shows it or <code>sacct</code> has no row, accounting may be delayed or unavailable. Neither case means failure: wait, check the site status guidance, or contact support. Do not resubmit in a loop. First inspect the recorded state. For a terminal failure, use the same validated ID to inspect its error log, if the site stores logs in this shared working directory:</p>
+<pre><code>cat "slurm-${JOB_ID}.err"
+cat "slurm-${JOB_ID}.out"</code></pre>
+<p>For a module error, confirm that the documented module system is initialized inside the batch shell and that the exact module is available there. For a submission rejection, inspect the site-required partition, account, resource limits, and directive syntax. For an out-of-memory or time-limit state, consult accounting and site policy before changing resource requests. If accounting is disabled or delayed, use the site's documented status route rather than inferring failure from absent records or files.</p>
+<h2>What this lesson did and did not test</h2>
+<p>The Python file and arithmetic are synthetic and runnable locally. The batch-script syntax and failure/success paths are tested with local command mocks only; mocks do not schedule a job, load a real site module, exercise a compute node, or verify a cluster's accounting and filesystem behavior. No real cluster, scheduler, paid service, private research material, account, or email is used by the local tests. Site setup, permissions, resource policy, and actual job execution remain for your administrator-approved environment.</p>
+<p>After this reference, continue to <a href="hpc-submission-part1.html">Writing Slurm Job Scripts</a> to learn how to adapt directives and script structure for a real workload. If you do not have HPC access or need a different prerequisite, return to <a href="../start-here.html">Start Here</a>; HPC is optional.</p>
 <h2>References</h2>
 <ul>
 <li><a href="https://slurm.schedmd.com/sinfo.html">Slurm <code>sinfo</code> manual</a>, partition and node reporting.</li>
 <li><a href="https://slurm.schedmd.com/squeue.html">Slurm <code>squeue</code> manual</a>, output formats and job state codes.</li>
 <li><a href="https://slurm.schedmd.com/sbatch.html">Slurm <code>sbatch</code> manual</a>, batch submission, directives, and output files.</li>
-<li><a href="https://slurm.schedmd.com/salloc.html">Slurm <code>salloc</code> manual</a>, interactive allocations.</li>
 <li><a href="https://slurm.schedmd.com/sacct.html">Slurm <code>sacct</code> manual</a>, job accounting.</li>
+<li><a href="https://modules.readthedocs.io/en/latest/module.html">Environment Modules <code>module</code> manual</a>, including shell initialization.</li>
 <li><a href="https://lmod.readthedocs.io/en/latest/">Lmod documentation</a>. The installed module system and commands may differ by site.</li>
 </ul>
 <aside aria-labelledby="tutorial-feedback-title" class="lesson-feedback" id="tutorial-feedback"><h2 id="tutorial-feedback-title">Help improve this tutorial</h2><p>Found an error, a broken link, or a step that needs a clearer explanation? Please <a href="../contact.html">contact me</a>. Your feedback helps me keep this resource accurate and useful.</p></aside></article>
