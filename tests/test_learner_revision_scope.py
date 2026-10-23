@@ -14,6 +14,7 @@ from reviewed_tutorial_baseline import (
     normalize_reviewed_content,
 )
 from reader_typography_baseline import normalize_reader_typography
+from beginner_walkthrough_baseline import normalize_beginner_walkthrough_revision
 from six_lesson_revision_baseline import normalize_six_lesson_revision
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -52,6 +53,8 @@ class LearnerRevisionScopeTests(unittest.TestCase):
                 after = (ROOT / relative).read_text(encoding="utf-8")
                 # One legacy page nests the continuation nav inside its article.
                 # For these 54 pages the helper masks navs, never article content.
+                before = normalize_beginner_walkthrough_revision(relative, before)
+                after = normalize_beginner_walkthrough_revision(relative, after)
                 before = normalize_six_lesson_revision(relative, before)
                 after = normalize_six_lesson_revision(relative, after)
                 self.assertEqual(
@@ -70,6 +73,8 @@ class LearnerRevisionScopeTests(unittest.TestCase):
             with self.subTest(page=relative):
                 after = (ROOT / relative).read_text(encoding="utf-8")
                 raw_before, raw_after = before, after
+                before = normalize_beginner_walkthrough_revision(relative, before)
+                after = normalize_beginner_walkthrough_revision(relative, after)
                 before = normalize_six_lesson_revision(relative, before)
                 after = normalize_six_lesson_revision(relative, after)
                 self.assertEqual(

@@ -73,7 +73,7 @@ gtag('consent', 'default', {
     }
   },
   "datePublished": "2026-09-01",
-  "dateModified": "2026-10-21",
+  "dateModified": "2026-10-23",
   "url": "https://theomicshub.com/tutorials/experimental-design-batch-effects.html",
   "name": "Experimental Design and Batch Effects",
   "isPartOf": {
@@ -187,21 +187,27 @@ function toggleMobileMenu() {
 </tbody></table></div>
 <p>A table with both conditions in every batch is a useful first check, but it does not prove the design is adequate. Replication, missing combinations, paired structure, and other covariates still matter. If condition and batch encode identical information, the model matrix is rank-deficient and the separate coefficients are not identifiable. If that happens before processing, redesign the allocation; after data collection, state the limitation and avoid claiming a correction recovered the separate effects.</p>
 <h2>Build and validate a sample sheet</h2>
-<p>Use one row per measured sample. If several samples come from one experimental unit, repeat its unit ID in those rows rather than treating those rows as independent units. Include all variables needed to link data files and describe the planned model. For example:</p>
+<p>Use one row per measured sample. If several samples come from one experimental unit, repeat its unit ID in those rows rather than treating those rows as independent units. Include all variables needed to link data files and describe the planned model. This small invented sample sheet is a code fixture, not a sample-size recommendation or biological result:</p>
 <pre><code>sample_id,experimental_unit,condition,batch,library_id,sex,collection_date
 S01,Donor01,control,Lane1,L01,F,2024-01-12
 S02,Donor02,control,Lane2,L02,M,2024-01-13
 S03,Donor03,treated,Lane1,L03,F,2024-01-12
 S04,Donor04,treated,Lane2,L04,M,2024-01-13</code></pre>
-<p>Use an empty working directory for these examples. Save the rows as <code>metadata.csv</code> (or create it with the shell heredoc below); they are illustrative and do not demonstrate an appropriate sample size or biological result. Check <code>python --version</code>, then verify pandas is available with <code>python -c "import pandas; print(pandas.__version__)"</code>.</p>
+<p>Use the same metadata file for either language. The Python route requires Python 3 and pandas; the base R route requires only R. Save and run one validator, not both. Each checks required fields, blanks, and unique sample IDs, prints the batch-by-condition counts, and writes <code>metadata.validated.csv</code>. Repeated experimental-unit IDs remain allowed because repeated or paired measurements can be legitimate; this structural check does not validate identities, replication, or model suitability.</p>
 <pre><code>cat &gt; metadata.csv &lt;&lt;'EOF'
 sample_id,experimental_unit,condition,batch,library_id,sex,collection_date
 S01,Donor01,control,Lane1,L01,F,2024-01-12
 S02,Donor02,control,Lane2,L02,M,2024-01-13
 S03,Donor03,treated,Lane1,L03,F,2024-01-12
 S04,Donor04,treated,Lane2,L04,M,2024-01-13
-EOF</code></pre>
-<p>Save the Python block below as <code>validate_metadata.py</code> in the working directory and run <code>python validate_metadata.py</code>. It requires pandas, stops on missing required fields, blank values, or duplicate sample IDs, prints the batch-by-condition counts, and writes <code>metadata.validated.csv</code>. It deliberately does not reject repeated experimental-unit IDs, since repeated measurements and paired designs can be valid. Review the table for empty cells and make sure every row corresponds to the intended sample unit before using the output downstream.</p>
+EOF
+</code></pre>
+<h3>Python validator</h3>
+<p>Save as <code>validate_metadata.py</code>. Install pandas only if it is not already available in the Python environment you manage.</p>
+<pre><code>python --version
+python -m pip install pandas
+python validate_metadata.py
+</code></pre>
 <pre><code>import pandas as pd
 
 meta = pd.read_csv("metadata.csv", dtype={"sample_id": "string"})
@@ -222,11 +228,50 @@ if meta["sample_id"].duplicated().any():
 print(pd.crosstab(meta["batch"], meta["condition"], dropna=False))
 meta.to_csv("metadata.validated.csv", index=False)
 print("Wrote metadata.validated.csv")</code></pre>
-<p>For the example rows, the table should show one control and one treated sample in each lane. If the script stops, correct the sample sheet rather than bypassing the check. A passing check verifies only these structural conditions; it does not establish correct sample identities, sufficient replication, or suitability for a statistical model.</p>
+<h3>Base R validator</h3>
+<p>Save this equivalent base R script as <code>validate_metadata.R</code>. It has no package installation step.</p>
+<pre><code>meta &lt;- read.csv("metadata.csv", check.names = FALSE, colClasses = "character",
+                na.strings = character(), strip.white = FALSE)
+required &lt;- c("sample_id", "experimental_unit", "condition", "batch", "library_id")
+missing_columns &lt;- setdiff(required, names(meta))
+if (length(missing_columns) &gt; 0) {
+  stop(paste("Missing columns:", paste(missing_columns, collapse = ", ")))
+}
+for (column in required) {
+  values &lt;- trimws(meta[[column]])
+  if (anyNA(values) || any(values == "")) {
+    stop(paste("Missing or blank values in", column))
+  }
+}
+if (anyDuplicated(meta$sample_id)) {
+  duplicates &lt;- unique(meta$sample_id[duplicated(meta$sample_id) |
+                                        duplicated(meta$sample_id, fromLast = TRUE)])
+  stop(paste("Duplicate sample_id values:", paste(duplicates, collapse = ", ")))
+}
+print(table(meta$batch, meta$condition))
+write.csv(meta, "metadata.validated.csv", row.names = FALSE, na = "")
+cat("Wrote metadata.validated.csv\n")</code></pre>
+<pre><code>Rscript --version
+Rscript validate_metadata.R
+</code></pre>
+<p>With the fixture, each lane contains one control and one treated sample. If a validator stops for a missing field, blank value, or duplicate sample ID, correct the file rather than bypassing the check. A passing result only verifies these structural conditions.</p>
 <h2>Explore expression patterns with PCA</h2>
-<p>PCA can help reveal dominant patterns in an expression matrix, but it is exploratory and cannot label a pattern as biological or technical by itself. The following base R example expects a numeric, non-negative count matrix in <code>counts.csv</code>, with feature IDs in the first column and sample IDs as column names. Its columns must correspond exactly to the sample IDs in the validated metadata. The log-CPM-like transform is a simple exploratory transform, not a count-model input for differential-expression testing.</p>
+<p>PCA can help reveal dominant patterns in an expression matrix, but it is exploratory and cannot label a pattern as biological or technical by itself. Choose either the base R or Python implementation below. Both require a finite, non-negative count matrix in <code>counts.csv</code>, with feature IDs in the first column and sample IDs as column names, plus the validated metadata produced by either validator. Counts columns must match metadata sample IDs exactly; each implementation aligns metadata to the count-column order. The log-CPM-like transform is a simple exploratory transform, not a count-model input for differential-expression testing.</p>
+<h3>Shared invented count fixture</h3>
+<p>This tiny table uses the same four invented sample IDs as the metadata above. It tests file structure and code flow only; values do not represent an assay and support no biological conclusion.</p>
+<pre><code>cat &gt; counts.csv &lt;&lt;'EOF'
+feature_id,S01,S02,S03,S04
+gene_A,10,12,40,38
+gene_B,30,28,15,17
+gene_C,5,8,22,18
+gene_D,50,45,55,60
+EOF
+</code></pre>
+<h3>Base R PCA</h3>
+<p>Save as <code>pca.R</code> and run with <code>Rscript pca.R</code>. It uses base R only.</p>
 <pre><code>counts_df &lt;- read.csv("counts.csv", row.names = 1, check.names = FALSE)
-meta &lt;- read.csv("metadata.validated.csv", stringsAsFactors = FALSE)
+meta &lt;- read.csv("metadata.validated.csv", stringsAsFactors = FALSE,
+                 check.names = FALSE)
 counts &lt;- as.matrix(counts_df)
 
 if (!is.numeric(counts) || anyNA(counts) || any(!is.finite(counts)) || any(counts &lt; 0)) {
@@ -245,27 +290,83 @@ libsize &lt;- colSums(counts)
 if (any(libsize == 0)) stop("A sample has zero total counts")
 cpm &lt;- sweep(counts, 2, libsize, "/") * 1e6
 logcpm &lt;- log2(cpm + 1)
-
-# Samples are rows for prcomp; remove features with no variation.
 variable &lt;- apply(logcpm, 1, function(x) length(unique(x)) &gt; 1)
 if (sum(variable) &lt; 2) stop("Need at least two variable features for a 2D PCA")
 pca &lt;- prcomp(t(logcpm[variable, , drop = FALSE]), center = TRUE, scale. = FALSE)
 if (ncol(pca$x) &lt; 2) stop("PCA returned fewer than two components")
-
 pc_df &lt;- data.frame(PC1 = pca$x[, 1], PC2 = pca$x[, 2], meta,
                     check.names = FALSE)
 write.csv(pc_df, "pca_coordinates.csv", row.names = FALSE)
 print(summary(pca))</code></pre>
-<p>To try the code without biological data, work in an empty directory and create the following clearly synthetic fixture with the same four sample IDs as the metadata example. This toy table tests file structure and code flow only; its values do not represent an assay or support biological conclusions.</p>
-<pre><code>cat &gt; counts.csv &lt;&lt;'EOF'
-feature_id,S01,S02,S03,S04
-gene_A,10,12,40,38
-gene_B,30,28,15,17
-gene_C,5,8,22,18
-gene_D,50,45,55,60
-EOF</code></pre>
-<p>Save the R block above as <code>pca.R</code> in that directory, then run <code>Rscript --version</code> and <code>Rscript pca.R</code>. It should write <code>pca_coordinates.csv</code> with four sample rows and columns <code>PC1</code>, <code>PC2</code>, and the seven metadata fields; the printed summary reports the variance represented by the components. If you see the explicit stop about matching sample IDs, align or correct the count-column names; do not bypass the check. If you substitute real data, use a count matrix produced for your assay and reference, with unique feature IDs, finite non-negative numeric entries, and columns corresponding exactly to sample IDs. The official <a href="https://bioconductor.org/packages/release/bioc/vignettes/DESeq2/inst/doc/DESeq2.html">DESeq2 worked vignette</a> explains count-matrix/sample-metadata correspondence for RNA-seq; this PCA example itself uses base R. A successful run establishes only that this input passed these checks and produced coordinates, not that the assay, design, or biological interpretation is valid.</p>
-<p>This writes sample coordinates and prints the variance summary; it does not draw a plot. Plot the coordinates with points colored by condition and shaped by batch, then inspect whether each factor tracks the visible separation. The explicit alignment and zero-library checks prevent common input mismatches; the feature filter avoids asking scaled PCA to divide constant features by zero. With <code>scale. = FALSE</code>, highly variable features can dominate, so treat this as a diagnostic view and document the transform and filtering choices.</p>
+<h3>Python PCA</h3>
+<p>Save as <code>pca.py</code>. This route requires Python 3 and NumPy; it uses the same transform, variable-feature filter, sample alignment checks, and output fields as the R example. Install NumPy only if it is not already available.</p>
+<pre><code>python --version
+python -m pip install numpy
+python pca.py
+</code></pre>
+<pre><code>import csv
+import numpy as np
+
+with open("counts.csv", newline="", encoding="utf-8") as handle:
+    reader = csv.DictReader(handle)
+    count_columns = reader.fieldnames
+    if not count_columns or count_columns[0] != "feature_id":
+        raise ValueError("counts.csv must start with a feature_id column")
+    sample_ids = count_columns[1:]
+    if not sample_ids or len(sample_ids) != len(set(sample_ids)):
+        raise ValueError("Count sample IDs must be present and unique")
+    feature_ids = []
+    rows = []
+    for row in reader:
+        feature_ids.append(row["feature_id"])
+        try:
+            rows.append([float(row[sample_id]) for sample_id in sample_ids])
+        except (TypeError, ValueError) as exc:
+            raise ValueError("Counts must be numeric for every feature and sample") from exc
+counts = np.asarray(rows, dtype=float)
+if counts.ndim != 2 or counts.shape[0] == 0 or counts.shape[1] == 0:
+    raise ValueError("counts.csv must contain at least one feature and sample")
+if not np.isfinite(counts).all() or (counts &lt; 0).any():
+    raise ValueError("counts.csv must contain finite, non-negative numeric values")
+if len(feature_ids) != len(set(feature_ids)):
+    raise ValueError("Feature IDs must be unique")
+
+with open("metadata.validated.csv", newline="", encoding="utf-8") as handle:
+    metadata_reader = csv.DictReader(handle)
+    metadata_fields = metadata_reader.fieldnames or []
+    metadata = list(metadata_reader)
+if "sample_id" not in metadata_fields:
+    raise ValueError("Metadata must contain sample_id")
+metadata_ids = [row["sample_id"] for row in metadata]
+if len(metadata_ids) != len(set(metadata_ids)):
+    raise ValueError("Sample IDs must be unique in counts and metadata")
+if set(sample_ids) != set(metadata_ids):
+    raise ValueError("Counts columns and metadata sample_id values must match exactly")
+metadata_by_id = {row["sample_id"]: row for row in metadata}
+aligned_metadata = [metadata_by_id[sample_id] for sample_id in sample_ids]
+
+library_sizes = counts.sum(axis=0)
+if (library_sizes == 0).any():
+    raise ValueError("A sample has zero total counts")
+logcpm = np.log2(counts / library_sizes * 1e6 + 1)
+variable = np.ptp(logcpm, axis=1) &gt; 0
+if int(variable.sum()) &lt; 2:
+    raise ValueError("Need at least two variable features for a 2D PCA")
+samples_by_features = logcpm[variable, :].T
+centered = samples_by_features - samples_by_features.mean(axis=0)
+u, singular_values, _ = np.linalg.svd(centered, full_matrices=False)
+if len(singular_values) &lt; 2:
+    raise ValueError("PCA returned fewer than two components")
+coordinates = u[:, :2] * singular_values[:2]
+with open("pca_coordinates.csv", "w", newline="", encoding="utf-8") as handle:
+    fields = ["PC1", "PC2"] + metadata_fields
+    writer = csv.DictWriter(handle, fieldnames=fields)
+    writer.writeheader()
+    for index, sample_metadata in enumerate(aligned_metadata):
+        writer.writerow({"PC1": coordinates[index, 0], "PC2": coordinates[index, 1],
+                         **sample_metadata})
+print("Wrote pca_coordinates.csv")</code></pre>
+<p>Run each PCA script in the directory containing <code>counts.csv</code> and <code>metadata.validated.csv</code>. A successful run writes <code>pca_coordinates.csv</code> with four sample rows, <code>PC1</code>, <code>PC2</code>, and the seven metadata fields. PCA axes may be sign-flipped between implementations; compare the represented subspace and sample structure, not the signs alone. Both stop if sample IDs are duplicated, missing, or extra, if counts are invalid or a library has zero total, or if fewer than two features vary. Do not bypass an alignment failure. The PCA does not draw a plot; color points by condition and shape by batch for an exploratory view. With unscaled features, high-variance features can dominate. A successful software run does not validate assay quality, design adequacy, or biological interpretation. The official <a href="https://bioconductor.org/packages/release/bioc/vignettes/DESeq2/inst/doc/DESeq2.html">DESeq2 worked vignette</a> explains count-matrix/sample-metadata correspondence for RNA-seq.</p>
 <h2>Choose a modeling response</h2>
 <ul>
 <li><strong>Conditions represented across batches:</strong> include batch and condition in the analysis design when supported by the study structure. For a simple independent-sample RNA-seq comparison, a DESeq2 design might be <code>~ batch + condition</code>; it is an example, not a universal formula. Paired, repeated-measures, interaction, or nested designs require terms that reflect those units and questions.</li>

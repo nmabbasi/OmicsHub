@@ -29,6 +29,9 @@ MODIFIED = {
     "tutorials/scrna-seq-trajectory-inference.html": "2026-09-17",
     "tutorials/advanced-ai-single-cell.html": "2026-08-25",
     "tutorials/ai-coding-cursor-aider.html": "2026-09-08",
+    "tutorials/computer-data-fundamentals.html": "2026-08-16",
+    "tutorials/statistics-for-bioinformatics.html": "2026-08-15",
+    "tutorials/experimental-design-batch-effects.html": "2026-09-01",
 }
 # These earlier PR changes only propagate adjacent-lesson title updates;
 # they remain navigation-only, unlike the six newly revised lessons above.

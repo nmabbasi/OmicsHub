@@ -7,6 +7,7 @@ import re
 import subprocess
 import unittest
 
+from beginner_walkthrough_baseline import normalize_beginner_walkthrough_revision
 from six_lesson_revision_baseline import normalize_six_lesson_revision
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -70,15 +71,19 @@ class ReaderPunctuationTests(unittest.TestCase):
                     expected = expected.replace(pair['before'], pair['after'])
                 for pair in self.manifest['stylesheet_versions']:
                     expected = expected.replace(pair['before'], pair['after'])
+                expected = normalize_beginner_walkthrough_revision(relative, expected)
+                current = normalize_beginner_walkthrough_revision(relative, (ROOT/relative).read_text())
                 expected = normalize_six_lesson_revision(relative, expected)
-                current = normalize_six_lesson_revision(relative, (ROOT/relative).read_text())
+                current = normalize_six_lesson_revision(relative, current)
                 self.assertEqual(current, expected)
 
     def test_all_pre_inline_code_and_executable_script_blocks_remain_byte_identical(self):
         patterns = [r'<pre\b[^>]*>.*?</pre>', r'<code\b[^>]*>.*?</code>']
         for relative, before in self.old.items():
+            before = normalize_beginner_walkthrough_revision(relative, before)
+            after = normalize_beginner_walkthrough_revision(relative, (ROOT/relative).read_text())
             before = normalize_six_lesson_revision(relative, before)
-            after = normalize_six_lesson_revision(relative, (ROOT/relative).read_text())
+            after = normalize_six_lesson_revision(relative, after)
             for pattern in patterns:
                 with self.subTest(path=relative, pattern=pattern):
                     old_blocks, new_blocks = re.findall(pattern, before, re.S), re.findall(pattern, after, re.S)
@@ -98,8 +103,10 @@ class ReaderPunctuationTests(unittest.TestCase):
     def test_links_anchor_ids_and_modification_metadata_are_unchanged(self):
         for relative, before in self.old.items():
             with self.subTest(path=relative):
+                before = normalize_beginner_walkthrough_revision(relative, before)
+                after = normalize_beginner_walkthrough_revision(relative, (ROOT/relative).read_text())
                 before = normalize_six_lesson_revision(relative, before)
-                after = normalize_six_lesson_revision(relative, (ROOT/relative).read_text())
+                after = normalize_six_lesson_revision(relative, after)
                 old, new = LinkAndIdParser(before), LinkAndIdParser(after)
                 self.assertEqual(old.links, new.links)
                 self.assertEqual(old.ids, new.ids)

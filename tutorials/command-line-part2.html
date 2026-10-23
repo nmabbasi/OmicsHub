@@ -176,6 +176,28 @@ function toggleMobileMenu() {
 <li>Write short, reproducible one-line or small multi-step shell workflows that extract specific records and produce simple summaries.</li>
 <li>Recognize when line-oriented tools are appropriate versus when sequence-aware tools are required.</li>
 </ul>
+<h2 id="cli-part2-tool-checkpoint">Setup checkpoint before the exercise</h2>
+<p>Use a Bash terminal, not an R or Python console. On Windows, use a Linux/WSL terminal for this Bioconda route rather than native PowerShell. You do not need R, Python, Scanpy or Seurat for this lesson. Check the tools before creating the practice files.</p>
+<p><strong>Already have SeqKit?</strong> Run this readiness check. It stops at the first missing command without closing your interactive terminal. If every command is found and a SeqKit version prints, skip the installation steps and continue to the exercise.</p>
+<pre id="cli-part2-preflight"><code>(
+  for tool in awk cut sort uniq grep sed seqkit; do
+    command -v "$tool" || { printf 'Missing tool: %s\n' "$tool" &gt;&amp;2; exit 1; }
+  done
+  seqkit version
+)</code></pre>
+<p><strong>Need SeqKit?</strong> First check whether Micromamba is available:</p>
+<pre id="cli-part2-micromamba-check"><code>command -v micromamba &amp;&amp; micromamba --version</code></pre>
+<p>If it is not found, stop here and follow only <a href="conda-mamba-part1.html#install-micromamba">Install Micromamba and verify the executable</a>, then return to this checkpoint. You do not need to complete that later lesson's QC environment lab or its optional R/Python examples first. On a managed computer, use your institution's approved installation route.</p>
+<p>Once the executable is available, load its Bash hook in this terminal. This enables activation for the current shell; it does not rewrite your startup files. Stop if either command fails:</p>
+<pre id="cli-part2-shell-hook"><code>hook="$(micromamba shell hook --shell bash)" &amp;&amp; eval "$hook"</code></pre>
+<p>For the first setup only, create a separate environment containing SeqKit. Review the package transaction and confirm it when prompted. Do not install it into a research environment. If <code>cli-sequences</code> already exists from an earlier visit, skip creation and try the activation check instead; do not overwrite it.</p>
+<pre id="cli-part2-install"><code>micromamba create -n cli-sequences --override-channels -c conda-forge -c bioconda --channel-priority strict seqkit</code></pre>
+<p>After creation succeeds, activate it and verify the actual command. The chained checks do not print a success from another installed SeqKit if activation fails:</p>
+<pre id="cli-part2-activate"><code>micromamba activate cli-sequences &amp;&amp;
+command -v seqkit &amp;&amp;
+seqkit version</code></pre>
+<p>Rerun the readiness check above before continuing. Expected evidence is a command path for each utility and a SeqKit version, not just a downloaded file or an environment name. In a new terminal, repeat the hook and activation checks, not environment creation. If solving fails, retain the error and inspect platform support and channel order instead of switching channels blindly. See the official <a href="https://mamba.readthedocs.io/en/latest/installation/micromamba-installation.html" rel="noopener" target="_blank">Micromamba installation guidance</a> and <a href="https://bioconda.github.io/" rel="noopener" target="_blank">Bioconda channel policy</a>.</p>
+<p><strong>Setup validation:</strong> On Ubuntu Linux x86_64, the displayed check, Bash hook, creation and activation commands succeeded with Micromamba 2.9.0 and SeqKit 2.14.0 in a fresh home directory and environment root, reusing an existing executable and package cache. The readiness check and both expected FASTA motif matches passed. The installer itself and other operating systems were not retested in this revision.</p>
 <h2>Why text processing matters in bioinformatics</h2>
 <p>Many bioinformatics data formats (FASTA, FASTQ, variant tables, gene annotation TSVs) are plain text. Being able to filter, extract, and summarize these files from the command line lets you explore data quickly, create reproducible preprocessing steps, and plug into larger pipelines. These tools process input a line at a time and can be useful in pipelines over large files; sorting may need substantial memory or temporary disk space, so do not assume every command in a pipeline has constant memory use. That same line-oriented behavior means you must know the file layout (for example, whether sequence lines are wrapped) before running a command like grep or cut.</p>
 <h3>Key concept: line orientation vs. record orientation</h3>
@@ -221,16 +243,7 @@ BAD_FASTQ
 head -n 2 data.tsv
 </code></pre>
 <p>The first two TSV lines should be its header and <code>GENE_A/S1/120</code>, separated by tabs. Inspect the fixtures before processing them. The split sequence <code>CCA</code> followed by <code>TGCGTT</code> is one record, not two reads.</p>
-<details><summary>Need SeqKit?</summary><p>Follow the <a href="conda-mamba-part1.html">Micromamba environment lesson</a> first if you do not yet have an initialized Micromamba shell. In an initialized shell, this creates a separate environment; do not install into a research environment just for the exercise.</p>
-<pre id="cli-part2-install"><code>micromamba create -n cli-sequences --override-channels -c conda-forge -c bioconda --strict-channel-priority seqkit
-micromamba activate cli-sequences
-seqkit version
-</code></pre>
-<p>This package-manager route is preparation guidance, not the route used in the recorded SeqKit test. The local test used the official Linux SeqKit 2.14.0 binary; record your own installed version.</p></details>
-<pre id="cli-part2-preflight"><code>command -v awk cut sort uniq grep sed seqkit
-seqkit version
-</code></pre>
-<p>Stop if a required command is missing. Expected evidence is a resolved path for each utility and a SeqKit version, not merely the presence of a downloaded file.</p>
+
 <h3>1) Inspect files safely</h3>
 <p>Before running extraction commands, inspect the file to determine layout.</p>
 <pre><code># Show the first 40 lines of a FASTA to check header and wrap behavior

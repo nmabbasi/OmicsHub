@@ -180,11 +180,12 @@ function toggleMobileMenu() {
 <div class="p-6 bg-blue-50 border border-blue-100 rounded-xl mb-8">
 <h4 class="text-lg font-bold text-blue-900 mb-2">Learning Objectives &amp; Prerequisites</h4>
 <ul class="list-disc list-inside text-blue-800 space-y-1 mb-4">
-<li><strong>Prerequisites:</strong> Micromamba installed and initialized in Bash on Linux/macOS/WSL (or use the separately labeled PowerShell installation instructions); permission to create files and install packages in a user-owned location.</li>
+<li><strong>Prerequisites:</strong> A Bash terminal and permission to create files and install packages in a user-owned location. If Micromamba is not installed yet, use the installation section below first; Windows PowerShell has separately labeled installation instructions.</li>
 <li><strong>Objective:</strong> Install Micromamba, create and activate Conda-compatible environments, install Bioconda tools, export a reproducible specification, and diagnose common failures.</li>
 <li><strong>Expected Output:</strong> A tested <code>environment.yml</code> that documents a small bioinformatics environment without modifying the system Python installation.</li>
 </ul>
 </div>
+<p><strong>Required route:</strong> <a href="#install-micromamba">Install and verify Micromamba</a> if needed, read the channel policy, then jump to the <a href="#qc-environment-lab">small QC environment lab</a>. That lab creates and checks one Python/FastQC/MultiQC environment. The other creation commands are alternative reference examples, not extra steps to run in sequence; several deliberately reuse <code>qc-tools</code>. You do not need the combined R/Python environment or any cleanup command to complete the required lab. If you came from Command Line Part 2, finish installation only, then <a href="command-line-part2.html#cli-part2-tool-checkpoint">return to its SeqKit checkpoint</a>.</p>
 <h2>Why environment management matters in bioinformatics</h2>
 <p class="lesson-lead">Bioinformatics projects combine command-line programs, Python libraries, R packages, compiled dependencies, and reference-data utilities. These components often require different versions of shared libraries. Installing everything into a system Python or one shared environment makes it difficult to identify which project changed a dependency and can break an older analysis.</p>
 <p>An environment is an isolated prefix containing an interpreter, packages, and their dependencies. It does not replace good scientific documentation: an environment file records software requirements, while the workflow should also record input data, reference versions, parameters, and results. The goal is to make the computational part of an analysis inspectable and repeatable on another machine.</p>
@@ -195,7 +196,7 @@ function toggleMobileMenu() {
 <p><strong>Conda</strong> remains a general package and environment manager with a large user base and extensive documentation. <strong>Miniforge</strong> is a small Conda distribution configured for the conda-forge ecosystem and is a practical choice when you want a traditional Conda installation with the familiar <code>conda</code> command. Choose one primary manager per machine or project. Do not initialize several competing base installations and then guess which executable is running.</p>
 <h3>Mamba 2: compatible terminology, different installation story</h3>
 <p>In Mamba 2, the <code>mamba</code> executable has the same user interface and experience as <code>micromamba</code>. Older tutorials that tell users to install the Python-based Mamba package into a Conda base environment are therefore not the best starting point for a new installation. Existing Mamba or Conda environments can still be useful, but new users should follow the current installation documentation for the selected tool.</p>
-<h2>Install Micromamba</h2>
+<h2 id="install-micromamba">Install Micromamba</h2>
 <p>The following route is documented for Linux, macOS, and Git Bash on Windows. It downloads and runs the official installer script over HTTPS, then initializes the selected shell. Review the script and follow local policy before running it on a managed or highly restricted system.</p>
 <h3>Linux, macOS, or Git Bash</h3>
 <pre><code class="language-bash"># Install the current Micromamba executable using the official installer
@@ -262,11 +263,13 @@ micromamba create -p ./env \
   python=3.11 fastqc
 micromamba activate ./env
 micromamba deactivate</code></pre>
-<p>Remove an environment only after checking that it is not referenced by a scheduled job or notebook kernel:</p>
+<h3>Optional cleanup after you finish</h3>
+<p>Cleanup is not required for the lab. Skip these removal commands while you still need the environment. Remove an environment only after checking that it is not referenced by a scheduled job or notebook kernel:</p>
 <pre><code class="language-bash">micromamba env remove -n qc-tools
 # For a prefix environment:
 # micromamba env remove -p ./env</code></pre>
-<h2>Install Python, R, and command-line tools safely</h2>
+<h2>Optional reference: combine Python, R, and command-line tools</h2>
+<p>Skip this section for the required QC lab. This larger single-cell environment can download substantial dependencies and is not needed for the Bash lessons, SeqKit setup or the authored YAML exercise. Continue at <a href="#qc-environment-lab">the small QC environment lab</a> instead unless you deliberately want this separate, untested extension.</p>
 <p>Prefer packages from the Conda-compatible channels when a suitable package exists. Use <code>pip</code> only for packages that are not available through the selected Conda channels, and install it after the compiled Conda dependencies. Record those pip requirements in the environment file.</p>
 <pre><code class="language-bash">micromamba create -n single-cell \
   --override-channels -c conda-forge -c bioconda --channel-priority strict \
@@ -280,7 +283,7 @@ python -c "import scanpy, anndata; print(scanpy.__version__, anndata.__version__
 R --slave -e "cat(R.version.string, '\n')"
 samtools --version | head -n 1</code></pre>
 <p>Do not assume that a package name is identical across ecosystems. For example, an R package may be named with an <code>r-</code> prefix and a Bioconductor package may use a <code>bioconductor-</code> prefix. Search the relevant channel and read the package recipe before adding it to a production environment.</p>
-<h2>Make the environment reproducible</h2>
+<h2 id="qc-environment-lab">Required lab: make a small QC environment reproducible</h2>
 <p>An environment file is a readable record of requested packages and channels. It is not a complete record of a scientific analysis, and a broad export can contain platform-specific build details. For teaching and cross-platform sharing, start with a small, intentional specification and test it on a clean environment.</p>
 <p>Work in a project directory so the authored specification and later exports stay together. In Bash, create and enter a directory, then use the displayed here-document to write the exact YAML file; it does not install anything or prove that a solve will succeed.</p>
 <pre><code class="language-bash">mkdir -p ~/projects/qc-environment
@@ -378,7 +381,7 @@ micromamba clean --all
 df -h "$HOME"
 quota -s 2&gt;/dev/null || true</code></pre>
 <p>Do not use <code>sudo</code> to install packages into a user-owned environment. On a cluster, request a project storage location if the home directory has a small quota, then initialize Micromamba with a root prefix there.</p>
-<h2>A complete current example</h2>
+<h2>Optional alternative: two fresh solves from the authored request</h2>
 <p>This workflow uses the authored <code>environment.yml</code> saved above for two fresh solves, checks the tools in each environment, and retains a resolved export as an audit record. Unlike the reviewed-snapshot exercise, its second solve uses the original package requests and may select different compatible versions. Start with one analysis step rather than installing every program used by a laboratory.</p>
 <pre><code class="language-bash">set -euo pipefail
 

@@ -5,6 +5,11 @@ import subprocess
 import unittest
 import xml.etree.ElementTree as ET
 
+from beginner_walkthrough_baseline import (
+    BEGINNER_WALKTHROUGH_ARTICLES,
+    PUBLISHED_PR9,
+    normalize_beginner_walkthrough_revision,
+)
 from six_lesson_revision_baseline import (
     PUBLISHED_PR8,
     ROOT,
@@ -88,8 +93,12 @@ class SixLessonRevisionScopeTests(unittest.TestCase):
                 else:
                     self.assertEqual(DISCLOSURE.findall(current), DISCLOSURE.findall(old))
                 self.assertEqual(
-                    normalize_six_lesson_revision(relative, current),
-                    normalize_six_lesson_revision(relative, old),
+                    normalize_six_lesson_revision(
+                        relative, normalize_beginner_walkthrough_revision(relative, current)
+                    ),
+                    normalize_six_lesson_revision(
+                        relative, normalize_beginner_walkthrough_revision(relative, old)
+                    ),
                     "content outside the approved article body/date/exact disclosure changed",
                 )
 
@@ -123,8 +132,30 @@ class SixLessonRevisionScopeTests(unittest.TestCase):
                     self.assertIsNotNone(old_bytes)
                     self.assertTrue(current_path.is_file())
                     self.assertEqual(
-                        normalize_six_lesson_revision(relative, current_path.read_text(encoding="utf-8")),
-                        normalize_six_lesson_revision(relative, old_bytes.decode("utf-8")),
+                        normalize_six_lesson_revision(
+                            relative,
+                            normalize_beginner_walkthrough_revision(
+                                relative, current_path.read_text(encoding="utf-8")
+                            ),
+                        ),
+                        normalize_six_lesson_revision(
+                            relative,
+                            normalize_beginner_walkthrough_revision(
+                                relative, old_bytes.decode("utf-8")
+                            ),
+                        ),
+                    )
+                elif relative in BEGINNER_WALKTHROUGH_ARTICLES:
+                    published = subprocess.run(
+                        ["git", "show", f"{PUBLISHED_PR9}:{relative}"], cwd=ROOT,
+                        stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, check=False,
+                    )
+                    self.assertEqual(published.returncode, 0, relative)
+                    self.assertEqual(
+                        normalize_beginner_walkthrough_revision(
+                            relative, current_path.read_text(encoding="utf-8")
+                        ),
+                        published.stdout.decode("utf-8"),
                     )
                 elif relative.startswith("files/"):
                     self.assertTrue(relative.startswith(ALLOWED_FIXTURE_PREFIXES),
@@ -160,7 +191,7 @@ class SixLessonRevisionScopeTests(unittest.TestCase):
             normalize_six_lesson_revision(relative, article),
         )
 
-    def test_sitemap_changes_only_the_six_substantive_dates(self):
+    def test_sitemap_changes_only_the_six_lesson_and_three_beginner_dates(self):
         namespace = {"s": "http://www.sitemaps.org/schemas/sitemap/0.9"}
         def dates(data):
             root = ET.fromstring(data)
@@ -171,7 +202,15 @@ class SixLessonRevisionScopeTests(unittest.TestCase):
         before = dates(git_bytes("sitemap.xml"))
         after = dates((ROOT / "sitemap.xml").read_bytes())
         self.assertEqual(set(before), set(after))
-        allowed = {"https://theomicshub.com/" + path for path in SIX_LESSON_ARTICLES}
+        beginner_date_paths = {
+            "tutorials/computer-data-fundamentals.html",
+            "tutorials/statistics-for-bioinformatics.html",
+            "tutorials/experimental-design-batch-effects.html",
+        }
+        allowed = {
+            "https://theomicshub.com/" + path
+            for path in SIX_LESSON_ARTICLES | beginner_date_paths
+        }
         self.assertEqual({url for url in before if before[url] != after[url]}, allowed)
         for url in allowed:
             self.assertEqual(after[url], "2026-10-23")
@@ -182,7 +221,7 @@ class SixLessonRevisionScopeTests(unittest.TestCase):
                 row.find("s:lastmod", namespace).text = before[url]
         self.assertEqual(
             ET.tostring(restored), ET.tostring(ET.fromstring(git_bytes("sitemap.xml"))),
-            "all sitemap fields and ordering other than the six dates must remain unchanged",
+            "all sitemap fields and ordering other than the nine approved dates must remain unchanged",
         )
 
 
