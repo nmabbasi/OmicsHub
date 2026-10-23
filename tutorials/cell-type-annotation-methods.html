@@ -6,20 +6,20 @@
 <link as="font" crossorigin="anonymous" href="../fonts/inter-e3237528af.woff2" rel="preload" type="font/woff2"/>
 <link href="../fonts/fonts.css" rel="stylesheet"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<meta content="Compare reference-based and marker-based cell-type annotation, check their inputs and outputs, and investigate disagreements before accepting labels." name="description"/>
+<meta content="Run SingleR and Seurat label transfer on public PBMC data, inspect real disagreements and RNA markers, and reproduce the saved results with checked inputs." name="description"/>
 <meta content="bioinformatics, single-cell RNA-seq, shell commands, conda, computational biology, tutorials, data analysis" name="keywords"/>
 <meta content="Nasir Mahmood Abbasi, PhD" name="author"/>
 <meta content="index, follow" name="robots"/>
 <!-- Open Graph tags for social sharing -->
 <meta content="Choosing and Checking Cell-Type Annotation Methods" property="og:title"/>
-<meta content="Compare reference-based and marker-based cell-type annotation, check their inputs and outputs, and investigate disagreements before accepting labels." property="og:description"/>
+<meta content="Run SingleR and Seurat label transfer on public PBMC data, inspect real disagreements and RNA markers, and reproduce the saved results with checked inputs." property="og:description"/>
 <meta content="https://theomicshub.com/tutorials/cell-type-annotation-methods.html" property="og:url"/>
 <meta content="website" property="og:type"/>
 <meta content="https://theomicshub.com/images/cell-type-annotation-methods-workstation.webp" property="og:image"/>
 <!-- Twitter Card tags -->
 <meta content="summary_large_image" name="twitter:card"/>
 <meta content="Choosing and Checking Cell-Type Annotation Methods" name="twitter:title"/>
-<meta content="Compare reference-based and marker-based cell-type annotation, check their inputs and outputs, and investigate disagreements before accepting labels." name="twitter:description"/>
+<meta content="Run SingleR and Seurat label transfer on public PBMC data, inspect real disagreements and RNA markers, and reproduce the saved results with checked inputs." name="twitter:description"/>
 <meta content="https://theomicshub.com/images/cell-type-annotation-methods-workstation.webp" name="twitter:image"/>
 <title>Choosing and Checking Cell-Type Annotation Methods | The Omics Hub</title><!-- Favicon -->
 <link href="../images/favicon.svg" rel="icon" type="image/svg+xml"/>
@@ -48,7 +48,7 @@ gtag('consent', 'default', {
   "@context": "https://schema.org",
   "@type": "TechArticle",
   "headline": "Choosing and Checking Cell-Type Annotation Methods",
-  "description": "Compare reference-based and marker-based cell-type annotation, check their inputs and outputs, and investigate disagreements before accepting labels.",
+  "description": "Run SingleR and Seurat label transfer on public PBMC data, inspect real disagreements and RNA markers, and reproduce the saved results with checked inputs.",
   "mainEntityOfPage": {
     "@type": "WebPage",
     "@id": "https://theomicshub.com/tutorials/cell-type-annotation-methods.html"
@@ -73,7 +73,7 @@ gtag('consent', 'default', {
     }
   },
   "datePublished": "2026-08-20",
-  "dateModified": "2026-10-21",
+  "dateModified": "2026-10-23",
   "url": "https://theomicshub.com/tutorials/cell-type-annotation-methods.html",
   "name": "Choosing and Checking Cell-Type Annotation Methods",
   "isPartOf": {
@@ -82,7 +82,7 @@ gtag('consent', 'default', {
     "url": "https://theomicshub.com/"
   },
   "inLanguage": "en"
-}</script><link href="../tutorial-library.css" rel="stylesheet"/><link href="../tutorial-figure-captions.css" rel="stylesheet"/></head>
+}</script><link href="../tutorial-library.css" rel="stylesheet"/><link href="../tutorial-figure-captions.css" rel="stylesheet"/><style id="worked-example-style">.worked-example{min-width:0;overflow-wrap:break-word}.worked-example .lesson-table-wrap{max-width:100%;overflow-x:auto}.worked-example .lesson-table-wrap table{min-width:36rem}.worked-example pre{max-width:100%;overflow-x:auto}.worked-example p code,.worked-example li code{white-space:normal;overflow-wrap:anywhere}.worked-example .lesson-figure{margin:2rem 0;padding:1rem;border:1px solid #dbe4ed;border-radius:.8rem;background:#f8fafc}.worked-example .lesson-figure img{width:100%;height:auto;margin:0;border-radius:.4rem}.worked-example .lesson-figure figcaption{margin-top:.85rem;font-size:.9rem;line-height:1.65;color:#475569}.worked-example h2[id]{scroll-margin-top:6rem}</style></head>
 <body class="bg-white text-gray-900">
 <script>
 function toggleMobileMenu() {
@@ -163,149 +163,54 @@ function toggleMobileMenu() {
 <div class="flex items-center gap-2 text-sm text-blue-600 font-medium mb-4"><span>Advanced Single-Cell Analysis</span><span>-</span><span>2026-08-20</span></div>
 <h1 class="text-4xl md:text-5xl font-black text-gray-900 mb-6 leading-tight" id="tutorial-title">Choosing and Checking Cell-Type Annotation Methods</h1>
 <div class="flex items-center gap-4"><div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 font-bold text-lg">NM</div><div><p class="font-bold text-gray-900">Nasir Mahmood Abbasi, PhD</p><p class="text-sm text-gray-500">Bioinformatics Educator</p></div></div>
+<p class="text-sm text-gray-500 mt-4">Worked example updated <time datetime="2026-10-23">23 October 2026</time>.</p>
 </section>
 <div class="mb-12 rounded-2xl overflow-hidden shadow-lg border border-gray-100">
 <img alt="Choosing and Checking Cell-Type Annotation Methods" class="w-full aspect-video object-cover" decoding="async" loading="eager" src="../images/cell-type-annotation-methods-workstation.webp" width="1024" height="1024"/>
 </div>
 <nav aria-label="Tutorial navigation" class="reader-toolbar"><a href="cell-cell-communication.html" title="Cell-Cell Communication">← Previous tutorial</a><a data-catalogue-return="" href="../tutorials.html">All tutorials</a><a href="advanced-ai-single-cell.html" title="AI-Assisted Cell-Type Annotation: Models, Limits, and Review">Next tutorial →</a></nav>
-<article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--decision-guide">
-<p class="lesson-lead">Cell-type labels are hypotheses supported by expression measurements and biological context. Choose an annotation method according to the evidence you have, then check the labels against markers and the method's uncertainty output.</p>
-<section class="lesson-summary tutorial-learning-contract" data-tutorial-format="conceptual-guide" aria-label="Learning format">
-<p><strong>Format: Conceptual guide.</strong> For readers comparing cell-annotation approaches, this guide helps you select a method and audit its input, output, and uncertainty requirements. You will complete a structured review of a disputed cluster using your own prepared analysis outputs; no datasets or reference files are supplied.</p>
-</section>
-<div class="lesson-summary"><p><strong>Scope and inputs.</strong> The examples below assume a quality-controlled, clustered human scRNA-seq Seurat object called <code>pbmc</code>, with RNA counts and normalized data, and a cell-level cluster identity in <code>Idents(pbmc)</code>. Reference-based methods also need a labeled reference with compatible features. These are example contracts, not supplied data or a tested environment.</p></div>
-<h2>Choose a method from the evidence you have</h2>
-<div aria-label="Scrollable table: Practical distinctions among the methods in this guide" class="lesson-table-wrap" role="region" tabindex="0"><table><caption>Practical distinctions among the methods in this guide</caption><thead><tr><th scope="col">Method</th><th scope="col">Evidence it uses</th><th scope="col">Best starting point when</th><th scope="col">Check before interpreting</th></tr></thead><tbody>
-<tr><th scope="row">SingleR</th><td>Similarity of test cells to labeled reference profiles</td><td>You have a suitable reference atlas or celldex reference.</td><td>Reference species, tissue, platform, label granularity, and score separation.</td></tr>
-<tr><th scope="row">Seurat label transfer</th><td>Anchors between labeled reference and query Seurat objects</td><td>Your reference is a compatible labeled Seurat object.</td><td>Shared features, preprocessing, predicted label scores, and missing query states.</td></tr>
-<tr><th scope="row">scmap-cluster</th><td>Projection onto a reference index of cluster profiles</td><td>Your reference is a labeled SingleCellExperiment.</td><td>Feature selection, gene identifiers, label field, and similarity/unknown outputs.</td></tr>
-<tr><th scope="row">scCATCH</th><td>Cluster markers matched to a tissue-specific marker knowledge base</td><td>Cluster-level marker evidence and supported tissue context are available.</td><td>Marker discovery assumptions, organism/tissue match, and whether results are unresolved.</td></tr>
-<tr><th scope="row">Garnett</th><td>User-defined marker rules trained into a hierarchical classifier</td><td>You can provide curated, explicit marker definitions.</td><td>Gene-ID conversion, marker specificity, classifier training, and unknown calls.</td></tr>
-<tr><th scope="row">CellAssign</th><td>Raw-count likelihood model with a predefined marker matrix</td><td>You have defensible marker definitions and raw counts.</td><td>Input matrix orientation, marker dimensions, size factors, covariates, and posterior uncertainty.</td></tr>
-</tbody></table></div>
-<p>The lesson focuses on these six established workflows. A previous draft also named CyteTypeR, but its purported package API, output contract, and claims about multi-agent behavior could not be checked against an authoritative project source. It is omitted rather than presented as runnable or validated. An LLM-generated annotation, if used elsewhere, should be treated as an unverified hypothesis and checked against dataset-derived evidence.</p>
-<h2>Prepare the object and preserve the input contract</h2>
-<p>Do not assume that “normalized expression” means the same input for every method. SingleR accepts expression data and its current vignette demonstrates a <code>SummarizedExperiment</code> reference; CellAssign specifically expects raw counts. Confirm feature identifiers and cell order before binding any result back to the object.</p>
-<p><strong>Before adapting any code below:</strong> work from a saved, quality-controlled object and identify the exact assay/layer and label field you intend to use. The example filenames (<code>data/pbmc_seurat.rds</code>, <code>data/ref_seurat.rds</code>, <code>data/ref_sce.rds</code>, and <code>data/cellassign_markers.rds</code>) are placeholders, not downloadable inputs. Replace them only with files you have prepared; do not proceed if object type, cell IDs, assay layer, feature identifiers, or reference label column fail the checks. Create a results directory in your project before writing outputs. A passing structural check establishes only that objects can be accessed and dimensions align—it does not establish suitable biological QC or reference validity.</p>
-<pre><code>library(Seurat)
-pbmc &lt;- readRDS("data/pbmc_seurat.rds")
-dir.create("results", showWarnings = FALSE)
-stopifnot(inherits(pbmc, "Seurat"), ncol(pbmc) == length(Idents(pbmc)))
-stopifnot("RNA" %in% Assays(pbmc))
-</code></pre>
-<p>This is a minimal object check, not proof that normalization, clustering, metadata, or biological QC is appropriate. Check available assay layers for your installed SeuratObject version; direct slot access such as <code>@assays$RNA@data</code> is version-sensitive and may not work with current layered assays.</p>
-<h2>Run reference-based workflows</h2>
-<h3>SingleR with a celldex reference</h3>
-<p>SingleR scores each test cell against labels in a reference. The reference and test data need overlapping, consistently named genes. HPCA is a bulk/microarray-derived reference, so its labels and platform may not resolve every state in a single-cell query.</p>
-<pre><code>library(SingleR)
-library(celldex)
-library(Seurat)
+<article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--lab worked-example">
+<p class="lesson-lead">A cell-type label is a hypothesis, not a fact produced by a software call. In this worked example, you will run SingleR and Seurat label transfer on the same public PBMC query cells, inspect where their labels differ, and check the original RNA expression before accepting a conclusion.</p>
+<section class="lesson-summary tutorial-learning-contract" data-tutorial-format="hands-on-lab" aria-label="Learning format"><p><strong>Format: Hands-on lab.</strong> The public-data workflow was executed for this lesson. Download the scripts, inspect the saved results, and reproduce the analysis from a checksum-verified input package. Only SingleR and Seurat label transfer are executed here; the other methods below are a selection guide, not additional tested results.</p></section>
+<nav aria-label="On this page"><ul><li><a href="#public-data-design">Data and reference design</a></li><li><a href="#reproduce-annotation">Reproduce the example</a></li><li><a href="#observed-annotation">Observed results</a></li><li><a href="#review-disagreement">Investigate disagreements</a></li><li><a href="#annotation-limits">Limits and alternatives</a></li></ul></nav>
+<h2 id="public-data-design">1. Use a real query and a separate reference</h2>
+<p>The input is <code>pbmcsca.SeuratData 3.0.0</code>, the public PBMC systematic-comparison dataset distributed by <a href="https://github.com/satijalab/seurat-data">SeuratData</a>. The underlying study is <a href="https://doi.org/10.1038/s41587-020-0465-8">Ding et al., Systematic comparison of single-cell and single-nucleus RNA-sequencing methods</a>. This lesson creates new teaching results from that public input; it does not reproduce a private research cohort or claim to reproduce the study's full benchmark.</p>
+<p>Two genuine assay groups form the query: <code>10x Chromium (v2) A</code> and <code>10x Chromium (v3)</code>. The reference is a third group, <code>10x Chromium (v2) B</code>. The workflow asserts that reference and query cell IDs are disjoint, then gives both annotation methods the same reference labels. A different assay group is not a held-out donor study: shared study design, reference-label biases, and shared expression-derived annotations remain important limitations.</p>
+<div class="lesson-table-wrap" role="region" aria-label="Scrollable public-data selection table" tabindex="0"><table><caption>The recorded public-data selection</caption><thead><tr><th scope="col">Source Method</th><th scope="col">Role</th><th scope="col">Source cells</th><th scope="col">Eligible cells</th><th scope="col">Selected</th></tr></thead><tbody><tr><th scope="row">10x Chromium (v2) A</th><td>Query</td><td>3222</td><td>2992</td><td>590</td></tr><tr><th scope="row">10x Chromium (v2) B</th><td>Reference</td><td>3222</td><td>3011</td><td>537</td></tr><tr><th scope="row">10x Chromium (v3)</th><td>Query</td><td>3222</td><td>2993</td><td>559</td></tr></tbody></table></div>
+<p>The subset is fixed before either method is scored: retain cells with more than 200 detected genes and a usable supplied <code>CellType</code>, then select at most 80 cells per assay-group × source-label stratum using a recorded seed and stable cell ordering. Small strata are kept rather than padded. The downloadable selection table records exactly which public cells were retained. This is a compact, label-stratified teaching sample, <strong>not an estimate of natural blood-cell proportions</strong>; this simple input filter is not a complete biological QC or doublet-detection workflow.</p>
+<p>The supplied source labels are annotations, not independent ground truth. They are used for reference training, subset construction and descriptive comparison. Agreement with them must therefore be described as <strong>source-label agreement—not accuracy</strong>. Novel or disease-associated states are outside this small public-PBMC demonstration.</p>
+<h2 id="reproduce-annotation">2. Reproduce the analysis, not a placeholder</h2>
+<p><a href="../downloads/pbmc-methods-worked-example.zip" download>Download the complete worked-example bundle</a>, including the executable R script, checksum-checking data preparer, Ubuntu setup instructions, recorded package versions and saved CSV results. You can also read the <a href="../files/pbmc-methods-worked-example/README.md">reproduction notes</a> or <a href="../files/pbmc-methods-worked-example/run_example.R">full analysis script</a> individually. The public input archive is fetched from its original provider rather than republished here.</p>
+<p><strong>Tested environment:</strong> R 4.3.3; Seurat / SeuratObject 5.0.1; SingleR 2.4.1; scuttle 1.12.0; scran 1.30.2; Harmony 1.2.3; LISI 1.0; ggplot2 3.4.4. Harmony 1.2.3 is deliberately pinned: the current Harmony2 release is a different version and is not silently substituted. Use a separate R environment, follow <code>README.md</code>, and keep the original download separate from generated results. Download size, observed runtime and memory are documented with the saved run; allow additional time for package installation.</p>
+<pre><code>cd pbmc-methods-worked-example
+# On Ubuntu 24.04, follow the setup instructions in README.md first.
+python3 prepare_inputs.py --data-dir data
+Rscript run_example.R \
+  --data-package data/pbmcsca.SeuratData_3.0.0.tar.gz \
+  --output reproduced-results</code></pre>
+<p>The same command also generates the <a href="scrna-seq-integration-strategies.html#observed-integration">paired integration example</a>. A missing package, checksum mismatch, overlapping reference/query IDs, missing source labels, or misaligned prediction rows is a reason to stop—not to guess a replacement. The script refuses to overwrite a nonempty output directory unless explicitly requested.</p>
+<h3>What the two methods actually do</h3>
+<div class="lesson-table-wrap" role="region" aria-label="Scrollable tested annotation methods" tabindex="0"><table><caption>Executed methods and evidence to retain</caption><thead><tr><th scope="col">Method</th><th scope="col">Input and operation</th><th scope="col">Uncertainty to inspect</th></tr></thead><tbody><tr><th scope="row">SingleR</th><td>Normalized query/reference RNA expression; reference labels supplied to <code>SingleR()</code>.</td><td>Original label, pruned label and <code>delta.next</code>. A pruned call is retained as unassigned.</td></tr><tr><th scope="row">Seurat label transfer</th><td>Reference/query anchors from <code>FindTransferAnchors()</code>, then categorical <code>TransferData()</code>.</td><td><code>predicted.id</code> and <code>prediction.score.max</code>. Scores are method-specific, not clinical probabilities.</td></tr></tbody></table></div>
+<p>The script rebuilds clean RNA objects from counts rather than reusing inherited reductions. It normalizes the reference and query, records selected features and dimensions, and aligns every prediction by the original cell ID before joining metadata. Name a method by the algorithm that generated its labels—not by the package or atlas that supplied a reference.</p>
+<h2 id="observed-annotation">3. Read the observed outputs</h2>
+<div class="lesson-result"><p><strong>Saved run:</strong> 1,149 query cells and 537 reference cells. Pruned SingleR and Seurat differ for 103 cells (9.0%); 37 of those are SingleR abstentions and 66 are competing named labels. These are descriptive results from this particular subset and environment, not a ranking of annotation algorithms.</p></div>
+<div class="lesson-table-wrap" role="region" aria-label="Scrollable observed annotation results" tabindex="0"><table><caption>Source-label agreement on all query cells—not accuracy</caption><thead><tr><th scope="col">Output</th><th scope="col">Matching source labels</th><th scope="col">Fraction of all query cells</th><th scope="col">Unassigned</th></tr></thead><tbody><tr><th scope="row">SingleR original</th><td>1,061 / 1,149</td><td>92.3%</td><td>0</td></tr><tr><th scope="row">SingleR pruned</th><td>1,031 / 1,149</td><td>89.7%</td><td>37</td></tr><tr><th scope="row">Seurat transfer</th><td>1,078 / 1,149</td><td>93.8%</td><td>0</td></tr></tbody></table></div>
+<p>SingleR pruning leaves 37 cells unassigned rather than forcing a named call. The table keeps all query cells in each denominator, including those abstentions. Seurat transfers a named label to every query cell in this run; that is not evidence that its calls are more trustworthy. A score or delta has meaning within its own method and is not a calibrated probability or a fair cross-method confidence scale.</p>
+<figure class="lesson-figure"><a href="../files/pbmc-methods-worked-example/observed/annotation_confusion.png"><img loading="lazy" decoding="async" width="1638" height="1350" src="../files/pbmc-methods-worked-example/observed/annotation_confusion.png" alt="Counts comparing SingleR pruned labels and Seurat transfer on 1,149 public PBMC query cells, including 37 SingleR unassigned calls."/></a><figcaption>Cell counts compare two outputs trained on the same reference. Blank tiles mean zero cells. This is descriptive agreement, not an accuracy matrix. <a href="../files/pbmc-methods-worked-example/observed/annotation_confusion.png">Open full-size figure</a>. New analysis of the public Ding et al. / SeuratData PBMC input; see provenance below.</figcaption></figure>
+<p>Both methods were trained on the same source-label vocabulary, which makes this comparison easier to interpret than an exact-string comparison between incompatible ontologies. Even here, two identical labels can share a reference error. In a new atlas, explicitly map label granularity before counting disagreements; “T cell” versus “CD4 memory T cell” need not be a contradiction.</p>
+<h2 id="review-disagreement">4. Investigate a disagreement with expression evidence</h2>
+<p>Start with the <a href="../files/pbmc-methods-worked-example/observed/annotation.csv">per-cell annotation table</a>. Keep the SingleR original/pruned labels, Seurat label, both uncertainty fields, the source label and the assay-group identity together. The saved table is keyed by cell ID, so a disagreement cannot be created merely by joining rows in a different order.</p>
+<div class="lesson-result"><h3>A real disagreement: cytotoxic T cell or NK cell?</h3><p>The largest competing named-label pair contains <strong>20 cells</strong>: SingleR calls them <strong>Cytotoxic T cell</strong>, while Seurat calls them <strong>Natural killer cell</strong>. 16 come from v3 and 4 from v2 A. Their supplied source labels are also mixed: 10 Cytotoxic T cell, 9 Natural killer cell, 1 CD4+ T cell. Those annotations are not an independent arbiter.</p><div class="lesson-table-wrap" role="region" aria-label="Scrollable marker evidence for the disputed cells" tabindex="0"><table><caption>Original normalized RNA in these same disputed cells</caption><thead><tr><th scope="col">Gene</th><th scope="col">Cells with expression &gt; 0</th><th scope="col">Mean normalized log expression</th></tr></thead><tbody><tr><th scope="row">CD3D</th><td>17 / 20</td><td>1.729</td></tr><tr><th scope="row">NKG7</th><td>20 / 20</td><td>3.991</td></tr></tbody></table></div><p>NKG7 is shared by cytotoxic T and NK programs, so its detection alone cannot choose between them. CD3D detection supports a T-lineage hypothesis for many of these cells, but dropout, ambient RNA and doublets must still be considered. Inspect additional discriminating markers such as TRAC/CD3E and KLRD1/GNLY in the original RNA before making a manual call; those additional genes are suggested checks, not measured results shown in this five-gene panel. These are review candidates, not cells automatically ready to relabel.</p></div>
+<ol class="lesson-steps"><li>Select a cell group where the methods differ, or a low-confidence group if all calls agree. Count how many cells are involved and check whether one assay group dominates.</li><li>Compare candidate labels at the same biological resolution. Preserve unassigned/pruned calls instead of forcing them into the nearest named class.</li><li>Inspect original normalized RNA for discriminating markers. Here, <code>CD3D</code>, <code>MS4A1</code>, <code>LYZ</code>, <code>NKG7</code> and <code>PPBP</code> provide a small PBMC review panel where those genes are present.</li><li>Write down the evidence for each candidate and the uncertainty that remains. A missing transcript can reflect dropout or depth; one detected marker does not establish a full phenotype.</li></ol>
+<figure class="lesson-figure"><a href="../files/pbmc-methods-worked-example/observed/marker_dotplot.png"><img loading="lazy" decoding="async" width="1440" height="1400" src="../files/pbmc-methods-worked-example/observed/marker_dotplot.png" alt="Public PBMC normalized RNA marker dot plot for CD3D, MS4A1, LYZ, NKG7 and PPBP, grouped by source cell type and assay group."/></a><figcaption>Dot size is the percentage of cells with positive normalized RNA expression. Color is average normalized expression scaled separately for each gene across the displayed groups, not absolute counts or a direct between-gene comparison. The rare plasmacytoid category is present only in v2 A. <a href="../files/pbmc-methods-worked-example/observed/marker_dotplot.png">Open full-size figure</a>. New analysis of the public Ding et al. / SeuratData PBMC input; see provenance below.</figcaption></figure>
+<p>The marker plot is an expression-derived cross-check, <strong>not orthogonal validation</strong>. Reference labels and marker patterns may have been derived from related expression evidence. Protein measurements, independent expert review, or other independent assays are needed for stronger validation claims. Leave an unresolved call unresolved when the evidence cannot distinguish alternatives.</p>
+<div class="lesson-exercise"><h3>Practice with the saved results</h3><p>Choose one disputed source-label group. Report the number of cells, each method's labels and uncertainty, and one marker observation supporting or weakening each interpretation. Then state what additional evidence would resolve the call. Do not write “method A is more accurate” unless you have a suitable independent truth set and evaluation design.</p></div>
+<h2 id="annotation-limits">5. Choose alternatives without overstating this test</h2>
+<div class="lesson-table-wrap" role="region" aria-label="Scrollable additional annotation approaches" tabindex="0"><table><caption>Selection guide only: not executed in the public worked example</caption><thead><tr><th scope="col">Approach</th><th scope="col">Useful when</th><th scope="col">Required check</th></tr></thead><tbody><tr><th scope="row">SingleR with a celldex atlas</th><td>A tissue- and species-appropriate reference is available.</td><td>Record atlas/version, feature IDs, label granularity and platform fit. HPCA is not the reference used in this run.</td></tr><tr><th scope="row">Azimuth / scmap</th><td>A suitable mapping reference or cluster index exists.</td><td>Check reference coverage, preprocessing, projection uncertainty and unassigned states.</td></tr><tr><th scope="row">scCATCH / Garnett</th><td>Curated tissue-specific markers or explicit marker rules are defensible.</td><td>Check supported marker data, organism/tissue, gene-ID conversion and unknown outputs.</td></tr><tr><th scope="row">CellAssign</th><td>Raw counts and a justified binary marker matrix are available.</td><td>For matrix input use cells × genes; marker rows must match count gene columns. Review size factors, covariates and posterior uncertainty.</td></tr></tbody></table></div>
+<p>AI-generated annotation suggestions are not part of the tested workflow. Do not send patient-derived data or marker summaries to an external service without the necessary permissions and a data-handling review. Automated annotation is not a clinical diagnosis, and individual cells are not independent donor replicates for population-level inference.</p>
+<h2>Sources and next steps</h2>
+<ul><li><a href="https://doi.org/10.1038/s41587-020-0465-8">Ding et al. (2020), original comparative study</a>; <a href="https://github.com/satijalab/seurat-data">SeuratData distribution and documentation</a>. Input provenance, package-declared license and complete checksums are in the bundle.</li><li><a href="https://bioconductor.org/packages/release/bioc/vignettes/SingleR/inst/doc/SingleR.html">SingleR vignette</a>; <a href="https://satijalab.org/seurat/reference/findtransferanchors">Seurat FindTransferAnchors</a> and <a href="https://satijalab.org/seurat/reference/transferdata">TransferData</a>.</li><li><a href="https://bioconductor.org/packages/devel/bioc/vignettes/scmap/inst/doc/scmap.html">scmap vignette</a>; <a href="https://rdrr.io/cran/scCATCH/f/vignettes/tutorial.Rmd">scCATCH tutorial</a>; <a href="https://cole-trapnell-lab.github.io/garnett/docs/">Garnett documentation</a>; <a href="https://irrationone.github.io/cellassign/reference/cellassign.html">CellAssign input reference</a>.</li><li>Continue with <a href="scrna-seq-integration-strategies.html">integration assessment on the same public query cells</a> or revisit <a href="scrna-seq-quality-control.html">QC decisions before interpretation</a>.</li></ul>
 
-hpca &lt;- HumanPrimaryCellAtlasData()
-test_data &lt;- GetAssayData(pbmc, assay = "RNA", layer = "data")
-pred &lt;- SingleR(test = test_data, ref = hpca, labels = hpca$label.main)
-pbmc$SingleR_label &lt;- pred$labels
-write.csv(data.frame(cell = rownames(as.data.frame(pred)),
-                     label = pred$labels,
-                     delta.next = pred$delta.next),
-          "results/singleR_predictions.csv", row.names = FALSE)
-</code></pre>
-<p>Use a normalized test matrix whose genes are rows and cells are columns; inspect the reference's <code>logcounts</code> assay and labels before running. The exact accessor for Seurat data differs by version and assay storage. The code assumes the selected <code>layer="data"</code> exists and uses a matching gene identifier convention. SingleR's returned rows correspond to test cells; its score matrix and delta diagnostics can help flag ambiguity. A small delta is uncertainty, not a universal rejection threshold.</p>
-<h3>Seurat label transfer</h3>
-<p>This path is conditional on <code>data/ref_seurat.rds</code> existing and containing the cell-level metadata field <code>celltype_label</code>. Use compatible assays and preprocessing. Seurat defaults to PCA projection with 30 dimensions; a hard-coded dimension range can fail when the reference has fewer usable dimensions or unsuitable preprocessing.</p>
-<pre><code>ref &lt;- readRDS("data/ref_seurat.rds")
-stopifnot("celltype_label" %in% colnames(ref[[]]))
-anchors &lt;- FindTransferAnchors(reference = ref, query = pbmc)
-transfer &lt;- TransferData(anchorset = anchors,
-                         refdata = ref$celltype_label)
-pbmc &lt;- AddMetaData(pbmc, metadata = transfer)
-write.csv(transfer, "results/seurat_transfer_predictions.csv")
-</code></pre>
-<p>TransferData returns predictions and associated scores for categorical labels when called without a query argument. Review the prediction-score fields as well as labels. Transferred labels describe resemblance to the reference; they do not establish that query cells have the same biological state.</p>
-<h3>scmap-cluster with a labeled reference</h3>
-<p>scmap uses <code>SingleCellExperiment</code> objects. The reference must carry cluster labels in the selected column, here <code>celltype_label</code>; select features and build the cluster index on the reference. Confirm that its log-expression assay and gene symbols are suitable for the query.</p>
-<pre><code>library(SingleCellExperiment)
-library(scmap)
-query_sce &lt;- as.SingleCellExperiment(pbmc)
-ref_sce &lt;- readRDS("data/ref_sce.rds")
-stopifnot("celltype_label" %in% colnames(colData(ref_sce)))
-ref_sce &lt;- selectFeatures(ref_sce)
-ref_sce &lt;- indexCluster(ref_sce, cluster_col = "celltype_label")
-scmap_res &lt;- scmapCluster(
-  projection = query_sce,
-  index_list = list(reference = metadata(ref_sce)$scmap_cluster_index)
-)
-write.csv(scmap_res$combined_labs,
-          "results/scmap_cluster_predictions.csv", row.names = FALSE)
-</code></pre>
-<p>The output includes combined labels and method-specific similarity results. Inspect similarity and any unassigned cells; do not treat a nearest reference cluster as proof that the query has no novel type.</p>
-<figure id="cell-annotation-public-arabidopsis-dotplot" class="my-8" aria-labelledby="cell-annotation-public-arabidopsis-dotplot-caption">
-<a href="../images/tutorial-figures/public-plant-dotplot.png" target="_blank" rel="noopener noreferrer" aria-label="Open this figure at full size"><img src="../images/tutorial-figures/public-plant-dotplot.png" alt="Arabidopsis root marker-gene dotplot with Leiden clusters 0–12 in rows and genes in columns. Brackets group genes under the candidate marker headings Columella, QC, NC, Endodermis, Cortex, Atrichoblast, Trichoblast, Xylem and VC; these headings are not validated labels for the cluster rows. Color runs from dark purple through green to yellow for increasing mean expression, while larger dots indicate a greater percentage of cells with positive expression, with size references from 20% to 100%. This plant example is independent of the OmicsHub human PBMC/Seurat code." width="1365" height="545" loading="lazy" decoding="async" style="display:block;width:100%;height:auto"/></a>
-<figcaption id="cell-annotation-public-arabidopsis-dotplot-caption" class="tutorial-figure-caption">
-  <div class="figure-caption-heading">
-    <strong class="figure-caption-title">Reading a marker dotplot</strong>
-    <a class="figure-caption-action" href="../images/tutorial-figures/public-plant-dotplot.png" target="_blank" rel="noopener noreferrer">View full-size figure</a>
-  </div>
-  <p>Rows show Leiden clusters, and columns show marker genes. Dot color indicates mean expression; dot size indicates the percentage of cells expressing the gene. The headings group candidate markers—they are not validated cell-type labels for the clusters.</p>
-  <p class="figure-caption-context">This public Arabidopsis root example is separate from the human-cell workflows on this page.</p>
-  <div class="figure-caption-credits">
-    <p><strong>Source:</strong> <a href="https://training.galaxyproject.org/training-material/topics/single-cell/tutorials/scrna-plant/tutorial.html" target="_blank" rel="noopener noreferrer">Analysis of plant scRNA-Seq Data with Scanpy</a>, Galaxy Training Network.
-      <span class="figure-caption-authors">Mehmet Tekman, Beatriz Serrano-Solano, Cristóbal Gallardo and Pavankumar Videm.</span>
-    </p>
-    <p><strong>License:</strong> <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener noreferrer">CC BY 4.0</a>; image unchanged.<br/>
-      <strong>Data:</strong> <a href="https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE123818" target="_blank" rel="noopener noreferrer">GSE123818</a> (Denyer et al., 2019).
-    </p>
-  </div>
-</figcaption>
-</figure>
-<h2>Run marker-driven workflows</h2>
-<h3>scCATCH: cluster markers and tissue-specific matching</h3>
-<p>scCATCH's documented sequence is to create an object from normalized expression and one cluster label per cell, identify markers using its supported marker data, then score cell types. Its vignette does not support passing Seurat's <code>FindAllMarkers</code> output in the <code>marker</code> parameter as the prior draft did. This revised outline avoids an unsupported mapping; follow the package vignette for the version-specific accepted marker object and supported tissue terms.</p>
-<pre><code>library(scCATCH)
-sc_data &lt;- GetAssayData(pbmc, assay = "RNA", layer = "data")
-clusters &lt;- as.character(Idents(pbmc))
-stopifnot(ncol(sc_data) == length(clusters))
-sc_obj &lt;- createscCATCH(data = sc_data, cluster = clusters)
-# Supply the package's supported marker data and tissue context as documented:
-# sc_obj &lt;- findmarkergene(sc_obj, species = "Human",
-#                           marker = cellmatch, tissue = "Blood")
-# sc_obj &lt;- findcelltype(sc_obj)
-</code></pre>
-<p>The database's supported tissue labels and organism coverage constrain this approach. Do not interpret an “unknown” or empty annotation as evidence that a cell type is biologically absent.</p>
-<h3>Garnett: define and audit marker rules</h3>
-<p>Garnett requires a <code>CellDataSet</code>, a marker file and a species-appropriate AnnotationDb package for gene-ID conversion. Its marker file is an input that you must author and justify, not an automatic consequence of clustering. A minimal format looks like this:</p>
-<pre><code>&gt;B cells
-expressed: CD19, MS4A1
-
-&gt;T cells
-expressed: CD3D
-</code></pre>
-<p>After converting the Seurat data into a compatible CDS and confirming identifier types, the documented sequence is <code>check_markers()</code>, <code>train_cell_classifier()</code>, then <code>classify_cells()</code>. Conversion from Seurat and package interfaces vary by release, so this is a method outline rather than a complete command sequence. Check marker specificity and gene-ID mapping before training; broad markers can blur neighboring labels.</p>
-<h3>CellAssign: counts and marker matrix must align</h3>
-<p>CellAssign takes raw counts as a cell-by-gene matrix (or a suitable <code>SummarizedExperiment</code>) and a gene-by-cell-type binary marker matrix. Seurat expression matrices are typically genes by cells, so transpose counts for a matrix input and ensure marker rows match the gene columns exactly. The earlier draft passed a genes-by-cells matrix and used <code>s=1</code> without defining size factors; that did not meet the documented input contract.</p>
-<pre><code>counts_gene_cell &lt;- GetAssayData(pbmc, assay = "RNA", layer = "counts")
-counts_cell_gene &lt;- t(as.matrix(counts_gene_cell))
-markers &lt;- readRDS("data/cellassign_markers.rds") # genes x cell types, 0/1
-stopifnot(identical(colnames(counts_cell_gene), rownames(markers)))
-fit &lt;- cellassign::cellassign(
-  exprs_obj = counts_cell_gene,
-  marker_gene_info = markers
-)
-saveRDS(fit, "results/cellassign_fit.rds")
-</code></pre>
-<p>In practice, reorder marker rows to match count gene columns before the check if the same genes appear in a different order, and subset counts and markers to shared genes. The package can estimate size factors when <code>s</code> is omitted. Read cell labels through <code>fit$cell_type</code>; inspect model diagnostics and posterior estimates where available. The output path is a fitted object, not a CSV of posterior probabilities. Batch covariates require explicit, correctly shaped input through the documented <code>X</code> argument; do not call CellAssign “robust to batch effects” without defining and evaluating that model.</p>
-<h2>Compare results without mistaking agreement for validation</h2>
-<p>Methods here return labels at different levels: SingleR, Seurat transfer, scmap, Garnett and CellAssign can label cells, while scCATCH is cluster-oriented. Align labels by cell identifier before comparing. Do not repeat a cluster label for each cell and then interpret the inflated count as independent evidence.</p>
-<p>For a small review, first write the disputed cluster ID and candidate labels in a notebook. Make a table with one row per cell (or one row per cluster for scCATCH), keyed by the original cell ID, and include each method's label, score/uncertainty field, and reference or marker source. Verify row counts and IDs before joining results; if they do not match, stop rather than relying on row order. Then inspect the strongest relevant markers and record evidence for and against each candidate. Leave the call unresolved when the available markers, reference coverage, or method outputs do not discriminate the alternatives.</p>
-<ol class="lesson-steps"><li>Make a per-cell table keyed by stable cell IDs; retain each tool's original label and confidence/score field.</li><li>Summarize label proportions by cluster and inspect cluster-level disagreement separately from per-cell uncertainty.</li><li>Plot dataset-derived expression for discriminating markers (for example, <code>CD3D</code> or <code>MS4A1</code> only where relevant to the tissue and assay). Check whether the evidence is present in the cells bearing each label.</li><li>For disagreements, revisit reference fit, gene naming, assay layer, tissue context, and marker definitions before changing cluster resolution or selecting a “winner.”</li><li>Record software versions, reference identity/version, preprocessing and all manual decisions.</li></ol>
-<p>A contingency table is descriptive agreement, not a gold-standard accuracy measure. Methods can share reference or marker biases. Lack of agreement points to a review task; agreement cannot rule out a shared error. A marker's absence can reflect dropout, low depth, state variation or an unsuitable marker, not necessarily a wrong label.</p>
-<h2>Common failure patterns</h2>
-<div class="lesson-columns"><section class="lesson-warning"><h3>Unexpected broad labels or low scores</h3><p>Check species, feature identifiers, reference composition and assay compatibility. Compare score separation and pruned/unknown calls; avoid inventing a universal score cutoff.</p></section><section class="lesson-warning"><h3>Many unassigned clusters</h3><p>Check scCATCH tissue selection and detected cluster markers, or scmap reference labels and similarity. Preserve abstention as information while investigating markers and reference coverage.</p></section></div>
-<div class="lesson-checkpoint"><p><strong>Before accepting a label:</strong> verify that the method received the expected assay and orientation; the reference/marker genes match the dataset; the label granularity fits the evidence; and at least one independent line of evidence supports the interpretation.</p></div>
-<h2>Limits and responsible interpretation</h2>
-<p>Automated annotation depends on reference coverage, marker specificity, tissue context, sequencing depth and preprocessing. Rare or novel states may not be represented. A confidence score is method-specific and is not a calibrated probability that a biological label is true. Cell-type annotation is not a clinical diagnosis. For consequential claims, seek orthogonal evidence such as protein measurements or targeted validation and report what was actually tested.</p>
-<div class="lesson-exercise"><h2>Practice: audit one disputed cluster</h2><p>Choose a cluster where two methods disagree. Write down each tool's input, reference or marker source, label and uncertainty metric. Check the dataset's expression for the strongest discriminating markers, then state what further evidence would resolve the disagreement. A sound outcome may remain “unresolved” when available data cannot distinguish the candidates.</p></div>
-<h2>Technical references</h2><ul><li><a href="https://bioconductor.org/packages/release/bioc/vignettes/SingleR/inst/doc/SingleR.html">SingleR Bioconductor vignette</a></li><li><a href="https://satijalab.org/seurat/reference/findtransferanchors">Seurat FindTransferAnchors</a> and <a href="https://satijalab.org/seurat/reference/transferdata">TransferData</a></li><li><a href="https://bioconductor.org/packages/devel/bioc/vignettes/scmap/inst/doc/scmap.html">scmap Bioconductor vignette</a></li><li><a href="https://rdrr.io/cran/scCATCH/f/vignettes/tutorial.Rmd">scCATCH tutorial</a></li><li><a href="https://cole-trapnell-lab.github.io/garnett/docs/">Garnett documentation</a></li><li><a href="https://irrationone.github.io/cellassign/reference/cellassign.html">CellAssign function reference</a></li></ul>
 <aside aria-labelledby="tutorial-feedback-title" class="lesson-feedback" id="tutorial-feedback"><h2 id="tutorial-feedback-title">Help improve this tutorial</h2><p>Found an error, a broken link, or a step that needs a clearer explanation? Please <a href="../contact.html">contact me</a>. Your feedback helps me keep this resource accurate and useful.</p></aside></article>
 <nav aria-label="Course sequence" class="reader-sequence" id="reader-course-navigation">
 <h2>Continue learning</h2>

@@ -45,8 +45,8 @@ class LearningPromiseTests(unittest.TestCase):
     def test_all_58_tutorials_and_format_counts_remain(self):
         labels = re.findall(r'<span[^>]*data-tutorial-format="([^"]+)"', self.catalogue)
         self.assertEqual(Counter(labels), {
-            'hands-on-lab': 19, 'conceptual-guide': 21,
-            'advanced-template': 16, 'reference': 2,
+            'hands-on-lab': 21, 'conceptual-guide': 20,
+            'advanced-template': 15, 'reference': 2,
         })
         self.assertEqual(len(list((ROOT / 'tutorials').glob('*.html'))), 58)
         self.assertIn('aria-label="58 tutorials"', self.catalogue)

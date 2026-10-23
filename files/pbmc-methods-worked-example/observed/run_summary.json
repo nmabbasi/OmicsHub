@@ -1,0 +1,134 @@
+{
+  "dataset": {
+    "package": "pbmcsca.SeuratData",
+    "version": "3.0.0",
+    "sha256": "5161e0e81ed72bb8d6f96b5cc776e04cce738600a3b439b1658fe648c2faf6cb",
+    "expected_sha256": "5161e0e81ed72bb8d6f96b5cc776e04cce738600a3b439b1658fe648c2faf6cb",
+    "checksum_source": "pinned-in-script",
+    "public_only": true,
+    "script_sha256": "bfdb2a342a25bff787f0c27bbdceab86011a2272cf3a6dd141f5e6f4c0426bd2",
+    "reference_query_cell_ids_disjoint": true,
+    "reference_query_count_profiles_disjoint": true,
+    "detected_gene_metadata_matches_counts": true,
+    "rna_counts_unchanged": true
+  },
+  "runtime": {
+    "R": "4.3.3",
+    "seed": 20261023,
+    "rng_kind": ["L'Ecuyer-CMRG", "Inversion", "Rejection"],
+    "threads": 1,
+    "elapsed_seconds": 82.976,
+    "nfeatures": 2000,
+    "pcs": 20,
+    "harmony": {
+      "group_by": "batch",
+      "theta": 2,
+      "lambda": 1,
+      "max_iter": 10
+    },
+    "lisi_perplexity": 30,
+    "umap": {
+      "n_neighbors": 30,
+      "min_dist": 0.3,
+      "metric": "cosine",
+      "seed": 20261023
+    }
+  },
+  "metadata_columns": {
+    "group": "Method",
+    "supplied_label": "CellType"
+  },
+  "filter": {
+    "feature_rule": "nFeature_RNA > 200",
+    "excluded_label_rule": "missing, empty, Unknown, or Unassigned",
+    "per_group_cell_type_cap": 80,
+    "selected_query_cells": 1149,
+    "selected_reference_cells": 537,
+    "query_group_counts": {
+      "10x Chromium (v2) A": 590,
+      "10x Chromium (v3)": 559
+    },
+    "requested_group_aliases_to_source_values": {
+      "10x_Chromium_v2_A": "10x Chromium (v2) A",
+      "10x_Chromium_v2_B": "10x Chromium (v2) B",
+      "10x_Chromium_v3": "10x Chromium (v3)"
+    },
+    "reference_source_group": "10x Chromium (v2) B",
+    "query_groups": ["10x Chromium (v2) A", "10x Chromium (v3)"],
+    "source_group_filter_counts": [
+      {
+        "group": "10x Chromium (v2) A",
+        "source_n": 3222,
+        "feature_pass_n": 2992,
+        "label_pass_n": 3222,
+        "eligible_n": 2992,
+        "selected_n": 590
+      },
+      {
+        "group": "10x Chromium (v2) B",
+        "source_n": 3222,
+        "feature_pass_n": 3011,
+        "label_pass_n": 3222,
+        "eligible_n": 3011,
+        "selected_n": 537
+      },
+      {
+        "group": "10x Chromium (v3)",
+        "source_n": 3222,
+        "feature_pass_n": 2993,
+        "label_pass_n": 3222,
+        "eligible_n": 2993,
+        "selected_n": 559
+      }
+    ]
+  },
+  "annotation": {
+    "methods": ["Seurat FindTransferAnchors/TransferData", "SingleR de.method=wilcox"],
+    "grouped_disagreement_cells": 103,
+    "pruned_singleR_unassigned_n": 37,
+    "note": "Descriptive agreement/disagreement only; no accuracy or ground-truth claim."
+  },
+  "lisi": {
+    "n_cells_per_embedding": 1149,
+    "summary": [
+      {
+        "reduction": "PCA",
+        "iLISI_batch_median": 1.06614578251215,
+        "iLISI_batch_q25": 1.01132377334589,
+        "iLISI_batch_q75": 1.25715494947241,
+        "cLISI_source_label_median": 1.01641919238245,
+        "cLISI_source_label_q25": 1.00104634532546,
+        "cLISI_source_label_q75": 1.1396961453535
+      },
+      {
+        "reduction": "Harmony",
+        "iLISI_batch_median": 1.91782280246179,
+        "iLISI_batch_q25": 1.7886136092239,
+        "iLISI_batch_q75": 1.9789675040722,
+        "cLISI_source_label_median": 1.00785470566768,
+        "cLISI_source_label_q25": 1.0000001192093,
+        "cLISI_source_label_q75": 1.09083764926133
+      }
+    ],
+    "paired_difference_summary": {
+      "iLISI_batch": {
+        "metric": "delta_iLISI_batch_Harmony_minus_PCA",
+        "median": 0.766129868637525,
+        "q25": 0.483802874155133,
+        "q75": 0.912346447057761
+      },
+      "cLISI_source_label": {
+        "metric": "delta_cLISI_source_label_Harmony_minus_PCA",
+        "median": -0.00283331445596202,
+        "q25": -0.0310791766761467,
+        "q75": 1.19209303761636e-07
+      }
+    },
+    "note": "Descriptive medians, quartiles, and paired differences; no hypothesis tests."
+  },
+  "markers": {
+    "genes_present": ["CD3D", "MS4A1", "LYZ", "NKG7", "PPBP"],
+    "per_cell_evidence_file": "marker_expression_per_cell.csv"
+  },
+  "caveats": ["Cell caps are deterministic and do not represent natural sample composition.", "UMAPs are illustrations only; LISI scores use the 20-dimensional embeddings.", "RPCA/CCA and scPred are not executed in this example."]
+}

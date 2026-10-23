@@ -101,6 +101,8 @@ class PbmcWorkedExampleTests(unittest.TestCase):
 
         site = 'https://theomicshub.com/'
         approved_updated_paths = {
+            'tutorials/cell-type-annotation-methods.html',
+            'tutorials/scrna-seq-integration-strategies.html',
             'tutorials/advanced-visualization-packages.html',
             'tutorials/ai-prompt-engineering-seurat.html',
             'tutorials/command-line-part3.html',
