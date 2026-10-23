@@ -166,6 +166,7 @@ test('missing or not-yet-ready CMP gives an accessible truthful fallback and nev
   assert.match(app.control().textContent, /Privacy and cookie settings \(advertising\)/);
   assert.equal(app.status().getAttribute('role'), 'status');
   assert.equal(app.status().getAttribute('aria-live'), 'polite');
+  assert.match(app.status().getAttribute('style'), /display:\s*block/);
 
   const nested = app.document.createElement('span');
   app.control().appendChild(nested);

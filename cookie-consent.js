@@ -192,6 +192,7 @@
     advertisingStatus.setAttribute('aria-live', 'polite');
     advertisingControl.parentElement.appendChild(advertisingStatus);
   }
+  advertisingStatus.setAttribute('style', 'display: block; margin-top: 0.25rem; font-size: 0.875rem;');
   advertisingState.statusNode = advertisingStatus;
 
   function updateAdvertisingStatus(message) {
