@@ -92,19 +92,72 @@ class PbmcWorkedExampleTests(unittest.TestCase):
         self.assertNotIn(OLD_VALIDITY, text)
         self.assertNotIn(OLD_RANDOM, text)
 
-    def test_only_pbmc_sitemap_date_changes_and_agrees_with_metadata(self):
-        data = (ROOT / 'sitemap.xml').read_text()
+    def test_sitemap_dates_match_reviewed_updates_and_historical_baseline(self):
         ns = {'s': 'http://www.sitemaps.org/schemas/sitemap/0.9'}
-        tree = ET.fromstring(data)
-        entry = next(x for x in tree.findall('s:url', ns) if x.find('s:loc', ns).text.endswith('/scrna-seq-basics.html'))
-        self.assertEqual(entry.find('s:lastmod', ns).text, '2026-10-22')
+        current_root = ET.parse(ROOT / 'sitemap.xml').getroot()
+        current_entries = current_root.findall('s:url', ns)
+        current_by_url = {entry.find('s:loc', ns).text: entry for entry in current_entries}
+        self.assertEqual(len(current_by_url), len(current_entries))
+
+        site = 'https://theomicshub.com/'
+        approved_updated_paths = {
+            'tutorials/advanced-visualization-packages.html',
+            'tutorials/ai-prompt-engineering-seurat.html',
+            'tutorials/command-line-part3.html',
+            'tutorials/deterministic-retrieval-gget-ai.html',
+            'tutorials/mcp-zotero.html',
+            'tutorials/modern-bioinformatics-methods-2026.html',
+            'tutorials/single-cell-foundation-models.html',
+            'tutorials/spatial-transcriptomics-r-python.html',
+            'tutorials/wes-variant-calling-pipeline.html',
+            'about.html',
+            'tutorials.html',
+        }
+        self.assertEqual(
+            {url for url, entry in current_by_url.items()
+             if entry.find('s:lastmod', ns).text == '2026-10-23'},
+            {site + path for path in approved_updated_paths},
+        )
+        for path in approved_updated_paths:
+            self.assertEqual(current_by_url[site + path].find('s:lastmod', ns).text, '2026-10-23')
+        pbmc_url = site + 'tutorials/scrna-seq-basics.html'
+        self.assertEqual(current_by_url[pbmc_url].find('s:lastmod', ns).text, '2026-10-22')
+
         result = subprocess.run(['git', 'show', BASELINE + ':sitemap.xml'], cwd=ROOT,
                                 stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
         if result.returncode == 0:
-            pattern = r'(<loc>https://theomicshub\.com/tutorials/scrna-seq-basics\.html</loc>\s*<changefreq>[^<]+</changefreq>\s*<priority>[^<]+</priority>\s*<lastmod>)2026-10-22(</lastmod>)'
-            restored, n = re.subn(pattern, r'\g<1>2026-10-21\g<2>', data)
-            self.assertEqual(n, 1)
-            self.assertEqual(restored.encode(), result.stdout)
+            baseline_root = ET.fromstring(result.stdout)
+            baseline_entries = baseline_root.findall('s:url', ns)
+            baseline_by_url = {entry.find('s:loc', ns).text: entry for entry in baseline_entries}
+            self.assertEqual(len(baseline_by_url), len(baseline_entries))
+            self.assertEqual(current_root.tag, baseline_root.tag)
+            self.assertEqual(current_root.attrib, baseline_root.attrib)
+            self.assertEqual(
+                [entry.find('s:loc', ns).text for entry in current_entries],
+                [entry.find('s:loc', ns).text for entry in baseline_entries],
+            )
+
+            allowed_date_urls = {site + path for path in approved_updated_paths} | {pbmc_url}
+            self.assertEqual(set(current_by_url), set(baseline_by_url))
+            for url, current in current_by_url.items():
+                baseline = baseline_by_url[url]
+                current_fields = [(child.tag, child.attrib, (child.text or '').strip())
+                                  for child in current]
+                baseline_fields = [(child.tag, child.attrib, (child.text or '').strip())
+                                   for child in baseline]
+                self.assertEqual(current.tag, baseline.tag, url)
+                self.assertEqual(current.attrib, baseline.attrib, url)
+                self.assertEqual([field[:2] for field in current_fields],
+                                 [field[:2] for field in baseline_fields], url)
+                if url in allowed_date_urls:
+                    lastmod_tag = '{' + ns['s'] + '}lastmod'
+                    self.assertEqual(
+                        [field[2] for field in current_fields if field[0] != lastmod_tag],
+                        [field[2] for field in baseline_fields if field[0] != lastmod_tag],
+                        url,
+                    )
+                else:
+                    self.assertEqual(current_fields, baseline_fields, url)
 
     def test_public_plant_figure_and_all_58_tutorials_remain(self):
         text = (ROOT / 'tutorials/scrna-seq-basics.html').read_text()

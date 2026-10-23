@@ -24,6 +24,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Verify generated homepage stylesheet
         run: |
@@ -34,6 +36,7 @@ jobs:
 
       - name: Validate tutorial retention, links, SEO, and accessibility markup
         run: |
+          python3 tools/generate_legacy_redirects.py --check
           python3 tests/validate_tutorials.py
           python3 -m unittest discover -s tests -v
 

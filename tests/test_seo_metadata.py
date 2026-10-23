@@ -22,7 +22,7 @@ class SeoMetadataTests(unittest.TestCase):
                 self.assertIn(field, entity)
         self.assertEqual(entity['author']['name'], 'Dr. Nasir Mahmood Abbasi, PhD')
         self.assertTrue(entity['mainEntityOfPage']['@id'].endswith('/tutorials/ai-prompt-engineering-seurat.html'))
-        self.assertEqual(entity['dateModified'], '2026-10-22')
+        self.assertEqual(entity['dateModified'], '2026-10-23')
 
     def test_tutorial_catalogue_has_correct_open_graph_url(self):
         text = (ROOT / 'tutorials.html').read_text(encoding='utf-8')
@@ -30,8 +30,14 @@ class SeoMetadataTests(unittest.TestCase):
 
     def test_each_page_uses_one_structured_data_entity(self):
         pages = list(ROOT.glob('*.html')) + list((ROOT / 'pages').glob('*.html')) + list((ROOT / 'tutorials').glob('*.html'))
+        manifest = json.loads((ROOT / 'tools' / 'legacy-redirects.json').read_text(encoding='utf-8'))
+        redirects = set(manifest['migration_root_urls']) | set(manifest['historical_aliases'])
+        pages = [page for page in pages if '/' + page.relative_to(ROOT).as_posix() not in redirects]
         for page in pages:
             with self.subTest(page=page.relative_to(ROOT)):
+                text = page.read_text(encoding='utf-8')
+                if re.search(r'<meta\s+http-equiv=["\']refresh["\']\s+content=["\']0;\s*url=', text, re.I):
+                    continue  # Legacy aliases are redirect stubs, not canonical article pages.
                 self.entity(page)
 
 if __name__ == '__main__':

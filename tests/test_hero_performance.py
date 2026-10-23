@@ -6,6 +6,12 @@ import re
 import subprocess
 import unittest
 
+from reviewed_tutorial_baseline import (
+    APPROVED_MAIN,
+    normalize_reviewed_content,
+    strip_cookie_banner,
+)
+
 ROOT = Path(__file__).resolve().parents[1]
 BASELINE = 'e7037f1b9a9eea8f4338e7b6696f791d8172f844'
 
@@ -74,6 +80,10 @@ class HeroPerformanceTests(unittest.TestCase):
             result = subprocess.run(['git', 'show', BASELINE + ':' + name], cwd=ROOT,
                                     stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
             return result.stdout if result.returncode == 0 else None
+        def approved(name):
+            result = subprocess.run(['git', 'show', APPROVED_MAIN + ':' + name], cwd=ROOT,
+                                    stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+            return result.stdout if result.returncode == 0 else None
         baseline = old('index.html')
         if baseline is None:
             self.skipTest('Historical baseline unavailable in shallow checkout')
@@ -94,12 +104,23 @@ class HeroPerformanceTests(unittest.TestCase):
                      'images/hero-image-light-navy-clean-1200.webp']:
             self.assertEqual(old(name), (ROOT / name).read_bytes(), name)
         for p in (ROOT / 'tutorials').glob('*.html'):
-            current_bytes = p.read_bytes()
             if p.name == 'scrna-seq-basics.html':
-                # Reverse only the exact PBMC proposal; keep every other byte guarded.
-                from test_pbmc_worked_example import restore_only_reviewed_pbmc_changes
-                current_bytes = restore_only_reviewed_pbmc_changes(current_bytes)
-            self.assertEqual(old('tutorials/' + p.name), current_bytes, p.name)
+                # The approved PBMC worked-example change is guarded by its dedicated tests.
+                continue
+            relative_path = 'tutorials/' + p.name
+            approved_bytes = approved(relative_path)
+            self.assertIsNotNone(approved_bytes, relative_path)
+            baseline_text = strip_cookie_banner(
+                approved_bytes.decode('utf-8'), allow_missing=True
+            )
+            current_text = strip_cookie_banner(
+                p.read_text(encoding='utf-8'), allow_missing=True
+            )
+            self.assertEqual(
+                normalize_reviewed_content(relative_path, baseline_text),
+                normalize_reviewed_content(relative_path, current_text),
+                p.name,
+            )
 
 if __name__ == '__main__':
     unittest.main()

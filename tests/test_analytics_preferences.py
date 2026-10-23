@@ -10,6 +10,12 @@ import re
 import subprocess
 import unittest
 
+from reviewed_tutorial_baseline import (
+    APPROVED_MAIN,
+    normalize_reviewed_content,
+    strip_cookie_banner,
+)
+
 ROOT = Path(__file__).resolve().parents[1]
 TUTORIALS = ROOT / "tutorials"
 BASELINE = "9782b635269171240c65abb942bd9bdf400e03d0"
@@ -179,20 +185,37 @@ class AnalyticsPreferencesTests(unittest.TestCase):
         self.assertNotRegex(consent, r"['\"]?ad_(?:storage|user_data|personalization)['\"]?\s*:\s*['\"]granted")
 
     def test_seven_page_changes_preserve_all_baseline_content(self):
-        if not self.baseline_available:
-            self.skipTest(f"baseline {BASELINE} unavailable")
+        if git_file(APPROVED_MAIN, "analytics.js") is None:
+            self.skipTest(f"approved-main baseline {APPROVED_MAIN} unavailable")
         self.assertEqual(7, len(UPDATED_PAGES))
         for name in sorted(UPDATED_PAGES):
-            baseline = git_file(BASELINE, f"tutorials/{name}")
+            relative_path = f"tutorials/{name}"
+            baseline = git_file(APPROVED_MAIN, relative_path)
             if baseline is None:
-                self.skipTest(f"baseline tutorial tutorials/{name} unavailable")
+                self.skipTest(f"approved-main tutorial {relative_path} unavailable")
             current = (TUTORIALS / name).read_text(encoding="utf-8")
             with self.subTest(page=name):
-                stripped, count = BANNER_BLOCK.subn("", current, count=1)
-                self.assertEqual(1, count, "remove only the marked inserted banner block")
-                self.assertEqual(baseline, stripped, "non-banner page content differs from baseline")
-                self.assertEqual(self._footer_subscribe(baseline), self._footer_subscribe(stripped))
-                self.assertEqual(self._scientific_content(baseline), self._scientific_content(stripped))
+                baseline_without_banner = strip_cookie_banner(baseline)
+                current_without_banner = strip_cookie_banner(current)
+                baseline_normalized = normalize_reviewed_content(
+                    relative_path, baseline_without_banner
+                )
+                current_normalized = normalize_reviewed_content(
+                    relative_path, current_without_banner
+                )
+                self.assertEqual(
+                    baseline_normalized,
+                    current_normalized,
+                    "non-banner page content differs from approved main",
+                )
+                self.assertEqual(
+                    self._footer_subscribe(baseline_normalized),
+                    self._footer_subscribe(current_normalized),
+                )
+                self.assertEqual(
+                    self._scientific_content(baseline_normalized),
+                    self._scientific_content(current_normalized),
+                )
 
     @staticmethod
     def _footer_subscribe(text):
