@@ -3,6 +3,8 @@ import re
 import subprocess
 import unittest
 
+from reader_typography_baseline import normalize_reader_typography
+
 ROOT = Path(__file__).resolve().parents[1]
 HTML_FILES = [p for p in ROOT.rglob("*.html") if "/.git/" not in str(p)]
 
@@ -32,6 +34,8 @@ class AccessibilityReviewTests(unittest.TestCase):
     def test_telegram_accessible_name_contains_visible_text_and_site(self):
         for path in HTML_FILES:
             text = path.read_text(errors="ignore")
+            relative = path.relative_to(ROOT).as_posix()
+            text = normalize_reader_typography(relative, text)
             if "Join us on Telegram" in text and "telegram-community-button" in text:
                 self.assertIn(
                     'aria-label="Join us on Telegram — The Omics Hub"', text, str(path)

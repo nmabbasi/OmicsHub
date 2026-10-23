@@ -12,6 +12,7 @@ import xml.etree.ElementTree as ET
 import zipfile
 
 from reviewed_tutorial_baseline import normalize_learner_revision
+from reader_typography_baseline import normalize_reader_typography
 
 ROOT = Path(__file__).resolve().parents[1]
 BASELINE = 'd10ec616cae67437db90427bee4e156dd2bfb7d7'
@@ -41,11 +42,12 @@ def restore_only_reviewed_pbmc_changes(data):
 class PbmcWorkedExampleTests(unittest.TestCase):
     def test_surrounding_lesson_and_both_analysis_scripts_are_preserved(self):
         data = (ROOT / 'tutorials/scrna-seq-basics.html').read_bytes()
+        relative = 'tutorials/scrna-seq-basics.html'
         result = subprocess.run(['git', 'show', BASELINE + ':tutorials/scrna-seq-basics.html'],
                                 cwd=ROOT, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
-        normalized = restore_only_reviewed_pbmc_changes(data)
+        typography_restored = normalize_reader_typography(relative, data.decode('utf-8')).encode('utf-8')
+        normalized = restore_only_reviewed_pbmc_changes(typography_restored)
         if result.returncode == 0:
-            relative = 'tutorials/scrna-seq-basics.html'
             self.assertEqual(normalize_learner_revision(relative, normalized.decode()),
                              normalize_learner_revision(relative, result.stdout.decode()))
         # The Python code itself has an independently recorded pre-edit fingerprint.
@@ -87,7 +89,8 @@ class PbmcWorkedExampleTests(unittest.TestCase):
             self.assertIn('height:auto', tag)
 
     def test_claims_distinguish_execution_from_biological_validation(self):
-        text = (ROOT / 'tutorials/scrna-seq-basics.html').read_text()
+        relative = 'tutorials/scrna-seq-basics.html'
+        text = normalize_reader_typography(relative, (ROOT / relative).read_text(encoding='utf-8'))
         for phrase in ['only the Scanpy/Python route was executed', 'The Seurat/R route has not been run',
                        'No cell-type annotation, doublet calling, or clinical validation was performed',
                        'No thesis data or tumor results were used',
@@ -171,7 +174,8 @@ class PbmcWorkedExampleTests(unittest.TestCase):
                     self.assertEqual(current_fields, baseline_fields, url)
 
     def test_public_plant_figure_and_all_58_tutorials_remain(self):
-        text = (ROOT / 'tutorials/scrna-seq-basics.html').read_text()
+        relative = 'tutorials/scrna-seq-basics.html'
+        text = normalize_reader_typography(relative, (ROOT / relative).read_text(encoding='utf-8'))
         for phrase in ['scrna-basics-public-arabidopsis-umap', 'public-plant-clusters.png',
                        'GSE123818', 'CC BY 4.0', 'image unchanged']:
             self.assertIn(phrase, text)

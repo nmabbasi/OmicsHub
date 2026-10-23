@@ -29,7 +29,7 @@
 <!-- Prism.js for syntax highlighting -->
 <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet"/>
 <!-- Custom CSS -->
-<link href="../style.css?v=20261022-reader-review" rel="stylesheet"/>
+<link href="../style.css?v=20261023-reader-typography" rel="stylesheet"/>
 <script src="../analytics.js"></script>
 <script>
 window.dataLayer = window.dataLayer || [];
@@ -177,16 +177,16 @@ function toggleMobileMenu() {
 <li>Recognize when line-oriented tools are appropriate versus when sequence-aware tools are required.</li>
 </ul>
 <h2>Why text processing matters in bioinformatics</h2>
-<p>Many bioinformatics data formats—FASTA, FASTQ, variant tables, gene annotation TSVs—are plain text. Being able to filter, extract, and summarize these files from the command line lets you explore data quickly, create reproducible preprocessing steps, and plug into larger pipelines. These tools process input a line at a time and can be useful in pipelines over large files; sorting may need substantial memory or temporary disk space, so do not assume every command in a pipeline has constant memory use. That same line-oriented behavior means you must know the file layout (for example, whether sequence lines are wrapped) before running a command like grep or cut.</p>
+<p>Many bioinformatics data formats (FASTA, FASTQ, variant tables, gene annotation TSVs) are plain text. Being able to filter, extract, and summarize these files from the command line lets you explore data quickly, create reproducible preprocessing steps, and plug into larger pipelines. These tools process input a line at a time and can be useful in pipelines over large files; sorting may need substantial memory or temporary disk space, so do not assume every command in a pipeline has constant memory use. That same line-oriented behavior means you must know the file layout (for example, whether sequence lines are wrapped) before running a command like grep or cut.</p>
 <h3>Key concept: line orientation vs. record orientation</h3>
 <p>Tools such as grep, sed, cut, sort, and uniq work on lines. If a biological record spans multiple lines (common in wrapped FASTA), naive line-based commands can yield incorrect results. Sequence-aware tools (for example, seqkit) treat sequences as records and should be used when format complexity matters.</p>
 <h2>Reproducible workflow: filter, extract, and summarize</h2>
 <p>Below is a sequential workflow demonstrating typical tasks. Each code block lists the expected input files and what each command produces. Use exact paths if your files are in another directory (for example, /home/user/data/sequences.fasta).</p>
 <h3>Files used in this example</h3>
 <ul>
-<li>sequences.fasta — a FASTA file containing sequence records. The file may be wrapped (long sequences on multiple lines) or unwrapped (each sequence on a single line).</li>
-<li>reads.fastq — a FASTQ file of sequencing reads (optional for the FASTQ section).</li>
-<li>data.tsv — a tab-delimited table with a header line and multiple columns (e.g., gene_id, sample, count).</li>
+<li>sequences.fasta: a FASTA file containing sequence records. The file may be wrapped (long sequences on multiple lines) or unwrapped (each sequence on a single line).</li>
+<li>reads.fastq: a FASTQ file of sequencing reads (optional for the FASTQ section).</li>
+<li>data.tsv: a tab-delimited table with a header line and multiple columns (e.g., gene_id, sample, count).</li>
 </ul>
 <p>To create a reproducible table and matching-ID list, start in a new working directory and run this block. The values are synthetic teaching data, not biological observations. Check the shell and basic tools before proceeding; later GNU-specific options may differ on macOS.</p>
 <pre><code>mkdir -p cli-part2-practice
@@ -276,9 +276,9 @@ awk -F'\t' 'FILENAME == ARGV[1] {a[$1]=1; next} ($1 in a)' genes_of_interest.txt
 <li>Matching_records.fasta: check that full records were preserved; if only partial sequences appear, you may have used a line-based grep on wrapped FASTA.</li>
 <li>Filtered TSV outputs: confirm the header presence and that numeric comparisons (such as $3 &gt; 100) behave as intended. Do not rely on an AWK numeric comparison to validate a field: nonnumeric text can be coerced or compared in ways that do not express the intended numeric threshold. Validate the field and normalize it before filtering.</li>
 </ul>
-<p>What a plausible result means—and what it does NOT prove:</p>
+<p>What a plausible result means and what it does NOT prove:</p>
 <ul>
-<li>A list of sequence IDs matching 'ATGCG' indicates those sequences contain that motif. It does NOT imply functional significance or experimental validity—further validation and context are required.</li>
+<li>A list of sequence IDs matching 'ATGCG' indicates those sequences contain that motif. It does NOT imply functional significance or experimental validity; further validation and context are required.</li>
 <li>A high read count or many matching records may indicate biological signal or contamination; text processing alone cannot distinguish these possibilities.</li>
 <li>Counting headers gives the number of records in the file, but not the uniqueness of IDs. Use uniq or additional checks to test for duplicated IDs.</li>
 </ul>
@@ -321,11 +321,11 @@ awk -F'\t' 'FILENAME == ARGV[1] {a[$1]=1; next} ($1 in a)' genes_of_interest.txt
 </ul>
 <h2>References</h2>
 <ul>
-<li><a href="https://www.gnu.org/software/grep/manual/grep.html">GNU grep manual</a> — documentation and options for pattern searching.</li>
-<li><a href="https://www.gnu.org/software/sed/manual/sed.html">GNU sed manual</a> — stream editor reference for substitution and simple text transformations.</li>
-<li><a href="https://www.gnu.org/software/coreutils/manual/coreutils.html">GNU Coreutils (cut, sort, uniq, wc)</a> — authoritative reference for standard text-processing utilities.</li>
-<li><a href="https://bioinf.shenwei.me/seqkit">seqkit documentation</a> — a fast toolkit for FASTA/Q manipulation with record-aware operations.</li>
-<li><a href="https://www.ncbi.nlm.nih.gov/nuccore/">FASTA format FAQ (NCBI)</a> — practical notes about the FASTA format and common format pitfalls.</li>
+<li><a href="https://www.gnu.org/software/grep/manual/grep.html">GNU grep manual</a>: documentation and options for pattern searching.</li>
+<li><a href="https://www.gnu.org/software/sed/manual/sed.html">GNU sed manual</a>: stream editor reference for substitution and simple text transformations.</li>
+<li><a href="https://www.gnu.org/software/coreutils/manual/coreutils.html">GNU Coreutils (cut, sort, uniq, wc)</a>: authoritative reference for standard text-processing utilities.</li>
+<li><a href="https://bioinf.shenwei.me/seqkit">seqkit documentation</a>: a fast toolkit for FASTA/Q manipulation with record-aware operations.</li>
+<li><a href="https://www.ncbi.nlm.nih.gov/nuccore/">FASTA format FAQ (NCBI)</a>: practical notes about the FASTA format and common format pitfalls.</li>
 </ul>
 <aside aria-labelledby="tutorial-feedback-title" class="lesson-feedback" id="tutorial-feedback"><h2 id="tutorial-feedback-title">Help improve this tutorial</h2><p>Found an error, a broken link, or a step that needs a clearer explanation? Please <a href="../contact.html">contact me</a>. Your feedback helps me keep this resource accurate and useful.</p></aside></article>
 <section class="mt-12 mb-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-100">
@@ -372,7 +372,7 @@ awk -F'\t' 'FILENAME == ARGV[1] {a[$1]=1; next} ($1 in a)' genes_of_interest.txt
 <p class="text-gray-400 text-sm leading-relaxed mb-4">Practical, hands-on tutorials for bioinformatics, HPC, and single-cell RNA-seq analysis.</p>
 <div class="flex flex-col sm:flex-row items-start gap-3">
 <a class="group inline-flex items-center gap-2 px-5 py-2.5 bg-white/5 text-gray-400 font-medium rounded-lg opacity-50 hover:opacity-100 hover:bg-[#FFDD00] hover:text-gray-900 hover:shadow-[0_0_20px_rgba(255,221,0,0.6)] transition-all duration-300 text-sm transform hover:-translate-y-0.5" href="https://paypal.me/nmabbasi12020?locale.x=en_US&amp;country.x=FR" rel="noopener noreferrer" target="_blank"><span class="text-base grayscale group-hover:grayscale-0">☕</span><span class="font-bold">Buy me a coffee</span></a>
-<a aria-label="Join us on Telegram — The Omics Hub" class="telegram-community-button group ml-0 sm:ml-2 inline-flex items-center gap-2 px-5 py-2.5 bg-white/5 text-gray-400 font-medium rounded-lg hover:opacity-100 hover:bg-[#34D399] hover:text-gray-950 hover:shadow-[0_0_20px_rgba(52,211,153,0.7)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#34D399] transition-all duration-300 text-sm transform hover:-translate-y-0.5" href="https://t.me/theomicshub" rel="noopener noreferrer" target="_blank" title="Join The Omics Hub on Telegram"><svg aria-hidden="true" class="w-4 h-4 grayscale group-hover:grayscale-0" fill="currentColor" viewbox="0 0 24 24"><path d="M21.7 3.4 18.4 20c-.25 1.17-.9 1.46-1.83.91l-5.05-3.72-2.44 2.35c-.27.27-.5.5-1.02.5l.36-5.14 9.36-8.46c.41-.36-.09-.56-.64-.2L5.57 13.5.58 11.94c-1.09-.34-1.11-1.09.23-1.61L20.3 2.78c.91-.34 1.71.2 1.4.62Z"></path></svg><span class="font-bold">Join us on Telegram</span></a>
+<a aria-label="Join The Omics Hub on Telegram" class="telegram-community-button group ml-0 sm:ml-2 inline-flex items-center gap-2 px-5 py-2.5 bg-white/5 text-gray-400 font-medium rounded-lg hover:opacity-100 hover:bg-[#34D399] hover:text-gray-950 hover:shadow-[0_0_20px_rgba(52,211,153,0.7)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#34D399] transition-all duration-300 text-sm transform hover:-translate-y-0.5" href="https://t.me/theomicshub" rel="noopener noreferrer" target="_blank" title="Join The Omics Hub on Telegram"><svg aria-hidden="true" class="w-4 h-4 grayscale group-hover:grayscale-0" fill="currentColor" viewbox="0 0 24 24"><path d="M21.7 3.4 18.4 20c-.25 1.17-.9 1.46-1.83.91l-5.05-3.72-2.44 2.35c-.27.27-.5.5-1.02.5l.36-5.14 9.36-8.46c.41-.36-.09-.56-.64-.2L5.57 13.5.58 11.94c-1.09-.34-1.11-1.09.23-1.61L20.3 2.78c.91-.34 1.71.2 1.4.62Z"></path></svg><span class="font-bold">Join us on Telegram</span></a>
 </div>
 </div>
 <div>

@@ -12,6 +12,7 @@ from reviewed_tutorial_baseline import (
     normalize_reviewed_content,
     strip_cookie_banner,
 )
+from reader_typography_baseline import normalize_reader_typography
 
 ROOT = Path(__file__).resolve().parents[1]
 BASELINE = 'e7037f1b9a9eea8f4338e7b6696f791d8172f844'
@@ -92,6 +93,8 @@ class HeroPerformanceTests(unittest.TestCase):
         current = (ROOT / 'index.html').read_text()
         # Undo only the new source and responsive-size attributes; the whole body must match.
         old_sizes = re.search(r'<img[^>]+fetchpriority="high"[^>]+sizes="([^"]+)"', original).group(1)
+        original = normalize_reader_typography('index.html', original)
+        current = normalize_reader_typography('index.html', current)
         body = current[current.index('<body'):]
         body = re.sub(r'<source[^>]+type="image/avif"/>\n', '', body)
         body = re.sub(r'sizes="[^"]+"', 'sizes="' + old_sizes + '"', body)
@@ -105,7 +108,7 @@ class HeroPerformanceTests(unittest.TestCase):
         self.assertEqual(marker, advertising_marker, 'Expected the isolated advertising module')
         self.assertEqual(consent.count(advertising_marker), 1)
         self.assertTrue(advertising_module.endswith(b'// END ADVERTISING CONSENT MODULE\n'))
-        for name in ['analytics.js', 'style.css', 'subscribe-fab.js',
+        for name in ['analytics.js', 'subscribe-fab.js',
                      'images/hero-image-light-navy-clean.webp',
                      'images/hero-image-light-navy-clean-480.webp',
                      'images/hero-image-light-navy-clean-768.webp',
@@ -124,6 +127,8 @@ class HeroPerformanceTests(unittest.TestCase):
             current_text = strip_cookie_banner(
                 p.read_text(encoding='utf-8'), allow_missing=True
             )
+            baseline_text = normalize_reader_typography(relative_path, baseline_text)
+            current_text = normalize_reader_typography(relative_path, current_text)
             baseline_text = normalize_learner_revision(relative_path, normalize_reviewed_content(relative_path, baseline_text))
             current_text = normalize_learner_revision(relative_path, normalize_reviewed_content(relative_path, current_text))
             if p.name in ('cell-type-annotation-methods.html', 'scrna-seq-integration-strategies.html'):

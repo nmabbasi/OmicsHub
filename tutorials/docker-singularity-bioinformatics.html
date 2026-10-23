@@ -29,7 +29,7 @@
 <!-- Prism.js for syntax highlighting -->
 <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet"/>
 <!-- Custom CSS -->
-<link href="../style.css?v=20261022-reader-review" rel="stylesheet"/>
+<link href="../style.css?v=20261023-reader-typography" rel="stylesheet"/>
 <script src="../analytics.js"></script>
 <script>
 window.dataLayer = window.dataLayer || [];
@@ -173,7 +173,7 @@ function toggleMobileMenu() {
 <section class="lesson-summary tutorial-learning-contract" data-tutorial-format="hands-on-lab" aria-label="Learning format">
 <p><strong>Format: Hands-on lab.</strong> For learners comfortable with a terminal, this short exercise creates a tiny, entirely synthetic reference and two reads, then follows their files through BWA in Docker. No biological data are supplied; a Docker-capable host and host-side BWA are needed locally, while the Slurm/Apptainer section is an optional adaptation for users with an authorized cluster account.</p>
 </section>
-<h2>What the container does—and does not—freeze</h2>
+<h2>What the container freezes, and what it does not</h2>
 <p>An image bundles an application and its userspace dependencies. That is useful when tools require conflicting libraries or when you need to preserve an environment, but it does not guarantee identical results across all hosts: kernel and hardware behavior, environment variables, mounted files, command-line parameters, and external services can still matter. Record the exact image reference (prefer a digest for durable identification), input checksums, tool arguments, and relevant host/runtime details. A tag can be moved, and a container is not a substitute for workflow provenance or biological validation.</p>
 <p>Docker commonly runs through a privileged daemon, which is why shared clusters often restrict Docker. Apptainer (formerly Singularity) is designed for unprivileged HPC use, but installation, configuration, allowed registries, and bind paths remain site-specific. Follow your cluster's documentation rather than assuming Docker is universally unavailable or that Apptainer is installed.</p>
 <h2>Prepare a small, explicit project layout</h2>
@@ -214,7 +214,7 @@ docker run --rm \
   "$IMAGE" bwa mem -t 4 reference.fa reads.fq \
   &gt; results/reads.sam
 </code></pre>
-<p>The redirection is performed by the host shell, not inside Docker; because the working directory is mounted, the SAM file lands in the host's <code>results/</code> directory. The command assumes the image can start <code>bwa</code> with this invocation and the tag exists and is accessible. Check the registry and image documentation before relying on either assumption. If the source directory is missing, Docker's explicit <code>--mount</code> form errors rather than silently creating it; check the mount path and permissions. Mounting a project read-write allows container processes to alter its contents—use a read-only input mount plus a separate writable output directory when the tool and directory layout permit.</p>
+<p>The redirection is performed by the host shell, not inside Docker; because the working directory is mounted, the SAM file lands in the host's <code>results/</code> directory. The command assumes the image can start <code>bwa</code> with this invocation and the tag exists and is accessible. Check the registry and image documentation before relying on either assumption. If the source directory is missing, Docker's explicit <code>--mount</code> form errors rather than silently creating it; check the mount path and permissions. Mounting a project read-write allows container processes to alter its contents. Use a read-only input mount plus a separate writable output directory when the tool and directory layout permit.</p>
 <h2>Use the same image on a Slurm cluster</h2>
 <p>This section is optional and applies only if you have an authorized Slurm account on a cluster that provides Apptainer (or its locally supported Singularity command). Check the site documentation for resource limits, permitted image acquisition, storage paths, and submission procedures; do not install software or submit jobs on a shared system without authorization. Where permitted, pull the OCI image once (often on a login or transfer node). This converts the registry image into a local SIF file; network access, image caching, and where pulls are allowed are cluster-specific.</p>
 <pre><code class="language-bash">apptainer pull bwa.sif docker://quay.io/biocontainers/bwa:0.7.17--hed695b0_7
@@ -245,9 +245,9 @@ apptainer exec --bind "$PWD:/work" --pwd /work bwa.sif \
 <section aria-label="References and further reading" class="lesson-reference">
 <h2>Official references</h2>
 <ul>
-<li><a href="https://docs.docker.com/engine/storage/bind-mounts/" rel="noopener" target="_blank">Docker: Bind mounts</a> — source/destination paths, missing sources, and read-only mounts.</li>
-<li><a href="https://apptainer.org/docs/user/main/quick_start.html" rel="noopener" target="_blank">Apptainer user guide: Quick start</a> — pull OCI images, execute commands, and access host files.</li>
-<li><a href="https://apptainer.org/docs/user/main/cli/apptainer_exec.html" rel="noopener" target="_blank">Apptainer: exec</a> — execution syntax and bind option.</li>
+<li><a href="https://docs.docker.com/engine/storage/bind-mounts/" rel="noopener" target="_blank">Docker: Bind mounts</a>, covering source/destination paths, missing sources, and read-only mounts.</li>
+<li><a href="https://apptainer.org/docs/user/main/quick_start.html" rel="noopener" target="_blank">Apptainer user guide: Quick start</a>, covering OCI image pulls, command execution, and host-file access.</li>
+<li><a href="https://apptainer.org/docs/user/main/cli/apptainer_exec.html" rel="noopener" target="_blank">Apptainer: exec</a>, covering execution syntax and the bind option.</li>
 </ul>
 </section>
 <aside aria-labelledby="tutorial-feedback-title" class="lesson-feedback" id="tutorial-feedback"><h2 id="tutorial-feedback-title">Help improve this tutorial</h2><p>Found an error, a broken link, or a step that needs a clearer explanation? Please <a href="../contact.html">contact me</a>. Your feedback helps me keep this resource accurate and useful.</p></aside></article>
@@ -295,7 +295,7 @@ apptainer exec --bind "$PWD:/work" --pwd /work bwa.sif \
 <p class="text-gray-400 text-sm leading-relaxed mb-4">Practical, hands-on tutorials for bioinformatics, HPC, and single-cell RNA-seq analysis.</p>
 <div class="flex flex-col sm:flex-row items-start gap-3">
 <a class="group inline-flex items-center gap-2 px-5 py-2.5 bg-white/5 text-gray-400 font-medium rounded-lg opacity-50 hover:opacity-100 hover:bg-[#FFDD00] hover:text-gray-900 hover:shadow-[0_0_20px_rgba(255,221,0,0.6)] transition-all duration-300 text-sm transform hover:-translate-y-0.5" href="https://paypal.me/nmabbasi12020?locale.x=en_US&amp;country.x=FR" rel="noopener noreferrer" target="_blank"><span class="text-base grayscale group-hover:grayscale-0">☕</span><span class="font-bold">Buy me a coffee</span></a>
-<a aria-label="Join us on Telegram — The Omics Hub" class="telegram-community-button group ml-0 sm:ml-2 inline-flex items-center gap-2 px-5 py-2.5 bg-white/5 text-gray-400 font-medium rounded-lg hover:opacity-100 hover:bg-[#34D399] hover:text-gray-950 hover:shadow-[0_0_20px_rgba(52,211,153,0.7)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#34D399] transition-all duration-300 text-sm transform hover:-translate-y-0.5" href="https://t.me/theomicshub" rel="noopener noreferrer" target="_blank" title="Join The Omics Hub on Telegram"><svg aria-hidden="true" class="w-4 h-4 grayscale group-hover:grayscale-0" fill="currentColor" viewbox="0 0 24 24"><path d="M21.7 3.4 18.4 20c-.25 1.17-.9 1.46-1.83.91l-5.05-3.72-2.44 2.35c-.27.27-.5.5-1.02.5l.36-5.14 9.36-8.46c.41-.36-.09-.56-.64-.2L5.57 13.5.58 11.94c-1.09-.34-1.11-1.09.23-1.61L20.3 2.78c.91-.34 1.71.2 1.4.62Z"></path></svg><span class="font-bold">Join us on Telegram</span></a>
+<a aria-label="Join The Omics Hub on Telegram" class="telegram-community-button group ml-0 sm:ml-2 inline-flex items-center gap-2 px-5 py-2.5 bg-white/5 text-gray-400 font-medium rounded-lg hover:opacity-100 hover:bg-[#34D399] hover:text-gray-950 hover:shadow-[0_0_20px_rgba(52,211,153,0.7)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#34D399] transition-all duration-300 text-sm transform hover:-translate-y-0.5" href="https://t.me/theomicshub" rel="noopener noreferrer" target="_blank" title="Join The Omics Hub on Telegram"><svg aria-hidden="true" class="w-4 h-4 grayscale group-hover:grayscale-0" fill="currentColor" viewbox="0 0 24 24"><path d="M21.7 3.4 18.4 20c-.25 1.17-.9 1.46-1.83.91l-5.05-3.72-2.44 2.35c-.27.27-.5.5-1.02.5l.36-5.14 9.36-8.46c.41-.36-.09-.56-.64-.2L5.57 13.5.58 11.94c-1.09-.34-1.11-1.09.23-1.61L20.3 2.78c.91-.34 1.71.2 1.4.62Z"></path></svg><span class="font-bold">Join us on Telegram</span></a>
 </div>
 </div>
 <div>

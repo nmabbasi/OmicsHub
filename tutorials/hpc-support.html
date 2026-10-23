@@ -29,7 +29,7 @@
 <!-- Prism.js for syntax highlighting -->
 <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet"/>
 <!-- Custom CSS -->
-<link href="../style.css?v=20261022-reader-review" rel="stylesheet"/>
+<link href="../style.css?v=20261023-reader-typography" rel="stylesheet"/>
 <script src="../analytics.js"></script>
 <script>
 window.dataLayer = window.dataLayer || [];
@@ -266,7 +266,7 @@ command -v bwa
 bwa 2&gt;&amp;1 | head -n 1  # consult your cluster/tool documentation for version syntax
 </code></pre>
 <p>
-  Files produced: none — these are checks you perform interactively. If a tool is missing or the wrong version is found, adjust the batch script to load the correct module or activate the correct environment.
+  No files are produced; these are checks you perform interactively. If a tool is missing or the wrong version is found, adjust the batch script to load the correct module or activate the correct environment.
 </p>
 <h3>4) Minimal re-run for debugging (short, small resource test)</h3>
 <p>
@@ -310,10 +310,10 @@ SBATCH
 sbatch tiny_test.sbatch
 </code></pre>
 <p>
-  For paired-end reads, create R1 and R2 subsets from the same source records using a paired-aware method, then pass both files to BWA in mate order; never downsample mates independently. Adapt the command, reference/index format and resource request to the original pipeline and site policy. Files produced: test_reads.fastq.gz, test_reads.sam (or tinytest-%j.out and tinytest.sam). The FASTQ line-count check confirms only a non-empty, four-line record boundary—not that sequence, quality and header fields are biologically valid or mates match. A successful small test shows only that this particular subset worked in that environment; it does not establish that the full input fits requested resources or rule out data-specific failures. Stop and ask cluster support if paths, permitted compute location, index files, or input format cannot be verified.</p>
+  For paired-end reads, create R1 and R2 subsets from the same source records using a paired-aware method, then pass both files to BWA in mate order; never downsample mates independently. Adapt the command, reference/index format and resource request to the original pipeline and site policy. Files produced: test_reads.fastq.gz, test_reads.sam (or tinytest-%j.out and tinytest.sam). The FASTQ line-count check confirms only a non-empty, four-line record boundary, not that sequence, quality and header fields are biologically valid or mates match. A successful small test shows only that this particular subset worked in that environment; it does not establish that the full input fits requested resources or rule out data-specific failures. Stop and ask cluster support if paths, permitted compute location, index files, or input format cannot be verified.</p>
 <h2>Output inspection and interpretation</h2>
 <p>
-  After you collect the outputs above, here are the common pieces of evidence and how to interpret them — including what a result does not prove.
+  After you collect the outputs above, here are the common pieces of evidence and how to interpret them, including what a result does not prove.
 </p>
 <h3>sacct and seff output</h3>
 <ul>
@@ -323,7 +323,7 @@ sbatch tiny_test.sbatch
 </ul>
 <h3>Log file contents</h3>
 <ul>
-<li>Tool-specific error messages (e.g., "FileNotFoundError: data/reads.fastq"): this implicates files or paths — check SLURM_SUBMIT_DIR and that all input files existed at submission time. This proves a missing-file condition if the path is absolute or the file's absence can be verified.</li>
+<li>Tool-specific error messages (e.g., "FileNotFoundError: data/reads.fastq"): this implicates files or paths; check SLURM_SUBMIT_DIR and that all input files existed at submission time. This proves a missing-file condition if the path is absolute or the file's absence can be verified.</li>
 <li>"command not found" points to command resolution in that execution context. Check module and environment setup, executable paths, and whether the command exists on compute nodes. The message alone does not establish why it was absent.</li>
 <li>Segmentation faults or "Bus error": could be corrupted input, a software bug, or exceeding memory/stack limits. These messages require more investigation (e.g., trying a small test or a different software version).</li>
 </ul>
@@ -425,9 +425,9 @@ Steps attempted:
 <h2>References</h2>
 <ul>
 <li><a href="https://slurm.schedmd.com/documentation.html">Slurm official documentation (SchedMD)</a></li>
-<li><a href="https://slurm.schedmd.com/sacct.html">sacct — Slurm accounting tool</a></li>
-<li><a href="https://slurm.schedmd.com/squeue.html">squeue — view jobs in the scheduling queue</a></li>
-<li><a href="https://slurm.schedmd.com/scontrol.html">scontrol — display and manage Slurm state</a></li>
+<li><a href="https://slurm.schedmd.com/sacct.html">sacct: Slurm accounting tool</a></li>
+<li><a href="https://slurm.schedmd.com/squeue.html">squeue: view jobs in the scheduling queue</a></li>
+<li><a href="https://slurm.schedmd.com/scontrol.html">scontrol: display and manage Slurm state</a></li>
 <li><a href="https://slurm.schedmd.com/job_state_codes.html">Slurm job state codes</a></li>
 <li><a href="https://support.access-ci.org/">XSEDE: Troubleshooting jobs on HPC systems (practical guidance)</a></li>
 </ul>
@@ -476,7 +476,7 @@ Steps attempted:
 <p class="text-gray-400 text-sm leading-relaxed mb-4">Practical, hands-on tutorials for bioinformatics, HPC, and single-cell RNA-seq analysis.</p>
 <div class="flex flex-col sm:flex-row items-start gap-3">
 <a class="group inline-flex items-center gap-2 px-5 py-2.5 bg-white/5 text-gray-400 font-medium rounded-lg opacity-50 hover:opacity-100 hover:bg-[#FFDD00] hover:text-gray-900 hover:shadow-[0_0_20px_rgba(255,221,0,0.6)] transition-all duration-300 text-sm transform hover:-translate-y-0.5" href="https://paypal.me/nmabbasi12020?locale.x=en_US&amp;country.x=FR" rel="noopener noreferrer" target="_blank"><span class="text-base grayscale group-hover:grayscale-0">☕</span><span class="font-bold">Buy me a coffee</span></a>
-<a aria-label="Join us on Telegram — The Omics Hub" class="telegram-community-button group ml-0 sm:ml-2 inline-flex items-center gap-2 px-5 py-2.5 bg-white/5 text-gray-400 font-medium rounded-lg hover:opacity-100 hover:bg-[#34D399] hover:text-gray-950 hover:shadow-[0_0_20px_rgba(52,211,153,0.7)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#34D399] transition-all duration-300 text-sm transform hover:-translate-y-0.5" href="https://t.me/theomicshub" rel="noopener noreferrer" target="_blank" title="Join The Omics Hub on Telegram"><svg aria-hidden="true" class="w-4 h-4 grayscale group-hover:grayscale-0" fill="currentColor" viewbox="0 0 24 24"><path d="M21.7 3.4 18.4 20c-.25 1.17-.9 1.46-1.83.91l-5.05-3.72-2.44 2.35c-.27.27-.5.5-1.02.5l.36-5.14 9.36-8.46c.41-.36-.09-.56-.64-.2L5.57 13.5.58 11.94c-1.09-.34-1.11-1.09.23-1.61L20.3 2.78c.91-.34 1.71.2 1.4.62Z"></path></svg><span class="font-bold">Join us on Telegram</span></a>
+<a aria-label="Join The Omics Hub on Telegram" class="telegram-community-button group ml-0 sm:ml-2 inline-flex items-center gap-2 px-5 py-2.5 bg-white/5 text-gray-400 font-medium rounded-lg hover:opacity-100 hover:bg-[#34D399] hover:text-gray-950 hover:shadow-[0_0_20px_rgba(52,211,153,0.7)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#34D399] transition-all duration-300 text-sm transform hover:-translate-y-0.5" href="https://t.me/theomicshub" rel="noopener noreferrer" target="_blank" title="Join The Omics Hub on Telegram"><svg aria-hidden="true" class="w-4 h-4 grayscale group-hover:grayscale-0" fill="currentColor" viewbox="0 0 24 24"><path d="M21.7 3.4 18.4 20c-.25 1.17-.9 1.46-1.83.91l-5.05-3.72-2.44 2.35c-.27.27-.5.5-1.02.5l.36-5.14 9.36-8.46c.41-.36-.09-.56-.64-.2L5.57 13.5.58 11.94c-1.09-.34-1.11-1.09.23-1.61L20.3 2.78c.91-.34 1.71.2 1.4.62Z"></path></svg><span class="font-bold">Join us on Telegram</span></a>
 </div>
 </div>
 <div>

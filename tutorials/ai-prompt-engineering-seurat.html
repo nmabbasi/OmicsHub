@@ -22,7 +22,7 @@
 <title>Prompt Engineering for Seurat and Scanpy: A Reproducible Workflow | The Omics Hub</title><link href="../images/favicon.svg" rel="icon" type="image/svg+xml"/>
 <link href="../tailwind.min.css" rel="stylesheet"/>
 <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet"/>
-<link href="../style.css?v=20261022-reader-review" rel="stylesheet"/>
+<link href="../style.css?v=20261023-reader-typography" rel="stylesheet"/>
 <script src="../analytics.js"></script>
 <script>
 window.dataLayer = window.dataLayer || [];
@@ -188,7 +188,7 @@ function toggleMobileMenu() {
 <li>Command-line literacy for running scripts and saving outputs to explicit file paths.</li>
 </ul>
 <h2>Why intent-based prompting matters for Seurat &amp; Scanpy workflows</h2>
-<p>A prompt should specify the question and the constraints that affect its answer, then ask the assistant to state assumptions and produce checks you can run. Intent-based prompting (a.k.a. "vibe coding") focuses the assistant on what you want to achieve — for example, "identify markers distinguishing cluster 2" — and leaves the assistant to choose reasonable API calls within explicit constraints you provide. A prompt does not remove the need to verify API calls against the installed package version.</p>
+<p>A prompt should specify the question and the constraints that affect its answer, then ask the assistant to state assumptions and produce checks you can run. Intent-based prompting (a.k.a. "vibe coding") focuses the assistant on what you want to achieve (for example, "identify markers distinguishing cluster 2") and leaves the assistant to choose reasonable API calls within explicit constraints you provide. A prompt does not remove the need to verify API calls against the installed package version.</p>
 <p>In single-cell analysis, small changes in preprocessing (filtering thresholds, normalization, variable-gene selection) materially affect downstream results. Therefore, prompt templates should require the assistant to state assumptions, include checks, and write files that let you re-run analyses deterministically.</p>
 <h2>Reproducible prompting loop</h2>
 <p>Before asking an assistant to write code, establish a reproducible loop:</p>
@@ -308,7 +308,7 @@ print("Wrote results to", outdir)
 </code></pre>
 <p>What each command produces:</p>
 <ul>
-<li>./results/qc_violins_before.png — violin plots of QC metrics before filtering.</li>
+<li>./results/qc_violins_before.png: violin plots of QC metrics before filtering.</li>
 <li>Filtered in-memory AnnData (then saved): ./results/adata_processed.h5ad</li>
 <li>UMAP image: ./results/umap_leiden_r10.png (the script explicitly saves this file).</li>
 <li>Cluster ranking table: ./results/scanpy_rank_genes.csv (all genes retained after filtering, not only HVGs; computed from the log1p_norm layer).</li>
@@ -412,9 +412,9 @@ message("Wrote results to ", outdir)
 </code></pre>
 <p>What each command produces:</p>
 <ul>
-<li>./results/umap_seurat_clusters.png — UMAP colored by 'seurat_clusters'.</li>
-<li>./results/cluster2_markers.csv — exploratory differential-expression results for cluster 2 versus the remaining cells, filtered by adjusted p-value.</li>
-<li>./results/seurat_obj_processed.rds — Seurat object with any computed reductions, unchanged incoming cluster labels, and the recorded cluster-2 comparison metadata.</li>
+<li>./results/umap_seurat_clusters.png: UMAP colored by 'seurat_clusters'.</li>
+<li>./results/cluster2_markers.csv: exploratory differential-expression results for cluster 2 versus the remaining cells, filtered by adjusted p-value.</li>
+<li>./results/seurat_obj_processed.rds: Seurat object with any computed reductions, unchanged incoming cluster labels, and the recorded cluster-2 comparison metadata.</li>
 </ul>
 <h3>Check your reasoning: labels and expression scale</h3>
 <p><strong>Task.</strong> Your Seurat input already has <code>seurat_clusters</code> values <code>0, 1, 2</code>, but no UMAP. Which labels define cluster 2 versus the reference group after the visualization step? For Scanpy, which values feed marker ranking if the input already has a <code>.raw</code> field?</p>
@@ -423,14 +423,14 @@ message("Wrote results to ", outdir)
 <h2>Output inspection and interpretation</h2>
 <p>After running a generated script, inspect outputs with these checks and interpret them cautiously.</p>
 <ul>
-<li><strong>QC plots</strong> Check whether the distributions of gene counts, total counts, and mitochondrial percentage look sensible for your sample type. Very high mitochondrial percentages often indicate damaged cells, but thresholds are dataset-specific — 5% is typical for fresh PBMCs and not a universal rule.</li>
+<li><strong>QC plots</strong> Check whether the distributions of gene counts, total counts, and mitochondrial percentage look sensible for your sample type. Very high mitochondrial percentages often indicate damaged cells, but thresholds are dataset-specific; 5% is typical for fresh PBMCs and not a universal rule.</li>
 <li><strong>Filtering results</strong>: Note the number of cells and genes retained. If you lose an unexpectedly large fraction (&gt;30–50%) of cells, revisit thresholds and confirm metadata quality (e.g., correct gene name capitalization for mitochondrial genes).</li>
 <li><strong>Clustering and UMAP</strong>: UMAP and cluster labels are descriptive summaries. A clear separation of known cell-type markers across clusters increases confidence, but cluster boundaries can change with preprocessing or neighbor parameter changes.</li>
 <li><strong>Differential expression tables</strong>: Check the installed version's actual columns, group definition, assay or layer, and test. Adjusted p-values describe evidence under that test and correction; they do not establish causality. Cell-level comparisons can overstate evidence when cells from one sample are treated as independent replicates.</li>
 </ul>
-<p>What plausible results mean — and what they don't:</p>
+<p>What plausible results mean and what they don't:</p>
 <ul>
-<li>Marker genes with strong log fold-change and low p_adj suggest genes enriched in that cluster under analysis choices (normalization, test). They do not by themselves validate cell identity — you should cross-reference with known marker gene sets and, if possible, orthogonal assays.</li>
+<li>Marker genes with strong log fold-change and low p_adj suggest genes enriched in that cluster under analysis choices (normalization, test). They do not by themselves validate cell identity; you should cross-reference with known marker gene sets and, if possible, orthogonal assays.</li>
 <li>Absence of significant markers could mean clusters are not biologically distinct, the cluster is too small, or the test lacks power (low cell counts or high variability).</li>
 </ul>
 <h2>Troubleshooting: symptoms, likely causes, and fixes</h2>
@@ -534,7 +534,7 @@ message("Wrote results to ", outdir)
 <p class="text-gray-400 text-sm leading-relaxed mb-4">Practical, hands-on tutorials for bioinformatics, HPC, and single-cell RNA-seq analysis.</p>
 <div class="flex flex-col sm:flex-row items-start gap-3">
 <a class="group inline-flex items-center gap-2 px-5 py-2.5 bg-white/5 text-gray-400 font-medium rounded-lg opacity-50 hover:opacity-100 hover:bg-[#FFDD00] hover:text-gray-900 hover:shadow-[0_0_20px_rgba(255,221,0,0.6)] transition-all duration-300 text-sm transform hover:-translate-y-0.5" href="https://paypal.me/nmabbasi12020?locale.x=en_US&amp;country.x=FR" rel="noopener noreferrer" target="_blank"><span class="text-base grayscale group-hover:grayscale-0">☕</span><span class="font-bold">Buy me a coffee</span></a>
-<a aria-label="Join us on Telegram — The Omics Hub" class="telegram-community-button group ml-0 sm:ml-2 inline-flex items-center gap-2 px-5 py-2.5 bg-white/5 text-gray-400 font-medium rounded-lg hover:opacity-100 hover:bg-[#34D399] hover:text-gray-950 hover:shadow-[0_0_20px_rgba(52,211,153,0.7)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#34D399] transition-all duration-300 text-sm transform hover:-translate-y-0.5" href="https://t.me/theomicshub" rel="noopener noreferrer" target="_blank" title="Join The Omics Hub on Telegram"><svg aria-hidden="true" class="w-4 h-4 grayscale group-hover:grayscale-0" fill="currentColor" viewbox="0 0 24 24"><path d="M21.7 3.4 18.4 20c-.25 1.17-.9 1.46-1.83.91l-5.05-3.72-2.44 2.35c-.27.27-.5.5-1.02.5l.36-5.14 9.36-8.46c.41-.36-.09-.56-.64-.2L5.57 13.5.58 11.94c-1.09-.34-1.11-1.09.23-1.61L20.3 2.78c.91-.34 1.71.2 1.4.62Z"></path></svg><span class="font-bold">Join us on Telegram</span></a>
+<a aria-label="Join The Omics Hub on Telegram" class="telegram-community-button group ml-0 sm:ml-2 inline-flex items-center gap-2 px-5 py-2.5 bg-white/5 text-gray-400 font-medium rounded-lg hover:opacity-100 hover:bg-[#34D399] hover:text-gray-950 hover:shadow-[0_0_20px_rgba(52,211,153,0.7)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#34D399] transition-all duration-300 text-sm transform hover:-translate-y-0.5" href="https://t.me/theomicshub" rel="noopener noreferrer" target="_blank" title="Join The Omics Hub on Telegram"><svg aria-hidden="true" class="w-4 h-4 grayscale group-hover:grayscale-0" fill="currentColor" viewbox="0 0 24 24"><path d="M21.7 3.4 18.4 20c-.25 1.17-.9 1.46-1.83.91l-5.05-3.72-2.44 2.35c-.27.27-.5.5-1.02.5l.36-5.14 9.36-8.46c.41-.36-.09-.56-.64-.2L5.57 13.5.58 11.94c-1.09-.34-1.11-1.09.23-1.61L20.3 2.78c.91-.34 1.71.2 1.4.62Z"></path></svg><span class="font-bold">Join us on Telegram</span></a>
 </div>
 </div>
 <div>
