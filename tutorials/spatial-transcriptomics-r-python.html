@@ -171,22 +171,31 @@ function toggleMobileMenu() {
 <article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--lab">
 <p class="lesson-lead">Spatial assays retain a relationship between measured RNA and a position in a tissue section. This Visium-oriented walkthrough follows the same analysis questions in R and Python: load a Space Ranger output, inspect expression on the tissue image, and compare expression-based clusters with anatomy.</p>
 <section class="lesson-summary tutorial-learning-contract" data-tutorial-format="advanced-template" aria-label="Learning format">
-<p><strong>Format: Advanced template.</strong> For readers with R or Python and a prepared conventional Visium Space Ranger output; adapt the supplied loading, image-QC, and expression-clustering fragments in one language, then record what the image and measurements support. No dataset or pinned environment is bundled; a documented Squidpy public-data accessor is provided for Python practice, while R readers supply a compatible local output directory.</p>
+<p><strong>Format: Advanced template.</strong> For readers with R or Python, this page supplies a shared public-data preparation route for the conventional Visium sample <code>V1_Adult_Mouse_Brain</code>. Both language branches load the same H5 matrix and spatial assets; adapt the image-QC and expression-clustering fragments in one language, then record what the measurements support. Input preparation was checked; the downstream R and Python analyses are not claimed as executed or version-pinned here.</p>
 </section>
-<p><strong>Scope and input:</strong> the code below assumes conventional Visium v1/v2 Space Ranger output, with <code>filtered_feature_bc_matrix/</code> and <code>spatial/</code> under the same <code>outs/</code> directory. Set <code>visium_brain_data/</code> to that <code>outs/</code> path, not the parent run directory. The <a href="https://www.10xgenomics.com/support/software/space-ranger/latest/analysis/outputs/output-overview" rel="noopener" target="_blank">Space Ranger output guide</a> documents the matrix and spatial assets; exact files vary by pipeline and assay. These calls do not cover Xenium, MERFISH, Visium HD binning, segmentation, deconvolution, or a complete QC workflow, whose input structures and analysis choices differ.</p>
-<p>Python readers can obtain a supported conventional sample with Squidpy's documented downloader in a current compatible Squidpy environment; it returns an <code>AnnData</code> object with spatial metadata rather than a local Space Ranger directory:</p>
-<pre><code class="language-python">import squidpy as sq
-adata = sq.datasets.visium("V1_Adult_Mouse_Brain", base_dir="data")
-print(adata.shape, adata.obsm.keys(), adata.uns.get("spatial", {}).keys())
+<p><strong>Scope and input:</strong> both readers below explicitly use <code>filtered_feature_bc_matrix.h5</code> beside a <code>spatial/</code> directory. A matrix-market folder alone is not the H5 file these calls expect. For your own conventional Visium v1/v2 output, point both readers at the same <code>outs/</code> directory with those assets. The <a href="https://www.10xgenomics.com/support/software/space-ranger/latest/analysis/outputs/output-overview" rel="noopener" target="_blank">Space Ranger output guide</a> documents the files. These calls do not cover Xenium, MERFISH, Visium HD binning, segmentation, deconvolution, or a complete QC workflow.</p>
+<h2 id="shared-visium-input">Prepare one public sample for both languages</h2>
+<p>Download the <a download="" href="../files/visium-example/prepare_inputs.py">standard-library input preparer</a> into a new project. With Python 3.10 or later, run the command below from that project root. It downloads approximately 30 MB from 10x Genomics, checks recorded SHA256 fingerprints and stages the mouse-brain H5 matrix and images together. It refuses an existing destination; do not remove checksum checks if an upstream source changes. No R or Squidpy installation is needed for this preparation step.</p>
+<pre><code class="language-bash">python3 prepare_inputs.py --output data/visium/V1_Adult_Mouse_Brain
 </code></pre>
-<p>To run the directory-loading examples instead, download and extract one conventional Visium Space Ranger output from the <a href="https://www.10xgenomics.com/resources/datasets" rel="noopener" target="_blank">10x Genomics public dataset portal</a>, then point both languages at its <code>outs/</code> directory. Do not substitute HD binned output. Before analysis, record versions in the active environments: Python <code>python -c "import scanpy,squidpy; print(scanpy.__version__, squidpy.__version__)"</code>; R <code>R -q -e 'sessionInfo()'</code>. This page does not prescribe or claim tested version pins; consult official package documentation for environment setup and compatibility before installation.</p>
+<pre><code class="language-text">data/visium/V1_Adult_Mouse_Brain/
+  filtered_feature_bc_matrix.h5
+  source-manifest.json
+  spatial/
+    tissue_positions_list.csv
+    scalefactors_json.json
+    tissue_lowres_image.png
+    tissue_hires_image.png
+</code></pre>
+<p><strong>Verified boundary:</strong> the actual source downloads, fingerprints, HDF5 signature, archive contents and shared-directory preparation were checked. See the <a href="../files/visium-example/verified-inputs.json">recorded source fingerprints</a> and <a href="../files/visium-example/README.md">setup notes</a>. These checks do not establish that either downstream analysis has run, that tissue registration is correct, or that a biological result is valid. Before analysis, record versions in the active environments: Python <code>python -c "import scanpy,squidpy; print(scanpy.__version__, squidpy.__version__)"</code>; R <code>R -q -e 'sessionInfo()'</code>. Check official package documentation for compatibility.</p>
 <h2>1. Load a Visium library</h2>
 <p>Keep the expression matrix and tissue metadata together. Squidpy's Visium reader loads the count matrix and, when available in the expected output, spot coordinates, image, and scale factors. Seurat's loader similarly expects the matrix file and image data under the specified directory. A missing or mismatched <code>spatial/</code> directory is a common reason an image-backed plot cannot be made.</p>
 <h3>Python: Squidpy and Scanpy</h3>
 <pre><code class="language-python">import scanpy as sc
 import squidpy as sq
 
-adata = sq.read.visium("visium_brain_data/")
+shared_input = "data/visium/V1_Adult_Mouse_Brain"
+adata = sq.read.visium(shared_input, counts_file="filtered_feature_bc_matrix.h5")
 sc.pp.normalize_total(adata, inplace=True)
 sc.pp.log1p(adata)
 sc.pp.highly_variable_genes(adata, flavor="seurat", n_top_genes=2000)
@@ -195,10 +204,11 @@ sc.pp.highly_variable_genes(adata, flavor="seurat", n_top_genes=2000)
 <pre><code class="language-r">library(Seurat)
 library(ggplot2)
 
-spatial_data &lt;- Load10X_Spatial(data.dir = "visium_brain_data/")
+shared_input &lt;- "data/visium/V1_Adult_Mouse_Brain"
+spatial_data &lt;- Load10X_Spatial(data.dir = shared_input, filename = "filtered_feature_bc_matrix.h5")
 spatial_data &lt;- SCTransform(spatial_data, assay = "Spatial", verbose = FALSE)
 </code></pre>
-<p>Python's normalization and highly-variable-gene selection and Seurat's <code>SCTransform</code> are alternative preprocessing choices; they are not identical transformations or numerically interchangeable. Inspect the object and assay/layer names before using downstream code, especially when adapting this example to a different Seurat or Scanpy release. If loading fails, first confirm the path ends at <code>outs/</code> and contains both the filtered matrix and <code>spatial/</code>; if counts load but the image does not, inspect the spatial assets and library metadata before proceeding with image-backed plots.</p>
+<p>Python's normalization and highly-variable-gene selection and Seurat's <code>SCTransform</code> are alternative preprocessing choices; they are not identical transformations or numerically interchangeable. Inspect object and assay/layer names when adapting to another release. If loading fails, confirm the selected directory directly contains <code>filtered_feature_bc_matrix.h5</code> and <code>spatial/</code>. For your own Space Ranger run this is usually <code>outs/</code>; the prepared public sample uses the named directory above. If counts load without an image, inspect the spatial assets and library metadata before interpreting plots.</p>
 <aside class="lesson-checkpoint"><strong>Before plotting:</strong> confirm that observations and genes are present, the intended tissue image is attached, and coordinates align with that image. Check the feature names in the object; gene-symbol capitalization and assay/layer selection can make a biologically plausible marker appear absent. Stop if the object has zero observations/features, coordinates are missing, or spot positions do not overlay the tissue; resolve input/library mismatches rather than interpreting a coordinate-only scatter as image validation.</aside>
 <h2>2. Plot a feature against tissue context</h2>
 <p>First plot a basic library-size QC measure, then choose a feature that exists in the object and plot it over the image. The code uses <code>Snap25</code> and <code>Mbp</code> as example labels only; their presence, biological relevance, and pattern depend on species, assay, tissue, and feature naming. Inspect the image key and color scale before interpreting a spatial gradient.</p>

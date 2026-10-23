@@ -161,7 +161,7 @@ function toggleMobileMenu() {
 <div class="mb-12 rounded-2xl overflow-hidden shadow-lg border border-gray-100">
 <img alt="Prompt Engineering for Data Analysis" class="w-full aspect-video object-cover" decoding="async" loading="eager" src="../images/prompt-engineering-seurat-scanpy.webp" width="1920" height="1920"/>
 </div>
-<nav aria-label="Tutorial navigation" class="reader-toolbar"><a href="single-cell-foundation-models.html" title="Evaluating scGPT &amp; Geneformer Embeddings">← Previous tutorial</a><a data-catalogue-return="" href="../tutorials.html">All tutorials</a><a href="autonomous-research-orchestrator.html" title="Autonomous Research Orchestrator">Next tutorial →</a></nav>
+<nav aria-label="Tutorial navigation" class="reader-toolbar"><a href="single-cell-foundation-models.html" title="Evaluating External scGPT &amp; Geneformer Embeddings">← Previous tutorial</a><a data-catalogue-return="" href="../tutorials.html">All tutorials</a><a href="autonomous-research-orchestrator.html" title="Autonomous Research Orchestrator">Next tutorial →</a></nav>
 <article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--walkthrough">
 <p class="lesson-lead">Use an AI coding assistant to draft single-cell analysis code only after you specify the data, biological question, method, and outputs. Then check its assumptions and run the script where you can inspect the results.</p>
 <section class="lesson-summary tutorial-learning-contract" data-tutorial-format="advanced-template" aria-label="Learning format"><p><strong>Format: Advanced template.</strong> For readers comfortable with basic scRNA-seq and command-line use: you will adapt and review one Scanpy QC/clustering workflow and one Seurat cluster-marker workflow. Prepare compatible AnnData and Seurat objects yourself; no dataset is bundled, and the examples are not end-to-end data-preparation labs.</p></section>
@@ -282,7 +282,7 @@ records = []
 for group in groups:
     names = r['names'][group].tolist()
     pvals_adj = r['pvals_adj'][group].tolist()
-    logfoldchanges = r.get('logfoldchanges', {}).get(group, [None]*len(names))
+    logfoldchanges = r['logfoldchanges'][group].tolist() if 'logfoldchanges' in r else [None]*len(names)
     for name, p, lf in zip(names, pvals_adj, logfoldchanges):
         records.append({'group': group, 'gene': name, 'p_val_adj': p, 'logfoldchange': lf})
 df = pd.DataFrame.from_records(records)
@@ -456,7 +456,7 @@ message("Wrote results to ", outdir)
 <h2>Continue learning</h2>
 <p class="reader-sequence-position">Tutorial 56 of 58 · AI-Driven Research &amp; Agentic Bioinformatics</p>
 <div class="reader-sequence-grid">
-<a href="single-cell-foundation-models.html" rel="prev"><small>← Previous tutorial</small><strong>Evaluating scGPT &amp; Geneformer Embeddings</strong></a>
+<a href="single-cell-foundation-models.html" rel="prev"><small>← Previous tutorial</small><strong>Evaluating External scGPT &amp; Geneformer Embeddings</strong></a>
 <a data-catalogue-return="" href="../tutorials.html"><small>Tutorial library</small><strong>All tutorials</strong></a>
 <a href="autonomous-research-orchestrator.html" rel="next"><small>Next tutorial →</small><strong>Autonomous Research Orchestrator</strong></a>
 </div>

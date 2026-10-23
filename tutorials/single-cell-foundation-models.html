@@ -6,20 +6,20 @@
 <link as="font" crossorigin="anonymous" href="../fonts/inter-e3237528af.woff2" rel="preload" type="font/woff2"/>
 <link href="../fonts/fonts.css" rel="stylesheet"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<meta content="Validate precomputed scGPT or Geneformer cell embeddings with donor-held-out kNN evaluation, strict ID checks, descriptive metrics, and explicit limits. The workflow evaluates supplied vectors; it does not generate embeddings or establish biological accuracy." name="description"/>
+<meta content="Use a standard-library evaluator to check externally generated scGPT or Geneformer embedding exports with donor-held-out kNN; first run a deliberately synthetic software check. This lesson includes no model output, inference, or biological accuracy claim." name="description"/>
 <meta content="bioinformatics, AI, scGPT, Geneformer, foundation models, single-cell RNA-seq, cell type annotation, HuggingFace, tutorials" name="keywords"/>
 <meta content="Nasir Mahmood Abbasi, PhD" name="author"/>
 <meta content="index, follow" name="robots"/>
-<meta content="Evaluating scGPT &amp; Geneformer Embeddings" property="og:title"/>
-<meta content="Validate precomputed scGPT or Geneformer cell embeddings with donor-held-out kNN evaluation, strict ID checks, descriptive metrics, and explicit limits. The workflow evaluates supplied vectors; it does not generate embeddings or establish biological accuracy." property="og:description"/>
+<meta content="Evaluating External scGPT &amp; Geneformer Embeddings" property="og:title"/>
+<meta content="Use a standard-library evaluator to check externally generated scGPT or Geneformer embedding exports with donor-held-out kNN; first run a deliberately synthetic software check. This lesson includes no model output, inference, or biological accuracy claim." property="og:description"/>
 <meta content="https://theomicshub.com/tutorials/single-cell-foundation-models.html" property="og:url"/>
 <meta content="website" property="og:type"/>
 <meta content="https://theomicshub.com/images/foundation-models.webp" property="og:image"/>
 <meta content="summary_large_image" name="twitter:card"/>
-<meta content="Evaluating scGPT &amp; Geneformer Embeddings" name="twitter:title"/>
-<meta content="Validate precomputed scGPT or Geneformer cell embeddings with donor-held-out kNN evaluation, strict ID checks, descriptive metrics, and explicit limits. The workflow evaluates supplied vectors; it does not generate embeddings or establish biological accuracy." name="twitter:description"/>
+<meta content="Evaluating External scGPT &amp; Geneformer Embeddings" name="twitter:title"/>
+<meta content="Use a standard-library evaluator to check externally generated scGPT or Geneformer embedding exports with donor-held-out kNN; first run a deliberately synthetic software check. This lesson includes no model output, inference, or biological accuracy claim." name="twitter:description"/>
 <meta content="https://theomicshub.com/images/foundation-models.webp" name="twitter:image"/>
-<title>Evaluating scGPT &amp; Geneformer Embeddings | The Omics Hub</title><link href="../images/favicon.svg" rel="icon" type="image/svg+xml"/>
+<title>Evaluating External scGPT &amp; Geneformer Embeddings | The Omics Hub</title><link href="../images/favicon.svg" rel="icon" type="image/svg+xml"/>
 <link href="../tailwind.min.css" rel="stylesheet"/>
 <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet"/>
 <link href="../style.css?v=20261022-reader-review" rel="stylesheet"/>
@@ -41,8 +41,8 @@ gtag('consent', 'default', {
 <script type="application/ld+json">{
   "@context": "https://schema.org",
   "@type": "TechArticle",
-  "headline": "Evaluating scGPT & Geneformer Embeddings",
-  "description": "Validate precomputed scGPT or Geneformer cell embeddings with donor-held-out kNN evaluation, strict ID checks, descriptive metrics, and explicit limits. The workflow evaluates supplied vectors; it does not generate embeddings or establish biological accuracy.",
+  "headline": "Evaluating External scGPT & Geneformer Embeddings",
+  "description": "Use a standard-library evaluator to check externally generated scGPT or Geneformer embedding exports with donor-held-out kNN; first run a deliberately synthetic software check. This lesson includes no model output, inference, or biological accuracy claim.",
   "mainEntityOfPage": {
     "@type": "WebPage",
     "@id": "https://theomicshub.com/tutorials/single-cell-foundation-models.html"
@@ -69,7 +69,7 @@ gtag('consent', 'default', {
   "datePublished": "2026-08-23",
   "dateModified": "2026-10-21",
   "url": "https://theomicshub.com/tutorials/single-cell-foundation-models.html",
-  "name": "Evaluating scGPT & Geneformer Embeddings",
+  "name": "Evaluating External scGPT & Geneformer Embeddings",
   "isPartOf": {
     "@type": "WebSite",
     "name": "The Omics Hub",
@@ -153,7 +153,7 @@ function toggleMobileMenu() {
 <div class="page-content" id="tutorial-page">
 <div class="container mx-auto px-4 py-8"><div class="max-w-4xl mx-auto"><div id="tutorial-content">
 <section class="mb-12">
-<div class="flex items-center gap-2 text-sm text-blue-600 font-medium mb-4"><span>AI-Driven Research &amp; Agentic Bioinformatics</span><span>-</span><span>2026-08-23</span></div><h1 class="text-4xl md:text-5xl font-black text-gray-900 mb-6 leading-tight" id="tutorial-title">Evaluating scGPT &amp; Geneformer Embeddings</h1>
+<div class="flex items-center gap-2 text-sm text-blue-600 font-medium mb-4"><span>AI-Driven Research &amp; Agentic Bioinformatics</span><span>-</span><span>2026-08-23</span></div><h1 class="text-4xl md:text-5xl font-black text-gray-900 mb-6 leading-tight" id="tutorial-title">Evaluating External scGPT &amp; Geneformer Embeddings</h1>
 <div class="flex items-center gap-4"><div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 font-bold text-lg">NM</div><div><p class="font-bold text-gray-900">Nasir Mahmood Abbasi, PhD</p><p class="text-sm text-gray-500">Bioinformatics Educator</p></div></div>
 </section>
 <div class="mb-12 rounded-2xl overflow-hidden shadow-lg border border-gray-100">
@@ -162,9 +162,9 @@ function toggleMobileMenu() {
 <nav aria-label="Tutorial navigation" class="reader-toolbar"><a href="protein-structure-design-alphafold.html" title="Retrieve an AlphaFold DB model and assess pLDDT">← Previous tutorial</a><a data-catalogue-return="" href="../tutorials.html">All tutorials</a><a href="ai-prompt-engineering-seurat.html" title="Prompt Engineering for Seurat and Scanpy: A Reproducible Workflow">Next tutorial →</a></nav>
 <article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--lab">
 <div class="rounded-xl border border-amber-300 bg-amber-50 p-5 mb-8"><strong>Scope and tested boundary.</strong> This lesson evaluates <em>precomputed</em> cell embedding exports; it does not load scGPT/Geneformer weights, run inference, generate embeddings, or infer regulatory networks. The scoring code below is executable offline, but no pretrained model output or biological accuracy claim is supplied. All teaching fixtures are explicitly synthetic.</div>
-<p class="lesson-lead">scGPT and Geneformer have distinct input representations and checkpoint conventions. A matrix called “embedding” is not enough to establish which model produced it. This walkthrough makes the checkpoint-to-embedding step an auditable upstream handoff and then tests whether the exported vectors support a narrow, donor-held-out cell-label retrieval task.</p>
+<p class="lesson-lead">This is an evaluator for externally generated scGPT or Geneformer embedding exports—not a model-inference tutorial. First, run the deliberately synthetic fixture to check the evaluator and its input contract; then, if you have compatible real exports, evaluate donor-held-out cell-label retrieval. The model-specific sections document the separate upstream handoff and provenance to verify; no pretrained model output is supplied.</p>
 <section class="lesson-summary tutorial-learning-contract" data-tutorial-format="hands-on-lab" aria-label="Learning format">
-<p><strong>Format: Hands-on lab.</strong> For learners comfortable running Python from a shell, this lab uses the linked standard-library evaluator and a generated synthetic CSV fixture to produce and inspect a donor-held-out kNN JSON report; real embeddings must be prepared separately.</p>
+<p><strong>Format: Hands-on lab.</strong> For learners comfortable running Python from a shell, this lab first uses a generated synthetic CSV fixture as a software check of the linked standard-library evaluator. It then shows how to evaluate your own externally generated scGPT or Geneformer vectors; no model weights, inference, or real embedding exports are included.</p>
 </section>
 <nav aria-label="On this page" class="rounded-xl bg-gray-50 border border-gray-200 p-5 mb-8"><h2>On this page</h2><ul><li><a href="#goals">Goals and assumptions</a></li><li><a href="#model-paths">Model-specific embedding generation handoff</a></li><li><a href="#inputs">Input contract</a></li><li><a href="#run">Run the evaluator</a></li><li><a href="#interpret">Read outputs and failure cases</a></li><li><a href="#caveats">Limitations and sources</a></li></ul></nav>
 <h2 id="goals">Goals and assumptions</h2><ul><li>Validate CSV embeddings, dimensions, finite values, and exact cell-ID alignment before comparing labels.</li><li>Prevent donor overlap between reference and held-out test cells.</li><li>Run deterministic Euclidean k-nearest-neighbor transfer with disclosed tie handling and top-vote uncertainty; report accuracy, macro-F1, per-class scores, confusion matrix, and donor-level results.</li></ul><aside class="lesson-checkpoint"><strong>What you will produce.</strong> A strict JSON report of nearest-reference predictions and descriptive metrics from supplied vectors, plus an audit trail for the cell-ID join and donor split. The Python evaluator uses only the standard library. It is a small software check, not a replacement for study-specific validation, Scanpy, scIB metrics, or biological review.</aside>
