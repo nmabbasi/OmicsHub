@@ -231,7 +231,8 @@ class SixLessonRevisionScopeTests(unittest.TestCase):
         }
         self.assertEqual({url for url in before if before[url] != after[url]}, allowed)
         for url in allowed:
-            self.assertEqual(after[url], "2026-10-23")
+            expected_date = "2026-10-24" if url.endswith(TIDYVERSE_SETUP_ARTICLE) else "2026-10-23"
+            self.assertEqual(after[url], expected_date)
         restored = ET.fromstring((ROOT / "sitemap.xml").read_bytes())
         for row in restored.findall("s:url", namespace):
             url = row.findtext("s:loc", namespaces=namespace)

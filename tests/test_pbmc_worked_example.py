@@ -137,13 +137,17 @@ class PbmcWorkedExampleTests(unittest.TestCase):
             'pages/privacy.html',
             'pages/cookie.html',
         }
+        tidyverse_path = 'tutorials/r-tidyverse-fundamentals.html'
+        tidyverse_url = site + tidyverse_path
         self.assertEqual(
             {url for url, entry in current_by_url.items()
              if entry.find('s:lastmod', ns).text == '2026-10-23'},
-            {site + path for path in approved_updated_paths},
+            {site + path for path in approved_updated_paths if path != tidyverse_path},
         )
         for path in approved_updated_paths:
-            self.assertEqual(current_by_url[site + path].find('s:lastmod', ns).text, '2026-10-23')
+            expected_date = '2026-10-24' if path == tidyverse_path else '2026-10-23'
+            self.assertEqual(current_by_url[site + path].find('s:lastmod', ns).text, expected_date)
+        self.assertEqual(current_by_url[tidyverse_url].find('s:lastmod', ns).text, '2026-10-24')
         pbmc_url = site + 'tutorials/scrna-seq-basics.html'
         self.assertEqual(current_by_url[pbmc_url].find('s:lastmod', ns).text, '2026-10-22')
 

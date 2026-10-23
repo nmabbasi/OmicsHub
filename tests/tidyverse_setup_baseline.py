@@ -12,7 +12,7 @@ import subprocess
 ROOT = Path(__file__).resolve().parents[1]
 PUBLISHED_PR10 = "d1748a93e9fb9a59ec20ee3ab7aabece9c0ae1f8"
 TIDYVERSE_SETUP_ARTICLE = "tutorials/r-tidyverse-fundamentals.html"
-_ALLOWED_DATES = frozenset({"2026-10-21", "2026-10-23"})
+_ALLOWED_DATES = frozenset({"2026-10-21", "2026-10-23", "2026-10-24"})
 _ARTICLE = re.compile(
     r"(?P<open><article\b[^>]*>)(?P<body>.*?)(?P<close></article\s*>)",
     re.S | re.I,

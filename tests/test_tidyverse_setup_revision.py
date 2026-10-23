@@ -105,7 +105,7 @@ class TidyverseSourceContractTests(unittest.TestCase):
         self.assertIn('lib = lib', install)
         self.assertIn('packageVersion("dplyr") >= "1.1.1"', named["tidyverse-package-preflight"])
         text = PAGE.read_text(encoding="utf-8")
-        for phrase in ("libxml2-dev", "filter_out", "not a lockfile", "not separately tested", "other", "12 invalid-input"):
+        for phrase in ("libxml2-dev", "filter_out", "not a lockfile", "separate readiness check", "other", "12 invalid-input"):
             self.assertIn(phrase, text)
         self.assertNotIn("\u2014", text)
 
