@@ -73,7 +73,7 @@ gtag('consent', 'default', {
     }
   },
   "datePublished": "2026-08-16",
-  "dateModified": "2026-10-21",
+  "dateModified": "2026-10-23",
   "url": "https://theomicshub.com/tutorials/computer-data-fundamentals.html",
   "name": "Computer and Data Fundamentals for Biologists",
   "isPartOf": {
@@ -174,8 +174,8 @@ function toggleMobileMenu() {
 <span><strong>Examples use:</strong> Bash and GNU command-line utilities; see platform notes.</span>
 </div>
 <div class="flex items-center gap-1">
-<svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
-<span>Updated 21 October 2026</span></div>
+<svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+<span>Updated 23 October 2026</span></div>
 </div><p class="lesson-lead">Before running an omics workflow, know where its files live, what resources it can exhaust, and how to check that a transfer arrived intact. This walkthrough builds a project directory and practices safe inspection of compressed FASTQ files.</p>
 <section class="lesson-summary tutorial-learning-contract" data-tutorial-format="hands-on-lab" aria-label="Learning format">
 <p><strong>Format: Hands-on lab.</strong> For beginning command-line users: create a small synthetic paired-FASTQ fixture, organize it, and inspect its integrity and resource context. No biological inputs are supplied or required; real datasets need provider-issued checksums.</p>
@@ -274,15 +274,17 @@ zcat data/raw/sample_R1.fastq.gz | head -n 8
 <li>zcat (or gzcat on macOS with GNU gzip) streams uncompressed text to stdout. The FASTQ format is line-oriented: the first four lines correspond to one read record (header, sequence, + line, quality). Seeing correct FASTQ headers and no binary or error output suggests the file is intact for basic parsing.</li>
 </ul>
 <p>For the generated teaching fixture, verify its local SHA-256 manifest as shown. For actual downloaded data, use the provider's manifest and the matching algorithm; the file names must match those listed in that manifest. Never generate a replacement expected hash from a file whose transfer you are trying to verify.</p>
-<pre><code>cd ~/projects/my-study/data/raw
-set -o pipefail
-sha256sum -c SHA256SUMS 2&gt;&amp;1 | tee ../../logs/checksum_validation_$(date +%F).log
-# If a real provider supplies MD5SUMS instead, use this command, not sha256sum:
-# md5sum -c MD5SUMS 2&gt;&amp;1 | tee ../../logs/checksum_validation_$(date +%F).log
-# On macOS use shasum -a 256 -c SHA256SUMS for SHA-256, or md5 -r -c MD5SUMS for MD5.
-# Also verify gzip streams can be read (non-zero exit indicates a problem).
-gzip -t sample_R1.fastq.gz sample_R2.fastq.gz
-echo "gzip exit status: $?"
+<pre><code>(
+  cd ~/projects/my-study/data/raw
+  set -e -o pipefail
+  sha256sum -c SHA256SUMS 2&gt;&amp;1 | tee ../../logs/checksum_validation_$(date +%F).log
+  # If a real provider supplies MD5SUMS instead, use this command, not sha256sum:
+  # md5sum -c MD5SUMS 2&gt;&amp;1 | tee ../../logs/checksum_validation_$(date +%F).log
+  # On macOS use shasum -a 256 -c SHA256SUMS for SHA-256, or md5 -r -c MD5SUMS for MD5.
+  # Also verify gzip streams can be read (a non-zero exit stops this block).
+  gzip -t sample_R1.fastq.gz sample_R2.fastq.gz
+  echo "gzip exit status: 0"
+)
 </code></pre>
 <div class="lesson-result"><strong>Expected result:</strong> The two-entry synthetic manifest should print <code>sample_R1.fastq.gz: OK</code> and <code>sample_R2.fastq.gz: OK</code>; gzip exit status should be <code>0</code>. An edited/truncated file, missing manifest filename, or nonzero gzip status is a stop condition: do not proceed as though validation succeeded. A manifest match verifies bytes against that manifest; it does not establish sample identity, biological suitability, consent, or provenance.</div>
 <h2>Interpret the checks and count records</h2>
@@ -300,18 +302,33 @@ echo "gzip exit status: $?"
 <li>sha256sum -c manifest reports "OK" for matching files. If you see "FAILED", the file is different from the manifest. Do not edit the manifest to force a match; instead re-download the affected file and re-verify.</li>
 <li>zcat + head lets you confirm the FASTQ header format. A typical Illumina-style header looks like @<instrument>:<run>:<flowcell>:<lane>:<tile>:<x>:<y> <read>:<is_filtered>:<control_number>:<sample_number>. If FASTQ records look truncated or lines are missing, the file may be corrupt.</sample_number></control_number></is_filtered></read></y></x></tile></lane></flowcell></run></instrument></li>
 </ul>
-<p>Example check: count reads without writing a full uncompressed file.</p>
-<pre><code># Each FASTQ record is 4 lines. Count records safely via streaming.
-# Count lines through awk (unlike piping into echo, awk consumes stdin).
-zcat data/raw/sample_R1.fastq.gz | awk 'END {
-  if (NR % 4 != 0) {
-    print "Incomplete FASTQ record: line count is not divisible by 4" &gt; "/dev/stderr"
-    exit 1
-  }
-  print NR / 4 " records"
-}'
+<p>Example check: count records without writing an uncompressed copy. The checksum block above runs in a subshell, so this relative path remains rooted at <code>~/projects/my-study</code>.</p>
+<pre><code># Each FASTQ record is 4 lines. Check the gzip stream before counting it.
+set -o pipefail
+count_fastq_records() {
+  local fastq=$1
+  if ! gzip -t "$fastq"; then
+    printf 'Cannot count records: gzip integrity check failed for %s\n' "$fastq" &gt;&amp;2
+    return 1
+  fi
+  zcat "$fastq" | awk 'END {
+    if (NR == 0) {
+      print "No lines found; refusing to report a record count" &gt; "/dev/stderr"
+      exit 1
+    }
+    if (NR % 4 != 0) {
+      print "Incomplete FASTQ record: line count is not divisible by 4" &gt; "/dev/stderr"
+      exit 1
+    }
+    print NR / 4 " records"
+  }'
+}
+count_fastq_records data/raw/sample_R1.fastq.gz
 </code></pre>
-<p>Counting reads scans the full compressed file and can take time. Dividing the line count by four catches incomplete record lengths, but it does not check sequence/quality lengths, identifiers, or whether paired files are synchronized. Use available quotas and avoid writing expanded copies when possible.</p>
+<p>Expected result for the invented fixture: <code>2 records</code>. Negative example: the following command must exit nonzero and must not print a record count if that file is missing or contains a corrupt gzip stream.</p>
+<pre><code>count_fastq_records data/raw/missing_R1.fastq.gz
+</code></pre>
+<p>Counting reads scans the full compressed file and can take time; the gzip integrity precheck and count each read the compressed file. Dividing the line count by four is only a line-count sanity check, not full FASTQ validation: it does not check sequence/quality lengths, identifiers, whether paired files are synchronized, or biological correctness. Use available quotas and avoid writing expanded copies when possible.</p>
 <h2>Troubleshooting: common symptoms, likely causes, and fixes</h2>
 <ul>
 <li>

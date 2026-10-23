@@ -74,10 +74,19 @@ class WESLiftoverConsistencyTests(unittest.TestCase):
 class BashInputOutputAliasTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.script = next(
+        saved_blocks = [
             code for code in code_blocks("tutorials/command-line-part3.html")
-            if code.startswith("#!/usr/bin/env bash") and "summarize.sh" in code
+            if "cat > summarize.sh <<'BASH'" in code
+        ]
+        if len(saved_blocks) != 1:
+            raise AssertionError("expected exactly one displayed summarize.sh save block")
+        match = re.search(
+            r"^cat > summarize\.sh <<'BASH'\n(.*?)\nBASH(?:\n|$)",
+            saved_blocks[0], re.S | re.M,
         )
+        if not match or not match.group(1).startswith("#!/usr/bin/env bash\n"):
+            raise AssertionError("expected the actual Bash script within the quoted save block")
+        cls.script = match.group(1) + "\n"
 
     def run_script(self, input_path, output_path):
         return subprocess.run(

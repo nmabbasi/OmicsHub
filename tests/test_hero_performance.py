@@ -13,6 +13,7 @@ from reviewed_tutorial_baseline import (
     strip_cookie_banner,
 )
 from reader_typography_baseline import normalize_reader_typography
+from beginner_walkthrough_baseline import normalize_beginner_walkthrough_revision
 from six_lesson_revision_baseline import normalize_six_lesson_revision
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -128,6 +129,8 @@ class HeroPerformanceTests(unittest.TestCase):
             current_text = strip_cookie_banner(
                 p.read_text(encoding='utf-8'), allow_missing=True
             )
+            baseline_text = normalize_beginner_walkthrough_revision(relative_path, baseline_text)
+            current_text = normalize_beginner_walkthrough_revision(relative_path, current_text)
             baseline_text = normalize_six_lesson_revision(relative_path, baseline_text)
             current_text = normalize_six_lesson_revision(relative_path, current_text)
             baseline_text = normalize_reader_typography(relative_path, baseline_text)

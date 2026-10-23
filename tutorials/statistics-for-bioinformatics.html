@@ -73,7 +73,7 @@ gtag('consent', 'default', {
     }
   },
   "datePublished": "2026-08-15",
-  "dateModified": "2026-10-21",
+  "dateModified": "2026-10-23",
   "url": "https://theomicshub.com/tutorials/statistics-for-bioinformatics.html",
   "name": "Statistics for Bioinformatics",
   "isPartOf": {
@@ -178,14 +178,15 @@ function toggleMobileMenu() {
 <p>For a single feature, the comparison below targets the difference in group means, defined as treated minus control. It assumes independent observations within and between groups. If the same biological units are measured in both conditions, use a paired analysis with correctly matched units; the independent-samples code here is inappropriate. If samples share a litter, donor, batch, or other dependence, consider a design-aware model rather than treating each row as independent.</p>
 <div class="lesson-warning"><p><strong>Before testing:</strong> confirm the sample mapping, condition labels, biological-unit IDs, and any pairing or blocking. A small p-value cannot repair pseudoreplication or confounding.</p></div>
 <h2>Input contract and reproducible setup</h2>
-<p>The runnable Python example expects two CSV files, each with a numeric column named <code>value</code>, one row per independent biological unit, and no duplicated technical measurements. Genuinely blank cells are discarded and counted; nonblank values that fail numeric conversion, infinities, a missing column, fewer than two retained values, or zero variance stop with an error. The output directory is created if needed. The included values are synthetic teaching fixtures, not biological evidence; replace them only with measurements whose experimental-unit structure you have checked.</p>
+<p>Choose either the Python or base R walkthrough below; each runs the same synthetic inputs independently and produces the same core Welch estimate, interval, statistic, degrees of freedom, and p-value. Both expect two CSV files, each with a numeric column named <code>value</code>, one row per independent biological unit, and no duplicated technical measurements. Genuinely blank cells are discarded and counted; nonblank values that fail numeric conversion, infinities, a missing column, fewer than two retained values, or zero variance stop with an error. The output directory is created if needed. The included values are synthetic teaching fixtures, not biological evidence; replace them only with measurements whose experimental-unit structure you have checked.</p>
 <pre><code># Run from a disposable working directory. Do not overwrite real data.
 mkdir -p data results
 printf "value\n8.9\n9.8\n10.4\n9.5\n" &gt; data/control.csv
 printf "value\n11.2\n10.7\n12.1\n11.4\n" &gt; data/treated.csv
 </code></pre>
-<p>Install the packages in an environment you manage, then save this as <code>compare_groups.py</code>. SciPy 1.11 or newer is required for the confidence-interval method used here. The later FDR example also requires statsmodels. The script tests one feature. Its Welch confidence interval is for the treated-minus-control mean difference; Cohen's d is a standardized descriptive effect estimate, not a substitute for the difference in the feature's original units.</p>
-<pre><code>python -m pip install numpy pandas 'scipy&gt;=1.11' statsmodels
+<p>For Python, use Python 3 and install NumPy, pandas, and SciPy 1.11 or newer in an environment you manage; save the displayed code as <code>compare_groups.py</code>. No R packages are needed for the base R route. The Python script tests one feature. Its Welch confidence interval is for the treated-minus-control mean difference; Cohen's d is a standardized descriptive effect estimate, not a substitute for the difference in the feature's original units.</p>
+<pre><code>python -m pip install numpy pandas 'scipy&gt;=1.11'
+# After saving the displayed Python code as compare_groups.py:
 python compare_groups.py data/control.csv data/treated.csv results
 </code></pre>
 <pre><code>#!/usr/bin/env python3
@@ -243,7 +244,7 @@ pd.DataFrame([{
 print(f"Wrote {outdir / 'comparison.csv'}")
 </code></pre>
 <h3>Equivalent test in base R</h3>
-<p>R's built-in <code>t.test</code> uses Welch's two-sample method by default. This parallel example expects the same two CSV files and writes the estimate, interval, statistic, degrees of freedom, and p-value. It uses base R only.</p>
+<p>R's built-in <code>t.test</code> uses Welch's two-sample method by default. Save the displayed code as <code>compare_groups.R</code> and run it with the same two CSV files. This branch uses base R only and writes the estimate, interval, statistic, degrees of freedom, and p-value.</p>
 <pre><code>#!/usr/bin/env Rscript
 args &lt;- commandArgs(trailingOnly = TRUE)
 if (length(args) != 3) stop("Usage: Rscript compare_groups.R CONTROL.csv TREATED.csv OUTDIR")
@@ -271,7 +272,10 @@ write.csv(data.frame(
   statistic = unname(res$statistic), df = unname(res$parameter), p_value = res$p.value
 ), file.path(args[3], "comparison_R.csv"), row.names = FALSE)
 </code></pre>
-<div class="lesson-result"><p><strong>Output:</strong> <code>comparison.csv</code> contains the retained sample counts, group means and standard deviations, treated-minus-control estimate, Welch statistic/degrees of freedom/p-value, a 95% confidence interval for the mean difference, and pooled-SD Cohen's d. The confidence interval and estimate retain the feature's measurement units. A run on the synthetic fixture is a software check only; it does not establish a biological effect.</p></div>
+<pre><code>Rscript --version
+Rscript compare_groups.R data/control.csv data/treated.csv results
+</code></pre>
+<div class="lesson-result"><p><strong>Output:</strong> Python writes <code>comparison.csv</code> with retained sample counts, group means and standard deviations, treated-minus-control estimate, Welch statistic/degrees of freedom/p-value, a 95% confidence interval, and pooled-SD Cohen's d. Base R writes the same core estimate, interval, statistic, degrees of freedom, and p-value to <code>comparison_R.csv</code>. The estimate and interval retain the feature's measurement units. A run on the synthetic fixture is a software check only; it does not establish a biological effect.</p></div>
 <h2>Inspect the data and interpret the comparison</h2>
 <ul>
 <li>Plot the raw observations by biological unit, alongside group summaries. With few samples, histograms and formal normality tests have little power to establish that a distribution is normal. Look for data-entry problems, severe skew, and influential observations, then check them against records instead of deleting them because they change a p-value.</li>
@@ -281,26 +285,59 @@ write.csv(data.frame(
 <li>A non-significant result does not establish no effect. It may reflect imprecision, limited independent replication, a small effect, or model mismatch. Increasing technical measurements alone does not replace additional independent biological units.</li>
 </ul>
 <h2>When thousands of features are tested</h2>
-<p>The example above produces one raw p-value. If a separate, appropriately specified analysis generates one valid p-value per feature, adjust the prespecified family together rather than interpreting thousands of unadjusted values as independent discoveries. The Benjamini–Hochberg procedure controls the expected false-discovery proportion under its conditions; dependence structure and analysis design matter, and the adjustment does not fix invalid p-values, confounding, or inappropriate feature filtering.</p>
-<p>For a vector of p-values in Python, this compact example writes adjusted values in the same order as the input. The four values below are synthetic software-demo data only. For real analyses, obtain p-values from a design-appropriate model for every feature, document the tested family and filtering rules, then adjust that vector.</p>
-<pre><code>from pathlib import Path
+<p>The example above produces one raw p-value. If a separate, appropriately specified analysis generates one valid p-value per feature, adjust the prespecified family together rather than interpreting thousands of unadjusted values as independent discoveries. The Benjamini-Hochberg procedure controls the expected false-discovery proportion under its conditions; dependence structure and analysis design matter, and the adjustment does not fix invalid p-values, confounding, or inappropriate feature filtering.</p>
+<p>Choose either language below. Each adjusts the same four synthetic p-values in their original order and writes an adjusted-value file plus a 0/1 rejection file. For real analyses, obtain p-values from a design-appropriate model for every feature, document the tested family and filtering rules, then adjust that complete vector. These four numbers are only a software demonstration.</p>
+<p>First, create the shared input below in a Bash terminal, not an R or Python console. This step applies to both routes. Then save and run only the script for your chosen language; you do not need the other language's installation or run commands.</p>
+<pre id="statistics-bh-shared-input"><code>printf "0.01\n0.04\n0.20\n0.80\n" &gt; pvalues_all_features.txt
+</code></pre>
+<h3>Python with statsmodels</h3>
+<p>This optional Python branch requires Python 3, NumPy, and statsmodels. Save the code as <code>adjust_features.py</code>. After saving it, run these commands in the same disposable working directory as the shared input.</p>
+<pre><code>python -m pip install numpy statsmodels
+python adjust_features.py
+</code></pre>
+<pre><code>#!/usr/bin/env python3
+from pathlib import Path
 import numpy as np
 from statsmodels.stats.multitest import multipletests
 
-# Create a tiny, synthetic input file in the current working directory.
-Path("pvalues_all_features.txt").write_text("0.01\n0.04\n0.20\n0.80\n")
-pvals = np.loadtxt("pvalues_all_features.txt")
-if pvals.ndim != 1 or pvals.size == 0:
-    raise ValueError("Expected a non-empty one-dimensional p-value vector")
+lines = Path("pvalues_all_features.txt").read_text(encoding="utf-8").splitlines()
+if not lines or any(not line.strip() for line in lines):
+    raise ValueError("Expected one nonblank p-value per line")
+try:
+    pvals = np.asarray([float(line.strip()) for line in lines], dtype=float)
+except ValueError as exc:
+    raise ValueError("Every input line must be numeric") from exc
 if not np.isfinite(pvals).all() or ((pvals &lt; 0) | (pvals &gt; 1)).any():
     raise ValueError("P-values must be finite and between 0 and 1")
 reject, p_adjusted, _, _ = multipletests(pvals, alpha=0.05, method="fdr_bh")
 np.savetxt("pvalues_adjusted.txt", p_adjusted)
 np.savetxt("discoveries_fdr05.txt", reject.astype(int), fmt="%d")
 print("adjusted:", p_adjusted)
-print("reject:", reject.astype(int))
+print("reject:", reject.astype(int))</code></pre>
+<h3>Base R with p.adjust</h3>
+<p>This equivalent route uses the base R <code>p.adjust</code> function with method <code>BH</code>; it needs no add-on packages. Save as <code>adjust_features.R</code> and run it in the same disposable working directory as the shared input above; skip the Python branch entirely.</p>
+<pre><code>#!/usr/bin/env Rscript
+lines &lt;- trimws(readLines("pvalues_all_features.txt", warn = FALSE))
+if (length(lines) == 0 || any(lines == "")) {
+  stop("Expected one nonblank p-value per line")
+}
+pvals &lt;- suppressWarnings(as.numeric(lines))
+if (anyNA(pvals)) stop("Every input line must be numeric")
+if (any(!is.finite(pvals)) || any(pvals &lt; 0 | pvals &gt; 1)) {
+  stop("P-values must be finite and between 0 and 1")
+}
+alpha &lt;- 0.05
+p_adjusted &lt;- p.adjust(pvals, method = "BH")
+write.table(p_adjusted, "pvalues_adjusted.txt", row.names = FALSE,
+            col.names = FALSE, quote = FALSE)
+write.table(as.integer(p_adjusted &lt;= alpha), "discoveries_fdr05.txt",
+            row.names = FALSE, col.names = FALSE, quote = FALSE)
+cat("adjusted:", paste(signif(p_adjusted, 8), collapse = " "), "\n")
+cat("reject:", as.integer(p_adjusted &lt;= alpha), "\n")</code></pre>
+<pre><code>Rscript --version
+Rscript adjust_features.R
 </code></pre>
-<p>Run the block from a disposable directory with statsmodels installed. For this four-value fixture, BH-adjusted values are [0.04, 0.08, 0.2666667, 0.8] (approximately), and the rejection flags at alpha 0.05 are [1, 0, 0, 0]. Adjusted values quantify multiplicity-adjusted evidence; a rejection is not proof of a biological effect. The input is one numeric p-value per line. The adjusted-value file preserves input order; the second file contains 1 for a rejected null and 0 otherwise at the specified alpha. Keep feature IDs in a parallel file and verify row alignment before joining results. Report the correction procedure, alpha, number and definition of tests, raw and adjusted p-values, effect estimates, and uncertainty where available.</p>
+<p>For this fixture, BH-adjusted values are [0.04, 0.08, 0.2666667, 0.8] (approximately), and rejection flags at alpha 0.05 are [1, 0, 0, 0]. Adjusted values quantify multiplicity-adjusted evidence; a rejection is not proof of a biological effect. Both scripts preserve input order, so keep feature IDs in a parallel file and verify row alignment before joining results. Report the correction procedure, alpha, number and definition of tests, raw and adjusted p-values, effect estimates, and uncertainty where available. Non-numeric, non-finite, or out-of-range p-values are errors, not values to silently discard.</p>
 <h2>Choose a method that matches the design</h2>
 <ul>
 <li><strong>Paired measurements:</strong> analyze within-unit differences with a paired method, or fit a model that represents the repeated structure. Do not pair groups by row order.</li>
