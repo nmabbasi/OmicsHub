@@ -29,7 +29,7 @@
 <!-- Prism.js for syntax highlighting -->
 <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet"/>
 <!-- Custom CSS -->
-<link href="../style.css?v=20261022-reader-review" rel="stylesheet"/>
+<link href="../style.css?v=20261023-reader-typography" rel="stylesheet"/>
 <script src="../analytics.js"></script>
 <script>
 window.dataLayer = window.dataLayer || [];
@@ -186,18 +186,18 @@ function toggleMobileMenu() {
 </ul>
 <p><strong>Before you begin:</strong> use the project root as your working directory and confirm the inputs listed below exist, substituting your actual project paths. This lesson does not supply a sample sheet, counts, plot, STAR index, or project-specific differential-expression script. If you do not have analysis outputs yet, complete an analysis workflow first; do not treat the placeholder accessions, observations, or filenames below as real data.</p>
 <h2>Why reproducible reporting and careful interpretation matter</h2>
-<p>Computational analyses generate outputs, but a result only becomes scientific knowledge when other researchers can (1) identify the exact inputs and steps used, (2) reproduce the outputs, and (3) see how the evidence supports — or fails to support — the claims. Poor reporting creates barriers to reuse, obscures sources of error, and inflates confidence in tentative findings.</p>
+<p>Computational analyses generate outputs, but a result only becomes scientific knowledge when other researchers can (1) identify the exact inputs and steps used, (2) reproduce the outputs, and (3) see how the evidence supports or fails to support the claims. Poor reporting creates barriers to reuse, obscures sources of error, and inflates confidence in tentative findings.</p>
 <p>Clear reporting also helps reviewers and collaborators evaluate whether a finding is robust across software versions, reference data, or parameter choices. In omics, differences in reference genomes, annotation releases, normalization methods, or filtering rules can change results substantially. The goal of this lesson is to give practical, reproducible guidance for writing methods, figure legends, and interpretation text that are useful, honest, and actionable.</p>
 <h2>Reproducible sequential workflow (example)</h2>
 <p>This is a reporting and command-pattern example, not a complete, executed RNA-seq pipeline. The sample names, accession, thresholds, and example observations below are illustrative placeholders, not measured results. Replace them with values from your analysis and verify each command against the versions installed. Paths are relative to a project directory tracked with Git.</p>
 <p>Files you should have before starting:</p>
 <ul>
-<li><code>data/raw/GSE123456_sample_sheet.csv</code> — sample metadata (sample ID, condition, file paths or accessions)</li>
+<li><code>data/raw/GSE123456_sample_sheet.csv</code>: sample metadata (sample ID, condition, file paths or accessions)</li>
 <li><code>data/raw/FASTQ/*_R1.fastq.gz</code> and <code>*_R2.fastq.gz</code> or note that FASTQ are in a public archive (GEO/SRA)</li>
-<li><code>results/counts/gene_counts.tsv</code> — gene-level counts (or a script that generates it)</li>
-<li><code>results/figures/qc_plot.png</code> — example QC plot to describe</li>
-<li><code>scripts/</code> — analysis scripts (R, Python, shell)</li>
-<li><code>provenance/environment.yaml</code> — conda environment spec (created in step 2), or <code>renv.lock</code>/<code>sessionInfo.txt</code> describing R packages</li>
+<li><code>results/counts/gene_counts.tsv</code>: gene-level counts (or a script that generates it)</li>
+<li><code>results/figures/qc_plot.png</code>: example QC plot to describe</li>
+<li><code>scripts/</code>: analysis scripts (R, Python, shell)</li>
+<li><code>provenance/environment.yaml</code>: conda environment spec (created in step 2), or <code>renv.lock</code>/<code>sessionInfo.txt</code> describing R packages</li>
 </ul>
 <h3>1. Record provenance: capture the repository state and checksums</h3>
 <p>Record the commit used for the analysis, whether the working tree had changes, and checksums for selected outputs. Run these commands at the same code revision that generated the results; for older results, check out the actual generating revision first. Create the provenance directory. Keep sensitive paths and metadata out of public files; review records before sharing.</p>
@@ -237,7 +237,7 @@ conda env export --no-builds &gt; provenance/environment.yaml
 <h3>3. Reproducible data-access statement</h3>
 <p>Record where the raw data were obtained, the exact accession identifiers, and the download date. If the data are public (recommended), include the accession and a checksum for the downloaded files. Example text you can paste into a methods paragraph:</p>
 <pre><code>Data: Raw sequencing files for the 12 tumor/normal pairs were downloaded from GEO (GSE123456) on 2026-06-01. Local copies are stored in data/raw/; checksums recorded in provenance/checksums.txt.</code></pre>
-<h3>4. Example pipeline steps (alignment and counts) — reproducible commands</h3>
+<h3>4. Example pipeline steps (alignment and counts): reproducible commands</h3>
 <p>This example uses STAR for alignment and featureCounts for gene counting, counting paired-end fragments rather than individual mates. It assumes paired FASTQ files and a STAR index already built from the same GRCh38 FASTA and GTF used for counting. The commands below only record reference filenames; they do not build or validate that index. STAR alignment and featureCounts options depend on data design and software version, so treat this as a command sketch and inspect each tool's logs and output before analysis.</p>
 <pre><code># index directory (performed once; record version of genome FASTA and GTF)
 # do NOT overwrite an existing index used previously unless you update the methods
@@ -297,7 +297,7 @@ Rscript scripts/de_analysis/run_de_pipeline.R \
 <li>Counts distribution per sample (library size): check for outliers, very low-depth libraries, or samples with anomalous mapping rates.</li>
 <li>Gene detection rate: number of genes with non-zero counts per sample.</li>
 <li>Principal component analysis (PCA) or multidimensional scaling: do samples cluster by expected experimental variable (e.g., condition) or by batch/donor?</li>
-<li>Differential expression: number of genes passing threshold and effect sizes (log2 fold changes) — examine volcano plots and MA plots.</li>
+<li>Differential expression: number of genes passing threshold and effect sizes (log2 fold changes); examine volcano plots and MA plots.</li>
 </ul>
 <p>Example observations you might report (phrased as observations, not conclusions):</p>
 <ul>
@@ -352,11 +352,11 @@ Rscript scripts/de_analysis/run_de_pipeline.R \
 </ul>
 <h2>References</h2>
 <ul>
-<li><a href="https://www.ncbi.nlm.nih.gov/geo/">GEO: Gene Expression Omnibus</a> — public repository for high-throughput functional genomics data.</li>
-<li><a href="https://bioconductor.org/packages/release/bioc/html/DESeq2.html">DESeq2 (Bioconductor)</a> — commonly used R package for differential expression analysis and guidance on model specification.</li>
-<li><a href="https://www.encodeproject.org/">ENCODE Project</a> — reporting guidelines and best practices for sequencing experiments (MINSEQE referenced within community guidelines).</li>
-<li><a href="https://gatk.broadinstitute.org/">GATK (Broad Institute)</a> — best-practice workflows and documentation relevant to variant calling reproducibility.</li>
-<li><a href="https://www.nature.com/articles/s41592-019-0686-2">Nature Methods: Ten simple rules for reproducible computational research</a> — practical principles that apply across omics analyses.</li>
+<li><a href="https://www.ncbi.nlm.nih.gov/geo/">GEO: Gene Expression Omnibus</a>, a public repository for high-throughput functional genomics data.</li>
+<li><a href="https://bioconductor.org/packages/release/bioc/html/DESeq2.html">DESeq2 (Bioconductor)</a>: commonly used R package for differential expression analysis and guidance on model specification.</li>
+<li><a href="https://www.encodeproject.org/">ENCODE Project</a>: reporting guidelines and best practices for sequencing experiments (MINSEQE referenced within community guidelines).</li>
+<li><a href="https://gatk.broadinstitute.org/">GATK (Broad Institute)</a>: best-practice workflows and documentation relevant to variant calling reproducibility.</li>
+<li><a href="https://www.nature.com/articles/s41592-019-0686-2">Nature Methods: Ten simple rules for reproducible computational research</a>, with practical principles that apply across omics analyses.</li>
 </ul>
 <aside aria-labelledby="tutorial-feedback-title" class="lesson-feedback" id="tutorial-feedback"><h2 id="tutorial-feedback-title">Help improve this tutorial</h2><p>Found an error, a broken link, or a step that needs a clearer explanation? Please <a href="../contact.html">contact me</a>. Your feedback helps me keep this resource accurate and useful.</p></aside></article>
 <section class="mt-12 mb-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-100">
@@ -402,7 +402,7 @@ Rscript scripts/de_analysis/run_de_pipeline.R \
 <p class="text-gray-400 text-sm leading-relaxed mb-4">Practical, hands-on tutorials for bioinformatics, HPC, and single-cell RNA-seq analysis.</p>
 <div class="flex flex-col sm:flex-row items-start gap-3">
 <a class="group inline-flex items-center gap-2 px-5 py-2.5 bg-white/5 text-gray-400 font-medium rounded-lg opacity-50 hover:opacity-100 hover:bg-[#FFDD00] hover:text-gray-900 hover:shadow-[0_0_20px_rgba(255,221,0,0.6)] transition-all duration-300 text-sm transform hover:-translate-y-0.5" href="https://paypal.me/nmabbasi12020?locale.x=en_US&amp;country.x=FR" rel="noopener noreferrer" target="_blank"><span class="text-base grayscale group-hover:grayscale-0">☕</span><span class="font-bold">Buy me a coffee</span></a>
-<a aria-label="Join us on Telegram — The Omics Hub" class="telegram-community-button group ml-0 sm:ml-2 inline-flex items-center gap-2 px-5 py-2.5 bg-white/5 text-gray-400 font-medium rounded-lg hover:opacity-100 hover:bg-[#34D399] hover:text-gray-950 hover:shadow-[0_0_20px_rgba(52,211,153,0.7)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#34D399] transition-all duration-300 text-sm transform hover:-translate-y-0.5" href="https://t.me/theomicshub" rel="noopener noreferrer" target="_blank" title="Join The Omics Hub on Telegram"><svg aria-hidden="true" class="w-4 h-4 grayscale group-hover:grayscale-0" fill="currentColor" viewbox="0 0 24 24"><path d="M21.7 3.4 18.4 20c-.25 1.17-.9 1.46-1.83.91l-5.05-3.72-2.44 2.35c-.27.27-.5.5-1.02.5l.36-5.14 9.36-8.46c.41-.36-.09-.56-.64-.2L5.57 13.5.58 11.94c-1.09-.34-1.11-1.09.23-1.61L20.3 2.78c.91-.34 1.71.2 1.4.62Z"></path></svg><span class="font-bold">Join us on Telegram</span></a>
+<a aria-label="Join The Omics Hub on Telegram" class="telegram-community-button group ml-0 sm:ml-2 inline-flex items-center gap-2 px-5 py-2.5 bg-white/5 text-gray-400 font-medium rounded-lg hover:opacity-100 hover:bg-[#34D399] hover:text-gray-950 hover:shadow-[0_0_20px_rgba(52,211,153,0.7)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#34D399] transition-all duration-300 text-sm transform hover:-translate-y-0.5" href="https://t.me/theomicshub" rel="noopener noreferrer" target="_blank" title="Join The Omics Hub on Telegram"><svg aria-hidden="true" class="w-4 h-4 grayscale group-hover:grayscale-0" fill="currentColor" viewbox="0 0 24 24"><path d="M21.7 3.4 18.4 20c-.25 1.17-.9 1.46-1.83.91l-5.05-3.72-2.44 2.35c-.27.27-.5.5-1.02.5l.36-5.14 9.36-8.46c.41-.36-.09-.56-.64-.2L5.57 13.5.58 11.94c-1.09-.34-1.11-1.09.23-1.61L20.3 2.78c.91-.34 1.71.2 1.4.62Z"></path></svg><span class="font-bold">Join us on Telegram</span></a>
 </div>
 </div>
 <div>

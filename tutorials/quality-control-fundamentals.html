@@ -29,7 +29,7 @@
 <!-- Prism.js for syntax highlighting -->
 <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet"/>
 <!-- Custom CSS -->
-<link href="../style.css?v=20261022-reader-review" rel="stylesheet"/>
+<link href="../style.css?v=20261023-reader-typography" rel="stylesheet"/>
 <script src="../analytics.js"></script>
 <script>
 window.dataLayer = window.dataLayer || [];
@@ -208,8 +208,8 @@ function toggleMobileMenu() {
 <p>This example assumes two gzip-compressed FASTQ files for one sample, matching provider checksums, and (for alignment) a reference FASTA with compatible indexes. Create the top-level <code>raw/</code>, <code>reference/</code>, and <code>logs/</code> inputs or directories as needed; the files shown are placeholders, not a supplied dataset. Run from the project directory after installing and testing the named tools. Replace sample names and paths. The snippets illustrate stages; they do not install tools, download references, or configure a compute environment.</p>
 <p>Required inputs (example):</p>
 <ul>
-<li>raw/ sample_R1.fastq.gz, sample_R2.fastq.gz — primary raw FASTQ files.</li>
-<li>raw/checksums.txt — provider checksum manifest (MD5 or SHA256), if supplied.</li>
+<li>raw/ sample_R1.fastq.gz, sample_R2.fastq.gz: primary raw FASTQ files.</li>
+<li>raw/checksums.txt: provider checksum manifest (MD5 or SHA256), if supplied.</li>
 <li>reference/ genome.fa and its index files (if performing alignment).</li>
 </ul>
 <h3>1. Verify input files before analysis</h3>
@@ -331,10 +331,10 @@ VlnPlot(seurat_obj, features = c("nFeature_RNA","nCount_RNA","percent.mt"), ncol
 <p>For long reads, inspect read-length and per-read quality distributions (for example, with the platform's read-QC report) alongside mapped-read yield and coverage breadth/depth. A long-read length histogram can reveal short-fragment tails or a mixture of molecule sizes, but neither read length nor a single quality summary establishes assembly or variant-call accuracy. Compare samples prepared and sequenced with compatible chemistry, and consult platform-specific guidance before setting filters; this page does not provide a long-read processing recipe.</p>
 <h3>Mapping rate and properly paired reads</h3>
 <p>What to look for: mapping fraction and properly paired percentage in the context of the assay and comparable samples. A low mapping fraction or unexpected contig counts can prompt checks of reference build, library type, and possible contamination.</p>
-<p>Meaning and limits: a low mapping rate can be caused by a wrong reference build, contamination, library type mismatch (e.g., RNA reads to DNA reference), or very divergent genomes. A high mapping rate alone does not guarantee correct variant calls — also check the mapping quality (MAPQ) distribution and variant-level metrics.</p>
+<p>Meaning and limits: a low mapping rate can be caused by a wrong reference build, contamination, library type mismatch (e.g., RNA reads to DNA reference), or very divergent genomes. A high mapping rate alone does not guarantee correct variant calls; also check the mapping quality (MAPQ) distribution and variant-level metrics.</p>
 <h3>Duplicate fraction and library complexity</h3>
 <p>What to look for: high duplicate fraction indicates low complexity or over-amplification. Duplicate fractions depend on library preparation, sequencing depth, and assay; compare like samples and consider library complexity and UMI design.</p>
-<p>Meaning and limits: Marked duplicates inflate apparent coverage. Removing duplicates is appropriate for many DNA analyses but may be inappropriate for some RNA-seq quantification or UMIs (unique molecular identifiers) — treat UMI-aware processing differently.</p>
+<p>Meaning and limits: Marked duplicates inflate apparent coverage. Removing duplicates is appropriate for many DNA analyses but may be inappropriate for some RNA-seq quantification or UMIs (unique molecular identifiers); treat UMI-aware processing differently.</p>
 <h3>Coverage uniformity and target dropouts</h3>
 <p>What to look for: per-target coverage reports that show consistent depth across the target set. Regions with zero or very low coverage are problematic and make variant calling unreliable at those loci.</p>
 <p>Meaning and limits: average depth does not substitute for per-target depth. For clinical genes or actionable loci, document per-site coverage before making claims about negative findings.</p>
@@ -370,7 +370,7 @@ VlnPlot(seurat_obj, features = c("nFeature_RNA","nCount_RNA","percent.mt"), ncol
   </li>
 </ul>
 <h2>Record decisions and protect source data</h2>
-<p>Tools and databases change. Always record tool names and exact versions (e.g., fastp v0.23.2, bwa-mem2 v2.2.1, samtools v1.17). Reference genomes and annotation versions matter: chromosome names (chr1 vs 1), contig order, and the presence of decoy or alternate contigs affect mapping statistics. When using taxonomic classifiers (Kraken2), record the database build date and the specific database used — contamination detection is only as good as the database.</p>
+<p>Tools and databases change. Always record tool names and exact versions (e.g., fastp v0.23.2, bwa-mem2 v2.2.1, samtools v1.17). Reference genomes and annotation versions matter: chromosome names (chr1 vs 1), contig order, and the presence of decoy or alternate contigs affect mapping statistics. When using taxonomic classifiers (Kraken2), record the database build date and the specific database used. Contamination detection is only as good as the database.</p>
 <p>Responsible-use notes:</p>
 <ul>
 <li>Do not delete raw files. Keep originals in raw/ and store logs alongside them.</li>
@@ -397,7 +397,7 @@ SYNTH_A	fastp 0.23.2; samtools 1.17	reads=1,000,000; mapped=62%; proper_pairs=58
 <p>To make the record reproducible, place it at <code>qc/qc_summary.tsv</code>, retain the corresponding reports in <code>qc/</code>, and record exact installed versions rather than copying the illustrative version labels. A completed row documents a decision and its evidence; it does not by itself validate a sample or establish a universal pass threshold.</p>
 <h2>Official tool documentation</h2>
 <ul>
-<li><a href="https://www.bioinformatics.babraham.ac.uk/projects/fastqc/">FastQC — Babraham Bioinformatics</a></li>
+<li><a href="https://www.bioinformatics.babraham.ac.uk/projects/fastqc/">FastQC: Babraham Bioinformatics</a></li>
 <li><a href="https://docs.seqera.io/multiqc">MultiQC documentation</a></li>
 <li><a href="https://github.com/OpenGene/fastp">fastp documentation</a></li>
 <li><a href="https://www.htslib.org/doc/samtools.html">SAMtools documentation</a></li>
@@ -454,7 +454,7 @@ SYNTH_A	fastp 0.23.2; samtools 1.17	reads=1,000,000; mapped=62%; proper_pairs=58
 <p class="text-gray-400 text-sm leading-relaxed mb-4">Practical, hands-on tutorials for bioinformatics, HPC, and single-cell RNA-seq analysis.</p>
 <div class="flex flex-col sm:flex-row items-start gap-3">
 <a class="group inline-flex items-center gap-2 px-5 py-2.5 bg-white/5 text-gray-400 font-medium rounded-lg opacity-50 hover:opacity-100 hover:bg-[#FFDD00] hover:text-gray-900 hover:shadow-[0_0_20px_rgba(255,221,0,0.6)] transition-all duration-300 text-sm transform hover:-translate-y-0.5" href="https://paypal.me/nmabbasi12020?locale.x=en_US&amp;country.x=FR" rel="noopener noreferrer" target="_blank"><span class="text-base grayscale group-hover:grayscale-0">☕</span><span class="font-bold">Buy me a coffee</span></a>
-<a aria-label="Join us on Telegram — The Omics Hub" class="telegram-community-button group ml-0 sm:ml-2 inline-flex items-center gap-2 px-5 py-2.5 bg-white/5 text-gray-400 font-medium rounded-lg hover:opacity-100 hover:bg-[#34D399] hover:text-gray-950 hover:shadow-[0_0_20px_rgba(52,211,153,0.7)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#34D399] transition-all duration-300 text-sm transform hover:-translate-y-0.5" href="https://t.me/theomicshub" rel="noopener noreferrer" target="_blank" title="Join The Omics Hub on Telegram"><svg aria-hidden="true" class="w-4 h-4 grayscale group-hover:grayscale-0" fill="currentColor" viewbox="0 0 24 24"><path d="M21.7 3.4 18.4 20c-.25 1.17-.9 1.46-1.83.91l-5.05-3.72-2.44 2.35c-.27.27-.5.5-1.02.5l.36-5.14 9.36-8.46c.41-.36-.09-.56-.64-.2L5.57 13.5.58 11.94c-1.09-.34-1.11-1.09.23-1.61L20.3 2.78c.91-.34 1.71.2 1.4.62Z"></path></svg><span class="font-bold">Join us on Telegram</span></a>
+<a aria-label="Join The Omics Hub on Telegram" class="telegram-community-button group ml-0 sm:ml-2 inline-flex items-center gap-2 px-5 py-2.5 bg-white/5 text-gray-400 font-medium rounded-lg hover:opacity-100 hover:bg-[#34D399] hover:text-gray-950 hover:shadow-[0_0_20px_rgba(52,211,153,0.7)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#34D399] transition-all duration-300 text-sm transform hover:-translate-y-0.5" href="https://t.me/theomicshub" rel="noopener noreferrer" target="_blank" title="Join The Omics Hub on Telegram"><svg aria-hidden="true" class="w-4 h-4 grayscale group-hover:grayscale-0" fill="currentColor" viewbox="0 0 24 24"><path d="M21.7 3.4 18.4 20c-.25 1.17-.9 1.46-1.83.91l-5.05-3.72-2.44 2.35c-.27.27-.5.5-1.02.5l.36-5.14 9.36-8.46c.41-.36-.09-.56-.64-.2L5.57 13.5.58 11.94c-1.09-.34-1.11-1.09.23-1.61L20.3 2.78c.91-.34 1.71.2 1.4.62Z"></path></svg><span class="font-bold">Join us on Telegram</span></a>
 </div>
 </div>
 <div>

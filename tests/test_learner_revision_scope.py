@@ -13,6 +13,7 @@ from reviewed_tutorial_baseline import (
     normalize_learner_revision,
     normalize_reviewed_content,
 )
+from reader_typography_baseline import normalize_reader_typography
 
 ROOT = Path(__file__).resolve().parents[1]
 PUBLISHED_BASELINE = "49cb63d91b508ae3c3e4a6b0a11ac2bb10d48fa1"
@@ -51,8 +52,12 @@ class LearnerRevisionScopeTests(unittest.TestCase):
                 # One legacy page nests the continuation nav inside its article.
                 # For these 54 pages the helper masks navs, never article content.
                 self.assertEqual(
-                    ARTICLE.findall(normalize_learner_revision(relative, before)),
-                    ARTICLE.findall(normalize_learner_revision(relative, after)),
+                    ARTICLE.findall(normalize_learner_revision(
+                        relative, normalize_reader_typography(relative, before)
+                    )),
+                    ARTICLE.findall(normalize_learner_revision(
+                        relative, normalize_reader_typography(relative, after)
+                    )),
                 )
                 checked += 1
         self.assertEqual(checked, 54)
@@ -62,8 +67,12 @@ class LearnerRevisionScopeTests(unittest.TestCase):
             with self.subTest(page=relative):
                 after = (ROOT / relative).read_text(encoding="utf-8")
                 self.assertEqual(
-                    normalize_learner_revision(relative, normalize_reviewed_content(relative, before)),
-                    normalize_learner_revision(relative, normalize_reviewed_content(relative, after)),
+                    normalize_learner_revision(relative, normalize_reviewed_content(
+                        relative, normalize_reader_typography(relative, before)
+                    )),
+                    normalize_learner_revision(relative, normalize_reviewed_content(
+                        relative, normalize_reader_typography(relative, after)
+                    )),
                 )
                 def executable_scripts(text):
                     return [item for item in SCRIPT.findall(text)
@@ -74,11 +83,15 @@ class LearnerRevisionScopeTests(unittest.TestCase):
         relative = "tutorials/command-line-part1.html"
         original = self.baseline[relative]
         mutated = original.replace("<article", "<article data-unapproved=\"true\"", 1)
-        self.assertNotEqual(normalize_learner_revision(relative, original),
-                            normalize_learner_revision(relative, mutated))
+        self.assertNotEqual(
+            normalize_learner_revision(relative, normalize_reader_typography(relative, original)),
+            normalize_learner_revision(relative, normalize_reader_typography(relative, mutated)),
+        )
         mutated = original.replace("<head>", "<head><!-- unexpected header edit -->", 1)
-        self.assertNotEqual(normalize_learner_revision(relative, original),
-                            normalize_learner_revision(relative, mutated))
+        self.assertNotEqual(
+            normalize_learner_revision(relative, normalize_reader_typography(relative, original)),
+            normalize_learner_revision(relative, normalize_reader_typography(relative, mutated)),
+        )
 
 
 if __name__ == "__main__":
