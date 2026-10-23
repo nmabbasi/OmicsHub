@@ -71,6 +71,17 @@ class ContentModificationDateTests(unittest.TestCase):
                     self.sitemap_dates[SITE + relative_path], "2026-10-23"
                 )
 
+    def test_consent_policy_revision_dates_match_the_sitemap(self):
+        for relative_path in ("pages/privacy.html", "pages/cookie.html"):
+            with self.subTest(page=relative_path):
+                self.assertIn(
+                    "Last updated: October 23, 2026",
+                    (ROOT / relative_path).read_text(encoding="utf-8"),
+                )
+                self.assertEqual(
+                    self.sitemap_dates[SITE + relative_path], "2026-10-23"
+                )
+
     def test_navigation_only_and_unchanged_lessons_are_not_freshened(self):
         for relative_path in NAVIGATION_ONLY:
             with self.subTest(page=relative_path):
@@ -91,6 +102,7 @@ class ContentModificationDateTests(unittest.TestCase):
         self.assertTrue(all("?" not in url for url in urls))
         expected_updated = {SITE + path for path in MODIFIED}
         expected_updated.update({SITE + "about.html", SITE + "tutorials.html"})
+        expected_updated.update({SITE + "pages/privacy.html", SITE + "pages/cookie.html"})
         self.assertEqual(
             {url for url, lastmod in self.sitemap_dates.items() if lastmod == "2026-10-23"},
             expected_updated,

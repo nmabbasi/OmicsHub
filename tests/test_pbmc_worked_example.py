@@ -112,6 +112,8 @@ class PbmcWorkedExampleTests(unittest.TestCase):
             'tutorials/wes-variant-calling-pipeline.html',
             'about.html',
             'tutorials.html',
+            'pages/privacy.html',
+            'pages/cookie.html',
         }
         self.assertEqual(
             {url for url, entry in current_by_url.items()
