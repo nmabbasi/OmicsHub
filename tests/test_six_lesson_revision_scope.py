@@ -18,6 +18,11 @@ from six_lesson_revision_baseline import (
     SIX_LESSON_DISCLOSURE_PAGES,
     normalize_six_lesson_revision,
 )
+from tidyverse_setup_baseline import (
+    PUBLISHED_PR10,
+    TIDYVERSE_SETUP_ARTICLE,
+    normalize_tidyverse_setup_revision,
+)
 
 ALLOWED_FIXTURE_PREFIXES = (
     "files/text-processing-lesson/",
@@ -157,6 +162,18 @@ class SixLessonRevisionScopeTests(unittest.TestCase):
                         ),
                         published.stdout.decode("utf-8"),
                     )
+                elif relative == TIDYVERSE_SETUP_ARTICLE:
+                    published = subprocess.run(
+                        ["git", "show", f"{PUBLISHED_PR10}:{relative}"], cwd=ROOT,
+                        stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, check=False,
+                    )
+                    self.assertEqual(published.returncode, 0, relative)
+                    self.assertEqual(
+                        normalize_tidyverse_setup_revision(
+                            relative, current_path.read_text(encoding="utf-8")
+                        ),
+                        published.stdout.decode("utf-8"),
+                    )
                 elif relative.startswith("files/"):
                     self.assertTrue(relative.startswith(ALLOWED_FIXTURE_PREFIXES),
                                     "new fixtures must be in an approved lesson folder")
@@ -191,7 +208,7 @@ class SixLessonRevisionScopeTests(unittest.TestCase):
             normalize_six_lesson_revision(relative, article),
         )
 
-    def test_sitemap_changes_only_the_six_lesson_and_three_beginner_dates(self):
+    def test_sitemap_changes_only_approved_lesson_dates_including_tidyverse(self):
         namespace = {"s": "http://www.sitemaps.org/schemas/sitemap/0.9"}
         def dates(data):
             root = ET.fromstring(data)
@@ -207,9 +224,10 @@ class SixLessonRevisionScopeTests(unittest.TestCase):
             "tutorials/statistics-for-bioinformatics.html",
             "tutorials/experimental-design-batch-effects.html",
         }
+        tidyverse_date_paths = {TIDYVERSE_SETUP_ARTICLE}
         allowed = {
             "https://theomicshub.com/" + path
-            for path in SIX_LESSON_ARTICLES | beginner_date_paths
+            for path in SIX_LESSON_ARTICLES | beginner_date_paths | tidyverse_date_paths
         }
         self.assertEqual({url for url in before if before[url] != after[url]}, allowed)
         for url in allowed:
@@ -221,7 +239,7 @@ class SixLessonRevisionScopeTests(unittest.TestCase):
                 row.find("s:lastmod", namespace).text = before[url]
         self.assertEqual(
             ET.tostring(restored), ET.tostring(ET.fromstring(git_bytes("sitemap.xml"))),
-            "all sitemap fields and ordering other than the nine approved dates must remain unchanged",
+            "all sitemap fields and ordering other than the ten approved dates must remain unchanged",
         )
 
 
