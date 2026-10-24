@@ -72,7 +72,19 @@
     });
   }
   function initInFlowTopControl() {
-    if (document.getElementById('back-to-top')) return;
+    const existing = document.getElementById('back-to-top');
+    if (existing) {
+      if (existing.matches('a[href="#tutorial-title"]')) {
+        existing.addEventListener('click', () => {
+          const title = document.getElementById('tutorial-title');
+          if (title) {
+            title.tabIndex = -1;
+            title.focus({ preventScroll: true });
+          }
+        });
+      }
+      return;
+    }
     const footer = document.querySelector('footer');
     if (!footer) return;
     const tools = document.createElement('div');

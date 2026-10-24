@@ -10,6 +10,8 @@ from pathlib import Path
 import re
 import subprocess
 
+from tutorial_ui_baseline import normalize_tutorial_ui
+
 ROOT = Path(__file__).resolve().parents[1]
 PUBLISHED_PR8 = "5ba874b7bc4d415aaa65efef8502d8be6aa2d169"
 SIX_LESSON_ARTICLES = frozenset({
@@ -60,10 +62,11 @@ def normalize_six_lesson_revision(relative_path, text):
     metadata is supported: only the complete structures present in that
     fragment can be normalized.
     """
+    text = normalize_tutorial_ui(relative_path, text)
     if relative_path not in SIX_LESSON_ARTICLES:
         return text
 
-    published = _published_page(relative_path)
+    published = normalize_tutorial_ui(relative_path, _published_page(relative_path))
     published_articles = list(_ARTICLE.finditer(published))
     if len(published_articles) != 1:
         raise AssertionError(f"expected one PR8 article in {relative_path}")

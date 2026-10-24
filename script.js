@@ -203,6 +203,9 @@ function setupEventListeners() {
 
     // Handle browser back/forward buttons
     window.addEventListener('popstate', function(event) {
+        // Static lessons own their native fragments, including #tutorial-title.
+        // Never reinterpret an in-page anchor as a legacy SPA tutorial ID.
+        if (window.STATIC_RENDERED) return;
         const hash = window.location.hash;
         if (hash && hash.startsWith('#tutorial-')) {
             const tutorialId = hash.substring(10);

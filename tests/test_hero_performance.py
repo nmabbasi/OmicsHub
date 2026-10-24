@@ -22,10 +22,11 @@ from remaining_validation_baseline import (
 )
 from advanced_validation_baseline import normalize_advanced_validation_if_allowed
 from resource_content_baseline import normalize_resource_content
-
+from tutorial_ui_baseline import (
+    TUTORIAL_UI_PATHS, normalize_tutorial_ui, verify_tutorial_ui_file,
+)
 ROOT = Path(__file__).resolve().parents[1]
 BASELINE = 'e7037f1b9a9eea8f4338e7b6696f791d8172f844'
-
 class Tags(HTMLParser):
     def __init__(self, text):
         super().__init__()
@@ -124,7 +125,11 @@ class HeroPerformanceTests(unittest.TestCase):
                      'images/hero-image-light-navy-clean-480.webp',
                      'images/hero-image-light-navy-clean-768.webp',
                      'images/hero-image-light-navy-clean-1200.webp']:
-            self.assertEqual(old(name), (ROOT / name).read_bytes(), name)
+            current_asset = (ROOT / name).read_bytes()
+            if name in TUTORIAL_UI_PATHS:
+                verify_tutorial_ui_file(name, current_asset)
+            else:
+                self.assertEqual(old(name), current_asset, name)
         for p in (ROOT / 'tutorials').glob('*.html'):
             if p.name == 'scrna-seq-basics.html':
                 # The approved PBMC worked-example change is guarded by its dedicated tests.
@@ -132,7 +137,7 @@ class HeroPerformanceTests(unittest.TestCase):
             relative_path = 'tutorials/' + p.name
             approved_bytes = approved(relative_path)
             self.assertIsNotNone(approved_bytes, relative_path)
-            raw_current_text = p.read_bytes().decode('utf-8')
+            raw_current_text = normalize_tutorial_ui(relative_path, p.read_text(encoding='utf-8'))
             if p.name in ('cell-type-annotation-methods.html', 'scrna-seq-integration-strategies.html'):
                 def executable_scripts(text):
                     return [script for script in re.findall(r'<script\b[^>]*>.*?</script>', text, re.S)

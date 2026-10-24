@@ -23,6 +23,7 @@ from remaining_validation_baseline import (
 )
 from advanced_validation_baseline import normalize_advanced_validation_if_allowed
 from resource_content_baseline import normalize_resource_content
+from tutorial_ui_baseline import normalize_tutorial_ui
 
 ROOT = Path(__file__).resolve().parents[1]
 PUBLISHED_BASELINE = "49cb63d91b508ae3c3e4a6b0a11ac2bb10d48fa1"
@@ -87,7 +88,8 @@ class LearnerRevisionScopeTests(unittest.TestCase):
                 after = (ROOT / relative).read_text(encoding="utf-8")
                 after = normalize_resource_content(relative, after.encode("utf-8")).decode("utf-8")
                 after = normalize_advanced_validation_if_allowed(relative, after)
-                raw_before, raw_after = before, after
+                raw_before = before
+                raw_after = normalize_tutorial_ui(relative, after)
                 if relative in remaining_validation_paths():
                     after = normalize_remaining_validation_edit(relative, after)
                 before = normalize_tidyverse_setup_revision(relative, before)

@@ -27,6 +27,11 @@ from resource_content_baseline import (
     normalize_resource_content,
     normalize_resource_sitemap,
 )
+from tutorial_ui_baseline import (
+    TUTORIAL_UI_PATHS,
+    normalize_tutorial_ui,
+    verify_tutorial_ui_file,
+)
 
 QC_PATH = "tutorials/quality-control-fundamentals.html"
 REVISED_TUTORIALS = frozenset({
@@ -63,7 +68,9 @@ class RemainingValidationScopeTests(unittest.TestCase):
     def test_allowlisted_page_equals_pinned_source_plus_only_exact_body_and_dates(self):
         for relative in sorted(allowed_paths()):
             current_path = ROOT / relative
-            original = published_bytes(relative)
+            original = normalize_tutorial_ui(
+                relative, published_bytes(relative).decode("utf-8")
+            ).encode("utf-8")
             self.assertTrue(current_path.is_file(), relative)
             current = current_path.read_bytes()
             current = normalize_resource_content(relative, current)
@@ -89,6 +96,10 @@ class RemainingValidationScopeTests(unittest.TestCase):
             if relative.startswith("tests/"):
                 continue
             current_path = ROOT / relative
+            if relative in TUTORIAL_UI_PATHS:
+                self.assertTrue(current_path.is_file(), relative)
+                verify_tutorial_ui_file(relative, current_path.read_bytes())
+                continue
             if current_path.is_file() and is_approved_workflow(relative, current_path.read_bytes()):
                 continue
             original = None
@@ -98,18 +109,26 @@ class RemainingValidationScopeTests(unittest.TestCase):
             )
             if result.returncode == 0:
                 original = result.stdout
+                if relative.startswith("tutorials/") and relative.endswith(".html"):
+                    original = normalize_tutorial_ui(
+                        relative, original.decode("utf-8")
+                    ).encode("utf-8")
             with self.subTest(path=relative):
-                self.assertTrue(
-                    relative in manifest_paths or relative in resource_paths
-                    or relative in advanced_validation_paths()
-                    or relative in advanced_asset_paths()
-                    or relative == "sitemap.xml",
-                    "public changes outside the explicit article/date allowlist are forbidden",
-                )
                 self.assertIsNotNone(original, "new public files and assets are forbidden")
                 self.assertTrue(current_path.is_file(), "published public files may not be deleted")
                 current = current_path.read_bytes()
                 current = normalize_resource_content(relative, current)
+                if not (
+                    relative in manifest_paths or relative in resource_paths
+                    or relative in advanced_validation_paths()
+                    or relative in advanced_asset_paths()
+                    or relative == "sitemap.xml"
+                ):
+                    self.assertEqual(
+                        current, original,
+                        "unlisted public changes must disappear under exact UI normalization",
+                    )
+                    continue
                 if relative in manifest_paths:
                     current = normalize_remaining_validation_edit(
                         relative, current.decode("utf-8")

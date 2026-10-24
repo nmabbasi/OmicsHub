@@ -13,6 +13,8 @@ from pathlib import Path
 import re
 import subprocess
 
+from tutorial_ui_baseline import normalize_tutorial_ui
+
 ROOT = Path(__file__).resolve().parents[1]
 MANIFEST_PATH = ROOT / "tests/fixtures/resource-content-edits.json"
 PUBLISHED_BASELINE = "5846304f76551252b97ca674f6020d2983901fca"
@@ -309,6 +311,8 @@ def published_bytes(relative_path):
 
 def restore_page_to_pr15(relative_path, data, entry, original):
     """Restore only exact approved body/date/metadata fields; wrappers remain visible."""
+    data = normalize_tutorial_ui(relative_path, data.decode("utf-8")).encode("utf-8")
+    original = normalize_tutorial_ui(relative_path, original.decode("utf-8")).encode("utf-8")
     if PRE_CODE.findall(data) != PRE_CODE.findall(original):
         raise AssertionError(f"<pre><code> mutation in {relative_path}")
     def executable_scripts(source):
@@ -364,6 +368,8 @@ def restore_page_to_pr15(relative_path, data, entry, original):
 
 def normalize_resource_content(relative_path, data):
     """Return non-allowlisted bytes unchanged; restore a listed page to exact PR15."""
+    if relative_path.startswith("tutorials/") and relative_path.endswith(".html"):
+        data = normalize_tutorial_ui(relative_path, data.decode("utf-8")).encode("utf-8")
     manifest = load_manifest()
     entry = manifest["articles"].get(relative_path)
     if entry is None:

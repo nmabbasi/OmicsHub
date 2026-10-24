@@ -21,6 +21,11 @@ from advanced_validation_baseline import (
     published_bytes as advanced_published_bytes,
 )
 from resource_content_baseline import normalize_resource_content
+from tutorial_ui_baseline import (
+    TUTORIAL_UI_PATHS,
+    normalize_tutorial_ui,
+    verify_tutorial_ui_file,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 BASE = 'c030bc62bf6e4a4ad21f9ff64cb630c152157692'
@@ -124,7 +129,7 @@ class ReaderPunctuationTests(unittest.TestCase):
                     self.assertEqual(old_blocks, new_blocks)
             # Executable JavaScript is checked on the raw pages. Do not restore
             # target articles first, or a script placed inside one could hide.
-            raw_after = (ROOT/relative).read_text()
+            raw_after = normalize_tutorial_ui(relative, (ROOT/relative).read_text())
             old_scripts = [block for block in re.findall(
                 r'<script\b[^>]*>.*?</script>', self.old[relative], re.S
             ) if 'type="application/ld+json"' not in block]
@@ -184,8 +189,13 @@ class ReaderPunctuationTests(unittest.TestCase):
                 )
         # This consent repair authorizes one production script and its exact runtime fixture.
         reviewed_scripts = {'analytics.js', 'tests/test_analytics_load_order.js'}
+        verified_ui_paths = set(changed) & TUTORIAL_UI_PATHS
+        for relative in sorted(verified_ui_paths):
+            verify_tutorial_ui_file(relative, (ROOT / relative).read_bytes())
         forbidden = [path for path in changed
-                     if path not in reviewed_scripts and not path.startswith('files/')]
+                     if path not in reviewed_scripts
+                     and path not in verified_ui_paths
+                     and not path.startswith('files/')]
         invalid_fixtures = [
             path for path in fixture_changes
             if (path in baseline_files and path not in approved_assets)

@@ -1,6 +1,8 @@
 """Narrow normalization for tutorial edits approved on main and this date-only patch."""
 import re
 
+from tutorial_ui_baseline import normalize_tutorial_ui
+
 
 APPROVED_MAIN = "994e363be42c4ae6f70e924f7030aad74b9cda5f"
 
@@ -70,6 +72,7 @@ _READER_NAVIGATION = (
 
 def normalize_learner_revision(relative_path, text):
     """Mask only reviewed article/navigation deltas, never whole page bodies."""
+    text = normalize_tutorial_ui(relative_path, text)
     for index, pattern in enumerate(_READER_NAVIGATION):
         text, count = pattern.subn(f"__REVIEWED_READER_NAV_{index}__", text)
         if count != 1:

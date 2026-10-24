@@ -8,6 +8,8 @@ from pathlib import Path
 import json
 import re
 
+from tutorial_ui_baseline import normalize_tutorial_ui
+
 
 ROOT = Path(__file__).resolve().parents[1]
 MANIFEST_PATH = Path(__file__).resolve().parent / "fixtures" / "reader-copy-edits.json"
@@ -115,6 +117,7 @@ def _apply(relative_path, text, manifest, inverse=False):
 
 def normalize_reader_typography(relative_path, text):
     """Restore exact published copy and stylesheet hrefs for historical comparisons."""
+    text = normalize_tutorial_ui(relative_path, text)
     return _apply(relative_path, text, _load_manifest(), inverse=True)
 
 

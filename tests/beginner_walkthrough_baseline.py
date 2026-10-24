@@ -9,6 +9,8 @@ from pathlib import Path
 import re
 import subprocess
 
+from tutorial_ui_baseline import normalize_tutorial_ui
+
 ROOT = Path(__file__).resolve().parents[1]
 PUBLISHED_PR9 = "d7f9bd559c0b7d326edaa9b94d3c461ad50d0f0d"
 BEGINNER_WALKTHROUGH_ARTICLES = frozenset({
@@ -57,10 +59,11 @@ def normalize_beginner_walkthrough_revision(relative_path, text):
     attribute or wrapper changes are not hidden. Fragments are supported: only
     complete article/date structures present in the fragment are normalized.
     """
+    text = normalize_tutorial_ui(relative_path, text)
     if relative_path not in BEGINNER_WALKTHROUGH_ARTICLES:
         return text
 
-    published = _published_page(relative_path)
+    published = normalize_tutorial_ui(relative_path, _published_page(relative_path))
     published_articles = list(_ARTICLE.finditer(published))
     if len(published_articles) != 1:
         raise AssertionError(f"expected one PR9 article in {relative_path}")
