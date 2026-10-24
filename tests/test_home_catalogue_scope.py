@@ -15,6 +15,7 @@ from home_catalogue_baseline import (
     verify_home_catalogue_file,
 )
 from tutorial_ui_baseline import normalize_tutorial_ui, verify_tutorial_ui_file
+from start_here_baseline import verify_start_here_file
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -308,6 +309,12 @@ class HomeCatalogueScopeTests(unittest.TestCase):
                         normalize_home_catalogue(relative, changed_elsewhere.decode("utf-8")),
                         git_bytes(HOME_CATALOGUE_BASELINE, relative).decode("utf-8"),
                     )
+                elif relative == "start-here.css":
+                    # This later owner-approved Start Here-only revision is
+                    # separately full-hash pinned, never generically ignored.
+                    self.assertEqual(verify_start_here_file(relative, current), current)
+                    with self.assertRaisesRegex(AssertionError, "fingerprint mismatch"):
+                        verify_start_here_file(relative, current + b"\n")
                 else:
                     self.assertEqual(current, git_bytes(HOME_CATALOGUE_BASELINE, relative))
 
