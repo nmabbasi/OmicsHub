@@ -41,15 +41,43 @@ class HomeCatalogueUITests(unittest.TestCase):
         cls.css=read('home-catalogue.css')
         cls.metadata=json.loads(read('tools/catalogue-learning.json'))
 
-    def test_homepage_has_one_beginner_first_action_and_preserves_selected_formats(self):
-        hero=re.search(r'<section class="hc-hero".*?</section>',self.home,re.S).group()
+    def test_homepage_restores_reference_layout_and_only_improves_visible_copy(self):
+        class LayoutSignature(HTMLParser):
+            def __init__(self,markup):
+                super().__init__(convert_charrefs=False)
+                self.signature=[]
+                self.stack=[]
+                self.feed(markup)
+            def handle_starttag(self,tag,attrs):
+                self.signature.append(('start',self.get_starttag_text()))
+                if tag not in {'img','input','br','hr','source','wbr','area','embed','link','meta'}:
+                    self.stack.append(tag)
+            def handle_startendtag(self,tag,attrs):
+                self.signature.append(('empty',self.get_starttag_text()))
+            def handle_endtag(self,tag):
+                self.signature.append(('end',tag))
+                if self.stack and self.stack[-1]==tag:self.stack.pop()
+            def handle_comment(self,text):self.signature.append(('comment',text))
+            def handle_data(self,text):
+                if self.stack and self.stack[-1] in {'style','script'}:
+                    self.signature.append(('executable-or-style-data',text))
+        published=subprocess.check_output(['git','show',f'{BASE}:index.html'],cwd=ROOT,text=True)
+        original_main=re.search(r'<main\b[^>]*>.*?</main>',published,re.S).group()
+        current_main=re.search(r'<main\b[^>]*>.*?</main>',self.home,re.S).group()
+        original_hero,original_after_hero=original_main.split('</section>',1)
+        self.assertEqual(original_after_hero.count('text-center'),5)
+        original_main=original_hero+'</section>'+original_after_hero.replace('text-center','text-left')
+        self.assertEqual(LayoutSignature(current_main).signature,LayoutSignature(original_main).signature,
+                         'Only visible copy and five written-section alignment utilities may change; the photographed hero stays exact')
+        hero=re.search(r'<section class="hero-laptop-section\b.*?</section>',self.home,re.S).group()
         self.assertEqual(len(re.findall(r'<h1\b',self.home)),1)
-        primary=re.findall(r'<a class="hc-primary-link"[^>]*href="([^"]+)"',hero)
-        self.assertEqual(primary,['start-here.html'])
-        self.assertIn('Browse all 58 tutorials',hero)
-        cards=re.findall(r'<article\b[^>]*class="hc-featured-card[^>]*>.*?</article>',self.home,re.S)
+        self.assertIn('Terminal prompt',hero)
+        self.assertIn('Explore Tutorials →',hero)
+        self.assertIn('Step by Step',hero)
+        self.assertNotIn('home-catalogue.css',self.home)
+        cards=re.findall(r'<article\b[^>]*class="[^"]*native-tutorial-card[^>]*>.*?</article>',self.home,re.S)
         self.assertEqual(len(cards),6)
-        self.assertTrue(all('<strong>' in c and 'Open lesson' in c for c in cards))
+        self.assertTrue(all('<strong>' in c and 'Read tutorial' in c for c in cards))
         for card in cards:
             slug=re.search(r'href="tutorials/([^"/]+)\.html"',card).group(1)
             self.assertIn(f'>{self.metadata["lessons"][slug]["level"].capitalize()}</span>',card)
@@ -105,10 +133,10 @@ class HomeCatalogueUITests(unittest.TestCase):
         for html in (self.home,self.catalogue):
             main=re.search(r'<main\b[^>]*>(.*?)</main>',html,re.S).group(1)
             self.assertNotIn('\u2014',Text(main).text)
-            self.assertNotRegex(main,r'\btext-center\b')
-            self.assertIn('home-catalogue.css?v=',html)
-            self.assertIn('back-to-top.css?v=',html)
-            self.assertIn('aria-label="Back to top"',html)
+            self.assertIn('subscribe-fab.js?v=',html)
+        self.assertIn('home-catalogue.css?v=',self.catalogue)
+        self.assertIn('back-to-top.css?v=',self.catalogue)
+        self.assertIn('aria-label="Back to top"',self.catalogue)
         self.assertNotRegex(self.css,r'text-align\s*:\s*(?:center|justify)\b')
         self.assertNotIn('https://',self.css)
         self.assertIn('prefers-reduced-motion',self.css)
@@ -147,12 +175,12 @@ class HomeCatalogueUITests(unittest.TestCase):
             finally:
                 sys.argv=previous_argv
 
-    def test_existing_shared_script_only_adds_native_top_targets_and_idempotent_category_guard(self):
+    def test_shared_script_restores_exact_published_source_and_keeps_idempotent_category_guard(self):
+        from sitewide_top_baseline import normalize_sitewide_top
         original=subprocess.check_output(['git','show',f'{BASE}:subscribe-fab.js'],cwd=ROOT,text=True)
-        current=read('subscribe-fab.js')
-        expected=original.replace('a[href="#tutorial-title"], a[href="#sh-hero-title"]','a[href="#tutorial-title"], a[href="#sh-hero-title"], a[href="#home-hero-title"], a[href="#catalogue-hero-title"]',1)
-        expected=expected.replace("if (!strip || typeof window.filterTutorialsOnly !== 'function') return;", "if (!strip || document.getElementById('catalogue-category') || typeof window.filterTutorialsOnly !== 'function') return;",1)
-        self.assertEqual(current,expected)
+        current=normalize_sitewide_top('subscribe-fab.js',read('subscribe-fab.js'))
+        self.assertEqual(current,original)
+        self.assertIn("if (!strip || document.getElementById('catalogue-category') || typeof window.filterTutorialsOnly !== 'function') return;",read('subscribe-fab.js'))
 
 
 if __name__=='__main__':unittest.main()

@@ -188,7 +188,7 @@ class HomeCatalogueScopeTests(unittest.TestCase):
             "typeof window.filterTutorialsOnly !== 'function') return;\n"
         )
         with self.assertRaisesRegex(AssertionError, "duplicate exact home-catalogue subscribe-fab category guard"):
-            normalize_home_catalogue(relative, current + guard_patch)
+            normalize_home_catalogue(relative, current + guard_patch + guard_patch)
 
     def test_all_58_tutorial_pages_are_raw_identical_to_the_source_pin(self):
         pages = sorted((ROOT / "tutorials").glob("*.html"))
@@ -218,18 +218,9 @@ class HomeCatalogueScopeTests(unittest.TestCase):
             self.assertTrue(old_body.keys() <= new_body.keys(), f"{relative}: existing body attributes were removed")
             self.assertEqual({key: new_body[key] for key in old_body}, old_body,
                              f"{relative}: an existing body attribute changed")
-            added_body_attrs = set(new_body) - set(old_body)
-            self.assertIn(added_body_attrs, (set(), {"data-home-catalogue"}),
-                          f"{relative}: only the optional catalogue body marker may be added")
-            if "data-home-catalogue" in added_body_attrs:
-                self.assertIn(new_body["data-home-catalogue"], {"home", "catalogue"},
-                              f"{relative}: unexpected catalogue body marker value")
-            raw_marker = re.compile(r"\s+data-home-catalogue=([\"'])(?:home|catalogue)\1")
             raw_new_body = new_body_match.group(0)
-            self.assertLessEqual(len(raw_marker.findall(raw_new_body)), 1,
-                                 f"{relative}: duplicate catalogue body marker")
-            self.assertEqual(raw_marker.sub("", raw_new_body, count=1), old_body_match.group(0),
-                             f"{relative}: original body attributes must remain byte-identical")
+            self.assertEqual(raw_new_body, old_body_match.group(0),
+                             f"{relative}: body markup must remain byte-identical")
             self.assertEqual(_normalize_outer_fragment(old_prefix), _normalize_outer_fragment(new_prefix),
                              f"{relative}: unapproved changes before main")
             self.assertEqual(_strip_allowed_asset_tags(old_suffix), _strip_allowed_asset_tags(new_suffix),
@@ -282,7 +273,7 @@ class HomeCatalogueScopeTests(unittest.TestCase):
             "subscribe-fab.js", ".github/workflows/static.yml",
             ".github/workflows/tutorial-review.yml",
             "tools/catalogue-learning.json", "tools/generate_catalogue_learning.py",
-            "home-page.min.css",
+            "home-page.min.css", "404.html",
         })
         for relative in sorted(HOME_CATALOGUE_ASSET_PATHS):
             with self.subTest(path=relative):
