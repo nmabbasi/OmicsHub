@@ -31,13 +31,35 @@ def main():
     def check_filter_match(page):
         data=page.evaluate('''()=>{
           const category=document.querySelector('#catalogue-category').value;
-          const level=document.querySelector('#catalogue-level').value;
-          const format=document.querySelector('#catalogue-format').value;
           return [...document.querySelectorAll('#all-tutorials-list article')].filter(e=>e.checkVisibility()).map(e=>({
-            valid:(category==='all'||e.dataset.category===category)&&(level==='all'||e.dataset.level===level)&&(format==='all'||e.dataset.format===format)
+            valid:(category==='all'||e.dataset.category===category)&&e.dataset.search.toLowerCase().includes(document.querySelector('#search-input').value.toLowerCase())
           }));
         }''')
-        check(all(item['valid'] for item in data),'Combined filters leaked a nonmatching card')
+        check(all(item['valid'] for item in data),'Category/search filters leaked a nonmatching card')
+
+    def check_catalogue_images(page):
+        images=page.evaluate('''async()=>{
+          const rows=[];
+          for(const card of document.querySelectorAll('#all-tutorials-list article')){
+            const image=card.querySelector('img');
+            const box=image?.closest('.hc-card-image')||image?.parentElement;
+            image?.scrollIntoView({block:'center',inline:'nearest'});
+            if(image){try{await image.decode()}catch(error){}}
+            const rect=image?.getBoundingClientRect();
+            const boxRect=box?.getBoundingClientRect();
+            const style=image?getComputedStyle(image):null;
+            rows.push({title:card.querySelector('h3')?.textContent.trim(),src:image?.getAttribute('src'),alt:image?.alt,
+              naturalWidth:image?.naturalWidth||0,visible:!!image&&image.checkVisibility()&&!!rect&&rect.width>0&&rect.height>0&&rect.bottom>0&&rect.top<innerHeight,
+              containerHeight:boxRect?.height||0,ratio:boxRect?.width&&boxRect?.height?boxRect.width/boxRect.height:0,
+              objectFit:style?.objectFit||''});
+          }
+          return rows;
+        }''')
+        check(len(images)==58,f'Expected 58 catalogue images, found {len(images)}')
+        failed=[image for image in images if not image['src'] or not image['alt'] or image['naturalWidth']<=0 or not image['visible'] or image['containerHeight']<140 or not 1.70<=image['ratio']<=1.90 or image['objectFit']!='cover']
+        check(not failed,f'Catalogue images are missing, unloaded, not visible, too small, or not 16:9: {failed[:5]}')
+        results['interactions'].append({'width':page.viewport_size['width'],'check':'all 58 catalogue images visible, loaded, and prominent 16:9','passed':True})
+        page.evaluate('scrollTo({top:0,behavior:"instant"})')
 
     def check_circle(page,title):
         circle=page.locator('#back-to-top')
@@ -108,18 +130,18 @@ def main():
                     else:
                         check(visible_cards(page).count()==58,'Default catalogue does not expose all 58 lessons')
                         check(page.locator('#catalogue-category').count()==1,'Duplicate topic select')
-                        check(page.locator('#all-tutorials-list .hc-card-prerequisite').count()==58,'Missing prerequisite previews')
+                        check(page.locator('#catalogue-level, #catalogue-format').count()==0,'Experience/format dropdowns must be removed')
+                        check(page.locator('#all-tutorials-list .hc-card-prerequisite, #all-tutorials-list .hc-card-level').count()==0,'Removed prerequisite/experience panels reappeared')
+                        if width==1440:check_catalogue_images(page)
                         page.select_option('#catalogue-category','Foundations & Prerequisites')
                         check(visible_cards(page).count()==12,'Topic filter count changed')
-                        page.select_option('#catalogue-level','beginner')
-                        page.select_option('#catalogue-format','reference')
-                        page.fill('#search-input','biological')
-                        check(visible_cards(page).count()==1,'Combined topic/level/format/query filter did not isolate data-format reference')
+                        page.fill('#search-input','biological data formats')
+                        check(visible_cards(page).count()==1,'Category and search did not isolate the data-formats lesson')
                         check_filter_match(page)
                         state=parse_qs(urlparse(page.url).query)
-                        check(state=={'category':['Foundations & Prerequisites'],'level':['beginner'],'format':['reference'],'q':['biological']},'Combined filter URL state is incomplete')
+                        check(state=={'category':['Foundations & Prerequisites'],'q':['biological data formats']},'Category/search URL state is incomplete')
                         page.reload(wait_until='networkidle')
-                        check(visible_cards(page).count()==1 and page.locator('#catalogue-format').input_value()=='reference','Reload lost filter state')
+                        check(visible_cards(page).count()==1 and page.locator('#catalogue-category').input_value()=='Foundations & Prerequisites' and page.locator('#search-input').input_value()=='biological data formats','Reload lost category/search state')
                         link=visible_cards(page).locator('a.hc-card-link')
                         lesson=link.get_attribute('href')
                         link.click()
@@ -127,7 +149,7 @@ def main():
                         page.wait_for_load_state('networkidle')
                         return_link=page.locator('[data-catalogue-return]').first
                         saved=parse_qs(urlparse(return_link.get_attribute('href')).query)
-                        check(saved==state,'Lesson return navigation lost combined filters')
+                        check(saved==state,'Lesson return navigation lost category/search state')
                         return_link.click()
                         page.wait_for_url('**/tutorials.html?**')
                         page.wait_for_load_state('networkidle')
@@ -136,15 +158,18 @@ def main():
                         check(visible_cards(page).count()==0,'No-match query leaks visible results')
                         check(page.locator('#catalogue-clear-empty').is_visible(),'No-match recovery is missing')
                         page.locator('#catalogue-clear-empty').click()
-                        check(visible_cards(page).count()==58 and not urlparse(page.url).query,'Reset did not clear all four filters')
+                        check(visible_cards(page).count()==58 and not urlparse(page.url).query,'Reset did not clear category and search')
                         page.select_option('#catalogue-category','Metagenomics')
                         check(visible_cards(page).count()==3,'Metagenomics topic count changed')
-                        page.select_option('#catalogue-level','advanced')
                         page.go_back(wait_until='networkidle')
-                        check(page.locator('#catalogue-category').input_value()=='Metagenomics' and page.locator('#catalogue-level').input_value()=='all','History Back did not restore the prior filter state')
+                        check(page.locator('#catalogue-category').input_value()=='all' and page.locator('#search-input').input_value()=='','History Back did not restore the prior category/search state')
                         page.locator('#catalogue-reset').click()
+                        visit(page,'tutorials.html?category=Foundations%20%26%20Prerequisites&level=advanced&format=reference&q=biological%20data%20formats')
+                        check(visible_cards(page).count()==1,'Legacy level/format parameters interfered with supported category/query state')
+                        check(parse_qs(urlparse(page.url).query)=={'category':['Foundations & Prerequisites'],'q':['biological data formats']},'Legacy level/format URL parameters were not normalized out')
+                        check_filter_match(page)
                         check_circle(page,'catalogue-hero-title')
-                        results['interactions'].append({'width':width,'check':'combined filters, URL reload, history, lesson return, no-match recovery','passed':True})
+                        results['interactions'].append({'width':width,'check':'category/search filters, URL reload, history, lesson return, legacy URL normalization, no-match recovery','passed':True})
                 context.close()
                 print(f'PASS homepage/catalogue layout and interaction checks at {width}px',flush=True)
             context=browser.new_context(viewport={'width':390,'height':844},java_script_enabled=False)
@@ -152,6 +177,7 @@ def main():
             page=context.new_page()
             page.goto(args.base+'/tutorials.html')
             check(visible_cards(page).count()==58,'Catalogue hides lessons without JavaScript')
+            check(page.locator('#catalogue-level, #catalogue-format, .hc-card-prerequisite, .hc-card-level').count()==0,'Simplified catalogue regressed without JavaScript')
             page.goto(args.base+'/index.html')
             check(page.locator('main a[href="start-here.html"]').first.is_visible(),'Beginner action is unavailable without JavaScript')
             check(page.locator('.hero-btn[href="tutorials.html"]').is_visible(),'Original Explore Tutorials action is unavailable without JavaScript')

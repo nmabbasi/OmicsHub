@@ -16,20 +16,20 @@ from sitewide_top_baseline import normalize_sitewide_top
 ROOT = Path(__file__).resolve().parents[1]
 HOME_CATALOGUE_BASELINE = "fa26faa8d20a31de1211652e8ebffcf99534b9a6"
 FIXTURE_PATH = ROOT / "tests/fixtures/home-catalogue-review-edits.json"
-FIXTURE_SHA256 = "196ba05096c38958298a9849aae6ba3b6b1f98ebc50651c23073a829209e5361"
+FIXTURE_SHA256 = "d23a7cb721a175a27607fc3a0725fd19e3c062ea69d5f897ee5c37a4f0a5856f"
 PAGE_PATHS = frozenset({"index.html", "tutorials.html"})
 
 # These four files are local to the homepage/catalogue feature. The generated
 # CSS bundle is an asset as well, but keeps its long-standing tutorial-UI path.
 HOME_CATALOGUE_ASSET_SHA256 = {
-    "home-catalogue.css": "1aad239b394d0b79f6dba7703a490cdc3cc1066d0fc87bda3f0134e3bccbb053",
+    "home-catalogue.css": "e54a7c94925e42885c1e19ed6b7647dc47354a4bd6df2168a08e1ead8b4287bf",
     "catalogue-browser.js": "f40825f685a9addd80d60b3674638c6ac4e0a316c7382930499f90f11d7a37ea",
     "subscribe-fab.js": "9721d06bac9fa3f1de8a3a57e06868e39f98f08c1e09dfbaaab13df5e4bcc8c1",
     "404.html": "5c9259a20ffd2c03859e206e51c1f04f4bd0a123254eea8d03dacec25081f042",
     ".github/workflows/static.yml": "9bd92a2ccf3a0fdd65a48952366933f2a5857f8abac18e90f68313a0a964ee0c",
     ".github/workflows/tutorial-review.yml": "8b4c3df2dc07719fb3a00776c62035443bacb8e5fde97db9c4321409d561572f",
     "tools/catalogue-learning.json": "a96141ebe48caea57f89d01b05d42b6ce29b30e0ef7671d1c9a761d0027d8569",
-    "tools/generate_catalogue_learning.py": "7264af71bb696d54c6979bd7b9e8bca2ffe733c10708a0de137d840294b5a9fe",
+    "tools/generate_catalogue_learning.py": "e4c2f2668a93079dc26321045b04d2c5812b5df6aeceb459d3b6288cf7a42fa5",
     "home-page.min.css": "31c20c852a226d2969acab21fc8a0ac87c5d7391b7d12d6441bdc3571e60cbbf",
 }
 HOME_CATALOGUE_ASSET_PATHS = frozenset(HOME_CATALOGUE_ASSET_SHA256)

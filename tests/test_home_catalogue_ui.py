@@ -14,7 +14,7 @@ import tempfile
 import unittest
 
 ROOT=Path(__file__).resolve().parents[1]
-BASE='fa26faa8d20a31de1211652e8ebffcf99534b9a6'
+PUBLISHED='911a5f0'
 
 
 class Text(HTMLParser):
@@ -32,6 +32,24 @@ def normalize(value):return ' '.join(unescape(value).split())
 
 def read(relative):return (ROOT/relative).read_text(encoding='utf-8')
 
+def published(relative):
+    return subprocess.check_output(['git','show',f'{PUBLISHED}:{relative}'],cwd=ROOT,text=True)
+
+def attr(tag,name):
+    match=re.search(r'\b'+re.escape(name)+r'\s*=\s*([\'\"])(.*?)\1',tag,re.I|re.S)
+    return unescape(match.group(2)) if match else None
+
+def catalogue_records(markup):
+    cards=re.findall(r'<article\b(?=[^>]*\btutorial-grid-card\b)[\s\S]*?</article>',markup,re.I)
+    records={}
+    for card in cards:
+        link=re.search(r'<a\b[^>]*>',card,re.I).group()
+        title=Text(re.search(r'<h3\b[^>]*>(.*?)</h3>',card,re.I|re.S).group(1)).text
+        description=Text(re.search(r'<p\b[^>]*>(.*?)</p>',card,re.I|re.S).group(1)).text
+        image=re.search(r'<img\b[^>]*>',card,re.I).group()
+        records[attr(link,'href')]=(title,description,attr(image,'src'),attr(image,'alt'))
+    return records
+
 
 class HomeCatalogueUITests(unittest.TestCase):
     @classmethod
@@ -41,48 +59,28 @@ class HomeCatalogueUITests(unittest.TestCase):
         cls.css=read('home-catalogue.css')
         cls.metadata=json.loads(read('tools/catalogue-learning.json'))
 
-    def test_homepage_restores_reference_layout_and_only_improves_visible_copy(self):
-        class LayoutSignature(HTMLParser):
-            def __init__(self,markup):
-                super().__init__(convert_charrefs=False)
-                self.signature=[]
-                self.stack=[]
-                self.feed(markup)
-            def handle_starttag(self,tag,attrs):
-                self.signature.append(('start',self.get_starttag_text()))
-                if tag not in {'img','input','br','hr','source','wbr','area','embed','link','meta'}:
-                    self.stack.append(tag)
-            def handle_startendtag(self,tag,attrs):
-                self.signature.append(('empty',self.get_starttag_text()))
-            def handle_endtag(self,tag):
-                self.signature.append(('end',tag))
-                if self.stack and self.stack[-1]==tag:self.stack.pop()
-            def handle_comment(self,text):self.signature.append(('comment',text))
-            def handle_data(self,text):
-                if self.stack and self.stack[-1] in {'style','script'}:
-                    self.signature.append(('executable-or-style-data',text))
-        published=subprocess.check_output(['git','show',f'{BASE}:index.html'],cwd=ROOT,text=True)
-        original_main=re.search(r'<main\b[^>]*>.*?</main>',published,re.S).group()
-        current_main=re.search(r'<main\b[^>]*>.*?</main>',self.home,re.S).group()
-        original_hero,original_after_hero=original_main.split('</section>',1)
-        self.assertEqual(original_after_hero.count('text-center'),5)
-        original_main=original_hero+'</section>'+original_after_hero.replace('text-center','text-left')
-        self.assertEqual(LayoutSignature(current_main).signature,LayoutSignature(original_main).signature,
-                         'Only visible copy and five written-section alignment utilities may change; the photographed hero stays exact')
-        hero=re.search(r'<section class="hero-laptop-section\b.*?</section>',self.home,re.S).group()
-        self.assertEqual(len(re.findall(r'<h1\b',self.home)),1)
-        self.assertIn('Terminal prompt',hero)
-        self.assertIn('Explore Tutorials →',hero)
-        self.assertIn('Step by Step',hero)
+    def test_homepage_is_byte_identical_to_published_version(self):
+        self.assertEqual(self.home,published('index.html'))
         self.assertNotIn('home-catalogue.css',self.home)
         cards=re.findall(r'<article\b[^>]*class="[^"]*native-tutorial-card[^>]*>.*?</article>',self.home,re.S)
         self.assertEqual(len(cards),6)
         self.assertTrue(all('<strong>' in c and 'Read tutorial' in c for c in cards))
-        for card in cards:
-            slug=re.search(r'href="tutorials/([^"/]+)\.html"',card).group(1)
-            self.assertIn(f'>{self.metadata["lessons"][slug]["level"].capitalize()}</span>',card)
-        self.assertNotIn('id="tutorials-list"',self.home,'Search suggestions must not blank the curated lesson section')
-        self.assertIn('not a raw-read processing pipeline or a clinical validation workflow',self.home)
+
+    def test_all_58_scientific_lesson_files_are_byte_identical_to_published_version(self):
+        pages=sorted((ROOT/'tutorials').glob('*.html'))
+        self.assertEqual(len(pages),58)
+        for page in pages:
+            relative=page.relative_to(ROOT).as_posix()
+            with self.subTest(page=relative):
+                self.assertEqual(page.read_bytes(),subprocess.check_output(['git','show',f'{PUBLISHED}:{relative}'],cwd=ROOT))
+
+    def test_catalogue_preserves_every_original_title_description_image_and_destination(self):
+        original=catalogue_records(published('tutorials.html'))
+        current=catalogue_records(self.catalogue)
+        self.assertEqual(len(original),58)
+        self.assertEqual(len(current),58)
+        self.assertEqual(current,original)
+        self.assertTrue(all(href.startswith('tutorials/') and all(record) for href,record in current.items()))
 
     def test_all_metadata_has_actual_lesson_body_evidence(self):
         lessons=self.metadata['lessons']
@@ -101,33 +99,53 @@ class HomeCatalogueUITests(unittest.TestCase):
                 article=re.search(r'<article\b[^>]*>(.*?)</article>',read(item['lessonPath']),re.S).group(1)
                 self.assertIn(excerpt,Text(article).text,'Evidence must quote the actual lesson body, not a catalogue caption')
 
-    def test_all_58_cards_have_searchable_setup_and_experience_metadata(self):
-        cards=re.findall(r'<article\b[^>]*class="[^"]*tutorial-grid-card[^>]*>.*?</article>',self.catalogue,re.S)
+    def test_all_58_cards_keep_metadata_and_have_prominent_16_by_9_images(self):
+        cards=re.findall(r'<article\b(?=[^>]*\btutorial-grid-card\b)[\s\S]*?</article>',self.catalogue,re.I)
         self.assertEqual(len(cards),58)
         levels=[]
         for card in cards:
-            slug=re.search(r'href="tutorials/([^"/]+)\.html"',card).group(1)
+            href=attr(re.search(r'<a\b[^>]*>',card,re.I).group(),'href')
+            slug=Path(href).stem
             metadata=self.metadata['lessons'][slug]
-            level=re.search(r'data-level="([^"]+)"',card).group(1)
+            opening=re.search(r'<article\b[^>]*>',card,re.I).group()
+            body=card[len(opening):]
+            level=attr(opening,'data-level')
             self.assertEqual(level,metadata['level'])
-            self.assertIn('hc-card-prerequisite',card)
-            self.assertIn(normalize(metadata['prerequisiteSummary']),Text(card).text)
-            self.assertIn('data-format=',card)
+            learning_format=attr(opening,'data-format')
+            self.assertIn(learning_format,{'hands-on-lab','conceptual-guide','advanced-template','reference'})
+            format_label=re.search(r'<span\b[^>]*data-tutorial-format="([^"]+)"',card,re.I)
+            self.assertIsNotNone(format_label)
+            self.assertEqual(format_label.group(1),learning_format)
+            self.assertEqual(attr(opening,'data-search'),attr(opening,'data-search-base'))
+            self.assertNotIn('hc-card-prerequisite',card)
+            self.assertNotIn('hc-card-level',card)
+            self.assertNotRegex(body,r'<[^>]+\bdata-level\s*=')
+            self.assertNotRegex(body,r'<[^>]+\bdata-format\s*=')
+            image=re.search(r'<img\b[^>]*>',card,re.I)
+            self.assertIsNotNone(image)
+            self.assertTrue(attr(image.group(),'src'))
+            self.assertTrue(attr(image.group(),'alt'))
+            self.assertRegex(card,r'<div\b[^>]*class="[^"]*\baspect-video\b[^"]*"[^>]*>\s*<img\b')
             levels.append(level)
         self.assertEqual(Counter(levels),Counter(i['level'] for i in self.metadata['lessons'].values()))
+        self.assertNotIn('Before you begin',Text(self.catalogue).text)
 
-    def test_browsing_controls_are_native_labeled_and_have_recovery(self):
-        for control in ('catalogue-category','catalogue-level','catalogue-format'):
-            self.assertEqual(self.catalogue.count(f'id="{control}"'),1,control)
-            self.assertRegex(self.catalogue,rf'<label\b[^>]*for="{control}"')
-            self.assertRegex(self.catalogue,rf'<select\b[^>]*id="{control}"')
+    def test_browsing_controls_are_only_labeled_search_topic_and_reset(self):
+        self.assertEqual(self.catalogue.count('id="search-input"'),1)
+        self.assertRegex(self.catalogue,r'<label\b[^>]*for="search-input"')
+        self.assertEqual(self.catalogue.count('id="catalogue-category"'),1)
+        self.assertRegex(self.catalogue,r'<label\b[^>]*for="catalogue-category"')
+        self.assertRegex(self.catalogue,r'<select\b[^>]*id="catalogue-category"')
+        for removed in ('catalogue-level','catalogue-format'):
+            self.assertNotIn(f'id="{removed}"',self.catalogue)
         for control in ('catalogue-reset','catalogue-clear-empty'):
             self.assertRegex(self.catalogue,rf'<button\b[^>]*id="{control}"')
         self.assertIn('role="status"',self.catalogue)
-        self.assertIn('Experience levels are browsing guidance',Text(self.catalogue).text)
-        self.assertIn('labels describe the learning format, not validation status',self.catalogue)
-        self.assertIn('Not every biological workflow has been run end to end',self.catalogue)
         self.assertIn('<noscript',self.catalogue)
+        self.assertIn('id="learning-formats"',self.catalogue)
+        self.assertIn('What do the learning-format labels mean?',Text(self.catalogue).text)
+        self.assertIn('labels describe the learning format, not validation status',Text(self.catalogue).text)
+        self.assertIn('Not every biological workflow has been run end to end',Text(self.catalogue).text)
 
     def test_text_is_left_aligned_and_no_new_external_assets_or_em_dashes(self):
         for html in (self.home,self.catalogue):
@@ -142,8 +160,6 @@ class HomeCatalogueUITests(unittest.TestCase):
         self.assertIn('prefers-reduced-motion',self.css)
         self.assertIn('@media print',self.css)
         self.assertIn('min-height: 3rem',self.css)
-        for selector in ('#home-page','#tutorials-page','.hc-card-prerequisite','.hc-filter-controls'):
-            self.assertIn(selector,self.css)
 
     def test_generated_catalogue_metadata_and_home_css_are_current(self):
         result=subprocess.run([sys.executable,'tools/generate_catalogue_learning.py','--check'],cwd=ROOT,capture_output=True,text=True)
@@ -152,13 +168,19 @@ class HomeCatalogueUITests(unittest.TestCase):
             result=subprocess.run(['node','--check',path],cwd=ROOT,capture_output=True,text=True)
             self.assertEqual(result.returncode,0,result.stdout+result.stderr)
 
-    def test_generator_check_mode_reports_stale_hooks_without_writing(self):
+    def test_generator_check_mode_reports_stale_metadata_without_writing(self):
         spec=importlib.util.spec_from_file_location('catalogue_generator_review',ROOT/'tools/generate_catalogue_learning.py')
         module=importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
         with tempfile.TemporaryDirectory() as folder:
             stale=Path(folder)/'tutorials.html'
-            content=self.catalogue.replace('>Beginner experience</span>','>Unapproved experience</span>',1)
+            slug=next(iter(self.metadata['lessons']))
+            original_level=self.metadata['lessons'][slug]['level']
+            changed_level=next(level for level in ('beginner','intermediate','advanced') if level!=original_level)
+            cards=re.findall(r'<article\b(?=[^>]*\btutorial-grid-card\b)[\s\S]*?</article>',self.catalogue,re.I)
+            card=next(card for card in cards if f'href="tutorials/{slug}.html"' in card)
+            mutated=re.sub(r'(data-level=")[^"]+',rf'\g<1>{changed_level}',card,count=1)
+            content=self.catalogue.replace(card,mutated,1)
             self.assertNotEqual(content,self.catalogue)
             stale.write_text(content)
             module.HTML_PATH=stale
@@ -175,10 +197,9 @@ class HomeCatalogueUITests(unittest.TestCase):
             finally:
                 sys.argv=previous_argv
 
-    def test_shared_script_restores_exact_published_source_and_keeps_idempotent_category_guard(self):
-        from sitewide_top_baseline import normalize_sitewide_top
-        original=subprocess.check_output(['git','show',f'{BASE}:subscribe-fab.js'],cwd=ROOT,text=True)
-        current=normalize_sitewide_top('subscribe-fab.js',read('subscribe-fab.js'))
+    def test_shared_script_is_published_identical_and_keeps_idempotent_category_guard(self):
+        original=published('subscribe-fab.js')
+        current=read('subscribe-fab.js')
         self.assertEqual(current,original)
         self.assertIn("if (!strip || document.getElementById('catalogue-category') || typeof window.filterTutorialsOnly !== 'function') return;",read('subscribe-fab.js'))
 

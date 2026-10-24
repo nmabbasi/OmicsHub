@@ -73,12 +73,19 @@ def catalogue_records(markup):
     return records
 
 
+def catalogue_metadata(markup):
+    return [
+        first_attrs("<article" + match.group(1) + ">", "article") or {}
+        for match in re.finditer(r"<article\b([^>]*)>(.*?)</article\s*>", markup, re.S | re.I)
+    ]
+
+
 def _strip_allowed_asset_tags(text):
     # Only these exact local stylesheet hrefs may differ outside <main>.
     allowed_stylesheet_hrefs = {
         "home-page.min.css?v=20261023-reader-typography",
         "home-page.min.css?v=20261024-home-catalogue-v1",
-        "home-catalogue.css?v=20261024a",
+        "home-catalogue.css?v=20261024-simple-images",
         "back-to-top.css?v=20261024-home-catalogue-v1",
     }
     stylesheet = re.compile(r"<link\b[^>]*>(?:\r?\n)?", re.I)
@@ -206,6 +213,45 @@ class HomeCatalogueScopeTests(unittest.TestCase):
         self.assertEqual(len(after), 58)
         self.assertEqual(after, before)
         self.assertTrue(all(href and title and description and category for href, title, description, category in after))
+
+    def test_catalogue_retains_filter_metadata_and_restores_original_base_search(self):
+        review_start = "911a5f0f7b95203306e78bd9dbf365f38a2d00b6"
+        review_source = git_bytes(review_start, "tutorials.html")
+        self.assertIsNotNone(review_source)
+        current = (ROOT / "tutorials.html").read_text(encoding="utf-8")
+        original = pre_home_catalogue_bytes("tutorials.html").decode("utf-8")
+        review_metadata = catalogue_metadata(review_source.decode("utf-8"))
+        base_metadata = catalogue_metadata(original)
+        current_metadata = catalogue_metadata(current)
+        self.assertEqual((len(review_metadata), len(base_metadata), len(current_metadata)), (58, 58, 58))
+        for index, (review, base, actual) in enumerate(zip(review_metadata, base_metadata, current_metadata), 1):
+            with self.subTest(card=index):
+                self.assertEqual(actual.get("data-category"), review.get("data-category"))
+                self.assertEqual(actual.get("data-level"), review.get("data-level"))
+                self.assertEqual(actual.get("data-format"), review.get("data-format"))
+                self.assertEqual(actual.get("data-search"), base.get("data-search"))
+
+    def test_review_outer_markup_changes_only_one_catalogue_stylesheet_version(self):
+        review_start = "911a5f0f7b95203306e78bd9dbf365f38a2d00b6"
+        old_href = 'href="home-catalogue.css?v=20261024a"'
+        new_href = 'href="home-catalogue.css?v=20261024-simple-images"'
+        for relative in ("index.html", "tutorials.html"):
+            source_bytes = git_bytes(review_start, relative)
+            self.assertIsNotNone(source_bytes)
+            source = source_bytes.decode("utf-8")
+            current = (ROOT / relative).read_text(encoding="utf-8")
+            if relative == "index.html":
+                self.assertEqual(current, source, "homepage must remain byte-identical to review start")
+                continue
+            old_prefix, old_suffix = _outside_main(source)
+            new_prefix, new_suffix = _outside_main(current)
+            self.assertEqual(old_prefix.count(old_href), 1)
+            self.assertEqual(new_prefix.count(new_href), 1)
+            self.assertEqual(old_suffix.count(old_href), 0)
+            self.assertEqual(new_suffix.count(new_href), 0)
+            self.assertEqual(old_prefix.replace(old_href, "{catalogue stylesheet version}", 1),
+                             new_prefix.replace(new_href, "{catalogue stylesheet version}", 1))
+            self.assertEqual(old_suffix, new_suffix)
 
     def test_only_catalogue_stylesheet_version_local_script_and_added_body_attribute_change_outside_main(self):
         for relative in ("index.html", "tutorials.html"):
