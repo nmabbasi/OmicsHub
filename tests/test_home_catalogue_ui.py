@@ -39,15 +39,28 @@ def attr(tag,name):
     match=re.search(r'\b'+re.escape(name)+r'\s*=\s*([\'\"])(.*?)\1',tag,re.I|re.S)
     return unescape(match.group(2)) if match else None
 
+def preserved_title_markup(title_markup,expected_href):
+    anchors=list(re.finditer(r'<a\b[^>]*>(.*?)</a\s*>',title_markup,re.I|re.S))
+    if not anchors:return title_markup
+    if len(anchors)!=1:raise AssertionError('A card title may contain only its one canonical lesson link')
+    anchor=anchors[0]
+    opening=re.match(r'<a\b[^>]*>',anchor.group(0),re.I|re.S).group()
+    if 'hc-card-link' not in (attr(opening,'class') or '').split():
+        raise AssertionError('The only title anchor must be the canonical hc-card-link')
+    if attr(opening,'href')!=expected_href:
+        raise AssertionError('The title anchor must retain the card lesson destination')
+    return title_markup[:anchor.start()]+anchor.group(1)+title_markup[anchor.end():]
+
 def catalogue_records(markup):
     cards=re.findall(r'<article\b(?=[^>]*\btutorial-grid-card\b)[\s\S]*?</article>',markup,re.I)
     records={}
     for card in cards:
         link=re.search(r'<a\b[^>]*>',card,re.I).group()
-        title=Text(re.search(r'<h3\b[^>]*>(.*?)</h3>',card,re.I|re.S).group(1)).text
+        href=attr(link,'href')
+        title=preserved_title_markup(re.search(r'<h3\b[^>]*>(.*?)</h3>',card,re.I|re.S).group(1),href)
         description=Text(re.search(r'<p\b[^>]*>(.*?)</p>',card,re.I|re.S).group(1)).text
         image=re.search(r'<img\b[^>]*>',card,re.I).group()
-        records[attr(link,'href')]=(title,description,attr(image,'src'),attr(image,'alt'))
+        records[href]=(title,description,attr(image,'src'),attr(image,'alt'))
     return records
 
 
@@ -81,6 +94,27 @@ class HomeCatalogueUITests(unittest.TestCase):
         self.assertEqual(len(current),58)
         self.assertEqual(current,original)
         self.assertTrue(all(href.startswith('tutorials/') and all(record) for href,record in current.items()))
+
+    def test_each_catalogue_card_has_one_native_title_link_and_no_open_lesson_label(self):
+        cards=re.findall(r'<article\b(?=[^>]*\btutorial-grid-card\b)[\s\S]*?</article>',self.catalogue,re.I)
+        self.assertEqual(len(cards),58)
+        for card in cards:
+            with self.subTest(card=card[:120]):
+                href=attr(re.search(r'<a\b[^>]*>',card,re.I).group(),'href')
+                title=re.search(r'<h3\b[^>]*>(.*?)</h3>',card,re.I|re.S)
+                self.assertIsNotNone(title)
+                self.assertRegex(title.group(1),r'^\s*<a\b')
+                self.assertRegex(title.group(1),r'</a\s*>\s*$')
+                links=re.findall(r'<a\b[^>]*>',card,re.I)
+                self.assertEqual(len(links),1,'The card should expose exactly one native lesson link')
+                link=links[0]
+                self.assertIn('hc-card-link',(attr(link,'class') or '').split())
+                self.assertEqual(attr(link,'href'),href)
+                self.assertEqual(href,f'tutorials/{Path(href).stem}.html')
+                title_link=re.search(r'<a\b[^>]*>(.*?)</a\s*>',title.group(1),re.I|re.S)
+                self.assertIsNotNone(title_link)
+                self.assertEqual(Text(title_link.group(1)).text,Text(title.group(1)).text)
+                self.assertNotRegex(Text(card).text,r'\bOpen lesson\b')
 
     def test_all_metadata_has_actual_lesson_body_evidence(self):
         lessons=self.metadata['lessons']

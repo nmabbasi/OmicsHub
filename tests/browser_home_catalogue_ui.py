@@ -61,6 +61,59 @@ def main():
         results['interactions'].append({'width':page.viewport_size['width'],'check':'all 58 catalogue images visible, loaded, and prominent 16:9','passed':True})
         page.evaluate('scrollTo({top:0,behavior:"instant"})')
 
+    def check_card_link_surfaces(page):
+        card=visible_cards(page).first
+        link=card.locator('h3 a.hc-card-link')
+        title=card.locator('h3').inner_text().strip()
+        check(card.locator('a').count()==1,'A lesson card must expose exactly one link')
+        check(link.count()==1,'The lesson title is missing its native card link')
+        check(page.get_by_role('link',name=title,exact=True).count()==1,'The visible lesson title must be the link accessible name')
+        check('Open lesson' not in card.inner_text(),'A visible Open lesson label remains on the card')
+        href=link.get_attribute('href')
+        check(bool(href),'The title link has no lesson destination')
+
+        def follow_and_return(target,description):
+            target.scroll_into_view_if_needed()
+            box=target.bounding_box()
+            check(bool(box),f'{description} has no visible pointer target')
+            page.mouse.click(box['x']+box['width']/2,box['y']+box['height']/2)
+            page.wait_for_url('**/'+href)
+            page.wait_for_load_state('networkidle')
+            check(page.url.endswith('/'+href),f'{description} did not navigate to the lesson')
+            page.go_back(wait_until='networkidle')
+            check(page.url.endswith('/tutorials.html'),f'{description} did not return to the catalogue')
+
+        link.focus()
+        page.keyboard.press('Enter')
+        page.wait_for_url('**/'+href)
+        page.wait_for_load_state('networkidle')
+        check(page.url.endswith('/'+href),'Enter on the title link did not open its lesson')
+        page.go_back(wait_until='networkidle')
+
+        card=visible_cards(page).first
+        follow_and_return(card.locator('img'),'Clicking the card image')
+        card=visible_cards(page).first
+        follow_and_return(card.locator('p'),'Clicking the card description')
+        card=visible_cards(page).first
+        card.scroll_into_view_if_needed()
+        point=card.evaluate('''e=>{
+          const r=e.getBoundingClientRect(),x=r.right-8,y=r.top+r.height/2;
+          const hit=document.elementFromPoint(x,y);
+          const occupied=[...e.querySelectorAll('img,p,h3,.hc-card-meta')].some(node=>{
+            const box=node.getBoundingClientRect();
+            return x>=box.left&&x<=box.right&&y>=box.top&&y<=box.bottom;
+          });
+          return {x,y,blank:!occupied&&!!hit&&e.contains(hit)&&!!hit.closest('a.hc-card-link')};
+        }''')
+        check(point['blank'],'Could not identify blank card whitespace for the click-through test')
+        page.mouse.click(point['x'],point['y'])
+        page.wait_for_url('**/'+href)
+        page.wait_for_load_state('networkidle')
+        check(page.url.endswith('/'+href),'Clicking blank card whitespace did not open its lesson')
+        page.go_back(wait_until='networkidle')
+        check(page.url.endswith('/tutorials.html'),'Blank-space navigation did not return to the catalogue')
+        results['interactions'].append({'width':page.viewport_size['width'],'check':'title accessible name and Enter, image, description, and blank-space native lesson links','passed':True})
+
     def check_circle(page,title):
         circle=page.locator('#back-to-top')
         found=False
@@ -132,6 +185,7 @@ def main():
                         check(page.locator('#catalogue-category').count()==1,'Duplicate topic select')
                         check(page.locator('#catalogue-level, #catalogue-format').count()==0,'Experience/format dropdowns must be removed')
                         check(page.locator('#all-tutorials-list .hc-card-prerequisite, #all-tutorials-list .hc-card-level').count()==0,'Removed prerequisite/experience panels reappeared')
+                        if width==390:check_card_link_surfaces(page)
                         if width==1440:check_catalogue_images(page)
                         page.select_option('#catalogue-category','Foundations & Prerequisites')
                         check(visible_cards(page).count()==12,'Topic filter count changed')
@@ -172,12 +226,30 @@ def main():
                         results['interactions'].append({'width':width,'check':'category/search filters, URL reload, history, lesson return, legacy URL normalization, no-match recovery','passed':True})
                 context.close()
                 print(f'PASS homepage/catalogue layout and interaction checks at {width}px',flush=True)
-            context=browser.new_context(viewport={'width':390,'height':844},java_script_enabled=False)
+            context=browser.new_context(viewport={'width':390,'height':844},java_script_enabled=False,reduced_motion='reduce')
             context.route('https://**/*',lambda route:route.abort())
             page=context.new_page()
             page.goto(args.base+'/tutorials.html')
             check(visible_cards(page).count()==58,'Catalogue hides lessons without JavaScript')
             check(page.locator('#catalogue-level, #catalogue-format, .hc-card-prerequisite, .hc-card-level').count()==0,'Simplified catalogue regressed without JavaScript')
+            first_card=visible_cards(page).first
+            lesson=first_card.locator('h3 a.hc-card-link').get_attribute('href')
+            check(lesson and first_card.locator('a').count()==1,'No-JavaScript catalogue card lacks its single title link')
+            title=first_card.locator('h3 a.hc-card-link')
+            title.evaluate('e=>e.scrollIntoView({block:"center",behavior:"instant"})')
+            box=title.bounding_box()
+            check(bool(box),'No-JavaScript title has no visible pointer target')
+            page.mouse.click(box['x']+box['width']/2,box['y']+box['height']/2)
+            page.wait_for_url('**/'+lesson)
+            check(page.url.endswith('/'+lesson),'No-JavaScript title link did not open the lesson natively')
+            page.go_back(wait_until='networkidle')
+            image=visible_cards(page).first.locator('img')
+            image.evaluate('e=>e.scrollIntoView({block:"center",behavior:"instant"})')
+            box=image.bounding_box()
+            check(bool(box),'No-JavaScript card image has no visible pointer target')
+            page.mouse.click(box['x']+box['width']/2,box['y']+box['height']/2)
+            page.wait_for_url('**/'+lesson)
+            check(page.url.endswith('/'+lesson),'No-JavaScript image surface did not open the lesson natively')
             page.goto(args.base+'/index.html')
             check(page.locator('main a[href="start-here.html"]').first.is_visible(),'Beginner action is unavailable without JavaScript')
             check(page.locator('.hero-btn[href="tutorials.html"]').is_visible(),'Original Explore Tutorials action is unavailable without JavaScript')
