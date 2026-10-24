@@ -11,6 +11,7 @@ import re
 import subprocess
 
 from advanced_validation_baseline import normalize_advanced_validation_if_allowed
+from start_here_baseline import normalize_start_here_sitemap
 from tutorial_ui_baseline import normalize_tutorial_ui
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -145,4 +146,5 @@ def restore_sitemap_to_published(data):
 
 def normalize_remaining_validation_sitemap(data):
     from advanced_validation_baseline import normalize_advanced_validation_sitemap
-    return restore_sitemap_to_published(normalize_advanced_validation_sitemap(data))
+    restored = restore_sitemap_to_published(normalize_advanced_validation_sitemap(data))
+    return normalize_start_here_sitemap(restored)

@@ -56,16 +56,17 @@ class TextAlignmentTests(unittest.TestCase):
                     "Tutorial should use the shared prose alignment scope",
                 )
 
-    def test_start_here_body_and_cards_align_to_start_but_hero_stays_centered(self):
-        body_rule = re.search(
-            r"\.sh-section-header\s*,\s*\.sh-audience-intro\s*,\s*"
-            r"\.sh-step-body\s*,\s*\.sh-route-body\s*,\s*"
-            r"\.sh-catalogue-inner\s*>\s*div\s*\{([^{}]*)\}",
+    def test_start_here_content_and_hero_remain_left_aligned(self):
+        main_props = declarations(css_rule(self.start_here_css, "#main-content"))
+        hero_props = declarations(css_rule(self.start_here_css, ".sh-hero"))
+        # English document direction makes the default inline alignment left;
+        # neither the content region nor the simplified hero may be centered.
+        self.assertIn(main_props.get("text-align", "left"), {"left", "start"})
+        self.assertIn(hero_props.get("text-align", "left"), {"left", "start"})
+        self.assertNotRegex(
             re.sub(r"/\*.*?\*/", "", self.start_here_css, flags=re.DOTALL),
+            r"text-align\s*:\s*center\b",
         )
-        self.assertIsNotNone(body_rule, "Expected Start Here reading-content alignment")
-        self.assertEqual(declarations(body_rule.group(1)).get("text-align"), "start")
-        self.assertEqual(declarations(css_rule(self.start_here_css, ".sh-hero")).get("text-align"), "center")
 
     def test_table_headers_remain_left_aligned_and_code_wrapping_stays_specialized(self):
         self.assertEqual(declarations(css_rule(self.shared_css, ".prose th")).get("text-align"), "left")

@@ -74,12 +74,39 @@
   function initInFlowTopControl() {
     const existing = document.getElementById('back-to-top');
     if (existing) {
-      if (existing.matches('a[href="#tutorial-title"]')) {
+      if (existing.matches('a[href="#tutorial-title"], a[href="#sh-hero-title"]')) {
         const tools = existing.closest('.reader-tools.tutorial-top-tools');
         const navigationFooter = document.querySelector('#reader-course-navigation .reader-sequence-footer');
         if (tools && navigationFooter) navigationFooter.appendChild(tools);
+        if (tools) {
+          tools.classList.add('is-floating');
+          let scheduled = false;
+          const update = () => {
+            const focused = document.activeElement === existing;
+            tools.hidden = window.scrollY < 240 && !focused;
+            if (!tools.hidden && !focused) {
+              const rect = existing.getBoundingClientRect();
+              const headerBottom = document.querySelector('body > header')?.getBoundingClientRect().bottom || 0;
+              const overlaps = [...document.querySelectorAll('main a, main button, main summary, main input, main select, main textarea, article button, #reader-course-navigation a:not(#back-to-top)')]
+                .some(control => control !== existing && [...control.getClientRects()].some(box =>
+                  box.width > 0 && box.height > 0 && box.left < rect.right + 4 && box.right > rect.left - 4 && box.top < rect.bottom + 4 && box.bottom > rect.top - 4));
+              tools.hidden = overlaps || rect.top < headerBottom + 8;
+            }
+            scheduled = false;
+          };
+          const schedule = () => {
+            if (!scheduled) { scheduled = true; requestAnimationFrame(update); }
+          };
+          window.addEventListener('scroll', schedule, { passive: true });
+          window.addEventListener('pageshow', schedule);
+          window.addEventListener('resize', schedule, { passive: true });
+          window.addEventListener('readerlayoutchange', schedule);
+          document.addEventListener('toggle', schedule, true);
+          existing.addEventListener('blur', schedule);
+          update();
+        }
         existing.addEventListener('click', () => {
-          const title = document.getElementById('tutorial-title');
+          const title = document.getElementById(existing.hash.slice(1));
           if (title) {
             title.tabIndex = -1;
             title.focus({ preventScroll: true });
@@ -114,6 +141,7 @@
         const height = row.getBoundingClientRect().bottom - header.getBoundingClientRect().top + parseFloat(getComputedStyle(header.querySelector('nav')).paddingBottom) + 1;
         document.documentElement.style.setProperty('--reader-header-height', `${Math.ceil(height)}px`);
       }
+      window.dispatchEvent(new Event('readerlayoutchange'));
     };
     if ('ResizeObserver' in window) {
       const observer = new ResizeObserver(update);

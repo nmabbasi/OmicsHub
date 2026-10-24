@@ -56,7 +56,7 @@ def main():
                       topCount:document.querySelectorAll('#back-to-top').length,
                       nav:[...document.querySelectorAll('.reader-toolbar > a')].map(a=>{const r=a.getBoundingClientRect();return {x:r.x,y:r.y,w:r.width,h:r.height,right:r.right,bottom:r.bottom}}),
                       topIntegrated:!!document.querySelector('#reader-course-navigation .reader-sequence-footer #back-to-top'),
-                      continuation:[...document.querySelectorAll('#reader-course-navigation a')].map(a=>a.getBoundingClientRect().height),
+                      continuation:[...document.querySelectorAll('#reader-course-navigation a')].filter(a=>a.getClientRects().length).map(a=>a.getBoundingClientRect().height),
                       codeBg:document.querySelector('article pre')?getComputedStyle(document.querySelector('article pre')).backgroundColor:null
                     })''')
                     hashes = [hashlib.sha256(code.encode()).hexdigest() for code in data['blocks']]
@@ -102,6 +102,9 @@ def main():
             check(rtab.get_attribute('aria-selected') == 'true', 'Hash target not revealed')
             rtab.click(); ready(page, 'experimental-design-batch-effects')
             check(page.locator('[role=tab][aria-selected=true][data-language=r]').count() == 2, 'Language preference not retained across lessons')
+            check(not page.locator('#back-to-top').is_visible(), 'Top control should wait until the reader scrolls')
+            page.evaluate("window.scrollTo({top:650,behavior:'instant'})")
+            page.locator('#back-to-top').wait_for(state='visible')
             page.get_by_role('link', name=re.compile('Back to top')).click()
             page.wait_for_function("document.activeElement?.id === 'tutorial-title' && window.scrollY < 300")
             check(page.evaluate('document.activeElement.id') == 'tutorial-title', 'Back-to-top focus not returned')
@@ -170,6 +173,8 @@ def main():
             check(page.url.endswith('/command-line-part2.html'), 'Suggested next link did not load the next lesson')
             page.go_back(); page.wait_for_selector('html[data-tutorial-code-ready="true"]')
             check(page.url == source_url and page.locator('article pre').count() > 0, 'Browser back lost the original lesson')
+            page.evaluate("window.scrollTo({top:650,behavior:'instant'})")
+            page.locator('#back-to-top').wait_for(state='visible')
             page.locator('#back-to-top').click()
             page.wait_for_function('document.activeElement?.id === "tutorial-title"')
             check(page.locator('article pre').count() > 0, 'Native fragment replaced the restored lesson')

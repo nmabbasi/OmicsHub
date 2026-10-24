@@ -32,6 +32,12 @@ from tutorial_ui_baseline import (
     normalize_tutorial_ui,
     verify_tutorial_ui_file,
 )
+from start_here_baseline import (
+    START_HERE_ASSET_PATHS,
+    normalize_start_here,
+    normalize_start_here_asset,
+    pre_review_bytes,
+)
 
 QC_PATH = "tutorials/quality-control-fundamentals.html"
 REVISED_TUTORIALS = frozenset({
@@ -100,6 +106,14 @@ class RemainingValidationScopeTests(unittest.TestCase):
                 self.assertTrue(current_path.is_file(), relative)
                 verify_tutorial_ui_file(relative, current_path.read_bytes())
                 continue
+            if relative in START_HERE_ASSET_PATHS:
+                self.assertTrue(current_path.is_file(), relative)
+                restored = normalize_start_here_asset(relative, current_path.read_bytes())
+                if relative == "start-here.js":
+                    self.assertIsNone(restored, "new JS is allowed only after its full hash verifies")
+                else:
+                    self.assertEqual(restored, pre_review_bytes(relative))
+                continue
             if current_path.is_file() and is_approved_workflow(relative, current_path.read_bytes()):
                 continue
             original = None
@@ -109,6 +123,8 @@ class RemainingValidationScopeTests(unittest.TestCase):
             )
             if result.returncode == 0:
                 original = result.stdout
+                if relative == "start-here.html":
+                    original = normalize_start_here(relative, original.decode("utf-8")).encode("utf-8")
                 if relative.startswith("tutorials/") and relative.endswith(".html"):
                     original = normalize_tutorial_ui(
                         relative, original.decode("utf-8")
@@ -117,6 +133,8 @@ class RemainingValidationScopeTests(unittest.TestCase):
                 self.assertIsNotNone(original, "new public files and assets are forbidden")
                 self.assertTrue(current_path.is_file(), "published public files may not be deleted")
                 current = current_path.read_bytes()
+                if relative == "start-here.html":
+                    current = normalize_start_here(relative, current.decode("utf-8")).encode("utf-8")
                 current = normalize_resource_content(relative, current)
                 if not (
                     relative in manifest_paths or relative in resource_paths

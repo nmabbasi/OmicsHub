@@ -154,8 +154,11 @@ class PbmcWorkedExampleTests(unittest.TestCase):
             if entry['sitemap_lastmod_approved'] == '2026-10-24'
         }
         expected_oct23_urls = {
-            site + path for path in approved_updated_paths if path != tidyverse_path
+            site + path for path in approved_updated_paths
+            if path != tidyverse_path
         }
+        # This tree has already reversed the exact Start Here date-only patch;
+        # test_content_modification_dates protects its raw current Oct 24 date.
         expected_oct24_urls = {tidyverse_url} | resource_oct24_urls
         expected_oct23_urls.difference_update(
             site + path for path in resource_oct23_overrides

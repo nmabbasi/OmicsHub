@@ -23,7 +23,7 @@ class ExactTutorialUIBaselineTests(unittest.TestCase):
                 self.assertEqual(normalize_tutorial_ui(relative, restored), restored)
 
     def test_every_explicit_ui_asset_matches_its_pinned_complete_digest(self):
-        self.assertEqual(len(TUTORIAL_UI_PATHS), 16)
+        self.assertEqual(len(TUTORIAL_UI_PATHS), 17)
         for relative in TUTORIAL_UI_PATHS:
             with self.subTest(path=relative):
                 data = (ROOT / relative).read_bytes()

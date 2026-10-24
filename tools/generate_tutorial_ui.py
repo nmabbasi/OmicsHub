@@ -14,7 +14,7 @@ import re
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
-VERSION = '20261024-reader-ui-v2'
+VERSION = '20261024-reader-ui-v3'
 LANGUAGES = {'bash', 'python', 'r', 'text', 'yaml', 'json', 'csv', 'diff', 'powershell', 'lua', 'groovy', 'javascript', 'markdown', 'sql', 'ini', 'docker', 'rscript'}
 VOID = {'area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr'}
 
@@ -88,7 +88,8 @@ def load_metadata(root):
     return result
 
 CSS = (f'<link href="../tutorial-reader.css?v={VERSION}" rel="stylesheet"/>\n'
-       f'<link href="../tutorial-navigation.css?v={VERSION}" rel="stylesheet"/>')
+       f'<link href="../tutorial-navigation.css?v={VERSION}" rel="stylesheet"/>\n'
+       f'<link href="../back-to-top.css?v={VERSION}" rel="stylesheet"/>')
 SCRIPTS = ('<script src="../assets/vendor/prism/prism-1.29.0.js"></script>\n'
            f'<script src="../tutorial-code-data.js?v={VERSION}"></script>\n'
            f'<script src="../code-tabs.js?v={VERSION}"></script>')
@@ -99,29 +100,32 @@ TOP_END = '<!-- /Tutorial top link -->'
 
 def top_link(title):
     return (TOP_START + '\n<div class="reader-tools tutorial-top-tools">'
-            '<a id="back-to-top" href="#tutorial-title">'
+            '<a id="back-to-top" href="#tutorial-title" aria-label="Back to top">'
             '<span class="tutorial-top-icon" aria-hidden="true">'
-            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">'
+            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'
             '<path d="M12 19V5m-6 6 6-6 6 6"/></svg></span>'
             '<span>Back to top<small>' + escape(title) + '</small></span></a></div>\n' + TOP_END + '\n')
 
 def render_page(source):
     output = PRISM_LINK.sub('', source)
     output = PRISM_SCRIPT.sub('', output)
-    output = re.sub(r'((?:href|src)="\.\./(?:tutorial-(?:reader|navigation)\.css|tutorial-code-data\.js|code-tabs\.js))(?:\?[^\"]*)?(\")',
+    output = re.sub(r'((?:href|src)="\.\./(?:tutorial-(?:reader|navigation)\.css|back-to-top\.css|tutorial-code-data\.js|code-tabs\.js))(?:\?[^\"]*)?(\")',
                     r'\1?v=' + VERSION + r'\2', output)
-    if CSS not in output:
-        output = output.replace('</head>', CSS + '</head>', 1)
+    for include in CSS.splitlines():
+        if include not in output: output = output.replace('</head>', include + '\n</head>', 1)
     if SCRIPTS not in output:
         output, count = re.subn(r'<script src="\.\./code-tabs\.js(?:\?[^\"]*)?"></script>', SCRIPTS, output)
         if count != 1: raise ValueError('Expected one code-tabs script')
     output = re.sub(r'(src="\.\./(?:script|copy-code|subscribe-fab)\.js)(?:\?[^\"]*)?(\")', r'\1?v=' + VERSION + r'\2', output)
-    if TOP_START not in output:
-        title_match = re.search(r'<h1\b[^>]*>(.*?)</h1>', output, re.S)
-        if not title_match: raise ValueError('Missing tutorial title')
-        title = re.sub('<[^>]*>', '', title_match.group(1))
-        from html import unescape
-        title = unescape(title)
+    title_match = re.search(r'<h1\b[^>]*>(.*?)</h1>', output, re.S)
+    if not title_match: raise ValueError('Missing tutorial title')
+    title = re.sub('<[^>]*>', '', title_match.group(1))
+    from html import unescape
+    title = unescape(title)
+    if TOP_START in output:
+        output, count = re.subn(re.escape(TOP_START) + r'.*?' + re.escape(TOP_END) + r'\n?', lambda _: top_link(title), output, flags=re.S)
+        if count != 1: raise ValueError('Expected one tutorial top link')
+    else:
         output, count = re.subn(r'(?=<footer\b)', lambda _: top_link(title), output, count=1)
         if count != 1: raise ValueError('Missing tutorial footer')
     return output

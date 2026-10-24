@@ -156,14 +156,21 @@ class TutorialNavigationStyleTests(unittest.TestCase):
         self.assertIn(".reader-toolbar.reader-toolbar a.reader-toolbar__next", self.css)
         self.assertIn(".reader-sequence-utilities", self.css)
 
-    def test_no_oversized_suggested_rows_and_native_top_control_stays_in_flow(self):
+    def test_no_oversized_suggested_rows_and_native_top_control_is_progressively_floating(self):
         self.assertNotIn('min-height: 9.5rem', self.css)
         self.assertIn('.reader-sequence-footer', self.css)
         self.assertIn('.reader-sequence-route-label', self.css)
         script = (ROOT / 'subscribe-fab.js').read_text()
-        self.assertIn("existing.matches('a[href=\"#tutorial-title\"]')", script)
+        self.assertIn("existing.matches('a[href=\"#tutorial-title\"], a[href=\"#sh-hero-title\"]')", script)
         self.assertIn('navigationFooter.appendChild(tools)', script)
-        self.assertNotIn('position: fixed', (ROOT / 'tutorial-reader.css').read_text())
+        self.assertIn("tools.classList.add('is-floating')", script)
+        self.assertIn('window.scrollY < 240', script)
+        self.assertIn('control !== existing', script)
+        circle = (ROOT / 'back-to-top.css').read_text()
+        self.assertIn('border-radius: 50%', circle)
+        self.assertIn('position: fixed', circle)
+        self.assertIn('var(--reader-banner-space, 0px)', circle)
+        self.assertIn('@media (prefers-reduced-motion: reduce)', circle)
 
 
 if __name__ == "__main__":

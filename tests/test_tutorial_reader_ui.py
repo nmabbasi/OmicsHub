@@ -56,7 +56,7 @@ class TutorialReaderUITests(unittest.TestCase):
             with self.subTest(page=page.name):
                 self.assertNotIn('cdnjs.cloudflare.com/ajax/libs/prism', source)
                 self.assertEqual(source.count('assets/vendor/prism/prism-1.29.0.js'), 1)
-                for name in ['tutorial-reader.css', 'tutorial-navigation.css', 'tutorial-code-data.js', 'code-tabs.js']:
+                for name in ['tutorial-reader.css', 'tutorial-navigation.css', 'back-to-top.css', 'tutorial-code-data.js', 'code-tabs.js']:
                     self.assertEqual(source.count(f'../{name}?v={generator.VERSION}"'), 1)
                 self.assertEqual(source.count('id="back-to-top"'), 1)
                 self.assertIn('id="back-to-top" href="#tutorial-title"', source)
@@ -68,6 +68,11 @@ class TutorialReaderUITests(unittest.TestCase):
             current = page.read_text()
             previous = current.replace(generator.VERSION, '20261024-reader-ui')
             self.assertEqual(generator.render_page(previous), current, page.name)
+
+    def test_prior_review_commit_upgrades_to_exact_current_markup(self):
+        for page in self.pages:
+            previous = subprocess.check_output(['git', 'show', f'a4b6ead:tutorials/{page.name}'], cwd=ROOT).decode()
+            self.assertEqual(generator.render_page(previous), page.read_text(), page.name)
 
     def test_failed_fingerprints_are_rejected_before_publishing_stale_tabs(self):
         with tempfile.TemporaryDirectory() as temp:

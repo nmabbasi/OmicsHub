@@ -48,6 +48,12 @@ from tutorial_ui_baseline import (
     normalize_tutorial_ui,
     verify_tutorial_ui_file,
 )
+from start_here_baseline import (
+    START_HERE_ASSET_PATHS,
+    normalize_start_here,
+    normalize_start_here_asset,
+    pre_review_bytes,
+)
 
 ALLOWED_FIXTURE_PREFIXES = (
     "files/text-processing-lesson/",
@@ -176,11 +182,24 @@ class SixLessonRevisionScopeTests(unittest.TestCase):
                 self.assertTrue(current_path.is_file(), relative)
                 verify_tutorial_ui_file(relative, current_path.read_bytes())
                 continue
+            if relative in START_HERE_ASSET_PATHS:
+                self.assertTrue(current_path.is_file(), relative)
+                restored = normalize_start_here_asset(relative, current_path.read_bytes())
+                if relative == "start-here.js":
+                    self.assertIsNone(restored, "new JS is allowed only after its full hash verifies")
+                else:
+                    self.assertEqual(restored, pre_review_bytes(relative))
+                continue
             if current_path.is_file() and is_approved_workflow(relative, current_path.read_bytes()):
                 continue
             old_bytes = git_bytes(relative)
+            current_raw = current_path.read_bytes()
+            if relative == "start-here.html":
+                current_raw = normalize_start_here(relative, current_raw.decode("utf-8")).encode("utf-8")
+                if old_bytes is not None:
+                    old_bytes = normalize_start_here(relative, old_bytes.decode("utf-8")).encode("utf-8")
             current_text = normalize_tutorial_ui(
-                relative, current_path.read_bytes().decode("utf-8")
+                relative, current_raw.decode("utf-8")
             )
             current_bytes = normalize_resource_content(relative, current_text.encode("utf-8"))
             current_text = current_bytes.decode("utf-8")
@@ -277,10 +296,12 @@ class SixLessonRevisionScopeTests(unittest.TestCase):
                                          "new source files outside approved fixture folders are forbidden")
                     self.assertTrue(current_path.is_file(), "deleting published files is forbidden")
                     expected = (old_text.encode("utf-8")
-                                if relative.startswith("tutorials/") and relative.endswith(".html")
+                                if relative == "start-here.html"
+                                or (relative.startswith("tutorials/") and relative.endswith(".html"))
                                 else old_bytes)
                     observed = (current_bytes
-                                if relative.startswith("tutorials/") and relative.endswith(".html")
+                                if relative == "start-here.html"
+                                or (relative.startswith("tutorials/") and relative.endswith(".html"))
                                 else current_path.read_bytes())
                     self.assertEqual(observed, expected,
                                      "non-target source, CSS, navigation and site scripts are immutable")
