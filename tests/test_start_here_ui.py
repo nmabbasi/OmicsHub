@@ -14,7 +14,7 @@ from start_here_baseline import (
 
 ROOT = Path(__file__).resolve().parents[1]
 BASE = 'a4b6ead8251e0a3abcb748061a40155ae9523a82'
-CSS_HREF = 'start-here.css?v=20261025-lesson-first-v2'
+CSS_HREF = 'start-here.css?v=20261025-hover-colours-v1'
 MAIN = re.compile(r'<main\b[^>]*>.*?</main>', re.S)
 
 class Facts(HTMLParser):
