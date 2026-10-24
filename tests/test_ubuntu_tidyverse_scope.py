@@ -13,6 +13,12 @@ from ubuntu_tidyverse_baseline import (
     normalize_ubuntu_tidyverse_revision,
     published_pr11_tidyverse_page,
 )
+from remaining_validation_baseline import (
+    allowed_paths as remaining_validation_paths,
+    load_manifest,
+    normalize_remaining_validation_edit,
+    normalize_remaining_validation_sitemap,
+)
 
 SITE = "https://theomicshub.com/"
 SCRIPT = re.compile(r"<script\b[^>]*>.*?</script\s*>", re.S | re.I)
@@ -129,7 +135,7 @@ class UbuntuTidyverseScopeTests(unittest.TestCase):
             with self.subTest(page=relative):
                 self.assertEqual(scripts(current), scripts(original), "executable script blocks are immutable")
                 old_jsonld, new_jsonld = scripts(original, jsonld=True), scripts(current, jsonld=True)
-                if relative == TIDYVERSE_SETUP_ARTICLE:
+                if relative == TIDYVERSE_SETUP_ARTICLE or relative in remaining_validation_paths():
                     self.assertEqual(len(old_jsonld), 1)
                     self.assertEqual(len(new_jsonld), 1)
                     self.assertEqual(
@@ -137,7 +143,11 @@ class UbuntuTidyverseScopeTests(unittest.TestCase):
                         re.sub(r'("dateModified"\s*:\s*")[^\"]+(")', r"\1__DATE__\2", old_jsonld[0]),
                         "only JSON-LD dateModified may differ",
                     )
-                    self.assertEqual(DATE_MODIFIED.findall(new_jsonld[0])[0][1], CURRENT_DATE)
+                    if relative == TIDYVERSE_SETUP_ARTICLE:
+                        self.assertEqual(DATE_MODIFIED.findall(new_jsonld[0])[0][1], CURRENT_DATE)
+                    else:
+                        approved = load_manifest()["files"][relative]["date_modified_approved"]
+                        self.assertEqual(DATE_MODIFIED.findall(new_jsonld[0])[0][1], approved)
                 else:
                     self.assertEqual(new_jsonld, old_jsonld)
 
@@ -150,7 +160,12 @@ class UbuntuTidyverseScopeTests(unittest.TestCase):
             old = git_bytes(relative)
             self.assertIsNotNone(old, relative)
             with self.subTest(tutorial=relative):
-                self.assertEqual(page.read_bytes(), old)
+                current = page.read_bytes()
+                if relative in remaining_validation_paths():
+                    current = normalize_remaining_validation_edit(
+                        relative, current.decode("utf-8")
+                    ).encode("utf-8")
+                self.assertEqual(current, old)
 
         for relative in changed_paths():
             if relative.startswith("tests/") or relative in {TIDYVERSE_SETUP_ARTICLE, "sitemap.xml"}:
@@ -163,6 +178,17 @@ class UbuntuTidyverseScopeTests(unittest.TestCase):
                     self.assertTrue(path.is_file(), "deleting analytics.js is forbidden")
                     # Exact authorized source is pinned by test_analytics_source_scope.py.
                     continue
+                if relative in remaining_validation_paths():
+                    self.assertIsNotNone(old, "allowlisted page must exist in published source")
+                    self.assertTrue(path.is_file(), "deleting published files is forbidden")
+                    self.assertEqual(
+                        normalize_remaining_validation_edit(
+                            relative, path.read_text(encoding="utf-8")
+                        ).encode("utf-8"),
+                        old,
+                        "only exact manifest-approved inner article and date deltas are allowed",
+                    )
+                    continue
                 self.assertIsNotNone(old, "new public files and assets are forbidden")
                 self.assertTrue(path.is_file(), "deleting published files is forbidden")
                 self.assertEqual(path.read_bytes(), old, "all non-target public files must remain byte-identical")
@@ -170,7 +196,7 @@ class UbuntuTidyverseScopeTests(unittest.TestCase):
     def test_sitemap_is_pr11_xml_with_only_target_lastmod_changed(self):
         original = git_bytes("sitemap.xml")
         self.assertIsNotNone(original)
-        current = (ROOT / "sitemap.xml").read_bytes()
+        current = normalize_remaining_validation_sitemap((ROOT / "sitemap.xml").read_bytes())
         expected = expected_sitemap_after_target_date_change(original)
         self.assertEqual(current, expected, "only the target URL's one lastmod may change")
         root = ET.fromstring(current)

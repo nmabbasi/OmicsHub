@@ -73,7 +73,7 @@ gtag('consent', 'default', {
     }
   },
   "datePublished": "2026-09-19",
-  "dateModified": "2026-10-21",
+  "dateModified": "2026-10-24",
   "url": "https://theomicshub.com/tutorials/quality-control-fundamentals.html",
   "name": "Quality Control Fundamentals",
   "isPartOf": {
@@ -171,11 +171,11 @@ function toggleMobileMenu() {
 <article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--lab"><div class="flex flex-wrap items-center gap-4 text-xs font-mono text-gray-500 bg-gray-50 p-3 rounded-lg border border-gray-200 mb-6">
 <div class="flex items-center gap-1">
 <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
-<span><strong>Examples target:</strong> Python/Scanpy, R/Seurat, and a Unix-like shell; commands not executed for this review.</span>
+<span><strong>Testing:</strong> Ubuntu 24.04: checksum handling and SAMtools depth software checks only. Other commands remain templates.</span>
 </div>
 <div class="flex items-center gap-1">
 <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
-<span>Updated 21 October 2026</span></div>
+<span>Updated 24 October 2026</span></div>
 </div><p class="lesson-lead">QC turns a set of files and tool reports into a documented decision about what can be analyzed, what needs investigation, and why. This lesson follows a paired-end short-read example, then contrasts it with single-cell checks. Thresholds must come from the assay and study context.</p>
 <section class="lesson-summary tutorial-learning-contract" data-tutorial-format="conceptual-guide" aria-label="Learning format">
 <p><strong>Format: Conceptual guide.</strong> For learners who can read basic shell commands and sequencing reports: compare evidence across assays and complete a sample-level QC decision record. No data are supplied; use the explicitly illustrative record below or bring reports prepared for your own study.</p>
@@ -206,33 +206,38 @@ function toggleMobileMenu() {
 </ul>
 <h2>Paired-end short-read workflow</h2>
 <p>This example assumes two gzip-compressed FASTQ files for one sample, matching provider checksums, and (for alignment) a reference FASTA with compatible indexes. Create the top-level <code>raw/</code>, <code>reference/</code>, and <code>logs/</code> inputs or directories as needed; the files shown are placeholders, not a supplied dataset. Run from the project directory after installing and testing the named tools. Replace sample names and paths. The snippets illustrate stages; they do not install tools, download references, or configure a compute environment.</p>
+<p>Save each shell stage in a Bash script and run it with <code>bash stage-name.sh</code> from the project directory. Each script starts with <code>set -euo pipefail</code>, so a failed command or pipeline stops that stage. Do not continue to later stages after a failure, and do not treat an old output file as evidence that a new run succeeded.</p>
 <p>Required inputs (example):</p>
 <ul>
 <li>raw/ sample_R1.fastq.gz, sample_R2.fastq.gz: primary raw FASTQ files.</li>
-<li>raw/checksums.txt: provider checksum manifest (MD5 or SHA256), if supplied.</li>
+<li><code>raw/checksums.txt</code>: provider SHA-256 manifest, or <code>raw/md5checksums.txt</code>: provider MD5 manifest. Entries must name files relative to <code>raw/</code>, for example <code>sample_R1.fastq.gz</code>. Use the provider's actual names and algorithm; do not replace a provider manifest with locally computed hashes.</li>
 <li>reference/ genome.fa and its index files (if performing alignment).</li>
 </ul>
 <h3>1. Verify input files before analysis</h3>
 <p>What you do: confirm that each FASTQ matches the checksum provided by the data source. This step prevents downstream QC confusion caused by partial or corrupted downloads.</p>
-<pre><code># Example: verify SHA-256 manifest provided by the sequencing center
-# Input: raw/checksums.txt (SHA-256 manifest matching filenames)
-# Output: checksum_validation.log
+<pre id="qc-integrity-stage"><code>set -euo pipefail
+# Input: provider manifest and FASTQ files beneath raw/
+# Output: logs/checksum_validation.log
 mkdir -p logs
-set -o pipefail
-sha256sum -c raw/checksums.txt 2&gt;&amp;1 | tee logs/checksum_validation.log
-
-# If the archive provided only MD5 sums:
-md5sum -c raw/md5checksums.txt 2&gt;&amp;1 | tee logs/checksum_validation.log
+if [[ -f raw/checksums.txt ]]; then
+  (cd raw &amp;&amp; sha256sum -c checksums.txt) 2&gt;&amp;1 | tee logs/checksum_validation.log
+elif [[ -f raw/md5checksums.txt ]]; then
+  (cd raw &amp;&amp; md5sum -c md5checksums.txt) 2&gt;&amp;1 | tee logs/checksum_validation.log
+else
+  echo "Missing provider SHA-256 or MD5 manifest; stop and obtain it." &gt;&amp;2
+  exit 1
+fi
 
 # Confirm each compressed FASTQ can be decompressed without error:
 gzip -t raw/sample_R1.fastq.gz raw/sample_R2.fastq.gz
-echo "gzip exit code: $?"
+echo "Provider checksums and gzip integrity checks passed."
 </code></pre>
 <p>Interpretation: all files should report OK and gzip -t should exit with code 0. If any check fails, re-download that specific file rather than editing the manifest. Save checksum_validation.log in logs/.</p>
 <h3>2. Compare read-level reports</h3>
 <p>What you do: run a per-file QC tool that reports per-base quality, adapter content, GC distribution, and overrepresented sequences. FastQC and fastp are common choices; run MultiQC to aggregate multiple FastQC outputs into a single report.</p>
-<pre><code># Input: raw/*.fastq.gz
-# Outputs: qc/fastqc/ (HTML + raw), qc/multiqc_report.html
+<pre><code>set -euo pipefail
+# Input: raw/*.fastq.gz
+# Outputs: qc/fastqc/ (HTML + raw), qc/multiqc_read_qc.html
 mkdir -p qc/fastqc
 fastqc -t 4 -o qc/fastqc raw/sample_R1.fastq.gz raw/sample_R2.fastq.gz
 
@@ -244,7 +249,8 @@ cd ..
 <p>FastQC writes a report for each input file. MultiQC searches the supplied directory for recognized report files and compiles a combined report; review sample names and modules to ensure it found the intended inputs.</p>
 <h3>3. Trim only when a report supports it</h3>
 <p>Fastp can trim adapters and apply other filters, so this example is not a neutral “adapter-only” operation. Inspect the reports and defaults for your version, justify each change, and retain the original FASTQ. This command writes a new paired output and reports; it does not overwrite raw files.</p>
-<pre><code># Input: raw/*.fastq.gz
+<pre><code>set -euo pipefail
+# Input: raw/*.fastq.gz
 # Output: trimmed/sample_R1.trim.fastq.gz, trimmed/sample_R2.trim.fastq.gz
 mkdir -p trimmed qc
 fastp -i raw/sample_R1.fastq.gz -I raw/sample_R2.fastq.gz \
@@ -255,9 +261,12 @@ fastp -i raw/sample_R1.fastq.gz -I raw/sample_R2.fastq.gz \
 <p>Note: adapt parameters to your platform and chemistry. The HTML and JSON reports are written to <code>qc/fastp_report.html</code> and <code>qc/fastp_report.json</code>, respectively; keep these alongside the other QC reports.</p>
 <h3>4. Align, sort, and inspect the BAM</h3>
 <p>Align reads with your chosen aligner (bwa-mem2 for short-read DNA, STAR for RNA-seq, minimap2 for long reads). Here is a short-read DNA example using bwa-mem2 followed by samtools flagstat and Picard MarkDuplicates.</p>
-<pre><code># Inputs: reference/genome.fa, trimmed/*.fastq.gz (or raw if untrimmed)
-# Outputs: aligned/sample.bam, aligned/sample.bam.bai, qc/alignment_stats.txt
+<p>The indexing line writes companion files beside the FASTA and is needed only once for that exact reference and aligner version. Use a writable reference copy, or skip that line when matching bwa-mem2 indexes have already been prepared. A FASTA <code>.fai</code> alone is not a bwa-mem2 index.</p>
+<pre><code>set -euo pipefail
+# Inputs: reference/genome.fa and trimmed/*.fastq.gz
+# Outputs: indexed BAMs, flagstat/idxstats logs, duplicate metrics
 mkdir -p aligned qc
+bwa-mem2 index reference/genome.fa
 bwa-mem2 mem -t 8 reference/genome.fa \
     trimmed/sample_R1.trim.fastq.gz trimmed/sample_R2.trim.fastq.gz \
     | samtools view -b -o aligned/sample.unsorted.bam -
@@ -275,30 +284,44 @@ picard MarkDuplicates I=aligned/sample.bam O=aligned/sample.dedup.bam \
 </code></pre>
 <p>flagstat summarizes alignment flag categories, including mapped reads, proper pairs, and records marked duplicate; interpret categories in light of the tool and input. idxstats reports counts by reference sequence after indexing. Picard MarkDuplicates writes metrics and marks duplicates in a new BAM. These outputs can flag questions for follow-up, but unusual contig counts alone do not prove contamination.</p>
 <h3>5. Check depth where the assay needs it</h3>
-<pre><code># Input: aligned/sample.dedup.bam
+<pre id="qc-depth-stage"><code>set -euo pipefail
+# Input: aligned/sample.dedup.bam
 # Output: qc/coverage_mean_depth.txt
-samtools depth -a aligned/sample.dedup.bam | \
-  awk '{sum+=$3; cnt++} END {if (cnt&gt;0) print sum/cnt; else print 0}' \
+mkdir -p qc
+samtools depth -aa aligned/sample.dedup.bam | \
+  awk '{sum+=$3; cnt++} END {if (cnt&gt;0) print sum/cnt; else exit 1}' \
   &gt; qc/coverage_mean_depth.txt
 
-# For targeted panels, use bedtools to compute per-target coverage:
+# Target breadth: fraction of each interval overlapped, not mean depth.
 bedtools coverage -a targets/regions.bed -b aligned/sample.dedup.bam &gt; qc/targets_coverage.tsv
 </code></pre>
-<p>Interpretation: mean depth is a global metric and may hide variability; for target panels inspect per-region coverage for dropout regions.</p>
+<p>The <code>-aa</code> denominator includes every reference position in the BAM header, including contigs with no mapped reads. With <code>-a</code> alone, wholly unused contigs can be omitted and the reported mean can be too high for a whole-reference claim. This whole-reference mean can be inappropriate for a targeted assay and expensive to calculate on a large genome. For a panel, define the intended target denominator and report per-target depth and breadth instead. The displayed <code>bedtools coverage</code> command reports overlap counts, covered bases, interval length, and covered fraction; it does not report mean depth. Record quality, duplicate, and overlapping-pair filters: samtools depth excludes marked duplicates by default but counts overlapping mates separately unless <code>-s</code> is requested.</p>
+<div class="lesson-result" id="qc-tested-counterexample"><p><strong>Checked software example:</strong> with SAMtools 1.19.2, an artificial alignment of one 8-base teaching read to two 16-base contigs gives 0.5 mean depth with <code>-a</code> but 0.25 with <code>-aa</code>. The second contig has no reads; including its positions changes the denominator from 16 to 32. This tests the calculation, not biological coverage or a sample's suitability. Copied teaching files were also used to check checksum failure handling. Full alignment, contamination analysis, and other operating systems were not tested here.</p></div>
 <h3>6) Contamination and sample identity checks</h3>
 <p>Use lightweight taxonomic classifiers for microbial contamination (Kraken2) and fingerprinting tools (e.g., VerifyBamID2 or Peddy for human samples) for swaps/contamination. Keep results in logs/.</p>
-<pre><code># Kraken2 taxonomic profile
+<pre><code>set -euo pipefail
+# Kraken2 taxonomic profile
 # Input: trimmed sample FASTQ, kraken2 database path
 # Output: qc/kraken2_report.txt
+mkdir -p qc
 kraken2 --db /path/to/kraken2_db --threads 4 --report qc/kraken2_report.txt \
         --paired trimmed/sample_R1.trim.fastq.gz trimmed/sample_R2.trim.fastq.gz
 
-# VerifyBamID2 for human contamination estimation (requires VCF of common variants)
-# Input: aligned/sample.dedup.bam, reference/common_snps.vcf.gz
-# Output: qc/verifybamid2.txt
-verifyBamID --bam aligned/sample.dedup.bam --vcf reference/common_snps.vcf.gz \
-            --out qc/verifybamid2
+# VerifyBamID2: human BAM, matching reference FASTA and SVD resource panel.
+# Replace the absolute panel prefix below; its .UD, .mu and .bed files must exist.
+# Bioconda executable name: verifybamid2; source builds may use VerifyBamID.
+samtools faidx reference/genome.fa
+mkdir -p qc/verifybamid2
+(
+  cd qc/verifybamid2
+  verifybamid2 --BamFile ../../aligned/sample.dedup.bam \
+    --Reference ../../reference/genome.fa \
+    --SVDPrefix /absolute/path/to/build_matched_panel_prefix \
+    &gt; verifybamid2.log 2&gt;&amp;1
+)
+# Outputs: qc/verifybamid2/result.selfSM and result.Ancestry, plus the log.
 </code></pre>
+<p>VerifyBamID2 is not the legacy <code>verifyBamID --bam --vcf</code> interface. Obtain a compatible SVD resource panel and check assembly and contig naming against the BAM and FASTA before running it. Its default result files are written in the working directory, so use a separate output folder for every sample. Inspect <code>FREEMIX</code> in <code>result.selfSM</code>; a contamination estimate alone does not identify a swapped sample or establish sample identity. This is a documented command template, not an executed contamination analysis.</p>
 <h3>7) Single-cell specific QC (Scanpy/Seurat)</h3>
 <p>For single-cell RNA-seq, start from the count matrix produced by your pipeline (for example, Cell Ranger or STARsolo). These examples assume a 10x Matrix Market directory and human-style mitochondrial gene symbols for the displayed patterns. Confirm feature naming and the input format for your data before using them.</p>
 <pre><code># Scanpy sketch (Python)
@@ -401,6 +424,9 @@ SYNTH_A	fastp 0.23.2; samtools 1.17	reads=1,000,000; mapped=62%; proper_pairs=58
 <li><a href="https://docs.seqera.io/multiqc">MultiQC documentation</a></li>
 <li><a href="https://github.com/OpenGene/fastp">fastp documentation</a></li>
 <li><a href="https://www.htslib.org/doc/samtools.html">SAMtools documentation</a></li>
+<li><a href="https://www.htslib.org/doc/samtools-depth.html">SAMtools depth: denominator and filtering options</a></li>
+<li><a href="https://github.com/Griffan/VerifyBamID">VerifyBamID2: reference-panel prerequisites and command interface</a></li>
+<li><a href="https://github.com/snakemake/snakemake-wrappers/blob/master/bio/verifybamid/verifybamid2/wrapper.py">VerifyBamID2 wrapper: executable name and default result files</a></li>
 <li><a href="https://www.gnu.org/software/coreutils/manual/html_node/sha2-utilities.html">GNU SHA checksum documentation</a></li>
 <li><a href="https://scanpy.readthedocs.io/en/stable/api/scanpy.pp.calculate_qc_metrics.html">Scanpy QC metrics API</a></li>
 <li><a href="https://satijalab.org/seurat/reference/percentagefeatureset">Seurat PercentageFeatureSet reference</a></li>

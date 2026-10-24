@@ -14,6 +14,10 @@ from tidyverse_setup_baseline import (
     TIDYVERSE_SETUP_ARTICLE,
     normalize_tidyverse_setup_revision,
 )
+from remaining_validation_baseline import (
+    allowed_paths as remaining_validation_paths,
+    normalize_remaining_validation_edit,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = re.compile(r"<script\b[^>]*>.*?</script\s*>", re.S | re.I)
@@ -117,7 +121,7 @@ class BeginnerWalkthroughScopeTests(unittest.TestCase):
                 )
                 current_jsonld = jsonld_scripts(page.read_text(encoding="utf-8"))
                 old_jsonld = jsonld_scripts(old_bytes.decode("utf-8"))
-                if relative in BEGINNER_WALKTHROUGH_ARTICLES or relative == TIDYVERSE_SETUP_ARTICLE:
+                if relative in BEGINNER_WALKTHROUGH_ARTICLES or relative == TIDYVERSE_SETUP_ARTICLE or relative in remaining_validation_paths():
                     current_jsonld = [normalize_jsonld_date(block) for block in current_jsonld]
                     old_jsonld = [normalize_jsonld_date(block) for block in old_jsonld]
                 self.assertEqual(current_jsonld, old_jsonld)
@@ -151,6 +155,14 @@ class BeginnerWalkthroughScopeTests(unittest.TestCase):
                         ),
                         published.stdout.decode("utf-8"),
                         "the separate PR10 authorization permits only the tidyverse body and dates",
+                    )
+                elif relative in remaining_validation_paths():
+                    self.assertEqual(
+                        normalize_remaining_validation_edit(
+                            relative, current_path.read_text(encoding="utf-8")
+                        ),
+                        old_bytes.decode("utf-8"),
+                        "the manifest-pinned body and exact dates are the only additional approved deltas",
                     )
                 elif relative == "analytics.js":
                     self.assertIsNotNone(old_bytes, "analytics.js must already exist in the published source")

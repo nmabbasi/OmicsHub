@@ -23,6 +23,11 @@ from tidyverse_setup_baseline import (
     TIDYVERSE_SETUP_ARTICLE,
     normalize_tidyverse_setup_revision,
 )
+from remaining_validation_baseline import (
+    allowed_paths as remaining_validation_paths,
+    normalize_remaining_validation_edit,
+    normalize_remaining_validation_sitemap,
+)
 
 ALLOWED_FIXTURE_PREFIXES = (
     "files/text-processing-lesson/",
@@ -174,6 +179,16 @@ class SixLessonRevisionScopeTests(unittest.TestCase):
                         ),
                         published.stdout.decode("utf-8"),
                     )
+                elif relative in remaining_validation_paths():
+                    self.assertIsNotNone(old_bytes, "allowlisted page must exist in the pinned source")
+                    self.assertTrue(current_path.is_file(), "deleting published files is forbidden")
+                    self.assertEqual(
+                        normalize_remaining_validation_edit(
+                            relative, current_path.read_text(encoding="utf-8")
+                        ).encode("utf-8"),
+                        old_bytes,
+                        "only the exact manifest-pinned article body and dates may differ",
+                    )
                 elif relative.startswith("files/"):
                     self.assertTrue(relative.startswith(ALLOWED_FIXTURE_PREFIXES),
                                     "new fixtures must be in an approved lesson folder")
@@ -221,7 +236,7 @@ class SixLessonRevisionScopeTests(unittest.TestCase):
                 for row in root.findall("s:url", namespace)
             }
         before = dates(git_bytes("sitemap.xml"))
-        after = dates((ROOT / "sitemap.xml").read_bytes())
+        after = dates(normalize_remaining_validation_sitemap((ROOT / "sitemap.xml").read_bytes()))
         self.assertEqual(set(before), set(after))
         beginner_date_paths = {
             "tutorials/computer-data-fundamentals.html",
@@ -237,7 +252,9 @@ class SixLessonRevisionScopeTests(unittest.TestCase):
         for url in allowed:
             expected_date = "2026-10-24" if url.endswith(TIDYVERSE_SETUP_ARTICLE) else "2026-10-23"
             self.assertEqual(after[url], expected_date)
-        restored = ET.fromstring((ROOT / "sitemap.xml").read_bytes())
+        restored = ET.fromstring(
+            normalize_remaining_validation_sitemap((ROOT / "sitemap.xml").read_bytes())
+        )
         for row in restored.findall("s:url", namespace):
             url = row.findtext("s:loc", namespaces=namespace)
             if url in allowed:

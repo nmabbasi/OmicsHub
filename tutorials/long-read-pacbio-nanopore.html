@@ -73,7 +73,7 @@ gtag('consent', 'default', {
     }
   },
   "datePublished": "2026-09-16",
-  "dateModified": "2026-10-21",
+  "dateModified": "2026-10-24",
   "url": "https://theomicshub.com/tutorials/long-read-pacbio-nanopore.html",
   "name": "Long-Read Sequencing: choosing a workflow",
   "isPartOf": {
@@ -179,13 +179,28 @@ function toggleMobileMenu() {
 <div class="lesson-decision"><h3>Choose a route</h3><ul><li><strong>Genome assembly:</strong> use a de novo assembler appropriate to the input read mode and organism. Flye supports PacBio and ONT modes, but the example below is specifically raw ONT input, not a universal PacBio command.</li><li><strong>Long-read RNA alignment:</strong> use a splice-aware mapper. The minimap2 <code>splice</code> preset is intended for long-read spliced alignment; its <code>splice:hq</code> preset is documented for accurate long RNA reads such as PacBio Iso-Seq.</li><li><strong>Isoform analysis:</strong> tools such as IsoQuant accept long RNA data, including PacBio CCS and ONT cDNA/direct RNA. Supply the correct read type and matched genome; annotation can improve transcript assignment but does not make every inferred isoform biologically validated.</li></ul></div>
 <h2>Inspect read quality before analysis</h2>
 <p>NanoPlot summarizes long-read length and quality distributions from FASTQ and can also use alignment or sequencing-summary inputs. It is a descriptive QC tool, not a pass/fail rule. Compare samples and batches, check for unexpectedly short reads or quality shifts, and interpret the plots in light of the basecaller and library protocol. Do not apply one universal length or Q-score cutoff across platforms and assays.</p>
-<pre><code class="language-bash"># Example: inspect one gzipped FASTQ; choose threads for your machine
-NanoPlot --threads 4 --fastq reads.fastq.gz --outdir nanoplot_qc</code></pre>
-<p>Replace <code>reads.fastq.gz</code> with the path to your own FASTQ (gzip compression is supported); the command assumes NanoPlot is installed and that the current directory is where you want <code>nanoplot_qc/</code> created. Check that the input is present before running, then list the output files:</p>
-<pre><code class="language-bash">test -s reads.fastq.gz &amp;&amp; echo "Input file found"
-NanoPlot --threads 4 --fastq reads.fastq.gz --outdir nanoplot_qc
-find nanoplot_qc -maxdepth 1 -type f -print</code></pre>
+<p>Save the following as <code>check_long_read_qc.sh</code> and run <code>bash check_long_read_qc.sh</code> from your project directory. Replace the input path and choose threads for your machine. NanoPlot must already be installed. The stage requires a fresh output directory so old reports cannot be mistaken for a successful new run; choose a new directory name when rerunning instead of deleting evidence.</p>
+<pre id="longread-nanoplot-stage"><code class="language-bash">set -euo pipefail
+input="reads.fastq.gz"
+outdir="nanoplot_qc"
+
+if [[ ! -s "$input" ]]; then
+  echo "Missing or empty input: $input" &gt;&amp;2
+  exit 1
+fi
+gzip -t "$input"
+if [[ -e "$outdir" ]]; then
+  echo "Output path already exists: $outdir; choose a fresh directory." &gt;&amp;2
+  exit 1
+fi
+
+NanoPlot --threads 4 --fastq "$input" --outdir "$outdir"
+test -s "$outdir/NanoPlot-report.html"
+test -s "$outdir/NanoStats.txt"
+find "$outdir" -maxdepth 1 -type f -print
+echo "NanoPlot completed and both expected reports are non-empty."</code></pre>
 <p>Success means the command exits without error and the output directory contains report files, including NanoPlot's HTML summary and statistics file; open the HTML report and compare the read-length and quality distributions with the assay and run metadata. If the input check fails, correct the path first. If NanoPlot fails or produces no report, stop and check that the file is readable FASTQ, its compression is valid, and the installed NanoPlot version's <code>--help</code> output matches the invocation. A good-looking QC plot does not establish mapping accuracy or variant validity.</p>
+<p>The report names above are NanoPlot's defaults without <code>--prefix</code>; adapt the assertions if you deliberately change output naming. Shell checks covered missing input, failed commands, incomplete reports and stale output directories using mock tool responses. NanoPlot itself and a real long-read dataset were not executed for these checks.</p>
 <h2>Genome assembly and polishing</h2>
 <p>For a bacterial de novo assembly from raw Oxford Nanopore reads, Flye documents the <code>--nano-raw</code> mode. The command below illustrates the interface, not a complete project recipe: real analysis also needs an appropriate input dataset, resource allocation, version tracking, and assembly evaluation. The output is a set of contigs and run files, not proof of a complete or correct genome.</p>
 <pre><code class="language-bash"># Example only: raw ONT reads, with output written to a new directory
