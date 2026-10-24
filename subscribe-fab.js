@@ -87,9 +87,23 @@
             if (!tools.hidden && !focused) {
               const rect = existing.getBoundingClientRect();
               const headerBottom = document.querySelector('body > header')?.getBoundingClientRect().bottom || 0;
-              const overlaps = [...document.querySelectorAll('main a, main button, main summary, main input, main select, main textarea, article button, #reader-course-navigation a:not(#back-to-top)')]
-                .some(control => control !== existing && [...control.getClientRects()].some(box =>
-                  box.width > 0 && box.height > 0 && box.left < rect.right + 4 && box.right > rect.left - 4 && box.top < rect.bottom + 4 && box.bottom > rect.top - 4));
+              const intersects = box => box.width > 0 && box.height > 0 &&
+                box.left < rect.right + 7 && box.right > rect.left - 7 &&
+                box.top < rect.bottom + 7 && box.bottom > rect.top - 7;
+              const controls = document.querySelectorAll('main a, main button, main summary, main input, main select, main textarea, article button, #reader-course-navigation a:not(#back-to-top), body > footer a, body > footer button');
+              const controlOverlap = [...controls].some(control => control !== existing && [...control.getClientRects()].some(intersects));
+              // Measure rendered text fragments, not full-width paragraph boxes:
+              // the circle can use whitespace, but never cover a line of reading.
+              const reading = document.querySelectorAll('main h1, main h2, main h3, main h4, main p, main li, main pre, main figcaption, main td, main th, body > footer p, body > footer h2');
+              const textOverlap = !controlOverlap && [...reading].some(block => {
+                if (block.contains(existing)) return false;
+                const bounds = block.getBoundingClientRect();
+                if (!intersects(bounds)) return false;
+                const range = document.createRange();
+                range.selectNodeContents(block);
+                return [...range.getClientRects()].some(intersects);
+              });
+              const overlaps = controlOverlap || textOverlap;
               tools.hidden = overlaps || rect.top < headerBottom + 8;
             }
             scheduled = false;

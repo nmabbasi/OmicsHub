@@ -22,7 +22,9 @@ def main():
     def circle(page):
         return page.locator('#back-to-top')
     def scroll(page, y):
-        for offset in (0, 60, 120, 180, 240, 300, 400):
+        # Narrow screens with a consent banner can have only brief safe gaps.
+        # Search the actual layout rather than requiring a text-obscuring arrow.
+        for offset in range(0, 1601, 20):
             page.evaluate('(y)=>window.scrollTo({top:y,behavior:"instant"})', y + offset)
             page.evaluate('()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))')
             if circle(page).is_visible(): return
@@ -117,6 +119,13 @@ def main():
                     summary.evaluate('el=>window.scrollTo({top:scrollY+el.getBoundingClientRect().bottom-(innerHeight-14),behavior:"instant"})')
                     page.wait_for_function('document.querySelector(".tutorial-top-tools").hidden')
                     results['interactions'].append('circle yields to overlapping disclosure controls')
+                    page.locator('#sh-routes').evaluate('el=>el.scrollIntoView({block:"start",behavior:"instant"})')
+                    page.evaluate('()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))')
+                    # A heading below this band used to be obscured by the circle.
+                    heading = page.locator('#sh-curriculum-title')
+                    heading.evaluate('el=>window.scrollTo({top:scrollY+el.getBoundingClientRect().bottom-(innerHeight-20),behavior:"instant"})')
+                    page.wait_for_function('document.querySelector(".tutorial-top-tools").hidden')
+                    results['interactions'].append('circle yields to overlapping reading text')
                     page.locator('#sh-routes').evaluate('el=>el.scrollIntoView({block:"start",behavior:"instant"})')
                     page.evaluate('()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))')
                     page.screenshot(path=str(args.output / 'start-here-topics-mobile.png'))

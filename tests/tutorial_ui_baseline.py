@@ -21,13 +21,13 @@ UI_MARKERS = (UI_VERSION, 'reader-path-card__copy', 'reader-sequence-utilities',
 TUTORIAL_UI_SHA256 = {
     ".github/workflows/static.yml": "b625c7afe9a00f8e7db14822bd31c5b30b89dc0ca766beb0abe1bab0f8fc73c7",
     ".github/workflows/tutorial-review.yml": "2a03d1c3187a6d9a71d8b5995da1f2f58f110b86f7b4252d542ca74af358cac0",
-    "home-page.min.css": "f4af7b3e7517e5cb598fd8dd51f214074c0b0e35fa2d827682ae03f21ccc3800",
+    "home-page.min.css": "cdb62d189a51a3c5e30734e65ffa9928aeff2662aa8bba42620a8ebff32ada43",
     "assets/vendor/prism/LICENSE": "2b947f0901a7ffcf08a89957da9783c0e9c6e72cb6ce8e959f501ab5409e4d2b",
     "assets/vendor/prism/prism-1.29.0.js": "6c45e1fd96435df297b0afa19685ea4ee6c1ef784b6b8c2c14cfdbcd9331e110",
     "code-tabs.js": "64db902cf23a8dbfca01a5f78cd74b9336cdd0ae3c224235cff9258004bc1341",
     "copy-code.js": "8eeeee419ea4b7da0e9890b6aed65cba32469c2e0a1a88896dbd3f13b8db796a",
     "script.js": "caf24bee4c7cd9b2f116ac7a149fc47b71507ae3deebda5ba18f250367990fa0",
-    "subscribe-fab.js": "254577554ee230930b3fcab1a8e82110f8a6967c7ee8f1ec96d4dcaf239229d1",
+    "subscribe-fab.js": "d8025077985e1d179473f03279cab1b2f7a9dcc8ea8e7ca7f22e5384dd4e2268",
     "tools/generate_learning_paths.py": "18606101c840099f0a191fba5b12524a865b039a317436a0e25caec7fd242834",
     "tools/generate_tutorial_ui.py": "a83562318ffc5e0ed2a61d871d0d72689a68af78448730f0e493ea7ec9c89a92",
     "tools/tutorial-code-groups.json": "71830f470c56a454f50220eac1d33e4c48bcfdbd5c6270886a7225b0df00a150",
@@ -35,7 +35,7 @@ TUTORIAL_UI_SHA256 = {
     "tutorial-code-data.js": "6d011cb3d2c5a383922625351778dea16e4094b5d5f7bb5d5a71e3cc2bd6144f",
     "tutorial-navigation.css": "f716eefbce9e73c3b797818ad154ebc94a5911d12c1c9971749fe166cc9e1974",
     "tutorial-reader.css": "3964dee44c4e529e74f8bea476e99813695638c2ccf3bc74cddb55b7d342f0cf",
-    "back-to-top.css": "5a5e95f742b768e24f680b3a955c7475fdebf7fd3cc5b97f9aa3b1256a8757ce"
+    "back-to-top.css": "835d1ef5330eacdd3452052d181bb1f0f440cfb0b2bf36be973ba03f53427896"
 }
 TUTORIAL_UI_PATHS = frozenset(TUTORIAL_UI_SHA256)
 
