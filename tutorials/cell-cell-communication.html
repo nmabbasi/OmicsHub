@@ -73,7 +73,7 @@ gtag('consent', 'default', {
     }
   },
   "datePublished": "2026-09-12",
-  "dateModified": "2026-10-21",
+  "dateModified": "2026-10-24",
   "url": "https://theomicshub.com/tutorials/cell-cell-communication.html",
   "name": "Cell-Cell Communication",
   "isPartOf": {
@@ -212,7 +212,7 @@ saveRDS(liana_raw, "liana_raw_results.rds")</code></pre>
 <li>Decide whether pathway/network summaries answer something beyond the LIANA ranking; record database/software versions and inspect underlying tables alongside visualizations. Do not treat agreement between tools as independent validation.</li>
 </ol>
 <p>For the standard single-dataset route, use the <a href="https://github.com/jinworks/CellChat">official CellChat repository</a>, which links its <a href="https://htmlpreview.github.io/?https://github.com/jinworks/CellChat/blob/master/tutorial/CellChat-vignette.html">full single-dataset tutorial</a> and <a href="https://www.nature.com/articles/s41596-024-01045-4">Nature Protocols</a>. Match the database to the organism and verify gene identifiers and complex coverage. Do not compare raw LIANA and CellChat scores as though they shared a scale; consult the CellChat protocol for multi-condition analysis rather than interpreting separate pooled runs as replicate-aware tests.</p>
-<p>Do not compare raw scores between LIANA and CellChat as though they shared a scale. CellChat's probability and pathway summaries depend on its model, database and parameters. Consult the current protocol for code and for multi-condition workflows rather than interpreting separate pooled runs as a replicate-aware test.</p>
+<p>CellChat's probability and pathway summaries depend on its model, database and parameters. Consult the current protocol for code and for multi-condition workflows rather than interpreting separate pooled runs as a replicate-aware test.</p>
 <h2>Interpret candidates, not causal messages</h2>
 <ul>
 <li>Ask whether a candidate is supported by multiple LIANA methods and whether source/target populations have adequate cells and plausible expression of the relevant ligand/receptor complex.</li>
@@ -220,6 +220,7 @@ saveRDS(liana_raw, "liana_raw_results.rds")</code></pre>
 <li>Use spatial, protein-level, or perturbation evidence where the biological claim requires proximity, binding, or functional signaling. Standard dissociated scRNA-seq does not establish tissue proximity.</li>
 </ul>
 <p>Transcript abundance does not establish protein abundance, secretion, localization, receptor occupancy, downstream activation, or direction of causal effect. A high rank is prioritization evidence within a chosen method/resource, not a universal confidence threshold, clinical conclusion, or proof of interaction.</p>
+<section class="lesson-exercise"><h2>Hypothetical decision check</h2><p>Suppose LIANA and CellChat both prioritize the same ligand–receptor candidate from the same pooled RNA dataset. What does that agreement support, and what would it still not establish?</p><details><summary>Reasoned feedback</summary><p>It supports prioritizing the transcript-based candidate for follow-up under the chosen methods and resources. Both analyses still rely on expression and prior interaction knowledge, so agreement is not independent experimental validation and does not show that proteins meet or signaling occurs in tissue. Check whether the candidate recurs across biological samples, then choose spatial, protein-level, or perturbation evidence suited to the claim.</p></details></section>
 <h2>Troubleshoot before loosening filters</h2>
 <ul>
 <li><strong>Missing/empty groups:</strong> inspect labels including <code>NA</code>, group counts, and object metadata. Correct annotation or data-joining errors before merging biologically distinct populations.</li>

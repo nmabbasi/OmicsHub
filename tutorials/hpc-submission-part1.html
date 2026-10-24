@@ -73,7 +73,7 @@ gtag('consent', 'default', {
     }
   },
   "datePublished": "2026-09-06",
-  "dateModified": "2026-10-23",
+  "dateModified": "2026-10-24",
   "url": "https://theomicshub.com/tutorials/hpc-submission-part1.html",
   "name": "Writing Slurm Job Scripts",
   "isPartOf": {
@@ -170,7 +170,7 @@ function toggleMobileMenu() {
 <nav aria-label="Learning path navigation" class="reader-toolbar"><a href="hpc-basic-commands.html" rel="prev">← Prerequisite: Basic Slurm Commands</a><a data-catalogue-return="" href="../tutorials.html">All tutorials</a><a href="hpc-support.html" rel="next">Explore: HPC Troubleshooting and Support</a></nav>
 <article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--walkthrough"><p class="lesson-lead">A Slurm submission script describes the resources a batch job requests and the commands it runs after the scheduler starts it. This walkthrough starts with a small smoke test; later optional examples cover task launches and arrays. Some optional examples use site-specific module names and partition values; confirm any such values with your cluster documentation before adapting or submitting those examples.</p>
 <section class="lesson-summary tutorial-learning-contract" data-tutorial-format="hands-on-lab" aria-label="Learning format">
-<p><strong>Format: Hands-on lab.</strong> Learners who have completed Basic Slurm Commands will adapt a small batch script, submit it on their own cluster, and check its log and final scheduler record; no input data are needed, but account and partition details must be supplied by the reader.</p>
+<p><strong>Format: Hands-on lab.</strong> With an authorized Slurm account and site-specific submission details, learners who have completed Basic Slurm Commands can adapt the harmless batch script, submit it, and inspect its log and final scheduler record. Without cluster access, use the planning check below to practise reading the script and distinguishing an accepted submission from a completed job.</p>
 </section>
 <nav aria-label="First-job learning route" class="lesson-summary">
 <h2>First-job route</h2>
@@ -178,12 +178,10 @@ function toggleMobileMenu() {
 <p>After this first job, optional topics are available: <a href="#optional-parallel">parallel steps and arrays</a>, <a href="#optional-x11">X11</a>, <a href="#optional-custom-modules">custom modules</a>, <a href="#optional-conda">Conda</a>, and <a href="#optional-compression">compression</a>.</p>
 </nav>
 <div class="lesson-summary" id="before-submit"><h2>Before you submit</h2><ul><li>Complete the preceding <a href="hpc-basic-commands.html">Basic Slurm Commands</a> lesson.</li><li>Check your cluster's account, allowed partition, time limit, output-file location, and submission rules. Add an account directive only if your site requires one.</li><li>Start with the harmless hostname/date smoke test below; do not substitute a research workload until you understand its input, resource, and storage requirements.</li></ul><p><strong>Deliverable:</strong> an adapted script, its submitted job ID, the log, and the final scheduler state. A job ID means Slurm accepted the submission; it does not mean the job started or completed.</p></div>
-<div class="p-5 bg-slate-50 border border-slate-200 rounded-xl mb-8">
-<p class="text-xs font-bold tracking-[0.14em] uppercase text-slate-500 mb-2">Detailed cluster reference</p>
-<h4 class="text-lg font-bold text-slate-900 mb-2">Need a complete HPC walkthrough?</h4>
-<p class="text-sm text-slate-700 mb-3">For expanded guidance on secure access, modules, Slurm submission scripts, Conda on a cluster, and practical support routes, visit the dedicated HPC Guide.</p>
-<a class="inline-flex items-center gap-2 px-4 py-2 bg-[#123B5D] text-white font-bold rounded-lg hover:bg-[#0B2741] transition-colors text-sm" href="https://nmabbasi.github.io/HPC/" rel="noopener noreferrer" target="_blank">Open the HPC Guide <span aria-hidden="true">-&gt;</span></a>
-</div>
+<section class="lesson-summary" aria-label="Cluster-free planning check">
+<h2>Before you have cluster access</h2>
+<p><strong>Hypothetical check:</strong> In the script below, which values must come from your cluster documentation, and what does a returned job ID establish? The partition and any required account or resource limits are site-specific; the example time and CPU values are illustrative. A returned ID means the scheduler accepted the submission, not that the job started or completed.</p>
+</section>
 <h2 id="smoke-job">First job: a safe smoke test</h2>
 <p>This one-task example uses only <code>hostname</code> and <code>date</code>; it needs no biological data or software modules. Replace <code>YOUR_ALLOWED_PARTITION</code> with a partition confirmed in your site documentation (for example, use <code>sinfo</code> if your site permits it). Add an account directive only when local policy requires it. The short time limit and resource values are illustrative, not guarantees or universal defaults.</p>
 <pre><code class="language-bash">#!/bin/sh
@@ -349,7 +347,7 @@ prepend_path("LD_LIBRARY_PATH", "/path/to/myprogram/lib")
 </code></pre>
 <h2 id="optional-conda">Optional advanced topic: Conda on a cluster</h2>
 <h3>Installing Conda</h3>
-<p>To install Conda on the cluster, download the Miniconda installer and run it. Choose a location in your home directory where you have write permissions.</p>
+<p>Before installing software on a shared cluster, check whether the site permits user-managed Conda installations, where they may be stored, and whether downloads from external sites are allowed. Prefer the site's documented module or environment setup when provided. If local policy permits a personal installation, download the Miniconda installer and choose an approved location with sufficient space.</p>
 <pre><code class="language-bash">wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
 bash Miniconda3-latest-Linux-x86_64.sh
 </code></pre>

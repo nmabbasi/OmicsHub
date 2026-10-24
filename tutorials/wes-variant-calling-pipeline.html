@@ -73,7 +73,7 @@ gtag('consent', 'default', {
     }
   },
   "datePublished": "2026-09-04",
-  "dateModified": "2026-10-23",
+  "dateModified": "2026-10-24",
   "url": "https://theomicshub.com/tutorials/wes-variant-calling-pipeline.html",
   "name": "Whole Exome Sequencing (WES): Variant Calling & VAF",
   "isPartOf": {
@@ -192,6 +192,7 @@ function toggleMobileMenu() {
 <h2>Why this matters: biological and computational context</h2>
 <p>WES enriches selected genomic intervals, usually including many protein-coding exons. Coverage is uneven: capture design, GC content, alignment, and library preparation affect which bases are callable. HaplotypeCaller performs local haplotype assembly in active regions; marking duplicates and, where appropriate, BQSR are distinct preparation steps. None of these steps removes the need to inspect coverage and call evidence.</p>
 <p>Variant Allele Frequency (VAF) is the fraction of sequencing reads supporting the alternate allele at a locus. For a diploid germline heterozygous single-nucleotide variant (SNV) with no bias, VAF ≈ 0.5; homozygous alternate VAF ≈ 1.0; low VAFs may indicate mosaicism, contamination, subclonal variation, or sequencing error. Interpreting VAF requires considering depth, strand balance, read position, and mapping quality.</p>
+<p>WES interrogates a capture-design-defined subset of the genome, not every coding base: some targets may have insufficient coverage for reliable calls, and most noncoding sequence is not systematically assessed. Detection of structural or other complex variants also depends on the assay and pipeline. Interpret a negative result within the validated target and callable regions, not as evidence that all relevant variation is absent.</p>
 <h2>Required input files and directory layout</h2>
 <p>Before beginning, create a working directory and ensure you have these files (examples paths below):</p>
 <ul>
@@ -407,6 +408,7 @@ gatk CollectHsMetrics \
 <li><a href="http://www.htslib.org/">HTSlib / samtools documentation</a></li>
 <li><a href="https://www.nature.com/articles/nbt.2527">DePristo et al., "A framework for variation discovery and genotyping using next-generation DNA sequencing", Nature Genetics (GATK foundational paper)</a></li>
 <li><a href="https://www.nist.gov/programs-projects/genome-bottle">Genome in a Bottle (GIAB) benchmark resources (NA12878)</a></li>
+<li><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC9541396/">Corominas et al. (2022), Clinical exome sequencing: mistakes and caveats</a></li>
 </ul>
 <aside aria-labelledby="tutorial-feedback-title" class="lesson-feedback" id="tutorial-feedback"><h2 id="tutorial-feedback-title">Help improve this tutorial</h2><p>Found an error, a broken link, or a step that needs a clearer explanation? Please <a href="../contact.html">contact me</a>. Your feedback helps me keep this resource accurate and useful.</p></aside></article>
 <nav aria-label="Learning path continuation" class="reader-sequence" id="reader-course-navigation">

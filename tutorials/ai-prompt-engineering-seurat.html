@@ -6,18 +6,18 @@
 <link as="font" crossorigin="anonymous" href="../fonts/inter-e3237528af.woff2" rel="preload" type="font/woff2"/>
 <link href="../fonts/fonts.css" rel="stylesheet"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<meta content="Build a precise prompt for single-cell analysis, review the resulting Seurat or Scanpy code, and check its assumptions, outputs, and statistical limitations." name="description"/>
+<meta content="Write a precise single-cell analysis prompt and review the supplied Seurat and Scanpy templates for input, output, assay, and statistical assumptions." name="description"/>
 <meta content="bioinformatics, AI, prompt engineering, Seurat, Scanpy, vibe coding, data analysis, tutorials" name="keywords"/>
 <meta content="Nasir Mahmood Abbasi, PhD" name="author"/>
 <meta content="index, follow" name="robots"/>
 <meta content="Prompt Engineering for Seurat and Scanpy: A Reproducible Workflow" property="og:title"/>
-<meta content="Build a precise prompt for single-cell analysis, review the resulting Seurat or Scanpy code, and check its assumptions, outputs, and statistical limitations." property="og:description"/>
+<meta content="Write a precise single-cell analysis prompt and review the supplied Seurat and Scanpy templates for input, output, assay, and statistical assumptions." property="og:description"/>
 <meta content="https://theomicshub.com/tutorials/ai-prompt-engineering-seurat.html" property="og:url"/>
 <meta content="website" property="og:type"/>
 <meta content="https://theomicshub.com/images/prompt-engineering-seurat-scanpy.webp" property="og:image"/>
 <meta content="summary_large_image" name="twitter:card"/>
 <meta content="Prompt Engineering for Seurat and Scanpy: A Reproducible Workflow" name="twitter:title"/>
-<meta content="Build a precise prompt for single-cell analysis, review the resulting Seurat or Scanpy code, and check its assumptions, outputs, and statistical limitations." name="twitter:description"/>
+<meta content="Write a precise single-cell analysis prompt and review the supplied Seurat and Scanpy templates for input, output, assay, and statistical assumptions." name="twitter:description"/>
 <meta content="https://theomicshub.com/images/prompt-engineering-seurat-scanpy.webp" name="twitter:image"/>
 <title>Prompt Engineering for Seurat and Scanpy: A Reproducible Workflow | The Omics Hub</title><link href="../images/favicon.svg" rel="icon" type="image/svg+xml"/>
 <link href="../tailwind.min.css" rel="stylesheet"/>
@@ -42,7 +42,7 @@ gtag('consent', 'default', {
   "@context": "https://schema.org",
   "@type": "TechArticle",
   "headline": "Prompt Engineering for Seurat and Scanpy: A Reproducible Workflow",
-  "description": "Build a precise prompt for single-cell analysis, review the resulting Seurat or Scanpy code, and check its assumptions, outputs, and statistical limitations.",
+  "description": "Write a precise single-cell analysis prompt and review the supplied Seurat and Scanpy templates for input, output, assay, and statistical assumptions.",
   "mainEntityOfPage": {
     "@type": "WebPage",
     "@id": "https://theomicshub.com/tutorials/ai-prompt-engineering-seurat.html"
@@ -67,7 +67,7 @@ gtag('consent', 'default', {
     }
   },
   "datePublished": "2026-08-27",
-  "dateModified": "2026-10-23",
+  "dateModified": "2026-10-24",
   "url": "https://theomicshub.com/tutorials/ai-prompt-engineering-seurat.html",
   "name": "Prompt Engineering for Seurat and Scanpy: A Reproducible Workflow",
   "isPartOf": {
@@ -163,8 +163,8 @@ function toggleMobileMenu() {
 </div>
 <nav aria-label="Learning path navigation" class="reader-toolbar"><a href="cell-type-annotation-methods.html" rel="prev">← Prerequisite: Choosing and Checking Cell-Type Annotation Methods</a><a data-catalogue-return="" href="../tutorials.html">All tutorials</a><a href="autonomous-research-orchestrator.html" rel="next">Explore: Autonomous Research Orchestrator</a></nav>
 <article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--walkthrough">
-<p class="lesson-lead">Use an AI coding assistant to draft single-cell analysis code only after you specify the data, biological question, method, and outputs. Then check its assumptions and run the script where you can inspect the results.</p>
-<section class="lesson-summary tutorial-learning-contract" data-tutorial-format="advanced-template" aria-label="Learning format"><p><strong>Format: Advanced template.</strong> For readers comfortable with basic scRNA-seq and command-line use: you will adapt and review one Scanpy QC/clustering workflow and one Seurat cluster-marker workflow. Prepare compatible AnnData and Seurat objects yourself; no dataset is bundled, and the examples are not end-to-end data-preparation labs.</p></section>
+<p class="lesson-lead">Learn to specify single-cell analysis tasks for optional AI-assisted code drafting. State the data, biological question, method, and outputs, then review any proposed code and inspect results if you choose to run it.</p>
+<section class="lesson-summary tutorial-learning-contract" data-tutorial-format="advanced-template" aria-label="Learning format"><p><strong>Format: Advanced template.</strong> For readers comfortable with basic scRNA-seq and command-line use: you will review one Scanpy QC/clustering workflow and one Seurat cluster-marker workflow. The account-free reasoning exercise below can be completed by reading the templates; using an AI assistant to generate code is optional. Running either template requires you to prepare compatible AnnData or Seurat objects yourself; no dataset is bundled, and these are not end-to-end data-preparation labs.</p></section>
 <div class="lesson-warning"><p><strong>Scope:</strong> These scripts are starting examples, not validated analyses. Thresholds, identities, assay or layer selection, and statistical design must match your data. Cell-level marker tests do not replace sample-aware inference for condition comparisons.</p></div><div class="flex flex-wrap items-center gap-4 text-xs font-mono text-gray-500 bg-gray-50 p-3 rounded-lg border border-gray-200 mb-6">
 <div class="flex items-center gap-1">
 <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
@@ -172,20 +172,20 @@ function toggleMobileMenu() {
 </div>
 <div class="flex items-center gap-1">
 <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
-<span>Updated 23 October 2026</span></div>
-</div><h2>What you will produce</h2>
-<p>By the end, you will have a task-specific prompt, a reviewed analysis script, and a record of the files and checks it produced. Running either example requires the named software and a compatible input object.</p>
+<span>Updated 24 October 2026</span></div>
+</div><h2>What this lesson provides</h2>
+<p>This lesson provides a task-specific prompt and two analysis templates to review. A generated script and its outputs are not supplied: using an assistant and running either example are optional and require your own compatible input object and software.</p>
 <p><strong>Learning objectives</strong></p>
 <ul>
-<li>Learn how to write intent-based prompts (sometimes called "vibe coding") that direct AI to produce reproducible Seurat (R) and Scanpy (Python) analysis scripts.</li>
-<li>Be able to craft a prompt that contains dataset context, a biological goal, practical constraints, and concrete output checks so an assistant produces runnable code.</li>
-<li>Understand how to validate and iterate on AI-generated code, inspect outputs, and interpret common results safely.</li>
+<li>Learn how to specify reproducible Seurat (R) and Scanpy (Python) analysis tasks for optional AI-assisted code drafting.</li>
+<li>Be able to craft a prompt that requests code with dataset context, a biological goal, practical constraints, and concrete output checks, then verify any proposed code against those requirements.</li>
+<li>Understand how to validate any proposed code against explicit checks and inspect outputs if you choose to run it.</li>
 </ul>
 <p><strong>Prerequisites</strong></p>
 <ul>
 <li>Basic familiarity with single-cell RNA-seq (scRNA-seq) data concepts: cells, genes, counts, metadata, clustering, and differential expression.</li>
-<li>Working AI coding environment (e.g., Cursor, Aider, or a code-completion assistant) and local ability to run R (&gt;=4.0) or Python (&gt;=3.8) with Seurat (&gt;=4) or Scanpy (&gt;=1.8) installed.</li>
-<li>Command-line literacy for running scripts and saving outputs to explicit file paths.</li>
+<li>An AI coding environment is needed only if you choose to request generated code. Running a supplied template requires local R or Python and the corresponding Seurat or Scanpy dependencies.</li>
+<li>Command-line literacy is useful if you choose to run scripts and save outputs to explicit file paths.</li>
 </ul>
 <h2>Why intent-based prompting matters for Seurat &amp; Scanpy workflows</h2>
 <p>A prompt should specify the question and the constraints that affect its answer, then ask the assistant to state assumptions and produce checks you can run. Intent-based prompting (a.k.a. "vibe coding") focuses the assistant on what you want to achieve (for example, "identify markers distinguishing cluster 2") and leaves the assistant to choose reasonable API calls within explicit constraints you provide. A prompt does not remove the need to verify API calls against the installed package version.</p>
@@ -199,7 +199,7 @@ function toggleMobileMenu() {
 <li>Require output files and programmatic checks (dimensions, column names, saved plots).</li>
 <li>Run the script, inspect outputs, and iterate with small changes.</li>
 </ul>
-<p>Use this prompt as a specification, not as evidence that an assistant will return correct code. Replace assumptions with facts from your object; biological results cannot be guaranteed by a minimum row count.</p>
+<p>Use this prompt as a specification, not as evidence that an assistant will return correct code. The prompt paths below are illustrative and do not match the Seurat template's paths: that template reads <code>./data/seurat_obj.rds</code> and writes <code>./results/umap_seurat_clusters.png</code>. Align paths before using the prompt and template together. Replace assumptions with facts from your object; biological results cannot be guaranteed by a minimum row count.</p>
 <pre><code>Goal: Identify marker genes for cluster 2 vs all in a PBMC dataset using the Seurat example below.
 Input: RDS Seurat object at ./data/pbmc_seurat.rds; metadata column 'seurat_clusters' present; 5,000 cells expected.
 Constraints: Use R and Seurat &gt;=4; test = MAST; logfc.threshold = 0.25; return genes with p_val_adj &lt; 0.05; save a CSV report.

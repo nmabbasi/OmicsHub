@@ -28,6 +28,13 @@ from advanced_validation_baseline import (
     load_manifest as load_advanced_manifest,
     published_bytes as advanced_published_bytes,
 )
+from resource_content_baseline import (
+    allowed_paths as resource_content_paths,
+    load_manifest as load_resource_content_manifest,
+    normalize_resource_content,
+    normalize_resource_sitemap,
+    published_bytes as resource_published_bytes,
+)
 
 SITE = "https://theomicshub.com/"
 SCRIPT = re.compile(r"<script\b[^>]*>.*?</script\s*>", re.S | re.I)
@@ -146,7 +153,16 @@ class UbuntuTidyverseScopeTests(unittest.TestCase):
                 old_jsonld, new_jsonld = scripts(original, jsonld=True), scripts(current, jsonld=True)
                 if (relative == TIDYVERSE_SETUP_ARTICLE
                         or relative in remaining_validation_paths()
-                        or relative in advanced_validation_paths()):
+                        or relative in advanced_validation_paths()
+                        or relative in resource_content_paths()):
+                    if relative in resource_content_paths():
+                        self.assertEqual(len(new_jsonld), 1)
+                        approved = load_resource_content_manifest()["articles"][relative]["date_modified_approved"]
+                        self.assertEqual(DATE_MODIFIED.findall(new_jsonld[0])[0][1], approved)
+                        current = normalize_resource_content(
+                            relative, current.encode("utf-8")
+                        ).decode("utf-8")
+                        new_jsonld = scripts(current, jsonld=True)
                     self.assertEqual(len(old_jsonld), 1)
                     self.assertEqual(len(new_jsonld), 1)
                     self.assertEqual(
@@ -154,7 +170,10 @@ class UbuntuTidyverseScopeTests(unittest.TestCase):
                         re.sub(r'("dateModified"\s*:\s*")[^\"]+(")', r"\1__DATE__\2", old_jsonld[0]),
                         "only JSON-LD dateModified may differ",
                     )
-                    if relative == TIDYVERSE_SETUP_ARTICLE:
+                    if relative in resource_content_paths():
+                        original_date = load_resource_content_manifest()["articles"][relative]["date_modified_original"]
+                        self.assertEqual(DATE_MODIFIED.findall(new_jsonld[0])[0][1], original_date)
+                    elif relative == TIDYVERSE_SETUP_ARTICLE:
                         self.assertEqual(DATE_MODIFIED.findall(new_jsonld[0])[0][1], CURRENT_DATE)
                     elif relative in advanced_validation_paths():
                         approved = load_advanced_manifest()["articles"][relative]["date_modified_approved"]
@@ -174,7 +193,7 @@ class UbuntuTidyverseScopeTests(unittest.TestCase):
             old = git_bytes(relative)
             self.assertIsNotNone(old, relative)
             with self.subTest(tutorial=relative):
-                current = page.read_bytes()
+                current = normalize_resource_content(relative, page.read_bytes())
                 current = normalize_advanced_validation_if_allowed(
                     relative, current.decode("utf-8")
                 ).encode("utf-8")
@@ -185,6 +204,11 @@ class UbuntuTidyverseScopeTests(unittest.TestCase):
                     current = normalize_remaining_validation_edit(
                         relative, current.decode("utf-8")
                     ).encode("utf-8")
+                    self.assertEqual(current, old)
+                    continue
+                if relative in resource_content_paths():
+                    self.assertEqual(current, resource_published_bytes(relative))
+                    continue
                 self.assertEqual(current, old)
 
         for relative in changed_paths():
@@ -194,6 +218,7 @@ class UbuntuTidyverseScopeTests(unittest.TestCase):
             if path.is_file() and is_approved_workflow(relative, path.read_bytes()):
                 continue
             old = git_bytes(relative)
+            current_bytes = normalize_resource_content(relative, path.read_bytes()) if path.is_file() else None
             with self.subTest(path=relative):
                 if relative == "analytics.js":
                     self.assertIsNotNone(old, "analytics.js must already exist in the published source")
@@ -205,10 +230,18 @@ class UbuntuTidyverseScopeTests(unittest.TestCase):
                     self.assertTrue(path.is_file(), "deleting published files is forbidden")
                     self.assertEqual(
                         normalize_remaining_validation_edit(
-                            relative, path.read_text(encoding="utf-8")
+                            relative, current_bytes.decode("utf-8")
                         ).encode("utf-8"),
                         old,
                         "only exact manifest-approved inner article and date deltas are allowed",
+                    )
+                    continue
+                if relative in resource_content_paths():
+                    self.assertIsNotNone(old, "resource article must exist in the PR11 source")
+                    self.assertTrue(path.is_file(), "deleting published files is forbidden")
+                    self.assertEqual(
+                        current_bytes, resource_published_bytes(relative),
+                        "only exact PR15-pinned body/date/metadata snippets may differ",
                     )
                     continue
                 if relative in advanced_validation_paths():
@@ -216,7 +249,7 @@ class UbuntuTidyverseScopeTests(unittest.TestCase):
                     self.assertTrue(path.is_file(), "deleting published files is forbidden")
                     self.assertEqual(
                         normalize_advanced_validation_if_allowed(
-                            relative, path.read_text(encoding="utf-8")
+                            relative, current_bytes.decode("utf-8")
                         ).encode("utf-8"),
                         advanced_published_bytes(relative),
                         "only the exact manifest-pinned PR14 article edit may differ",
@@ -231,12 +264,14 @@ class UbuntuTidyverseScopeTests(unittest.TestCase):
                     continue
                 self.assertIsNotNone(old, "new public files and assets are forbidden")
                 self.assertTrue(path.is_file(), "deleting published files is forbidden")
-                self.assertEqual(path.read_bytes(), old, "all non-target public files must remain byte-identical")
+                self.assertEqual(current_bytes, old, "all non-target public files must remain byte-identical")
 
     def test_sitemap_is_pr11_xml_with_only_target_lastmod_changed(self):
         original = git_bytes("sitemap.xml")
         self.assertIsNotNone(original)
-        current = normalize_remaining_validation_sitemap((ROOT / "sitemap.xml").read_bytes())
+        current = normalize_remaining_validation_sitemap(
+            normalize_resource_sitemap((ROOT / "sitemap.xml").read_bytes())
+        )
         expected = expected_sitemap_after_target_date_change(original)
         self.assertEqual(current, expected, "only the target URL's one lastmod may change")
         root = ET.fromstring(current)

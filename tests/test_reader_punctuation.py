@@ -20,6 +20,7 @@ from advanced_validation_baseline import (
     normalize_advanced_validation_if_allowed,
     published_bytes as advanced_published_bytes,
 )
+from resource_content_baseline import normalize_resource_content
 
 ROOT = Path(__file__).resolve().parents[1]
 BASE = 'c030bc62bf6e4a4ad21f9ff64cb630c152157692'
@@ -30,6 +31,10 @@ NAVIGATION = ['index.html', 'start-here.html', 'tutorials.html', 'about.html',
 
 def baseline(relative):
     return subprocess.check_output(['git', 'show', f'{BASE}:{relative}'], cwd=ROOT).decode()
+
+
+def current_before_resource_content_edits(relative):
+    return normalize_resource_content(relative, (ROOT / relative).read_bytes()).decode('utf-8')
 
 
 class LinkAndIdParser(HTMLParser):
@@ -85,7 +90,7 @@ class ReaderPunctuationTests(unittest.TestCase):
                 expected = normalize_beginner_walkthrough_revision(relative, expected)
                 current = normalize_beginner_walkthrough_revision(
                     relative, normalize_advanced_validation_if_allowed(
-                        relative, (ROOT/relative).read_text()
+                        relative, current_before_resource_content_edits(relative)
                     )
                 )
                 expected = normalize_six_lesson_revision(relative, expected)
@@ -102,7 +107,7 @@ class ReaderPunctuationTests(unittest.TestCase):
             before = normalize_beginner_walkthrough_revision(relative, before)
             after = normalize_beginner_walkthrough_revision(
                 relative, normalize_advanced_validation_if_allowed(
-                    relative, (ROOT/relative).read_text()
+                    relative, current_before_resource_content_edits(relative)
                 )
             )
             before = normalize_six_lesson_revision(relative, before)
@@ -135,7 +140,7 @@ class ReaderPunctuationTests(unittest.TestCase):
                 before = normalize_beginner_walkthrough_revision(relative, before)
                 after = normalize_beginner_walkthrough_revision(
                     relative, normalize_advanced_validation_if_allowed(
-                        relative, (ROOT/relative).read_text()
+                        relative, current_before_resource_content_edits(relative)
                     )
                 )
                 before = normalize_six_lesson_revision(relative, before)

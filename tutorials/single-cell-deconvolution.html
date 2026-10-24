@@ -73,7 +73,7 @@ gtag('consent', 'default', {
     }
   },
   "datePublished": "2026-08-21",
-  "dateModified": "2026-10-21",
+  "dateModified": "2026-10-24",
   "url": "https://theomicshub.com/tutorials/single-cell-deconvolution.html",
   "name": "Bulk RNA-seq cell-type deconvolution with MuSiC",
   "isPartOf": {
@@ -182,7 +182,7 @@ function toggleMobileMenu() {
 <li>Confirm cell-type annotations and donor identifiers are present for every reference cell. MuSiC uses the cell-type field as <code>clusters</code> and donor/sample field as <code>samples</code>.</li>
 <li>Check that bulk and single-cell features use the same gene identifier system. Inspect duplicated and missing row names, then quantify shared features in both directions; investigate unexpectedly low overlap before fitting rather than relying on a universal cutoff.</li>
 <li>Review whether the reference covers the tissue, condition, and cell states in the bulk cohort. Record omitted or rare populations rather than treating the listed types as exhaustive truth.</li>
-<li>Use expression on an appropriate linear scale as expected by the method; do not pass log-transformed values simply because they are convenient for visualization. Confirm the package guidance for normalization and inputs.</li>
+<li>Use raw read counts for both bulk and single-cell expression, as specified in the MuSiC vignette; do not pass log-transformed values merely because they are convenient for visualization. Check the installed package guidance before adapting preprocessing.</li>
 </ol>
 <aside class="lesson-checkpoint"><h3>Before running</h3><p>The bulk matrix should have genes in rows and samples in columns; its row names must match the single-cell reference gene identifiers. The reference must be a <code>SingleCellExperiment</code> with counts and the metadata columns named in the call. Do not use the old <code>ExpressionSet</code>-based single-cell example: current MuSiC documentation specifies <code>sc.sce</code>.</p></aside>
 <h2>Run MuSiC with your prepared objects</h2>
@@ -242,6 +242,7 @@ plot_df &lt;- as.data.frame(as.table(as.matrix(prop_estimates)))
 names(plot_df) &lt;- c("bulk_sample", "cell_type", "proportion")
 # Plotting code can use ggplot2 after inspecting the values and labels.</code></pre>
 <p>Do not treat a stacked bar chart as validation. Compare estimates with an independent measurement from the same samples when available, such as flow cytometry for matching cell populations, and examine agreement across the range rather than relying on one correlation number. Differences in cell definitions, units, sampling, and measurement error affect that comparison. When no independent measurement exists, report that limitation and use checks such as fit diagnostics, reference coverage, stability to defensible reference choices, and known sample annotations as diagnostics, not proof of accuracy.</p>
+<section class="lesson-exercise"><h2>Hypothetical decision check</h2><p>Imagine a hypothetical fit that reports proportions summing to one across the cell types included in the reference, while a population of interest is not represented there. Does the sum show that the reported fractions are validated tissue proportions?</p><details><summary>Reasoned feedback</summary><p>No. The estimates are conditional on the included reference types, and normalization to one does not show that the reference is exhaustive or that the fit is accurate. An omitted population can make the reported mixture ambiguous. Review reference coverage and fit diagnostics, test stability under defensible reference choices, and compare with an independent measurement from the same samples when available.</p></details></section>
 <aside class="lesson-warning"><h3>When estimates look implausible</h3><p>Check gene-ID overlap and order, input scale, missing or mislabelled metadata, reference coverage, and whether multiple reference profiles are too similar to distinguish. Examine MuSiC's fit and variance outputs alongside the proportions. Do not clip, renormalize, or discard unexpected estimates without understanding what produced them; consult the installed version's documentation and investigate the input and model assumptions.</p></aside>
 <section class="lesson-exercise"><h2>Analysis record to keep</h2><p>For each run, record the reference tissue and condition, cell-type and donor fields, preprocessing and expression scale, number of shared genes, included cell types, MuSiC version, output dimensions, fit/variance diagnostics, and any external validation. A useful deliverable is this record alongside the sample-by-cell-type estimate table and a plot clearly labeled as an estimate.</p></section>
 <h2>References and further reading</h2>

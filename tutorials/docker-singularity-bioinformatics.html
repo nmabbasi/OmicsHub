@@ -6,20 +6,20 @@
 <link as="font" crossorigin="anonymous" href="../fonts/inter-e3237528af.woff2" rel="preload" type="font/woff2"/>
 <link href="../fonts/fonts.css" rel="stylesheet"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<meta content="Compare Docker and Apptainer for bioinformatics, then trace a BWA mapping command through image selection, bind mounts, HPC execution, and reproducibility checks." name="description"/>
+<meta content="Trace a local Docker BWA example through image selection and bind mounts, then review an optional Apptainer/Slurm adaptation and reproducibility checks." name="description"/>
 <meta content="bioinformatics, single-cell RNA-seq, shell commands, conda, computational biology, tutorials, data analysis" name="keywords"/>
 <meta content="Nasir Mahmood Abbasi, PhD" name="author"/>
 <meta content="index, follow" name="robots"/>
 <!-- Open Graph tags for social sharing -->
 <meta content="Docker and Apptainer for Bioinformatics" property="og:title"/>
-<meta content="Compare Docker and Apptainer for bioinformatics, then trace a BWA mapping command through image selection, bind mounts, HPC execution, and reproducibility checks." property="og:description"/>
+<meta content="Trace a local Docker BWA example through image selection and bind mounts, then review an optional Apptainer/Slurm adaptation and reproducibility checks." property="og:description"/>
 <meta content="https://theomicshub.com/tutorials/docker-singularity-bioinformatics.html" property="og:url"/>
 <meta content="website" property="og:type"/>
 <meta content="https://theomicshub.com/images/docker-singularity-bioinformatics.webp" property="og:image"/>
 <!-- Twitter Card tags -->
 <meta content="summary_large_image" name="twitter:card"/>
 <meta content="Docker and Apptainer for Bioinformatics" name="twitter:title"/>
-<meta content="Compare Docker and Apptainer for bioinformatics, then trace a BWA mapping command through image selection, bind mounts, HPC execution, and reproducibility checks." name="twitter:description"/>
+<meta content="Trace a local Docker BWA example through image selection and bind mounts, then review an optional Apptainer/Slurm adaptation and reproducibility checks." name="twitter:description"/>
 <meta content="https://theomicshub.com/images/docker-singularity-bioinformatics.webp" name="twitter:image"/>
 <title>Docker and Apptainer for Bioinformatics | The Omics Hub</title><!-- Favicon -->
 <link href="../images/favicon.svg" rel="icon" type="image/svg+xml"/>
@@ -48,7 +48,7 @@ gtag('consent', 'default', {
   "@context": "https://schema.org",
   "@type": "TechArticle",
   "headline": "Docker and Apptainer for Bioinformatics",
-  "description": "Compare Docker and Apptainer for bioinformatics, then trace a BWA mapping command through image selection, bind mounts, HPC execution, and reproducibility checks.",
+  "description": "Trace a local Docker BWA example through image selection and bind mounts, then review an optional Apptainer/Slurm adaptation and reproducibility checks.",
   "mainEntityOfPage": {
     "@type": "WebPage",
     "@id": "https://theomicshub.com/tutorials/docker-singularity-bioinformatics.html"
@@ -73,7 +73,7 @@ gtag('consent', 'default', {
     }
   },
   "datePublished": "2026-08-25",
-  "dateModified": "2026-10-21",
+  "dateModified": "2026-10-24",
   "url": "https://theomicshub.com/tutorials/docker-singularity-bioinformatics.html",
   "name": "Docker and Apptainer for Bioinformatics",
   "isPartOf": {
@@ -169,9 +169,9 @@ function toggleMobileMenu() {
 </div>
 <nav aria-label="Learning path navigation" class="reader-toolbar"><a href="reproducible-project-structure.html" rel="prev">← Prerequisite: Reproducible Project Structure</a><a data-catalogue-return="" href="../tutorials.html">All tutorials</a><a href="reproducible-workflows-snakemake-nextflow.html" rel="next">Explore: Reproducible bioinformatics workflows with Snakemake and Nextflow</a></nav>
 <article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--walkthrough">
-<p class="lesson-lead">A container can make a bioinformatics tool's software environment easier to reuse, but it does not package your reads, reference genome, scheduler policy, or every host dependency. This walkthrough follows one BWA-MEM job from a local Docker invocation to an Apptainer/Singularity-style HPC job, with attention to the files each command can actually see.</p>
+<p class="lesson-lead">A container can make a bioinformatics tool's software environment easier to reuse, but it does not package your reads, reference genome, scheduler policy, or every host dependency. This walkthrough traces file paths in a local Docker BWA-MEM example and an optional Apptainer/Slurm script, with attention to the files each command can actually see.</p>
 <section class="lesson-summary tutorial-learning-contract" data-tutorial-format="hands-on-lab" aria-label="Learning format">
-<p><strong>Format: Hands-on lab.</strong> For learners comfortable with a terminal, this short exercise creates a tiny, entirely synthetic reference and two reads, then follows their files through BWA in Docker. No biological data are supplied; a Docker-capable host and host-side BWA are needed locally, while the Slurm/Apptainer section is an optional adaptation for users with an authorized cluster account.</p>
+<p><strong>Format: Hands-on lab.</strong> For learners comfortable with a terminal, the local exercise creates a tiny, entirely synthetic reference and two reads, then follows their files through BWA in Docker. It requires a Docker-capable host and host-side BWA; no biological data are supplied. If those tools are unavailable, the file-flow check below can be completed without running commands. The Slurm/Apptainer section is an optional adaptation for users with an authorized cluster account.</p>
 </section>
 <h2>What the container freezes, and what it does not</h2>
 <p>An image bundles an application and its userspace dependencies. That is useful when tools require conflicting libraries or when you need to preserve an environment, but it does not guarantee identical results across all hosts: kernel and hardware behavior, environment variables, mounted files, command-line parameters, and external services can still matter. Record the exact image reference (prefer a digest for durable identification), input checksums, tool arguments, and relevant host/runtime details. A tag can be moved, and a container is not a substitute for workflow provenance or biological validation.</p>
@@ -215,6 +215,7 @@ docker run --rm \
   &gt; results/reads.sam
 </code></pre>
 <p>The redirection is performed by the host shell, not inside Docker; because the working directory is mounted, the SAM file lands in the host's <code>results/</code> directory. The command assumes the image can start <code>bwa</code> with this invocation and the tag exists and is accessible. Check the registry and image documentation before relying on either assumption. If the source directory is missing, Docker's explicit <code>--mount</code> form errors rather than silently creating it; check the mount path and permissions. Mounting a project read-write allows container processes to alter its contents. Use a read-only input mount plus a separate writable output directory when the tool and directory layout permit.</p>
+<p><strong>File-flow check, no Docker required:</strong> In this example, <code>$PWD</code> is the host project directory and it is mounted at <code>/work</code> inside the container. The program reads <code>reference.fa</code> and <code>reads.fq</code> at <code>/work</code>; where does <code>results/reads.sam</code> go? The host shell handles <code>&gt; results/reads.sam</code>, so it writes in the host project directory, under <code>results/</code>. The bind mount makes that same project directory visible to the container.</p>
 <h2>Use the same image on a Slurm cluster</h2>
 <p>This section is optional and applies only if you have an authorized Slurm account on a cluster that provides Apptainer (or its locally supported Singularity command). Check the site documentation for resource limits, permitted image acquisition, storage paths, and submission procedures; do not install software or submit jobs on a shared system without authorization. Where permitted, pull the OCI image once (often on a login or transfer node). This converts the registry image into a local SIF file; network access, image caching, and where pulls are allowed are cluster-specific.</p>
 <pre><code class="language-bash">apptainer pull bwa.sif docker://quay.io/biocontainers/bwa:0.7.17--hed695b0_7

@@ -8,16 +8,14 @@
 <link href="../fonts/fonts.css" rel="stylesheet"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <meta content="Retrieve a precomputed AlphaFold DB model by UniProt accession, preserve the source-file provenance, and inspect per-residue pLDDT with a small Python workflow." name="description"/>
-<meta content="bioinformatics, AI, AlphaFold, AlphaFold 3, ESMFold, ESM3, protein structure, protein design, structural biology, tutorials" name="keywords"/>
+<meta content="bioinformatics, AlphaFold DB, UniProt, protein structure, pLDDT, structural biology, tutorials" name="keywords"/>
 <meta content="Nasir Mahmood Abbasi, PhD" name="author"/><meta content="Retrieve an AlphaFold DB model and assess pLDDT" property="og:title"/>
 <meta content="Retrieve a precomputed AlphaFold DB model by UniProt accession, preserve the source-file provenance, and inspect per-residue pLDDT with a small Python workflow." property="og:description"/>
 <meta content="https://theomicshub.com/tutorials/protein-structure-design-alphafold.html" property="og:url"/>
 <meta content="website" property="og:type"/>
-<meta content="https://theomicshub.com/images/alphafold-esmfold.webp" property="og:image"/>
-<meta content="summary_large_image" name="twitter:card"/>
+<meta content="summary" name="twitter:card"/>
 <meta content="Retrieve an AlphaFold DB model and assess pLDDT" name="twitter:title"/>
 <meta content="Retrieve a precomputed AlphaFold DB model by UniProt accession, preserve the source-file provenance, and inspect per-residue pLDDT with a small Python workflow." name="twitter:description"/>
-<meta content="https://theomicshub.com/images/alphafold-esmfold.webp" name="twitter:image"/>
 <title>Retrieve an AlphaFold DB model and assess pLDDT | The Omics Hub</title><link href="../images/favicon.svg" rel="icon" type="image/svg+xml"/>
 <link href="../tailwind.min.css" rel="stylesheet"/>
 <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet"/>
@@ -46,7 +44,6 @@ gtag('consent', 'default', {
     "@type": "WebPage",
     "@id": "https://theomicshub.com/tutorials/protein-structure-design-alphafold.html"
   },
-  "image": "https://theomicshub.com/images/alphafold-esmfold.webp",
   "author": {
     "@type": "Person",
     "name": "Dr. Nasir Mahmood Abbasi, PhD",
@@ -66,7 +63,7 @@ gtag('consent', 'default', {
     }
   },
   "datePublished": "2026-08-24",
-  "dateModified": "2026-10-21",
+  "dateModified": "2026-10-24",
   "url": "https://theomicshub.com/tutorials/protein-structure-design-alphafold.html",
   "name": "Retrieve an AlphaFold DB model and assess pLDDT",
   "isPartOf": {
@@ -155,14 +152,11 @@ function toggleMobileMenu() {
 <div class="flex items-center gap-2 text-sm text-blue-600 font-medium mb-4"><span>AI-Driven Research &amp; Agentic Bioinformatics</span><span>-</span><span>2026-08-24</span></div><h1 class="text-4xl md:text-5xl font-black text-gray-900 mb-6 leading-tight" id="tutorial-title">Retrieve an AlphaFold DB model and assess pLDDT</h1>
 <div class="flex items-center gap-4"><div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 font-bold text-lg">NM</div><div><p class="font-bold text-gray-900">Nasir Mahmood Abbasi, PhD</p><p class="text-sm text-gray-500">Bioinformatics Educator</p></div></div>
 </section>
-<div class="mb-12 rounded-2xl overflow-hidden shadow-lg border border-gray-100">
-<img alt="Protein Structure Design" class="w-full aspect-video object-cover" decoding="async" loading="eager" src="../images/alphafold-esmfold.webp" width="1920" height="1920"/>
-</div>
 <nav aria-label="Learning path navigation" class="reader-toolbar"><a href="reference-genomes-annotation.html" rel="prev">← Prerequisite: Reference Genomes and Annotation Databases</a><a data-catalogue-return="" href="../tutorials.html">All tutorials</a><a href="../start-here.html#sh-genomics" rel="next">Return to genomics choices</a></nav>
 <article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--walkthrough">
 <p class="lesson-lead">Use a UniProt accession to retrieve a precomputed AlphaFold Database (AlphaFold DB) structure, keep a record of which file you analyzed, and summarize its per-residue confidence. The workflow does not predict a new structure or design a protein.</p>
 <section class="lesson-summary tutorial-learning-contract" data-tutorial-format="conceptual-guide" aria-label="Learning format">
-<p><strong>Format: Conceptual guide.</strong> For learners who can run basic shell and Python commands: retrieve the supplied public UniProt example and review its provenance and pLDDT summary. The workflow fetches its inputs from AlphaFold DB; no local structure fixture is supplied.</p>
+<p><strong>Format: Conceptual guide.</strong> For learners who can run basic shell and Python commands: retrieve the supplied public UniProt example and review its provenance and pLDDT summary. The workflow fetches the model from AlphaFold DB. No AlphaFold model PDB is bundled; the companion tests use small constructed PDB text fixtures for offline parser checks.</p>
 </section>
 <nav aria-label="On this page"><strong>On this page</strong><ul><li><a href="#objectives">Goal and prerequisites</a></li><li><a href="#concept">Database retrieval and prediction</a></li><li><a href="#workflow">Retrieve and inspect a model</a></li><li><a href="#worked-example">Worked example</a></li><li><a href="#interpret">Interpret pLDDT</a></li><li><a href="#limits">Scope and limitations</a></li><li><a href="#sources">Official sources</a></li></ul></nav>
 <h2 id="objectives">Goal and prerequisites</h2>
@@ -190,7 +184,7 @@ python3 protein_structure_workflow.py analyze path/to/model.pdb --out qc.json</c
 <p>The report includes the number of parsed Cα residues, chains, mean/minimum/maximum B-factor, and one record per chain/residue/insertion-code key. These values describe the file processed in that run. The mean is not a pass/fail score and does not support a biological conclusion by itself.</p>
 <div class="lesson-checkpoint"><p><strong>Before calling B-factors pLDDT:</strong> confirm that the file came from the intended AlphaFold DB entry. Offline analysis deliberately reports B-factors without asserting provenance.</p></div>
 <h3 id="worked-example">Worked example: P69905, model version 6</h3>
-<p>The complete standard-Python fetch workflow was run against the API-advertised <code>AF-P69905-F1</code> model, version 6. The downloaded file parsed as one chain with 142 Cα residues; mean Cα value was 98.064, with a minimum of 65.38 and maximum of 98.88.</p>
+<p>A recorded retrieval of the API-advertised <code>AF-P69905-F1</code> model, version 6, parsed as one chain with 142 Cα residues; mean Cα value was 98.064, with a minimum of 65.38 and maximum of 98.88. These values describe that recorded file, not a guaranteed result from a later fetch; check the API response for the current model version and retain its file hash.</p>
 <div aria-label="Scrollable table: Observed values for the retrieved P69905 file, not universal quality thresholds." class="lesson-table-wrap" role="region" tabindex="0"><table><caption>Observed values for the retrieved P69905 file, not universal quality thresholds.</caption><thead><tr><th scope="col">Field</th><th scope="col">Observed value</th></tr></thead><tbody><tr><th scope="row">Model version</th><td>6</td></tr><tr><th scope="row">Cα residues / chain</th><td>142 / A</td></tr><tr><th scope="row">Mean Cα pLDDT</th><td>98.064</td></tr><tr><th scope="row">Minimum / maximum</th><td>65.38 / 98.88</td></tr></tbody></table></div>
 <p>A high mean can obscure a less-confident segment. These measurements identify this particular file; a later database version may differ. The SHA-256 recorded for the fetched file was <code>d9d7ad4607164de17b65767b467d366909d74f96df5176ee368a9a515aaa1911</code>. A matching hash helps identify bytes, but does not independently establish scientific validity or authenticity.</p>
 <p>To compare the local PDB bytes with the QC report and print the five lowest-confidence parsed residues:</p>

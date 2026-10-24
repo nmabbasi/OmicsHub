@@ -73,7 +73,7 @@ gtag('consent', 'default', {
     }
   },
   "datePublished": "2026-09-18",
-  "dateModified": "2026-10-21",
+  "dateModified": "2026-10-24",
   "url": "https://theomicshub.com/tutorials/metagenomics-assembly-mapping.html",
   "name": "Metagenomic Assembly and Read Mapping",
   "isPartOf": {
@@ -239,6 +239,7 @@ samtools depth -a reads_to_contigs.bam &gt; contig_depth.tsv</code></pre>
 <li class="lesson-step"><strong>Inspect candidate joins in IGV.</strong> Create the FASTA index with <code>samtools faidx spades_output/contigs.fasta</code>, then load that exact FASTA and the indexed coordinate-sorted BAM. Examine paired-read placement around suspicious regions. A visual pattern is a prompt for further validation, not proof of a chimera.</li>
 </ol>
 <p>There is no general coverage cutoff such as 5× that separates valid from artifactual metagenomic contigs across samples. Likewise, contig length or a high mapping percentage alone does not establish organism identity, genome completeness, correct binning, or biological function. Interpret those questions with appropriate downstream evidence and sample-specific context.</p>
+<section class="lesson-exercise"><h2>Practice a mapping-limit decision</h2><p><strong>Hypothetical review:</strong> Read-back mapping summaries show that many reads align to the assembled contigs, but the depth track varies sharply and some regions have little or no read coverage. Is the overall mapping percentage enough to call a contig complete, correctly assembled, or taxonomically identified? Name one next check.</p><details><summary>Reasoned feedback</summary><p>No. Mapping documents support under the chosen aligner and reference, not independent validation of the assembly. Uneven depth can have several explanations, including strain mixtures, repeats, collapsed sequence, and uneven organism abundance. Inspect read placements around joins and combine assembly statistics with independent evidence suited to completeness, binning, and taxonomy; do not infer a single cause from depth alone.</p></details></section>
 <h2>Common problems and next actions</h2>
 <ul>
 <li><strong>Few reads map back:</strong> verify that the correct R1/R2 files were assembled and mapped, check counts before and after host filtering, and inspect SPAdes logs for completion or input warnings. Low depth or high community complexity can also leave reads unassembled; the mapping percentage by itself does not identify the cause.</li>
