@@ -75,6 +75,9 @@
     const existing = document.getElementById('back-to-top');
     if (existing) {
       if (existing.matches('a[href="#tutorial-title"]')) {
+        const tools = existing.closest('.reader-tools.tutorial-top-tools');
+        const navigationFooter = document.querySelector('#reader-course-navigation .reader-sequence-footer');
+        if (tools && navigationFooter) navigationFooter.appendChild(tools);
         existing.addEventListener('click', () => {
           const title = document.getElementById('tutorial-title');
           if (title) {

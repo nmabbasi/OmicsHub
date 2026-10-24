@@ -55,6 +55,8 @@ def main():
                       colors:[...document.querySelectorAll('.token')].map(t=>getComputedStyle(t).color).filter((v,i,a)=>a.indexOf(v)===i),
                       topCount:document.querySelectorAll('#back-to-top').length,
                       nav:[...document.querySelectorAll('.reader-toolbar > a')].map(a=>{const r=a.getBoundingClientRect();return {x:r.x,y:r.y,w:r.width,h:r.height,right:r.right,bottom:r.bottom}}),
+                      topIntegrated:!!document.querySelector('#reader-course-navigation .reader-sequence-footer #back-to-top'),
+                      continuation:[...document.querySelectorAll('#reader-course-navigation a')].map(a=>a.getBoundingClientRect().height),
                       codeBg:document.querySelector('article pre')?getComputedStyle(document.querySelector('article pre')).backgroundColor:null
                     })''')
                     hashes = [hashlib.sha256(code.encode()).hexdigest() for code in data['blocks']]
@@ -66,6 +68,8 @@ def main():
                     check(all(n == 1 for n in data['selected'] + data['visible']), f'{slug} invalid tab visibility')
                     check(data['topCount'] == 1, f'{slug} duplicate/missing top control')
                     check(all(r['h'] >= 44 for r in data['nav']), f'{slug} small navigation target')
+                    check(data['topIntegrated'], f'{slug} detached back-to-top control at {width}')
+                    check(all(h >= 44 for h in data['continuation']), f'{slug} small continuation target at {width}')
                     for i, first in enumerate(data['nav']):
                         for second in data['nav'][i+1:]:
                             overlap = min(first['right'],second['right'])-max(first['x'],second['x']) > 1 and min(first['bottom'],second['bottom'])-max(first['y'],second['y']) > 1
@@ -106,7 +110,10 @@ def main():
             # Print exposes both language routes with their original headings.
             page.emulate_media(media='print')
             check(page.locator('[role=tabpanel]').evaluate_all('(els)=>els.every(el=>getComputedStyle(el).display!=="none")'), 'Print hides a language route')
-            page.emulate_media(media='screen'); results['interactions'].append('print includes both routes')
+            printed = page.locator('.reader-path-card--suggested').first
+            check(printed.evaluate('el=>getComputedStyle(el).backgroundColor') == 'rgb(255, 255, 255)', 'Print navigation still uses a dark background')
+            check(printed.locator('.reader-path-card__title').evaluate('el=>getComputedStyle(el).color') == 'rgb(18, 51, 72)', 'Print navigation title is not dark')
+            page.emulate_media(media='screen'); results['interactions'] += ['print includes both routes', 'readable printed continuation navigation']
             # Screenshots deliberately contain public teaching examples only.
             page.set_viewport_size({'width': 1440, 'height': 1000}); ready(page, 'spatial-transcriptomics-r-python')
             page.locator('[data-code-tabs]').nth(1).evaluate("el=>window.scrollTo({top:scrollY+el.getBoundingClientRect().top-120,behavior:'instant'})")
@@ -116,6 +123,8 @@ def main():
             page.set_viewport_size({'width': 390, 'height': 844}); ready(page, 'spatial-transcriptomics-r-python')
             page.locator('[data-code-tabs]').nth(1).evaluate("el=>window.scrollTo({top:scrollY+el.getBoundingClientRect().top-125,behavior:'instant'})")
             page.screenshot(path=str(args.output / 'mobile-language-tabs.png'))
+            page.locator('#reader-course-navigation').evaluate("el=>window.scrollTo({top:scrollY+el.getBoundingClientRect().top-120,behavior:'instant'})")
+            page.screenshot(path=str(args.output / 'mobile-next-steps.png'))
             # Clipboard denial selects the original code and provides a visible instruction.
             denied = browser.new_context(viewport={'width': 390, 'height': 844}); configure(denied)
             denied.add_init_script("Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText:async()=>{throw new Error('denied')}}});")

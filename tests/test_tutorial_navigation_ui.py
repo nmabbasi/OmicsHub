@@ -83,6 +83,17 @@ class TutorialNavigationMarkupTests(unittest.TestCase):
                 self.assertLess(markup.index('class="reader-sequence-utilities"'),
                                 markup.index('reader-path-card--previous'))
 
+    def test_editorial_heading_and_compact_footer_preserve_route_context(self):
+        for key, item in self.manifest['tutorials'].items():
+            markup = generator.render_continuation(key, item, self.manifest, self.facts)
+            with self.subTest(page=key):
+                self.assertIn('<h2>Keep exploring</h2>', markup)
+                self.assertIn('class="reader-sequence-route-label">Learning route</span>', markup)
+                self.assertIn('class="reader-sequence-footer"', markup)
+                self.assertIn('class="reader-sequence-note"', markup)
+                self.assertLess(markup.index('class="reader-sequence-utilities"'), markup.index('class="reader-sequence-note"'))
+                self.assertNotIn('completed', markup.lower())
+
     def test_single_path_keeps_exact_previous_and_next_targets_and_relations(self):
         key = next(k for k, v in self.manifest["tutorials"].items()
                    if v.get("previous") and not v["previous"].startswith("@") and v["next"])
@@ -133,8 +144,8 @@ class TutorialNavigationStyleTests(unittest.TestCase):
 
     def test_navigation_typography_is_left_aligned_and_hierarchy_is_styled(self):
         self.assertIn(".reader-path-card--suggested", self.css)
-        self.assertIn(".reader-path-card--previous", self.css)
-        self.assertIn(".reader-path-card--library", self.css)
+        self.assertIn(".reader-sequence .reader-sequence-utilities a.reader-path-card", self.css)
+        self.assertIn(".reader-sequence-utilities .reader-path-card__eyebrow", self.css)
         self.assertIn("text-align: left", self.css)
         self.assertNotIn("text-align: center", self.css)
 
@@ -144,6 +155,15 @@ class TutorialNavigationStyleTests(unittest.TestCase):
         self.assertIn(".reader-toolbar.reader-toolbar a.reader-toolbar__library", self.css)
         self.assertIn(".reader-toolbar.reader-toolbar a.reader-toolbar__next", self.css)
         self.assertIn(".reader-sequence-utilities", self.css)
+
+    def test_no_oversized_suggested_rows_and_native_top_control_stays_in_flow(self):
+        self.assertNotIn('min-height: 9.5rem', self.css)
+        self.assertIn('.reader-sequence-footer', self.css)
+        self.assertIn('.reader-sequence-route-label', self.css)
+        script = (ROOT / 'subscribe-fab.js').read_text()
+        self.assertIn("existing.matches('a[href=\"#tutorial-title\"]')", script)
+        self.assertIn('navigationFooter.appendChild(tools)', script)
+        self.assertNotIn('position: fixed', (ROOT / 'tutorial-reader.css').read_text())
 
 
 if __name__ == "__main__":

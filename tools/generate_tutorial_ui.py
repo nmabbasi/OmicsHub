@@ -14,7 +14,7 @@ import re
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
-VERSION = '20261024-reader-ui'
+VERSION = '20261024-reader-ui-v2'
 LANGUAGES = {'bash', 'python', 'r', 'text', 'yaml', 'json', 'csv', 'diff', 'powershell', 'lua', 'groovy', 'javascript', 'markdown', 'sql', 'ini', 'docker', 'rscript'}
 VOID = {'area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr'}
 
@@ -108,6 +108,8 @@ def top_link(title):
 def render_page(source):
     output = PRISM_LINK.sub('', source)
     output = PRISM_SCRIPT.sub('', output)
+    output = re.sub(r'((?:href|src)="\.\./(?:tutorial-(?:reader|navigation)\.css|tutorial-code-data\.js|code-tabs\.js))(?:\?[^\"]*)?(\")',
+                    r'\1?v=' + VERSION + r'\2', output)
     if CSS not in output:
         output = output.replace('</head>', CSS + '</head>', 1)
     if SCRIPTS not in output:

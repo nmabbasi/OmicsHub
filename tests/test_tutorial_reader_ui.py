@@ -57,11 +57,17 @@ class TutorialReaderUITests(unittest.TestCase):
                 self.assertNotIn('cdnjs.cloudflare.com/ajax/libs/prism', source)
                 self.assertEqual(source.count('assets/vendor/prism/prism-1.29.0.js'), 1)
                 for name in ['tutorial-reader.css', 'tutorial-navigation.css', 'tutorial-code-data.js', 'code-tabs.js']:
-                    self.assertEqual(source.count(f'../{name}?v=20261024-reader-ui'), 1)
+                    self.assertEqual(source.count(f'../{name}?v={generator.VERSION}"'), 1)
                 self.assertEqual(source.count('id="back-to-top"'), 1)
                 self.assertIn('id="back-to-top" href="#tutorial-title"', source)
                 self.assertIn('id="tutorial-title"', source)
                 self.assertNotIn('data-code-tabs', source, 'Language routes stay visible in source/no-JS mode')
+
+    def test_upgrading_first_draft_versions_never_duplicates_local_assets(self):
+        for page in self.pages:
+            current = page.read_text()
+            previous = current.replace(generator.VERSION, '20261024-reader-ui')
+            self.assertEqual(generator.render_page(previous), current, page.name)
 
     def test_failed_fingerprints_are_rejected_before_publishing_stale_tabs(self):
         with tempfile.TemporaryDirectory() as temp:

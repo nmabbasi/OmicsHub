@@ -47,7 +47,7 @@ class ExactTutorialUIBaselineTests(unittest.TestCase):
             current.replace('window.STATIC_RENDERED = true;', 'window.STATIC_RENDERED = false;', 1),
             current.replace('A two-group test is only meaningful', 'An unapproved claim is meaningful', 1),
             re.sub(r'("dateModified"\s*:\s*)"[^"]+"', r'\1"2099-01-01"', current, count=1),
-            current.replace('<script src="../copy-code.js?v=20261024-reader-ui"></script>', '<script src="https://unapproved.invalid/extra.js"></script>', 1),
+            re.sub(r'<script src="\.\./copy-code\.js\?v=[^"]+"></script>', '<script src="https://unapproved.invalid/extra.js"></script>', current, count=1),
         ]
         for mutated in candidates:
             self.assertTrue(mutated != current, 'Mutation probe must actually modify the source')

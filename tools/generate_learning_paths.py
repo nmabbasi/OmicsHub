@@ -212,8 +212,8 @@ def render_continuation(key: str, item: dict, manifest: dict, facts: dict[str, P
     next_edges = item.get("next", [])
     grid_class = "reader-sequence-grid reader-sequence-grid--single" if len(next_edges) <= 1 else "reader-sequence-grid"
     sequence = [f'<nav aria-label="Learning path continuation" class="reader-sequence" id="reader-course-navigation">',
-                '<h2>Choose a relevant next step</h2>',
-                f'<p class="reader-sequence-position"><strong>Learning route:</strong> {route}. Suggested links are not a completion tracker or a required linear course.</p>',
+                '<div class="reader-sequence-heading"><h2>Keep exploring</h2>',
+                f'<p class="reader-sequence-position"><span class="reader-sequence-route-label">Learning route</span><strong>{route}</strong></p></div>',
                 f'<div class="{grid_class}">']
     for edge in next_edges:
         target = edge["target"]
@@ -235,7 +235,9 @@ def render_continuation(key: str, item: dict, manifest: dict, facts: dict[str, P
                     '<span class="reader-path-card__copy"><span class="reader-path-card__eyebrow">Browse the collection</span>'
                     '<strong class="reader-path-card__title">All tutorials</strong></span>'
                     '<span class="reader-path-card__arrow" aria-hidden="true">▤</span></a>')
-    sequence.append('</div></nav>')
+    sequence.append('</div><div class="reader-sequence-footer">'
+                    '<p class="reader-sequence-note">Suggested links are not a completion tracker or a required linear course.</p>'
+                    '</div></nav>')
     return '\n'.join(sequence)
 
 
