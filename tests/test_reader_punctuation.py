@@ -95,8 +95,9 @@ class ReaderPunctuationTests(unittest.TestCase):
         self.assertEqual(normalize_start_here('start-here.html', restored), restored)
 
         changed_claim = current.replace(
-            'Bioinformatics can begin with', 'Bioinformatics can start with', 1
+            'Start with the big picture.', 'Unsupported new learning claim.', 1
         )
+        self.assertNotEqual(changed_claim, current, 'the mutation must exercise current reading text')
         self.assertNotEqual(
             normalize_start_here('start-here.html', changed_claim), restored,
             'a claim altered inside a reviewed chunk must remain visible to strict checks',
@@ -253,7 +254,7 @@ class ReaderPunctuationTests(unittest.TestCase):
                 version = '20261024-home-catalogue-v1' if relative == 'index.html' else '20261023-reader-typography'
                 self.assertIn(stylesheet+'?v='+version, (ROOT/relative).read_text())
         self.assertIn('home-page.min.css?v=20261024-home-catalogue-v1', (ROOT/'index.html').read_text())
-        self.assertIn('start-here.css?v=20261024-start-simple', (ROOT/'start-here.html').read_text())
+        self.assertIn('start-here.css?v=20261024-blue-learning-v1', (ROOT/'start-here.html').read_text())
 
 
 if __name__ == '__main__':

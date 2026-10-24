@@ -52,19 +52,22 @@ class StartHereSimplificationTests(unittest.TestCase):
         hero = re.search(r'<section class="sh-hero".*?</section>', self.main, re.S).group()
         self.assertEqual(hero.count('<a '), 1)
         self.assertIn('href="tutorials/introduction-to-bioinformatics.html"', hero)
+        self.assertIn('aria-describedby="sh-first-lesson-note"', hero)
+        self.assertIn('id="sh-first-lesson-note"', hero)
         steps = re.search(r'<ol class="sh-steps">(.*?)</ol>', self.main, re.S).group(1)
         self.assertEqual(steps.count('<li '), 4)
         first_links = re.findall(r'<h3><a href="([^"]+)"', steps)
         self.assertEqual(first_links, ['tutorials/' + x + '.html' for x in [
-            'introduction-to-bioinformatics', 'computer-data-fundamentals', 'command-line-part1', 'conda-mamba-part1']])
+            'introduction-to-bioinformatics', 'command-line-part1', 'computer-data-fundamentals', 'conda-mamba-part1']])
         self.assertNotIn('<details', self.main[:self.main.index('id="sh-routes"')])
 
     def test_r_and_python_are_alternatives_and_shared_foundations_remain(self):
         choice = re.search(r'<section class="sh-choice".*?</section>', self.main, re.S).group()
-        self.assertIn('You do not need both', choice)
+        self.assertIn('Learn one for now', choice)
         self.assertIn('tutorials/r-tidyverse-fundamentals.html', choice)
         self.assertIn('tutorials/python-fundamentals-bioinformatics.html', choice)
-        self.assertIn('Both routes continue to', self.main)
+        self.assertIn('When needed, use', self.main)
+        self.assertIn('independent two-group comparisons', self.main)
         self.assertIn('tutorials/statistics-for-bioinformatics.html', self.main)
         self.assertIn('tutorials/experimental-design-batch-effects.html', self.main)
 
@@ -93,8 +96,8 @@ class StartHereSimplificationTests(unittest.TestCase):
 
     def test_outside_main_only_explicit_ui_wiring_and_date_changed(self):
         expected = self.before.replace(self.old_main, self.main, 1)
-        expected = expected.replace('start-here.css?v=20261023-reader-typography', 'start-here.css?v=20261024-start-simple', 1)
-        css_line = '<link href="start-here.css?v=20261024-start-simple" rel="stylesheet"/>\n'
+        expected = expected.replace('start-here.css?v=20261023-reader-typography', 'start-here.css?v=20261024-blue-learning-v1', 1)
+        css_line = '<link href="start-here.css?v=20261024-blue-learning-v1" rel="stylesheet"/>\n'
         expected = expected.replace(css_line, css_line + '<link href="back-to-top.css?v=20261024-reader-ui-v3" rel="stylesheet"/>\n<script defer="" src="start-here.js?v=20261024-start-simple"></script>\n', 1)
         expected = expected.replace('"dateModified": "2026-10-23"', '"dateModified": "2026-10-24"', 1)
         expected = expected.replace('subscribe-fab.js?v=20261022-reader-review', 'subscribe-fab.js?v=20261024-reader-ui-v3', 1)
@@ -109,7 +112,7 @@ class StartHereSimplificationTests(unittest.TestCase):
         self.assertEqual(normalize_start_here('start-here.html', self.before), self.before)
         current = (ROOT / 'sitemap.xml').read_bytes()
         self.assertEqual(normalize_start_here_sitemap(current), pre_review_bytes('sitemap.xml'))
-        bad = self.source.replace('Bioinformatics can begin', 'Unsupported new claim can begin', 1)
+        bad = self.source.replace('Start with the big picture', 'Unsupported new claim can begin', 1)
         self.assertNotEqual(bad, self.source)
         self.assertNotEqual(normalize_start_here('start-here.html', bad), self.before)
         bad = self.source.replace('src="analytics.js"', 'src="unapproved.js"', 1)
