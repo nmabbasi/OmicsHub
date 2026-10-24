@@ -43,6 +43,17 @@ from resource_content_baseline import (
     normalize_resource_sitemap,
     published_bytes as resource_published_bytes,
 )
+from tutorial_ui_baseline import (
+    TUTORIAL_UI_PATHS,
+    normalize_tutorial_ui,
+    verify_tutorial_ui_file,
+)
+from start_here_baseline import (
+    START_HERE_ASSET_PATHS,
+    normalize_start_here,
+    normalize_start_here_asset,
+    pre_review_bytes,
+)
 
 ALLOWED_FIXTURE_PREFIXES = (
     "files/text-processing-lesson/",
@@ -98,8 +109,10 @@ class SixLessonRevisionScopeTests(unittest.TestCase):
         for relative in sorted(SIX_LESSON_ARTICLES):
             old_bytes = git_bytes(relative)
             self.assertIsNotNone(old_bytes, relative)
-            old = old_bytes.decode("utf-8")
-            current = (ROOT / relative).read_text(encoding="utf-8")
+            old = normalize_tutorial_ui(relative, old_bytes.decode("utf-8"))
+            current = normalize_tutorial_ui(
+                relative, (ROOT / relative).read_text(encoding="utf-8")
+            )
             current = normalize_resource_content(relative, current.encode("utf-8")).decode("utf-8")
             with self.subTest(page=relative):
                 self.assertEqual(DATE_MODIFIED.findall(old), ["2026-10-21"])
@@ -143,8 +156,11 @@ class SixLessonRevisionScopeTests(unittest.TestCase):
             relative = page.relative_to(ROOT).as_posix()
             old_bytes = git_bytes(relative)
             self.assertIsNotNone(old_bytes, relative)
-            old = old_bytes.decode("utf-8")
-            current = normalize_resource_content(relative, page.read_bytes()).decode("utf-8")
+            old = normalize_tutorial_ui(relative, old_bytes.decode("utf-8"))
+            current = normalize_tutorial_ui(
+                relative, page.read_bytes().decode("utf-8")
+            )
+            current = normalize_resource_content(relative, current.encode("utf-8")).decode("utf-8")
             current = normalize_advanced_validation_if_allowed(relative, current)
             def executable(text):
                 return [
@@ -162,11 +178,32 @@ class SixLessonRevisionScopeTests(unittest.TestCase):
             if relative.startswith("tests/") or relative == "sitemap.xml":
                 continue
             current_path = ROOT / relative
+            if relative in TUTORIAL_UI_PATHS:
+                self.assertTrue(current_path.is_file(), relative)
+                verify_tutorial_ui_file(relative, current_path.read_bytes())
+                continue
+            if relative in START_HERE_ASSET_PATHS:
+                self.assertTrue(current_path.is_file(), relative)
+                restored = normalize_start_here_asset(relative, current_path.read_bytes())
+                if relative == "start-here.js":
+                    self.assertIsNone(restored, "new JS is allowed only after its full hash verifies")
+                else:
+                    self.assertEqual(restored, pre_review_bytes(relative))
+                continue
             if current_path.is_file() and is_approved_workflow(relative, current_path.read_bytes()):
                 continue
             old_bytes = git_bytes(relative)
-            current_bytes = normalize_resource_content(relative, current_path.read_bytes())
+            current_raw = current_path.read_bytes()
+            if relative == "start-here.html":
+                current_raw = normalize_start_here(relative, current_raw.decode("utf-8")).encode("utf-8")
+                if old_bytes is not None:
+                    old_bytes = normalize_start_here(relative, old_bytes.decode("utf-8")).encode("utf-8")
+            current_text = normalize_tutorial_ui(
+                relative, current_raw.decode("utf-8")
+            )
+            current_bytes = normalize_resource_content(relative, current_text.encode("utf-8"))
             current_text = current_bytes.decode("utf-8")
+            old_text = normalize_tutorial_ui(relative, old_bytes.decode("utf-8")) if old_bytes else None
             with self.subTest(path=relative):
                 if relative in SIX_LESSON_ARTICLES:
                     self.assertIsNotNone(old_bytes)
@@ -180,12 +217,12 @@ class SixLessonRevisionScopeTests(unittest.TestCase):
                                 )
                             ),
                         ),
-                        normalize_six_lesson_revision(
-                            relative,
-                            normalize_beginner_walkthrough_revision(
-                                relative, old_bytes.decode("utf-8")
+                            normalize_six_lesson_revision(
+                                relative,
+                                normalize_beginner_walkthrough_revision(
+                                    relative, old_text
+                                ),
                             ),
-                        ),
                     )
                 elif relative in BEGINNER_WALKTHROUGH_ARTICLES:
                     published = subprocess.run(
@@ -197,7 +234,7 @@ class SixLessonRevisionScopeTests(unittest.TestCase):
                         normalize_beginner_walkthrough_revision(
                             relative, current_text
                         ),
-                        published.stdout.decode("utf-8"),
+                        normalize_tutorial_ui(relative, published.stdout.decode("utf-8")),
                     )
                 elif relative == TIDYVERSE_SETUP_ARTICLE:
                     published = subprocess.run(
@@ -209,7 +246,7 @@ class SixLessonRevisionScopeTests(unittest.TestCase):
                         normalize_tidyverse_setup_revision(
                             relative, current_text
                         ),
-                        published.stdout.decode("utf-8"),
+                        normalize_tutorial_ui(relative, published.stdout.decode("utf-8")),
                     )
                 elif relative in remaining_validation_paths():
                     self.assertIsNotNone(old_bytes, "allowlisted page must exist in the pinned source")
@@ -218,7 +255,7 @@ class SixLessonRevisionScopeTests(unittest.TestCase):
                         normalize_remaining_validation_edit(
                             relative, current_text
                         ).encode("utf-8"),
-                        old_bytes,
+                        (old_text or "").encode("utf-8"),
                         "only the exact manifest-pinned article body and dates may differ",
                     )
                 elif relative in advanced_validation_paths():
@@ -226,7 +263,9 @@ class SixLessonRevisionScopeTests(unittest.TestCase):
                         normalize_advanced_validation_if_allowed(
                             relative, current_text
                         ).encode("utf-8"),
-                        advanced_published_bytes(relative),
+                        normalize_tutorial_ui(
+                            relative, advanced_published_bytes(relative).decode("utf-8")
+                        ).encode("utf-8"),
                         "only the exact manifest-pinned PR14 article edit may differ",
                     )
                 elif relative in advanced_asset_paths():
@@ -236,7 +275,12 @@ class SixLessonRevisionScopeTests(unittest.TestCase):
                         "only the exact manifest-pinned Visium helper asset may change",
                     )
                 elif relative in resource_paths:
-                    self.assertEqual(current_bytes, resource_published_bytes(relative))
+                    self.assertEqual(
+                        current_bytes,
+                        normalize_tutorial_ui(
+                            relative, resource_published_bytes(relative).decode("utf-8")
+                        ).encode("utf-8"),
+                    )
                 elif relative.startswith("files/"):
                     self.assertTrue(relative.startswith(ALLOWED_FIXTURE_PREFIXES),
                                     "new fixtures must be in an approved lesson folder")
@@ -251,7 +295,15 @@ class SixLessonRevisionScopeTests(unittest.TestCase):
                     self.assertIsNotNone(old_bytes,
                                          "new source files outside approved fixture folders are forbidden")
                     self.assertTrue(current_path.is_file(), "deleting published files is forbidden")
-                    self.assertEqual(current_path.read_bytes(), old_bytes,
+                    expected = (old_text.encode("utf-8")
+                                if relative == "start-here.html"
+                                or (relative.startswith("tutorials/") and relative.endswith(".html"))
+                                else old_bytes)
+                    observed = (current_bytes
+                                if relative == "start-here.html"
+                                or (relative.startswith("tutorials/") and relative.endswith(".html"))
+                                else current_path.read_bytes())
+                    self.assertEqual(observed, expected,
                                      "non-target source, CSS, navigation and site scripts are immutable")
 
     def test_normalizer_preserves_article_wrapper_and_unapproved_surrounding_text(self):

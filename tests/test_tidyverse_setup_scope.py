@@ -33,6 +33,17 @@ from resource_content_baseline import (
     normalize_resource_sitemap,
     published_bytes as resource_published_bytes,
 )
+from tutorial_ui_baseline import (
+    TUTORIAL_UI_PATHS,
+    normalize_tutorial_ui,
+    verify_tutorial_ui_file,
+)
+from start_here_baseline import (
+    START_HERE_ASSET_PATHS,
+    normalize_start_here,
+    normalize_start_here_asset,
+    pre_review_bytes,
+)
 
 SITE = "https://theomicshub.com/"
 SCRIPT = re.compile(r"<script\b[^>]*>.*?</script\s*>", re.S | re.I)
@@ -81,8 +92,11 @@ def normalize_jsonld_date(block):
 
 class TidyverseSetupScopeTests(unittest.TestCase):
     def test_pr10_baseline_target_and_only_its_two_date_labels_are_authorized(self):
-        original = published_tidyverse_page()
-        current = (ROOT / TIDYVERSE_SETUP_ARTICLE).read_text(encoding="utf-8")
+        original = normalize_tutorial_ui(TIDYVERSE_SETUP_ARTICLE, published_tidyverse_page())
+        current = normalize_tutorial_ui(
+            TIDYVERSE_SETUP_ARTICLE,
+            (ROOT / TIDYVERSE_SETUP_ARTICLE).read_text(encoding="utf-8"),
+        )
         old_articles, new_articles = list(ARTICLE.finditer(original)), list(ARTICLE.finditer(current))
         self.assertEqual(len(old_articles), 1)
         self.assertEqual(len(new_articles), 1)
@@ -136,8 +150,10 @@ class TidyverseSetupScopeTests(unittest.TestCase):
             relative = page.relative_to(ROOT).as_posix()
             old_bytes = git_bytes(relative)
             self.assertIsNotNone(old_bytes, relative)
-            old = old_bytes.decode("utf-8")
-            current = page.read_text(encoding="utf-8")
+            old = normalize_tutorial_ui(relative, old_bytes.decode("utf-8"))
+            current = normalize_tutorial_ui(
+                relative, page.read_text(encoding="utf-8")
+            )
             with self.subTest(page=relative):
                 self.assertEqual(scripts(current, executable_only=True),
                                  scripts(old, executable_only=True))
@@ -197,10 +213,29 @@ class TidyverseSetupScopeTests(unittest.TestCase):
             if relative.startswith("tests/") or relative in {TIDYVERSE_SETUP_ARTICLE, "sitemap.xml"}:
                 continue
             path = ROOT / relative
+            if relative in TUTORIAL_UI_PATHS:
+                self.assertTrue(path.is_file(), relative)
+                verify_tutorial_ui_file(relative, path.read_bytes())
+                continue
+            if relative in START_HERE_ASSET_PATHS:
+                self.assertTrue(path.is_file(), relative)
+                restored = normalize_start_here_asset(relative, path.read_bytes())
+                if relative == "start-here.js":
+                    self.assertIsNone(restored, "new JS is allowed only after its full hash verifies")
+                else:
+                    self.assertEqual(restored, pre_review_bytes(relative))
+                continue
             if path.is_file() and is_approved_workflow(relative, path.read_bytes()):
                 continue
             old = git_bytes(relative)
-            current_bytes = normalize_resource_content(relative, path.read_bytes()) if path.is_file() else None
+            if relative == "start-here.html" and old is not None:
+                old = normalize_start_here(relative, old.decode("utf-8")).encode("utf-8")
+            if old is not None and relative.startswith("tutorials/") and relative.endswith(".html"):
+                old = normalize_tutorial_ui(relative, old.decode("utf-8")).encode("utf-8")
+            current_raw = path.read_bytes() if path.is_file() else None
+            if relative == "start-here.html" and current_raw is not None:
+                current_raw = normalize_start_here(relative, current_raw.decode("utf-8")).encode("utf-8")
+            current_bytes = normalize_resource_content(relative, current_raw) if current_raw is not None else None
             with self.subTest(path=relative):
                 if relative == "analytics.js":
                     self.assertIsNotNone(old, "analytics.js must already exist in the published source")

@@ -21,6 +21,16 @@ from advanced_validation_baseline import (
     published_bytes as advanced_published_bytes,
 )
 from resource_content_baseline import normalize_resource_content
+from tutorial_ui_baseline import (
+    TUTORIAL_UI_PATHS,
+    normalize_tutorial_ui,
+    verify_tutorial_ui_file,
+)
+from start_here_baseline import (
+    START_HERE_ASSET_PATHS,
+    normalize_start_here,
+    verify_start_here_file,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 BASE = 'c030bc62bf6e4a4ad21f9ff64cb630c152157692'
@@ -78,6 +88,31 @@ class ReaderPunctuationTests(unittest.TestCase):
                     self.assertNotIn('\u2014', pair['after'])
                     self.assertNotEqual(pair['before'], pair['after'])
 
+    def test_start_here_normalization_is_literal_and_does_not_hide_claims_or_scripts(self):
+        current = (ROOT / 'start-here.html').read_text(encoding='utf-8')
+        restored = normalize_start_here('start-here.html', current)
+        self.assertEqual(normalize_start_here('start-here.html', restored), restored)
+
+        changed_claim = current.replace(
+            'Bioinformatics can begin with', 'Bioinformatics can start with', 1
+        )
+        self.assertNotEqual(
+            normalize_start_here('start-here.html', changed_claim), restored,
+            'a claim altered inside a reviewed chunk must remain visible to strict checks',
+        )
+        changed_script = current.replace(
+            'function toggleMobileMenu()', 'function toggleMobileMenus()', 1
+        )
+        self.assertNotEqual(
+            normalize_start_here('start-here.html', changed_script), restored,
+            'unapproved inline JavaScript must remain visible to strict checks',
+        )
+
+    def test_new_start_here_assets_match_exact_reviewed_hashes(self):
+        for relative in sorted(START_HERE_ASSET_PATHS):
+            with self.subTest(asset=relative):
+                verify_start_here_file(relative, (ROOT / relative).read_bytes())
+
     def test_every_source_change_matches_the_exact_recorded_copy_and_cache_edits(self):
         for relative, changes in self.manifest['files'].items():
             with self.subTest(path=relative):
@@ -124,7 +159,7 @@ class ReaderPunctuationTests(unittest.TestCase):
                     self.assertEqual(old_blocks, new_blocks)
             # Executable JavaScript is checked on the raw pages. Do not restore
             # target articles first, or a script placed inside one could hide.
-            raw_after = (ROOT/relative).read_text()
+            raw_after = normalize_tutorial_ui(relative, (ROOT/relative).read_text())
             old_scripts = [block for block in re.findall(
                 r'<script\b[^>]*>.*?</script>', self.old[relative], re.S
             ) if 'type="application/ld+json"' not in block]
@@ -184,8 +219,17 @@ class ReaderPunctuationTests(unittest.TestCase):
                 )
         # This consent repair authorizes one production script and its exact runtime fixture.
         reviewed_scripts = {'analytics.js', 'tests/test_analytics_load_order.js'}
+        verified_ui_paths = set(changed) & TUTORIAL_UI_PATHS
+        for relative in sorted(verified_ui_paths):
+            verify_tutorial_ui_file(relative, (ROOT / relative).read_bytes())
+        verified_start_here_paths = set(changed) & START_HERE_ASSET_PATHS
+        for relative in sorted(verified_start_here_paths):
+            verify_start_here_file(relative, (ROOT / relative).read_bytes())
         forbidden = [path for path in changed
-                     if path not in reviewed_scripts and not path.startswith('files/')]
+                     if path not in reviewed_scripts
+                     and path not in verified_ui_paths
+                     and path not in verified_start_here_paths
+                     and not path.startswith('files/')]
         invalid_fixtures = [
             path for path in fixture_changes
             if (path in baseline_files and path not in approved_assets)
@@ -207,7 +251,7 @@ class ReaderPunctuationTests(unittest.TestCase):
                 stylesheet = 'home-page.min.css' if relative == 'index.html' else 'style.css'
                 self.assertIn(stylesheet+'?v=20261023-reader-typography', (ROOT/relative).read_text())
         self.assertIn('home-page.min.css?v=20261023-reader-typography', (ROOT/'index.html').read_text())
-        self.assertIn('start-here.css?v=20261023-reader-typography', (ROOT/'start-here.html').read_text())
+        self.assertIn('start-here.css?v=20261024-start-simple', (ROOT/'start-here.html').read_text())
 
 
 if __name__ == '__main__':

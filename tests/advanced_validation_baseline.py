@@ -11,6 +11,8 @@ from pathlib import Path
 import re
 import subprocess
 
+from tutorial_ui_baseline import normalize_tutorial_ui
+
 ROOT = Path(__file__).resolve().parents[1]
 MANIFEST_PATH = ROOT / "tests/fixtures/advanced-validation-edits.json"
 PUBLISHED_BASELINE = "d581217c96a8100d42ab919e1e26816cdcf1a7bb"
@@ -102,6 +104,8 @@ def is_approved_workflow(relative_path, data):
 
 
 def _restore_registered_page(relative_path, data, entry, original):
+    data = normalize_tutorial_ui(relative_path, data.decode("utf-8")).encode("utf-8")
+    original = normalize_tutorial_ui(relative_path, original.decode("utf-8")).encode("utf-8")
     """Restore one manifest-pinned PR14 body/date and optional exact disclosure."""
     old_articles = list(ARTICLE.finditer(original))
     current_articles = list(ARTICLE.finditer(data))
@@ -172,6 +176,10 @@ def normalize_advanced_validation_edit(relative_path, data):
 
 def normalize_advanced_validation_if_allowed(relative_path, text):
     """Apply PR14 restoration when registered; otherwise preserve input unchanged."""
+    if isinstance(text, bytes):
+        text = normalize_tutorial_ui(relative_path, text.decode("utf-8")).encode("utf-8")
+    else:
+        text = normalize_tutorial_ui(relative_path, text)
     if relative_path not in allowed_article_paths():
         return text
     if isinstance(text, str):

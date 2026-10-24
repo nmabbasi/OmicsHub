@@ -9,6 +9,8 @@ from pathlib import Path
 import re
 import subprocess
 
+from tutorial_ui_baseline import normalize_tutorial_ui
+
 ROOT = Path(__file__).resolve().parents[1]
 PUBLISHED_PR10 = "d1748a93e9fb9a59ec20ee3ab7aabece9c0ae1f8"
 TIDYVERSE_SETUP_ARTICLE = "tutorials/r-tidyverse-fundamentals.html"
@@ -35,10 +37,11 @@ def published_tidyverse_page():
 
 def normalize_tidyverse_setup_revision(relative_path, text):
     """Restore only the approved article/date deltas for historical comparisons."""
+    text = normalize_tutorial_ui(relative_path, text)
     if relative_path != TIDYVERSE_SETUP_ARTICLE:
         return text
 
-    published = published_tidyverse_page()
+    published = normalize_tutorial_ui(relative_path, published_tidyverse_page())
     published_articles = list(_ARTICLE.finditer(published))
     if len(published_articles) != 1:
         raise AssertionError("expected one PR10 tidyverse article")

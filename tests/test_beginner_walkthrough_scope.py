@@ -31,6 +31,17 @@ from resource_content_baseline import (
     normalize_resource_content,
     published_bytes as resource_published_bytes,
 )
+from tutorial_ui_baseline import (
+    TUTORIAL_UI_PATHS,
+    normalize_tutorial_ui,
+    verify_tutorial_ui_file,
+)
+from start_here_baseline import (
+    START_HERE_ASSET_PATHS,
+    normalize_start_here,
+    normalize_start_here_asset,
+    pre_review_bytes,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = re.compile(r"<script\b[^>]*>.*?</script\s*>", re.S | re.I)
@@ -97,8 +108,10 @@ class BeginnerWalkthroughScopeTests(unittest.TestCase):
             original_bytes = git_bytes(relative)
             self.assertIsNotNone(original_bytes, relative)
             current = (ROOT / relative).read_text(encoding="utf-8")
-            current = normalize_resource_content(relative, current.encode("utf-8")).decode("utf-8")
-            original = original_bytes.decode("utf-8")
+            current = normalize_tutorial_ui(
+                relative, normalize_resource_content(relative, current.encode("utf-8")).decode("utf-8")
+            )
+            original = normalize_tutorial_ui(relative, original_bytes.decode("utf-8"))
             with self.subTest(page=relative):
                 self.assertEqual(
                     normalize_beginner_walkthrough_revision(relative, current), original,
@@ -126,16 +139,19 @@ class BeginnerWalkthroughScopeTests(unittest.TestCase):
             relative = page.relative_to(ROOT).as_posix()
             old_bytes = git_bytes(relative)
             self.assertIsNotNone(old_bytes, relative)
-            current = normalize_resource_content(relative, page.read_bytes()).decode("utf-8")
+            current = normalize_tutorial_ui(
+                relative, normalize_resource_content(relative, page.read_bytes()).decode("utf-8")
+            )
+            old_text = normalize_tutorial_ui(relative, old_bytes.decode("utf-8"))
             with self.subTest(page=relative):
                 # Compare scripts before any article restoration; scripts added
                 # within an authorized article must not be hidden by its body allowance.
                 self.assertEqual(
                     executable_scripts(current),
-                    executable_scripts(old_bytes.decode("utf-8")),
+                    executable_scripts(old_text),
                 )
                 current_jsonld = jsonld_scripts(current)
-                old_jsonld = jsonld_scripts(old_bytes.decode("utf-8"))
+                old_jsonld = jsonld_scripts(old_text)
                 if (relative in BEGINNER_WALKTHROUGH_ARTICLES or relative == TIDYVERSE_SETUP_ARTICLE
                         or relative in remaining_validation_paths() or relative in advanced_validation_paths()):
                     current_jsonld = [normalize_jsonld_date(block) for block in current_jsonld]
@@ -148,11 +164,30 @@ class BeginnerWalkthroughScopeTests(unittest.TestCase):
             if relative.startswith("tests/") or relative == "sitemap.xml":
                 continue
             current_path = ROOT / relative
+            if relative in TUTORIAL_UI_PATHS:
+                self.assertTrue(current_path.is_file(), relative)
+                verify_tutorial_ui_file(relative, current_path.read_bytes())
+                continue
+            if relative in START_HERE_ASSET_PATHS:
+                self.assertTrue(current_path.is_file(), relative)
+                restored = normalize_start_here_asset(relative, current_path.read_bytes())
+                if relative == "start-here.js":
+                    self.assertIsNone(restored, "new JS is allowed only after its full hash verifies")
+                else:
+                    self.assertEqual(restored, pre_review_bytes(relative))
+                continue
             if current_path.is_file() and is_approved_workflow(relative, current_path.read_bytes()):
                 continue
             old_bytes = git_bytes(relative)
-            current_bytes = normalize_resource_content(relative, current_path.read_bytes())
-            current_text = current_bytes.decode("utf-8")
+            if relative == "start-here.html":
+                if old_bytes is not None:
+                    old_bytes = normalize_start_here(relative, old_bytes.decode("utf-8")).encode("utf-8")
+                current_raw = normalize_start_here(relative, current_path.read_bytes().decode("utf-8")).encode("utf-8")
+            else:
+                current_raw = current_path.read_bytes()
+            current_bytes = normalize_resource_content(relative, current_raw)
+            current_text = normalize_tutorial_ui(relative, current_bytes.decode("utf-8"))
+            old_text = normalize_tutorial_ui(relative, old_bytes.decode("utf-8")) if old_bytes else None
             with self.subTest(path=relative):
                 self.assertIsNotNone(old_bytes, "new source/assets outside tests are forbidden")
                 self.assertTrue(current_path.is_file(), "deleting published files is forbidden")
@@ -161,7 +196,7 @@ class BeginnerWalkthroughScopeTests(unittest.TestCase):
                         normalize_beginner_walkthrough_revision(
                             relative, current_text
                         ),
-                        old_bytes.decode("utf-8"),
+                        old_text,
                         "target page changes must be confined to its article body/date",
                     )
                 elif relative == TIDYVERSE_SETUP_ARTICLE:
@@ -182,7 +217,7 @@ class BeginnerWalkthroughScopeTests(unittest.TestCase):
                         normalize_remaining_validation_edit(
                             relative, current_text
                         ),
-                        old_bytes.decode("utf-8"),
+                        old_text,
                         "the manifest-pinned body and exact dates are the only additional approved deltas",
                     )
                 elif relative in advanced_validation_paths():
@@ -205,7 +240,7 @@ class BeginnerWalkthroughScopeTests(unittest.TestCase):
                     # Exact authorized source is pinned by test_analytics_source_scope.py.
                 else:
                     self.assertEqual(
-                        current_path.read_bytes(), old_bytes,
+                        current_text, old_text,
                         "non-target pages, old assets, CSS, navigation, and site scripts are immutable",
                     )
 

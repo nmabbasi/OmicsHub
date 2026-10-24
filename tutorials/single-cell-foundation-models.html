@@ -21,7 +21,7 @@
 <meta content="https://theomicshub.com/images/foundation-models.webp" name="twitter:image"/>
 <title>Evaluating External scGPT &amp; Geneformer Embeddings | The Omics Hub</title><link href="../images/favicon.svg" rel="icon" type="image/svg+xml"/>
 <link href="../tailwind.min.css" rel="stylesheet"/>
-<link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet"/>
+
 <link href="../style.css?v=20261023-reader-typography" rel="stylesheet"/>
 <script src="../analytics.js"></script>
 <script>
@@ -76,7 +76,9 @@ gtag('consent', 'default', {
     "url": "https://theomicshub.com/"
   },
   "inLanguage": "en"
-}</script><link href="../tutorial-library.css" rel="stylesheet"/></head>
+}</script><link href="../tutorial-library.css" rel="stylesheet"/><link href="../tutorial-reader.css?v=20261024-reader-ui-v3" rel="stylesheet"/>
+<link href="../tutorial-navigation.css?v=20261024-reader-ui-v3" rel="stylesheet"/><link href="../back-to-top.css?v=20261024-reader-ui-v3" rel="stylesheet"/>
+</head>
 <body class="bg-white text-gray-900">
 <script>
 function toggleMobileMenu() {
@@ -159,7 +161,7 @@ function toggleMobileMenu() {
 <div class="mb-12 rounded-2xl overflow-hidden shadow-lg border border-gray-100">
 <img alt="Evaluating scGPT and Geneformer embeddings" class="w-full aspect-video object-cover" decoding="async" loading="eager" src="../images/foundation-models.webp" width="1920" height="1920"/>
 </div>
-<nav aria-label="Learning path navigation" class="reader-toolbar"><a href="cell-type-annotation-methods.html" rel="prev">← Prerequisite: Choosing and Checking Cell-Type Annotation Methods</a><a data-catalogue-return="" href="../tutorials.html">All tutorials</a><a href="ai-prompt-engineering-seurat.html" rel="next">Explore: Prompt Engineering for Seurat and Scanpy: A Reproducible Workflow</a></nav>
+<nav aria-label="Learning path navigation" class="reader-toolbar"><a href="cell-type-annotation-methods.html" rel="prev" class="reader-toolbar__previous"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5m0 0 7 7m-7-7 7-7"/></svg><span class="reader-toolbar__copy"><small>Previous prerequisite</small><strong>Choosing and Checking Cell-Type Annotation Methods</strong></span></a><a data-catalogue-return="" href="../tutorials.html" class="reader-toolbar__library"><span class="reader-toolbar__library-mark" aria-hidden="true">▤</span><span><small>Browse</small><strong>All tutorials</strong></span></a><a href="ai-prompt-engineering-seurat.html" rel="next" class="reader-toolbar__next"><span class="reader-toolbar__copy"><small>Suggested next</small><strong>Prompt Engineering for Seurat and Scanpy: A Reproducible Workflow</strong></span><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14m0 0-7-7m7 7-7 7"/></svg></a></nav>
 <article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--lab">
 <div class="rounded-xl border border-amber-300 bg-amber-50 p-5 mb-8"><strong>Scope and tested boundary.</strong> This lesson evaluates <em>precomputed</em> cell embedding exports; it does not load scGPT/Geneformer weights, run inference, generate embeddings, or infer regulatory networks. The scoring code below is executable offline, but no pretrained model output or biological accuracy claim is supplied. All teaching fixtures are explicitly synthetic.</div>
 <p class="lesson-lead">This is an evaluator for externally generated scGPT or Geneformer embedding exports, not a model-inference tutorial. First, run the deliberately synthetic fixture to check the evaluator and its input contract; then, if you have compatible real exports, evaluate donor-held-out cell-label retrieval. The model-specific sections document the separate upstream handoff and provenance to verify; no pretrained model output is supplied.</p>
@@ -223,17 +225,21 @@ python3 foundation_embedding_workflow.py \
 <h2 id="caveats">Limitations and official sources</h2><p>This is supervised nearest-neighbor label transfer using labeled reference cells, not zero-shot prediction. Donor exclusion limits a common leakage route but cannot remove confounding when labels align with site, protocol, or disease cohort. A single donor-level split is not a population-level uncertainty estimate. Report cohort composition, per-class support, donor/site performance, baselines, preprocessing, chosen k, and independent replication. No test accuracy is asserted by this tutorial.</p><p>Embedding similarity is not a gene-regulatory network, causal edge, differential expression result, or mechanistic claim. Network inference requires separate methods and evidence; no GRN is produced here.</p><ul><li><a href="https://github.com/bowang-lab/scGPT">Official scGPT repository</a>: model zoo, checkpoints/vocabulary and tutorials.</li><li><a href="https://github.com/bowang-lab/scGPT/blob/main/tutorials/Tutorial_Reference_Mapping.ipynb">Official scGPT reference mapping notebook</a>.</li><li><a href="https://geneformer.readthedocs.io/en/latest/getstarted.html">Official Geneformer getting started docs</a>.</li><li><a href="https://huggingface.co/ctheodoris/Geneformer/tree/main/examples">Official Geneformer examples on Hugging Face</a>: tokenization and cell embedding examples.</li></ul>
 <aside aria-labelledby="tutorial-feedback-title" class="lesson-feedback" id="tutorial-feedback"><h2 id="tutorial-feedback-title">Help improve this tutorial</h2><p>Found an error, a broken link, or a step that needs a clearer explanation? Please <a href="../contact.html">contact me</a>. Your feedback helps me keep this resource accurate and useful.</p></aside></article>
 <nav aria-label="Learning path continuation" class="reader-sequence" id="reader-course-navigation">
-<h2>Choose a relevant next step</h2>
-<p class="reader-sequence-position"><strong>Learning route:</strong> Single-cell · advanced model evaluation. Suggested links are not a completion tracker or a required linear course.</p>
-<div class="reader-sequence-grid">
-<a href="cell-type-annotation-methods.html" rel="prev" class="reader-path-card"><small>Relevant prerequisite / back to path</small><strong>← Choosing and Checking Cell-Type Annotation Methods</strong></a>
-<a data-catalogue-return="" href="../tutorials.html"><small>Tutorial library</small><strong>All tutorials</strong></a>
-<a href="ai-prompt-engineering-seurat.html" rel="next" class="reader-path-card"><small>Suggested next step</small><strong>Prompt Engineering for Seurat and Scanpy: A Reproducible Workflow</strong><span>Optional: review prompting with external models and its reproducibility limits.</span></a>
-</div></nav>
+<div class="reader-sequence-heading"><h2>Keep exploring</h2>
+<p class="reader-sequence-position"><span class="reader-sequence-route-label">Learning route</span><strong>Single-cell · advanced model evaluation</strong></p></div>
+<div class="reader-sequence-grid reader-sequence-grid--single">
+<a href="ai-prompt-engineering-seurat.html" rel="next" class="reader-path-card reader-path-card--suggested"><span class="reader-path-card__copy"><span class="reader-path-card__eyebrow">Suggested next step</span><strong class="reader-path-card__title">Prompt Engineering for Seurat and Scanpy: A Reproducible Workflow</strong><span class="reader-path-card__reason">Optional: review prompting with external models and its reproducibility limits.</span></span><span class="reader-path-card__arrow"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14m0 0-7-7m7 7-7 7"/></svg></span></a>
+</div><div class="reader-sequence-utilities">
+<a href="cell-type-annotation-methods.html" rel="prev" class="reader-path-card reader-path-card--previous"><span class="reader-path-card__copy"><span class="reader-path-card__eyebrow">Previous prerequisite</span><strong class="reader-path-card__title">Choosing and Checking Cell-Type Annotation Methods</strong></span><span class="reader-path-card__arrow"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5m0 0 7 7m-7-7 7-7"/></svg></span></a>
+<a data-catalogue-return="" href="../tutorials.html" class="reader-path-card reader-path-card--library"><span class="reader-path-card__copy"><span class="reader-path-card__eyebrow">Browse the collection</span><strong class="reader-path-card__title">All tutorials</strong></span><span class="reader-path-card__arrow" aria-hidden="true">▤</span></a>
+</div><div class="reader-sequence-footer"><p class="reader-sequence-note">Suggested links are not a completion tracker or a required linear course.</p></div></nav>
 </div></div></div>
 </div>
 <script>window.STATIC_RENDERED = true; window.PRELOADED_TUTORIAL_ID = "single-cell-foundation-models";</script>
 </main>
+<!-- Tutorial top link -->
+<div class="reader-tools tutorial-top-tools"><a id="back-to-top" href="#tutorial-title" aria-label="Back to top"><span class="tutorial-top-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5m-6 6 6-6 6 6"/></svg></span><span>Back to top<small>Evaluating External scGPT &amp; Geneformer Embeddings</small></span></a></div>
+<!-- /Tutorial top link -->
 <footer class="bg-gray-900 text-white mt-16">
 <div class="container mx-auto px-6 py-12">
 <div class="footer-grid gap-8 mb-8">
@@ -291,13 +297,12 @@ python3 foundation_embedding_workflow.py \
 </div>
 </div>
 </footer>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
-<script src="../script.js?v=20261022-reader-review"></script>
-<script src="../code-tabs.js"></script>
-<script src="../copy-code.js?v=20261022-reader-review"></script>
-<script src="../subscribe-fab.js?v=20261022-reader-review"></script>
+<script src="../script.js?v=20261024-reader-ui-v3"></script>
+<script src="../assets/vendor/prism/prism-1.29.0.js"></script>
+<script src="../tutorial-code-data.js?v=20261024-reader-ui-v3"></script>
+<script src="../code-tabs.js?v=20261024-reader-ui-v3"></script>
+<script src="../copy-code.js?v=20261024-reader-ui-v3"></script>
+<script src="../subscribe-fab.js?v=20261024-reader-ui-v3"></script>
 <!-- Cookie Consent Banner -->
 <div class="fixed bottom-0 inset-x-0 z-[9999] transition-transform duration-500" id="cookie-consent-banner" style="font-family:'Inter',system-ui,sans-serif;">
 <div class="mx-auto max-w-4xl px-4 pb-4 sm:px-6">

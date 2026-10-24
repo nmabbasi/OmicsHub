@@ -8,6 +8,8 @@ from pathlib import Path
 import re
 import subprocess
 
+from tutorial_ui_baseline import normalize_tutorial_ui
+
 ROOT = Path(__file__).resolve().parents[1]
 PUBLISHED_PR11 = "85937d5d76d42602c67b50003d959ff81a7c1ab1"
 TIDYVERSE_SETUP_ARTICLE = "tutorials/r-tidyverse-fundamentals.html"
@@ -36,10 +38,11 @@ def published_pr11_tidyverse_page():
 
 def normalize_ubuntu_tidyverse_revision(relative_path, text):
     """Restore only the permitted target article and date changes to PR11."""
+    text = normalize_tutorial_ui(relative_path, text)
     if relative_path != TIDYVERSE_SETUP_ARTICLE:
         return text
 
-    published = published_pr11_tidyverse_page()
+    published = normalize_tutorial_ui(relative_path, published_pr11_tidyverse_page())
     published_articles = list(_ARTICLE.finditer(published))
     current_articles = list(_ARTICLE.finditer(text))
     if len(published_articles) != 1 or len(current_articles) != 1:

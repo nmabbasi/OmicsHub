@@ -127,12 +127,13 @@ class ContentModificationDateTests(unittest.TestCase):
                 )
 
     def test_catalogue_about_and_beginner_path_dates_reflect_content_revision(self):
-        for relative_path in ("about.html", "tutorials.html", "start-here.html"):
+        for relative_path in ("about.html", "tutorials.html"):
             with self.subTest(page=relative_path):
                 self.assertEqual(
                     self.sitemap_dates[SITE + relative_path], "2026-10-23"
                 )
-        self.assertEqual(self.entity("start-here.html")["dateModified"], "2026-10-23")
+        self.assertEqual(self.sitemap_dates[SITE + "start-here.html"], TARGET_MODIFIED_DATE)
+        self.assertEqual(self.entity("start-here.html")["dateModified"], TARGET_MODIFIED_DATE)
 
     def test_consent_policy_revision_dates_match_the_sitemap(self):
         for relative_path in ("pages/privacy.html", "pages/cookie.html"):
@@ -218,7 +219,8 @@ class ContentModificationDateTests(unittest.TestCase):
             SITE + path for path, entry in resource_dates.items()
             if entry["date_modified_approved"] == TARGET_MODIFIED_DATE
         )
-        expected_updated.update({SITE + "about.html", SITE + "tutorials.html", SITE + "start-here.html"})
+        expected_updated.update({SITE + "about.html", SITE + "tutorials.html"})
+        expected_oct24.add(SITE + "start-here.html")
         expected_updated.update({SITE + "pages/privacy.html", SITE + "pages/cookie.html"})
         self.assertEqual(
             {url for url, lastmod in self.sitemap_dates.items() if lastmod == "2026-10-23"},

@@ -23,7 +23,44 @@ jobs:
         run: python3 tools/generate_legacy_redirects.py --check
       - name: Verify generated learning paths
         run: python3 tools/generate_learning_paths.py --check
+      - name: Verify fingerprinted tutorial UI assets
+        run: python3 tools/generate_tutorial_ui.py --check
+      - name: Check shared tutorial JavaScript
+        run: |
+          node --check code-tabs.js
+          node --check copy-code.js
+          node --check subscribe-fab.js
+          node --check start-here.js
+          node --check assets/vendor/prism/prism-1.29.0.js
       - name: Validate tutorial contracts and local links
         run: python3 tests/validate_tutorials.py
       - name: Run offline regression tests
         run: python3 -m unittest discover -s tests -v
+  browser-ui:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out review branch
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install browser test runtime
+        run: |
+          python3 -m pip install playwright==1.62.0
+          python3 -m playwright install --with-deps chromium
+      - name: Check all tutorial layouts and interactions
+        run: |
+          python3 -m http.server 8767 --bind 127.0.0.1 > /tmp/tutorial-ui-server.log 2>&1 &
+          for attempt in $(seq 1 30); do
+            if curl --silent --fail http://127.0.0.1:8767/tutorials.html > /dev/null; then break; fi
+            sleep 1
+          done
+          python3 tests/browser_tutorial_reader_ui.py --browser '' --output /tmp/tutorial-ui-check
+          python3 tests/browser_start_here_ui.py --browser '' --output /tmp/tutorial-ui-check
+      - name: Save UI regression evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tutorial-ui-check
+          path: /tmp/tutorial-ui-check/

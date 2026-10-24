@@ -1,0 +1,78 @@
+/* Native circle first; floating behavior is a progressive enhancement. */
+.reader-tools.tutorial-top-tools {
+  display: flex;
+  justify-content: flex-end;
+  width: min(100% - 2rem, 56rem);
+  margin: 1rem auto;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+.reader-tools.tutorial-top-tools #back-to-top {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 3.5rem;
+  height: 3.5rem;
+  min-height: 3.5rem;
+  padding: 0;
+  border: 1.5px solid #8cddcf;
+  border-radius: 50%;
+  background: #123b5d;
+  color: #fff;
+  text-decoration: none;
+  box-shadow: 0 0 0 3px #fff, 0 6px 20px rgb(11 39 65 / 20%);
+  transition: background-color 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+}
+.reader-tools.tutorial-top-tools #back-to-top::before {
+  content: "";
+  position: absolute;
+  inset: 5px;
+  border: 1px solid rgb(154 225 216 / 18%);
+  border-radius: 50%;
+  pointer-events: none;
+}
+.reader-tools.tutorial-top-tools #back-to-top:hover {
+  border-color: #b2f2e6;
+  background: #1b506b;
+  box-shadow: 0 0 0 3px #fff, 0 7px 24px rgb(11 39 65 / 26%);
+}
+.reader-tools.tutorial-top-tools #back-to-top:focus-visible {
+  outline: 3px solid #087c78;
+  outline-offset: 4px;
+  box-shadow: 0 0 0 3px #fff, 0 5px 18px rgb(11 39 65 / 18%);
+}
+.tutorial-top-icon {
+  display: grid;
+  place-items: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  color: inherit;
+}
+.tutorial-top-icon svg { display: block; width: 1.5rem; height: 1.5rem; }
+.reader-tools.tutorial-top-tools #back-to-top > span:last-child {
+  display: none;
+}
+.reader-tools.tutorial-top-tools #back-to-top small { display: none; }
+.reader-tools.tutorial-top-tools.is-floating {
+  position: fixed;
+  z-index: 40;
+  right: max(1rem, env(safe-area-inset-right));
+  bottom: calc(1rem + var(--reader-banner-space, 0px) + env(safe-area-inset-bottom));
+  width: auto;
+  margin: 0;
+}
+.reader-tools.tutorial-top-tools.is-floating[hidden] { display: none !important; }
+body:has(#reader-course-navigation .tutorial-top-tools) > footer { margin-top: 1rem; }
+@media (max-width: 639px) {
+  .reader-tools.tutorial-top-tools #back-to-top { width: 3.25rem; height: 3.25rem; min-height: 3.25rem; }
+  .reader-tools.tutorial-top-tools.is-floating { right: max(.85rem, env(safe-area-inset-right)); bottom: calc(.85rem + var(--reader-banner-space, 0px) + env(safe-area-inset-bottom)); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .reader-tools.tutorial-top-tools #back-to-top { transition: none; }
+}
+@media print {
+  .reader-tools.tutorial-top-tools { display: none !important; }
+}

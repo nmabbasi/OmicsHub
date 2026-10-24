@@ -11,6 +11,8 @@ import re
 import subprocess
 
 from advanced_validation_baseline import normalize_advanced_validation_if_allowed
+from start_here_baseline import normalize_start_here_sitemap
+from tutorial_ui_baseline import normalize_tutorial_ui
 
 ROOT = Path(__file__).resolve().parents[1]
 MANIFEST_PATH = ROOT / "tests/fixtures/remaining-validation-edits.json"
@@ -59,8 +61,11 @@ def _entry(relative_path):
 
 def restore_page_to_published(relative_path, data):
     """Restore only exact approved body/date deltas; leave wrappers byte-visible."""
+    data = normalize_tutorial_ui(relative_path, data.decode("utf-8")).encode("utf-8")
     entry = _entry(relative_path)
-    original = published_bytes(relative_path)
+    original = normalize_tutorial_ui(
+        relative_path, published_bytes(relative_path).decode("utf-8")
+    ).encode("utf-8")
     original_articles = list(ARTICLE.finditer(original))
     current_articles = list(ARTICLE.finditer(data))
     if len(original_articles) != 1 or len(current_articles) != 1:
@@ -141,4 +146,5 @@ def restore_sitemap_to_published(data):
 
 def normalize_remaining_validation_sitemap(data):
     from advanced_validation_baseline import normalize_advanced_validation_sitemap
-    return restore_sitemap_to_published(normalize_advanced_validation_sitemap(data))
+    restored = restore_sitemap_to_published(normalize_advanced_validation_sitemap(data))
+    return normalize_start_here_sitemap(restored)

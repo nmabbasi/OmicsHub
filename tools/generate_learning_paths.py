@@ -135,61 +135,109 @@ def render_link(target: str, label: str, rel: str | None = None, extra_class: st
     return f'<a href="{href}"{rel_attr}{class_attr}>{safe_label}</a>'
 
 
+def arrow_icon(direction: str) -> str:
+    """A decorative directional cue that never replaces the link's text label."""
+    paths = {
+        "left": '<path d="M19 12H5m0 0 7 7m-7-7 7-7"/>',
+        "right": '<path d="M5 12h14m0 0-7-7m7 7-7 7"/>',
+        "down": '<path d="M12 5v14m0 0 7-7m-7 7-7-7"/>',
+    }
+    if direction not in paths:
+        raise ValueError(f"Unsupported arrow direction: {direction}")
+    return ('<svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" '
+            'fill="none" stroke="currentColor" stroke-width="1.8" '
+            'stroke-linecap="round" stroke-linejoin="round">' + paths[direction] + '</svg>')
+
+
 def render_card(target: str, small: str, strong: str, reason: str | None = None,
-                rel: str | None = None) -> str:
+                rel: str | None = None, variant: str = "suggested",
+                direction: str = "right") -> str:
     """Render only trusted fixed markup; escape all manifest/title text and attributes."""
     href = html.escape(href_for(target), quote=True)
     rel_attr = f' rel="{html.escape(rel, quote=True)}"' if rel else ""
-    body = (f'<small>{html.escape(small, quote=False)}</small>'
-            f'<strong>{html.escape(strong, quote=False)}</strong>')
+    body = (f'<span class="reader-path-card__eyebrow">{html.escape(small, quote=False)}</span>'
+            f'<strong class="reader-path-card__title">{html.escape(strong, quote=False)}</strong>')
     if reason:
-        body += f'<span>{html.escape(reason, quote=False)}</span>'
-    return f'<a href="{href}"{rel_attr} class="reader-path-card">{body}</a>'
+        body += f'<span class="reader-path-card__reason">{html.escape(reason, quote=False)}</span>'
+    return (f'<a href="{href}"{rel_attr} class="reader-path-card reader-path-card--{variant}">'
+            f'<span class="reader-path-card__copy">{body}</span>'
+            f'<span class="reader-path-card__arrow">{arrow_icon(direction)}</span></a>')
 
 
 def render_toolbar(key: str, item: dict, manifest: dict, facts: dict[str, PageFacts]) -> str:
     previous = item.get("previous")
     if previous:
         label = target_label(previous, manifest, facts)
-        if previous.startswith("@"):
-            prev_link = render_link(previous, "← " + label)
-        else:
-            prev_link = render_link(previous, "← Prerequisite: " + label, "prev")
+        is_route = previous.startswith("@")
+        rel_attr = "" if is_route else ' rel="prev"'
+        eyebrow = "Previous path choice" if is_route else "Previous prerequisite"
+        prev_link = (f'<a href="{html.escape(href_for(previous), quote=True)}"{rel_attr} '
+                     'class="reader-toolbar__previous">' + arrow_icon("left")
+                     + '<span class="reader-toolbar__copy">'
+                     + f'<small>{eyebrow}</small><strong>{html.escape(label, quote=False)}</strong>'
+                     + '</span></a>')
     else:
-        prev_link = render_link("@sh-routes", "← Choose a learning path")
+        prev_link = (f'<a href="{html.escape(href_for("@sh-routes"), quote=True)}" '
+                     'class="reader-toolbar__previous">' + arrow_icon("left")
+                     + '<span class="reader-toolbar__copy"><small>Start here</small>'
+                     '<strong>Choose a learning path</strong></span></a>')
     next_edges = item.get("next", [])
     if len(next_edges) > 1:
-        next_links = '<a href="#reader-course-navigation">Choose a next step ↓</a>'
+        next_links = ('<a href="#reader-course-navigation" class="reader-toolbar__next">'
+                      '<span class="reader-toolbar__copy"><small>Several directions</small>'
+                      '<strong>Choose a next step</strong></span>' + arrow_icon("down") + '</a>')
     elif next_edges:
         edge = next_edges[0]
         target = edge["target"]
-        label = edge.get("label") or ("Explore: " + target_label(target, manifest, facts))
-        next_links = render_link(target, label, "next")
+        label = edge.get("label") or target_label(target, manifest, facts)
+        next_links = (f'<a href="{html.escape(href_for(target), quote=True)}" rel="next" '
+                      'class="reader-toolbar__next"><span class="reader-toolbar__copy">'
+                      '<small>Suggested next</small>'
+                      f'<strong>{html.escape(label, quote=False)}</strong></span>'
+                      + arrow_icon("right") + '</a>')
     else:
-        next_links = render_link("@sh-routes", "Choose another path →")
+        next_links = (f'<a href="{html.escape(href_for("@sh-routes"), quote=True)}" '
+                      'class="reader-toolbar__next"><span class="reader-toolbar__copy">'
+                      '<small>Keep exploring</small><strong>Choose another path</strong></span>'
+                      + arrow_icon("right") + '</a>')
     return ('<nav aria-label="Learning path navigation" class="reader-toolbar">'
-            + prev_link + '<a data-catalogue-return="" href="../tutorials.html">All tutorials</a>'
+            + prev_link + '<a data-catalogue-return="" href="../tutorials.html" class="reader-toolbar__library">'
+            '<span class="reader-toolbar__library-mark" aria-hidden="true">▤</span>'
+            '<span><small>Browse</small><strong>All tutorials</strong></span></a>'
             + next_links + '</nav>')
 
 
 def render_continuation(key: str, item: dict, manifest: dict, facts: dict[str, PageFacts]) -> str:
     route = html.escape(item["route"], quote=False)
+    next_edges = item.get("next", [])
+    grid_class = "reader-sequence-grid reader-sequence-grid--single" if len(next_edges) <= 1 else "reader-sequence-grid"
     sequence = [f'<nav aria-label="Learning path continuation" class="reader-sequence" id="reader-course-navigation">',
-                '<h2>Choose a relevant next step</h2>',
-                f'<p class="reader-sequence-position"><strong>Learning route:</strong> {route}. Suggested links are not a completion tracker or a required linear course.</p>',
-                '<div class="reader-sequence-grid">']
-    previous = item.get("previous")
-    if previous:
-        label = "← " + target_label(previous, manifest, facts)
-        sequence.append(render_card(previous, "Relevant prerequisite / back to path", label, rel="prev"))
-    else:
-        sequence.append(render_card("@sh-routes", "Start Here", "Choose a learning path"))
-    sequence.append('<a data-catalogue-return="" href="../tutorials.html"><small>Tutorial library</small><strong>All tutorials</strong></a>')
-    for edge in item.get("next", []):
+                '<div class="reader-sequence-heading"><h2>Keep exploring</h2>',
+                f'<p class="reader-sequence-position"><span class="reader-sequence-route-label">Learning route</span><strong>{route}</strong></p></div>',
+                f'<div class="{grid_class}">']
+    for edge in next_edges:
         target = edge["target"]
         label = target_label(target, manifest, facts, edge.get("label"))
-        sequence.append(render_card(target, "Suggested next step", label, edge["reason"], "next"))
-    sequence.append('</div></nav>')
+        sequence.append(render_card(target, "Suggested next step", label, edge["reason"],
+                                    "next", "suggested", "right"))
+    sequence.append('</div><div class="reader-sequence-utilities">')
+    previous = item.get("previous")
+    if previous:
+        label = target_label(previous, manifest, facts)
+        eyebrow = "Back to path" if previous.startswith("@") else "Previous prerequisite"
+        sequence.append(render_card(previous, eyebrow, label,
+                                    rel=None if previous.startswith("@") else "prev",
+                                    variant="previous", direction="left"))
+    else:
+        sequence.append(render_card("@sh-routes", "Start here", "Choose a learning path",
+                                    variant="previous", direction="left"))
+    sequence.append('<a data-catalogue-return="" href="../tutorials.html" class="reader-path-card reader-path-card--library">'
+                    '<span class="reader-path-card__copy"><span class="reader-path-card__eyebrow">Browse the collection</span>'
+                    '<strong class="reader-path-card__title">All tutorials</strong></span>'
+                    '<span class="reader-path-card__arrow" aria-hidden="true">▤</span></a>')
+    sequence.append('</div><div class="reader-sequence-footer">'
+                    '<p class="reader-sequence-note">Suggested links are not a completion tracker or a required linear course.</p>'
+                    '</div></nav>')
     return '\n'.join(sequence)
 
 
