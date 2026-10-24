@@ -51,9 +51,24 @@ if (identical(os, "Linux")) {
   stop(sprintf("Unsupported native runner OS for public binary install: %s", os))
 }
 
-missing <- required[!vapply(required, requireNamespace, logical(1), quietly = TRUE)]
-if (length(missing)) {
-  stop(sprintf("Required native R binaries remain unavailable: %s", paste(missing, collapse = ", ")))
+loadable <- vapply(required, function(package) {
+  tryCatch({
+    loadNamespace(package)
+    TRUE
+  }, error = function(e) {
+    cat(sprintf(
+      "PLATFORM_R_PACKAGE_LOAD_FAILURE package=%s: %s\n",
+      package, conditionMessage(e)
+    ), file = stderr())
+    FALSE
+  })
+}, logical(1))
+unavailable <- required[!loadable]
+if (length(unavailable)) {
+  stop(sprintf(
+    "Required native R packages could not be loaded: %s",
+    paste(unavailable, collapse = ", ")
+  ))
 }
 versions <- vapply(required, function(package) as.character(packageVersion(package)), character(1))
 package_json <- paste(sprintf("\"%s\":\"%s\"", names(versions), versions), collapse = ",")
