@@ -103,7 +103,9 @@ class AnnotationPreflightRevisionTests(unittest.TestCase):
             description = {"details": "Invented synthetic model adapter; not a public model"}
             @staticmethod
             def load(path):
-                self.assertEqual(path, "Immune_All_Low.pkl")
+                self.assertTrue(Path(path).is_absolute())
+                self.assertEqual(Path(path).name, "Immune_All_Low.pkl")
+                self.assertIn("/", path)
                 return FakeModel()
 
         fake_model_api = types.SimpleNamespace(Model=FakeModel)

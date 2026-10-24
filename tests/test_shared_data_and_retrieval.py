@@ -60,7 +60,9 @@ class SharedVisiumTests(unittest.TestCase):
         self.assertIn('counts_file="filtered_feature_bc_matrix.h5"', text)
         self.assertIn('filename = "filtered_feature_bc_matrix.h5"', text)
         self.assertNotIn("visium_brain_data/", text)
-        self.assertIn("Input preparation was checked", text)
+        self.assertIn("Both language branches were executed", text)
+        self.assertIn("not a complete QC workflow", text)
+        self.assertIn("Other operating systems were not tested for this spatial route", text)
 
     def test_verified_source_fingerprints_match_preparer(self):
         records = json.loads((ROOT / "files/visium-example/verified-inputs.json").read_text())

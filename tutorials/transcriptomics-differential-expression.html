@@ -73,7 +73,7 @@ gtag('consent', 'default', {
     }
   },
   "datePublished": "2026-09-13",
-  "dateModified": "2026-10-21",
+  "dateModified": "2026-10-24",
   "url": "https://theomicshub.com/tutorials/transcriptomics-differential-expression.html",
   "name": "Pseudobulk Differential Expression for scRNA-seq",
   "isPartOf": {
@@ -179,6 +179,7 @@ function toggleMobileMenu() {
 <h2>Define the sample-level input contract</h2>
 <p>Use one stable <code>sample_id</code> per independent biological sample, not a cell barcode, sequencing lane, or arbitrary group label. Each sample must map to exactly one condition in this simple unpaired example. If the same subject contributes multiple conditions or time points, preserve the subject identifier and use an appropriate paired/repeated-measures design rather than this simple <code>~ condition</code> model. The subset below uses the metadata column directly, not active Seurat identities.</p>
 <p>Replace the example field names and cell-type label with those in your object. Output directories are created beneath the current working directory; use paths you control. Start R in the project directory where you want outputs, set the object path to a real local RDS file, then run the code blocks in order. Check versions in that same R session with <code>R.version.string</code>, <code>packageVersion("Seurat")</code>, and <code>packageVersion("DESeq2")</code>; record them with the analysis rather than assuming the example versions match your installation.</p>
+<p><strong>Tested software check:</strong> the template completed on Ubuntu with R 4.3.3, Seurat 5.0.1 and DESeq2 1.42.1, using 5,294 public CD4 T cells from <a href="https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE96583">Kang et al., GSE96583</a>. The check selected eight genuine donors, four per condition, with only one condition retained per donor; path and contrast labels were changed to the actual control/IFN inputs. Count sums, original sample IDs, sample-sheet alignment, DE outputs and all three white-background figures passed. The original experiment is paired: this deliberately disjoint subset checks the unpaired software route, not the full study. Do not discard matched samples merely to fit this formula. No CTCL conclusion, biological validation or other-platform pseudobulk execution is claimed.</p>
 <h2>Aggregate raw counts within the chosen cell type</h2>
 <pre><code class="language-r">library(Seurat)
 library(DESeq2)
@@ -189,7 +190,7 @@ library(readr)
 
 seurat_obj &lt;- readRDS("/data/seurat_objects/pbmc_processed.rds")
 if (!inherits(seurat_obj, "Seurat")) stop("Input RDS must contain a Seurat object")
-if (!"RNA" %in% Assays(seurat_obj)) stop("Input object must contain an RNA assay")
+if (!"RNA" %in% SeuratObject::Assays(seurat_obj)) stop("Input object must contain an RNA assay")
 meta &lt;- seurat_obj[[]]
 required &lt;- c("sample_id", "condition", "cell_type")
 if (!all(required %in% colnames(meta))) {
@@ -218,13 +219,22 @@ if (any(condition_per_sample != 1L)) {
   stop("Each sample_id must map to exactly one condition in this example")
 }
 
-# Seurat sums RNA counts per sample; it returns a list of assay matrices.
+# Temporary codes prevent Seurat from rewriting underscores or numeric IDs.
+# They preserve the same biological samples; they are not new replicates.
+sample_ids &lt;- unique(as.character(meta_ct$sample_id))
+if (any(!nzchar(trimws(sample_ids)))) stop("sample_id must contain non-empty biological sample IDs")
+aggregation_codes &lt;- paste0("sample", seq_along(sample_ids))
+obj_ct$pseudobulk_group &lt;- aggregation_codes[match(as.character(meta_ct$sample_id), sample_ids)]
+
+# Seurat sums raw counts within each biological sample.
 pb &lt;- AggregateExpression(
-  obj_ct, assays = "RNA", group.by = "sample_id", return.seurat = FALSE
+  obj_ct, assays = "RNA", group.by = "pseudobulk_group", return.seurat = FALSE
 )$RNA
-if (!setequal(colnames(pb), unique(as.character(meta_ct$sample_id)))) {
-  stop("Aggregated columns do not match the expected sample IDs; inspect Seurat output")
+if (!setequal(colnames(pb), aggregation_codes)) {
+  stop("Aggregated columns do not match the expected temporary sample codes")
 }
+# Restore the original IDs before aligning the sample sheet or writing counts.
+colnames(pb) &lt;- sample_ids[match(colnames(pb), aggregation_codes)]
 # Make the column order explicit and align sample metadata to it.
 coldata &lt;- meta_ct[!duplicated(meta_ct$sample_id), c("sample_id", "condition"), drop = FALSE]
 coldata &lt;- coldata[match(colnames(pb), as.character(coldata$sample_id)), , drop = FALSE]
@@ -240,6 +250,7 @@ write_csv(as.data.frame(pb) %&gt;% rownames_to_column("gene"),
 write_csv(coldata %&gt;% rownames_to_column("sample"),
           "output/pseudobulk/sample_metadata.csv")</code></pre>
 <p class="lesson-checkpoint"><strong>Check before modeling:</strong> each count-matrix column must be one biological sample, and its condition in <code>coldata</code> must be the matching sample-level label. Confirm the assay really contains raw counts. If the conditions are confounded with batch or another covariate, the condition effect cannot be separated from it by adding a formula term alone.</p>
+<p>Seurat can rewrite grouping labels containing underscores or beginning with numbers. The temporary codes above avoid changing or merging those original sample IDs; the code restores the real IDs before sample-metadata alignment. Never use renamed groups as an excuse to split one donor into artificial replicates.</p>
 <h2>Fit DESeq2 and make the contrast explicit</h2>
 <p>The code below is for two independent conditions and unpaired samples. It uses a simple count prefilter as an example (not a universal cutoff) and leaves DESeq2's result filtering in place. Choose design terms from the study design before looking at outcomes. Do not put both condition and a perfectly confounded batch term into a model and expect it to identify their separate effects.</p>
 <pre><code class="language-r"># Illustrative low-count prefilter; review for your cohort and design.
@@ -273,7 +284,7 @@ write.csv(as.data.frame(res_ordered), "output/deseq2/cd4_DE_results.csv")</code>
 pca_plot &lt;- plotPCA(vsd, intgroup = "condition") +
   ggtitle("Pseudobulk samples: variance-stabilized counts")
 dir.create("output/plots", recursive = TRUE, showWarnings = FALSE)
-ggsave("output/plots/pca.png", pca_plot, width = 6, height = 4)
+ggsave("output/plots/pca.png", pca_plot, width = 6, height = 4, bg = "white")
 
 png("output/plots/ma.png", width = 800, height = 600)
 plotMA(res, main = "CTCL vs Healthy")
@@ -286,7 +297,7 @@ volcano &lt;- ggplot(res_df, aes(log2FoldChange, neg_log10_p, color = called)) +
   geom_point(alpha = 0.6) +
   labs(title = "CTCL vs Healthy", x = "Log2 fold change", y = "-log10(p-value)") +
   theme_minimal()
-ggsave("output/plots/volcano.png", volcano, width = 6, height = 4)</code></pre>
+ggsave("output/plots/volcano.png", volcano, width = 6, height = 4, bg = "white")</code></pre>
 <p>Read the PCA alongside sample metadata and study design: a batch pattern is a prompt to investigate, not proof that a specific correction is appropriate. VST does not remove batch effects. In the volcano plot, the color marks the adjusted-p-value rule used above; it does not encode a validated effect-size cutoff.</p>
 <h2>Interpret the result without overclaiming</h2>
 <ul>

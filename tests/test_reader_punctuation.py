@@ -14,6 +14,12 @@ from remaining_validation_baseline import (
     allowed_paths as remaining_validation_paths,
     normalize_remaining_validation_edit,
 )
+from advanced_validation_baseline import (
+    allowed_asset_paths as advanced_asset_paths,
+    normalize_advanced_validation_asset,
+    normalize_advanced_validation_if_allowed,
+    published_bytes as advanced_published_bytes,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 BASE = 'c030bc62bf6e4a4ad21f9ff64cb630c152157692'
@@ -77,7 +83,11 @@ class ReaderPunctuationTests(unittest.TestCase):
                 for pair in self.manifest['stylesheet_versions']:
                     expected = expected.replace(pair['before'], pair['after'])
                 expected = normalize_beginner_walkthrough_revision(relative, expected)
-                current = normalize_beginner_walkthrough_revision(relative, (ROOT/relative).read_text())
+                current = normalize_beginner_walkthrough_revision(
+                    relative, normalize_advanced_validation_if_allowed(
+                        relative, (ROOT/relative).read_text()
+                    )
+                )
                 expected = normalize_six_lesson_revision(relative, expected)
                 current = normalize_six_lesson_revision(relative, current)
                 expected = normalize_tidyverse_setup_revision(relative, expected)
@@ -90,7 +100,11 @@ class ReaderPunctuationTests(unittest.TestCase):
         patterns = [r'<pre\b[^>]*>.*?</pre>', r'<code\b[^>]*>.*?</code>']
         for relative, before in self.old.items():
             before = normalize_beginner_walkthrough_revision(relative, before)
-            after = normalize_beginner_walkthrough_revision(relative, (ROOT/relative).read_text())
+            after = normalize_beginner_walkthrough_revision(
+                relative, normalize_advanced_validation_if_allowed(
+                    relative, (ROOT/relative).read_text()
+                )
+            )
             before = normalize_six_lesson_revision(relative, before)
             after = normalize_six_lesson_revision(relative, after)
             before = normalize_tidyverse_setup_revision(relative, before)
@@ -117,9 +131,13 @@ class ReaderPunctuationTests(unittest.TestCase):
 
     def test_links_anchor_ids_and_modification_metadata_are_unchanged(self):
         for relative, before in self.old.items():
-            with self.subTest(path=relative):
+            with self.subTest(page=relative):
                 before = normalize_beginner_walkthrough_revision(relative, before)
-                after = normalize_beginner_walkthrough_revision(relative, (ROOT/relative).read_text())
+                after = normalize_beginner_walkthrough_revision(
+                    relative, normalize_advanced_validation_if_allowed(
+                        relative, (ROOT/relative).read_text()
+                    )
+                )
                 before = normalize_six_lesson_revision(relative, before)
                 after = normalize_six_lesson_revision(relative, after)
                 before = normalize_tidyverse_setup_revision(relative, before)
@@ -149,12 +167,25 @@ class ReaderPunctuationTests(unittest.TestCase):
             'files/annotation-preflight-lesson/', 'files/coding-assistant-lesson/',
         )
         fixture_changes = [path for path in changed if path.startswith('files/')]
+        approved_assets = advanced_asset_paths()
+        for relative in fixture_changes:
+            if relative in approved_assets:
+                self.assertEqual(
+                    normalize_advanced_validation_asset(
+                        relative, (ROOT / relative).read_bytes()
+                    ),
+                    advanced_published_bytes(relative),
+                    'the exact approved asset path must retain its manifest-pinned full bytes',
+                )
         # This consent repair authorizes one production script and its exact runtime fixture.
         reviewed_scripts = {'analytics.js', 'tests/test_analytics_load_order.js'}
         forbidden = [path for path in changed
                      if path not in reviewed_scripts and not path.startswith('files/')]
-        invalid_fixtures = [path for path in fixture_changes
-                            if path in baseline_files or not path.startswith(allowed_prefixes)]
+        invalid_fixtures = [
+            path for path in fixture_changes
+            if (path in baseline_files and path not in approved_assets)
+            or (not path.startswith(allowed_prefixes) and path not in approved_assets)
+        ]
         self.assertEqual(forbidden, [], 'Reader-copy edits must not modify images, research examples or site scripts')
         self.assertEqual(invalid_fixtures, [], 'Only new files in the six approved teaching-fixture folders are permitted')
 

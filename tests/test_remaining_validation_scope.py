@@ -14,7 +14,14 @@ from remaining_validation_baseline import (
     normalize_remaining_validation_sitemap,
     published_bytes,
 )
-from advanced_validation_baseline import is_approved_workflow
+from advanced_validation_baseline import (
+    allowed_asset_paths as advanced_asset_paths,
+    allowed_article_paths as advanced_validation_paths,
+    is_approved_workflow,
+    normalize_advanced_validation_asset,
+    normalize_advanced_validation_if_allowed,
+    published_bytes as advanced_published_bytes,
+)
 
 QC_PATH = "tutorials/quality-control-fundamentals.html"
 REVISED_TUTORIALS = frozenset({
@@ -86,7 +93,9 @@ class RemainingValidationScopeTests(unittest.TestCase):
                 original = result.stdout
             with self.subTest(path=relative):
                 self.assertTrue(
-                    relative in manifest_paths or relative == "sitemap.xml",
+                    relative in manifest_paths or relative in advanced_validation_paths()
+                    or relative in advanced_asset_paths()
+                    or relative == "sitemap.xml",
                     "public changes outside the explicit article/date allowlist are forbidden",
                 )
                 self.assertIsNotNone(original, "new public files and assets are forbidden")
@@ -98,6 +107,17 @@ class RemainingValidationScopeTests(unittest.TestCase):
                     ).encode("utf-8")
                 elif relative == "sitemap.xml":
                     current = normalize_remaining_validation_sitemap(current)
+                elif relative in advanced_validation_paths():
+                    current = normalize_advanced_validation_if_allowed(
+                        relative, current.decode("utf-8")
+                    ).encode("utf-8")
+                    self.assertEqual(
+                        current, advanced_published_bytes(relative),
+                        "only the exact manifest-pinned PR14 article edit may differ",
+                    )
+                    continue
+                elif relative in advanced_asset_paths():
+                    current = normalize_advanced_validation_asset(relative, current)
                 self.assertEqual(current, original,
                                  "every changed public file must equal pinned main after exact restoration")
 
