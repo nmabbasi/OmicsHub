@@ -1,4 +1,4 @@
-"""Strict boundary and visual contracts for the Start Here blue-learning revision."""
+"""Strict boundary and visual contracts for the Start Here lesson-first revision."""
 from html import unescape
 from html.parser import HTMLParser
 from pathlib import Path
@@ -9,17 +9,18 @@ import unittest
 ROOT = Path(__file__).resolve().parents[1]
 PUBLISHED = "19ec34c2227b9daeb4b32764d3ad32dafb17d87a"
 LONG_FORM_BASELINE = "a4b6ead8251e0a3abcb748061a40155ae9523a82"
+CSS_VERSION = "20261025-lesson-first-v2"
 FOUNDATION = (
-    "tutorials/introduction-to-bioinformatics.html",
     "tutorials/command-line-part1.html",
     "tutorials/computer-data-fundamentals.html",
-    "tutorials/conda-mamba-part1.html",
+)
+LANGUAGE_CHOICES = (
+    "tutorials/r-tidyverse-fundamentals.html",
+    "tutorials/python-fundamentals-bioinformatics.html",
 )
 FOUNDATION_EVIDENCE = {
-    "tutorials/introduction-to-bioinformatics.html": {"question", "data", "plan"},
     "tutorials/command-line-part1.html": {"terminal", "location", "checking"},
     "tutorials/computer-data-fundamentals.html": {"project", "synthetic", "file"},
-    "tutorials/conda-mamba-part1.html": {"micromamba", "permission", "packages"},
 }
 CAUTIONS = (
     "not a required course",
@@ -130,28 +131,48 @@ class StartHereBlueLearningTests(unittest.TestCase):
     def test_only_main_and_the_named_stylesheet_version_change_in_start_here_html(self):
         old_href = start_css_href(self.old)
         new_href = start_css_href(self.source)
-        expected = self.old.replace(self.old_main, self.current_main, 1)
+        expected = self.old.replace(main(self.old), self.current_main, 1)
         expected = expected.replace(old_href, new_href, 1)
         self.assertEqual(self.source, expected)
-        self.assertRegex(new_href, r"^start-here\.css\?v=[A-Za-z0-9._-]+$")
+        self.assertEqual(new_href, f"start-here.css?v={CSS_VERSION}")
 
-    def test_four_foundation_steps_one_intro_cta_and_all_32_destinations_remain(self):
+    def test_one_intro_cta_three_ordered_steps_and_all_32_destinations_remain(self):
         hero = re.search(r'<section class="sh-hero".*?</section>', self.current_main, re.S).group()
         self.assertEqual(len(re.findall(r"<a\b", hero)), 1)
-        self.assertIn('href="tutorials/introduction-to-bioinformatics.html"', hero)
+        intro_href = 'href="tutorials/introduction-to-bioinformatics.html"'
+        self.assertIn(intro_href, hero)
+        self.assertEqual(self.current_main.count(intro_href), 1, "intro lesson is the hero CTA, not a repeated timeline item")
         self.assertIn('aria-describedby="sh-first-lesson-note"', hero)
-        self.assertIn('id="sh-first-lesson-note"', self.current_main)
+        self.assertIn('id="sh-first-lesson-note"', hero)
 
-        steps = re.search(r'<ol class="sh-steps">(.*?)</ol>', self.current_main, re.S).group(1)
-        self.assertEqual(len(re.findall(r"<li\b", steps)), 4)
-        step_links = re.findall(r'<h3><a href="([^"]+)"', steps)
-        self.assertEqual(tuple(step_links), FOUNDATION)
+        match = re.search(r'<ol class="sh-steps" start="2">(.*?)</ol>', self.current_main, re.S)
+        self.assertIsNotNone(match, "the ordered basics must start at lesson 02")
+        steps = match.group(1)
+        items = re.findall(r"<li\b.*?</li>", steps, re.S)
+        self.assertEqual(len(items), 3)
+        self.assertEqual(
+            re.findall(r'<h3><a href="([^"]+)"', steps),
+            list(FOUNDATION),
+        )
+        self.assertLess(steps.index(FOUNDATION[0]), steps.index(FOUNDATION[1]))
+        choice = re.search(r'<section class="sh-choice".*?</section>', steps, re.S).group()
+        choice_links = re.findall(r'<a href="([^"]+)"', choice)
+        self.assertEqual(tuple(choice_links), LANGUAGE_CHOICES)
 
         old_links = {url for url in PageFacts(self.old_main).links if url.startswith("tutorials/")}
         new_links = {url for url in PageFacts(self.current_main).links if url.startswith("tutorials/")}
         self.assertEqual(len(old_links), 32)
         self.assertEqual(new_links, old_links)
         self.assertTrue(all((ROOT / url.split("#", 1)[0]).is_file() for url in new_links))
+
+    def test_software_setup_is_optional_and_bash_precedes_the_file_lab(self):
+        steps = re.search(r'<ol class="sh-steps" start="2">(.*?)</ol>', self.current_main, re.S).group(1)
+        self.assertLess(steps.index("command-line-part1.html"), steps.index("computer-data-fundamentals.html"))
+        self.assertIn("Bash on Linux, macOS, or Windows Subsystem for Linux (WSL)", self.current_main)
+        self.assertNotIn("conda-mamba-part1.html", steps)
+        optional = re.search(r'<details\b[^>]*id="sh-optional-tools".*?</details>', self.current_main, re.S).group()
+        self.assertIn("conda-mamba-part1.html", optional)
+        self.assertEqual(self.current_main.count("conda-mamba-part1.html"), 1)
 
     def test_visible_start_here_copy_is_more_concise_than_the_published_page(self):
         long_form = git_bytes(LONG_FORM_BASELINE, "start-here.html").decode("utf-8")
@@ -161,38 +182,33 @@ class StartHereBlueLearningTests(unittest.TestCase):
         self.assertLess(new_words, old_words * 0.55)
         self.assertLess(new_words, 650)
 
-    def test_blue_banner_direction_readability_and_keyboard_focus(self):
+    def test_hero_design_has_a_white_first_lesson_card_and_readable_call_to_action(self):
         hero = css_rule(self.css, ".sh-hero")
-        self.assertRegex(
-            hero,
-            r"background(?:-image)?\s*:\s*linear-gradient\(\s*90deg\s*,\s*#dff2ff\b[^)]*#123b5d",
-        )
+        self.assertRegex(hero, r"background(?:-image)?\s*:\s*linear-gradient\(")
+        card = css_rule(self.css, ".sh-first-lesson")
+        self.assertRegex(card, r"background\s*:\s*#fff(?:fff)?\b")
+        self.assertRegex(card, r"border-radius\s*:")
+        self.assertRegex(card, r"box-shadow\s*:")
         heading = css_rule(self.css, ".sh-hero h1")
         self.assertRegex(heading, r"color\s*:\s*(?:#123b5d|var\(--sh-navy\))")
-        body = css_rule(self.css, ".sh-hero p:not(.sh-eyebrow)")
-        self.assertRegex(body, r"color\s*:\s*(?:#123b5d|var\(--sh-navy\))")
         button = css_rule(self.css, "#main-content .sh-primary-link")
         self.assertRegex(button, r"background\s*:\s*#123b5d\b")
         self.assertRegex(button, r"color\s*:\s*#fff(?:fff)?\b")
-        focus = css_rule(self.css, "#main-content .sh-hero :focus-visible")
-        self.assertRegex(focus, r"outline(?:-color)?\s*:[^;]*#123b5d")
-        self.assertRegex(focus, r"box-shadow\s*:[^;]*#fff(?:fff)?")
-        self.assertNotRegex(self.css.lower(), r"outline-color\s*:\s*#fff(?:fff)?\b")
+        self.assertIn("min-height: 3.25rem", button)
 
-    def test_outcomes_are_supported_by_linked_lessons_and_cautionary_copy_is_retained(self):
-        step_markup = re.search(r'<ol class="sh-steps">(.*?)</ol>', self.current_main, re.S).group(1)
+    def test_outcomes_are_supported_and_cautions_and_disclosures_remain(self):
+        step_markup = re.search(r'<ol class="sh-steps" start="2">(.*?)</ol>', self.current_main, re.S).group(1)
         items = re.findall(r"<li\b.*?</li>", step_markup, re.S)
-        self.assertEqual(len(items), 4)
-        for href, item in zip(FOUNDATION, items):
+        self.assertEqual(len(items), 3)
+        for href, item in zip(FOUNDATION, items[:2]):
             with self.subTest(lesson=href):
                 visible = " ".join(unescape(re.sub(r"<[^>]*>", " ", item)).split()).lower()
                 self.assertGreaterEqual(len(visible.split()), 6)
                 lesson_html = (ROOT / href).read_text(encoding="utf-8").lower()
                 item_terms = {word for word in re.findall(r"[a-z][a-z0-9-]{3,}", visible)}
                 lesson_terms = {word for word in re.findall(r"[a-z][a-z0-9-]{3,}", lesson_html)}
-                overlap = item_terms & lesson_terms
                 self.assertTrue(
-                    FOUNDATION_EVIDENCE[href] <= overlap,
+                    FOUNDATION_EVIDENCE[href] <= (item_terms & lesson_terms),
                     f"beginner outcomes must be supported by lesson-specific content in {href}",
                 )
 
@@ -201,8 +217,9 @@ class StartHereBlueLearningTests(unittest.TestCase):
             with self.subTest(caution=phrase):
                 self.assertIn(phrase.lower(), text)
         self.assertNotIn("\u2014", text)
-        self.assertEqual(self.current_main.count("<details"), 6)
-        self.assertTrue(all(not re.search(r"\bopen\b", tag) for tag in re.findall(r"<details\b[^>]*>", self.current_main)))
+        details = re.findall(r"<details\b[^>]*>", self.current_main)
+        self.assertEqual(len(details), 6)
+        self.assertTrue(all(not re.search(r"\bopen\b", tag) for tag in details))
 
 
 if __name__ == "__main__":
