@@ -26,6 +26,13 @@ from advanced_validation_baseline import (
     load_manifest as load_advanced_manifest,
     published_bytes as advanced_published_bytes,
 )
+from resource_content_baseline import (
+    allowed_paths as resource_content_paths,
+    load_manifest as load_resource_content_manifest,
+    normalize_resource_content,
+    normalize_resource_sitemap,
+    published_bytes as resource_published_bytes,
+)
 
 SITE = "https://theomicshub.com/"
 SCRIPT = re.compile(r"<script\b[^>]*>.*?</script\s*>", re.S | re.I)
@@ -137,7 +144,16 @@ class TidyverseSetupScopeTests(unittest.TestCase):
                 old_jsonld, current_jsonld = scripts(old), scripts(current)
                 if (relative == TIDYVERSE_SETUP_ARTICLE
                         or relative in remaining_validation_paths()
-                        or relative in advanced_validation_paths()):
+                        or relative in advanced_validation_paths()
+                        or relative in resource_content_paths()):
+                    if relative in resource_content_paths():
+                        self.assertEqual(len(current_jsonld), 1)
+                        approved = load_resource_content_manifest()["articles"][relative]["date_modified_approved"]
+                        self.assertEqual(DATE_MODIFIED.findall(current_jsonld[0])[0][1], approved)
+                        current = normalize_resource_content(
+                            relative, current.encode("utf-8")
+                        ).decode("utf-8")
+                        current_jsonld = scripts(current)
                     self.assertEqual(len(old_jsonld), 1)
                     self.assertEqual(len(current_jsonld), 1)
                     old_jsonld = [normalize_jsonld_date(block) for block in old_jsonld]
@@ -159,7 +175,7 @@ class TidyverseSetupScopeTests(unittest.TestCase):
             old = git_bytes(relative)
             self.assertIsNotNone(old, relative)
             with self.subTest(tutorial=relative):
-                current = page.read_bytes()
+                current = normalize_resource_content(relative, page.read_bytes())
                 current = normalize_advanced_validation_if_allowed(
                     relative, current.decode("utf-8")
                 ).encode("utf-8")
@@ -170,6 +186,11 @@ class TidyverseSetupScopeTests(unittest.TestCase):
                     current = normalize_remaining_validation_edit(
                         relative, current.decode("utf-8")
                     ).encode("utf-8")
+                    self.assertEqual(current, old)
+                    continue
+                if relative in resource_content_paths():
+                    self.assertEqual(current, resource_published_bytes(relative))
+                    continue
                 self.assertEqual(current, old)
 
         for relative in changed_paths():
@@ -179,6 +200,7 @@ class TidyverseSetupScopeTests(unittest.TestCase):
             if path.is_file() and is_approved_workflow(relative, path.read_bytes()):
                 continue
             old = git_bytes(relative)
+            current_bytes = normalize_resource_content(relative, path.read_bytes()) if path.is_file() else None
             with self.subTest(path=relative):
                 if relative == "analytics.js":
                     self.assertIsNotNone(old, "analytics.js must already exist in the published source")
@@ -190,10 +212,18 @@ class TidyverseSetupScopeTests(unittest.TestCase):
                     self.assertTrue(path.is_file(), "deleting published files is forbidden")
                     self.assertEqual(
                         normalize_remaining_validation_edit(
-                            relative, path.read_text(encoding="utf-8")
+                            relative, current_bytes.decode("utf-8")
                         ).encode("utf-8"),
                         old,
                         "only the exact manifest-pinned article body and date deltas may differ",
+                    )
+                    continue
+                if relative in resource_content_paths():
+                    self.assertIsNotNone(old, "resource article must exist in the PR10 source")
+                    self.assertTrue(path.is_file(), "deleting published files is forbidden")
+                    self.assertEqual(
+                        current_bytes, resource_published_bytes(relative),
+                        "only the exact manifest-pinned PR15 body/date/metadata snippets may differ",
                     )
                     continue
                 if relative in advanced_validation_paths():
@@ -201,7 +231,7 @@ class TidyverseSetupScopeTests(unittest.TestCase):
                     self.assertTrue(path.is_file(), "deleting published files is forbidden")
                     self.assertEqual(
                         normalize_advanced_validation_if_allowed(
-                            relative, path.read_text(encoding="utf-8")
+                            relative, current_bytes.decode("utf-8")
                         ).encode("utf-8"),
                         advanced_published_bytes(relative),
                         "only the exact manifest-pinned PR14 article edit may differ",
@@ -216,13 +246,15 @@ class TidyverseSetupScopeTests(unittest.TestCase):
                     continue
                 self.assertIsNotNone(old, "new public files and assets are forbidden")
                 self.assertTrue(path.is_file(), "deleting published files is forbidden")
-                self.assertEqual(path.read_bytes(), old,
+                self.assertEqual(current_bytes, old,
                                  "all other public pages, assets, styles, and site scripts are immutable")
 
     def test_sitemap_diff_is_exactly_the_target_lastmod_replacement(self):
         original = git_bytes("sitemap.xml")
         self.assertIsNotNone(original)
-        current = normalize_remaining_validation_sitemap((ROOT / "sitemap.xml").read_bytes())
+        current = normalize_remaining_validation_sitemap(
+            normalize_resource_sitemap((ROOT / "sitemap.xml").read_bytes())
+        )
         target_url = (SITE + TIDYVERSE_SETUP_ARTICLE).encode("ascii")
         escaped_url = re.escape(target_url)
         row_pattern = re.compile(rb"<url>\s*<loc>" + escaped_url + rb"</loc>.*?</url>", re.S)

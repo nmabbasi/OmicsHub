@@ -21,6 +21,7 @@ from remaining_validation_baseline import (
     normalize_remaining_validation_edit,
 )
 from advanced_validation_baseline import normalize_advanced_validation_if_allowed
+from resource_content_baseline import normalize_resource_content
 
 ROOT = Path(__file__).resolve().parents[1]
 BASELINE = 'e7037f1b9a9eea8f4338e7b6696f791d8172f844'
@@ -131,11 +132,22 @@ class HeroPerformanceTests(unittest.TestCase):
             relative_path = 'tutorials/' + p.name
             approved_bytes = approved(relative_path)
             self.assertIsNotNone(approved_bytes, relative_path)
+            raw_current_text = p.read_bytes().decode('utf-8')
+            if p.name in ('cell-type-annotation-methods.html', 'scrna-seq-integration-strategies.html'):
+                def executable_scripts(text):
+                    return [script for script in re.findall(r'<script\b[^>]*>.*?</script>', text, re.S)
+                            if 'application/ld+json' not in script.split('>', 1)[0]]
+                self.assertEqual(
+                    executable_scripts(approved_bytes.decode('utf-8')),
+                    executable_scripts(raw_current_text),
+                    p.name,
+                )
             baseline_text = strip_cookie_banner(
                 approved_bytes.decode('utf-8'), allow_missing=True
             )
             current_text = strip_cookie_banner(
-                p.read_text(encoding='utf-8'), allow_missing=True
+                normalize_resource_content(relative_path, p.read_bytes()).decode('utf-8'),
+                allow_missing=True,
             )
             current_text = normalize_advanced_validation_if_allowed(relative_path, current_text)
             if relative_path in remaining_validation_paths():
@@ -159,10 +171,6 @@ class HeroPerformanceTests(unittest.TestCase):
                     body = body.replace('<p class="text-sm text-gray-500 mt-4">Worked example updated <time datetime="2026-10-23">23 October 2026</time>.</p>\n', '', 1)
                     return body
                 self.assertEqual(surrounding_body(baseline_text), surrounding_body(current_text), p.name)
-                def executable_scripts(text):
-                    return [script for script in re.findall(r'<script\b[^>]*>.*?</script>', text, re.S)
-                            if 'application/ld+json' not in script.split('>', 1)[0]]
-                self.assertEqual(executable_scripts(baseline_text), executable_scripts(current_text), p.name)
                 continue
             self.assertEqual(
                 baseline_text,

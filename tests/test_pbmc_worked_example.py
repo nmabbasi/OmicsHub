@@ -14,6 +14,7 @@ import zipfile
 from reviewed_tutorial_baseline import normalize_learner_revision
 from reader_typography_baseline import normalize_reader_typography
 from remaining_validation_baseline import normalize_remaining_validation_sitemap
+from resource_content_baseline import load_manifest as load_resource_content_manifest
 
 ROOT = Path(__file__).resolve().parents[1]
 BASELINE = 'd10ec616cae67437db90427bee4e156dd2bfb7d7'
@@ -142,13 +143,39 @@ class PbmcWorkedExampleTests(unittest.TestCase):
         }
         tidyverse_path = 'tutorials/r-tidyverse-fundamentals.html'
         tidyverse_url = site + tidyverse_path
+        resource_articles = load_resource_content_manifest()['articles']
+        resource_oct23_overrides = {
+            path: entry for path, entry in resource_articles.items()
+            if entry['sitemap_lastmod_original'] == '2026-10-23'
+            and entry['sitemap_lastmod_approved'] == '2026-10-24'
+        }
+        resource_oct24_urls = {
+            site + path for path, entry in resource_articles.items()
+            if entry['sitemap_lastmod_approved'] == '2026-10-24'
+        }
+        expected_oct23_urls = {
+            site + path for path in approved_updated_paths if path != tidyverse_path
+        }
+        expected_oct24_urls = {tidyverse_url} | resource_oct24_urls
+        expected_oct23_urls.difference_update(
+            site + path for path in resource_oct23_overrides
+        )
         self.assertEqual(
             {url for url, entry in current_by_url.items()
              if entry.find('s:lastmod', ns).text == '2026-10-23'},
-            {site + path for path in approved_updated_paths if path != tidyverse_path},
+            expected_oct23_urls,
+        )
+        self.assertEqual(
+            {url for url, entry in current_by_url.items()
+             if entry.find('s:lastmod', ns).text == '2026-10-24'},
+            expected_oct24_urls,
         )
         for path in approved_updated_paths:
-            expected_date = '2026-10-24' if path == tidyverse_path else '2026-10-23'
+            expected_date = (
+                resource_articles[path]['sitemap_lastmod_approved']
+                if path in resource_articles else
+                '2026-10-24' if path == tidyverse_path else '2026-10-23'
+            )
             self.assertEqual(current_by_url[site + path].find('s:lastmod', ns).text, expected_date)
         self.assertEqual(current_by_url[tidyverse_url].find('s:lastmod', ns).text, '2026-10-24')
         pbmc_url = site + 'tutorials/scrna-seq-basics.html'
@@ -168,7 +195,11 @@ class PbmcWorkedExampleTests(unittest.TestCase):
                 [entry.find('s:loc', ns).text for entry in baseline_entries],
             )
 
-            allowed_date_urls = {site + path for path in approved_updated_paths} | {pbmc_url}
+            allowed_date_urls = (
+                {site + path for path in approved_updated_paths}
+                | {site + path for path in resource_articles}
+                | {pbmc_url}
+            )
             self.assertEqual(set(current_by_url), set(baseline_by_url))
             for url, current in current_by_url.items():
                 baseline = baseline_by_url[url]

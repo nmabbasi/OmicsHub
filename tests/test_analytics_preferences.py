@@ -18,6 +18,7 @@ from reviewed_tutorial_baseline import (
 )
 from reader_typography_baseline import normalize_reader_typography
 from six_lesson_revision_baseline import normalize_six_lesson_revision
+from resource_content_baseline import normalize_resource_content
 
 ROOT = Path(__file__).resolve().parents[1]
 TUTORIALS = ROOT / "tutorials"
@@ -206,7 +207,9 @@ class AnalyticsPreferencesTests(unittest.TestCase):
             baseline = git_file(APPROVED_MAIN, relative_path)
             if baseline is None:
                 self.skipTest(f"approved-main tutorial {relative_path} unavailable")
-            current = (TUTORIALS / name).read_text(encoding="utf-8")
+            current = normalize_resource_content(
+                relative_path, (TUTORIALS / name).read_bytes()
+            ).decode("utf-8")
             with self.subTest(page=name):
                 baseline_without_banner = strip_cookie_banner(baseline)
                 current_without_banner = strip_cookie_banner(current)

@@ -22,6 +22,11 @@ from advanced_validation_baseline import (
     normalize_advanced_validation_if_allowed,
     published_bytes as advanced_published_bytes,
 )
+from resource_content_baseline import (
+    allowed_paths as resource_content_paths,
+    normalize_resource_content,
+    normalize_resource_sitemap,
+)
 
 QC_PATH = "tutorials/quality-control-fundamentals.html"
 REVISED_TUTORIALS = frozenset({
@@ -61,6 +66,7 @@ class RemainingValidationScopeTests(unittest.TestCase):
             original = published_bytes(relative)
             self.assertTrue(current_path.is_file(), relative)
             current = current_path.read_bytes()
+            current = normalize_resource_content(relative, current)
             original_articles = list(ARTICLE.finditer(original))
             current_articles = list(ARTICLE.finditer(current))
             with self.subTest(path=relative):
@@ -78,6 +84,7 @@ class RemainingValidationScopeTests(unittest.TestCase):
 
     def test_all_changed_public_paths_are_allowlisted_and_exact_after_restoration(self):
         manifest_paths = set(allowed_paths())
+        resource_paths = set(resource_content_paths())
         for relative in changed_paths():
             if relative.startswith("tests/"):
                 continue
@@ -93,7 +100,8 @@ class RemainingValidationScopeTests(unittest.TestCase):
                 original = result.stdout
             with self.subTest(path=relative):
                 self.assertTrue(
-                    relative in manifest_paths or relative in advanced_validation_paths()
+                    relative in manifest_paths or relative in resource_paths
+                    or relative in advanced_validation_paths()
                     or relative in advanced_asset_paths()
                     or relative == "sitemap.xml",
                     "public changes outside the explicit article/date allowlist are forbidden",
@@ -101,12 +109,15 @@ class RemainingValidationScopeTests(unittest.TestCase):
                 self.assertIsNotNone(original, "new public files and assets are forbidden")
                 self.assertTrue(current_path.is_file(), "published public files may not be deleted")
                 current = current_path.read_bytes()
+                current = normalize_resource_content(relative, current)
                 if relative in manifest_paths:
                     current = normalize_remaining_validation_edit(
                         relative, current.decode("utf-8")
                     ).encode("utf-8")
                 elif relative == "sitemap.xml":
-                    current = normalize_remaining_validation_sitemap(current)
+                    current = normalize_remaining_validation_sitemap(
+                        normalize_resource_sitemap(current)
+                    )
                 elif relative in advanced_validation_paths():
                     current = normalize_advanced_validation_if_allowed(
                         relative, current.decode("utf-8")
@@ -157,7 +168,7 @@ class RemainingValidationScopeTests(unittest.TestCase):
 
     def test_sitemap_restorer_changes_only_manifest_allowlisted_lastmods(self):
         original = published_bytes("sitemap.xml")
-        current = (ROOT / "sitemap.xml").read_bytes()
+        current = normalize_resource_sitemap((ROOT / "sitemap.xml").read_bytes())
         self.assertEqual(normalize_remaining_validation_sitemap(current), original)
         target_url = b"https://theomicshub.com/tutorials/quality-control-fundamentals.html"
         row = re.search(rb"<url>\s*<loc>" + re.escape(target_url) + rb"</loc>.*?</url>", current, re.S)

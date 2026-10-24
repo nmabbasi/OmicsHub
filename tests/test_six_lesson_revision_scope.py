@@ -37,6 +37,12 @@ from advanced_validation_baseline import (
     load_manifest as load_advanced_manifest,
     published_bytes as advanced_published_bytes,
 )
+from resource_content_baseline import (
+    allowed_paths as resource_content_paths,
+    normalize_resource_content,
+    normalize_resource_sitemap,
+    published_bytes as resource_published_bytes,
+)
 
 ALLOWED_FIXTURE_PREFIXES = (
     "files/text-processing-lesson/",
@@ -94,6 +100,7 @@ class SixLessonRevisionScopeTests(unittest.TestCase):
             self.assertIsNotNone(old_bytes, relative)
             old = old_bytes.decode("utf-8")
             current = (ROOT / relative).read_text(encoding="utf-8")
+            current = normalize_resource_content(relative, current.encode("utf-8")).decode("utf-8")
             with self.subTest(page=relative):
                 self.assertEqual(DATE_MODIFIED.findall(old), ["2026-10-21"])
                 if relative in advanced_validation_paths():
@@ -137,7 +144,7 @@ class SixLessonRevisionScopeTests(unittest.TestCase):
             old_bytes = git_bytes(relative)
             self.assertIsNotNone(old_bytes, relative)
             old = old_bytes.decode("utf-8")
-            current = page.read_text(encoding="utf-8")
+            current = normalize_resource_content(relative, page.read_bytes()).decode("utf-8")
             current = normalize_advanced_validation_if_allowed(relative, current)
             def executable(text):
                 return [
@@ -148,6 +155,7 @@ class SixLessonRevisionScopeTests(unittest.TestCase):
                 self.assertEqual(executable(current), executable(old))
 
     def test_global_source_diff_and_fixture_folders_stay_within_allowlist(self):
+        resource_paths = set(resource_content_paths())
         for relative in changed_paths():
             # Test infrastructure is this task's explicit area; sitemap dates
             # are parent-owned and receive their own precise metadata test.
@@ -157,6 +165,8 @@ class SixLessonRevisionScopeTests(unittest.TestCase):
             if current_path.is_file() and is_approved_workflow(relative, current_path.read_bytes()):
                 continue
             old_bytes = git_bytes(relative)
+            current_bytes = normalize_resource_content(relative, current_path.read_bytes())
+            current_text = current_bytes.decode("utf-8")
             with self.subTest(path=relative):
                 if relative in SIX_LESSON_ARTICLES:
                     self.assertIsNotNone(old_bytes)
@@ -166,7 +176,7 @@ class SixLessonRevisionScopeTests(unittest.TestCase):
                             relative,
                             normalize_beginner_walkthrough_revision(
                                 relative, normalize_advanced_validation_if_allowed(
-                                    relative, current_path.read_text(encoding="utf-8")
+                                    relative, current_text
                                 )
                             ),
                         ),
@@ -185,7 +195,7 @@ class SixLessonRevisionScopeTests(unittest.TestCase):
                     self.assertEqual(published.returncode, 0, relative)
                     self.assertEqual(
                         normalize_beginner_walkthrough_revision(
-                            relative, current_path.read_text(encoding="utf-8")
+                            relative, current_text
                         ),
                         published.stdout.decode("utf-8"),
                     )
@@ -197,7 +207,7 @@ class SixLessonRevisionScopeTests(unittest.TestCase):
                     self.assertEqual(published.returncode, 0, relative)
                     self.assertEqual(
                         normalize_tidyverse_setup_revision(
-                            relative, current_path.read_text(encoding="utf-8")
+                            relative, current_text
                         ),
                         published.stdout.decode("utf-8"),
                     )
@@ -206,7 +216,7 @@ class SixLessonRevisionScopeTests(unittest.TestCase):
                     self.assertTrue(current_path.is_file(), "deleting published files is forbidden")
                     self.assertEqual(
                         normalize_remaining_validation_edit(
-                            relative, current_path.read_text(encoding="utf-8")
+                            relative, current_text
                         ).encode("utf-8"),
                         old_bytes,
                         "only the exact manifest-pinned article body and dates may differ",
@@ -214,7 +224,7 @@ class SixLessonRevisionScopeTests(unittest.TestCase):
                 elif relative in advanced_validation_paths():
                     self.assertEqual(
                         normalize_advanced_validation_if_allowed(
-                            relative, current_path.read_text(encoding="utf-8")
+                            relative, current_text
                         ).encode("utf-8"),
                         advanced_published_bytes(relative),
                         "only the exact manifest-pinned PR14 article edit may differ",
@@ -225,6 +235,8 @@ class SixLessonRevisionScopeTests(unittest.TestCase):
                         old_bytes,
                         "only the exact manifest-pinned Visium helper asset may change",
                     )
+                elif relative in resource_paths:
+                    self.assertEqual(current_bytes, resource_published_bytes(relative))
                 elif relative.startswith("files/"):
                     self.assertTrue(relative.startswith(ALLOWED_FIXTURE_PREFIXES),
                                     "new fixtures must be in an approved lesson folder")
@@ -272,7 +284,9 @@ class SixLessonRevisionScopeTests(unittest.TestCase):
                 for row in root.findall("s:url", namespace)
             }
         before = dates(git_bytes("sitemap.xml"))
-        after = dates(normalize_remaining_validation_sitemap((ROOT / "sitemap.xml").read_bytes()))
+        after = dates(normalize_remaining_validation_sitemap(
+            normalize_resource_sitemap((ROOT / "sitemap.xml").read_bytes())
+        ))
         self.assertEqual(set(before), set(after))
         beginner_date_paths = {
             "tutorials/computer-data-fundamentals.html",
@@ -289,7 +303,9 @@ class SixLessonRevisionScopeTests(unittest.TestCase):
             expected_date = "2026-10-24" if url.endswith(TIDYVERSE_SETUP_ARTICLE) else "2026-10-23"
             self.assertEqual(after[url], expected_date)
         restored = ET.fromstring(
-            normalize_remaining_validation_sitemap((ROOT / "sitemap.xml").read_bytes())
+            normalize_remaining_validation_sitemap(
+                normalize_resource_sitemap((ROOT / "sitemap.xml").read_bytes())
+            )
         )
         for row in restored.findall("s:url", namespace):
             url = row.findtext("s:loc", namespaces=namespace)

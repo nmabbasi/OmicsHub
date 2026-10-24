@@ -12,6 +12,10 @@ from advanced_validation_baseline import (
     load_manifest as load_advanced_manifest,
     published_bytes as advanced_published_bytes,
 )
+from resource_content_baseline import (
+    load_manifest as load_resource_content_manifest,
+    published_bytes as resource_published_bytes,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 SITE = "https://theomicshub.com/"
@@ -68,19 +72,29 @@ class ContentModificationDateTests(unittest.TestCase):
 
     def test_substantively_revised_articles_have_matching_dates(self):
         advanced_dates = load_advanced_manifest()["articles"]
+        resource_dates = load_resource_content_manifest()["articles"]
         revised_pages = dict(MODIFIED)
         for relative_path in advanced_article_paths():
+            revised_pages.setdefault(relative_path, None)
+        for relative_path in resource_dates:
             revised_pages.setdefault(relative_path, None)
         for relative_path, published in revised_pages.items():
             with self.subTest(page=relative_path):
                 entity = self.entity(relative_path)
-                if published is None:
+                if relative_path in resource_dates:
+                    original = json.loads(
+                        SCHEMA.findall(resource_published_bytes(relative_path).decode("utf-8"))[0]
+                    )
+                    published = original["datePublished"]
+                elif published is None:
                     original = json.loads(
                         SCHEMA.findall(advanced_published_bytes(relative_path).decode("utf-8"))[0]
                     )
                     published = original["datePublished"]
                 modified = (
-                    TARGET_MODIFIED_DATE if relative_path == TIDYVERSE_TARGET
+                    resource_dates[relative_path]["date_modified_approved"]
+                    if relative_path in resource_dates
+                    else TARGET_MODIFIED_DATE if relative_path == TIDYVERSE_TARGET
                     else advanced_dates[relative_path]["date_modified_approved"]
                     if relative_path in advanced_article_paths()
                     else "2026-10-23"
@@ -91,7 +105,13 @@ class ContentModificationDateTests(unittest.TestCase):
                 visible_dates = re.findall(
                     r"Updated\s+(\d{1,2} [A-Za-z]+ \d{4})", page_html
                 )
-                if relative_path in advanced_article_paths():
+                if relative_path in resource_dates:
+                    approved_visible = resource_dates[relative_path]["visible_updated_approved"]
+                    self.assertEqual(
+                        visible_dates,
+                        [approved_visible] if approved_visible else [],
+                    )
+                elif relative_path in advanced_article_paths():
                     approved_visible = advanced_dates[relative_path]["visible_updated_approved"]
                     self.assertEqual(
                         visible_dates,
@@ -153,12 +173,15 @@ class ContentModificationDateTests(unittest.TestCase):
                 )
 
     def test_navigation_only_and_unchanged_lessons_are_not_freshened(self):
+        resource_dates = load_resource_content_manifest()["articles"]
         for relative_path in NAVIGATION_ONLY:
             with self.subTest(page=relative_path):
                 entity = self.entity(relative_path)
-                self.assertEqual(entity["dateModified"], "2026-10-21")
+                entry = resource_dates.get(relative_path)
+                expected = entry["date_modified_approved"] if entry else "2026-10-21"
+                self.assertEqual(entity["dateModified"], expected)
                 self.assertEqual(
-                    self.sitemap_dates[SITE + relative_path], "2026-10-21"
+                    self.sitemap_dates[SITE + relative_path], expected
                 )
         unchanged = "tutorials/command-line-part1.html"
         self.assertEqual(self.entity(unchanged)["dateModified"], "2026-10-21")
@@ -184,6 +207,15 @@ class ContentModificationDateTests(unittest.TestCase):
         }
         expected_oct24.update(
             SITE + path for path, entry in advanced_dates.items()
+            if entry["date_modified_approved"] == TARGET_MODIFIED_DATE
+        )
+        resource_dates = load_resource_content_manifest()["articles"]
+        expected_updated.difference_update(
+            SITE + path for path, entry in resource_dates.items()
+            if entry["date_modified_approved"] != "2026-10-23"
+        )
+        expected_oct24.update(
+            SITE + path for path, entry in resource_dates.items()
             if entry["date_modified_approved"] == TARGET_MODIFIED_DATE
         )
         expected_updated.update({SITE + "about.html", SITE + "tutorials.html", SITE + "start-here.html"})

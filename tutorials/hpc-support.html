@@ -73,7 +73,7 @@ gtag('consent', 'default', {
     }
   },
   "datePublished": "2026-09-20",
-  "dateModified": "2026-10-21",
+  "dateModified": "2026-10-24",
   "url": "https://theomicshub.com/tutorials/hpc-support.html",
   "name": "HPC Troubleshooting and Support",
   "isPartOf": {
@@ -175,7 +175,7 @@ function toggleMobileMenu() {
 </div>
 <div class="flex items-center gap-1">
 <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
-<span>Updated 21 October 2026</span></div>
+<span>Updated 24 October 2026</span></div>
 </div><p class="lesson-lead">Use the job record and its logs to narrow down a failure before changing the submission script. Slurm reports what happened to the job; the application log and your script help explain why.</p>
 <section class="lesson-summary tutorial-learning-contract" data-tutorial-format="conceptual-guide" aria-label="Learning format">
 <p><strong>Format: Conceptual guide.</strong> For cluster users with an existing job, script and logs: practise a structured diagnosis and prepare a support-ready evidence summary. You supply your own job records, approved input files and cluster-specific tool/reference paths; no data or executable test fixture is bundled.</p>
@@ -186,9 +186,9 @@ function toggleMobileMenu() {
 </p>
 <ul>
 <li>Use core Slurm tools (sacct, scontrol, squeue, tail) to collect job evidence.</li>
-<li>Interpret common job states and exit codes to distinguish resource, software, and environment errors.</li>
-<li>Extract compact, non-sensitive information to include in a support request (Minimal Reproducible Example).</li>
-<li>Apply straightforward fixes (increase memory, load modules, correct working directory) and know when to escalate to support.</li>
+<li>Use common job states and exit-code evidence to narrow possible resource, software, and environment explanations without treating one clue as a confirmed cause.</li>
+<li>Prepare a compact, non-sensitive evidence summary for a support request.</li>
+<li>Choose an evidence-based next check, distinguish a plausible cause from a confirmed cause, and know when a change or support escalation requires local guidance.</li>
 </ul>
 <p>
   Prerequisites: you have access to the cluster where your jobs ran, the original submission script or command, and the job ID(s) you want to investigate. Familiarity with basic shell commands, your cluster's module or environment system (Modules or Conda), and the bioinformatics tool(s) used in the job is assumed.
@@ -327,9 +327,9 @@ sbatch tiny_test.sbatch
 <li>"command not found" points to command resolution in that execution context. Check module and environment setup, executable paths, and whether the command exists on compute nodes. The message alone does not establish why it was absent.</li>
 <li>Segmentation faults or "Bus error": could be corrupted input, a software bug, or exceeding memory/stack limits. These messages require more investigation (e.g., trying a small test or a different software version).</li>
 </ul>
-<h2>Troubleshooting: symptoms, likely causes, and concrete fixes</h2>
+<h2>Troubleshooting: symptoms, possible causes, and next checks</h2>
 <p>
-  The table below gives practical symptom → likely cause → recommended action pairs. Use them as a checklist when diagnosing.
+  The examples below suggest evidence to examine, not a guaranteed diagnosis or universal fix. Confirm resource, software, and environment changes against job records and local policy.
 </p>
 <h3>Symptom: Exit code 127 or "command not found"</h3>
 <p>Possible cause: the executable was unavailable through the batch job's PATH or environment. Check module setup, activation, and command spelling.</p>
@@ -374,6 +374,10 @@ conda activate myenv</code></pre>
 <li>Check whether the executable and linked libraries are compatible with compute nodes. Test another version only when the cluster provides it and record that version; compiling from source is not a first diagnostic step.</li>
 <li>Test a small dataset to reproduce the crash quickly.</li>
 </ul>
+<section class="lesson-summary" aria-label="Cluster-free troubleshooting check">
+<h2>Interpret a hypothetical job record</h2>
+<p><strong>Hypothetical check:</strong> A record says <code>COMPLETED</code> with exit code <code>0:0</code>, but the expected output file is absent. Does that prove the analysis produced a complete or scientifically valid result? No. It records successful job-script termination only. Check the script's output path, working directory, logs, and expected-file logic before drawing conclusions or rerunning.</p>
+</section>
 <h2>How to prepare an effective support request</h2>
 <p>
   If you need to contact cluster support, include a concise, privacy-respecting set of items. Avoid attaching raw data that may be sensitive. A useful support-ready report includes:

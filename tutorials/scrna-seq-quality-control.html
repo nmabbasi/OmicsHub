@@ -73,7 +73,7 @@ gtag('consent', 'default', {
     }
   },
   "datePublished": "2026-09-12",
-  "dateModified": "2026-10-21",
+  "dateModified": "2026-10-24",
   "url": "https://theomicshub.com/tutorials/scrna-seq-quality-control.html",
   "name": "Assessing scRNA-seq integration with LISI and silhouette",
   "isPartOf": {
@@ -275,6 +275,7 @@ print("Mean silhouette across cells:", sil_global)
 <li>Low or negative silhouette values identify cells or clusters with weak separation under the chosen distance and representation. Review cluster sizes, labels, marker expression and the underlying embedding before changing the clustering.</li>
 </ul>
 <p>Do not interpret a single score as a pass/fail threshold. LISI is conditional on supplied categorical labels and neighborhood scale; silhouette is conditional on the supplied clusters and distance. If batches are confounded with cell identity, neither score alone can resolve that design limitation. These diagnostics do not establish causality or replace biological validation.</p>
+<section class="lesson-exercise"><h2>Hypothetical decision check</h2><p>In a hypothetical study, each batch contains a different cell type. Should you maximize batch mixing to improve the integration score, or can these metrics tell whether batch or biology explains the separation?</p><details><summary>Reasoned feedback</summary><p>Neither score resolves this confounding: batch and cell identity change together, so increased mixing is not automatically better and could obscure real differences. iLISI describes local diversity of the supplied batch labels; cLISI describes local diversity of the supplied cell-type labels; silhouette describes separation for supplied clusters in the chosen representation. Report the design limitation and use biological context and independent samples to assess the integration, rather than optimizing a metric in isolation.</p></details></section>
 <h2>Troubleshoot common failures</h2>
 <ul>
 <li><strong>LISI reports an error or yields missing results:</strong> check that embedding rows and metadata rows refer to the same cells in the same order, the requested metadata fields exist, and labels are not missing. A missing reduction name or absent metadata field should be fixed explicitly rather than replaced with a different representation without recording the change.</li>

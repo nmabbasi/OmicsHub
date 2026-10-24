@@ -26,6 +26,11 @@ from advanced_validation_baseline import (
     normalize_advanced_validation_if_allowed,
     published_bytes as advanced_published_bytes,
 )
+from resource_content_baseline import (
+    allowed_paths as resource_content_paths,
+    normalize_resource_content,
+    published_bytes as resource_published_bytes,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = re.compile(r"<script\b[^>]*>.*?</script\s*>", re.S | re.I)
@@ -92,6 +97,7 @@ class BeginnerWalkthroughScopeTests(unittest.TestCase):
             original_bytes = git_bytes(relative)
             self.assertIsNotNone(original_bytes, relative)
             current = (ROOT / relative).read_text(encoding="utf-8")
+            current = normalize_resource_content(relative, current.encode("utf-8")).decode("utf-8")
             original = original_bytes.decode("utf-8")
             with self.subTest(page=relative):
                 self.assertEqual(
@@ -120,14 +126,15 @@ class BeginnerWalkthroughScopeTests(unittest.TestCase):
             relative = page.relative_to(ROOT).as_posix()
             old_bytes = git_bytes(relative)
             self.assertIsNotNone(old_bytes, relative)
+            current = normalize_resource_content(relative, page.read_bytes()).decode("utf-8")
             with self.subTest(page=relative):
                 # Compare scripts before any article restoration; scripts added
                 # within an authorized article must not be hidden by its body allowance.
                 self.assertEqual(
-                    executable_scripts(page.read_text(encoding="utf-8")),
+                    executable_scripts(current),
                     executable_scripts(old_bytes.decode("utf-8")),
                 )
-                current_jsonld = jsonld_scripts(page.read_text(encoding="utf-8"))
+                current_jsonld = jsonld_scripts(current)
                 old_jsonld = jsonld_scripts(old_bytes.decode("utf-8"))
                 if (relative in BEGINNER_WALKTHROUGH_ARTICLES or relative == TIDYVERSE_SETUP_ARTICLE
                         or relative in remaining_validation_paths() or relative in advanced_validation_paths()):
@@ -136,6 +143,7 @@ class BeginnerWalkthroughScopeTests(unittest.TestCase):
                 self.assertEqual(current_jsonld, old_jsonld)
 
     def test_changed_paths_are_limited_to_target_articles_tests_and_sitemap(self):
+        resource_paths = set(resource_content_paths())
         for relative in changed_paths():
             if relative.startswith("tests/") or relative == "sitemap.xml":
                 continue
@@ -143,13 +151,15 @@ class BeginnerWalkthroughScopeTests(unittest.TestCase):
             if current_path.is_file() and is_approved_workflow(relative, current_path.read_bytes()):
                 continue
             old_bytes = git_bytes(relative)
+            current_bytes = normalize_resource_content(relative, current_path.read_bytes())
+            current_text = current_bytes.decode("utf-8")
             with self.subTest(path=relative):
                 self.assertIsNotNone(old_bytes, "new source/assets outside tests are forbidden")
                 self.assertTrue(current_path.is_file(), "deleting published files is forbidden")
                 if relative in BEGINNER_WALKTHROUGH_ARTICLES:
                     self.assertEqual(
                         normalize_beginner_walkthrough_revision(
-                            relative, current_path.read_text(encoding="utf-8")
+                            relative, current_text
                         ),
                         old_bytes.decode("utf-8"),
                         "target page changes must be confined to its article body/date",
@@ -162,7 +172,7 @@ class BeginnerWalkthroughScopeTests(unittest.TestCase):
                     self.assertEqual(published.returncode, 0, relative)
                     self.assertEqual(
                         normalize_tidyverse_setup_revision(
-                            relative, current_path.read_text(encoding="utf-8")
+                            relative, current_text
                         ),
                         published.stdout.decode("utf-8"),
                         "the separate PR10 authorization permits only the tidyverse body and dates",
@@ -170,7 +180,7 @@ class BeginnerWalkthroughScopeTests(unittest.TestCase):
                 elif relative in remaining_validation_paths():
                     self.assertEqual(
                         normalize_remaining_validation_edit(
-                            relative, current_path.read_text(encoding="utf-8")
+                            relative, current_text
                         ),
                         old_bytes.decode("utf-8"),
                         "the manifest-pinned body and exact dates are the only additional approved deltas",
@@ -178,7 +188,7 @@ class BeginnerWalkthroughScopeTests(unittest.TestCase):
                 elif relative in advanced_validation_paths():
                     self.assertEqual(
                         normalize_advanced_validation_if_allowed(
-                            relative, current_path.read_text(encoding="utf-8")
+                            relative, current_text
                         ).encode("utf-8"),
                         advanced_published_bytes(relative),
                         "only the exact manifest-pinned PR14 article edit may differ",
@@ -187,6 +197,8 @@ class BeginnerWalkthroughScopeTests(unittest.TestCase):
                     self.assertEqual(normalize_advanced_validation_asset(
                         relative, current_path.read_bytes()
                     ), old_bytes, "only the exact full-file approved asset hash may differ")
+                elif relative in resource_paths:
+                    self.assertEqual(current_bytes, resource_published_bytes(relative))
                 elif relative == "analytics.js":
                     self.assertIsNotNone(old_bytes, "analytics.js must already exist in the published source")
                     self.assertTrue(current_path.is_file(), "deleting analytics.js is forbidden")

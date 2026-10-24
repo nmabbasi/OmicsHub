@@ -22,6 +22,7 @@ from remaining_validation_baseline import (
     normalize_remaining_validation_edit,
 )
 from advanced_validation_baseline import normalize_advanced_validation_if_allowed
+from resource_content_baseline import normalize_resource_content
 
 ROOT = Path(__file__).resolve().parents[1]
 PUBLISHED_BASELINE = "49cb63d91b508ae3c3e4a6b0a11ac2bb10d48fa1"
@@ -57,6 +58,7 @@ class LearnerRevisionScopeTests(unittest.TestCase):
                 continue
             with self.subTest(page=relative):
                 after = (ROOT / relative).read_text(encoding="utf-8")
+                after = normalize_resource_content(relative, after.encode("utf-8")).decode("utf-8")
                 after = normalize_advanced_validation_if_allowed(relative, after)
                 if relative in remaining_validation_paths():
                     after = normalize_remaining_validation_edit(relative, after)
@@ -83,6 +85,7 @@ class LearnerRevisionScopeTests(unittest.TestCase):
         for relative, before in self.baseline.items():
             with self.subTest(page=relative):
                 after = (ROOT / relative).read_text(encoding="utf-8")
+                after = normalize_resource_content(relative, after.encode("utf-8")).decode("utf-8")
                 after = normalize_advanced_validation_if_allowed(relative, after)
                 raw_before, raw_after = before, after
                 if relative in remaining_validation_paths():
