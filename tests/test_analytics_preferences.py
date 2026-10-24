@@ -174,11 +174,7 @@ class AnalyticsPreferencesTests(unittest.TestCase):
                 ids = parsed.ids
                 self.assertEqual(len(ids), len(set(ids)), "duplicate id on tutorial")
 
-    def test_existing_shared_scripts_unchanged_and_analytics_not_ad_grants(self):
-        if self.baseline_available:
-            baseline = git_file(BASELINE, "analytics.js")
-            self.assertIsNotNone(baseline)
-            self.assertEqual(baseline, (ROOT / "analytics.js").read_text(encoding="utf-8"), "analytics.js changed")
+    def test_analytics_not_ad_granted_and_advertising_script_unchanged(self):
         analytics = (ROOT / "analytics.js").read_text(encoding="utf-8")
         self.assertNotRegex(analytics, r"ad_storage\s*[:=]")
         self.assertNotRegex(analytics, r"ad_user_data\s*[:=]")

@@ -152,6 +152,10 @@ class BeginnerWalkthroughScopeTests(unittest.TestCase):
                         published.stdout.decode("utf-8"),
                         "the separate PR10 authorization permits only the tidyverse body and dates",
                     )
+                elif relative == "analytics.js":
+                    self.assertIsNotNone(old_bytes, "analytics.js must already exist in the published source")
+                    self.assertTrue(current_path.is_file(), "deleting analytics.js is forbidden")
+                    # Exact authorized source is pinned by test_analytics_source_scope.py.
                 else:
                     self.assertEqual(
                         current_path.read_bytes(), old_bytes,
