@@ -11,6 +11,7 @@ import json
 from pathlib import Path
 import subprocess
 from start_here_baseline import normalize_start_here
+from home_catalogue_baseline import normalize_home_catalogue
 
 ROOT = Path(__file__).resolve().parents[1]
 PRE_UI_COMMIT = '243bc04e5edff51b33bef1b9312a48f6b2ae5751'
@@ -52,13 +53,14 @@ def page_patches():
 
 
 def normalize_tutorial_ui(relative_path, text):
-    """Reverse only literal current UI chunks, never a regex-selected HTML body.
+    """Reverse only literal page-specific UI chunks, never a regex-selected body.
 
-    This is idempotent and supports fragments. It has no effect on pre-UI history.
-    Missing/altered patch chunks stay visible to the existing strict comparisons.
+    The home-catalogue adapter runs first so historic scientific-scope helpers
+    can still compose it with the older Start Here and tutorial UI restorations.
     """
     if not isinstance(text, str):
         raise TypeError('tutorial UI normalization requires decoded text')
+    text = normalize_home_catalogue(relative_path, text)
     text = normalize_start_here(relative_path, text)
     if not (relative_path.startswith('tutorials/') and relative_path.endswith('.html')):
         return text
@@ -75,12 +77,20 @@ def normalize_tutorial_ui(relative_path, text):
 
 def verify_tutorial_ui_file(relative_path, data):
     """Pin every explicitly authorized new/modified UI file, never whole folders."""
-    if relative_path not in TUTORIAL_UI_PATHS:
-        raise AssertionError(f'not an authorized tutorial UI file: {relative_path}')
-    observed = hashlib.sha256(data).hexdigest()
-    if observed != TUTORIAL_UI_SHA256[relative_path]:
-        raise AssertionError(f'tutorial UI file fingerprint mismatch for {relative_path}: {observed}')
-    return data
+    from home_catalogue_baseline import HOME_CATALOGUE_ASSET_PATHS, verify_home_catalogue_file
+    if relative_path in HOME_CATALOGUE_ASSET_PATHS and relative_path in TUTORIAL_UI_PATHS:
+        observed = hashlib.sha256(data).hexdigest()
+        # Preserve former complete pins for older snapshots; current work is
+        # separately pinned as a home-catalogue asset.
+        if observed == TUTORIAL_UI_SHA256[relative_path]:
+            return data
+        return verify_home_catalogue_file(relative_path, data)
+    if relative_path in TUTORIAL_UI_PATHS:
+        observed = hashlib.sha256(data).hexdigest()
+        if observed != TUTORIAL_UI_SHA256[relative_path]:
+            raise AssertionError(f'tutorial UI file fingerprint mismatch for {relative_path}: {observed}')
+        return data
+    return verify_home_catalogue_file(relative_path, data)
 
 
 def pre_ui_bytes(relative_path):

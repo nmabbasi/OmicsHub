@@ -21,6 +21,7 @@ from advanced_validation_baseline import (
     published_bytes as advanced_published_bytes,
 )
 from resource_content_baseline import normalize_resource_content
+from home_catalogue_baseline import HOME_CATALOGUE_ASSET_PATHS
 from tutorial_ui_baseline import (
     TUTORIAL_UI_PATHS,
     normalize_tutorial_ui,
@@ -219,7 +220,7 @@ class ReaderPunctuationTests(unittest.TestCase):
                 )
         # This consent repair authorizes one production script and its exact runtime fixture.
         reviewed_scripts = {'analytics.js', 'tests/test_analytics_load_order.js'}
-        verified_ui_paths = set(changed) & TUTORIAL_UI_PATHS
+        verified_ui_paths = set(changed) & (TUTORIAL_UI_PATHS | HOME_CATALOGUE_ASSET_PATHS)
         for relative in sorted(verified_ui_paths):
             verify_tutorial_ui_file(relative, (ROOT / relative).read_bytes())
         verified_start_here_paths = set(changed) & START_HERE_ASSET_PATHS
@@ -249,8 +250,9 @@ class ReaderPunctuationTests(unittest.TestCase):
         for relative in self.pages:
             with self.subTest(path=relative):
                 stylesheet = 'home-page.min.css' if relative == 'index.html' else 'style.css'
-                self.assertIn(stylesheet+'?v=20261023-reader-typography', (ROOT/relative).read_text())
-        self.assertIn('home-page.min.css?v=20261023-reader-typography', (ROOT/'index.html').read_text())
+                version = '20261024-home-catalogue-v1' if relative == 'index.html' else '20261023-reader-typography'
+                self.assertIn(stylesheet+'?v='+version, (ROOT/relative).read_text())
+        self.assertIn('home-page.min.css?v=20261024-home-catalogue-v1', (ROOT/'index.html').read_text())
         self.assertIn('start-here.css?v=20261024-start-simple', (ROOT/'start-here.html').read_text())
 
 

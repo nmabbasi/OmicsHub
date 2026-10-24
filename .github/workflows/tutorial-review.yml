@@ -23,6 +23,8 @@ jobs:
         run: python3 tools/generate_legacy_redirects.py --check
       - name: Verify generated learning paths
         run: python3 tools/generate_learning_paths.py --check
+      - name: Verify evidence-backed catalogue metadata
+        run: python3 tools/generate_catalogue_learning.py --check
       - name: Verify fingerprinted tutorial UI assets
         run: python3 tools/generate_tutorial_ui.py --check
       - name: Check shared tutorial JavaScript
@@ -31,6 +33,7 @@ jobs:
           node --check copy-code.js
           node --check subscribe-fab.js
           node --check start-here.js
+          node --check catalogue-browser.js
           node --check assets/vendor/prism/prism-1.29.0.js
       - name: Validate tutorial contracts and local links
         run: python3 tests/validate_tutorials.py
@@ -58,6 +61,7 @@ jobs:
           done
           python3 tests/browser_tutorial_reader_ui.py --browser '' --output /tmp/tutorial-ui-check
           python3 tests/browser_start_here_ui.py --browser '' --output /tmp/tutorial-ui-check
+          python3 tests/browser_home_catalogue_ui.py --browser '' --output /tmp/tutorial-ui-check
       - name: Save UI regression evidence
         if: always()
         uses: actions/upload-artifact@v4

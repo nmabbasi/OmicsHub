@@ -101,6 +101,7 @@ class HeroPerformanceTests(unittest.TestCase):
             self.skipTest('Historical baseline unavailable in shallow checkout')
         original = baseline.decode()
         current = (ROOT / 'index.html').read_text()
+        current = normalize_tutorial_ui('index.html', current)
         # Undo only the new source and responsive-size attributes; the whole body must match.
         old_sizes = re.search(r'<img[^>]+fetchpriority="high"[^>]+sizes="([^"]+)"', original).group(1)
         original = normalize_reader_typography('index.html', original)

@@ -31,6 +31,7 @@ from resource_content_baseline import (
     normalize_resource_content,
     published_bytes as resource_published_bytes,
 )
+from home_catalogue_baseline import HOME_CATALOGUE_ASSET_PATHS
 from tutorial_ui_baseline import (
     TUTORIAL_UI_PATHS,
     normalize_tutorial_ui,
@@ -164,7 +165,7 @@ class BeginnerWalkthroughScopeTests(unittest.TestCase):
             if relative.startswith("tests/") or relative == "sitemap.xml":
                 continue
             current_path = ROOT / relative
-            if relative in TUTORIAL_UI_PATHS:
+            if relative in TUTORIAL_UI_PATHS | HOME_CATALOGUE_ASSET_PATHS:
                 self.assertTrue(current_path.is_file(), relative)
                 verify_tutorial_ui_file(relative, current_path.read_bytes())
                 continue

@@ -20,7 +20,7 @@
   }
   function initCompactCategories() {
     const strip = document.getElementById('category-filter');
-    if (!strip || typeof window.filterTutorialsOnly !== 'function') return;
+    if (!strip || document.getElementById('catalogue-category') || typeof window.filterTutorialsOnly !== 'function') return;
     const group = document.createElement('div');
     group.className = 'catalogue-category-select';
     const label = document.createElement('label');
@@ -74,7 +74,7 @@
   function initInFlowTopControl() {
     const existing = document.getElementById('back-to-top');
     if (existing) {
-      if (existing.matches('a[href="#tutorial-title"], a[href="#sh-hero-title"]')) {
+      if (existing.matches('a[href="#tutorial-title"], a[href="#sh-hero-title"], a[href="#home-hero-title"], a[href="#catalogue-hero-title"]')) {
         const tools = existing.closest('.reader-tools.tutorial-top-tools');
         const navigationFooter = document.querySelector('#reader-course-navigation .reader-sequence-footer');
         if (tools && navigationFooter) navigationFooter.appendChild(tools);

@@ -33,6 +33,7 @@ from resource_content_baseline import (
     normalize_resource_sitemap,
     published_bytes as resource_published_bytes,
 )
+from home_catalogue_baseline import HOME_CATALOGUE_ASSET_PATHS, normalize_home_catalogue
 from tutorial_ui_baseline import (
     TUTORIAL_UI_PATHS,
     normalize_tutorial_ui,
@@ -213,7 +214,7 @@ class TidyverseSetupScopeTests(unittest.TestCase):
             if relative.startswith("tests/") or relative in {TIDYVERSE_SETUP_ARTICLE, "sitemap.xml"}:
                 continue
             path = ROOT / relative
-            if relative in TUTORIAL_UI_PATHS:
+            if relative in TUTORIAL_UI_PATHS | HOME_CATALOGUE_ASSET_PATHS:
                 self.assertTrue(path.is_file(), relative)
                 verify_tutorial_ui_file(relative, path.read_bytes())
                 continue
@@ -229,12 +230,18 @@ class TidyverseSetupScopeTests(unittest.TestCase):
                 continue
             old = git_bytes(relative)
             if relative == "start-here.html" and old is not None:
+                old = normalize_home_catalogue(relative, old.decode("utf-8")).encode("utf-8")
                 old = normalize_start_here(relative, old.decode("utf-8")).encode("utf-8")
+            elif old is not None:
+                old = normalize_home_catalogue(relative, old.decode("utf-8")).encode("utf-8")
             if old is not None and relative.startswith("tutorials/") and relative.endswith(".html"):
                 old = normalize_tutorial_ui(relative, old.decode("utf-8")).encode("utf-8")
             current_raw = path.read_bytes() if path.is_file() else None
             if relative == "start-here.html" and current_raw is not None:
+                current_raw = normalize_home_catalogue(relative, current_raw.decode("utf-8")).encode("utf-8")
                 current_raw = normalize_start_here(relative, current_raw.decode("utf-8")).encode("utf-8")
+            elif current_raw is not None:
+                current_raw = normalize_home_catalogue(relative, current_raw.decode("utf-8")).encode("utf-8")
             current_bytes = normalize_resource_content(relative, current_raw) if current_raw is not None else None
             with self.subTest(path=relative):
                 if relative == "analytics.js":

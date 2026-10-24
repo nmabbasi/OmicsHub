@@ -161,7 +161,7 @@ class TutorialNavigationStyleTests(unittest.TestCase):
         self.assertIn('.reader-sequence-footer', self.css)
         self.assertIn('.reader-sequence-route-label', self.css)
         script = (ROOT / 'subscribe-fab.js').read_text()
-        self.assertIn("existing.matches('a[href=\"#tutorial-title\"], a[href=\"#sh-hero-title\"]')", script)
+        self.assertIn("existing.matches('a[href=\"#tutorial-title\"], a[href=\"#sh-hero-title\"], a[href=\"#home-hero-title\"], a[href=\"#catalogue-hero-title\"]')", script)
         self.assertIn('navigationFooter.appendChild(tools)', script)
         self.assertIn("tools.classList.add('is-floating')", script)
         self.assertIn('window.scrollY < 240', script)
