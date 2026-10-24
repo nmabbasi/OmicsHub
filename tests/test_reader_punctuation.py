@@ -135,7 +135,8 @@ class ReaderPunctuationTests(unittest.TestCase):
             'files/annotation-preflight-lesson/', 'files/coding-assistant-lesson/',
         )
         fixture_changes = [path for path in changed if path.startswith('files/')]
-        forbidden = [path for path in changed if not path.startswith('files/')]
+        forbidden = [path for path in changed
+                     if path != 'analytics.js' and not path.startswith('files/')]
         invalid_fixtures = [path for path in fixture_changes
                             if path in baseline_files or not path.startswith(allowed_prefixes)]
         self.assertEqual(forbidden, [], 'Reader-copy edits must not modify images, research examples or site scripts')

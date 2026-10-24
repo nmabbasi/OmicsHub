@@ -111,7 +111,9 @@ class HeroPerformanceTests(unittest.TestCase):
         self.assertEqual(marker, advertising_marker, 'Expected the isolated advertising module')
         self.assertEqual(consent.count(advertising_marker), 1)
         self.assertTrue(advertising_module.endswith(b'// END ADVERTISING CONSENT MODULE\n'))
-        for name in ['analytics.js', 'subscribe-fab.js',
+        # analytics.js has a narrowly pinned authorized source update; every other
+        # shared script and original asset remains byte-identical here.
+        for name in ['subscribe-fab.js',
                      'images/hero-image-light-navy-clean.webp',
                      'images/hero-image-light-navy-clean-480.webp',
                      'images/hero-image-light-navy-clean-768.webp',

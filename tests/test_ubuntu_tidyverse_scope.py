@@ -158,6 +158,11 @@ class UbuntuTidyverseScopeTests(unittest.TestCase):
             old = git_bytes(relative)
             path = ROOT / relative
             with self.subTest(path=relative):
+                if relative == "analytics.js":
+                    self.assertIsNotNone(old, "analytics.js must already exist in the published source")
+                    self.assertTrue(path.is_file(), "deleting analytics.js is forbidden")
+                    # Exact authorized source is pinned by test_analytics_source_scope.py.
+                    continue
                 self.assertIsNotNone(old, "new public files and assets are forbidden")
                 self.assertTrue(path.is_file(), "deleting published files is forbidden")
                 self.assertEqual(path.read_bytes(), old, "all non-target public files must remain byte-identical")

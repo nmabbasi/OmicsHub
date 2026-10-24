@@ -180,6 +180,10 @@ class SixLessonRevisionScopeTests(unittest.TestCase):
                     if old_bytes is not None:
                         self.assertEqual(current_path.read_bytes(), old_bytes,
                                          "pre-existing datasets/output artifacts are immutable")
+                elif relative == "analytics.js":
+                    self.assertIsNotNone(old_bytes, "analytics.js must already exist in the published source")
+                    self.assertTrue(current_path.is_file(), "deleting analytics.js is forbidden")
+                    # Exact authorized source is pinned by test_analytics_source_scope.py.
                 else:
                     self.assertIsNotNone(old_bytes,
                                          "new source files outside approved fixture folders are forbidden")
