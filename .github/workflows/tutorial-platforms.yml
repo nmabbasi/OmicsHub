@@ -1,0 +1,55 @@
+name: Beginner tutorial platform validation
+
+on:
+  push:
+    branches:
+      - improve/advanced-tutorial-validation
+  pull_request:
+    paths:
+      - .github/workflows/tutorial-platforms.yml
+      - tests/platform_validation/**
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  native-tutorials:
+    name: Native tutorial examples (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+          - windows-latest
+          - macos-latest
+
+    env:
+      MPLBACKEND: Agg
+      PYTHONUTF8: "1"
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install public Python scientific packages
+        run: python -m pip install numpy pandas scipy statsmodels scikit-learn matplotlib seaborn umap-learn Pillow
+
+      - name: Set up current R release
+        uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: release
+
+      - name: Install public R packages
+        timeout-minutes: 10
+        run: Rscript tests/platform_validation/install_r_packages.R
+
+      - name: Execute published beginner examples on this native OS
+        run: python tests/platform_validation/validate_platforms.py

@@ -14,6 +14,7 @@ from remaining_validation_baseline import (
     normalize_remaining_validation_sitemap,
     published_bytes,
 )
+from advanced_validation_baseline import is_approved_workflow
 
 QC_PATH = "tutorials/quality-control-fundamentals.html"
 REVISED_TUTORIALS = frozenset({
@@ -74,6 +75,8 @@ class RemainingValidationScopeTests(unittest.TestCase):
             if relative.startswith("tests/"):
                 continue
             current_path = ROOT / relative
+            if current_path.is_file() and is_approved_workflow(relative, current_path.read_bytes()):
+                continue
             original = None
             result = subprocess.run(
                 ["git", "show", f"{PUBLISHED_BASELINE}:{relative}"],

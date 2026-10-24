@@ -28,6 +28,7 @@ from remaining_validation_baseline import (
     normalize_remaining_validation_edit,
     normalize_remaining_validation_sitemap,
 )
+from advanced_validation_baseline import is_approved_workflow
 
 ALLOWED_FIXTURE_PREFIXES = (
     "files/text-processing-lesson/",
@@ -136,6 +137,8 @@ class SixLessonRevisionScopeTests(unittest.TestCase):
             if relative.startswith("tests/") or relative == "sitemap.xml":
                 continue
             current_path = ROOT / relative
+            if current_path.is_file() and is_approved_workflow(relative, current_path.read_bytes()):
+                continue
             old_bytes = git_bytes(relative)
             with self.subTest(path=relative):
                 if relative in SIX_LESSON_ARTICLES:

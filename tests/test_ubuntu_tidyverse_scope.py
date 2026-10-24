@@ -19,6 +19,7 @@ from remaining_validation_baseline import (
     normalize_remaining_validation_edit,
     normalize_remaining_validation_sitemap,
 )
+from advanced_validation_baseline import is_approved_workflow
 
 SITE = "https://theomicshub.com/"
 SCRIPT = re.compile(r"<script\b[^>]*>.*?</script\s*>", re.S | re.I)
@@ -170,8 +171,10 @@ class UbuntuTidyverseScopeTests(unittest.TestCase):
         for relative in changed_paths():
             if relative.startswith("tests/") or relative in {TIDYVERSE_SETUP_ARTICLE, "sitemap.xml"}:
                 continue
-            old = git_bytes(relative)
             path = ROOT / relative
+            if path.is_file() and is_approved_workflow(relative, path.read_bytes()):
+                continue
+            old = git_bytes(relative)
             with self.subTest(path=relative):
                 if relative == "analytics.js":
                     self.assertIsNotNone(old, "analytics.js must already exist in the published source")

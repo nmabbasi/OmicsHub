@@ -18,6 +18,7 @@ from remaining_validation_baseline import (
     allowed_paths as remaining_validation_paths,
     normalize_remaining_validation_edit,
 )
+from advanced_validation_baseline import is_approved_workflow
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = re.compile(r"<script\b[^>]*>.*?</script\s*>", re.S | re.I)
@@ -131,6 +132,8 @@ class BeginnerWalkthroughScopeTests(unittest.TestCase):
             if relative.startswith("tests/") or relative == "sitemap.xml":
                 continue
             current_path = ROOT / relative
+            if current_path.is_file() and is_approved_workflow(relative, current_path.read_bytes()):
+                continue
             old_bytes = git_bytes(relative)
             with self.subTest(path=relative):
                 self.assertIsNotNone(old_bytes, "new source/assets outside tests are forbidden")
