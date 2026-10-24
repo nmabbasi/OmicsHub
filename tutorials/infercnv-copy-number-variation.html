@@ -73,7 +73,7 @@ gtag('consent', 'default', {
     }
   },
   "datePublished": "2026-09-06",
-  "dateModified": "2026-10-21",
+  "dateModified": "2026-10-24",
   "url": "https://theomicshub.com/tutorials/infercnv-copy-number-variation.html",
   "name": "Inferring Copy Number Variation (inferCNV)",
   "isPartOf": {
@@ -175,7 +175,7 @@ function toggleMobileMenu() {
 </div>
 <div class="flex items-center gap-1">
 <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
-<span>Updated 21 October 2026</span></div>
+<span>Updated 24 October 2026</span></div>
 </div><p class="lesson-lead">This tutorial is a prepared-input template: it validates the three inferCNV inputs, constructs an R analysis object, and guides inspection of expression patterns without treating them as DNA copy-number measurements.</p>
 <section class="lesson-summary tutorial-learning-contract" data-tutorial-format="advanced-template" aria-label="Learning format">
 <p><strong>Format: Advanced template.</strong> For readers with prior scRNA-seq and R experience who already have filtered raw counts, cell annotations, and assembly-matched gene coordinates; you will validate these inputs, run inferCNV, and review its outputs. No dataset is supplied, so prepare the inputs before starting.</p>
@@ -203,11 +203,30 @@ function toggleMobileMenu() {
 <li>Reference selection is the most critical factor: if the reference set contains cells with copy-number lesions, inferences will be biased.</li>
 </ul>
 <h2>Reproducible workflow</h2>
-<p>This is a run template, not an end-to-end reproducible dataset: it requires three prepared files and does not download or construct them. Before running, set the working directory to the folder containing those files, verify the identifier and genome-assembly contract below, and use the official <a href="https://github.com/broadinstitute/inferCNV/wiki/File-Definitions">file definitions</a> to prepare missing inputs. The commands read inputs and write files in that directory.
+<p>This is a run template, not an end-to-end reproducible dataset: it requires three prepared files and does not download or construct them. Before running, set the working directory to the folder containing those files, verify the identifier and genome-assembly contract below, and use the official <a href="https://github.com/broadinstitute/inferCNV/wiki/File-Definitions">file definitions</a> to prepare missing inputs. The commands read inputs and write files in that directory.</p>
 <p>Check the installed R and package versions before analysis with <code>R --version</code> and, in R, <code>packageVersion("infercnv")</code>. The examples assume raw, unnormalized gene-by-cell counts; do not substitute normalized or scaled expression. Record these versions with the assembly and identifier mapping.</p>
+<h3>Install and verify the JAGS prerequisite</h3>
+<p>The R package needs native <strong>JAGS 4.x</strong> as well as the R binding <code>rjags</code>. Installing R packages alone does not install JAGS. With R and its build tools already configured, Ubuntu 24.04 users can install JAGS in a terminal:</p>
+<pre><code>sudo apt-get update
+sudo apt-get install jags</code></pre>
+<p>On other operating systems, use the <a href="https://github.com/broadinstitute/inferCNV/wiki/Installing-infercnv">official installation instructions</a> to install JAGS first. Then run this separate setup step in the R environment you will use for analysis. Bioconductor selects the release matching your R version; <code>update=FALSE</code> avoids a blanket update of existing packages.</p>
+<pre><code># Setup only: do this before opening the analysis script below.
+if (!requireNamespace("BiocManager", quietly = TRUE)) {
+    install.packages("BiocManager", repos = "https://cloud.r-project.org")
+}
+BiocManager::install("infercnv", ask = FALSE, update = FALSE)
+needed &lt;- c("rjags", "infercnv")
+missing &lt;- needed[!vapply(needed, requireNamespace, logical(1), quietly = TRUE)]
+if (length(missing)) stop("Setup incomplete: ", paste(missing, collapse = ", "))
+message("JAGS: ", as.character(rjags::jags.version()))
+message("infercnv: ", as.character(packageVersion("infercnv")))</code></pre>
+<p>Proceed only when both packages load and the native JAGS version prints. Package installation can warn about failures without stopping R, so do not treat the return from the installer as proof of readiness. Keep setup and analysis in the same R library/environment.</p>
+<h3>Verified execution and limits</h3>
+<p>The original R route was executed on Ubuntu 24.04.4 with R 4.3.3, infercnv 1.18.1 and JAGS 4.3.2 using 170 genuine public cells from a CELLxGENE-curated <a href="https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE84465">GSE84465</a> subset and 20,374 exact GRCh37 gene matches. The run retained 14,319 genes and all 170 cells, with HMM and denoising enabled. The returned object was reloaded in a fresh R process; gene coordinates, cell identities, HMM report links and opaque white-background heatmaps were checked. Reference labels, input paths and a two-thread limit were adapted for this bounded test.</p>
+<p>This is software-execution evidence, not DNA or clinical validation. The input is a Smart-seq2 GBM subset: <code>cutoff=0.1</code> was retained to test the displayed template, not established as the appropriate threshold for these full-length data. Choose the assay-appropriate cutoff before your own analysis. Candidate reference labels were not independently verified as diploid. Setup reused existing R libraries, so this was not a fresh whole-stack installation or a test of inferCNV on other operating systems or hardware.</p>
 <h3>Required files (inputs)</h3>
 <ul>
-<li>Raw counts matrix in R format or as an on-disk matrix: counts_matrix.rds (genes x cells). Rows named by gene symbols (HGNC-style preferred).</li>
+<li>Raw counts matrix in R format or as an on-disk matrix: counts_matrix.rds (genes x cells). Name rows with consistent gene identifiers, such as approved HGNC symbols or stable Ensembl IDs; use exactly matching identifiers in the gene-ordering file.</li>
 <li>Cell annotations: a table with <code>cell_id</code> and <code>cell_type</code> columns, one row per cell. IDs must match the count-matrix column names; the package input written below is headerless.</li>
 <li>Gene ordering: gene_ordering.tsv with gene, chromosome, start, and end coordinates from a declared assembly (the example metadata table has headers). Use the same gene identifiers as the count-matrix row names and document the source, assembly, and any identifier conversion; only overlapping genes are analyzed.</li>
 </ul>
@@ -278,6 +297,9 @@ infercnv_obj &lt;- CreateInfercnvObject(
 # - cutoff: 0.1 for droplet-based 10x (sparse); 1 for Smart-seq2-like full-length counts.
 # - out_dir: path to write outputs (creates directory if needed).
 out_dir &lt;- "infercnv_output"
+if (dir.exists(out_dir) &amp;&amp; length(list.files(out_dir, all.files = TRUE, no.. = TRUE))) {
+    stop("Choose an empty output directory for a new run; do not mix old and new results")
+}
 dir.create(out_dir, showWarnings = FALSE)
 
 infercnv_obj &lt;- infercnv::run(
@@ -289,13 +311,42 @@ infercnv_obj &lt;- infercnv::run(
     HMM = TRUE
 )
 
-# 6) Basic completion checkpoint: verify the run returned and inspect the directory.
-stopifnot(dir.exists(out_dir), length(list.files(out_dir, all.files = TRUE)) &gt; 2)
+# 6) Save the returned object and verify it can be read back.
+final_path &lt;- file.path(out_dir, "returned_final_infercnv.rds")
+saveRDS(infercnv_obj, final_path)
+final_check &lt;- readRDS(final_path)
+stopifnot(methods::is(final_check, "infercnv"))
+methods::validObject(final_check)
+stopifnot(nrow(final_check@expr.data) &gt; 0L, ncol(final_check@expr.data) &gt; 0L)
+stopifnot(all(is.finite(final_check@expr.data)))
+stopifnot(all(colnames(final_check@expr.data) %in% colnames(counts)))
+stopifnot(identical(rownames(final_check@expr.data), rownames(final_check@gene_order)))
+message("Retained ", nrow(final_check@expr.data), " genes and ",
+        ncol(final_check@expr.data), " cells; saved object: ", final_path)
+
+# 7) HMM=TRUE must produce readable HMM region reports, not just a heatmap.
+# Prefixes vary by release; the documented region-report suffix is used here.
+hmm_reports &lt;- list.files(out_dir, pattern = "\\.pred_cnv_regions\\.dat$",
+                          full.names = TRUE, recursive = TRUE)
+if (!length(hmm_reports)) stop("No HMM region report: inspect the run log and installed-version output documentation")
+hmm_type &lt;- final_check@options$HMM_type
+if (length(hmm_type) != 1L || !hmm_type %in% c("i6", "i3")) {
+    stop("Unrecognized HMM type: review installed-version documentation before checking state codes")
+}
+legal_states &lt;- if (hmm_type == "i6") 1:6 else 1:3
+for (path in hmm_reports) {
+    report &lt;- read.delim(path, header = TRUE, check.names = FALSE)
+    stopifnot(all(c("cell_group_name", "cnv_name", "state", "chr", "start", "end") %in% names(report)))
+    if (nrow(report)) {
+        stopifnot(all(report$state %in% legal_states))
+        stopifnot(all(is.finite(report$start)), all(is.finite(report$end)))
+        stopifnot(all(report$start &gt;= 1), all(report$start &lt;= report$end))
+    }
+    message(basename(path), ": ", nrow(report), " reported regions")
+}
+writeLines(capture.output(sessionInfo()), file.path(out_dir, "session-info.txt"))
 print(list.files(out_dir, recursive = TRUE))
-# Documented examples include infercnv.png (final heatmap) and
-# infercnv.preliminary.png; filenames and optional HMM outputs vary by release.
-# If no output appears or the run errors, stop and inspect the R error/log,
-# installed-version documentation, input overlap, and available disk/memory.
+# Inventory is not proof of completion. Inspect the heatmap and reports below.
 </code></pre>
 <p>Notes on parameters:</p>
 <ul>
@@ -334,6 +385,7 @@ cnv_matrix = adata.obsm["X_cnv"]
 <li>If HMM prediction is enabled, inspect its generated files using the installed version documentation. These are model-derived states, not direct measurements of DNA dosage.</li>
 <li>InferCNV also saves stage-specific R objects and text matrices; consult the output directory and package documentation rather than relying on an assumed filename.</li>
 </ul>
+<p>The checkpoint saves the object returned by this run rather than guessing which stage file is final. It also checks the HMM region-table schema and the state codes for the recorded HMM type. A report with zero retained regions can be a valid outcome after neutral-state or posterior-probability filtering: it is not proof that every cell is diploid. Inspect the unfiltered and filtered reports and the run log. If another release changes the output schema, consult that release's documentation instead of renaming files or inventing calls to satisfy the check. This template uses a new, empty output folder so stale artifacts cannot masquerade as new results; deliberate checkpoint resumption needs separate review of the package's resume options.</p>
 <p>What to look for:</p>
 <ul>
 <li>Look for broad, contiguous expression shifts across genes in genomic order. A regional pattern is a candidate signal to investigate, not a CNV call by itself.</li>

@@ -71,7 +71,7 @@ gtag('consent', 'default', {
     }
   },
   "datePublished": "2026-08-25",
-  "dateModified": "2026-10-23"
+  "dateModified": "2026-10-24"
 }</script>
 <link href="../tutorial-library.css" rel="stylesheet"/></head>
 <body class="bg-white text-gray-900">
@@ -218,7 +218,7 @@ import scanpy as sc
 from celltypist import models
 
 INPUT_PATH = Path("my_data.h5ad")
-MODEL_PATH = Path("Immune_All_Low.pkl")
+MODEL_PATH = Path("Immune_All_Low.pkl").resolve()
 INPUT_SPECIES = "human"                 # Set from input provenance, never inferred
 MODEL_SPECIES = "human"                 # Verify against the official model description
 INPUT_FEATURE_ID_CONVENTION = "HGNC gene symbols"
@@ -262,7 +262,8 @@ if OVER_CLUSTERING_KEY not in adata.obs:
 if adata.obs[OVER_CLUSTERING_KEY].isna().any():
     raise ValueError("Over-clustering labels are missing for one or more cells")
 
-model = models.Model.load(str(MODEL_PATH))
+# An explicit path avoids catalog lookup; forward slashes also work on Windows.
+model = models.Model.load(MODEL_PATH.as_posix())
 query_features = list(map(str, adata.var_names))
 model_features = list(map(str, model.features))
 if not model_features:
@@ -425,7 +426,7 @@ print("Saved manifest and cell-aligned diagnostics for", adata.n_obs, "cells")
 <li><strong>External processing of sensitive data:</strong> keep patient-linked counts, metadata and cell identifiers within approved systems; do not send them to a third-party service without institutional authorization.</li>
 </ul>
 <h2>References and version checks</h2>
-<p>CellTypist documentation pages were checked on 2026-10-23: the <code>annotate</code> and <code>Model</code> pages were the current <code>latest</code> docs, and the prediction-result page was the <code>stable</code> docs identified as version 1.7.1. The example records installed package versions at runtime instead of promising a fixed version lock. Validation here is limited to syntax and an invented low-overlap preflight fixture using a synthetic model adapter; CellTypist is not installed in the test environment, so no real model was loaded and no predictions were run. Recheck APIs, model inventory and defaults before use.</p>
+<p>The prediction and diagnostic stages completed on 2,638 cells prepared from the official public 10x PBMC 3k counts, using CellTypist 1.7.1, Scanpy 1.12.4 and the official <code>Immune_All_Low.pkl</code> version-2 model on Ubuntu. The query matched 4,177 of the model's 6,639 features; cell-aligned review, probability and decision tables, an annotated H5AD and a completed run manifest were written. This checks software execution, not independent biological label accuracy. The synthetic low-overlap refusal test is retained. The model is loaded by an explicit local path: in CellTypist 1.7.1, a basename can trigger a catalog lookup and download other models even when the named file is present locally. Native Windows/macOS model inference and other datasets remain untested. Record installed versions and recheck APIs, model inventory and defaults before use.</p>
 <ul>
 <li><a href="https://celltypist.readthedocs.io/en/latest/celltypist.annotate.html" rel="noopener noreferrer" target="_blank">CellTypist prediction function</a>: accepted inputs, model selection, majority voting and result object.</li>
 <li><a href="https://celltypist.readthedocs.io/en/latest/celltypist.models.Model.html" rel="noopener noreferrer" target="_blank">CellTypist Model structure</a>: documented <code>features</code> and <code>description</code> properties used by the preflight.</li>

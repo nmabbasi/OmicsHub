@@ -28,6 +28,15 @@ from remaining_validation_baseline import (
     normalize_remaining_validation_edit,
     normalize_remaining_validation_sitemap,
 )
+from advanced_validation_baseline import (
+    allowed_asset_paths as advanced_asset_paths,
+    allowed_article_paths as advanced_validation_paths,
+    is_approved_workflow,
+    normalize_advanced_validation_asset,
+    normalize_advanced_validation_if_allowed,
+    load_manifest as load_advanced_manifest,
+    published_bytes as advanced_published_bytes,
+)
 
 ALLOWED_FIXTURE_PREFIXES = (
     "files/text-processing-lesson/",
@@ -87,8 +96,12 @@ class SixLessonRevisionScopeTests(unittest.TestCase):
             current = (ROOT / relative).read_text(encoding="utf-8")
             with self.subTest(page=relative):
                 self.assertEqual(DATE_MODIFIED.findall(old), ["2026-10-21"])
-                self.assertIn(DATE_MODIFIED.findall(current),
-                              [["2026-10-21"], ["2026-10-23"]])
+                if relative in advanced_validation_paths():
+                    approved_date = load_advanced_manifest()["articles"][relative]["date_modified_approved"]
+                    self.assertEqual(DATE_MODIFIED.findall(current), [approved_date])
+                else:
+                    self.assertIn(DATE_MODIFIED.findall(current),
+                                  [["2026-10-21"], ["2026-10-23"]])
                 if relative in SIX_LESSON_DISCLOSURE_PAGES:
                     current_notes = DISCLOSURE.findall(current)
                     old_notes = DISCLOSURE.findall(old)
@@ -104,7 +117,11 @@ class SixLessonRevisionScopeTests(unittest.TestCase):
                     self.assertEqual(DISCLOSURE.findall(current), DISCLOSURE.findall(old))
                 self.assertEqual(
                     normalize_six_lesson_revision(
-                        relative, normalize_beginner_walkthrough_revision(relative, current)
+                        relative,
+                        normalize_beginner_walkthrough_revision(
+                            relative,
+                            normalize_advanced_validation_if_allowed(relative, current),
+                        ),
                     ),
                     normalize_six_lesson_revision(
                         relative, normalize_beginner_walkthrough_revision(relative, old)
@@ -121,6 +138,7 @@ class SixLessonRevisionScopeTests(unittest.TestCase):
             self.assertIsNotNone(old_bytes, relative)
             old = old_bytes.decode("utf-8")
             current = page.read_text(encoding="utf-8")
+            current = normalize_advanced_validation_if_allowed(relative, current)
             def executable(text):
                 return [
                     block for block in SCRIPT.findall(text)
@@ -136,6 +154,8 @@ class SixLessonRevisionScopeTests(unittest.TestCase):
             if relative.startswith("tests/") or relative == "sitemap.xml":
                 continue
             current_path = ROOT / relative
+            if current_path.is_file() and is_approved_workflow(relative, current_path.read_bytes()):
+                continue
             old_bytes = git_bytes(relative)
             with self.subTest(path=relative):
                 if relative in SIX_LESSON_ARTICLES:
@@ -145,7 +165,9 @@ class SixLessonRevisionScopeTests(unittest.TestCase):
                         normalize_six_lesson_revision(
                             relative,
                             normalize_beginner_walkthrough_revision(
-                                relative, current_path.read_text(encoding="utf-8")
+                                relative, normalize_advanced_validation_if_allowed(
+                                    relative, current_path.read_text(encoding="utf-8")
+                                )
                             ),
                         ),
                         normalize_six_lesson_revision(
@@ -188,6 +210,20 @@ class SixLessonRevisionScopeTests(unittest.TestCase):
                         ).encode("utf-8"),
                         old_bytes,
                         "only the exact manifest-pinned article body and dates may differ",
+                    )
+                elif relative in advanced_validation_paths():
+                    self.assertEqual(
+                        normalize_advanced_validation_if_allowed(
+                            relative, current_path.read_text(encoding="utf-8")
+                        ).encode("utf-8"),
+                        advanced_published_bytes(relative),
+                        "only the exact manifest-pinned PR14 article edit may differ",
+                    )
+                elif relative in advanced_asset_paths():
+                    self.assertEqual(
+                        normalize_advanced_validation_asset(relative, current_path.read_bytes()),
+                        old_bytes,
+                        "only the exact manifest-pinned Visium helper asset may change",
                     )
                 elif relative.startswith("files/"):
                     self.assertTrue(relative.startswith(ALLOWED_FIXTURE_PREFIXES),

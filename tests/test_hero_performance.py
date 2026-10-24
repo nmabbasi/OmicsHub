@@ -20,6 +20,7 @@ from remaining_validation_baseline import (
     allowed_paths as remaining_validation_paths,
     normalize_remaining_validation_edit,
 )
+from advanced_validation_baseline import normalize_advanced_validation_if_allowed
 
 ROOT = Path(__file__).resolve().parents[1]
 BASELINE = 'e7037f1b9a9eea8f4338e7b6696f791d8172f844'
@@ -136,6 +137,7 @@ class HeroPerformanceTests(unittest.TestCase):
             current_text = strip_cookie_banner(
                 p.read_text(encoding='utf-8'), allow_missing=True
             )
+            current_text = normalize_advanced_validation_if_allowed(relative_path, current_text)
             if relative_path in remaining_validation_paths():
                 current_text = normalize_remaining_validation_edit(relative_path, current_text)
             baseline_text = normalize_tidyverse_setup_revision(relative_path, baseline_text)

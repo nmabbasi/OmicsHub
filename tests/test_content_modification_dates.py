@@ -7,6 +7,11 @@ import unittest
 import xml.etree.ElementTree as ET
 from urllib.parse import urlsplit
 from remaining_validation_baseline import load_manifest, published_bytes
+from advanced_validation_baseline import (
+    allowed_article_paths as advanced_article_paths,
+    load_manifest as load_advanced_manifest,
+    published_bytes as advanced_published_bytes,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 SITE = "https://theomicshub.com/"
@@ -62,16 +67,36 @@ class ContentModificationDateTests(unittest.TestCase):
         return json.loads(blocks[0])
 
     def test_substantively_revised_articles_have_matching_dates(self):
-        for relative_path, published in MODIFIED.items():
+        advanced_dates = load_advanced_manifest()["articles"]
+        revised_pages = dict(MODIFIED)
+        for relative_path in advanced_article_paths():
+            revised_pages.setdefault(relative_path, None)
+        for relative_path, published in revised_pages.items():
             with self.subTest(page=relative_path):
                 entity = self.entity(relative_path)
-                modified = TARGET_MODIFIED_DATE if relative_path == TIDYVERSE_TARGET else "2026-10-23"
+                if published is None:
+                    original = json.loads(
+                        SCHEMA.findall(advanced_published_bytes(relative_path).decode("utf-8"))[0]
+                    )
+                    published = original["datePublished"]
+                modified = (
+                    TARGET_MODIFIED_DATE if relative_path == TIDYVERSE_TARGET
+                    else advanced_dates[relative_path]["date_modified_approved"]
+                    if relative_path in advanced_article_paths()
+                    else "2026-10-23"
+                )
                 self.assertEqual(entity["datePublished"], published)
                 self.assertEqual(entity["dateModified"], modified)
                 page_html = (ROOT / relative_path).read_text(encoding="utf-8")
                 visible_dates = re.findall(
                     r"Updated\s+(\d{1,2} [A-Za-z]+ \d{4})", page_html
                 )
+                if relative_path in advanced_article_paths():
+                    approved_visible = advanced_dates[relative_path]["visible_updated_approved"]
+                    self.assertEqual(
+                        visible_dates,
+                        [approved_visible] if approved_visible else [],
+                    )
                 for visible_date in visible_dates:
                     self.assertEqual(
                         datetime.strptime(visible_date, "%d %B %Y").date().isoformat(),
@@ -147,11 +172,20 @@ class ContentModificationDateTests(unittest.TestCase):
         self.assertTrue(all("?" not in url for url in urls))
         expected_updated = {SITE + path for path in MODIFIED}
         expected_updated.remove(SITE + TIDYVERSE_TARGET)
+        advanced_dates = load_advanced_manifest()["articles"]
+        expected_updated.difference_update(
+            SITE + path for path in advanced_article_paths()
+            if advanced_dates[path]["date_modified_approved"] != "2026-10-23"
+        )
         manifest = load_manifest()
         expected_oct24 = {SITE + TIDYVERSE_TARGET} | {
             SITE + path for path, entry in manifest["files"].items()
             if entry["date_modified_approved"] == TARGET_MODIFIED_DATE
         }
+        expected_oct24.update(
+            SITE + path for path, entry in advanced_dates.items()
+            if entry["date_modified_approved"] == TARGET_MODIFIED_DATE
+        )
         expected_updated.update({SITE + "about.html", SITE + "tutorials.html", SITE + "start-here.html"})
         expected_updated.update({SITE + "pages/privacy.html", SITE + "pages/cookie.html"})
         self.assertEqual(

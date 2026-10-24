@@ -10,6 +10,8 @@ from pathlib import Path
 import re
 import subprocess
 
+from advanced_validation_baseline import normalize_advanced_validation_if_allowed
+
 ROOT = Path(__file__).resolve().parents[1]
 MANIFEST_PATH = ROOT / "tests/fixtures/remaining-validation-edits.json"
 PUBLISHED_BASELINE = "f218d1b6c711a5a50fff8c8af67f2b3d9bf7201c"
@@ -107,7 +109,8 @@ def restore_page_to_published(relative_path, data):
 
 
 def normalize_remaining_validation_edit(relative_path, text):
-    """Text ingress for legacy checks; call only on the current page version."""
+    """Restore PR14 first, then the older remaining-validation snapshot."""
+    text = normalize_advanced_validation_if_allowed(relative_path, text)
     return restore_page_to_published(relative_path, text.encode("utf-8")).decode("utf-8")
 
 
@@ -137,4 +140,5 @@ def restore_sitemap_to_published(data):
 
 
 def normalize_remaining_validation_sitemap(data):
-    return restore_sitemap_to_published(data)
+    from advanced_validation_baseline import normalize_advanced_validation_sitemap
+    return restore_sitemap_to_published(normalize_advanced_validation_sitemap(data))

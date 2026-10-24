@@ -17,6 +17,15 @@ from remaining_validation_baseline import (
     normalize_remaining_validation_edit,
     normalize_remaining_validation_sitemap,
 )
+from advanced_validation_baseline import (
+    allowed_asset_paths as advanced_asset_paths,
+    allowed_article_paths as advanced_validation_paths,
+    is_approved_workflow,
+    normalize_advanced_validation_asset,
+    normalize_advanced_validation_if_allowed,
+    load_manifest as load_advanced_manifest,
+    published_bytes as advanced_published_bytes,
+)
 
 SITE = "https://theomicshub.com/"
 SCRIPT = re.compile(r"<script\b[^>]*>.*?</script\s*>", re.S | re.I)
@@ -126,11 +135,16 @@ class TidyverseSetupScopeTests(unittest.TestCase):
                 self.assertEqual(scripts(current, executable_only=True),
                                  scripts(old, executable_only=True))
                 old_jsonld, current_jsonld = scripts(old), scripts(current)
-                if relative == TIDYVERSE_SETUP_ARTICLE or relative in remaining_validation_paths():
+                if (relative == TIDYVERSE_SETUP_ARTICLE
+                        or relative in remaining_validation_paths()
+                        or relative in advanced_validation_paths()):
                     self.assertEqual(len(old_jsonld), 1)
                     self.assertEqual(len(current_jsonld), 1)
                     old_jsonld = [normalize_jsonld_date(block) for block in old_jsonld]
                     current_jsonld = [normalize_jsonld_date(block) for block in current_jsonld]
+                    if relative in advanced_validation_paths():
+                        approved = load_advanced_manifest()["articles"][relative]["date_modified_approved"]
+                        self.assertEqual(DATE_MODIFIED.findall(scripts(current, executable_only=False)[0])[0][1], approved)
                 self.assertEqual(current_jsonld, old_jsonld,
                                  "JSON-LD fields other than the approved date must remain exact")
 
@@ -146,6 +160,12 @@ class TidyverseSetupScopeTests(unittest.TestCase):
             self.assertIsNotNone(old, relative)
             with self.subTest(tutorial=relative):
                 current = page.read_bytes()
+                current = normalize_advanced_validation_if_allowed(
+                    relative, current.decode("utf-8")
+                ).encode("utf-8")
+                if relative in advanced_validation_paths():
+                    self.assertEqual(current, advanced_published_bytes(relative))
+                    continue
                 if relative in remaining_validation_paths():
                     current = normalize_remaining_validation_edit(
                         relative, current.decode("utf-8")
@@ -155,8 +175,10 @@ class TidyverseSetupScopeTests(unittest.TestCase):
         for relative in changed_paths():
             if relative.startswith("tests/") or relative in {TIDYVERSE_SETUP_ARTICLE, "sitemap.xml"}:
                 continue
-            old = git_bytes(relative)
             path = ROOT / relative
+            if path.is_file() and is_approved_workflow(relative, path.read_bytes()):
+                continue
+            old = git_bytes(relative)
             with self.subTest(path=relative):
                 if relative == "analytics.js":
                     self.assertIsNotNone(old, "analytics.js must already exist in the published source")
@@ -172,6 +194,24 @@ class TidyverseSetupScopeTests(unittest.TestCase):
                         ).encode("utf-8"),
                         old,
                         "only the exact manifest-pinned article body and date deltas may differ",
+                    )
+                    continue
+                if relative in advanced_validation_paths():
+                    self.assertIsNotNone(old, "advanced article must exist in the PR10 source")
+                    self.assertTrue(path.is_file(), "deleting published files is forbidden")
+                    self.assertEqual(
+                        normalize_advanced_validation_if_allowed(
+                            relative, path.read_text(encoding="utf-8")
+                        ).encode("utf-8"),
+                        advanced_published_bytes(relative),
+                        "only the exact manifest-pinned PR14 article edit may differ",
+                    )
+                    continue
+                if relative in advanced_asset_paths():
+                    self.assertIsNotNone(old, "approved helper asset must exist in PR10 source")
+                    self.assertEqual(
+                        normalize_advanced_validation_asset(relative, path.read_bytes()), old,
+                        "only the exact reviewed full-file hash may differ",
                     )
                     continue
                 self.assertIsNotNone(old, "new public files and assets are forbidden")

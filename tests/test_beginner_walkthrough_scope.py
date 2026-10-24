@@ -18,6 +18,14 @@ from remaining_validation_baseline import (
     allowed_paths as remaining_validation_paths,
     normalize_remaining_validation_edit,
 )
+from advanced_validation_baseline import (
+    allowed_asset_paths as advanced_asset_paths,
+    allowed_article_paths as advanced_validation_paths,
+    is_approved_workflow,
+    normalize_advanced_validation_asset,
+    normalize_advanced_validation_if_allowed,
+    published_bytes as advanced_published_bytes,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = re.compile(r"<script\b[^>]*>.*?</script\s*>", re.S | re.I)
@@ -121,7 +129,8 @@ class BeginnerWalkthroughScopeTests(unittest.TestCase):
                 )
                 current_jsonld = jsonld_scripts(page.read_text(encoding="utf-8"))
                 old_jsonld = jsonld_scripts(old_bytes.decode("utf-8"))
-                if relative in BEGINNER_WALKTHROUGH_ARTICLES or relative == TIDYVERSE_SETUP_ARTICLE or relative in remaining_validation_paths():
+                if (relative in BEGINNER_WALKTHROUGH_ARTICLES or relative == TIDYVERSE_SETUP_ARTICLE
+                        or relative in remaining_validation_paths() or relative in advanced_validation_paths()):
                     current_jsonld = [normalize_jsonld_date(block) for block in current_jsonld]
                     old_jsonld = [normalize_jsonld_date(block) for block in old_jsonld]
                 self.assertEqual(current_jsonld, old_jsonld)
@@ -131,6 +140,8 @@ class BeginnerWalkthroughScopeTests(unittest.TestCase):
             if relative.startswith("tests/") or relative == "sitemap.xml":
                 continue
             current_path = ROOT / relative
+            if current_path.is_file() and is_approved_workflow(relative, current_path.read_bytes()):
+                continue
             old_bytes = git_bytes(relative)
             with self.subTest(path=relative):
                 self.assertIsNotNone(old_bytes, "new source/assets outside tests are forbidden")
@@ -164,6 +175,18 @@ class BeginnerWalkthroughScopeTests(unittest.TestCase):
                         old_bytes.decode("utf-8"),
                         "the manifest-pinned body and exact dates are the only additional approved deltas",
                     )
+                elif relative in advanced_validation_paths():
+                    self.assertEqual(
+                        normalize_advanced_validation_if_allowed(
+                            relative, current_path.read_text(encoding="utf-8")
+                        ).encode("utf-8"),
+                        advanced_published_bytes(relative),
+                        "only the exact manifest-pinned PR14 article edit may differ",
+                    )
+                elif relative in advanced_asset_paths():
+                    self.assertEqual(normalize_advanced_validation_asset(
+                        relative, current_path.read_bytes()
+                    ), old_bytes, "only the exact full-file approved asset hash may differ")
                 elif relative == "analytics.js":
                     self.assertIsNotNone(old_bytes, "analytics.js must already exist in the published source")
                     self.assertTrue(current_path.is_file(), "deleting analytics.js is forbidden")
