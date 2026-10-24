@@ -78,6 +78,30 @@ class AdvancedValidationScopeTests(unittest.TestCase):
         with self.assertRaisesRegex(AssertionError, "outside-article disclosure"):
             _restore_registered_page(relative, unknown_disclosure, entry, original)
 
+    def test_embedded_visible_date_remains_part_of_exact_article_hash(self):
+        relative = "tutorials/infercnv-copy-number-variation.html"
+        original_body = b'<span>Updated 21 October 2026</span><p>published</p>'
+        approved_body = b'<span>Updated 24 October 2026</span><p>checked</p>'
+        prefix = b'<html><head>{"dateModified": "2026-10-21"}</head><body><article>'
+        suffix = b'</article><nav>Unchanged</nav></body></html>'
+        original = prefix + original_body + suffix
+        current = prefix.replace(b"2026-10-21", b"2026-10-24") + approved_body + suffix
+        entry = {
+            "article_body_sha256": hashlib.sha256(approved_body).hexdigest(),
+            "date_modified_original": "2026-10-21",
+            "date_modified_approved": "2026-10-24",
+            "visible_updated_original": "21 October 2026",
+            "visible_updated_approved": "24 October 2026",
+        }
+        self.assertEqual(_restore_registered_page(relative, current, entry, original), original)
+        self.assertEqual(_restore_registered_page(relative, original, entry, original), original)
+        with self.assertRaisesRegex(AssertionError, "article-body edit"):
+            _restore_registered_page(
+                relative, current.replace(b"24 October 2026", b"25 October 2026"), entry, original
+            )
+        wrapper_change = current.replace(b'<nav>Unchanged', b'<nav>Unauthorized')
+        self.assertNotEqual(_restore_registered_page(relative, wrapper_change, entry, original), original)
+
     def test_sitemap_normalizer_restores_only_explicit_article_lastmods(self):
         path = "tutorials/synthetic-validation.html"
         url = "https://theomicshub.com/" + path
@@ -99,6 +123,7 @@ class AdvancedValidationScopeTests(unittest.TestCase):
         self.assertEqual(set(manifest["articles"]), set(allowed_article_paths()))
         self.assertEqual(set(allowed_article_paths()), {
             "tutorials/advanced-ai-single-cell.html",
+            "tutorials/infercnv-copy-number-variation.html",
             "tutorials/phylogenomics-orthofinder.html",
             "tutorials/transcriptomics-differential-expression.html",
             "tutorials/spatial-transcriptomics-r-python.html",
