@@ -73,7 +73,7 @@ gtag('consent', 'default', {
     }
   },
   "datePublished": "2026-08-31",
-  "dateModified": "2026-10-21",
+  "dateModified": "2026-10-24",
   "url": "https://theomicshub.com/tutorials/cite-seq-wnn-multiomics.html",
   "name": "Multi-Omics: CITE-seq & WNN Integration",
   "isPartOf": {
@@ -170,6 +170,7 @@ function toggleMobileMenu() {
 <nav aria-label="Learning path navigation" class="reader-toolbar"><a href="scrna-seq-basics.html" rel="prev">← Prerequisite: scRNA-seq Basics</a><a data-catalogue-return="" href="../tutorials.html">All tutorials</a><a href="../start-here.html#sh-single-cell" rel="next">Return to single-cell choices</a></nav>
 <article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--lab"><p class="lesson-lead">CITE-seq measures RNA and antibody-derived tags (ADTs) in the same cells. This template follows the two assays from matched count matrices through separate preprocessing, a Seurat weighted-nearest-neighbor (WNN) graph, and checks that help you interpret modality weights without treating them as biological truth.</p>
 <section class="lesson-summary tutorial-learning-contract" data-tutorial-format="advanced-template" aria-label="Learning format"><p><strong>Format: Advanced template.</strong> For readers familiar with R and single-cell analysis, this adaptable workflow builds and inspects a WNN Seurat object from paired RNA and ADT count matrices you prepare; no dataset is bundled.</p></section>
+<div class="lesson-result" id="cite-tested-scope"><p><strong>Checked route:</strong> the five displayed R stages ran on the first 1,000 paired cells from the official <a href="https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE100866">CBMC RNA/ADT matrices</a>, using Ubuntu 24.04, R 4.3.3 and Seurat 5.0.1. The example retained 999 cells, produced 12 PCs from 13 ADT features, completed WNN and generated all five PNGs with opaque white backgrounds. This is a bounded software check, not a full-cohort benchmark, biological validation, clean installation test or cross-platform result. Thresholds and dimension caps still need study-specific justification.</p></div>
 <h2>Learning objectives &amp; prerequisites</h2>
 <p>
 By the end of this lesson you will be able to:
@@ -204,6 +205,7 @@ WNN is an unsupervised way to combine local neighborhood information. A weight d
 <li>Optional: feature annotations and a barcode list for auditing the matched inputs.</li>
 </ul>
 <p>No matrices are bundled. For a worked source-to-object example, follow the official <a href="https://satijalab.org/seurat/articles/multimodal_vignette">Seurat multimodal vignette</a> (CITE-seq CBMC RNA and ADT matrices); its CSV inputs must be converted/prepared as RDS objects for this script. Inputs may be base R or Matrix sparse matrices, with nonnegative finite raw counts, unique feature names and unique cell barcodes. Do not use normalized/scaled values as counts. Work from a project directory root so relative <code>data/</code> and <code>results/</code> paths resolve. Check prerequisites and create directories:</p>
+<p><strong>CBMC species checkpoint:</strong> the named GEO RNA matrix uses <code>HUMAN_</code> and <code>MOUSE_</code> prefixes. For this human-focused example, the script follows Seurat's <a href="https://satijalab.org/seurat/reference/collapsespeciesexpressionmatrix">CollapseSpeciesExpressionMatrix</a> preparation before object creation: it removes the human prefix and retains 100 highly expressed mouse control features. This is not a joint analysis of both species. Do not strip prefixes blindly in a different study; confirm the species and feature annotation first. Without preparation, Seurat changes underscores to hyphens and a plain <code>^MT-</code> or <code>CD4</code> lookup misses the human features.</p>
 <pre><code>R --version
 Rscript -e 'stopifnot(requireNamespace("Seurat", quietly=TRUE), requireNamespace("ggplot2", quietly=TRUE)); cat("Seurat", as.character(packageVersion("Seurat")), "\n")'
 mkdir -p data results</code></pre>
@@ -216,7 +218,7 @@ saveRDS(adt, "data/adt_counts.rds")
 </code></pre>
 <p>For large data, prefer a sparse-matrix-preserving reader/conversion rather than forcing dense matrices. Place/produce inputs at <code>data/rna_counts.rds</code> and <code>data/adt_counts.rds</code>. Save the following R code as <code>cite_seq_wnn.R</code> in this directory and invoke <code>Rscript cite_seq_wnn.R</code>. Stop if files or preflight checks fail; do not continue with a partial or empty barcode intersection.</p>
 <h3>R script: build a Seurat CITE-seq object and preprocess</h3>
-<pre><code># Load libraries
+<pre id="cite-build-stage"><code># Load libraries
 library(Seurat)
 library(ggplot2)
 
@@ -239,6 +241,17 @@ rna_mat &lt;- rna_mat[, shared_cells, drop = FALSE]
 adt_mat &lt;- adt_mat[, shared_cells, drop = FALSE]
 message(length(shared_cells), " shared barcodes retained")
 
+# Prepare the named human CBMC source before Seurat normalizes feature names.
+# This route assumes HUMAN_ genes are of interest and MOUSE_ genes are controls.
+if (any(startsWith(rownames(rna_mat), "HUMAN_")) &amp;&amp;
+    any(startsWith(rownames(rna_mat), "MOUSE_"))) {
+  rna_mat &lt;- CollapseSpeciesExpressionMatrix(
+    rna_mat, prefix = "HUMAN_", controls = "MOUSE_", ncontrols = 100
+  )
+  if (anyDuplicated(rownames(rna_mat))) stop("Species preparation produced duplicate feature names")
+  message("Prepared human CBMC gene symbols; retained 100 mouse control features")
+}
+
 # Add ADT counts after aligning to the cells retained in the RNA object
 seurat_obj &lt;- CreateSeuratObject(counts = rna_mat, assay = "RNA", project = "CITE_project")
 adt_mat &lt;- adt_mat[, colnames(seurat_obj), drop = FALSE]
@@ -254,7 +267,7 @@ Check the input checkpoint:
 <li>In-memory Seurat object with assays "RNA" and "ADT". The file results/seurat_initial.rds is a reproducible checkpoint.</li>
 </ul>
 <h3>Preprocess RNA (standard): filtering, normalization, PCA</h3>
-<pre><code># Basic QC: percent mitochondrial, per-cell counts, per-cell features
+<pre id="cite-rna-stage"><code># Basic QC: percent mitochondrial, per-cell counts, per-cell features
 # Human-style symbols commonly use MT-; mouse-style symbols commonly use mt-.
 # Inspect rownames and verify percent.mt is nonzero/plausible before filtering.
 mito_pattern &lt;- "^MT-"  # use "^mt-" for mouse-style symbols; adapt to reference
@@ -285,7 +298,7 @@ Produces:
 <li>Results checkpoint results/seurat_rna_pca.rds.</li>
 </ul>
 <h3>Preprocess ADT: CLR normalization and protein PCA</h3>
-<pre><code># Switch to ADT assay
+<pre id="cite-adt-stage"><code># Switch to ADT assay
 DefaultAssay(seurat_obj) &lt;- "ADT"
 
 # CLR normalization. margin = 2 performs per-cell centering across proteins (common default for CITE-seq)
@@ -295,7 +308,9 @@ seurat_obj &lt;- NormalizeData(seurat_obj, normalization.method = "CLR", margin 
 # Scale and run PCA on all ADT features (usually few proteins; do not select HVGs)
 adt_features &lt;- rownames(seurat_obj[["ADT"]])
 seurat_obj &lt;- ScaleData(seurat_obj, features = adt_features)
-seurat_obj &lt;- RunPCA(seurat_obj, features = adt_features, reduction.name = "apca")
+adt_npcs &lt;- min(18L, length(adt_features) - 1L, ncol(seurat_obj) - 1L)
+if (adt_npcs &lt; 2L) stop("Too few ADT features or cells for this PCA/WNN example")
+seurat_obj &lt;- RunPCA(seurat_obj, features = adt_features, npcs = adt_npcs, reduction.name = "apca")
 
 # Save
 saveRDS(seurat_obj, file = "results/seurat_adt_pca.rds")
@@ -308,15 +323,23 @@ Produces:
 <li>Checkpoint results/seurat_adt_pca.rds.</li>
 </ul>
 <h3>Run WNN integration, embedding, and clustering</h3>
-<pre><code># Ensure RNA is default for the function that requires "pca" as an entry
+<p>Use only PCs that actually exist in each reduction. The named CBMC panel has 13 ADT features, not enough for 18 protein PCs. The caps below are software limits, not a biological selection rule: inspect the reductions and choose fewer informative PCs when appropriate.</p>
+<pre id="cite-wnn-stage"><code># Ensure RNA is default for the function that requires "pca" as an entry
 DefaultAssay(seurat_obj) &lt;- "RNA"
 
-# Find multi-modal neighbors: supply the reductions and appropriate dims.
-# Adjust dims.list to the number of informative PCs for your dataset.
+# Bound each requested range by the dimensions actually produced.
+rna_available &lt;- ncol(Embeddings(seurat_obj, reduction = "pca"))
+adt_available &lt;- ncol(Embeddings(seurat_obj, reduction = "apca"))
+if (rna_available &lt; 2L || adt_available &lt; 2L) stop("Need at least two PCs per modality for this example")
+rna_dims &lt;- seq_len(min(30L, rna_available))
+adt_dims &lt;- seq_len(min(18L, adt_available))
+message("WNN PCs: RNA=", length(rna_dims), "; ADT=", length(adt_dims))
+
+# Find multi-modal neighbors with the inspected, available dimensions.
 seurat_obj &lt;- FindMultiModalNeighbors(
   seurat_obj,
   reduction.list = list("pca", "apca"),
-  dims.list = list(1:30, 1:18),
+  dims.list = list(rna_dims, adt_dims),
   modality.weight.name = c("RNA.weight", "ADT.weight")
 )
 
@@ -347,20 +370,20 @@ After running the pipeline, inspect the following elements. Do not treat any sin
 </p>
 <h3>Make concrete inspection plots</h3>
 <p>Run after integration; this writes five PNGs under <code>results/</code>. It assumes CD4 occurs in both assays; replace with features actually present if needed.</p>
-<pre><code>stopifnot(all(c("wnn.umap") %in% Reductions(seurat_obj)),
+<pre id="cite-plots-stage"><code>stopifnot(all(c("wnn.umap") %in% Reductions(seurat_obj)),
           all(c("RNA.weight", "ADT.weight") %in% colnames(seurat_obj[[]])))
 print(summary(seurat_obj$RNA.weight)); print(summary(seurat_obj$ADT.weight))
 stopifnot("CD4" %in% rownames(seurat_obj[["RNA"]]), "CD4" %in% rownames(seurat_obj[["ADT"]]))
 p_wnn &lt;- DimPlot(seurat_obj, reduction = "wnn.umap", group.by = "ident")
-ggplot2::ggsave("results/wnn_umap.png", p_wnn, width = 7, height = 5)
+ggplot2::ggsave("results/wnn_umap.png", p_wnn, width = 7, height = 5, bg = "white")
 p_rna_weight &lt;- FeaturePlot(seurat_obj, features = "RNA.weight", reduction = "wnn.umap")
-ggplot2::ggsave("results/rna_weight.png", p_rna_weight, width = 7, height = 5)
+ggplot2::ggsave("results/rna_weight.png", p_rna_weight, width = 7, height = 5, bg = "white")
 p_adt_weight &lt;- FeaturePlot(seurat_obj, features = "ADT.weight", reduction = "wnn.umap")
-ggplot2::ggsave("results/adt_weight.png", p_adt_weight, width = 7, height = 5)
+ggplot2::ggsave("results/adt_weight.png", p_adt_weight, width = 7, height = 5, bg = "white")
 DefaultAssay(seurat_obj) &lt;- "RNA"
-ggplot2::ggsave("results/cd4_rna.png", FeaturePlot(seurat_obj, features = "CD4", reduction = "wnn.umap"), width = 7, height = 5)
+ggplot2::ggsave("results/cd4_rna.png", FeaturePlot(seurat_obj, features = "CD4", reduction = "wnn.umap"), width = 7, height = 5, bg = "white")
 DefaultAssay(seurat_obj) &lt;- "ADT"
-ggplot2::ggsave("results/cd4_adt.png", FeaturePlot(seurat_obj, features = "CD4", reduction = "wnn.umap"), width = 7, height = 5)
+ggplot2::ggsave("results/cd4_adt.png", FeaturePlot(seurat_obj, features = "CD4", reduction = "wnn.umap"), width = 7, height = 5, bg = "white")
 DefaultAssay(seurat_obj) &lt;- "RNA"
 </code></pre>
 <p>The UMAP should show points colored by active WNN cluster identity; weight plots show per-cell relative modality contributions, and the paired CD4 plots display separate assay measurements on the same coordinates. These checks establish that plots were generated, not that clusters are cell types, a weight is quality, or RNA and protein should agree.</p>

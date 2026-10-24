@@ -73,7 +73,7 @@ gtag('consent', 'default', {
     }
   },
   "datePublished": "2026-09-18",
-  "dateModified": "2026-10-21",
+  "dateModified": "2026-10-24",
   "url": "https://theomicshub.com/tutorials/data-visualization-fundamentals.html",
   "name": "Data Visualization Fundamentals",
   "isPartOf": {
@@ -221,7 +221,8 @@ plt.close(fig)</code></pre>
 <p>The code reports missing, non-numeric, or non-finite values with affected sample IDs. The boxplot shows individual observations; the histogram summarizes a distribution and cannot identify which sample is an outlier. Follow an apparent extreme back to the QC table by sample ID and inspect library size, units, and provenance. With very small groups, treat the histogram/KDE shape as descriptive only. These checks do not decide whether a sample passes QC, and metric names do not define assay-specific thresholds.</p>
 <h2>PCA: summarize broad sample variation</h2>
 <p>PCA expects observations in rows and features in columns. Here rows become samples and columns genes. The example computes a simple log2-CPM transform, filters genes by a stated variance rule, then standardizes each retained gene across samples. That last choice gives low-variance genes similar scale to high-variance genes and can amplify noise; it is an exploratory choice, not a universal RNA-seq recommendation. Compare with a suitable variance-stabilizing transform and/or without feature-wise scaling for the assay and question at hand.</p>
-<pre><code>import numpy as np
+<p>The cutoff of <code>0.01</code> below retains five of the ten genes in the supplied synthetic count table. A cutoff of <code>0.5</code> retains none, so there would be no matrix to plot or pass to UMAP. This small-fixture setting teaches the handoff; it is not a recommended threshold for a biological dataset. Inspect the variance distribution and justify feature selection for real data.</p>
+<pre id="visualization-pca-stage"><code>import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -250,7 +251,7 @@ if not qc.index.equals(counts.columns):
 
 cpm = counts.div(counts.sum(axis=0), axis=1) * 1e6
 logcpm = np.log2(cpm + 1)
-keep = logcpm.var(axis=1) &gt; 0.5  # illustrative filter; justify for your data
+keep = logcpm.var(axis=1) &gt; 0.01  # for this tiny synthetic fixture; justify for real data
 if keep.sum() &lt; 2 or counts.shape[1] &lt; 2:
     raise ValueError("PCA plot needs at least two samples and two retained genes")
 mat = logcpm.loc[keep].T  # samples x genes
@@ -276,7 +277,7 @@ plt.close(fig)</code></pre>
 <p>The TSVs preserve sample coordinates for later checks. PC1/PC2 percentages describe variance represented by those components under this exact preprocessing. A separation by batch is a cue to inspect design balance, metadata, and possible technical effects; it does not by itself establish a correction method or prove confounding. PCA centers input internally, while the explicit scaler also changes each gene's variance contribution.</p>
 <h2>UMAP: explore neighborhoods with a specified input</h2>
 <p>UMAP embeds the rows supplied to it. The example uses all saved PCs available, not the two columns intended for plotting. Small datasets may not support the default neighborhood size, so set <code>n_neighbors</code> below the number of observations and evaluate several sensible settings. <code>n_neighbors</code> changes the local-versus-broader structure considered; <code>min_dist</code> affects how tightly points may pack in the embedding. The coordinates are a visualization, not a calibrated distance scale.</p>
-<pre><code>import pandas as pd
+<pre id="visualization-umap-stage"><code>import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 import umap
@@ -342,7 +343,7 @@ plt.close(grid.fig)</code></pre>
 <p>Clustering method and distance metric affect the dendrogram. A heatmap can show relative patterns or sample groupings under those choices; it does not establish a pathway, shared regulation, or causal relationship. For very small tables, highly variable genes, or strongly imbalanced samples, state the selection rule and inspect whether clustering is stable.</p>
 <h2>Volcano plots: display model results, not raw counts</h2>
 <p>A volcano plot uses differential-expression output. In this DESeq2-style table, <code>log2FoldChange</code> is the estimated effect and <code>padj</code> is the adjusted p-value; missing adjusted values can occur and should not be silently plotted as zero. The thresholds below are illustrative display cutoffs, not universal biological criteria. Do not use this plot as a substitute for checking the model, design, contrasts, and multiple-testing procedure.</p>
-<pre><code>library(ggplot2)
+<pre id="visualization-volcano-stage"><code>library(ggplot2)
 res &lt;- read.delim("results/deseq2_results.tsv", stringsAsFactors = FALSE)
 required &lt;- c("log2FoldChange", "padj")
 if (!all(required %in% names(res))) stop("Input needs log2FoldChange and padj columns")
@@ -359,7 +360,7 @@ p &lt;- ggplot(res, aes(x = log2FoldChange, y = -log10(padj), color = label)) +
   labs(x = "log2 fold change", y = "-log10 adjusted p-value",
        color = NULL, title = "Differential-expression results") +
   theme_minimal()
-ggsave("results/volcano.png", plot = p, width = 6, height = 5, dpi = 300)</code></pre>
+ggsave("results/volcano.png", plot = p, width = 6, height = 5, dpi = 300, bg = "white")</code></pre>
 <p>Rows with zero adjusted p-values would have an infinite plotted value and are omitted here along with missing values. Report how many rows were omitted and why in a real analysis, especially if filtering or independent filtering produced missing adjusted p-values. A small adjusted p-value can accompany a small effect; statistical evidence and biological importance are separate judgments.</p>
 <h2>Use plots as diagnostics, then follow up</h2>
 <ul><li><strong>QC shifts:</strong> verify metric units, group sizes, and metadata; a batch shift can arise from technical or design differences, but a plot alone cannot identify its cause.</li><li><strong>PCA separation:</strong> inspect the explained variance, sample labels, design balance, and component loadings. Consider the experimental model before choosing batch correction; indiscriminate correction can remove biological signal.</li><li><strong>Fragmented UMAP:</strong> check feature selection, sample count, scaling, and parameter sensitivity. Raising <code>n_neighbors</code> broadens neighborhoods, while changing <code>min_dist</code> changes packing; neither guarantees meaningful clusters.</li><li><strong>Uniform heatmap:</strong> check transformation, selected features, and color limits. Row scaling may reveal relative patterns while hiding absolute amplitude.</li><li><strong>Volcano extremes:</strong> check missing or zero adjusted p-values, effect-size estimates, model formula, contrast, and multiplicity correction before labeling candidates.</li></ul>

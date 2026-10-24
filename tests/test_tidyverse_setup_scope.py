@@ -12,6 +12,11 @@ from tidyverse_setup_baseline import (
     published_tidyverse_page,
 )
 from ubuntu_tidyverse_baseline import normalize_ubuntu_tidyverse_revision
+from remaining_validation_baseline import (
+    allowed_paths as remaining_validation_paths,
+    normalize_remaining_validation_edit,
+    normalize_remaining_validation_sitemap,
+)
 
 SITE = "https://theomicshub.com/"
 SCRIPT = re.compile(r"<script\b[^>]*>.*?</script\s*>", re.S | re.I)
@@ -121,7 +126,7 @@ class TidyverseSetupScopeTests(unittest.TestCase):
                 self.assertEqual(scripts(current, executable_only=True),
                                  scripts(old, executable_only=True))
                 old_jsonld, current_jsonld = scripts(old), scripts(current)
-                if relative == TIDYVERSE_SETUP_ARTICLE:
+                if relative == TIDYVERSE_SETUP_ARTICLE or relative in remaining_validation_paths():
                     self.assertEqual(len(old_jsonld), 1)
                     self.assertEqual(len(current_jsonld), 1)
                     old_jsonld = [normalize_jsonld_date(block) for block in old_jsonld]
@@ -140,7 +145,12 @@ class TidyverseSetupScopeTests(unittest.TestCase):
             old = git_bytes(relative)
             self.assertIsNotNone(old, relative)
             with self.subTest(tutorial=relative):
-                self.assertEqual(page.read_bytes(), old)
+                current = page.read_bytes()
+                if relative in remaining_validation_paths():
+                    current = normalize_remaining_validation_edit(
+                        relative, current.decode("utf-8")
+                    ).encode("utf-8")
+                self.assertEqual(current, old)
 
         for relative in changed_paths():
             if relative.startswith("tests/") or relative in {TIDYVERSE_SETUP_ARTICLE, "sitemap.xml"}:
@@ -153,6 +163,17 @@ class TidyverseSetupScopeTests(unittest.TestCase):
                     self.assertTrue(path.is_file(), "deleting analytics.js is forbidden")
                     # Exact authorized source is pinned by test_analytics_source_scope.py.
                     continue
+                if relative in remaining_validation_paths():
+                    self.assertIsNotNone(old, "allowlisted page must exist in published source")
+                    self.assertTrue(path.is_file(), "deleting published files is forbidden")
+                    self.assertEqual(
+                        normalize_remaining_validation_edit(
+                            relative, path.read_text(encoding="utf-8")
+                        ).encode("utf-8"),
+                        old,
+                        "only the exact manifest-pinned article body and date deltas may differ",
+                    )
+                    continue
                 self.assertIsNotNone(old, "new public files and assets are forbidden")
                 self.assertTrue(path.is_file(), "deleting published files is forbidden")
                 self.assertEqual(path.read_bytes(), old,
@@ -161,7 +182,7 @@ class TidyverseSetupScopeTests(unittest.TestCase):
     def test_sitemap_diff_is_exactly_the_target_lastmod_replacement(self):
         original = git_bytes("sitemap.xml")
         self.assertIsNotNone(original)
-        current = (ROOT / "sitemap.xml").read_bytes()
+        current = normalize_remaining_validation_sitemap((ROOT / "sitemap.xml").read_bytes())
         target_url = (SITE + TIDYVERSE_SETUP_ARTICLE).encode("ascii")
         escaped_url = re.escape(target_url)
         row_pattern = re.compile(rb"<url>\s*<loc>" + escaped_url + rb"</loc>.*?</url>", re.S)

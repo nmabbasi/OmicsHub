@@ -13,6 +13,7 @@ import zipfile
 
 from reviewed_tutorial_baseline import normalize_learner_revision
 from reader_typography_baseline import normalize_reader_typography
+from remaining_validation_baseline import normalize_remaining_validation_sitemap
 
 ROOT = Path(__file__).resolve().parents[1]
 BASELINE = 'd10ec616cae67437db90427bee4e156dd2bfb7d7'
@@ -101,7 +102,9 @@ class PbmcWorkedExampleTests(unittest.TestCase):
 
     def test_sitemap_dates_match_reviewed_updates_and_historical_baseline(self):
         ns = {'s': 'http://www.sitemaps.org/schemas/sitemap/0.9'}
-        current_root = ET.parse(ROOT / 'sitemap.xml').getroot()
+        current_root = ET.fromstring(
+            normalize_remaining_validation_sitemap((ROOT / 'sitemap.xml').read_bytes())
+        )
         current_entries = current_root.findall('s:url', ns)
         current_by_url = {entry.find('s:loc', ns).text: entry for entry in current_entries}
         self.assertEqual(len(current_by_url), len(current_entries))

@@ -6,6 +6,7 @@ import re
 import unittest
 import xml.etree.ElementTree as ET
 from urllib.parse import urlsplit
+from remaining_validation_baseline import load_manifest, published_bytes
 
 ROOT = Path(__file__).resolve().parents[1]
 SITE = "https://theomicshub.com/"
@@ -99,6 +100,33 @@ class ContentModificationDateTests(unittest.TestCase):
                     self.sitemap_dates[SITE + relative_path], "2026-10-23"
                 )
 
+    def test_remaining_validation_articles_use_only_manifest_approved_dates(self):
+        manifest = load_manifest()
+        for relative_path, entry in manifest["files"].items():
+            with self.subTest(page=relative_path):
+                current = self.entity(relative_path)
+                baseline_text = published_bytes(relative_path).decode("utf-8")
+                baseline_blocks = SCHEMA.findall(baseline_text)
+                self.assertEqual(len(baseline_blocks), 1)
+                original = json.loads(baseline_blocks[0])
+                self.assertEqual(current["datePublished"], original["datePublished"])
+                self.assertEqual(current["dateModified"], entry["date_modified_approved"])
+                visible_dates = re.findall(
+                    r"Updated\s+(\d{1,2} [A-Za-z]+ \d{4})",
+                    (ROOT / relative_path).read_text(encoding="utf-8"),
+                )
+                expected_visible = entry["visible_updated_approved"]
+                self.assertEqual(visible_dates, [expected_visible] if expected_visible else [])
+                if expected_visible:
+                    self.assertEqual(
+                        datetime.strptime(visible_dates[0], "%d %B %Y").date().isoformat(),
+                        entry["date_modified_approved"],
+                    )
+                self.assertEqual(
+                    self.sitemap_dates[SITE + relative_path],
+                    entry["sitemap_lastmod_approved"],
+                )
+
     def test_navigation_only_and_unchanged_lessons_are_not_freshened(self):
         for relative_path in NAVIGATION_ONLY:
             with self.subTest(page=relative_path):
@@ -119,6 +147,11 @@ class ContentModificationDateTests(unittest.TestCase):
         self.assertTrue(all("?" not in url for url in urls))
         expected_updated = {SITE + path for path in MODIFIED}
         expected_updated.remove(SITE + TIDYVERSE_TARGET)
+        manifest = load_manifest()
+        expected_oct24 = {SITE + TIDYVERSE_TARGET} | {
+            SITE + path for path, entry in manifest["files"].items()
+            if entry["date_modified_approved"] == TARGET_MODIFIED_DATE
+        }
         expected_updated.update({SITE + "about.html", SITE + "tutorials.html", SITE + "start-here.html"})
         expected_updated.update({SITE + "pages/privacy.html", SITE + "pages/cookie.html"})
         self.assertEqual(
@@ -127,7 +160,7 @@ class ContentModificationDateTests(unittest.TestCase):
         )
         self.assertEqual(
             {url for url, lastmod in self.sitemap_dates.items() if lastmod == TARGET_MODIFIED_DATE},
-            {SITE + TIDYVERSE_TARGET},
+            expected_oct24,
         )
         tutorial_urls = [url for url in urls if "/tutorials/" in url]
         self.assertEqual(len(tutorial_urls), 58)

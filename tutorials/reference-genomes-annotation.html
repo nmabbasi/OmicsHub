@@ -73,7 +73,7 @@ gtag('consent', 'default', {
     }
   },
   "datePublished": "2026-08-17",
-  "dateModified": "2026-10-21",
+  "dateModified": "2026-10-24",
   "url": "https://theomicshub.com/tutorials/reference-genomes-annotation.html",
   "name": "Reference Genomes and Annotation Databases",
   "isPartOf": {
@@ -196,13 +196,13 @@ sha256sum GRCh38.p14.genome.fa.gz gencode.v46.chr_patch_hapl_scaff.annotation.gt
 <p>Keep the command output with your run records. The release page identifies the exact filenames, assembly, and region scope; SHA-256 lets you later check whether your local copy has changed. This example does not download a provider checksum file. If the provider publishes a checksum for the chosen artifact, verify it using the provider's documented format as well.</p>
 <h2>3. Index the FASTA and inspect its contents</h2>
 <p><code>samtools faidx</code> creates an index used for random access. It accepts plain FASTA or BGZF-compressed FASTA; a file compressed with ordinary gzip is not necessarily BGZF. GENCODE’s downloadable <code>.fa.gz</code> is a gzip download, so decompress a working copy before indexing. Preserve the original compressed file and do not overwrite it.</p>
-<pre><code>gzip --test GRCh38.p14.genome.fa.gz
+<pre id="reference-index-stage"><code>gzip --test GRCh38.p14.genome.fa.gz
 gzip --keep --decompress GRCh38.p14.genome.fa.gz
 samtools faidx GRCh38.p14.genome.fa
 
 cut -f1 GRCh38.p14.genome.fa.fai | sort -u &gt; fasta_contigs.txt
 zcat gencode.v46.chr_patch_hapl_scaff.annotation.gtf.gz \
-  | awk 'BEGIN { FS="	" } !/^#/ { print $1 }' \
+  | awk 'BEGIN { FS="\t" } !/^#/ { print $1 }' \
   | sort -u &gt; gtf_contigs.txt</code></pre>
 <p>The FASTA index lists sequence names and lengths. The GTF command emits distinct sequence names from feature rows, skipping comment lines. Empty output, a gzip integrity error, a failed index, or a name that looks like an HTML response calls for inspecting the downloaded file and command error before continuing.</p>
 <h2>4. Compare contig names without forcing false equality</h2>
@@ -220,8 +220,9 @@ comm -13 fasta_contigs.txt gtf_contigs.txt | head</code></pre>
 <p>GENCODE records use Ensembl-style identifiers, often with version suffixes. Keep the original IDs and the release context when mapping to gene symbols for figures; symbols are useful labels but can change or be reused. Record the mapping file if you create one.</p>
 <p>Coordinate conventions differ by format. GTF/GFF feature starts and ends are conventionally one-based and inclusive; BED uses a zero-based start and an end that is excluded. Converting between them requires changing the start coordinate, not merely relabeling a file. Check the specific downstream tool’s documentation before conversion, and never infer a coordinate convention from a filename alone.</p>
 <h2>6. Write a manifest and carry it with the analysis</h2>
-<p>Create <code>refs/reference_manifest.tsv</code> from the project directory, using the checksums computed for the downloaded compressed files. This command writes the header and both tab-separated rows with the exact source URLs and file paths:</p>
-<pre><code>FASTA_SHA=$(sha256sum refs/GRCh38.p14.genome.fa.gz | awk '{print $1}')
+<p>The earlier steps leave the shell inside <code>refs/</code>. The first line below returns to the project directory before creating <code>refs/reference_manifest.tsv</code>. If you have already returned to the project root in a fresh terminal, omit that first <code>cd ..</code>. The block uses the compressed-file checksums and writes the header plus both tab-separated rows with the exact source URLs and file paths:</p>
+<pre id="reference-manifest-stage"><code>cd ..
+FASTA_SHA=$(sha256sum refs/GRCh38.p14.genome.fa.gz | awk '{print $1}')
 GTF_SHA=$(sha256sum refs/gencode.v46.chr_patch_hapl_scaff.annotation.gtf.gz | awk '{print $1}')
 printf 'provider\tresource\tassembly\trelease\turl\tsha256\tfile_path\tregion_scope\nGENCODE\tgenome FASTA\tGRCh38.p14\t46\thttps://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_46/GRCh38.p14.genome.fa.gz\t%s\trefs/GRCh38.p14.genome.fa.gz\tALL\nGENCODE\tannotation GTF\tGRCh38.p14\t46\thttps://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_46/gencode.v46.chr_patch_hapl_scaff.annotation.gtf.gz\t%s\trefs/gencode.v46.chr_patch_hapl_scaff.annotation.gtf.gz\tALL\n' \
   "$FASTA_SHA" "$GTF_SHA" &gt; refs/reference_manifest.tsv
