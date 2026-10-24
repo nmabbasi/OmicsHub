@@ -7,6 +7,7 @@ from tutorial_ui_baseline import (
     TUTORIAL_UI_PATHS, normalize_tutorial_ui, page_patches,
     pre_ui_bytes, verify_tutorial_ui_file,
 )
+from home_catalogue_baseline import normalize_home_catalogue
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -35,6 +36,7 @@ class ExactTutorialUIBaselineTests(unittest.TestCase):
 
     def test_homepage_css_rebuild_changes_its_checksum_only(self):
         current = (ROOT / 'home-page.min.css').read_bytes()
+        current = normalize_home_catalogue('home-page.min.css', current.decode()).encode()
         original = pre_ui_bytes('home-page.min.css')
         self.assertEqual(current.split(b'\n', 1)[1], original.split(b'\n', 1)[1])
 

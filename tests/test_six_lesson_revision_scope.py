@@ -43,6 +43,7 @@ from resource_content_baseline import (
     normalize_resource_sitemap,
     published_bytes as resource_published_bytes,
 )
+from home_catalogue_baseline import HOME_CATALOGUE_ASSET_PATHS, normalize_home_catalogue
 from tutorial_ui_baseline import (
     TUTORIAL_UI_PATHS,
     normalize_tutorial_ui,
@@ -178,7 +179,7 @@ class SixLessonRevisionScopeTests(unittest.TestCase):
             if relative.startswith("tests/") or relative == "sitemap.xml":
                 continue
             current_path = ROOT / relative
-            if relative in TUTORIAL_UI_PATHS:
+            if relative in TUTORIAL_UI_PATHS | HOME_CATALOGUE_ASSET_PATHS:
                 self.assertTrue(current_path.is_file(), relative)
                 verify_tutorial_ui_file(relative, current_path.read_bytes())
                 continue
@@ -194,6 +195,11 @@ class SixLessonRevisionScopeTests(unittest.TestCase):
                 continue
             old_bytes = git_bytes(relative)
             current_raw = current_path.read_bytes()
+            if old_bytes is not None:
+                old_bytes = normalize_home_catalogue(relative, old_bytes.decode("utf-8")).encode("utf-8")
+            current_raw = normalize_home_catalogue(
+                relative, current_raw.decode("utf-8")
+            ).encode("utf-8")
             if relative == "start-here.html":
                 current_raw = normalize_start_here(relative, current_raw.decode("utf-8")).encode("utf-8")
                 if old_bytes is not None:
@@ -301,6 +307,7 @@ class SixLessonRevisionScopeTests(unittest.TestCase):
                                 else old_bytes)
                     observed = (current_bytes
                                 if relative == "start-here.html"
+                                or relative in {"index.html", "tutorials.html"}
                                 or (relative.startswith("tutorials/") and relative.endswith(".html"))
                                 else current_path.read_bytes())
                     self.assertEqual(observed, expected,

@@ -82,9 +82,9 @@ class StartHereVisualPolishTests(unittest.TestCase):
         self.assertIn('aria-label="Back to top"', self.after)
         self.assertIn('border-radius: 50%', circle)
         self.assertIn('range.getClientRects()', script)
-        self.assertIn('main h1, main h2, main h3', script)
-        self.assertIn('body > footer a, body > footer button', script)
-        self.assertIn('if (block.contains(existing)) return false;', script)
+        self.assertIn('body h1, body h2, body h3', script)
+        self.assertIn('body a[href], body button', script)
+        self.assertIn('if (block.contains(existing) || !block.getClientRects().length) return false;', script)
 
 
 if __name__ == '__main__':

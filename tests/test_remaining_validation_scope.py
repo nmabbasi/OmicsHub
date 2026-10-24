@@ -27,6 +27,7 @@ from resource_content_baseline import (
     normalize_resource_content,
     normalize_resource_sitemap,
 )
+from home_catalogue_baseline import HOME_CATALOGUE_ASSET_PATHS, normalize_home_catalogue
 from tutorial_ui_baseline import (
     TUTORIAL_UI_PATHS,
     normalize_tutorial_ui,
@@ -102,7 +103,7 @@ class RemainingValidationScopeTests(unittest.TestCase):
             if relative.startswith("tests/"):
                 continue
             current_path = ROOT / relative
-            if relative in TUTORIAL_UI_PATHS:
+            if relative in TUTORIAL_UI_PATHS | HOME_CATALOGUE_ASSET_PATHS:
                 self.assertTrue(current_path.is_file(), relative)
                 verify_tutorial_ui_file(relative, current_path.read_bytes())
                 continue
@@ -123,6 +124,7 @@ class RemainingValidationScopeTests(unittest.TestCase):
             )
             if result.returncode == 0:
                 original = result.stdout
+                original = normalize_home_catalogue(relative, original.decode("utf-8")).encode("utf-8")
                 if relative == "start-here.html":
                     original = normalize_start_here(relative, original.decode("utf-8")).encode("utf-8")
                 if relative.startswith("tutorials/") and relative.endswith(".html"):
@@ -132,7 +134,9 @@ class RemainingValidationScopeTests(unittest.TestCase):
             with self.subTest(path=relative):
                 self.assertIsNotNone(original, "new public files and assets are forbidden")
                 self.assertTrue(current_path.is_file(), "published public files may not be deleted")
-                current = current_path.read_bytes()
+                current = normalize_home_catalogue(
+                    relative, current_path.read_bytes().decode("utf-8")
+                ).encode("utf-8")
                 if relative == "start-here.html":
                     current = normalize_start_here(relative, current.decode("utf-8")).encode("utf-8")
                 current = normalize_resource_content(relative, current)

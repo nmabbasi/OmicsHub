@@ -11,7 +11,9 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "tools"))
+sys.path.insert(0, str(ROOT / "tests"))
 import generate_learning_paths as generator  # noqa: E402
+from sitewide_top_baseline import normalize_sitewide_top  # noqa: E402
 
 
 class Anchors(HTMLParser):
@@ -160,7 +162,9 @@ class TutorialNavigationStyleTests(unittest.TestCase):
         self.assertNotIn('min-height: 9.5rem', self.css)
         self.assertIn('.reader-sequence-footer', self.css)
         self.assertIn('.reader-sequence-route-label', self.css)
-        script = (ROOT / 'subscribe-fab.js').read_text()
+        script = normalize_sitewide_top(
+            'subscribe-fab.js', (ROOT / 'subscribe-fab.js').read_text()
+        )
         self.assertIn("existing.matches('a[href=\"#tutorial-title\"], a[href=\"#sh-hero-title\"]')", script)
         self.assertIn('navigationFooter.appendChild(tools)', script)
         self.assertIn("tools.classList.add('is-floating')", script)

@@ -2,6 +2,7 @@
 (() => {
   'use strict';
   const STORAGE_KEY = 'omicsHubCatalogueReturn';
+  const sharedScriptURL = document.currentScript?.src || new URL('subscribe-fab.js', location.href).href;
   function readSavedResults() {
     try {
       const saved = JSON.parse(sessionStorage.getItem(STORAGE_KEY));
@@ -20,7 +21,7 @@
   }
   function initCompactCategories() {
     const strip = document.getElementById('category-filter');
-    if (!strip || typeof window.filterTutorialsOnly !== 'function') return;
+    if (!strip || document.getElementById('catalogue-category') || typeof window.filterTutorialsOnly !== 'function') return;
     const group = document.createElement('div');
     group.className = 'catalogue-category-select';
     const label = document.createElement('label');
@@ -72,77 +73,116 @@
     });
   }
   function initInFlowTopControl() {
-    const existing = document.getElementById('back-to-top');
-    if (existing) {
-      if (existing.matches('a[href="#tutorial-title"], a[href="#sh-hero-title"]')) {
-        const tools = existing.closest('.reader-tools.tutorial-top-tools');
-        const navigationFooter = document.querySelector('#reader-course-navigation .reader-sequence-footer');
-        if (tools && navigationFooter) navigationFooter.appendChild(tools);
-        if (tools) {
-          tools.classList.add('is-floating');
-          let scheduled = false;
-          const update = () => {
-            const focused = document.activeElement === existing;
-            tools.hidden = window.scrollY < 240 && !focused;
-            if (!tools.hidden && !focused) {
-              const rect = existing.getBoundingClientRect();
-              const headerBottom = document.querySelector('body > header')?.getBoundingClientRect().bottom || 0;
-              const intersects = box => box.width > 0 && box.height > 0 &&
-                box.left < rect.right + 7 && box.right > rect.left - 7 &&
-                box.top < rect.bottom + 7 && box.bottom > rect.top - 7;
-              const controls = document.querySelectorAll('main a, main button, main summary, main input, main select, main textarea, article button, #reader-course-navigation a:not(#back-to-top), body > footer a, body > footer button');
-              const controlOverlap = [...controls].some(control => control !== existing && [...control.getClientRects()].some(intersects));
-              // Measure rendered text fragments, not full-width paragraph boxes:
-              // the circle can use whitespace, but never cover a line of reading.
-              const reading = document.querySelectorAll('main h1, main h2, main h3, main h4, main p, main li, main pre, main figcaption, main td, main th, body > footer p, body > footer h2');
-              const textOverlap = !controlOverlap && [...reading].some(block => {
-                if (block.contains(existing)) return false;
-                const bounds = block.getBoundingClientRect();
-                if (!intersects(bounds)) return false;
-                const range = document.createRange();
-                range.selectNodeContents(block);
-                return [...range.getClientRects()].some(intersects);
-              });
-              const overlaps = controlOverlap || textOverlap;
-              tools.hidden = overlaps || rect.top < headerBottom + 8;
-            }
-            scheduled = false;
-          };
-          const schedule = () => {
-            if (!scheduled) { scheduled = true; requestAnimationFrame(update); }
-          };
-          window.addEventListener('scroll', schedule, { passive: true });
-          window.addEventListener('pageshow', schedule);
-          window.addEventListener('resize', schedule, { passive: true });
-          window.addEventListener('readerlayoutchange', schedule);
-          document.addEventListener('toggle', schedule, true);
-          existing.addEventListener('blur', schedule);
-          update();
-        }
-        existing.addEventListener('click', () => {
-          const title = document.getElementById(existing.hash.slice(1));
-          if (title) {
-            title.tabIndex = -1;
-            title.focus({ preventScroll: true });
-          }
-        });
-      }
-      return;
+    const cssPath = '/back-to-top.css';
+    let stylesheet = [...document.querySelectorAll('link[rel="stylesheet"][href]')]
+      .find(link => new URL(link.href, location.href).pathname.endsWith(cssPath));
+    let stylesheetReady;
+    if (stylesheet?.sheet) {
+      stylesheetReady = Promise.resolve();
+    } else if (stylesheet) {
+      stylesheetReady = new Promise(resolve => {
+        stylesheet.addEventListener('load', resolve, { once: true });
+        stylesheet.addEventListener('error', resolve, { once: true });
+      });
+    } else {
+      stylesheet = document.createElement('link');
+      stylesheet.rel = 'stylesheet';
+      stylesheet.href = new URL('back-to-top.css?v=20261024-sitewide-circle', sharedScriptURL).href;
+      stylesheetReady = new Promise(resolve => {
+        stylesheet.addEventListener('load', resolve, { once: true });
+        stylesheet.addEventListener('error', resolve, { once: true });
+      });
+      document.head.appendChild(stylesheet);
     }
-    const footer = document.querySelector('footer');
-    if (!footer) return;
-    const tools = document.createElement('div');
-    tools.className = 'reader-tools';
-    const button = document.createElement('button');
-    button.id = 'back-to-top';
-    button.type = 'button';
-    button.textContent = 'Back to top ↑';
-    button.addEventListener('click', () => {
-      document.querySelector('header a[href]')?.focus({ preventScroll: true });
-      window.scrollTo({ top: 0, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' });
+
+    let existing = document.getElementById('back-to-top');
+    let tools = existing?.closest('.reader-tools.tutorial-top-tools');
+    if (existing) {
+      tools ||= existing.parentElement;
+      tools.classList.add('reader-tools', 'tutorial-top-tools');
+    } else {
+      const heading = document.querySelector('main h1') || document.querySelector('h1');
+      if (!heading) return;
+      if (!heading.id) {
+        const baseId = 'site-page-title';
+        let id = baseId;
+        let suffix = 2;
+        while (document.getElementById(id)) id = `${baseId}-${suffix++}`;
+        heading.id = id;
+      }
+      tools = document.createElement('div');
+      tools.className = 'reader-tools tutorial-top-tools';
+      existing = document.createElement('a');
+      existing.id = 'back-to-top';
+      existing.href = `#${heading.id}`;
+      existing.setAttribute('aria-label', 'Back to top');
+      const icon = document.createElement('span');
+      icon.className = 'tutorial-top-icon';
+      icon.setAttribute('aria-hidden', 'true');
+      icon.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5m-6 6 6-6 6 6"/></svg>';
+      const label = document.createElement('span');
+      label.textContent = 'Back to top';
+      existing.append(icon, label);
+      tools.appendChild(existing);
+      const footer = document.querySelector('footer');
+      if (footer) footer.before(tools);
+      else document.body.appendChild(tools);
+    }
+
+    // The native hidden attribute prevents an unstyled link flash while a newly
+    // referenced shared stylesheet loads, and keeps it absent before scrolling.
+    tools.hidden = true;
+    tools.classList.add('is-floating');
+    const navigationFooter = document.querySelector('#reader-course-navigation .reader-sequence-footer');
+    if (existing.matches('a[href="#tutorial-title"]') && navigationFooter) navigationFooter.appendChild(tools);
+
+    existing.addEventListener('click', () => {
+      const target = existing.hash ? document.getElementById(existing.hash.slice(1)) : null;
+      if (target) {
+        target.tabIndex = -1;
+        target.focus({ preventScroll: true });
+      }
     });
-    tools.appendChild(button);
-    footer.before(tools);
+
+    stylesheetReady.then(() => {
+      let scheduled = false;
+      const update = () => {
+        const focused = document.activeElement === existing;
+        tools.hidden = window.scrollY < 240 && !focused;
+        if (!tools.hidden && !focused) {
+          const rect = existing.getBoundingClientRect();
+          const headerBottom = document.querySelector('body > header')?.getBoundingClientRect().bottom || 0;
+          const intersects = box => box.width > 0 && box.height > 0 &&
+            box.left < rect.right + 7 && box.right > rect.left - 7 &&
+            box.top < rect.bottom + 7 && box.bottom > rect.top - 7;
+          const controls = document.querySelectorAll('body a[href], body button, body summary, body input, body select, body textarea, body [tabindex]');
+          const controlOverlap = [...controls].some(control => control !== existing && [...control.getClientRects()].some(intersects));
+          // Measure text fragments, not full-width paragraph boxes: the circle
+          // uses whitespace only and yields to content, forms, navigation, and footer text.
+          const reading = document.querySelectorAll('body h1, body h2, body h3, body h4, body h5, body h6, body p, body li, body pre, body figcaption, body td, body th, body blockquote, body label, body dt, body dd, body address');
+          const textOverlap = !controlOverlap && [...reading].some(block => {
+            if (block.contains(existing) || !block.getClientRects().length) return false;
+            const bounds = block.getBoundingClientRect();
+            if (!intersects(bounds)) return false;
+            const range = document.createRange();
+            range.selectNodeContents(block);
+            return [...range.getClientRects()].some(intersects);
+          });
+          tools.hidden = controlOverlap || textOverlap || rect.top < headerBottom + 8;
+        }
+        scheduled = false;
+      };
+      const schedule = () => {
+        if (!scheduled) { scheduled = true; requestAnimationFrame(update); }
+      };
+      window.addEventListener('scroll', schedule, { passive: true });
+      window.addEventListener('pageshow', schedule);
+      window.addEventListener('resize', schedule, { passive: true });
+      window.addEventListener('readerlayoutchange', schedule);
+      document.addEventListener('toggle', schedule, true);
+      existing.addEventListener('blur', schedule);
+      update();
+    });
   }
   function initLayoutMetrics() {
     const banner = document.getElementById('cookie-consent-banner');
