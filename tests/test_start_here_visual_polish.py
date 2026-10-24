@@ -5,7 +5,7 @@ import re
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
-CSS_VERSION = 'start-here.css?v=20261025-lesson-first-v2'
+CSS_VERSION = 'start-here.css?v=20261025-hover-colours-v1'
 
 
 class ReadingText(HTMLParser):

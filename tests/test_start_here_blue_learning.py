@@ -9,7 +9,7 @@ import unittest
 ROOT = Path(__file__).resolve().parents[1]
 PUBLISHED = "19ec34c2227b9daeb4b32764d3ad32dafb17d87a"
 LONG_FORM_BASELINE = "a4b6ead8251e0a3abcb748061a40155ae9523a82"
-CSS_VERSION = "20261025-lesson-first-v2"
+CSS_VERSION = "20261025-hover-colours-v1"
 FOUNDATION = (
     "tutorials/command-line-part1.html",
     "tutorials/computer-data-fundamentals.html",
