@@ -116,18 +116,22 @@ def enrich(card: str, metadata: dict) -> tuple[str, str]:
     if base_search is None:
         base_search = get_attr(opening, 'data-search') or ''
         opening = set_attr(opening, 'data-search-base', base_search)
-    opening = set_attr(opening, 'data-search', f"{base_search} {item['level']} {item['prerequisiteSummary']}".strip())
+    opening = set_attr(opening, 'data-search', base_search)
     card = opening + card[end + 1:]
     card = re.sub(r'\s*<span class="hc-card-level"[^>]*>.*?</span>', '', card, flags=re.I | re.S)
     card = re.sub(r'\s*<div class="hc-card-prerequisite"[^>]*>.*?</div>', '', card, flags=re.I | re.S)
-    format_end = re.search(r'<span\b[^>]*data-tutorial-format[^>]*>.*?</span>', card, re.I | re.S)
-    label = f'<span class="hc-card-level" data-level="{item["level"]}">{item["level"].capitalize()} experience</span>'
-    card = card[:format_end.end()] + label + card[format_end.end():]
     paragraph = re.search(r'<p\b[^>]*>.*?</p>', card, re.I | re.S)
     if not paragraph:
         raise ValueError(f'No original description paragraph found: {slug}')
-    prereq = '<div class="hc-card-prerequisite"><strong>Before you begin</strong><p>' + html.escape(item['prerequisiteSummary']) + '</p></div>'
-    card = card[:paragraph.end()] + prereq + card[paragraph.end():]
+    heading = re.search(r'<h3\b[^>]*>(.*?)</h3>', card, re.I | re.S)
+    if not heading:
+        raise ValueError(f'No original lesson title found: {slug}')
+    title = re.sub(r'</?a\b[^>]*>', '', heading.group(1), flags=re.I)
+    card = re.sub(r'\s*<a\b[^>]*class="[^"]*\bhc-card-link\b[^"]*"[^>]*>.*?</a>', '', card, flags=re.I | re.S)
+    destination = html.escape(item['lessonPath'], quote=True)
+    card = re.sub(r'(<h3\b[^>]*>).*?(</h3>)',
+                  lambda match: match.group(1) + f'<a class="hc-card-link" href="{destination}">' + title + '</a>' + match.group(2),
+                  card, count=1, flags=re.I | re.S)
     return card, slug
 
 

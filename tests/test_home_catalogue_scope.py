@@ -55,6 +55,20 @@ def _text(fragment):
     return unescape(re.sub(r"<[^>]*>", "", fragment)).strip()
 
 
+def _title_markup_after_canonical_link(title_markup, expected_href):
+    anchors = list(re.finditer(r"<a\b[^>]*>(.*?)</a\s*>", title_markup, re.S | re.I))
+    if not anchors:
+        return title_markup
+    if len(anchors) != 1:
+        raise AssertionError("a title may contain only one canonical lesson link")
+    anchor = anchors[0]
+    opening = re.match(r"<a\b[^>]*>", anchor.group(0), re.S | re.I).group(0)
+    attrs = first_attrs(opening, "a") or {}
+    if "hc-card-link" not in attrs.get("class", "").split() or attrs.get("href") != expected_href:
+        raise AssertionError("title anchor must be the canonical link to its own lesson")
+    return title_markup[:anchor.start()] + anchor.group(1) + title_markup[anchor.end():]
+
+
 def catalogue_records(markup):
     records = []
     for match in re.finditer(r"<article\b([^>]*)>(.*?)</article\s*>", markup, re.S | re.I):
@@ -64,13 +78,21 @@ def catalogue_records(markup):
         title_match = re.search(r"<h3\b[^>]*>(.*?)</h3\s*>", card, re.S | re.I)
         description_match = re.search(r"<p\b[^>]*>(.*?)</p\s*>", card, re.S | re.I)
         if href_match and href_match.group(1).startswith("tutorials/"):
+            href = href_match.group(1)
             records.append((
-                href_match.group(1),
-                _text(title_match.group(1)) if title_match else "",
+                href,
+                _title_markup_after_canonical_link(title_match.group(1), href) if title_match else "",
                 _text(description_match.group(1)) if description_match else "",
                 attrs.get("data-category", ""),
             ))
     return records
+
+
+def catalogue_metadata(markup):
+    return [
+        first_attrs("<article" + match.group(1) + ">", "article") or {}
+        for match in re.finditer(r"<article\b([^>]*)>(.*?)</article\s*>", markup, re.S | re.I)
+    ]
 
 
 def _strip_allowed_asset_tags(text):
@@ -78,7 +100,8 @@ def _strip_allowed_asset_tags(text):
     allowed_stylesheet_hrefs = {
         "home-page.min.css?v=20261023-reader-typography",
         "home-page.min.css?v=20261024-home-catalogue-v1",
-        "home-catalogue.css?v=20261024a",
+        "home-catalogue.css?v=20261024-simple-images",
+        "home-catalogue.css?v=20261024-banner-cards-v2",
         "back-to-top.css?v=20261024-home-catalogue-v1",
     }
     stylesheet = re.compile(r"<link\b[^>]*>(?:\r?\n)?", re.I)
@@ -206,6 +229,45 @@ class HomeCatalogueScopeTests(unittest.TestCase):
         self.assertEqual(len(after), 58)
         self.assertEqual(after, before)
         self.assertTrue(all(href and title and description and category for href, title, description, category in after))
+
+    def test_catalogue_retains_filter_metadata_and_restores_original_base_search(self):
+        review_start = "911a5f0f7b95203306e78bd9dbf365f38a2d00b6"
+        review_source = git_bytes(review_start, "tutorials.html")
+        self.assertIsNotNone(review_source)
+        current = (ROOT / "tutorials.html").read_text(encoding="utf-8")
+        original = pre_home_catalogue_bytes("tutorials.html").decode("utf-8")
+        review_metadata = catalogue_metadata(review_source.decode("utf-8"))
+        base_metadata = catalogue_metadata(original)
+        current_metadata = catalogue_metadata(current)
+        self.assertEqual((len(review_metadata), len(base_metadata), len(current_metadata)), (58, 58, 58))
+        for index, (review, base, actual) in enumerate(zip(review_metadata, base_metadata, current_metadata), 1):
+            with self.subTest(card=index):
+                self.assertEqual(actual.get("data-category"), review.get("data-category"))
+                self.assertEqual(actual.get("data-level"), review.get("data-level"))
+                self.assertEqual(actual.get("data-format"), review.get("data-format"))
+                self.assertEqual(actual.get("data-search"), base.get("data-search"))
+
+    def test_review_outer_markup_changes_only_one_catalogue_stylesheet_version(self):
+        review_start = "911a5f0f7b95203306e78bd9dbf365f38a2d00b6"
+        old_href = 'href="home-catalogue.css?v=20261024a"'
+        new_href = 'href="home-catalogue.css?v=20261024-banner-cards-v2"'
+        for relative in ("index.html", "tutorials.html"):
+            source_bytes = git_bytes(review_start, relative)
+            self.assertIsNotNone(source_bytes)
+            source = source_bytes.decode("utf-8")
+            current = (ROOT / relative).read_text(encoding="utf-8")
+            if relative == "index.html":
+                self.assertEqual(current, source, "homepage must remain byte-identical to review start")
+                continue
+            old_prefix, old_suffix = _outside_main(source)
+            new_prefix, new_suffix = _outside_main(current)
+            self.assertEqual(old_prefix.count(old_href), 1)
+            self.assertEqual(new_prefix.count(new_href), 1)
+            self.assertEqual(old_suffix.count(old_href), 0)
+            self.assertEqual(new_suffix.count(new_href), 0)
+            self.assertEqual(old_prefix.replace(old_href, "{catalogue stylesheet version}", 1),
+                             new_prefix.replace(new_href, "{catalogue stylesheet version}", 1))
+            self.assertEqual(old_suffix, new_suffix)
 
     def test_only_catalogue_stylesheet_version_local_script_and_added_body_attribute_change_outside_main(self):
         for relative in ("index.html", "tutorials.html"):
