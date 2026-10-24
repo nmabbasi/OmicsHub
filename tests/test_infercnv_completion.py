@@ -3,6 +3,7 @@
 The opt-in tests use a completed public-data run. They do not simulate a
 biological analysis, rerun inference, or modify the original result artifacts.
 """
+from html.parser import HTMLParser
 import os
 from pathlib import Path
 import shutil
@@ -10,15 +11,51 @@ import subprocess
 import tempfile
 import unittest
 
-from bs4 import BeautifulSoup
-
 ROOT = Path(__file__).resolve().parents[1]
 PAGE = ROOT / "tutorials/infercnv-copy-number-variation.html"
 RSCRIPT = shutil.which("Rscript")
 
 
+class LessonContent(HTMLParser):
+    """Collect displayed code and text with only the Python standard library."""
+
+    def __init__(self):
+        super().__init__(convert_charrefs=True)
+        self.code_blocks = []
+        self.text = []
+        self.pre_depth = 0
+        self.in_code = False
+        self.current = []
+
+    def handle_starttag(self, tag, attrs):
+        if tag == "pre":
+            self.pre_depth += 1
+        elif tag == "code" and self.pre_depth:
+            self.in_code = True
+            self.current = []
+
+    def handle_endtag(self, tag):
+        if tag == "code" and self.in_code:
+            self.code_blocks.append("".join(self.current))
+            self.in_code = False
+        elif tag == "pre":
+            self.pre_depth -= 1
+
+    def handle_data(self, data):
+        self.text.append(data)
+        if self.in_code:
+            self.current.append(data)
+
+
+def lesson_content():
+    parser = LessonContent()
+    parser.feed(PAGE.read_text())
+    parser.close()
+    return parser
+
+
 def blocks():
-    return [code.get_text() for code in BeautifulSoup(PAGE.read_text(), "html.parser").select("pre code")]
+    return lesson_content().code_blocks
 
 
 def analysis():
@@ -41,9 +78,16 @@ def run_r(code, env=None):
 
 
 class InfercnvCompletionSourceTests(unittest.TestCase):
+    def test_code_parser_preserves_nested_text_and_escaped_operators(self):
+        parser = LessonContent()
+        parser.feed('<p>JAGS 4.x</p><code>inline only</code>'
+                    '<pre><code>x &lt;- 2 &amp; 3<span>\nHMM = TRUE</span></code></pre>')
+        parser.close()
+        self.assertEqual(parser.code_blocks, ["x <- 2 & 3\nHMM = TRUE"])
+        self.assertIn("JAGS 4.x", "".join(parser.text))
+
     def test_jags_setup_is_separate_and_dependency_failure_is_checked(self):
-        soup = BeautifulSoup(PAGE.read_text(), "html.parser")
-        self.assertIn("JAGS 4.x", soup.get_text())
+        self.assertIn("JAGS 4.x", "".join(lesson_content().text))
         setup = next(code for code in blocks() if "BiocManager::install" in code)
         self.assertIn('BiocManager::install("infercnv", ask = FALSE, update = FALSE)', setup)
         self.assertIn('needed <- c("rjags", "infercnv")', setup)
