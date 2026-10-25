@@ -63,10 +63,15 @@ class TextAlignmentTests(unittest.TestCase):
         # neither the content region nor the simplified hero may be centered.
         self.assertIn(main_props.get("text-align", "left"), {"left", "start"})
         self.assertIn(hero_props.get("text-align", "left"), {"left", "start"})
-        self.assertNotRegex(
-            re.sub(r"/\*.*?\*/", "", self.start_here_css, flags=re.DOTALL),
-            r"text-align\s*:\s*center\b",
-        )
+        # Only short circular-control labels may be centered, never reading copy.
+        allowed_centered = {
+            "#main-content .sh-orbit-stop",
+            ".sh-enhanced .sh-orbit::after",
+        }
+        clean = re.sub(r"/\*.*?\*/", "", self.start_here_css, flags=re.DOTALL)
+        for selector, body in re.findall(r"([^{}]+)\{([^{}]*)\}", clean):
+            if declarations(body).get("text-align") == "center":
+                self.assertIn(selector.strip(), allowed_centered)
 
     def test_table_headers_remain_left_aligned_and_code_wrapping_stays_specialized(self):
         self.assertEqual(declarations(css_rule(self.shared_css, ".prose th")).get("text-align"), "left")

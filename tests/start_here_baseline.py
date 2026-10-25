@@ -11,16 +11,19 @@ import json
 from pathlib import Path
 import re
 import subprocess
+from reader_text_colour_baseline import (
+    READER_TEXT_ASSET_SHA256, normalize_reader_text, restore_reader_text_asset,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 PRE_REVIEW_COMMIT = "a4b6ead8251e0a3abcb748061a40155ae9523a82"
 FIXTURE_PATH = ROOT / "tests/fixtures/start-here-review-edits.json"
 # Exact reviewed HTML/sitemap chunks and final frozen asset digests; no broad normalization.
-FIXTURE_SHA256 = "579e644e6d3bbf58c5daa209c69e5228d67e9d8ab10cd1f175fec2497cf8d8b0"
+FIXTURE_SHA256 = "0e22504380045a5a8b2274cca0736fc7557fb87481a99458326708a7e07ee3fa"
 # Replace None with the final SHA-256 pins after the owner-authored assets land.
 START_HERE_ASSET_SHA256 = {
-    "start-here.css": "959b1e05ee6dd0a54c1d339d003af2f299836883d0e8b37e1630fc5e043444b1",
-    "start-here.js": "828cc6e870ccfb31a3751b243a00cb517e07145be1d176161b809a138324c4af",
+    "start-here.css": "cf4d37fa66592705203fffaa2924f9cc068c2bd24080778b0d115bed2ec73acd",
+    "start-here.js": "e2102a67a41b7d14bf81a11aa1351c9d950ad8082b0eff02f1afbd1a7172f7c7",
 }
 START_HERE_ASSET_PATHS = frozenset(START_HERE_ASSET_SHA256)
 
@@ -96,6 +99,7 @@ def normalize_start_here(relative_path, text):
     """Reverse exact reviewed chunks in start-here.html; leave every other byte alone."""
     if not isinstance(text, str):
         raise TypeError("Start Here normalization requires decoded text")
+    text = normalize_reader_text(relative_path, text)
     if relative_path != "start-here.html":
         return text
     for index, patch in reversed(list(enumerate(page_patches()["start-here.html"]))):
@@ -131,10 +135,13 @@ def verify_start_here_file(relative_path, data):
     expected = START_HERE_ASSET_SHA256[relative_path]
     if not isinstance(expected, str) or not re.fullmatch(r"[0-9a-f]{64}", expected):
         raise AssertionError(f"parent must refresh the exact SHA-256 pin for {relative_path}")
+    original_data = data
+    if hashlib.sha256(data).hexdigest() == READER_TEXT_ASSET_SHA256.get(relative_path):
+        data = restore_reader_text_asset(relative_path, data)
     observed = hashlib.sha256(data).hexdigest()
     if observed != expected:
         raise AssertionError(f"Start Here asset fingerprint mismatch for {relative_path}: {observed}")
-    return data
+    return original_data
 
 
 def normalize_start_here_asset(relative_path, data):

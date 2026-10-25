@@ -11,6 +11,8 @@ from pathlib import Path
 import re
 import subprocess
 
+from reader_text_colour_baseline import normalize_reader_text
+
 ROOT = Path(__file__).resolve().parents[1]
 SITEWIDE_TOP_BASELINE = "fa26faa8d20a31de1211652e8ebffcf99534b9a6"
 FIXTURE_PATH = ROOT / "tests/fixtures/sitewide-top-review-edits.json"
@@ -93,6 +95,7 @@ def normalize_sitewide_top(relative_path, text):
     """Reverse only exact frozen chunks; unknown and mutated edits remain visible."""
     if not isinstance(text, str):
         raise TypeError("sitewide-top normalization requires decoded text")
+    text = normalize_reader_text(relative_path, text)
     if relative_path not in SITEWIDE_TOP_PATHS:
         return text
     for index, patch in reversed(list(enumerate(sitewide_top_patches()[relative_path]))):

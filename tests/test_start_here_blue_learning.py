@@ -1,4 +1,4 @@
-"""Strict boundary and visual contracts for the Start Here lesson-first revision."""
+"""Content, boundary, and visual contracts for the circular Start Here path."""
 from html import unescape
 from html.parser import HTMLParser
 from pathlib import Path
@@ -6,70 +6,49 @@ import re
 import subprocess
 import unittest
 
+from reader_text_colour_baseline import (
+    READER_TEXT_ASSET_PATHS, normalize_reader_text, restore_reader_text_asset,
+)
+
 ROOT = Path(__file__).resolve().parents[1]
-PUBLISHED = "19ec34c2227b9daeb4b32764d3ad32dafb17d87a"
-LONG_FORM_BASELINE = "a4b6ead8251e0a3abcb748061a40155ae9523a82"
-CSS_VERSION = "20261025-hover-colours-v1"
-FOUNDATION = (
-    "tutorials/command-line-part1.html",
-    "tutorials/computer-data-fundamentals.html",
-)
-LANGUAGE_CHOICES = (
-    "tutorials/r-tidyverse-fundamentals.html",
-    "tutorials/python-fundamentals-bioinformatics.html",
-)
-FOUNDATION_EVIDENCE = {
-    "tutorials/command-line-part1.html": {"terminal", "location", "checking"},
-    "tutorials/computer-data-fundamentals.html": {"project", "synthetic", "file"},
+PUBLISHED = "45d660c5f53a0f4d8c2736057e2ab54fe7b8e718"
+CSS_VERSION = "20261025-reader-colours-v1"
+JS_VERSION = "20261025-circular-path-v1"
+FOUNDATION = ("tutorials/command-line-part1.html", "tutorials/computer-data-fundamentals.html")
+LANGUAGE_CHOICES = ("tutorials/r-tidyverse-fundamentals.html", "tutorials/python-fundamentals-bioinformatics.html")
+EVIDENCE = {
+    FOUNDATION[0]: {"terminal", "location", "checking"},
+    FOUNDATION[1]: {"project", "synthetic", "file"},
 }
 CAUTIONS = (
-    "not a required course",
-    "not a bulk RNA-seq tutorial",
-    "replicated single-cell samples",
-    "not substitutes for basic QC",
-    "authorized institutional access",
-    "not standardized on one Python or R version",
-    "zero-byte placeholder files are not sequencing data",
+    "not a required course", "not a bulk RNA-seq tutorial", "replicated single-cell samples",
+    "not substitutes for basic QC", "authorized institutional access",
+    "not standardized on one Python or R version", "zero-byte placeholder files are not sequencing data",
 )
+LEGACY_IDS = ("sh-foundation", "sh-language-choice", "sh-routes", "sh-curriculum", "sh-hpc")
 
 
 def git_bytes(revision, path):
-    result = subprocess.run(
-        ["git", "show", f"{revision}:{path}"], cwd=ROOT,
-        stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, check=False,
-    )
+    result = subprocess.run(["git", "show", f"{revision}:{path}"], cwd=ROOT, stdout=subprocess.PIPE,
+                            stderr=subprocess.DEVNULL, check=False)
     return result.stdout if result.returncode == 0 else None
 
 
 def pinned_paths():
-    return subprocess.check_output(
-        ["git", "ls-tree", "-r", "--name-only", PUBLISHED],
-        cwd=ROOT, text=True,
-    ).splitlines()
+    return subprocess.check_output(["git", "ls-tree", "-r", "--name-only", PUBLISHED], cwd=ROOT, text=True).splitlines()
 
 
-class PageFacts(HTMLParser):
+class Facts(HTMLParser):
     def __init__(self, markup):
         super().__init__(convert_charrefs=True)
-        self.links = []
-        self.ids = []
-        self.text = []
-        self.stack = []
+        self.links, self.elements, self.text = [], [], []
         self.feed(markup)
 
     def handle_starttag(self, tag, attrs):
         attrs = dict(attrs)
+        self.elements.append((tag, attrs))
         if tag == "a":
             self.links.append(attrs.get("href", ""))
-        if "id" in attrs:
-            self.ids.append(attrs["id"])
-        self.stack.append(tag)
-
-    def handle_endtag(self, tag):
-        for index in range(len(self.stack) - 1, -1, -1):
-            if self.stack[index] == tag:
-                self.stack = self.stack[:index]
-                break
 
     def handle_data(self, data):
         self.text.append(data)
@@ -78,22 +57,19 @@ class PageFacts(HTMLParser):
 def main(markup):
     match = re.search(r"<main\b[^>]*>.*?</main\s*>", markup, re.S | re.I)
     if not match:
-        raise AssertionError("Start Here page must contain one main element")
-    return match.group(0)
+        raise AssertionError("Start Here page must contain a main element")
+    return match.group()
 
 
-def start_css_href(markup):
-    matches = re.findall(r'<link\b[^>]*href="(start-here\.css\?v=[^"]+)"[^>]*>', markup)
-    if len(matches) != 1:
-        raise AssertionError("expected exactly one versioned Start Here stylesheet link")
-    return matches[0]
-
-
-def css_rule(css, selector):
-    match = re.search(re.escape(selector) + r"\s*\{([^}]*)\}", css, re.I | re.S)
+def panel(markup, number):
+    match = re.search(rf'<article\b(?=[^>]*\bid="sh-step-{number}")[^>]*>.*?</article\s*>', markup, re.S | re.I)
     if not match:
-        raise AssertionError(f"missing CSS rule for {selector}")
-    return re.sub(r"\s+", " ", match.group(1)).strip().lower()
+        raise AssertionError(f"missing lesson panel sh-step-{number}")
+    return match.group()
+
+
+def tutorial_links(markup):
+    return {url for url in Facts(markup).links if url.startswith("tutorials/")}
 
 
 class StartHereBlueLearningTests(unittest.TestCase):
@@ -101,125 +77,113 @@ class StartHereBlueLearningTests(unittest.TestCase):
     def setUpClass(cls):
         cls.source = (ROOT / "start-here.html").read_text(encoding="utf-8")
         cls.old = git_bytes(PUBLISHED, "start-here.html").decode("utf-8")
-        cls.current_main = main(cls.source)
-        cls.old_main = main(cls.old)
+        cls.current_main, cls.old_main = main(cls.source), main(cls.old)
         cls.css = (ROOT / "start-here.css").read_text(encoding="utf-8")
+        cls.js = (ROOT / "start-here.js").read_text(encoding="utf-8")
 
-    def test_home_catalogue_scientific_pages_and_shared_assets_are_unchanged(self):
+    def test_home_catalogue_lessons_and_shared_assets_are_unchanged(self):
         for relative in ("index.html", "tutorials.html"):
             with self.subTest(path=relative):
-                self.assertEqual((ROOT / relative).read_bytes(), git_bytes(PUBLISHED, relative))
-
+                restored = normalize_reader_text(relative, (ROOT / relative).read_text()).encode()
+                self.assertEqual(restored, git_bytes(PUBLISHED, relative))
         lessons = sorted((ROOT / "tutorials").glob("*.html"))
         self.assertEqual(len(lessons), 58)
         for page in lessons:
             relative = page.relative_to(ROOT).as_posix()
             with self.subTest(path=relative):
-                self.assertEqual(page.read_bytes(), git_bytes(PUBLISHED, relative))
-
-        # The new Start Here stylesheet is the only permitted shared-code exception.
-        protected = [
-            path for path in pinned_paths()
-            if path.endswith((".css", ".js")) and path != "start-here.css"
-            or path.startswith(("fonts/", "images/", "assets/"))
-            or path in {"ads.txt"}
-        ]
+                restored = normalize_reader_text(relative, page.read_text()).encode()
+                self.assertEqual(restored, git_bytes(PUBLISHED, relative))
+        protected = [path for path in pinned_paths()
+                     if (path.endswith((".css", ".js")) and path not in {"start-here.css", "start-here.js"})
+                     or path.startswith(("fonts/", "images/", "assets/")) or path == "ads.txt"]
         for relative in protected:
             with self.subTest(path=relative):
-                self.assertEqual((ROOT / relative).read_bytes(), git_bytes(PUBLISHED, relative))
+                current = (ROOT / relative).read_bytes()
+                if relative in READER_TEXT_ASSET_PATHS:
+                    current = restore_reader_text_asset(relative, current)
+                self.assertEqual(current, git_bytes(PUBLISHED, relative))
 
-    def test_only_main_and_the_named_stylesheet_version_change_in_start_here_html(self):
-        old_href = start_css_href(self.old)
-        new_href = start_css_href(self.source)
+    def test_html_changes_only_in_main_and_start_here_asset_versions(self):
+        restored_source = normalize_reader_text("start-here.html", self.source)
+        old_css = re.search(r'<link\b[^>]*href="(start-here\.css\?v=[^"]+)"', self.old).group(1)
+        new_css = re.search(r'<link\b[^>]*href="(start-here\.css\?v=[^"]+)"', restored_source).group(1)
+        old_js = re.search(r'<script\b[^>]*src="(start-here\.js\?v=[^"]+)"', self.old).group(1)
+        new_js = re.search(r'<script\b[^>]*src="(start-here\.js\?v=[^"]+)"', self.source).group(1)
         expected = self.old.replace(main(self.old), self.current_main, 1)
-        expected = expected.replace(old_href, new_href, 1)
-        self.assertEqual(self.source, expected)
-        self.assertEqual(new_href, f"start-here.css?v={CSS_VERSION}")
+        expected = expected.replace(old_css, new_css, 1).replace(old_js, new_js, 1)
+        self.assertEqual(restored_source, expected)
+        self.assertIn(f'href="start-here.css?v={CSS_VERSION}"', self.source)
+        self.assertEqual(new_js, f"start-here.js?v={JS_VERSION}")
 
-    def test_one_intro_cta_three_ordered_steps_and_all_32_destinations_remain(self):
-        hero = re.search(r'<section class="sh-hero".*?</section>', self.current_main, re.S).group()
-        self.assertEqual(len(re.findall(r"<a\b", hero)), 1)
-        intro_href = 'href="tutorials/introduction-to-bioinformatics.html"'
-        self.assertIn(intro_href, hero)
-        self.assertEqual(self.current_main.count(intro_href), 1, "intro lesson is the hero CTA, not a repeated timeline item")
-        self.assertIn('aria-describedby="sh-first-lesson-note"', hero)
-        self.assertIn('id="sh-first-lesson-note"', hero)
+    def test_four_ordered_lesson_panels_and_orbit_anchors(self):
+        facts = Facts(self.current_main)
+        orbit = next(attrs for _, attrs in facts.elements if "sh-orbit" in attrs.get("class", "").split())
+        self.assertIn("hidden", orbit, "the orbit is revealed by the enhancement script")
+        orbit_anchors = [(tag, attrs) for tag, attrs in facts.elements
+                         if tag == "a" and "sh-orbit-stop" in attrs.get("class", "").split()]
+        self.assertEqual(len(orbit_anchors), 4)
+        for step, (_, attrs) in enumerate(orbit_anchors, 1):
+            self.assertEqual(attrs.get("data-sh-step"), str(step))
+            self.assertEqual(attrs.get("href"), f"#sh-step-{step}")
+            self.assertNotIn("hidden", attrs)
+        panels = [panel(self.current_main, step) for step in range(1, 5)]
+        self.assertIn("introduction-to-bioinformatics.html", panels[0])
+        self.assertIn(FOUNDATION[0], panels[1])
+        self.assertIn(FOUNDATION[1], panels[2])
+        self.assertLess(self.current_main.index(FOUNDATION[0]), self.current_main.index(FOUNDATION[1]))
+        self.assertIn('id="sh-language-choice"', panels[3])
+        for url in LANGUAGE_CHOICES:
+            self.assertIn(url, panels[3])
+        self.assertIn("Bash on Linux, macOS, or Windows Subsystem for Linux (WSL)", self.current_main)
 
-        match = re.search(r'<ol class="sh-steps" start="2">(.*?)</ol>', self.current_main, re.S)
-        self.assertIsNotNone(match, "the ordered basics must start at lesson 02")
-        steps = match.group(1)
-        items = re.findall(r"<li\b.*?</li>", steps, re.S)
-        self.assertEqual(len(items), 3)
-        self.assertEqual(
-            re.findall(r'<h3><a href="([^"]+)"', steps),
-            list(FOUNDATION),
-        )
-        self.assertLess(steps.index(FOUNDATION[0]), steps.index(FOUNDATION[1]))
-        choice = re.search(r'<section class="sh-choice".*?</section>', steps, re.S).group()
-        choice_links = re.findall(r'<a href="([^"]+)"', choice)
-        self.assertEqual(tuple(choice_links), LANGUAGE_CHOICES)
+    def test_beginner_outcomes_are_supported_by_their_linked_lesson_content(self):
+        for number, href in ((2, FOUNDATION[0]), (3, FOUNDATION[1])):
+            item = " ".join(unescape(re.sub(r"<[^>]*>", " ", panel(self.current_main, number))).split()).lower()
+            lesson = (ROOT / href).read_text(encoding="utf-8").lower()
+            item_terms = set(re.findall(r"[a-z][a-z0-9-]{3,}", item))
+            lesson_terms = set(re.findall(r"[a-z][a-z0-9-]{3,}", lesson))
+            with self.subTest(lesson=href):
+                self.assertGreaterEqual(len(item.split()), 6)
+                self.assertTrue(EVIDENCE[href] <= item_terms & lesson_terms)
 
-        old_links = {url for url in PageFacts(self.old_main).links if url.startswith("tutorials/")}
-        new_links = {url for url in PageFacts(self.current_main).links if url.startswith("tutorials/")}
+    def test_all_32_tutorial_destinations_disclosure_cautions_and_legacy_targets_remain(self):
+        old_links, new_links = tutorial_links(self.old_main), tutorial_links(self.current_main)
         self.assertEqual(len(old_links), 32)
         self.assertEqual(new_links, old_links)
-        self.assertTrue(all((ROOT / url.split("#", 1)[0]).is_file() for url in new_links))
-
-    def test_software_setup_is_optional_and_bash_precedes_the_file_lab(self):
-        steps = re.search(r'<ol class="sh-steps" start="2">(.*?)</ol>', self.current_main, re.S).group(1)
-        self.assertLess(steps.index("command-line-part1.html"), steps.index("computer-data-fundamentals.html"))
-        self.assertIn("Bash on Linux, macOS, or Windows Subsystem for Linux (WSL)", self.current_main)
-        self.assertNotIn("conda-mamba-part1.html", steps)
-        optional = re.search(r'<details\b[^>]*id="sh-optional-tools".*?</details>', self.current_main, re.S).group()
-        self.assertIn("conda-mamba-part1.html", optional)
-        self.assertEqual(self.current_main.count("conda-mamba-part1.html"), 1)
-
-    def test_visible_start_here_copy_is_more_concise_than_the_published_page(self):
-        long_form = git_bytes(LONG_FORM_BASELINE, "start-here.html").decode("utf-8")
-        old_long_form_main = main(long_form)
-        old_words = len(" ".join(PageFacts(old_long_form_main).text).split())
-        new_words = len(" ".join(PageFacts(self.current_main).text).split())
-        self.assertLess(new_words, old_words * 0.55)
-        self.assertLess(new_words, 650)
-
-    def test_hero_design_has_a_white_first_lesson_card_and_readable_call_to_action(self):
-        hero = css_rule(self.css, ".sh-hero")
-        self.assertRegex(hero, r"background(?:-image)?\s*:\s*linear-gradient\(")
-        card = css_rule(self.css, ".sh-first-lesson")
-        self.assertRegex(card, r"background\s*:\s*#fff(?:fff)?\b")
-        self.assertRegex(card, r"border-radius\s*:")
-        self.assertRegex(card, r"box-shadow\s*:")
-        heading = css_rule(self.css, ".sh-hero h1")
-        self.assertRegex(heading, r"color\s*:\s*(?:#123b5d|var\(--sh-navy\))")
-        button = css_rule(self.css, "#main-content .sh-primary-link")
-        self.assertRegex(button, r"background\s*:\s*#123b5d\b")
-        self.assertRegex(button, r"color\s*:\s*#fff(?:fff)?\b")
-        self.assertIn("min-height: 3.25rem", button)
-
-    def test_outcomes_are_supported_and_cautions_and_disclosures_remain(self):
-        step_markup = re.search(r'<ol class="sh-steps" start="2">(.*?)</ol>', self.current_main, re.S).group(1)
-        items = re.findall(r"<li\b.*?</li>", step_markup, re.S)
-        self.assertEqual(len(items), 3)
-        for href, item in zip(FOUNDATION, items[:2]):
-            with self.subTest(lesson=href):
-                visible = " ".join(unescape(re.sub(r"<[^>]*>", " ", item)).split()).lower()
-                self.assertGreaterEqual(len(visible.split()), 6)
-                lesson_html = (ROOT / href).read_text(encoding="utf-8").lower()
-                item_terms = {word for word in re.findall(r"[a-z][a-z0-9-]{3,}", visible)}
-                lesson_terms = {word for word in re.findall(r"[a-z][a-z0-9-]{3,}", lesson_html)}
-                self.assertTrue(
-                    FOUNDATION_EVIDENCE[href] <= (item_terms & lesson_terms),
-                    f"beginner outcomes must be supported by lesson-specific content in {href}",
-                )
-
-        text = unescape(" ".join(PageFacts(self.current_main).text)).lower()
+        for url in new_links:
+            with self.subTest(destination=url):
+                self.assertTrue((ROOT / url.split("#", 1)[0]).is_file())
+        facts = Facts(self.current_main)
+        ids = [attrs["id"] for _, attrs in facts.elements if "id" in attrs]
+        for anchor in LEGACY_IDS:
+            self.assertEqual(ids.count(anchor), 1, anchor)
+        self.assertEqual(len(ids), len(set(ids)), "fragment targets are unique")
+        details = [attrs for tag, attrs in facts.elements if tag == "details"]
+        self.assertEqual(len(details), 6)
+        self.assertTrue(all("open" not in attrs for attrs in details))
+        text = " ".join(facts.text).lower()
         for phrase in CAUTIONS:
             with self.subTest(caution=phrase):
                 self.assertIn(phrase.lower(), text)
-        self.assertNotIn("\u2014", text)
-        details = re.findall(r"<details\b[^>]*>", self.current_main)
-        self.assertEqual(len(details), 6)
-        self.assertTrue(all(not re.search(r"\bopen\b", tag) for tag in details))
+        optional = re.search(r'<details\b[^>]*id="sh-optional-tools".*?</details\s*>', self.current_main, re.S)
+        self.assertIsNotNone(optional)
+        self.assertIn("tutorials/conda-mamba-part1.html", optional.group())
+        self.assertNotIn("tutorials/conda-mamba-part1.html", "".join(panel(self.current_main, n) for n in range(1, 5)))
+
+    def test_copy_is_concise_and_does_not_claim_completion_or_progress(self):
+        text = " ".join(Facts(self.current_main).text)
+        self.assertLess(len(text.split()), 650)
+        self.assertNotIn("\u2014", unescape(self.current_main))
+        self.assertNotRegex(text.lower(), r"\b(?:completed|completion|percent complete)\b")
+
+    def test_real_fragment_navigation_and_script_enhancement_are_present(self):
+        self.assertIn("data-sh-step", self.js)
+        self.assertIn("hidden", self.js)
+        self.assertIn("sh-step-", self.js)
+        self.assertRegex(self.js, r"(?:addEventListener|onclick)")
+        for step in range(1, 5):
+            self.assertIn(f'href="#sh-step-{step}"', self.current_main)
+            self.assertIn(f'data-sh-step="{step}"', self.current_main)
 
 
 if __name__ == "__main__":

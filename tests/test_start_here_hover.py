@@ -1,128 +1,89 @@
-"""Exact runtime boundary and interaction-state contracts for Start Here."""
+"""Pointer and keyboard interaction feedback contracts for Start Here navigation."""
+from html.parser import HTMLParser
 from pathlib import Path
 import re
-import subprocess
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
-PUBLISHED = "2ee199d3bdf3a876b9cb1f185f298f5fa8c4dcc7"
-OLD_HREF = 'start-here.css?v=20261025-lesson-first-v2'
-NEW_HREF = 'start-here.css?v=20261025-hover-colours-v1'
-OLD_CHOICE = (
-    '#main-content .sh-choice-links a { display: flex; align-items: center; '
-    'justify-content: space-between; min-height: 3rem; gap: 1rem; padding: .7rem 1rem; '
-    'border: 1px solid #d0e0e8; border-radius: .55rem; background: #f7fafc; '
-    'color: var(--sh-navy); font-size: .85rem; font-weight: 700; text-decoration: none; '
-    'transition: background-color 150ms ease, border-color 150ms ease; }\n'
-)
-NEW_CHOICE = (
-    '#main-content .sh-choice-links a { display: flex; align-items: center; '
-    'justify-content: space-between; min-height: 3rem; gap: 1rem; padding: .7rem 1rem; '
-    'border: 1px solid #d0e0e8; border-radius: .55rem; background: #f7fafc; '
-    'color: var(--sh-navy); font-size: .85rem; font-weight: 700; text-decoration: none; '
-    'transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease, '
-    'box-shadow 150ms ease; }\n'
-)
-OLD_HOVER = '#main-content .sh-choice-links a:hover { border-color: #4a8e9f; background: #edf6f9; }\n'
-INTERACTION_CSS = '''/* Coloured feedback stays on the six learner choices, not the reading content. */
-#sh-routes .sh-details { transition: border-color 150ms ease; }
-#sh-routes .sh-details summary { border-radius: .65rem; transition: background-color 150ms ease, color 150ms ease, box-shadow 150ms ease; }
-#sh-routes .sh-topic-icon { transition: background-color 150ms ease, color 150ms ease; }
-#sh-routes .sh-details[open] { border-color: #65a9b7; }
-#sh-routes .sh-details[open] summary { border-radius: .65rem .65rem 0 0; background: #e5f4f8; }
-#main-content .sh-choice-links a:is(:focus-visible, :active),
-#sh-routes .sh-details summary:is(:focus-visible, :active) { background: #123b5d; color: #fff; box-shadow: inset 0 0 0 1px #318b9b; }
-#main-content .sh-choice-links a:is(:focus-visible, :active) { border-color: #318b9b; }
-#main-content .sh-choice-links a:is(:focus-visible, :active) span,
-#sh-routes .sh-details summary:is(:focus-visible, :active)::after { color: #9be4d8; }
-#sh-routes .sh-details summary:is(:focus-visible, :active) .sh-topic-icon { background: #9be4d8; color: #123b5d; }
-@media (hover: hover) and (pointer: fine) {
-  #main-content .sh-choice-links a:hover,
-  #sh-routes .sh-details summary:hover { background: #123b5d; color: #fff; box-shadow: inset 0 0 0 1px #318b9b; }
-  #main-content .sh-choice-links a:hover { border-color: #318b9b; }
-  #sh-routes .sh-details:has(> summary:hover) { border-color: #318b9b; }
-  #main-content .sh-choice-links a:hover span,
-  #sh-routes .sh-details summary:hover::after { color: #9be4d8; }
-  #sh-routes .sh-details summary:hover .sh-topic-icon { background: #9be4d8; color: #123b5d; }
-}
-'''
-PRINT_CSS = '''  #main-content .sh-choice-links a, #sh-routes .sh-details summary { background: #fff !important; color: #123b5d !important; box-shadow: none !important; }
-  #main-content .sh-choice-links a span, #sh-routes .sh-details summary::after, #sh-routes .sh-topic-icon { color: #123b5d !important; }
-  #sh-routes .sh-topic-icon { background: transparent !important; }
-'''
 
 
-def git_text(path):
-    return subprocess.check_output(["git", "show", f"{PUBLISHED}:{path}"], cwd=ROOT).decode("utf-8")
+class Elements(HTMLParser):
+    def __init__(self, source):
+        super().__init__(convert_charrefs=True)
+        self.items = []
+        self.feed(source)
+
+    def handle_starttag(self, tag, attrs):
+        self.items.append((tag, dict(attrs)))
 
 
-def page_main(markup):
-    match = re.search(r"<main\b[^>]*>.*?</main\s*>", markup, re.S | re.I)
+def media_block(css, media):
+    """Return one balanced media block body without relying on whitespace formatting."""
+    match = re.search(re.escape(media) + r"\s*\{", css, re.I)
     if not match:
-        raise AssertionError("expected one Start Here main element")
-    return match.group(0)
+        raise AssertionError(f"missing media query {media}")
+    start = match.end()
+    depth = 1
+    for index in range(start, len(css)):
+        if css[index] == "{":
+            depth += 1
+        elif css[index] == "}":
+            depth -= 1
+            if depth == 0:
+                return css[start:index]
+    raise AssertionError(f"unterminated media query {media}")
 
 
-class StartHereHoverBoundaryTests(unittest.TestCase):
+class StartHereHoverTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.published_html = git_text("start-here.html")
-        cls.current_html = (ROOT / "start-here.html").read_text(encoding="utf-8")
-        cls.published_css = git_text("start-here.css")
-        cls.current_css = (ROOT / "start-here.css").read_text(encoding="utf-8")
+        cls.source = (ROOT / "start-here.html").read_text(encoding="utf-8")
+        cls.css = (ROOT / "start-here.css").read_text(encoding="utf-8")
+        cls.js = (ROOT / "start-here.js").read_text(encoding="utf-8")
+        cls.main = re.search(r"<main\b[^>]*>.*?</main\s*>", cls.source, re.S | re.I).group()
+        cls.elements = Elements(cls.main).items
 
-    def test_html_is_exactly_published_page_except_the_named_stylesheet_cache_version(self):
-        self.assertEqual(self.published_html.count(OLD_HREF), 1)
-        expected = self.published_html.replace(OLD_HREF, NEW_HREF, 1)
-        self.assertEqual(self.current_html, expected)
-        self.assertEqual(page_main(self.current_html), page_main(self.published_html))
-        old_hero = re.search(r'<section class="sh-hero".*?</section>', page_main(self.published_html), re.S).group()
-        new_hero = re.search(r'<section class="sh-hero".*?</section>', page_main(self.current_html), re.S).group()
-        self.assertEqual(new_hero, old_hero)
-        destinations = re.findall(r'<a\b[^>]*href="(tutorials/[^"#]+(?:#[^"]*)?)"', page_main(self.current_html))
-        old_destinations = re.findall(r'<a\b[^>]*href="(tutorials/[^"#]+(?:#[^"]*)?)"', page_main(self.published_html))
-        self.assertEqual(len(set(destinations)), 32)
-        self.assertEqual(destinations, old_destinations)
+    def test_orbit_and_sidebar_links_are_real_and_have_focusable_targets(self):
+        links = [(tag, attrs) for tag, attrs in self.elements if tag == "a" and attrs.get("data-sh-step")]
+        self.assertEqual(len(links), 8, "each step is linked from both the orbit and guide navigation")
+        for step in range(1, 5):
+            matches = [attrs for _, attrs in links if attrs.get("data-sh-step") == str(step)]
+            self.assertEqual(len(matches), 2)
+            self.assertTrue(all(attrs.get("href") == f"#sh-step-{step}" for attrs in matches))
+        orbit = next(attrs for tag, attrs in self.elements if "sh-orbit" in attrs.get("class", "").split())
+        self.assertIn("hidden", orbit, "orbit is revealed as an enhancement")
+        self.assertIn(":focus-visible", self.css)
+        self.assertRegex(self.css, r"(?i)(?:outline|box-shadow)[^;}]*")
 
-    def test_css_diff_is_only_the_scoped_interaction_rules_and_print_reset(self):
-        expected = self.published_css
-        self.assertEqual(expected.count(OLD_CHOICE), 1)
-        expected = expected.replace(OLD_CHOICE, NEW_CHOICE, 1)
-        self.assertEqual(expected.count(OLD_HOVER), 1)
-        expected = expected.replace(OLD_HOVER, "", 1)
-        insertion_point = '.sh-details-body a { font-weight: 600; text-decoration: underline; }\n'
-        self.assertEqual(expected.count(insertion_point), 1)
-        expected = expected.replace(insertion_point, insertion_point + INTERACTION_CSS, 1)
-        print_anchor = '  .sh-details { margin-bottom: .75rem; }\n'
-        self.assertEqual(expected.count(print_anchor), 1)
-        expected = expected.replace(print_anchor, print_anchor + PRINT_CSS, 1)
-        self.assertEqual(self.current_css, expected)
+    def test_previous_next_buttons_and_polite_status_support_non_pointer_navigation(self):
+        guide = re.search(r'<aside\b[^>]*class="[^"]*\bsh-guide\b[^"]*".*?</aside\s*>', self.main, re.S)
+        self.assertIsNotNone(guide)
+        content = guide.group().lower()
+        self.assertRegex(content, r"<button\b[^>]*(?:prev|previous)|(?:prev|previous)[^<]*</button>")
+        self.assertRegex(content, r"(?is)<button\b[^>]*>[^<]*next[^<]*</button>")
+        self.assertRegex(content, r'aria-live="polite"')
+        self.assertIn("data-sh-step", self.js)
+        self.assertIn("aria-current", self.js)
+        self.assertRegex(self.js, r"(?s)(?:addEventListener|onclick)")
 
-    def test_six_choices_receive_focus_active_and_mouse_only_states(self):
-        main = page_main(self.current_html)
-        choice_match = re.search(r'<div class="sh-choice-links">(.*?)</div>', main, re.S)
-        self.assertIsNotNone(choice_match)
-        self.assertEqual(len(re.findall(r'<a\b', choice_match.group(1))), 2)
-        route_match = re.search(r'<section[^>]*id="sh-routes".*?</section>', main, re.S)
-        self.assertIsNotNone(route_match)
-        route = route_match.group(0)
-        self.assertEqual(len(re.findall(r'<details\b[^>]*class="sh-details"', route)), 4)
-        self.assertEqual(len(re.findall(r'<summary>', route)), 4)
-        self.assertIn('#main-content .sh-choice-links a:is(:focus-visible, :active)', INTERACTION_CSS)
-        self.assertIn('#sh-routes .sh-details summary:is(:focus-visible, :active)', INTERACTION_CSS)
-        self.assertIn('@media (hover: hover) and (pointer: fine) {', INTERACTION_CSS)
-        gated = INTERACTION_CSS.split('@media (hover: hover) and (pointer: fine) {', 1)[1]
-        self.assertEqual(gated.count('.sh-choice-links a:hover'), 3)
-        self.assertEqual(gated.count('.sh-details summary:hover'), 3)
-        self.assertIn('color: #fff', gated)
-        self.assertIn('color: #9be4d8', gated)
-        self.assertIn('#sh-routes .sh-details[open] summary { border-radius: .65rem .65rem 0 0; background: #e5f4f8; }', INTERACTION_CSS)
-        self.assertNotIn(':hover', INTERACTION_CSS.split('@media (hover: hover) and (pointer: fine) {', 1)[0])
+    def test_pointer_hover_feedback_is_limited_to_devices_that_support_hover(self):
+        hover_media = "@media (hover: hover) and (pointer: fine)"
+        body = media_block(self.css, hover_media)
+        self.assertRegex(body, r"(?i):hover")
+        self.assertIn(":hover", body)
+        self.assertIn(":focus-visible", self.css)
 
-    def test_print_keeps_foreground_and_decorative_icons_ink_safe(self):
-        self.assertIn('summary { background: #fff !important; color: #123b5d !important; box-shadow: none !important; }', PRINT_CSS)
-        self.assertIn('summary::after, #sh-routes .sh-topic-icon { color: #123b5d !important; }', PRINT_CSS)
-        self.assertIn('#sh-routes .sh-topic-icon { background: transparent !important; }', PRINT_CSS)
+    def test_focus_and_active_feedback_work_without_hover_and_use_site_brand_colors(self):
+        self.assertRegex(self.css, r"(?i):focus-visible")
+        self.assertRegex(self.css, r"(?i):active")
+        self.assertRegex(self.css, r"(?i)(?:#123b5d|--sh-navy)")
+        self.assertRegex(self.css, r"(?i)(?:#9be4d8|#55c7d9|--sh-mint|--sh-accent)")
+        self.assertRegex(self.css, r"(?i)@media\s*\(prefers-reduced-motion:\s*reduce\)")
+
+    def test_interaction_does_not_suggest_completion_or_persistent_progress(self):
+        text = " ".join(re.sub(r"<[^>]*>", " ", self.main).split()).lower()
+        self.assertNotRegex(text, r"\b(?:completed|completion|percent complete|progress bar)\b")
+        self.assertNotRegex(self.css, r"(?i)progressbar")
 
 
 if __name__ == "__main__":

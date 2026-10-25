@@ -16,6 +16,9 @@ from home_catalogue_baseline import (
 )
 from tutorial_ui_baseline import normalize_tutorial_ui, verify_tutorial_ui_file
 from start_here_baseline import verify_start_here_file
+from reader_text_colour_baseline import (
+    READER_TEXT_ASSET_PATHS, normalize_reader_text, restore_reader_text_asset,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -99,6 +102,11 @@ def catalogue_metadata(markup):
 def _strip_allowed_asset_tags(text):
     # Only these exact local stylesheet hrefs may differ outside <main>.
     allowed_stylesheet_hrefs = {
+        "home-page.min.css?v=20261025-reader-colours-v1",
+        "home-catalogue.css?v=20261025-reader-colours-v1",
+        "style.css?v=20261025-reader-colours-v1",
+        "tutorial-navigation.css?v=20261025-reader-colours-v1",
+        "start-here.css?v=20261025-reader-colours-v1",
         "home-page.min.css?v=20261023-reader-typography",
         "home-page.min.css?v=20261024-home-catalogue-v1",
         "home-catalogue.css?v=20261024-simple-images",
@@ -220,7 +228,8 @@ class HomeCatalogueScopeTests(unittest.TestCase):
         for page in pages:
             relative = page.relative_to(ROOT).as_posix()
             with self.subTest(page=relative):
-                self.assertEqual(page.read_bytes(), git_bytes(HOME_CATALOGUE_BASELINE, relative))
+                restored = normalize_reader_text(relative, page.read_text(encoding="utf-8"))
+                self.assertEqual(restored.encode("utf-8"), git_bytes(HOME_CATALOGUE_BASELINE, relative))
 
     def test_catalogue_retains_all_58_hrefs_titles_descriptions_and_categories(self):
         original = pre_home_catalogue_bytes("tutorials.html").decode("utf-8")
@@ -256,9 +265,13 @@ class HomeCatalogueScopeTests(unittest.TestCase):
             source_bytes = git_bytes(review_start, relative)
             self.assertIsNotNone(source_bytes)
             source = source_bytes.decode("utf-8")
-            current = (ROOT / relative).read_text(encoding="utf-8")
+            raw_current = (ROOT / relative).read_text(encoding="utf-8")
+            self.assertEqual(raw_current.count('href="home-catalogue.css?v=20261025-reader-colours-v1"'),
+                             1 if relative == "tutorials.html" else 0)
+            current = normalize_reader_text(relative, raw_current)
             if relative == "index.html":
-                self.assertEqual(current, source, "homepage must remain byte-identical to review start")
+                self.assertEqual(normalize_reader_text(relative, current), source,
+                                 "homepage must remain byte-identical after exact reader-text restoration")
                 continue
             old_prefix, old_suffix = _outside_main(source)
             new_prefix, new_suffix = _outside_main(current)
@@ -273,7 +286,7 @@ class HomeCatalogueScopeTests(unittest.TestCase):
     def test_only_catalogue_stylesheet_version_local_script_and_added_body_attribute_change_outside_main(self):
         for relative in ("index.html", "tutorials.html"):
             original = pre_home_catalogue_bytes(relative).decode("utf-8")
-            current = (ROOT / relative).read_text(encoding="utf-8")
+            current = normalize_reader_text(relative, (ROOT / relative).read_text(encoding="utf-8"))
             old_prefix, old_suffix = _outside_main(original)
             new_prefix, new_suffix = _outside_main(current)
             old_body_match, old_body = _body_attrs(old_prefix)
@@ -309,12 +322,15 @@ class HomeCatalogueScopeTests(unittest.TestCase):
                         normalize_home_catalogue(relative, changed_elsewhere.decode("utf-8")),
                         git_bytes(HOME_CATALOGUE_BASELINE, relative).decode("utf-8"),
                     )
-                elif relative == "start-here.css":
+                elif relative in {"start-here.css", "start-here.js"}:
                     # This later owner-approved Start Here-only revision is
                     # separately full-hash pinned, never generically ignored.
                     self.assertEqual(verify_start_here_file(relative, current), current)
                     with self.assertRaisesRegex(AssertionError, "fingerprint mismatch"):
                         verify_start_here_file(relative, current + b"\n")
+                elif relative in READER_TEXT_ASSET_PATHS:
+                    self.assertEqual(restore_reader_text_asset(relative, current),
+                                     git_bytes(HOME_CATALOGUE_BASELINE, relative))
                 else:
                     self.assertEqual(current, git_bytes(HOME_CATALOGUE_BASELINE, relative))
 
