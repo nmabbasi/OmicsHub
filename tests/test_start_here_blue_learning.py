@@ -10,6 +10,7 @@ from reader_text_colour_baseline import (
     READER_TEXT_ASSET_PATHS, normalize_reader_text, restore_reader_text_asset,
 )
 from r_first_revision_baseline import R_FIRST_ASSET_PATHS, restore_r_first_asset
+from latest_review_baseline import restore_latest_review_asset
 
 ROOT = Path(__file__).resolve().parents[1]
 PUBLISHED = "45d660c5f53a0f4d8c2736057e2ab54fe7b8e718"
@@ -99,7 +100,7 @@ class StartHereBlueLearningTests(unittest.TestCase):
                      or path.startswith(("fonts/", "images/", "assets/")) or path == "ads.txt"]
         for relative in protected:
             with self.subTest(path=relative):
-                current = (ROOT / relative).read_bytes()
+                current = restore_latest_review_asset(relative, (ROOT / relative).read_bytes())
                 if relative in READER_TEXT_ASSET_PATHS:
                     current = restore_reader_text_asset(relative, current)
                 elif relative in R_FIRST_ASSET_PATHS:

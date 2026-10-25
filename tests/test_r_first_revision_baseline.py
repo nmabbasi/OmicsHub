@@ -17,6 +17,7 @@ from tutorial_execution_baseline import (
     execution_date_paths, overlapping_execution_asset_paths,
     verify_execution_asset_or_overlapping,
 )
+from latest_review_baseline import normalize_latest_review
 
 ROOT = Path(__file__).resolve().parents[1]
 TARGET_DATE = "2026-10-25"
@@ -68,7 +69,7 @@ class RFirstRevisionBaselineTests(unittest.TestCase):
         self.assertEqual(len(content_paths()), EXPECTED_CONTENT_PAGE_COUNT)
         for relative in navigation_paths():
             with self.subTest(page=relative):
-                current_text = (ROOT / relative).read_text(encoding="utf-8")
+                current_text = normalize_latest_review(relative, (ROOT / relative).read_text(encoding="utf-8"))
                 baseline_text = pre_r_first_bytes(relative).decode("utf-8")
                 current_meta = _jsonld(current_text)
                 baseline_meta = _jsonld(baseline_text)
@@ -91,7 +92,7 @@ class RFirstRevisionBaselineTests(unittest.TestCase):
         self.assertEqual(start_meta.get("dateModified"), TARGET_DATE)
         self.assertEqual(start_meta.get("datePublished"), baseline_start_meta.get("datePublished"))
 
-        current_dates = _sitemap_dates((ROOT / "sitemap.xml").read_bytes())
+        current_dates = _sitemap_dates(normalize_latest_review('sitemap.xml', (ROOT / 'sitemap.xml').read_text()).encode('utf-8'))
         baseline_dates = _sitemap_dates(pre_r_first_bytes("sitemap.xml"))
         self.assertEqual(set(current_dates), set(baseline_dates))
         changed_urls = {

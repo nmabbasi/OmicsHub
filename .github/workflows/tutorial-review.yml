@@ -37,6 +37,7 @@ jobs:
           node --check start-here.js
           node --check catalogue-browser.js
           node --check assets/vendor/prism/prism-1.29.0.js
+          node --test tests/test_search_reference_aliases.js
       - name: Validate tutorial contracts and local links
         run: python3 tests/validate_tutorials.py
       - name: Run offline regression tests
@@ -65,6 +66,7 @@ jobs:
           python3 tests/browser_start_here_ui.py --browser '' --output /tmp/tutorial-ui-check
           python3 tests/browser_home_catalogue_ui.py --browser '' --output /tmp/tutorial-ui-check
           python3 tests/browser_sitewide_top_ui.py --browser '' --output /tmp/tutorial-ui-check
+          python3 tests/browser_sitewide_reference_fixes.py --browser '' --output /tmp/tutorial-ui-check/sitewide-reference-fixes.json
       - name: Save UI regression evidence
         if: always()
         uses: actions/upload-artifact@v4

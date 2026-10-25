@@ -1020,7 +1020,9 @@ const SEARCH_QUERY_ALIASES = {
     'wes': [['whole', 'exome'], ['variant', 'calling']],
     'qc': [['quality', 'control']],
     'cna': [['copy', 'number']],
-    'de': [['differential', 'expression']]
+    'de': [['differential', 'expression']],
+    'rmarkdown': [['research', 'reporting']],
+    'rmd': [['research', 'reporting']]
 };
 
 function searchTextMatches(searchText, queryTerms) {

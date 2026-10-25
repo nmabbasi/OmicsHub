@@ -15,6 +15,7 @@ from reader_text_colour_baseline import (
 )
 from r_first_revision_baseline import restore_r_first_asset, R_FIRST_ASSET_PATHS
 from r_first_revision_baseline import normalize_r_first_revision
+from latest_review_baseline import normalize_latest_review, restore_latest_review_asset
 
 ROOT = Path(__file__).resolve().parents[1]
 CSS_CHANGES = [
@@ -126,7 +127,7 @@ class ReaderTextColourTests(unittest.TestCase):
                 normalized[path] = _replace_color(normalized[path], selector, old, new)
         for path in CSS_PATHS:
             with self.subTest(path=path, structure="all non-color bytes"):
-                current = (ROOT / path).read_bytes()
+                current = restore_latest_review_asset(path, (ROOT / path).read_bytes())
                 if path in R_FIRST_ASSET_PATHS:
                     current = restore_r_first_asset(path, current)
                 self.assertEqual(normalized[path].encode(), current)
@@ -189,7 +190,7 @@ class ReaderTextColourTests(unittest.TestCase):
         setup = ("      - name: Install existing CSS build dependencies\n"
                  "        run: npm ci --prefix tools --no-audit --no-fund\n")
         self.assertEqual(previous.count(anchor), 1)
-        self.assertEqual((ROOT / review_path).read_text(), previous.replace(anchor, setup + anchor, 1))
+        self.assertEqual(normalize_latest_review(review_path, (ROOT / review_path).read_text()), previous.replace(anchor, setup + anchor, 1))
         deploy_path = ".github/workflows/static.yml"
         previous = pre_reader_text_bytes(deploy_path).decode("utf-8")
         cleanup = "          rm -rf tools/node_modules\n"

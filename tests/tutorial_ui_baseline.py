@@ -16,6 +16,7 @@ from reader_text_colour_baseline import READER_TEXT_ASSET_SHA256, restore_reader
 from r_first_revision_baseline import (
     R_FIRST_ASSET_PATHS, normalize_r_first_revision, restore_r_first_asset,
 )
+from latest_review_baseline import normalize_latest_review, restore_latest_review_asset
 
 ROOT = Path(__file__).resolve().parents[1]
 PRE_UI_COMMIT = '243bc04e5edff51b33bef1b9312a48f6b2ae5751'
@@ -64,6 +65,7 @@ def normalize_tutorial_ui(relative_path, text):
     """
     if not isinstance(text, str):
         raise TypeError('tutorial UI normalization requires decoded text')
+    text = normalize_latest_review(relative_path, text)
     text = normalize_r_first_revision(relative_path, text)
     text = normalize_home_catalogue(relative_path, text)
     text = normalize_start_here(relative_path, text)
@@ -83,6 +85,7 @@ def normalize_tutorial_ui(relative_path, text):
 def verify_tutorial_ui_file(relative_path, data):
     """Pin every explicitly authorized new/modified UI file, never whole folders."""
     original_data = data
+    data = restore_latest_review_asset(relative_path, data)
     if relative_path in R_FIRST_ASSET_PATHS:
         data = restore_r_first_asset(relative_path, data)
         if relative_path not in TUTORIAL_UI_SHA256:
@@ -93,8 +96,9 @@ def verify_tutorial_ui_file(relative_path, data):
         # Preserve former complete pins for older snapshots; current work is
         # separately pinned as a home-catalogue asset.
         if observed == TUTORIAL_UI_SHA256[relative_path]:
-            return data
-        return verify_home_catalogue_file(relative_path, data)
+            return original_data
+        verify_home_catalogue_file(relative_path, data)
+        return original_data
     if relative_path in TUTORIAL_UI_PATHS:
         if (relative_path in READER_TEXT_ASSET_SHA256
                 and hashlib.sha256(data).hexdigest() == READER_TEXT_ASSET_SHA256[relative_path]):

@@ -151,13 +151,16 @@ header {
     position: relative;
 }
 
-/* Keep the Legal menu reliable after a click, keyboard focus, or hover. */
-#legal-menu-button[aria-expanded="true"] + #legal-menu,
-#legal-menu-button:focus-visible + #legal-menu,
-#legal-menu-button:hover + #legal-menu,
-#legal-menu-button + #legal-menu:hover {
+/* The button state is authoritative, including while it retains focus after Escape. */
+#legal-menu-button[aria-expanded="false"] + #legal-menu {
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none;
+}
+#legal-menu-button[aria-expanded="true"] + #legal-menu {
     opacity: 1 !important;
     visibility: visible !important;
+    pointer-events: auto;
 }
 
 /* Legal page tab consistency */

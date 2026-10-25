@@ -42,6 +42,7 @@ from r_first_revision_baseline import (
 from tutorial_execution_baseline import (
     new_execution_asset_paths, verify_execution_asset_or_overlapping,
 )
+from latest_review_baseline import normalize_latest_review
 
 ROOT = Path(__file__).resolve().parents[1]
 BASE = 'c030bc62bf6e4a4ad21f9ff64cb630c152157692'
@@ -245,7 +246,8 @@ class ReaderPunctuationTests(unittest.TestCase):
             verify_execution_asset_or_overlapping(relative, (ROOT / relative).read_bytes())
         approved_assets = approved_assets | verified_execution_paths
         # This consent repair authorizes one production script and its exact runtime fixture.
-        reviewed_scripts = {'analytics.js', 'tests/test_analytics_load_order.js'}
+        reviewed_scripts = {'analytics.js', 'tests/test_analytics_load_order.js',
+                            'tests/test_search_reference_aliases.js'}
         verified_ui_paths = set(changed) & (TUTORIAL_UI_PATHS | HOME_CATALOGUE_ASSET_PATHS)
         for relative in sorted(verified_ui_paths):
             verify_tutorial_ui_file(relative, (ROOT / relative).read_bytes())
@@ -307,7 +309,7 @@ class ReaderPunctuationTests(unittest.TestCase):
         )
         for relative in self.pages:
             with self.subTest(path=relative):
-                text = (ROOT/relative).read_text()
+                text = normalize_latest_review(relative, (ROOT/relative).read_text())
                 for stylesheet in changed_stylesheets:
                     matches = re.findall(r'href=["\']([^"\']*' + re.escape(stylesheet) + r'\?v=[^"\']+)', text)
                     for href in matches:
@@ -317,7 +319,7 @@ class ReaderPunctuationTests(unittest.TestCase):
                                    if stylesheet == 'tutorial-navigation.css'
                                    else READER_TEXT_VERSION)
                         self.assertTrue(href.endswith('?v=' + version), href)
-        self.assertIn('home-page.min.css?v='+READER_TEXT_VERSION, (ROOT/'index.html').read_text())
+        self.assertIn('home-page.min.css?v='+READER_TEXT_VERSION, normalize_latest_review('index.html', (ROOT/'index.html').read_text()))
         self.assertIn('start-here.css?v='+READER_TEXT_VERSION, (ROOT/'start-here.html').read_text())
 
 
