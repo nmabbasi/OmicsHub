@@ -18,7 +18,7 @@ BASE_COMMIT = "36bc46d"
 FIXTURE_PATH = ROOT / "tests/fixtures/latest-review-edits.json"
 # Refreshed only after SOURCES FINAL; malformed/empty means the layer remains
 # dormant during active source work rather than inferring a baseline from it.
-FIXTURE_SHA256 = "024b629b71452ef0de3f74764d0fe9659369ddeedfeef109cd515e9e1f00ea45"
+FIXTURE_SHA256 = "9823b9629a912f605c3f14823af40771516d237f1ee8cd6bd9642876ac3d2a04"
 FIXTURE_PATHS = frozenset({
     ".github/workflows/tutorial-review.yml", "home-page.min.css", "index.html",
     "script.js", "services.html", "sitemap.xml", "style.css", "tutorials.html",

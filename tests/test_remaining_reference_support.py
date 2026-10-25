@@ -210,7 +210,7 @@ class RemainingReferenceSupportTests(unittest.TestCase):
             with self.subTest(path=path):
                 self.assertEqual((ROOT / path).read_bytes(), baseline_bytes(path))
 
-    def test_scrna_support_change_is_exactly_the_narrow_universal_three_prime_link(self):
+    def test_scrna_reference_changes_are_exactly_the_support_link_and_bibliographic_label(self):
         path = "tutorials/scrna-seq-basics.html"
         before, after = baseline_text(path), current_text(path)
         old_link = (
@@ -221,12 +221,24 @@ class RemainingReferenceSupportTests(unittest.TestCase):
             r'<li><a href="https://www\.10xgenomics\.com/support/single-cell-gene-expression">'
             r'10x Universal 3′ Gene Expression support and dataset links</a></li>'
         )
+        old_citation = re.escape(
+            '<li><a href="https://www.nature.com/articles/nbt.4096">'
+            'Stuart et al., 2019. Comprehensive Integration of Single-Cell Data (Seurat v3 paper)</a>'
+        )
+        new_citation = re.escape(
+            '<li><a href="https://www.nature.com/articles/nbt.4096">'
+            'Butler et al., 2018. Integrating single-cell transcriptomic data across different conditions, technologies, and species (Seurat integration)</a>'
+        )
         self.assertRegex(before, old_link)
         self.assertRegex(after, new_link)
+        self.assertRegex(before, old_citation)
+        self.assertRegex(after, new_citation)
         self.assertNotIn("https://support.10xgenomics.com/single-cell-gene-expression", after)
+        before_remainder = strip_one(before, old_link, "legacy 10x support link")
+        after_remainder = strip_one(after, new_link, "narrow Universal 3′ support link")
         self.assertEqual(
-            strip_one(before, old_link, "legacy 10x support link"),
-            strip_one(after, new_link, "narrow Universal 3′ support link"),
+            strip_one(before_remainder, old_citation, "old mismatched Nature citation"),
+            strip_one(after_remainder, new_citation, "correct Butler 2018 citation"),
             "the scRNA edit must not change unrelated page content",
         )
 
