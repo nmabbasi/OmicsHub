@@ -189,7 +189,7 @@ function toggleMobileMenu() {
 <h2>Calculate LISI in R</h2>
 <p>The <code>lisi</code> package's <code>compute_lisi()</code> takes a matrix with cells in rows and embedding dimensions in columns, plus metadata with one row per cell. It returns one score column for each requested metadata label. The code below uses existing Seurat reductions and reorders metadata to match embedding row names before calculation. Replace the example metadata keys with columns present in your object.</p>
 <pre><code># Input: seurat_obj.rds, containing an existing PCA or integration reduction
-# Output: lisi_scores.csv; the input RDS is read only
+# Outputs: lisi_scores.csv and lisi_metadata.csv; the input RDS is read only
 
 library(lisi)
 library(Seurat)
@@ -214,12 +214,15 @@ if (anyNA(meta[, labels_to_eval, drop = FALSE])) {
 }
 lisi_res &lt;- compute_lisi(emb, meta, labels_to_eval)
 write.csv(lisi_res, file = "lisi_scores.csv", row.names = TRUE)
+write.csv(meta, file = "lisi_metadata.csv")
 summary(lisi_res)
 </code></pre>
 <p>Rows in the resulting CSV correspond to cells in the embedding. The selected batch-label column is used as iLISI and the cell-type column as cLISI; the software does not assign those biological meanings for you. The package uses a local-neighborhood calculation whose neighborhood scale affects the score. Check the installed package's documentation for its arguments, record the setting used, and compare a small, justified range if conclusions depend on it.</p>
 <h3>Summarize by cluster without losing cell alignment</h3>
-<p>Use the cell names written by <code>write.csv()</code> to align scores back to metadata. This example stops on mismatched cell sets rather than silently assigning scores by row position.</p>
-<pre><code>lisi_df &lt;- read.csv("lisi_scores.csv", row.names = 1, check.names = FALSE)
+<p>Run this summary as a separate <code>Rscript</code> process after the LISI calculation block completes. The first block saves the matched metadata to <code>lisi_metadata.csv</code>; this block reloads it instead of relying on an in-memory object from another process. Keep both CSV files in the working directory. The cell-name check stops on mismatched inputs rather than silently assigning scores by row position.</p>
+<pre><code># Inputs: lisi_scores.csv and lisi_metadata.csv, written by the first block
+meta &lt;- read.csv("lisi_metadata.csv", row.names = 1, check.names = FALSE)
+lisi_df &lt;- read.csv("lisi_scores.csv", row.names = 1, check.names = FALSE)
 if (!setequal(rownames(meta), rownames(lisi_df))) {
   stop("LISI output cells do not match the metadata cells")
 }
@@ -473,7 +476,7 @@ print("Mean silhouette across cells:", silhouette_score(embedding, labels.to_num
 })();
 </script>
 <script src="../assets/vendor/prism/prism-1.29.0.js"></script>
-<script src="../tutorial-code-data.js?v=20261025-r-first-v1"></script>
+<script src="../tutorial-code-data.js?v=20261025-executed-examples-v1"></script>
 <script src="../code-tabs.js?v=20261025-r-first-v1"></script>
 <script src="../copy-code.js?v=20261025-r-first-v1"></script>
 <script src="../subscribe-fab.js?v=20261025-r-first-v1"></script>

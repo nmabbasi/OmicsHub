@@ -22,7 +22,7 @@ A public report example should include its `.Rmd` source, only the small public 
 
 Treat citations as evidence, not decoration. Cite the source of real data and the methods, software or publications actually used. Check author, title, year, version, DOI or URL against the cited source; do not fabricate references or leave template citations that do not support the claims. Clearly distinguish citations for report tooling from citations for scientific methods or data. Synthetic values have no scientific provenance and must never be presented or cited as observations.
 
-Keep the public repository limited to source code and authorized public or invented teaching data. Do not publish knitted HTML, generated figures or tables, private execution outputs, research datasets, credentials, patient identifiers or confidential paths. Review generated outputs privately before sharing them; a checksum verifies bytes, not privacy, provenance or biological validity.
+Keep the public repository limited to source code, authorized public or invented teaching data, and specifically reviewed teaching figures. Do not publish knitted HTML, raw execution logs or tables, private execution outputs, research datasets, credentials, patient identifiers or confidential paths. When the owner requests analysis images, generate them by executing the linked source, declare the input provenance, label invented fixtures clearly, record the source and output fingerprints, and explain the actual execution boundary in the caption. Keep those additions unpublished until the owner approves them. A checksum verifies bytes, not privacy, provenance or biological validity.
 
 ## Match the evidence to the format
 

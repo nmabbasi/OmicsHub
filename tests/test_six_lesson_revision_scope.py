@@ -55,6 +55,10 @@ from start_here_baseline import (
     normalize_start_here_asset,
     pre_review_bytes,
 )
+from tutorial_execution_baseline import (
+    new_execution_asset_paths,
+    verify_new_execution_asset,
+)
 
 ALLOWED_FIXTURE_PREFIXES = (
     "files/text-processing-lesson/",
@@ -179,6 +183,10 @@ class SixLessonRevisionScopeTests(unittest.TestCase):
             if relative.startswith("tests/") or relative == "sitemap.xml":
                 continue
             current_path = ROOT / relative
+            if relative in new_execution_asset_paths():
+                self.assertTrue(current_path.is_file(), relative)
+                verify_new_execution_asset(relative, current_path.read_bytes())
+                continue
             if relative in TUTORIAL_UI_PATHS | HOME_CATALOGUE_ASSET_PATHS:
                 self.assertTrue(current_path.is_file(), relative)
                 verify_tutorial_ui_file(relative, current_path.read_bytes())

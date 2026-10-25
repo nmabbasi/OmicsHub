@@ -60,7 +60,7 @@ class TutorialReaderUITests(unittest.TestCase):
                 self.assertNotIn('cdnjs.cloudflare.com/ajax/libs/prism', source)
                 self.assertEqual(source.count('assets/vendor/prism/prism-1.29.0.js'), 1)
                 for name in ['tutorial-reader.css', 'tutorial-navigation.css', 'back-to-top.css', 'tutorial-code-data.js', 'code-tabs.js']:
-                    version = generator.NAVIGATION_CSS_VERSION if name == 'tutorial-navigation.css' else generator.VERSION
+                    version = generator.NAVIGATION_CSS_VERSION if name == 'tutorial-navigation.css' else generator.CODE_DATA_VERSION if name == 'tutorial-code-data.js' else generator.VERSION
                     self.assertEqual(source.count(f'../{name}?v={version}"'), 1)
                 self.assertEqual(source.count('id="back-to-top"'), 1)
                 self.assertIn('id="back-to-top" href="#tutorial-title"', source)
