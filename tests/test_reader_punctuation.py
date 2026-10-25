@@ -95,7 +95,7 @@ class ReaderPunctuationTests(unittest.TestCase):
         self.assertEqual(normalize_start_here('start-here.html', restored), restored)
 
         changed_claim = current.replace(
-            'Start with the big picture.', 'Unsupported new learning claim.', 1
+            'Start with a question.', 'Unsupported new learning claim.', 1
         )
         self.assertNotEqual(changed_claim, current, 'the mutation must exercise current reading text')
         self.assertNotEqual(
@@ -254,7 +254,7 @@ class ReaderPunctuationTests(unittest.TestCase):
                 version = '20261024-home-catalogue-v1' if relative == 'index.html' else '20261023-reader-typography'
                 self.assertIn(stylesheet+'?v='+version, (ROOT/relative).read_text())
         self.assertIn('home-page.min.css?v=20261024-home-catalogue-v1', (ROOT/'index.html').read_text())
-        self.assertIn('start-here.css?v=20261025-hover-colours-v1', (ROOT/'start-here.html').read_text())
+        self.assertIn('start-here.css?v=20261025-circular-path-v1', (ROOT/'start-here.html').read_text())
 
 
 if __name__ == '__main__':

@@ -45,9 +45,9 @@ def main():
                 data = page.evaluate('''() => ({
                   width:innerWidth, scrollWidth:document.documentElement.scrollWidth,
                   heroLeft:getComputedStyle(document.querySelector('.sh-hero')).textAlign,
-                  coreVisible:[...document.querySelectorAll('.sh-steps,.sh-choice')].every(e=>e.checkVisibility()),
+                  coreVisible:document.getElementById('sh-step-1').checkVisibility() && [...document.querySelectorAll('.sh-step-nav a')].every(e=>e.checkVisibility()),
                   details:[...document.querySelectorAll('main details')].map(e=>({open:e.open,summaryHeight:e.querySelector('summary').getBoundingClientRect().height})),
-                  actions:[...document.querySelectorAll('.sh-primary-link,.sh-step h3 a,.sh-choice-links a,.sh-catalogue a')].map(e=>({height:e.getBoundingClientRect().height,width:e.getBoundingClientRect().width})),
+                  actions:[...document.querySelectorAll('.sh-primary-link,.sh-orbit-stop,.sh-step-nav a,.sh-choice-links a,.sh-catalogue a')].filter(e=>e.checkVisibility()).map(e=>({height:e.getBoundingClientRect().height,width:e.getBoundingClientRect().width})),
                   visibleWords:document.querySelector('main').innerText.trim().split(/\\s+/).length,
                   totalWords:document.querySelector('main').textContent.trim().split(/\\s+/).length,
                   mainHeight:document.querySelector('main').getBoundingClientRect().height,
@@ -60,6 +60,26 @@ def main():
                 check(all(a['height'] >= 44 and a['width'] >= 44 for a in data['actions']), f'{width}: small primary target')
                 check(data['visibleWords'] < 340 and data['totalWords'] < 650, f'{width}: excessive reading load')
                 check(data['heroButtonBottom'] < height, f'{width}: first lesson button below initial viewport')
+                # Circle, side guide and previous/next controls stay in sync.
+                for step in range(1, 5):
+                    page.locator(f'.sh-orbit-stop[data-sh-step="{step}"]').click()
+                    check(page.locator(f'#sh-step-{step}').is_visible(), f'{width}: orbit selection {step}')
+                    check(page.locator('.sh-lesson-panel:visible').count() == 1, f'{width}: competing lesson panels')
+                    check(page.locator(f'.sh-step-nav a[data-sh-step="{step}"]').get_attribute('aria-current') == 'step', f'{width}: unsynced side guide')
+                    check(f'Viewing step {step} of 4' in page.locator('.sh-step-status').inner_text(), f'{width}: status missing')
+                check(page.locator('[data-sh-next]').is_disabled(), f'{width}: last step incorrectly wraps')
+                page.locator('.sh-step-nav a[data-sh-step="2"]').focus()
+                page.keyboard.press('Enter')
+                check(page.locator('#sh-step-2').is_visible(), f'{width}: keyboard side guide selection')
+                page.locator('[data-sh-next]').click()
+                check(page.locator('#sh-step-3').is_visible(), f'{width}: next control')
+                page.locator('[data-sh-previous]').click()
+                check(page.locator('#sh-step-2').is_visible(), f'{width}: previous control')
+                page.goto(args.base + '/start-here.html#sh-language-choice')
+                check(page.locator('#sh-step-4').is_visible(), f'{width}: language deep link remains hidden')
+                check(page.locator('.sh-choice-links a:visible').count() == 2, f'{width}: R/Python options unavailable')
+                page.goto(args.base + '/start-here.html')
+                check(page.locator('[data-sh-previous]').is_disabled(), f'{width}: first step incorrectly wraps')
                 scroll(page, 650)
                 placement = page.evaluate('''() => {
                     const e=document.getElementById('back-to-top'), r=e.getBoundingClientRect(), b=document.getElementById('cookie-consent-banner');
@@ -138,11 +158,12 @@ def main():
             page.goto(args.base + '/start-here.html')
             page.locator('#sh-hpc-track summary').click()
             check(page.locator('#sh-hpc-track a').first.is_visible(), 'No-JS optional HPC content inaccessible')
-            check(page.locator('.sh-primary-link').get_attribute('href') == 'tutorials/introduction-to-bioinformatics.html', 'No-JS first lesson missing')
+            check(page.locator('.sh-primary-link').first.get_attribute('href') == 'tutorials/introduction-to-bioinformatics.html', 'No-JS first lesson missing')
+            check(page.locator('.sh-lesson-panel:visible').count() == 4, 'No-JS lessons hidden')
             check(circle(page).get_attribute('href') == '#sh-hero-title', 'No-JS native top link missing')
             check(circle(page).is_visible(), 'No-JS top link inaccessible')
             context.close()
-            results['interactions'] += ['first lesson above fold', 'core steps and language choice always exposed', 'compact optional disclosures', '44px primary and 48px disclosure targets', 'brand circular arrow geometry', 'consent-safe floating placement', 'keyboard top focus return', 'keyboard disclosure toggling', 'topic hash reveal', 'optional HPC hash reveal', 'print open/restore', 'native no-JS reading and top anchor']
+            results['interactions'] += ['first lesson above fold', 'one focused lesson with all four steps navigable', 'compact optional disclosures', '44px primary and 48px disclosure targets', 'brand circular arrow geometry', 'consent-safe floating placement', 'keyboard top focus return', 'keyboard disclosure toggling', 'topic hash reveal', 'optional HPC hash reveal', 'print open/restore', 'native no-JS reading and top anchor']
             browser.close()
         check(not results['errors'], str(results['errors']))
         results['passed'] = True

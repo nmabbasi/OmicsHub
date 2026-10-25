@@ -309,7 +309,7 @@ class HomeCatalogueScopeTests(unittest.TestCase):
                         normalize_home_catalogue(relative, changed_elsewhere.decode("utf-8")),
                         git_bytes(HOME_CATALOGUE_BASELINE, relative).decode("utf-8"),
                     )
-                elif relative == "start-here.css":
+                elif relative in {"start-here.css", "start-here.js"}:
                     # This later owner-approved Start Here-only revision is
                     # separately full-hash pinned, never generically ignored.
                     self.assertEqual(verify_start_here_file(relative, current), current)

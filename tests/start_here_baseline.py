@@ -16,11 +16,11 @@ ROOT = Path(__file__).resolve().parents[1]
 PRE_REVIEW_COMMIT = "a4b6ead8251e0a3abcb748061a40155ae9523a82"
 FIXTURE_PATH = ROOT / "tests/fixtures/start-here-review-edits.json"
 # Exact reviewed HTML/sitemap chunks and final frozen asset digests; no broad normalization.
-FIXTURE_SHA256 = "579e644e6d3bbf58c5daa209c69e5228d67e9d8ab10cd1f175fec2497cf8d8b0"
+FIXTURE_SHA256 = "e9d8e03d65845051e61f5e062d5ebcb39ee03a1566e24b7a7a135f4f674a75cb"
 # Replace None with the final SHA-256 pins after the owner-authored assets land.
 START_HERE_ASSET_SHA256 = {
-    "start-here.css": "959b1e05ee6dd0a54c1d339d003af2f299836883d0e8b37e1630fc5e043444b1",
-    "start-here.js": "828cc6e870ccfb31a3751b243a00cb517e07145be1d176161b809a138324c4af",
+    "start-here.css": "0651860a95a3a7939cf0ebfa7fab461400699efdaaa8a0147b40f44cd88cf8a4",
+    "start-here.js": "e2102a67a41b7d14bf81a11aa1351c9d950ad8082b0eff02f1afbd1a7172f7c7",
 }
 START_HERE_ASSET_PATHS = frozenset(START_HERE_ASSET_SHA256)
 
