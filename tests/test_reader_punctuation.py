@@ -6,6 +6,7 @@ from pathlib import Path
 import re
 import subprocess
 import unittest
+from unittest.mock import patch
 
 from beginner_walkthrough_baseline import normalize_beginner_walkthrough_revision
 from six_lesson_revision_baseline import normalize_six_lesson_revision
@@ -35,7 +36,9 @@ from start_here_baseline import (
 from reader_text_colour_baseline import (
     READER_TEXT_ASSET_PATHS, READER_TEXT_VERSION, verify_reader_text_file,
 )
-from r_first_revision_baseline import R_FIRST_ASSET_PATHS, restore_r_first_asset
+from r_first_revision_baseline import (
+    R_FIRST_ASSET_PATHS, restore_r_first_asset, verify_r_first_asset,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 BASE = 'c030bc62bf6e4a4ad21f9ff64cb630c152157692'
@@ -217,6 +220,9 @@ class ReaderPunctuationTests(unittest.TestCase):
         )
         fixture_changes = [path for path in changed if path.startswith('files/')]
         approved_assets = advanced_asset_paths()
+        approved_r_first_assets = set(fixture_changes) & R_FIRST_ASSET_PATHS
+        for relative in sorted(approved_r_first_assets):
+            verify_r_first_asset(relative, (ROOT / relative).read_bytes())
         for relative in fixture_changes:
             if relative in approved_assets:
                 self.assertEqual(
@@ -226,6 +232,7 @@ class ReaderPunctuationTests(unittest.TestCase):
                     advanced_published_bytes(relative),
                     'the exact approved asset path must retain its manifest-pinned full bytes',
                 )
+        approved_assets = approved_assets | approved_r_first_assets
         # This consent repair authorizes one production script and its exact runtime fixture.
         reviewed_scripts = {'analytics.js', 'tests/test_analytics_load_order.js'}
         verified_ui_paths = set(changed) & (TUTORIAL_UI_PATHS | HOME_CATALOGUE_ASSET_PATHS)
@@ -247,7 +254,32 @@ class ReaderPunctuationTests(unittest.TestCase):
             or (not path.startswith(allowed_prefixes) and path not in approved_assets)
         ]
         self.assertEqual(forbidden, [], 'Reader-copy edits must not modify images, research examples or site scripts')
-        self.assertEqual(invalid_fixtures, [], 'Only new files in the six approved teaching-fixture folders are permitted')
+        self.assertEqual(invalid_fixtures, [], 'Only original teaching-fixture folders or individually verified approved assets are permitted')
+
+    def test_scope_guard_rejects_mutated_approved_r_first_fixtures(self):
+        target = ROOT / 'files/tutorial-examples/foundation-model-evaluation/synthetic_embeddings.csv'
+        original_read = Path.read_bytes
+
+        def mutated_read(path):
+            data = original_read(path)
+            return data + b'\n' if path == target else data
+
+        with patch.object(Path, 'read_bytes', mutated_read):
+            with self.assertRaisesRegex(AssertionError, 'R-first asset fingerprint mismatch'):
+                self.test_analysis_downloads_research_examples_images_and_site_scripts_are_unchanged()
+
+    def test_scope_guard_rejects_unapproved_research_fixture_paths(self):
+        original_output = subprocess.check_output
+
+        def additional_path(command, *args, **kwargs):
+            result = original_output(command, *args, **kwargs)
+            if command[:3] == ['git', 'diff', '--name-only']:
+                return result + 'files/unapproved-research/private-notebook.Rmd\n'
+            return result
+
+        with patch.object(subprocess, 'check_output', additional_path):
+            with self.assertRaisesRegex(AssertionError, 'individually verified approved assets'):
+                self.test_analysis_downloads_research_examples_images_and_site_scripts_are_unchanged()
 
     def test_generated_navigation_copy_cannot_reintroduce_em_dashes(self):
         for relative in ['tools/learning-paths.json', 'tools/generate_learning_paths.py', 'script.js']:
