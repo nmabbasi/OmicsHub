@@ -14,9 +14,10 @@ import re
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
-VERSION = '20261024-reader-ui-v3'
-NAVIGATION_CSS_VERSION = '20261025-reader-colours-v1'
+VERSION = '20261025-r-first-v1'
+NAVIGATION_CSS_VERSION = '20261025-learning-navigation-v2'
 LANGUAGES = {'bash', 'python', 'r', 'text', 'yaml', 'json', 'csv', 'diff', 'powershell', 'lua', 'groovy', 'javascript', 'markdown', 'sql', 'ini', 'docker', 'rscript'}
+TAB_ORDER = ['r', 'python']
 VOID = {'area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr'}
 
 class ArticleFacts(HTMLParser):
@@ -72,6 +73,8 @@ def load_metadata(root):
         occupied = set()
         for group in paired:
             panels = group['panels']
+            if group.get('tabOrder') != TAB_ORDER:
+                raise ValueError(f'{page.name}: language tabs must be ordered R then Python')
             if {p['language'] for p in panels} != {'r', 'python'} or len(panels) != 2:
                 raise ValueError(f'{page.name}: expected one R and one Python route')
             start, end = panels[0]['start'], panels[-1]['end']

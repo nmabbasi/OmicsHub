@@ -157,11 +157,11 @@ class EditorialScopeFixTests(unittest.TestCase):
 
     def test_embedding_evaluator_foregrounds_external_vectors_and_synthetic_check(self):
         text = (ROOT / "tutorials/single-cell-foundation-models.html").read_text(encoding="utf-8")
-        self.assertIn("evaluator for externally generated scGPT or Geneformer embedding exports", text)
-        self.assertIn("deliberately synthetic fixture", text)
-        self.assertIn("not scGPT or Geneformer outputs", text)
-        self.assertIn("no pretrained model output or biological accuracy claim is supplied", text)
-        self.assertIn("no pretrained model output is supplied", text)
+        self.assertIn("Run the evaluator: R main route, Python optional", text)
+        self.assertIn("the synthetic embedding fixture", text)
+        self.assertIn("deliberately easy software checks", text)
+        self.assertIn("Neither computes model embeddings or supports biological claims.", text)
+        self.assertIn("Use only real vectors from a documented upstream model workflow for scientific analysis.", text)
 
     def test_methods_table_compares_inputs_outputs_and_assumptions(self):
         text = (ROOT / "tutorials/modern-bioinformatics-methods-2026.html").read_text(encoding="utf-8")

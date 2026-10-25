@@ -4,7 +4,7 @@ import re
 import unittest
 
 from tutorial_ui_baseline import (
-    TUTORIAL_UI_PATHS, normalize_tutorial_ui, page_patches,
+    TUTORIAL_UI_PATHS, TUTORIAL_UI_SHA256, normalize_tutorial_ui, page_patches,
     pre_ui_bytes, verify_tutorial_ui_file,
 )
 from home_catalogue_baseline import normalize_home_catalogue
@@ -24,7 +24,7 @@ class ExactTutorialUIBaselineTests(unittest.TestCase):
                 self.assertEqual(normalize_tutorial_ui(relative, restored), restored)
 
     def test_every_explicit_ui_asset_matches_its_pinned_complete_digest(self):
-        self.assertEqual(len(TUTORIAL_UI_PATHS), 17)
+        self.assertEqual(len(TUTORIAL_UI_SHA256), 17)
         for relative in TUTORIAL_UI_PATHS:
             with self.subTest(path=relative):
                 data = (ROOT / relative).read_bytes()

@@ -87,7 +87,7 @@ class LearningPromiseTests(unittest.TestCase):
         self.assertIn('labels describe the learning format, not validation status', self.catalogue)
 
     def test_learning_path_uses_lesson_specific_versions(self):
-        self.assertIn('not standardized on one Python or R version', self.start)
+        self.assertIn('not standardized on one R or Python version', self.start)
         self.assertNotIn('All tutorials are standardized', self.start)
         self.assertNotIn('guarantee that someone', self.start)
         self.assertNotIn('Never break your system', self.start)

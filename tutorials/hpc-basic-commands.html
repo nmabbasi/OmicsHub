@@ -73,7 +73,7 @@ gtag('consent', 'default', {
     }
   },
   "datePublished": "2026-09-11",
-  "dateModified": "2026-10-23",
+  "dateModified": "2026-10-25",
   "url": "https://theomicshub.com/tutorials/hpc-basic-commands.html",
   "name": "Basic Slurm Commands",
   "isPartOf": {
@@ -82,8 +82,8 @@ gtag('consent', 'default', {
     "url": "https://theomicshub.com/"
   },
   "inLanguage": "en"
-}</script><link href="../tutorial-library.css" rel="stylesheet"/><link href="../tutorial-reader.css?v=20261024-reader-ui-v3" rel="stylesheet"/>
-<link href="../tutorial-navigation.css?v=20261025-reader-colours-v1" rel="stylesheet"/><link href="../back-to-top.css?v=20261024-reader-ui-v3" rel="stylesheet"/>
+}</script><link href="../tutorial-library.css" rel="stylesheet"/><link href="../tutorial-reader.css?v=20261025-r-first-v1" rel="stylesheet"/>
+<link href="../tutorial-navigation.css?v=20261025-learning-navigation-v2" rel="stylesheet"/><link href="../back-to-top.css?v=20261025-r-first-v1" rel="stylesheet"/>
 </head>
 <body class="bg-white text-gray-900">
 <script>
@@ -169,11 +169,11 @@ function toggleMobileMenu() {
 <div class="mb-12 rounded-2xl overflow-hidden shadow-lg border border-gray-100">
 <img alt="Basic Slurm Commands" class="w-full aspect-video object-cover" decoding="async" loading="eager" src="../images/hpc-basic-slurm-commands.webp" width="1024" height="1024"/>
 </div>
-<nav aria-label="Learning path navigation" class="reader-toolbar"><a href="hpc-connection.html" rel="prev" class="reader-toolbar__previous"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5m0 0 7 7m-7-7 7-7"/></svg><span class="reader-toolbar__copy"><small>Previous prerequisite</small><strong>Connecting to HPC</strong></span></a><a data-catalogue-return="" href="../tutorials.html" class="reader-toolbar__library"><span class="reader-toolbar__library-mark" aria-hidden="true">▤</span><span><small>Browse</small><strong>All tutorials</strong></span></a><a href="hpc-submission-part1.html" rel="next" class="reader-toolbar__next"><span class="reader-toolbar__copy"><small>Suggested next</small><strong>Writing Slurm Job Scripts</strong></span><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14m0 0-7-7m7 7-7 7"/></svg></a></nav>
+<nav aria-label="Learning path navigation" class="reader-toolbar"><span class="reader-toolbar__heading">Learning path</span><a href="hpc-connection.html" rel="prev" class="reader-toolbar__previous"><span class="reader-toolbar__direction"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5m0 0 7 7m-7-7 7-7"/></svg></span><span class="reader-toolbar__copy"><small>Previous prerequisite</small><strong>Connecting to HPC</strong></span></a><a data-catalogue-return="" href="../tutorials.html" class="reader-toolbar__library"><span class="reader-toolbar__library-mark" aria-hidden="true"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="6" height="6" rx="1.3"/><rect x="14" y="4" width="6" height="6" rx="1.3"/><rect x="4" y="14" width="6" height="6" rx="1.3"/><rect x="14" y="14" width="6" height="6" rx="1.3"/></svg></span><span><small>Browse</small><strong>All tutorials</strong></span></a><a href="hpc-submission-part1.html" rel="next" class="reader-toolbar__next"><span class="reader-toolbar__copy"><small>Suggested next</small><strong>Writing Slurm Job Scripts</strong></span><span class="reader-toolbar__direction"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14m0 0-7-7m7 7-7 7"/></svg></span></a></nav>
 <article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--reference">
 <p class="lesson-lead">Use Slurm commands to inspect the resources your cluster exposes, submit a small batch job, and find out why a job is waiting or failed. Slurm versions and local policies differ; replace example partitions, module names, paths, and resource limits with values documented by your HPC site.</p>
 <section class="lesson-summary tutorial-learning-contract" data-tutorial-format="reference" aria-label="Learning format">
-<p><strong>Format: Reference.</strong> For learners with a Slurm account and SSH access, this guide demonstrates partition/job inspection, a small Python batch smoke test, and basic diagnosis. The test script and input are created by the commands; cluster-specific settings must be supplied from local documentation.</p>
+<p><strong>Format: Reference.</strong> For learners with a Slurm account and SSH access, this guide demonstrates partition/job inspection, an R batch smoke test, and basic diagnosis. A Python route is included as an optional alternative for the same synthetic utility. The scripts and input are created by the commands; cluster-specific settings must come from local documentation.</p>
 </section>
 <h2>Before you start</h2>
 <p>This reference is for learners who already know basic shell commands and have an account with SSH access to a Slurm cluster. Work from the login node only for setup and submission, not for compute work. The cluster examples below require your site's current user documentation. They have not been run on a real cluster.</p>
@@ -185,7 +185,7 @@ function toggleMobileMenu() {
 else
   echo "No module command in this shell; check site instructions for batch-shell initialization."
 fi</code></pre>
-<p>Module names, versions, shell setup, and Python executable names are site-specific. Do not assume that <code>python/3.11</code> or any example module name exists. If the site documents a module for the batch environment, use that exact name and initialize Modules as directed by the site. A failed module load must stop the job rather than quietly using another Python. If the site does not use modules, use the alternative in the script only after its documentation confirms which Python is available in non-interactive batch jobs.</p>
+<p>Module names, versions, shell setup, and R executable names are site-specific; Python applies only to the optional alternative below. Do not assume that an example module name exists. If the site documents a module for the batch environment, use that exact name and initialize Modules as directed by the site. A failed module load must stop the job rather than quietly using another R. If the site does not use modules, use an Rscript path only after the site documentation confirms which R installation is available in non-interactive batch jobs.</p>
 <h2>Inspect partitions and your queue</h2>
 <p>Use the cluster's own output to discover partition names and node states; an idle node does not guarantee that your account or request is eligible to run there. Replace <code>PARTITION_NAME</code> with a name reported by your site. State and resource fields describe scheduler configuration, not a promise of availability.</p>
 <pre><code>sinfo
@@ -195,7 +195,14 @@ sinfo -p PARTITION_NAME</code></pre>
 <pre><code>squeue -u "$USER" -o "%.18i %.9P %.30j %.10u %.2t %.10M %.6D %R"</code></pre>
 <p>Common compact states include <code>PD</code> (pending), <code>R</code> (running), <code>CG</code> (completing), <code>CD</code> (completed), and <code>F</code> (failed). The <code>%R</code> field shows a reason for pending jobs and, for other states, may show allocated nodes or a failure explanation. A completed job may disappear from <code>squeue</code>; consult accounting when the site provides it.</p>
 <h2>Try a tiny local synthetic script</h2>
-<p>This Python-only exercise needs no account, scheduler, module system, third-party package, or research data. Save it as <code>local-smoke.py</code> and run <code>python3 local-smoke.py</code> on a Linux or macOS machine with Python 3. It prints the interpreter, version, host, and a predictable arithmetic result.</p>
+<p>Start with the selected R route. It uses base R only and needs no account, scheduler, module system, third-party package, or research data. Save the code as <code>local-smoke.R</code> and run <code>Rscript local-smoke.R</code> on a machine with R installed. It prints the selected Rscript path, R version, hostname, and a predictable arithmetic result.</p>
+<h3 id="hpc-smoke-r">R · base R (primary route)</h3>
+<pre><code>cat("Selected Rscript: ", Sys.which("Rscript"), "\n", sep = "")
+cat("R version: ", R.version.string, "\n", sep = "")
+cat("Hostname: ", Sys.info()[["nodename"]], "\n", sep = "")
+cat("Sum 1..100: ", sum(1:100), "\n", sep = "")</code></pre>
+<p>Expected output includes the selected executable path, R version, host name, and <code>Sum 1..100: 5050</code>. The path, version, and host vary by machine. This invented fixture is only a local runtime smoke test; it does not test Slurm, a compute node, scientific software, or any research result.</p>
+<h3 id="hpc-smoke-python">Python · optional alternative</h3>
 <pre><code>import platform
 import sys
 
@@ -203,9 +210,42 @@ print(f"Selected Python: {sys.executable}")
 print(f"Python version: {platform.python_version()}")
 print(f"Hostname: {platform.node()}")
 print(f"Sum 1..100: {sum(range(1, 101))}")</code></pre>
-<p>Expected output includes a Python executable path, a version, a host name, and <code>Sum 1..100: 5050</code>. The host and version vary by machine. This invented fixture is only a smoke test; it says nothing about Slurm or scientific results.</p>
-<h2>Prepare a small batch script</h2>
-<p>On the cluster, follow site storage guidance and move to a permitted working directory. Create <code>hello.py</code> there with the same five lines of Python shown above. Create a batch script next to it:</p>
+<p>This alternative needs Python 3 and no third-party package. Save it as <code>local-smoke.py</code> and run <code>python3 local-smoke.py</code>. It performs the same arithmetic smoke test; it does not establish anything about the target cluster.</p>
+<h2>Prepare a batch script for your selected language</h2>
+<h3 id="hpc-batch-r">R · base R (primary route)</h3>
+<p>On the cluster, follow site storage guidance and move to a permitted working directory. Create <code>hello.R</code> there with the R snippet above, then save the following as <code>smoke.sbatch</code>. Replace the R module placeholder with the exact module documented by your HPC site. The example requests one node, one task, one CPU, one gigabyte of memory, and five minutes; these are illustrative limits, not portable recommendations.</p>
+<pre><code>#!/usr/bin/env bash
+#SBATCH --job-name=r-smoke
+#SBATCH --output=slurm-%j.out
+#SBATCH --error=slurm-%j.err
+#SBATCH --nodes=1
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=1
+#SBATCH --time=00:05:00
+#SBATCH --mem=1G
+
+set -euo pipefail
+
+# Replace with the exact R module name and batch-shell setup documented by your site.
+if ! command -v module &gt;/dev/null 2&gt;&amp;1; then
+  echo "module is not initialized in this batch shell; follow site batch-shell instructions." &gt;&amp;2
+  exit 127
+fi
+if ! module load REPLACE_WITH_SITE_DOCUMENTED_R_MODULE; then
+  echo "R module load failed; refusing to use an unrelated installation." &gt;&amp;2
+  exit 1
+fi
+if ! rscript_path=$(command -v Rscript); then
+  echo "Rscript is not available after the documented module load." &gt;&amp;2
+  exit 127
+fi
+printf 'Selected Rscript: %s\n' "$rscript_path"
+"$rscript_path" --version
+hostname
+"$rscript_path" hello.R</code></pre>
+<p>Check whether your site requires a partition, account, quality-of-service, storage path, or other directive, and add only values it documents for your account. Slurm reads <code>#SBATCH</code> directives before executing the script, so keep them above shell commands and do not put shell variables in their values. If your site does not use modules, replace the module block only with a fail-fast check for the site-documented <code>Rscript</code> executable in non-interactive jobs; do not fall back silently between installations. The selected path is printed so the batch environment is inspectable.</p>
+<h3 id="hpc-batch-python">Python · optional batch alternative</h3>
+<p>This is the same synthetic utility using Python 3 instead of R. Create <code>hello.py</code> with the Python snippet above, then save this alternative as <code>python-smoke.sbatch</code>; substitute the exact site-documented Python module. It is not needed for the R route.</p>
 <pre><code>#!/usr/bin/env bash
 #SBATCH --job-name=python-smoke
 #SBATCH --output=slurm-%j.out
@@ -217,8 +257,6 @@ print(f"Sum 1..100: {sum(range(1, 101))}")</code></pre>
 #SBATCH --mem=1G
 
 set -euo pipefail
-
-# Replace this placeholder with a Python module name documented by your site.
 if ! command -v module &gt;/dev/null 2&gt;&amp;1; then
   echo "module is not initialized in this batch shell; follow site batch-shell instructions." &gt;&amp;2
   exit 127
@@ -227,19 +265,14 @@ if ! module load REPLACE_WITH_SITE_DOCUMENTED_PYTHON_MODULE; then
   echo "Python module load failed; refusing to use an unrelated interpreter." &gt;&amp;2
   exit 1
 fi
-
-if ! python_path=$(command -v python3); then
-  echo "python3 is not available after the documented module load." &gt;&amp;2
-  exit 127
-fi
+python_path=$(command -v python3) || { echo "python3 is unavailable after module load." &gt;&amp;2; exit 127; }
 printf 'Selected Python: %s\n' "$python_path"
 python3 --version
 hostname
 python3 hello.py</code></pre>
-<p>Save this block as <code>smoke.sbatch</code>, replacing the module placeholder before submission. The resource limits shown are examples, not portable recommendations. Check whether your site requires a partition, account, quality-of-service, storage path, or other directive, and add only values it documents for your account. Slurm reads <code>#SBATCH</code> directives before executing the script, so keep them above shell commands and do not put shell variables in their values.</p>
-<p>If your site explicitly documents that modules are not used and that <code>python3</code> is present in non-interactive batch jobs, replace the module check/load block with a fail-fast <code>command -v python3</code> check. Do not retain a fallback chain between <code>python</code>, <code>python3</code>, module names, or environments: choose the documented setup and print the selected executable as this example does.</p>
+<p>The optional Python script has the same site-specific partition, account, resource, and batch-shell caveats. A local R or Python smoke test verifies only that local interpreter and arithmetic. Even a successful submitted job confirms only that this tiny synthetic command ran in the observed cluster context; it does not validate a scientific workflow or make a local test evidence of HPC compatibility.</p>
 <h2>Submit once and keep the returned identifier</h2>
-<p>Run submission from the directory containing the script and <code>hello.py</code>. Keep the following commands in the same Bash shell. <code>sbatch --parsable</code> returns the identifier assigned by Slurm; a federated or cluster-qualified response may be <code>JOB_ID;CLUSTER</code>. The validation accepts a numeric identifier and optional non-empty cluster suffix, and rejects unexpected output instead of building a log filename from it.</p>
+<p>Run the primary R submission from the directory containing <code>smoke.sbatch</code> and <code>hello.R</code>. Keep the following commands in the same Bash shell. To submit the optional Python alternative instead, substitute <code>python-smoke.sbatch</code> and its <code>hello.py</code> input. <code>sbatch --parsable</code> returns the identifier assigned by Slurm; a federated or cluster-qualified response may be <code>JOB_ID;CLUSTER</code>. The validation accepts a numeric identifier and optional non-empty cluster suffix, and rejects unexpected output instead of building a log filename from it.</p>
 <pre><code>if ! submission=$(sbatch --parsable smoke.sbatch); then
   echo "Submission failed; check the site policy and error above. No job ID was captured." &gt;&amp;2
   exit 1
@@ -292,7 +325,7 @@ fi</code></pre>
 cat "slurm-${JOB_ID}.out"</code></pre>
 <p>For a module error, confirm that the documented module system is initialized inside the batch shell and that the exact module is available there. For a submission rejection, inspect the site-required partition, account, resource limits, and directive syntax. For an out-of-memory or time-limit state, consult accounting and site policy before changing resource requests. If accounting is disabled or delayed, use the site's documented status route rather than inferring failure from absent records or files.</p>
 <h2>What this lesson did and did not test</h2>
-<p>The Python file and arithmetic are synthetic and runnable locally. The batch-script syntax and failure/success paths are tested with local command mocks only; mocks do not schedule a job, load a real site module, exercise a compute node, or verify a cluster's accounting and filesystem behavior. No real cluster, scheduler, paid service, private research material, account, or email is used by the local tests. Site setup, permissions, resource policy, and actual job execution remain for your administrator-approved environment.</p>
+<p>The R script and arithmetic are synthetic and runnable locally; the optional Python route uses the same arithmetic. Local execution does not test Slurm. The batch-script syntax and failure/success paths are tested with local command mocks only; mocks do not schedule a job, load a real site module, exercise a compute node, or verify a cluster's accounting and filesystem behavior. No real cluster, scheduler, paid service, private research material, account, or email is used by these local checks. Site setup, permissions, resource policy, and actual job execution remain for your administrator-approved environment.</p>
 <p>After this reference, continue to <a href="hpc-submission-part1.html">Writing Slurm Job Scripts</a> to learn how to adapt directives and script structure for a real workload. If you do not have HPC access or need a different prerequisite, return to <a href="../start-here.html">Start Here</a>; HPC is optional.</p>
 <h2>References</h2>
 <ul>
@@ -316,13 +349,14 @@ cat "slurm-${JOB_ID}.out"</code></pre>
 </div>
 </section>
 <nav aria-label="Learning path continuation" class="reader-sequence" id="reader-course-navigation">
-<div class="reader-sequence-heading"><h2>Keep exploring</h2>
+<div class="reader-sequence-heading"><p class="reader-sequence-kicker">Continue learning</p><h2>Keep exploring</h2>
 <p class="reader-sequence-position"><span class="reader-sequence-route-label">Learning route</span><strong>Optional HPC · Slurm basics</strong></p></div>
 <div class="reader-sequence-grid reader-sequence-grid--single">
-<a href="hpc-submission-part1.html" rel="next" class="reader-path-card reader-path-card--suggested"><span class="reader-path-card__copy"><span class="reader-path-card__eyebrow">Suggested next step</span><strong class="reader-path-card__title">Writing Slurm Job Scripts</strong><span class="reader-path-card__reason">After learning cluster navigation and scheduler commands, inspect a job script.</span></span><span class="reader-path-card__arrow"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14m0 0-7-7m7 7-7 7"/></svg></span></a>
-</div><div class="reader-sequence-utilities">
 <a href="hpc-connection.html" rel="prev" class="reader-path-card reader-path-card--previous"><span class="reader-path-card__copy"><span class="reader-path-card__eyebrow">Previous prerequisite</span><strong class="reader-path-card__title">Connecting to HPC</strong></span><span class="reader-path-card__arrow"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5m0 0 7 7m-7-7 7-7"/></svg></span></a>
-<a data-catalogue-return="" href="../tutorials.html" class="reader-path-card reader-path-card--library"><span class="reader-path-card__copy"><span class="reader-path-card__eyebrow">Browse the collection</span><strong class="reader-path-card__title">All tutorials</strong></span><span class="reader-path-card__arrow" aria-hidden="true">▤</span></a>
+<div class="reader-sequence-choices">
+<a href="hpc-submission-part1.html" rel="next" class="reader-path-card reader-path-card--suggested"><span class="reader-path-card__copy"><span class="reader-path-card__eyebrow">Suggested next step</span><strong class="reader-path-card__title">Writing Slurm Job Scripts</strong><span class="reader-path-card__reason">After learning cluster navigation and scheduler commands, inspect a job script.</span></span><span class="reader-path-card__arrow"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14m0 0-7-7m7 7-7 7"/></svg></span></a>
+</div></div><div class="reader-sequence-utilities">
+<a data-catalogue-return="" href="../tutorials.html" class="reader-path-card reader-path-card--library"><span class="reader-path-card__copy"><span class="reader-path-card__eyebrow">Browse the collection</span><strong class="reader-path-card__title">All tutorials</strong></span><span class="reader-path-card__arrow" aria-hidden="true"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="6" height="6" rx="1.3"/><rect x="14" y="4" width="6" height="6" rx="1.3"/><rect x="4" y="14" width="6" height="6" rx="1.3"/><rect x="14" y="14" width="6" height="6" rx="1.3"/></svg></span></a>
 </div><div class="reader-sequence-footer"><p class="reader-sequence-note">Suggested links are not a completion tracker or a required linear course.</p></div></nav>
 </div></div></div>
 </div>
@@ -393,7 +427,7 @@ cat "slurm-${JOB_ID}.out"</code></pre>
 <!-- Marked.js for markdown rendering -->
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <!-- Custom JS - loads tutorials from manifest -->
-<script src="../script.js?v=20261024-reader-ui-v3"></script>
+<script src="../script.js?v=20261025-r-first-v1"></script>
 <script id="navigation-accessibility">
 (function () {
   const legalButton = document.getElementById("legal-menu-button");
@@ -442,10 +476,10 @@ cat "slurm-${JOB_ID}.out"</code></pre>
 })();
 </script>
 <script src="../assets/vendor/prism/prism-1.29.0.js"></script>
-<script src="../tutorial-code-data.js?v=20261024-reader-ui-v3"></script>
-<script src="../code-tabs.js?v=20261024-reader-ui-v3"></script>
-<script src="../copy-code.js?v=20261024-reader-ui-v3"></script>
-<script src="../subscribe-fab.js?v=20261024-reader-ui-v3"></script>
+<script src="../tutorial-code-data.js?v=20261025-r-first-v1"></script>
+<script src="../code-tabs.js?v=20261025-r-first-v1"></script>
+<script src="../copy-code.js?v=20261025-r-first-v1"></script>
+<script src="../subscribe-fab.js?v=20261025-r-first-v1"></script>
 <!-- Cookie Consent Banner -->
 <div class="fixed bottom-0 inset-x-0 z-[9999] transition-transform duration-500" id="cookie-consent-banner" style="font-family:'Inter',system-ui,sans-serif;">
 <div class="mx-auto max-w-4xl px-4 pb-4 sm:px-6">

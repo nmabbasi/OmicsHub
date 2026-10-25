@@ -180,11 +180,11 @@ class RemainingValidationScopeTests(unittest.TestCase):
         with self.assertRaisesRegex(AssertionError, "article-body edit"):
             normalize_remaining_validation_edit(relative, body_mutation)
 
-        manifest = load_manifest()["files"][relative]
-        unknown_date = current.replace(
-            f'"dateModified": "{manifest["date_modified_approved"]}"',
-            '"dateModified": "2026-10-25"', 1,
+        unknown_date = re.sub(
+            r'("dateModified"\s*:\s*")[^"]+(")',
+            r'\g<1>2030-01-01\2', current, count=1,
         )
+        self.assertNotEqual(unknown_date, current, "the negative fixture must actually change the current date")
         with self.assertRaisesRegex(AssertionError, "unapproved dateModified"):
             normalize_remaining_validation_edit(relative, unknown_date)
 
@@ -204,8 +204,16 @@ class RemainingValidationScopeTests(unittest.TestCase):
         )
         for mutation in mutations:
             with self.subTest(change=mutation[:80]):
-                restored = normalize_remaining_validation_edit(relative, mutation)
-                self.assertNotEqual(restored, original)
+                self.assertNotEqual(mutation, current, "the negative fixture must actually change source")
+                try:
+                    restored = normalize_remaining_validation_edit(relative, mutation)
+                except AssertionError as error:
+                    # Altering a literal R-first chunk's neighboring wrapper can
+                    # prevent its exact restoration. Rejecting that source is
+                    # stricter than returning it for whole-file comparison.
+                    self.assertRegex(str(error), r"unapproved dateModified|article-body edit")
+                else:
+                    self.assertNotEqual(restored, original)
 
     def test_sitemap_restorer_changes_only_manifest_allowlisted_lastmods(self):
         original = published_bytes("sitemap.xml")

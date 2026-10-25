@@ -17,6 +17,8 @@
     const occupied = new Set();
     return groups.every(group => {
       if (!group || typeof group.title !== 'string' || !Array.isArray(group.panels) || group.panels.length !== 2 || !Array.isArray(group.members)) return false;
+      const tabOrder = group.tabOrder || ['r', 'python'];
+      if (tabOrder.length !== 2 || tabOrder[0] !== 'r' || tabOrder[1] !== 'python') return false;
       const [first, second] = group.panels;
       if (new Set(group.panels.map(panel => panel?.language)).size !== 2) return false;
       for (const panel of group.panels) {
@@ -61,7 +63,7 @@
     title.textContent = group.title;
     const hint = document.createElement('p');
     hint.className = 'code-tabs-hint';
-    hint.textContent = 'Choose R or Python. Follow the same language through this lesson.';
+    hint.textContent = 'R is the main route. Python is an optional alternative for this task.';
     heading.append(title, hint);
     const tabList = document.createElement('div');
     tabList.className = 'code-tab-list';
@@ -71,6 +73,9 @@
     container.append(heading, tabList);
     const tabs = [];
     const panels = [];
+    const sourcePanels = group.panels;
+    const tabOrder = group.tabOrder || ['r', 'python'];
+    const orderedPanels = tabOrder.map(language => sourcePanels.find(panel => panel.language === language));
     const controller = {
       container,
       activate(language, focus) {
@@ -87,7 +92,7 @@
     };
     // All ranges and fingerprints have already passed before any original nodes move.
     article.insertBefore(container, nodes[group.panels[0].start]);
-    group.panels.forEach((branch, branchIndex) => {
+    orderedPanels.forEach((branch, branchIndex) => {
       const tab = document.createElement('button');
       tab.type = 'button';
       tab.id = `${prefix}-${branch.language}-tab`;
@@ -126,7 +131,7 @@
       });
     });
     controllers.push(controller);
-    controller.activate(preference);
+    controller.activate(preference || 'r');
   }
 
   function revealHashTarget(scroll = false) {
@@ -156,6 +161,7 @@
           blocks.forEach((pre, index) => {
             const code = pre.querySelector('code');
             const language = spec.blocks[index].language;
+            pre.dataset.codeSourceIndex = String(index);
             pre.dataset.codeLanguage = language;
             if (code) {
               Array.from(code.classList).filter(name => name.startsWith('language-')).forEach(name => code.classList.remove(name));

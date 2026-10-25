@@ -13,6 +13,8 @@ from reader_text_colour_baseline import (
     READER_TEXT_VERSION, normalize_reader_text, page_patches, pre_reader_text_bytes,
     verify_reader_text_file,
 )
+from r_first_revision_baseline import restore_r_first_asset, R_FIRST_ASSET_PATHS
+from r_first_revision_baseline import normalize_r_first_revision
 
 ROOT = Path(__file__).resolve().parents[1]
 CSS_CHANGES = [
@@ -124,7 +126,10 @@ class ReaderTextColourTests(unittest.TestCase):
                 normalized[path] = _replace_color(normalized[path], selector, old, new)
         for path in CSS_PATHS:
             with self.subTest(path=path, structure="all non-color bytes"):
-                self.assertEqual(normalized[path].encode(), (ROOT / path).read_bytes())
+                current = (ROOT / path).read_bytes()
+                if path in R_FIRST_ASSET_PATHS:
+                    current = restore_r_first_asset(path, current)
+                self.assertEqual(normalized[path].encode(), current)
 
     def test_all_70_html_files_have_only_approved_cache_href_and_utility_class_changes(self):
         patches = page_patches()
@@ -134,7 +139,12 @@ class ReaderTextColourTests(unittest.TestCase):
                 before = pre_reader_text_bytes(relative).decode("utf-8")
                 current = (ROOT / relative).read_text(encoding="utf-8")
                 expected = _expected_html_after_allowed_changes(relative, before)
-                self.assertEqual(current, expected)
+                # R-first article/navigation chunks are an independent, exact
+                # reviewed layer. Reverse only those pinned chunks before
+                # checking that this reader-colour pass changed only its own
+                # cache tokens and utility classes.
+                r_first_normalized = normalize_r_first_revision(relative, current)
+                self.assertEqual(r_first_normalized, expected)
                 self.assertEqual(normalize_reader_text(relative, current), before)
 
     def test_code_script_image_and_non_utility_content_are_unchanged(self):
@@ -143,6 +153,7 @@ class ReaderTextColourTests(unittest.TestCase):
         for relative in sorted(page_patches()):
             before = pre_reader_text_bytes(relative).decode("utf-8")
             current = (ROOT / relative).read_text(encoding="utf-8")
+            current = normalize_r_first_revision(relative, current)
             with self.subTest(page=relative):
                 for pattern in tags:
                     self.assertEqual(re.findall(pattern, before, re.I | re.S),

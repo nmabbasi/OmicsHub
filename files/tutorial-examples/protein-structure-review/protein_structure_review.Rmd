@@ -1,0 +1,28 @@
+---
+title: "Inspect local protein-structure metadata"
+output: html_document
+params:
+  pdb: "synthetic_ca_fixture.pdb"
+---
+
+The bundled PDB is a constructed parser fixture, not an experimental structure or AlphaFold prediction. Offline inspection reports the file's B-factor values and does not infer their provenance. Only the explicit API retrieval route in the tutorial marks a file as an AlphaFold DB result and interprets its B-factor field as pLDDT.
+
+```{r setup, message=FALSE}
+source("inspect_alphafold.R")
+prefix <- tempfile("structure-review-")
+result <- inspect_pdb(params$pdb, prefix)
+```
+
+## File summary
+
+```{r summary}
+knitr::kable(result$summary)
+```
+
+## Per-residue values
+
+```{r residues}
+knitr::kable(result$residues)
+```
+
+The summary is a quality-inspection aid only. It does not validate geometry, domain orientation, function, binding, stability, or experimental accuracy.

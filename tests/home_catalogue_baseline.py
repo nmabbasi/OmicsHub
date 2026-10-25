@@ -15,6 +15,7 @@ from sitewide_top_baseline import normalize_sitewide_top
 from reader_text_colour_baseline import (
     READER_TEXT_ASSET_SHA256, normalize_reader_text, restore_reader_text_asset,
 )
+from r_first_revision_baseline import R_FIRST_ASSET_PATHS, restore_r_first_asset
 
 ROOT = Path(__file__).resolve().parents[1]
 HOME_CATALOGUE_BASELINE = "fa26faa8d20a31de1211652e8ebffcf99534b9a6"
@@ -118,6 +119,8 @@ def normalize_home_catalogue(relative_path, text):
     if not isinstance(text, str):
         raise TypeError("home-catalogue normalization requires decoded text")
     text = normalize_reader_text(relative_path, text)
+    if relative_path in R_FIRST_ASSET_PATHS:
+        text = restore_r_first_asset(relative_path, text.encode("utf-8")).decode("utf-8")
     if (relative_path in {"home-page.min.css", "home-catalogue.css", "style.css",
                           ".github/workflows/tutorial-review.yml", ".github/workflows/static.yml"}
             and hashlib.sha256(text.encode("utf-8")).hexdigest() == READER_TEXT_ASSET_SHA256[relative_path]):
@@ -175,6 +178,10 @@ def verify_home_catalogue_file(relative_path, data):
         data = restore_reader_text_asset(relative_path, data)
     if relative_path not in HOME_CATALOGUE_ASSET_PATHS:
         raise AssertionError(f"not an authorized home-catalogue asset: {relative_path}")
+    if relative_path in R_FIRST_ASSET_PATHS:
+        # A later evidence refresh must pass its explicit complete-file R-first
+        # pin before the immutable original catalogue fingerprint is checked.
+        data = restore_r_first_asset(relative_path, data)
     expected = HOME_CATALOGUE_ASSET_SHA256[relative_path]
     if not re.fullmatch(r"[0-9a-f]{64}", expected):
         raise AssertionError(f"home-catalogue asset pin not refreshed for {relative_path}")

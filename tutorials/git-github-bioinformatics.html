@@ -73,7 +73,7 @@ gtag('consent', 'default', {
     }
   },
   "datePublished": "2026-09-02",
-  "dateModified": "2026-10-21",
+  "dateModified": "2026-10-25",
   "url": "https://theomicshub.com/tutorials/git-github-bioinformatics.html",
   "name": "Git and GitHub for Bioinformatics",
   "isPartOf": {
@@ -82,8 +82,8 @@ gtag('consent', 'default', {
     "url": "https://theomicshub.com/"
   },
   "inLanguage": "en"
-}</script><link href="../tutorial-library.css" rel="stylesheet"/><link href="../tutorial-reader.css?v=20261024-reader-ui-v3" rel="stylesheet"/>
-<link href="../tutorial-navigation.css?v=20261025-reader-colours-v1" rel="stylesheet"/><link href="../back-to-top.css?v=20261024-reader-ui-v3" rel="stylesheet"/>
+}</script><link href="../tutorial-library.css" rel="stylesheet"/><link href="../tutorial-reader.css?v=20261025-r-first-v1" rel="stylesheet"/>
+<link href="../tutorial-navigation.css?v=20261025-learning-navigation-v2" rel="stylesheet"/><link href="../back-to-top.css?v=20261025-r-first-v1" rel="stylesheet"/>
 </head>
 <body class="bg-white text-gray-900">
 <script>
@@ -169,18 +169,17 @@ function toggleMobileMenu() {
 <div class="mb-12 rounded-2xl overflow-hidden shadow-lg border border-gray-100">
 <img alt="Git and GitHub for Bioinformatics" class="w-full aspect-video object-cover" decoding="async" loading="eager" src="../images/git-github-bioinformatics-workstation.webp" width="1024" height="1024"/>
 </div>
-<nav aria-label="Learning path navigation" class="reader-toolbar"><a href="reproducible-project-structure.html" rel="prev" class="reader-toolbar__previous"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5m0 0 7 7m-7-7 7-7"/></svg><span class="reader-toolbar__copy"><small>Previous prerequisite</small><strong>Reproducible Project Structure</strong></span></a><a data-catalogue-return="" href="../tutorials.html" class="reader-toolbar__library"><span class="reader-toolbar__library-mark" aria-hidden="true">▤</span><span><small>Browse</small><strong>All tutorials</strong></span></a><a href="reproducible-workflows-snakemake-nextflow.html" rel="next" class="reader-toolbar__next"><span class="reader-toolbar__copy"><small>Suggested next</small><strong>Reproducible bioinformatics workflows with Snakemake and Nextflow</strong></span><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14m0 0-7-7m7 7-7 7"/></svg></a></nav>
+<nav aria-label="Learning path navigation" class="reader-toolbar"><span class="reader-toolbar__heading">Learning path</span><a href="reproducible-project-structure.html" rel="prev" class="reader-toolbar__previous"><span class="reader-toolbar__direction"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5m0 0 7 7m-7-7 7-7"/></svg></span><span class="reader-toolbar__copy"><small>Previous prerequisite</small><strong>Reproducible Project Structure</strong></span></a><a data-catalogue-return="" href="../tutorials.html" class="reader-toolbar__library"><span class="reader-toolbar__library-mark" aria-hidden="true"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="6" height="6" rx="1.3"/><rect x="14" y="4" width="6" height="6" rx="1.3"/><rect x="4" y="14" width="6" height="6" rx="1.3"/><rect x="14" y="14" width="6" height="6" rx="1.3"/></svg></span><span><small>Browse</small><strong>All tutorials</strong></span></a><a href="reproducible-workflows-snakemake-nextflow.html" rel="next" class="reader-toolbar__next"><span class="reader-toolbar__copy"><small>Suggested next</small><strong>Reproducible bioinformatics workflows with Snakemake and Nextflow</strong></span><span class="reader-toolbar__direction"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14m0 0-7-7m7 7-7 7"/></svg></span></a></nav>
 <article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--walkthrough">
 <p class="lesson-lead">Build a small local repository, record a meaningful change, and inspect what Git has captured before deciding whether it is safe to share. The examples use a deliberately data-free project; they do not process sequencing reads or establish that an analysis is scientifically valid.</p>
 <section class="lesson-summary tutorial-learning-contract" data-tutorial-format="hands-on-lab" aria-label="Learning format">
-<p><strong>Format: Hands-on lab.</strong> Beginners with a terminal, Git, and Python 3 will build and inspect a local teaching repository, then run a tiny synthetic TSV parser check. The commands create the inputs; a GitHub account and remote are optional.</p>
+<p><strong>Format: Hands-on lab.</strong> Beginners with a terminal, Git, and R will build and inspect a local teaching repository, then run a tiny synthetic TSV parser check. The commands create the inputs; a GitHub account and remote are optional.</p>
 </section>
 <h2>Before you start</h2>
-<p>You need a terminal, Git, and Python 3 for the later script and provenance sections. Check that Git and Python are available; the pip check confirms the Python package manager if you choose the optional package inventory step:</p>
+<p>You need a terminal, Git, and R for the main script and provenance sections. Python 3 is only needed if you choose the alternative parser. Check the main tools first:</p>
 <pre><code>git --version
-python3 --version
-python3 -m pip --version</code></pre>
-<p>If Python is missing, install Python 3 using your operating system's package manager or the official <a href="https://www.python.org/downloads/">Python downloads and installation guidance</a>, then open a new terminal and repeat the checks. No third-party Python packages are needed for the example script.</p>
+Rscript --version</code></pre>
+<p>If R is missing, follow the <a href="https://cran.r-project.org/">official CRAN installation guidance</a> for your operating system, then open a new terminal and repeat the checks. The main parser uses base R, with no third-party R packages. The optional Python parser uses only the Python standard library.</p>
 <p>A GitHub account is optional until you choose to create a remote repository. Work first in a project that contains no patient-level information, credentials, or restricted data. Git records text changes well, but ordinary Git history is a poor home for large sequencing files.</p>
 <h2>Start a local repository</h2>
 <p>Use a dedicated practice path. The preflight below stops rather than reusing an existing directory, so it will not silently overwrite prior work. If it already exists, choose another unused name before continuing:</p>
@@ -213,6 +212,9 @@ data/raw/
 *.pyc
 __pycache__/
 .ipynb_checkpoints/
+.Rhistory
+.RData
+.Rproj.user/
 .env
 .env.*
 .venv/
@@ -247,6 +249,31 @@ git log --oneline --decorate -3</code></pre>
 <p>After the merge, the change is part of <code>main</code> and remains visible in history. If Git reports a conflict, stop and inspect the marked file before continuing; do not discard edits you need. Branching helps organize changes, while review and testing still determine whether they are ready to use.</p>
 <h2>Add a small script with an explicit input contract</h2>
 <p>This example reads a tab-separated file with headers named <code>sample</code> and <code>reads</code>. It is a teaching script for checking repository structure; its printed values are whatever the supplied file contains, not an assessment of sequencing quality.</p>
+<h3 id="git-parser-r-route">R: main TSV parser</h3>
+<p>Save the following as <code>scripts/qc_summary.R</code> after creating <code>scripts/</code> and <code>results/</code> with <code>mkdir -p scripts results</code>. It reads values as text so identifiers and printed counts are not silently reformatted.</p>
+<pre id="git-tsv-parser-r"><code class="language-r">args &lt;- commandArgs(trailingOnly = TRUE)
+if (length(args) != 1L) stop(&quot;Usage: Rscript scripts/qc_summary.R samples.tsv&quot;, call. = FALSE)
+frame &lt;- read.delim(args[[1]], colClasses = &quot;character&quot;, check.names = FALSE,
+                    stringsAsFactors = FALSE, quote = &quot;&quot;, comment.char = &quot;&quot;)
+if (!all(c(&quot;sample&quot;, &quot;reads&quot;) %in% names(frame))) {
+  stop(&quot;Input must have &#x27;sample&#x27; and &#x27;reads&#x27; header columns&quot;, call. = FALSE)
+}
+if (nrow(frame)) cat(paste(frame$sample, frame$reads), sep = &quot;\n&quot;)</code></pre>
+<pre id="git-tsv-parser-r-check"><code class="language-bash">git add scripts/qc_summary.R
+git diff --cached
+git commit -m &quot;Add R TSV summary example&quot;
+printf &#x27;sample\treads\nsynthetic_A\t1200\n&#x27; &gt; samples.tsv
+Rscript --vanilla scripts/qc_summary.R samples.tsv
+# Expected: synthetic_A 1200
+# Deliberate negative test, only on this disposable teaching fixture:
+printf &#x27;name\treads\nsynthetic_A\t1200\n&#x27; &gt; samples.tsv
+Rscript --vanilla scripts/qc_summary.R samples.tsv
+# Expected nonzero exit and the missing-header message.
+# Restore the valid fixture before continuing.
+printf &#x27;sample\treads\nsynthetic_A\t1200\n&#x27; &gt; samples.tsv</code></pre>
+<p>The successful run should print <code>synthetic_A 1200</code>. The negative test must report <code>Input must have 'sample' and 'reads' header columns</code> and exit nonzero. These checks test a parser contract, not sequencing quality.</p>
+<h3 id="git-parser-python-route">Python alternative: the same TSV parser</h3>
+<p>Use this route only if you choose Python 3. Run <code>python3 --version</code> first; no third-party packages are needed. Its input and expected successful output are the same as the R route.</p>
 <pre><code>mkdir -p scripts results
 cat &gt; scripts/qc_summary.py &lt;&lt; 'EOF'
 #!/usr/bin/env python3
@@ -288,11 +315,11 @@ python3 scripts/qc_summary.py samples.tsv</code></pre>
 <h2>Record provenance without overstating reproducibility</h2>
 <p>Capture the code snapshot used for an analysis after committing the analysis code. The first command writes the current short commit ID; subsequent commands record selected environment details. Because adding these records creates another commit, the saved ID names the code state immediately before the provenance files were committed.</p>
 <pre><code>git rev-parse --short HEAD &gt; COMMIT_HASH.txt
-python3 --version &gt; ENV_INFO.txt
-pip3 freeze &gt; requirements.txt
-git add COMMIT_HASH.txt ENV_INFO.txt requirements.txt
-git commit -m "Record analysis code revision and Python packages"</code></pre>
-<p><code>pip freeze</code> describes installed Python distributions in the active environment. It does not capture R or Bioconductor packages, operating-system libraries, reference genomes, annotation versions, or external databases. Record those separately when they affect the workflow; use a project-appropriate lockfile or container and test the setup on the intended platform.</p>
+Rscript --version &gt; ENV_INFO.txt 2&gt;&amp;1
+Rscript --vanilla -e 'sessionInfo()' &gt;&gt; ENV_INFO.txt 2&gt;&amp;1
+git add COMMIT_HASH.txt ENV_INFO.txt
+git commit -m "Record analysis code revision and R session"</code></pre>
+<p><code>sessionInfo()</code> records the R session and loaded packages, not every dependency, reference genome, annotation release, or external database. Use a reviewed project lockfile such as <code>renv.lock</code> for the R package environment and record external inputs separately. If you choose the Python alternative, record its interpreter and package inventory as additional provenance; Python is not required for the R route.</p>
 <h2>Choose how to handle larger files</h2>
 <p>Keep raw reads and restricted inputs in approved institutional storage. A <code>.gitignore</code> rule only affects untracked paths and does not provide storage, access control, or backup.</p>
 <ul>
@@ -342,13 +369,14 @@ git push -u origin main</code></pre>
 </ul>
 <aside aria-labelledby="tutorial-feedback-title" class="lesson-feedback" id="tutorial-feedback"><h2 id="tutorial-feedback-title">Help improve this tutorial</h2><p>Found an error, a broken link, or a step that needs a clearer explanation? Please <a href="../contact.html">contact me</a>. Your feedback helps me keep this resource accurate and useful.</p></aside></article>
 <nav aria-label="Learning path continuation" class="reader-sequence" id="reader-course-navigation">
-<div class="reader-sequence-heading"><h2>Keep exploring</h2>
+<div class="reader-sequence-heading"><p class="reader-sequence-kicker">Continue learning</p><h2>Keep exploring</h2>
 <p class="reader-sequence-position"><span class="reader-sequence-route-label">Learning route</span><strong>Reproducible computing · version control</strong></p></div>
 <div class="reader-sequence-grid reader-sequence-grid--single">
-<a href="reproducible-workflows-snakemake-nextflow.html" rel="next" class="reader-path-card reader-path-card--suggested"><span class="reader-path-card__copy"><span class="reader-path-card__eyebrow">Suggested next step</span><strong class="reader-path-card__title">Reproducible bioinformatics workflows with Snakemake and Nextflow</strong><span class="reader-path-card__reason">If your analysis has repeatable steps, explore workflow automation.</span></span><span class="reader-path-card__arrow"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14m0 0-7-7m7 7-7 7"/></svg></span></a>
-</div><div class="reader-sequence-utilities">
 <a href="reproducible-project-structure.html" rel="prev" class="reader-path-card reader-path-card--previous"><span class="reader-path-card__copy"><span class="reader-path-card__eyebrow">Previous prerequisite</span><strong class="reader-path-card__title">Reproducible Project Structure</strong></span><span class="reader-path-card__arrow"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5m0 0 7 7m-7-7 7-7"/></svg></span></a>
-<a data-catalogue-return="" href="../tutorials.html" class="reader-path-card reader-path-card--library"><span class="reader-path-card__copy"><span class="reader-path-card__eyebrow">Browse the collection</span><strong class="reader-path-card__title">All tutorials</strong></span><span class="reader-path-card__arrow" aria-hidden="true">▤</span></a>
+<div class="reader-sequence-choices">
+<a href="reproducible-workflows-snakemake-nextflow.html" rel="next" class="reader-path-card reader-path-card--suggested"><span class="reader-path-card__copy"><span class="reader-path-card__eyebrow">Suggested next step</span><strong class="reader-path-card__title">Reproducible bioinformatics workflows with Snakemake and Nextflow</strong><span class="reader-path-card__reason">If your analysis has repeatable steps, explore workflow automation.</span></span><span class="reader-path-card__arrow"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14m0 0-7-7m7 7-7 7"/></svg></span></a>
+</div></div><div class="reader-sequence-utilities">
+<a data-catalogue-return="" href="../tutorials.html" class="reader-path-card reader-path-card--library"><span class="reader-path-card__copy"><span class="reader-path-card__eyebrow">Browse the collection</span><strong class="reader-path-card__title">All tutorials</strong></span><span class="reader-path-card__arrow" aria-hidden="true"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="6" height="6" rx="1.3"/><rect x="14" y="4" width="6" height="6" rx="1.3"/><rect x="4" y="14" width="6" height="6" rx="1.3"/><rect x="14" y="14" width="6" height="6" rx="1.3"/></svg></span></a>
 </div><div class="reader-sequence-footer"><p class="reader-sequence-note">Suggested links are not a completion tracker or a required linear course.</p></div></nav>
 </div></div></div>
 </div>
@@ -419,7 +447,7 @@ git push -u origin main</code></pre>
 <!-- Marked.js for markdown rendering -->
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <!-- Custom JS - loads tutorials from manifest -->
-<script src="../script.js?v=20261024-reader-ui-v3"></script>
+<script src="../script.js?v=20261025-r-first-v1"></script>
 <script id="navigation-accessibility">
 (function () {
   const legalButton = document.getElementById("legal-menu-button");
@@ -468,10 +496,10 @@ git push -u origin main</code></pre>
 })();
 </script>
 <script src="../assets/vendor/prism/prism-1.29.0.js"></script>
-<script src="../tutorial-code-data.js?v=20261024-reader-ui-v3"></script>
-<script src="../code-tabs.js?v=20261024-reader-ui-v3"></script>
-<script src="../copy-code.js?v=20261024-reader-ui-v3"></script>
-<script src="../subscribe-fab.js?v=20261024-reader-ui-v3"></script>
+<script src="../tutorial-code-data.js?v=20261025-r-first-v1"></script>
+<script src="../code-tabs.js?v=20261025-r-first-v1"></script>
+<script src="../copy-code.js?v=20261025-r-first-v1"></script>
+<script src="../subscribe-fab.js?v=20261025-r-first-v1"></script>
 <!-- Cookie Consent Banner -->
 <div class="fixed bottom-0 inset-x-0 z-[9999] transition-transform duration-500" id="cookie-consent-banner" style="font-family:'Inter',system-ui,sans-serif;">
 <div class="mx-auto max-w-4xl px-4 pb-4 sm:px-6">

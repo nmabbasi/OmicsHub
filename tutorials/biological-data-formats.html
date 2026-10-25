@@ -73,7 +73,7 @@ gtag('consent', 'default', {
     }
   },
   "datePublished": "2026-08-19",
-  "dateModified": "2026-10-21",
+  "dateModified": "2026-10-25",
   "url": "https://theomicshub.com/tutorials/biological-data-formats.html",
   "name": "Biological Data Formats: A Practical Field Guide",
   "isPartOf": {
@@ -82,8 +82,8 @@ gtag('consent', 'default', {
     "url": "https://theomicshub.com/"
   },
   "inLanguage": "en"
-}</script><link href="../tutorial-library.css" rel="stylesheet"/><link href="../tutorial-reader.css?v=20261024-reader-ui-v3" rel="stylesheet"/>
-<link href="../tutorial-navigation.css?v=20261025-reader-colours-v1" rel="stylesheet"/><link href="../back-to-top.css?v=20261024-reader-ui-v3" rel="stylesheet"/>
+}</script><link href="../tutorial-library.css" rel="stylesheet"/><link href="../tutorial-reader.css?v=20261025-r-first-v1" rel="stylesheet"/>
+<link href="../tutorial-navigation.css?v=20261025-learning-navigation-v2" rel="stylesheet"/><link href="../back-to-top.css?v=20261025-r-first-v1" rel="stylesheet"/>
 </head>
 <body class="bg-white text-gray-900">
 <script>
@@ -169,7 +169,7 @@ function toggleMobileMenu() {
 <div class="mb-12 rounded-2xl overflow-hidden shadow-lg border border-gray-100">
 <img alt="Biological Data Formats" class="w-full aspect-video object-cover" decoding="async" loading="eager" src="../images/biological-data-formats-workstation.webp" width="1024" height="1024"/>
 </div>
-<nav aria-label="Learning path navigation" class="reader-toolbar"><a href="computer-data-fundamentals.html" rel="prev" class="reader-toolbar__previous"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5m0 0 7 7m-7-7 7-7"/></svg><span class="reader-toolbar__copy"><small>Previous prerequisite</small><strong>Computer and Data Fundamentals for Biologists</strong></span></a><a data-catalogue-return="" href="../tutorials.html" class="reader-toolbar__library"><span class="reader-toolbar__library-mark" aria-hidden="true">▤</span><span><small>Browse</small><strong>All tutorials</strong></span></a><a href="../start-here.html#sh-foundation" rel="next" class="reader-toolbar__next"><span class="reader-toolbar__copy"><small>Suggested next</small><strong>Return to foundations</strong></span><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14m0 0-7-7m7 7-7 7"/></svg></a></nav>
+<nav aria-label="Learning path navigation" class="reader-toolbar"><span class="reader-toolbar__heading">Learning path</span><a href="computer-data-fundamentals.html" rel="prev" class="reader-toolbar__previous"><span class="reader-toolbar__direction"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5m0 0 7 7m-7-7 7-7"/></svg></span><span class="reader-toolbar__copy"><small>Previous prerequisite</small><strong>Computer and Data Fundamentals for Biologists</strong></span></a><a data-catalogue-return="" href="../tutorials.html" class="reader-toolbar__library"><span class="reader-toolbar__library-mark" aria-hidden="true"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="6" height="6" rx="1.3"/><rect x="14" y="4" width="6" height="6" rx="1.3"/><rect x="4" y="14" width="6" height="6" rx="1.3"/><rect x="14" y="14" width="6" height="6" rx="1.3"/></svg></span><span><small>Browse</small><strong>All tutorials</strong></span></a><a href="../start-here.html#sh-foundation" rel="next" class="reader-toolbar__next"><span class="reader-toolbar__copy"><small>Suggested next</small><strong>Return to foundations</strong></span><span class="reader-toolbar__direction"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14m0 0-7-7m7 7-7 7"/></svg></span></a></nav>
 <article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--reference"><p class="lesson-lead">Before a pipeline reads a file, check what it represents, how records are encoded, and which reference or sample metadata it assumes. These inspections can catch format mismatches early; they cannot establish biological validity.</p>
 <section class="lesson-summary tutorial-learning-contract" data-tutorial-format="reference" aria-label="Learning format">
 <p><strong>Format: Reference.</strong> For learners who can run basic shell commands and have their own sequencing or expression files, this guide demonstrates read-only structural checks and how to interpret their limits; no input dataset is supplied.</p>
@@ -215,7 +215,41 @@ zcat reads_R1.fastq.gz | sed -n '1,12p'
 # Optional summary, if seqkit is installed
 seqkit stats reads_R1.fastq.gz</code></pre>
 <p>In the conventional FASTQ layout, each record has a header beginning with <code>@</code>, a sequence, a <code>+</code> separator, and a quality string of matching length. A nonzero line-count remainder is a warning, not a complete parser-level validation. This quick check assumes unwrapped four-line records; malformed wrapping can invalidate that assumption. <code>pipefail</code> makes a decompression failure visible through the pipeline status in common shells such as Bash.</p>
-<p>For paired-end data, compare record counts and read-name identifiers in R1 and R2. Equal counts alone do not show that mates are in the same order or correctly paired. The following Bash/Python check reads both gzip-compressed files in lockstep, verifies four-line records and equal sequence/quality lengths, and compares the first header token after removing a terminal <code>/1</code> or <code>/2</code>. It assumes the remaining token is identical between mates; if your provider uses a different naming convention (for example, mate labels in a second header field), inspect its documentation and adapt the normalization rather than accepting a mismatch blindly.</p>
+<p>For paired-end data, compare record counts and read-name identifiers in R1 and R2. Equal counts alone do not show that mates are in the same order or correctly paired. The R-first check below reads both gzip-compressed files in lockstep, verifies four-line records and equal sequence/quality lengths, and compares the first header token after removing a terminal <code>/1</code> or <code>/2</code>. It assumes the remaining token is identical between mates; if your provider uses a different naming convention (for example, mate labels in a second header field), inspect its documentation and adapt the normalization rather than accepting a mismatch blindly.</p>
+<h3 id="fastq-mates-r-route">R: compare paired read identifiers</h3>
+<p>Save this base R script as <code>check_mates.R</code> and run <code>Rscript --vanilla check_mates.R reads_R1.fastq.gz reads_R2.fastq.gz</code>. It streams one four-line record at a time rather than loading both files into memory.</p>
+<pre id="fastq-mates-r"><code class="language-r">args &lt;- commandArgs(trailingOnly = TRUE)
+if (length(args) != 2L) stop(&quot;Usage: Rscript check_mates.R R1.fastq.gz R2.fastq.gz&quot;, call. = FALSE)
+check_mates &lt;- function(paths) {
+  handles &lt;- lapply(paths, gzfile, open = &quot;rt&quot;)
+  on.exit(lapply(handles, close), add = TRUE)
+  next_id &lt;- function(handle, path) {
+    block &lt;- readLines(handle, n = 4L, warn = FALSE)
+    if (!length(block)) return(NULL)
+    if (length(block) != 4L) stop(path, &quot;: incomplete four-line record&quot;, call. = FALSE)
+    if (!startsWith(block[[1]], &quot;@&quot;) || !startsWith(block[[3]], &quot;+&quot;) ||
+        nchar(block[[2]], type = &quot;bytes&quot;) != nchar(block[[4]], type = &quot;bytes&quot;)) {
+      stop(path, &quot;: malformed record near &quot;, block[[1]], call. = FALSE)
+    }
+    token &lt;- sub(&quot;[[:space:]].*$&quot;, &quot;&quot;, substring(block[[1]], 2L))
+    if (!nzchar(token)) stop(path, &quot;: missing read identifier&quot;, call. = FALSE)
+    sub(&quot;/[12]$&quot;, &quot;&quot;, token)
+  }
+  n &lt;- 0L
+  repeat {
+    a &lt;- next_id(handles[[1]], paths[[1]])
+    b &lt;- next_id(handles[[2]], paths[[2]])
+    if (is.null(a) &amp;&amp; is.null(b)) break
+    n &lt;- n + 1L
+    if (is.null(a) || is.null(b)) stop(&quot;FAIL: different record counts at record &quot;, n, call. = FALSE)
+    if (!identical(a, b)) stop(&quot;FAIL: mate identifiers/order differ at record &quot;, n, call. = FALSE)
+  }
+  if (n) cat(sprintf(&quot;PASS: %d paired records; normalized identifiers match in order\n&quot;, n))
+  else cat(&quot;PASS: both files are empty\n&quot;)
+}
+check_mates(args)</code></pre>
+<h3 id="fastq-mates-python-route">Python alternative: the same paired-record check</h3>
+<p>This standard-library route requires Python 3.9 or later for <code>removesuffix</code>. It applies the same first-token and terminal mate-suffix convention to ordinary read names.</p>
 <pre><code>python3 - reads_R1.fastq.gz reads_R2.fastq.gz &lt;&lt;'PY'
 import gzip, itertools, sys
 
@@ -240,7 +274,7 @@ for n, (a, b) in enumerate(itertools.zip_longest(records(sys.argv[1]), records(s
         raise SystemExit(f"FAIL: mate identifiers/order differ at record {n}: {a!r} vs {b!r}")
 print(f"PASS: {n} paired records; normalized identifiers match in order" if n else "PASS: both files are empty")
 PY</code></pre>
-<p>A <code>PASS</code> establishes only that the parsed records have matching normalized identifiers in order under the stated convention; it does not establish sample identity or biological validity. Any malformed record, count difference, or identifier mismatch stops the check with the first location to investigate. This small Python check assumes readable gzip inputs; adapt the opener for uncompressed FASTQ. Do not treat quality scores as comparable across files until the encoding and instrument/pipeline provenance are known.</p>
+<p>A <code>PASS</code> establishes only that the parsed records have matching normalized identifiers in order under the stated convention; it does not establish sample identity or biological validity. Any malformed record, count difference, or identifier mismatch stops the check with the first location to investigate. Both small checks assume readable gzip inputs and ordinary first-token identifiers; adapt the opener for uncompressed FASTQ. They are not full FASTQ specification or compression-integrity validators. Do not treat quality scores as comparable across files until the encoding and instrument/pipeline provenance are known.</p>
 <h2>Check alignments and variants against their references</h2>
 <h3>SAM/BAM/CRAM: headers and file integrity</h3>
 <pre><code># Header metadata, including @SQ sequence dictionary and @RG read groups
@@ -290,13 +324,14 @@ awk -F '\t' 'NR==1 {print; print "Columns:", NF}' counts.tsv</code></pre>
 <li><a href="https://academic.oup.com/bioinformatics/article/25/15/2078/225615">Cock et al. (2009), FASTQ format description</a>; <a href="https://github.com/shenwei356/seqkit">SeqKit documentation</a></li>
 </ul>
 <nav aria-label="Learning path continuation" class="reader-sequence" id="reader-course-navigation">
-<div class="reader-sequence-heading"><h2>Keep exploring</h2>
+<div class="reader-sequence-heading"><p class="reader-sequence-kicker">Continue learning</p><h2>Keep exploring</h2>
 <p class="reader-sequence-position"><span class="reader-sequence-route-label">Learning route</span><strong>Foundations · optional data-format reference</strong></p></div>
 <div class="reader-sequence-grid reader-sequence-grid--single">
-<a href="../start-here.html#sh-foundation" rel="next" class="reader-path-card reader-path-card--suggested"><span class="reader-path-card__copy"><span class="reader-path-card__eyebrow">Suggested next step</span><strong class="reader-path-card__title">Return to foundations</strong><span class="reader-path-card__reason">Use this as a reference when a file format is unfamiliar; it is not a required stop before the shell lessons.</span></span><span class="reader-path-card__arrow"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14m0 0-7-7m7 7-7 7"/></svg></span></a>
-</div><div class="reader-sequence-utilities">
 <a href="computer-data-fundamentals.html" rel="prev" class="reader-path-card reader-path-card--previous"><span class="reader-path-card__copy"><span class="reader-path-card__eyebrow">Previous prerequisite</span><strong class="reader-path-card__title">Computer and Data Fundamentals for Biologists</strong></span><span class="reader-path-card__arrow"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5m0 0 7 7m-7-7 7-7"/></svg></span></a>
-<a data-catalogue-return="" href="../tutorials.html" class="reader-path-card reader-path-card--library"><span class="reader-path-card__copy"><span class="reader-path-card__eyebrow">Browse the collection</span><strong class="reader-path-card__title">All tutorials</strong></span><span class="reader-path-card__arrow" aria-hidden="true">▤</span></a>
+<div class="reader-sequence-choices">
+<a href="../start-here.html#sh-foundation" rel="next" class="reader-path-card reader-path-card--suggested"><span class="reader-path-card__copy"><span class="reader-path-card__eyebrow">Suggested next step</span><strong class="reader-path-card__title">Return to foundations</strong><span class="reader-path-card__reason">Use this as a reference when a file format is unfamiliar; it is not a required stop before the shell lessons.</span></span><span class="reader-path-card__arrow"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14m0 0-7-7m7 7-7 7"/></svg></span></a>
+</div></div><div class="reader-sequence-utilities">
+<a data-catalogue-return="" href="../tutorials.html" class="reader-path-card reader-path-card--library"><span class="reader-path-card__copy"><span class="reader-path-card__eyebrow">Browse the collection</span><strong class="reader-path-card__title">All tutorials</strong></span><span class="reader-path-card__arrow" aria-hidden="true"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="6" height="6" rx="1.3"/><rect x="14" y="4" width="6" height="6" rx="1.3"/><rect x="4" y="14" width="6" height="6" rx="1.3"/><rect x="14" y="14" width="6" height="6" rx="1.3"/></svg></span></a>
 </div><div class="reader-sequence-footer"><p class="reader-sequence-note">Suggested links are not a completion tracker or a required linear course.</p></div></nav>
 <aside aria-labelledby="tutorial-feedback-title" class="lesson-feedback" id="tutorial-feedback"><h2 id="tutorial-feedback-title">Help improve this tutorial</h2><p>Found an error, a broken link, or a step that needs a clearer explanation? Please <a href="../contact.html">contact me</a>. Your feedback helps me keep this resource accurate and useful.</p></aside></article></div></div></div>
 </div>
@@ -367,7 +402,7 @@ awk -F '\t' 'NR==1 {print; print "Columns:", NF}' counts.tsv</code></pre>
 <!-- Marked.js for markdown rendering -->
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <!-- Custom JS - loads tutorials from manifest -->
-<script src="../script.js?v=20261024-reader-ui-v3"></script>
+<script src="../script.js?v=20261025-r-first-v1"></script>
 <script id="navigation-accessibility">
 (function () {
   const legalButton = document.getElementById("legal-menu-button");
@@ -416,10 +451,10 @@ awk -F '\t' 'NR==1 {print; print "Columns:", NF}' counts.tsv</code></pre>
 })();
 </script>
 <script src="../assets/vendor/prism/prism-1.29.0.js"></script>
-<script src="../tutorial-code-data.js?v=20261024-reader-ui-v3"></script>
-<script src="../code-tabs.js?v=20261024-reader-ui-v3"></script>
-<script src="../copy-code.js?v=20261024-reader-ui-v3"></script>
-<script src="../subscribe-fab.js?v=20261024-reader-ui-v3"></script>
+<script src="../tutorial-code-data.js?v=20261025-r-first-v1"></script>
+<script src="../code-tabs.js?v=20261025-r-first-v1"></script>
+<script src="../copy-code.js?v=20261025-r-first-v1"></script>
+<script src="../subscribe-fab.js?v=20261025-r-first-v1"></script>
 <!-- Cookie Consent Banner -->
 <div class="fixed bottom-0 inset-x-0 z-[9999] transition-transform duration-500" id="cookie-consent-banner" style="font-family:'Inter',system-ui,sans-serif;">
 <div class="mx-auto max-w-4xl px-4 pb-4 sm:px-6">

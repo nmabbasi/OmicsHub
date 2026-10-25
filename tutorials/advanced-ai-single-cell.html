@@ -71,10 +71,10 @@ gtag('consent', 'default', {
     }
   },
   "datePublished": "2026-08-25",
-  "dateModified": "2026-10-24"
+  "dateModified": "2026-10-25"
 }</script>
-<link href="../tutorial-library.css" rel="stylesheet"/><link href="../tutorial-reader.css?v=20261024-reader-ui-v3" rel="stylesheet"/>
-<link href="../tutorial-navigation.css?v=20261025-reader-colours-v1" rel="stylesheet"/><link href="../back-to-top.css?v=20261024-reader-ui-v3" rel="stylesheet"/>
+<link href="../tutorial-library.css" rel="stylesheet"/><link href="../tutorial-reader.css?v=20261025-r-first-v1" rel="stylesheet"/>
+<link href="../tutorial-navigation.css?v=20261025-learning-navigation-v2" rel="stylesheet"/><link href="../back-to-top.css?v=20261025-r-first-v1" rel="stylesheet"/>
 </head>
 <body class="bg-white text-gray-900">
 <script>
@@ -178,11 +178,11 @@ Legal
 <div class="mb-12 rounded-2xl overflow-hidden shadow-lg border border-gray-100">
 <img alt="Advanced AI Cell Annotation" class="w-full aspect-video object-cover" decoding="async" loading="eager" src="../images/advanced-ai-cell-annotation.webp" width="1024" height="1024"/>
 </div>
-<nav aria-label="Learning path navigation" class="reader-toolbar"><a href="cell-type-annotation-methods.html" rel="prev" class="reader-toolbar__previous"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5m0 0 7 7m-7-7 7-7"/></svg><span class="reader-toolbar__copy"><small>Previous prerequisite</small><strong>Choosing and Checking Cell-Type Annotation Methods</strong></span></a><a data-catalogue-return="" href="../tutorials.html" class="reader-toolbar__library"><span class="reader-toolbar__library-mark" aria-hidden="true">▤</span><span><small>Browse</small><strong>All tutorials</strong></span></a><a href="#reader-course-navigation" class="reader-toolbar__next"><span class="reader-toolbar__copy"><small>Several directions</small><strong>Choose a next step</strong></span><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14m0 0 7-7m-7 7-7-7"/></svg></a></nav>
+<nav aria-label="Learning path navigation" class="reader-toolbar"><span class="reader-toolbar__heading">Learning path</span><a href="cell-type-annotation-methods.html" rel="prev" class="reader-toolbar__previous"><span class="reader-toolbar__direction"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5m0 0 7 7m-7-7 7-7"/></svg></span><span class="reader-toolbar__copy"><small>Previous prerequisite</small><strong>Choosing and Checking Cell-Type Annotation Methods</strong></span></a><a data-catalogue-return="" href="../tutorials.html" class="reader-toolbar__library"><span class="reader-toolbar__library-mark" aria-hidden="true"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="6" height="6" rx="1.3"/><rect x="14" y="4" width="6" height="6" rx="1.3"/><rect x="4" y="14" width="6" height="6" rx="1.3"/><rect x="14" y="14" width="6" height="6" rx="1.3"/></svg></span><span><small>Browse</small><strong>All tutorials</strong></span></a><a href="#reader-course-navigation" class="reader-toolbar__next"><span class="reader-toolbar__copy"><small>Several directions</small><strong>Choose a next step</strong></span><span class="reader-toolbar__direction"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14m0 0 7-7m-7 7-7-7"/></svg></span></a></nav>
 <article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--walkthrough">
 <p class="lesson-lead">Cell annotation tools assign labels by comparing a query dataset with learned classes, reference profiles, or embedded representations. Treat each assignment as a proposal: its usefulness depends on what the model or reference contains and whether the evidence fits your cells.</p>
 <section class="lesson-summary tutorial-learning-contract" data-tutorial-format="advanced-template" aria-label="Learning format">
-<p><strong>Format: Advanced template.</strong> For readers familiar with Python and AnnData who already have an authorized, human immune-cell <code>.h5ad</code> query with documented raw counts and gene symbols. You will run one CellTypist prediction, save reviewable labels and diagnostics, and inspect reference fit; the input is prepared by you, not supplied here.</p>
+<p><strong>Format: Advanced template.</strong> For readers familiar with single-cell analysis who already have a prepared query and a suitable labeled reference. The primary worked route is reference-based annotation and review in R with SingleR; an optional, distinct CellTypist inference example is Python-only because CellTypist has no R API. Inputs are prepared by you and are not supplied here.</p>
 </section>
 <h2>Choose a method by its input and comparison</h2>
 <p>These methods do not share one interchangeable “AI annotation” interface. CellTypist is a logistic-regression classifier with downloadable or custom models. SingleR transfers labels by comparing query expression with a labeled reference. The published CELLama method converts ranked expressed genes, and optionally metadata, into text for sentence-transformer embeddings; the study evaluates embedding-based cell typing against reference cells. Geneformer and scGPT are separate projects with distinct representations and task workflows. A model's general-purpose or foundation-model label does not establish support for every annotation task.</p>
@@ -192,8 +192,65 @@ Legal
 <tr><th scope="row">CELLama (published method)</th><td>Ranked top-gene text embedded and compared with reference embeddings</td><td>Gene-ranking and sentence construction, metadata included, reference design, and the paper's evaluation scope</td></tr>
 </tbody></table></div>
 <p class="lesson-caption">A shared output label does not make the methods' scores equivalent. Compare each result using its own documented diagnostics.</p>
-<h2>Run and inspect a CellTypist prediction</h2>
-<p>This advanced template expects a reader-prepared <code>my_data.h5ad</code>: AnnData with cells in rows, genes in columns, and an explicitly documented raw-count matrix. Start in a dedicated working directory, create an isolated Python environment, and install the two packages (current releases and dependency resolution may change):</p>
+<h2>Primary R route: annotate against a labeled reference with SingleR</h2>
+<p>This is a reproducible R reference-transfer baseline, not an R implementation of CellTypist and not a foundation-model prediction. Prepare two <code>SingleCellExperiment</code> objects from public or synthetic inputs only: <code>query_sce.rds</code> and <code>reference_sce.rds</code>. Both must contain a <code>logcounts</code> assay with compatible gene identifiers; the reference must have a reviewed <code>cell_type</code> label in <code>colData</code>. This template uses those existing log-normalized assays as supplied. It does not normalize, map gene identifiers, choose labels, or fetch data. Review reference provenance, species, tissue, assay, and label granularity before running.</p>
+<pre id="advanced-singlecell-singler-r"><code># Inputs: query_sce.rds and reference_sce.rds, prepared by the reader
+# Output: singleR_predictions.csv and singleR_scores.csv
+suppressPackageStartupMessages({
+  library(SingleCellExperiment)
+  library(SingleR)
+})
+
+query &lt;- readRDS("query_sce.rds")
+reference &lt;- readRDS("reference_sce.rds")
+if (!inherits(query, "SingleCellExperiment") || !inherits(reference, "SingleCellExperiment")) {
+  stop("Both RDS inputs must contain SingleCellExperiment objects")
+}
+if (!"logcounts" %in% assayNames(query) || !"logcounts" %in% assayNames(reference)) {
+  stop("Both objects must contain the declared logcounts assay")
+}
+if (!"cell_type" %in% colnames(colData(reference))) {
+  stop("Reference needs a reviewed cell_type label column in colData")
+}
+labels &lt;- as.character(colData(reference)$cell_type)
+if (anyNA(labels) || any(!nzchar(labels))) {
+  stop("Reference labels must be present and non-empty")
+}
+shared_genes &lt;- intersect(rownames(query), rownames(reference))
+if (length(shared_genes) &lt; 2L) {
+  stop("Too few exact shared gene identifiers; resolve the feature contract first")
+}
+query &lt;- query[shared_genes, ]
+reference &lt;- reference[shared_genes, ]
+if (anyDuplicated(rownames(query)) || anyDuplicated(rownames(reference))) {
+  stop("Resolve duplicate gene identifiers before annotation")
+}
+if (is.null(colnames(query)) || anyDuplicated(colnames(query))) {
+  stop("Query cell names must be present and unique")
+}
+if (is.null(colnames(reference)) || anyDuplicated(colnames(reference))) {
+  stop("Reference cell names must be present and unique")
+}
+prediction &lt;- SingleR(test = query, ref = reference, labels = labels,
+                     assay.type.test = "logcounts", assay.type.ref = "logcounts",
+                     prune = TRUE)
+results &lt;- data.frame(
+  cell_id = rownames(prediction),
+  label = prediction$labels,
+  pruned_label = prediction$pruned.labels,
+  delta_next = prediction$delta.next,
+  stringsAsFactors = FALSE
+)
+write.csv(results, "singleR_predictions.csv", row.names = FALSE)
+write.csv(as.data.frame(prediction$scores), "singleR_scores.csv", row.names = TRUE)
+message("Annotated ", nrow(results), " query cells using ", length(shared_genes),
+        " exact shared genes. Review labels, score separation, pruning, and reference fit.")
+</code></pre>
+<p>Run only after confirming the input contracts and package versions for your environment. A pruned/unassigned label is a useful uncertainty signal, not a failure to be filled automatically. Inspect score patterns, marker evidence, and reference fit; a technically successful transfer is not independent validation and cannot recover cell states absent from the reference.</p>
+<h2>Optional Python-only method: run and inspect CellTypist</h2>
+<p>CellTypist inference in this section is Python-only; it is a distinct classifier route, not a matching implementation of the R SingleR baseline. Do not interpret the two tools' scores as interchangeable. CellTypist’s input and model compatibility requirements below apply only to this optional method.</p>
+
+<p>This optional Python template expects a reader-prepared <code>my_data.h5ad</code> made from public or synthetic data only: AnnData with cells in rows, genes in columns, and an explicitly documented raw-count matrix. Start in a dedicated working directory, create an isolated Python environment, and install the two packages (current releases and dependency resolution may change):</p>
 <pre><code class="language-bash">mkdir -p celltypist-review
 cd celltypist-review
 python3 -m venv .venv
@@ -425,7 +482,7 @@ print("Saved manifest and cell-aligned diagnostics for", adata.n_obs, "cells")
 <li><strong>Reference mismatch:</strong> a human immune model is not suitable simply because the query contains immune cells; species, tissue, disease and assay context affect transfer.</li>
 <li><strong>Strong scores with contradictory markers:</strong> investigate preprocessing, doublets, mixed clusters and classes missing from the reference. A classifier still assigns the closest available class in best-match mode.</li>
 <li><strong>Majority-vote labels erase heterogeneity:</strong> compare refined labels with per-cell predictions and the clustering used for refinement. The result depends on over-clustering choices.</li>
-<li><strong>External processing of sensitive data:</strong> keep patient-linked counts, metadata and cell identifiers within approved systems; do not send them to a third-party service without institutional authorization.</li>
+<li><strong>Input privacy:</strong> use public or synthetic inputs for the examples in this lesson; do not upload patient-linked counts, metadata or cell identifiers to external tools.</li>
 </ul>
 <h2>References and version checks</h2>
 <p>The prediction and diagnostic stages completed on 2,638 cells prepared from the official public 10x PBMC 3k counts, using CellTypist 1.7.1, Scanpy 1.12.4 and the official <code>Immune_All_Low.pkl</code> version-2 model on Ubuntu. The query matched 4,177 of the model's 6,639 features; cell-aligned review, probability and decision tables, an annotated H5AD and a completed run manifest were written. This checks software execution, not independent biological label accuracy. The synthetic low-overlap refusal test is retained. The model is loaded by an explicit local path: in CellTypist 1.7.1, a basename can trigger a catalog lookup and download other models even when the named file is present locally. Native Windows/macOS model inference and other datasets remain untested. Record installed versions and recheck APIs, model inventory and defaults before use.</p>
@@ -440,14 +497,15 @@ print("Saved manifest and cell-aligned diagnostics for", adata.n_obs, "cells")
 </ul>
 <aside aria-labelledby="tutorial-feedback-title" class="lesson-feedback" id="tutorial-feedback"><h2 id="tutorial-feedback-title">Help improve this tutorial</h2><p>Found an error, a broken link, or a step that needs a clearer explanation? Please <a href="../contact.html">contact me</a>. Your feedback helps me keep this resource accurate and useful.</p></aside></article>
 <nav aria-label="Learning path continuation" class="reader-sequence" id="reader-course-navigation">
-<div class="reader-sequence-heading"><h2>Keep exploring</h2>
+<div class="reader-sequence-heading"><p class="reader-sequence-kicker">Continue learning</p><h2>Keep exploring</h2>
 <p class="reader-sequence-position"><span class="reader-sequence-route-label">Learning route</span><strong>Single-cell · advanced annotation</strong></p></div>
 <div class="reader-sequence-grid">
+<a href="cell-type-annotation-methods.html" rel="prev" class="reader-path-card reader-path-card--previous"><span class="reader-path-card__copy"><span class="reader-path-card__eyebrow">Previous prerequisite</span><strong class="reader-path-card__title">Choosing and Checking Cell-Type Annotation Methods</strong></span><span class="reader-path-card__arrow"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5m0 0 7 7m-7-7 7-7"/></svg></span></a>
+<div class="reader-sequence-choices">
 <a href="single-cell-foundation-models.html" rel="next" class="reader-path-card reader-path-card--suggested"><span class="reader-path-card__copy"><span class="reader-path-card__eyebrow">Suggested next step</span><strong class="reader-path-card__title">Evaluating External scGPT &amp; Geneformer Embeddings</strong><span class="reader-path-card__reason">Optional advanced evaluation: inspect external scGPT or Geneformer embeddings and leakage controls. Pretrained embeddings are not a prerequisite for ordinary prompting or marker review.</span></span><span class="reader-path-card__arrow"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14m0 0-7-7m7 7-7 7"/></svg></span></a>
 <a href="../start-here.html#sh-single-cell" rel="next" class="reader-path-card reader-path-card--suggested"><span class="reader-path-card__copy"><span class="reader-path-card__eyebrow">Suggested next step</span><strong class="reader-path-card__title">Return to single-cell choices</strong><span class="reader-path-card__reason">Treat model-assisted annotation as an optional method to evaluate, not a required stage.</span></span><span class="reader-path-card__arrow"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14m0 0-7-7m7 7-7 7"/></svg></span></a>
-</div><div class="reader-sequence-utilities">
-<a href="cell-type-annotation-methods.html" rel="prev" class="reader-path-card reader-path-card--previous"><span class="reader-path-card__copy"><span class="reader-path-card__eyebrow">Previous prerequisite</span><strong class="reader-path-card__title">Choosing and Checking Cell-Type Annotation Methods</strong></span><span class="reader-path-card__arrow"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5m0 0 7 7m-7-7 7-7"/></svg></span></a>
-<a data-catalogue-return="" href="../tutorials.html" class="reader-path-card reader-path-card--library"><span class="reader-path-card__copy"><span class="reader-path-card__eyebrow">Browse the collection</span><strong class="reader-path-card__title">All tutorials</strong></span><span class="reader-path-card__arrow" aria-hidden="true">▤</span></a>
+</div></div><div class="reader-sequence-utilities">
+<a data-catalogue-return="" href="../tutorials.html" class="reader-path-card reader-path-card--library"><span class="reader-path-card__copy"><span class="reader-path-card__eyebrow">Browse the collection</span><strong class="reader-path-card__title">All tutorials</strong></span><span class="reader-path-card__arrow" aria-hidden="true"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="6" height="6" rx="1.3"/><rect x="14" y="4" width="6" height="6" rx="1.3"/><rect x="4" y="14" width="6" height="6" rx="1.3"/><rect x="14" y="14" width="6" height="6" rx="1.3"/></svg></span></a>
 </div><div class="reader-sequence-footer"><p class="reader-sequence-note">Suggested links are not a completion tracker or a required linear course.</p></div></nav>
 </div></div></div>
 </div>
@@ -515,7 +573,7 @@ print("Saved manifest and cell-aligned diagnostics for", adata.n_obs, "cells")
 <!-- Marked.js for markdown rendering -->
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <!-- Custom JS - loads tutorials from manifest -->
-<script src="../script.js?v=20261024-reader-ui-v3"></script>
+<script src="../script.js?v=20261025-r-first-v1"></script>
 <script id="navigation-accessibility">
 (function () {
   const legalButton = document.getElementById("legal-menu-button");
@@ -547,10 +605,10 @@ print("Saved manifest and cell-aligned diagnostics for", adata.n_obs, "cells")
 })();
 </script>
 <script src="../assets/vendor/prism/prism-1.29.0.js"></script>
-<script src="../tutorial-code-data.js?v=20261024-reader-ui-v3"></script>
-<script src="../code-tabs.js?v=20261024-reader-ui-v3"></script>
-<script src="../copy-code.js?v=20261024-reader-ui-v3"></script>
-<script src="../subscribe-fab.js?v=20261024-reader-ui-v3"></script>
+<script src="../tutorial-code-data.js?v=20261025-r-first-v1"></script>
+<script src="../code-tabs.js?v=20261025-r-first-v1"></script>
+<script src="../copy-code.js?v=20261025-r-first-v1"></script>
+<script src="../subscribe-fab.js?v=20261025-r-first-v1"></script>
 <!-- Cookie Consent Banner -->
 <div class="fixed bottom-0 inset-x-0 z-[9999] transition-transform duration-500" id="cookie-consent-banner" style="font-family:'Inter',system-ui,sans-serif;">
 <div class="mx-auto max-w-4xl px-4 pb-4 sm:px-6">

@@ -83,6 +83,8 @@ class StartHereJourneyUITests(unittest.TestCase):
         self.assertIn('id="sh-language-choice"', panels[3])
         self.assertIn("tutorials/r-tidyverse-fundamentals.html", panels[3])
         self.assertIn("tutorials/python-fundamentals-bioinformatics.html", panels[3])
+        self.assertIn("Start with R. Python is an optional alternative.", panels[3])
+        self.assertIn("Python (optional)", panels[3])
         self.assertNotIn("conda-mamba-part1.html", "".join(panels))
         self.assertIn("Bash on Linux, macOS, or Windows Subsystem for Linux (WSL)", self.main)
 
@@ -150,15 +152,16 @@ class StartHereJourneyUITests(unittest.TestCase):
         for phrase in (
             "not a required course", "not a bulk RNA-seq tutorial", "replicated single-cell samples",
             "not substitutes for basic QC", "authorized institutional access",
-            "not standardized on one Python or R version", "zero-byte placeholder files are not sequencing data",
+            "not standardized on one R or Python version", "zero-byte placeholder files are not sequencing data",
         ):
             with self.subTest(caution=phrase):
                 self.assertIn(phrase.lower(), text)
         optional = re.search(r'<details\b[^>]*id="sh-optional-tools".*?</details\s*>', self.main, re.S)
         self.assertIsNotNone(optional)
         self.assertIn("tutorials/conda-mamba-part1.html", optional.group())
-        self.assertIn("choose one language", text)
-        self.assertIn("learn one for now", text)
+        language_step = panel(self.main, 4)
+        self.assertIn("Start with R. Python is an optional alternative.", language_step)
+        self.assertIn("Python (optional)", language_step)
         self.assertIn("tutorials/statistics-for-bioinformatics.html", self.main)
         self.assertIn("tutorials/experimental-design-batch-effects.html", self.main)
 

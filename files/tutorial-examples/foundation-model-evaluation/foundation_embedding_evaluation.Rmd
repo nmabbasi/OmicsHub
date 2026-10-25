@@ -1,0 +1,37 @@
+---
+title: "Evaluate supplied cell embeddings"
+output: html_document
+params:
+  embeddings: "synthetic_embeddings.csv"
+  metadata: "synthetic_metadata.csv"
+  k: 1
+---
+
+This report evaluates supplied vectors only. The included coordinates and labels are deliberately synthetic. No scGPT or Geneformer weights are loaded, no inference is performed, and the perfect toy score is not a biological result.
+
+```{r setup, message=FALSE}
+source("evaluate_embeddings.R")
+inputs <- load_embedding_inputs(params$embeddings, params$metadata)
+predictions <- score_embeddings(inputs, params$k)
+metrics <- summarize_predictions(predictions)
+```
+
+## Donor-held-out predictions
+
+The evaluator joins metadata by `cell_id`, checks that donors do not occur in both splits, and calculates squared-Euclidean nearest neighbors. A top-vote fraction is neighbor agreement, not a calibrated probability.
+
+```{r predictions}
+knitr::kable(predictions)
+```
+
+## Descriptive metrics
+
+Accuracy, macro-F1, per-class F1, and test-donor accuracy describe only these supplied labels and coordinates. Choose preprocessing, distance metric, and `k` with reference-only validation before interpreting a held-out evaluation.
+
+```{r metrics}
+knitr::kable(metrics)
+```
+
+## Reproducibility boundary
+
+Record the external model/checkpoint, preprocessing, vocabulary, embedding layer/pooling, organism, and export provenance separately. This script does not establish which model generated an input table or whether a checkpoint saw a held-out donor during pretraining.

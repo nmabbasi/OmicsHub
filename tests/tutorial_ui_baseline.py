@@ -13,6 +13,9 @@ import subprocess
 from start_here_baseline import normalize_start_here
 from home_catalogue_baseline import normalize_home_catalogue
 from reader_text_colour_baseline import READER_TEXT_ASSET_SHA256, restore_reader_text_asset
+from r_first_revision_baseline import (
+    R_FIRST_ASSET_PATHS, normalize_r_first_revision, restore_r_first_asset,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 PRE_UI_COMMIT = '243bc04e5edff51b33bef1b9312a48f6b2ae5751'
@@ -39,7 +42,7 @@ TUTORIAL_UI_SHA256 = {
     "tutorial-reader.css": "3964dee44c4e529e74f8bea476e99813695638c2ccf3bc74cddb55b7d342f0cf",
     "back-to-top.css": "835d1ef5330eacdd3452052d181bb1f0f440cfb0b2bf36be973ba03f53427896"
 }
-TUTORIAL_UI_PATHS = frozenset(TUTORIAL_UI_SHA256)
+TUTORIAL_UI_PATHS = frozenset(TUTORIAL_UI_SHA256) | R_FIRST_ASSET_PATHS
 
 @lru_cache(maxsize=1)
 def page_patches():
@@ -61,6 +64,7 @@ def normalize_tutorial_ui(relative_path, text):
     """
     if not isinstance(text, str):
         raise TypeError('tutorial UI normalization requires decoded text')
+    text = normalize_r_first_revision(relative_path, text)
     text = normalize_home_catalogue(relative_path, text)
     text = normalize_start_here(relative_path, text)
     if not (relative_path.startswith('tutorials/') and relative_path.endswith('.html')):
@@ -79,6 +83,10 @@ def normalize_tutorial_ui(relative_path, text):
 def verify_tutorial_ui_file(relative_path, data):
     """Pin every explicitly authorized new/modified UI file, never whole folders."""
     original_data = data
+    if relative_path in R_FIRST_ASSET_PATHS:
+        data = restore_r_first_asset(relative_path, data)
+        if relative_path not in TUTORIAL_UI_SHA256:
+            return original_data
     from home_catalogue_baseline import HOME_CATALOGUE_ASSET_PATHS, verify_home_catalogue_file
     if relative_path in HOME_CATALOGUE_ASSET_PATHS and relative_path in TUTORIAL_UI_PATHS:
         observed = hashlib.sha256(data).hexdigest()
