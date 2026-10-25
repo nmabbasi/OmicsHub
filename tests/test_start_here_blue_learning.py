@@ -8,7 +8,7 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
 PUBLISHED = "45d660c5f53a0f4d8c2736057e2ab54fe7b8e718"
-CSS_VERSION = "20261025-circular-path-v1"
+CSS_VERSION = "20261025-circular-banner-v2"
 JS_VERSION = "20261025-circular-path-v1"
 FOUNDATION = ("tutorials/command-line-part1.html", "tutorials/computer-data-fundamentals.html")
 LANGUAGE_CHOICES = ("tutorials/r-tidyverse-fundamentals.html", "tutorials/python-fundamentals-bioinformatics.html")

@@ -5,7 +5,7 @@ import re
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
-CSS_VERSION = "20261025-circular-path-v1"
+CSS_VERSION = "20261025-circular-banner-v2"
 JS_VERSION = "20261025-circular-path-v1"
 
 
@@ -71,6 +71,22 @@ class StartHereVisualPolishTests(unittest.TestCase):
         hero_css = rule(self.css, ".sh-hero")
         self.assertRegex(hero_css, r"background(?:-image)?\s*:\s*[^;]*gradient\(")
         self.assertRegex(self.css.lower(), r"#(?:123b5d|19546b|08696d|dff2ff)")
+
+    def test_banner_palette_matches_about_and_contact_without_mobile_override(self):
+        shared = (ROOT / "style.css").read_text(encoding="utf-8")
+        background = lambda body: re.search(r"background\s*:\s*([^;]+)", body).group(1)
+        self.assertEqual(background(rule(self.css, ".sh-hero")),
+                         background(rule(shared, ".page-hero")))
+        for page in ("about.html", "contact.html"):
+            self.assertIn('class="page-hero"', (ROOT / page).read_text(encoding="utf-8"))
+        screen_css, print_css = self.css.split("@media print", 1)
+        hero_rules = re.findall(r"(?<![\w-])\.sh-hero\s*\{([^}]*)\}", screen_css)
+        self.assertEqual(sum(bool(re.search(r"background\s*:", body)) for body in hero_rules), 1)
+        self.assertIn("color: #fff", rule(self.css, ".sh-hero h1"))
+        self.assertIn("color: #fff", rule(self.css, ".sh-hero h1 span"))
+        for selector in (".sh-hero .sh-eyebrow", ".sh-hero-inner > div:first-child > p:last-child"):
+            self.assertIn("color: #d8eeff", rule(self.css, selector))
+        self.assertIn("color: #123b5d", print_css)
 
     def test_circular_orbit_has_four_ordered_steps_and_four_lesson_panels(self):
         orbit_facts = ReadingText(self.main)
