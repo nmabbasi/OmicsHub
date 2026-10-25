@@ -16,6 +16,7 @@ from reader_text_colour_baseline import (
     READER_TEXT_ASSET_SHA256, normalize_reader_text, restore_reader_text_asset,
 )
 from r_first_revision_baseline import R_FIRST_ASSET_PATHS, restore_r_first_asset
+from latest_review_baseline import normalize_latest_review, restore_latest_review_asset
 
 ROOT = Path(__file__).resolve().parents[1]
 HOME_CATALOGUE_BASELINE = "fa26faa8d20a31de1211652e8ebffcf99534b9a6"
@@ -118,6 +119,11 @@ def normalize_home_catalogue(relative_path, text):
     """Reverse only exact frozen chunks; unknown page edits remain visible."""
     if not isinstance(text, str):
         raise TypeError("home-catalogue normalization requires decoded text")
+    text = normalize_latest_review(relative_path, text)
+    try:
+        text = restore_latest_review_asset(relative_path, text.encode("utf-8")).decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise AssertionError(f"latest-review asset is not UTF-8 text: {relative_path}") from exc
     text = normalize_reader_text(relative_path, text)
     if relative_path in R_FIRST_ASSET_PATHS:
         text = restore_r_first_asset(relative_path, text.encode("utf-8")).decode("utf-8")
@@ -170,6 +176,7 @@ def normalize_home_catalogue(relative_path, text):
 def verify_home_catalogue_file(relative_path, data):
     """Verify a feature asset only when its exact path has a complete hash pin."""
     original_data = data
+    data = restore_latest_review_asset(relative_path, data)
     if relative_path.endswith(".html"):
         data = normalize_reader_text(relative_path, data.decode("utf-8")).encode("utf-8")
     if (relative_path in {"home-page.min.css", "home-catalogue.css",

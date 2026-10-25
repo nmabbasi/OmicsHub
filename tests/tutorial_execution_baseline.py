@@ -128,6 +128,10 @@ def normalize_execution_delta(relative_path, text):
     """Reverse one exact current page to 122bd bytes; leave mutations untouched."""
     if not isinstance(text, str):
         raise TypeError("execution-delta normalization requires decoded text")
+    from latest_review_baseline import latest_review_fixture, normalize_latest_review
+    latest = latest_review_fixture().get(relative_path)
+    if latest is not None and _sha(text.encode('utf-8')) == latest['current_sha256']:
+        text = normalize_latest_review(relative_path, text)
     entry = _fixture()["page_map"].get(relative_path)
     if entry is None:
         return text
@@ -162,6 +166,14 @@ def verify_new_execution_asset(relative_path, data):
 
 def restore_overlapping_execution_asset(relative_path, data):
     """Return exact 122bd bytes for an overlapping asset only at its pinned digest."""
+    if relative_path == "sitemap.xml":
+        # The newest review is a text-delta layer over the execution snapshot.
+        # Compose it here only for its exact current whole-file pin; partial
+        # mutations stay byte-for-byte visible to the caller's older row guards.
+        from latest_review_baseline import latest_review_fixture, normalize_latest_review
+        latest = latest_review_fixture().get(relative_path)
+        if latest is not None and _sha(data) == latest["current_sha256"]:
+            data = normalize_latest_review(relative_path, data.decode("utf-8")).encode("utf-8")
     entry = _fixture()["overlapping_asset_map"].get(relative_path)
     if entry is None:
         return data
@@ -178,17 +190,21 @@ def restore_overlapping_execution_asset(relative_path, data):
 
 def verify_execution_asset_or_overlapping(relative_path, data):
     """Verify either one exact new asset or one exact overlapping asset revision."""
+    from latest_review_baseline import restore_latest_review_asset
+    original_data = data
+    data = restore_latest_review_asset(relative_path, data)
     fixture = _fixture()
     new = fixture["new_asset_map"].get(relative_path)
     if new is not None:
-        return verify_new_execution_asset(relative_path, data)
+        verify_new_execution_asset(relative_path, data)
+        return original_data
     overlap = fixture["overlapping_asset_map"].get(relative_path)
     if overlap is not None:
         observed = _sha(data)
         if observed == overlap["current_sha256"]:
-            return data
+            return original_data
         if observed == overlap["base_sha256"]:
-            return data
+            return original_data
         raise AssertionError(f"execution asset fingerprint mismatch for {relative_path}: {observed}")
     raise AssertionError(f"not an authorized execution asset: {relative_path}")
 

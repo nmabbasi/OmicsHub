@@ -20,7 +20,7 @@ from reader_text_colour_baseline import (
     READER_TEXT_ASSET_PATHS, normalize_reader_text, restore_reader_text_asset,
 )
 from r_first_revision_baseline import R_FIRST_ASSET_PATHS, restore_r_first_asset
-
+from latest_review_baseline import restore_latest_review_asset
 ROOT = Path(__file__).resolve().parents[1]
 
 
@@ -313,7 +313,7 @@ class HomeCatalogueScopeTests(unittest.TestCase):
         protected = [path for path in protected if path != "home-page.min.css"]
         for relative in protected:
             with self.subTest(path=relative):
-                current = (ROOT / relative).read_bytes()
+                current = restore_latest_review_asset(relative, (ROOT / relative).read_bytes())
                 if relative == "subscribe-fab.js":
                     normalized = normalize_home_catalogue(relative, current.decode("utf-8"))
                     self.assertEqual(normalized.encode("utf-8"), git_bytes(HOME_CATALOGUE_BASELINE, relative))

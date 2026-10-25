@@ -12,6 +12,7 @@ import subprocess
 
 ROOT = Path(__file__).resolve().parents[1]
 from r_first_revision_baseline import normalize_r_first_revision, restore_r_first_asset, R_FIRST_ASSET_PATHS
+from latest_review_baseline import normalize_latest_review, restore_latest_review_asset
 PRE_READER_TEXT_COMMIT = "c6d5a9cbf059570ad87b972c7b0fbffe7ed97801"
 FIXTURE_PATH = ROOT / "tests/fixtures/reader-text-colour-edits.json"
 FIXTURE_SHA256 = "2a14ddda16eeb0ecec8a44e6ab69a8d567c01b9cd04b6769e1008fff9598b906"
@@ -95,6 +96,7 @@ def normalize_reader_text(relative_path, text):
     """Reverse only exact frozen HTML chunks; leave all unrecognized edits visible."""
     if not isinstance(text, str):
         raise TypeError("reader-text normalization requires decoded text")
+    text = normalize_latest_review(relative_path, text)
     text = normalize_r_first_revision(relative_path, text)
     patches = page_patches().get(relative_path)
     if patches is None:
@@ -113,6 +115,8 @@ def verify_reader_text_file(relative_path, data):
     """Accept a modified asset only when its complete current bytes are pinned."""
     if relative_path not in READER_TEXT_ASSET_PATHS:
         raise AssertionError(f"not an authorized reader-text asset: {relative_path}")
+    original_data = data
+    data = restore_latest_review_asset(relative_path, data)
     if relative_path in R_FIRST_ASSET_PATHS:
         observed_hash = hashlib.sha256(data).hexdigest()
         if observed_hash == READER_TEXT_ASSET_SHA256[relative_path]:
@@ -126,7 +130,7 @@ def verify_reader_text_file(relative_path, data):
     observed = hashlib.sha256(observed_data).hexdigest()
     if observed != expected:
         raise AssertionError(f"reader-text asset fingerprint mismatch for {relative_path}: {observed}")
-    return data
+    return original_data
 
 
 def restore_reader_text_asset(relative_path, data):

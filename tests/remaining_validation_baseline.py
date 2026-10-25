@@ -148,6 +148,10 @@ def restore_sitemap_to_published(data):
 
 def normalize_remaining_validation_sitemap(data):
     from advanced_validation_baseline import normalize_advanced_validation_sitemap
+    # Apply the newest literal text layer before any older exact-asset or
+    # manifest date logic; unmatched mutations remain visible to those guards.
+    from latest_review_baseline import normalize_latest_review
+    data = normalize_latest_review("sitemap.xml", data.decode("utf-8")).encode("utf-8")
     data = restore_overlapping_execution_asset("sitemap.xml", data)
     # This entry point also accepts already-restored older review layers. Only
     # the exact full-file current pin may remove the newer R-first date delta;

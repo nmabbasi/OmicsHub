@@ -12,6 +12,8 @@ from pathlib import Path
 import re
 import subprocess
 
+from latest_review_baseline import normalize_latest_review, restore_latest_review_asset
+
 ROOT = Path(__file__).resolve().parents[1]
 PRE_R_FIRST_COMMIT = "2ad77315c9fbc48ac5b941df9998bbad4b76fb2f"
 FIXTURE_PATH = ROOT / "tests/fixtures/r-first-revision-edits.json"
@@ -207,6 +209,7 @@ def normalize_r_first_revision(relative_path, text):
     """Reverse matching literal chunks; every unmatched edit remains visible."""
     if not isinstance(text, str):
         raise TypeError("R-first normalization requires decoded text")
+    text = normalize_latest_review(relative_path, text)
     # The execution-review layer is a separate exact-digest/context adapter.
     # Once it returns the immutable 122bd bytes, the historical R-first patches
     # below remain unchanged and naturally become an idempotent no-op.
@@ -232,15 +235,18 @@ def verify_r_first_asset(relative_path, data):
     """Accept only explicit changed assets with an exact complete-file digest."""
     if relative_path not in R_FIRST_ASSET_SHA256:
         raise AssertionError(f"not an authorized R-first asset: {relative_path}")
+    original_data = data
+    data = restore_latest_review_asset(relative_path, data)
     observed = hashlib.sha256(data).hexdigest()
     expected = R_FIRST_ASSET_SHA256[relative_path]
     if observed != expected:
         raise AssertionError(f"R-first asset fingerprint mismatch for {relative_path}: {observed}")
-    return data
+    return original_data
 
 
 def restore_r_first_asset(relative_path, data):
     """Verify a changed asset, then restore exact 2ad7731 bytes when tracked."""
+    data = restore_latest_review_asset(relative_path, data)
     # Compose the separately pinned execution-review asset layer first. Its
     # exact 122bd bytes then pass through the original R-first restoration path.
     from tutorial_execution_baseline import restore_overlapping_execution_asset
