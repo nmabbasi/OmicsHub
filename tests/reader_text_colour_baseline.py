@@ -22,6 +22,8 @@ READER_TEXT_ASSET_SHA256 = {
     "tutorial-navigation.css": "725db31e5855afdb868a43d9ada12787fe76723657ca454be9e1ac89904cd3e8",
     "home-page.min.css": "c4bc6262003d9fdff311a02b0b8939adef7362d15ef970e7940796b729f838bc",
     "tools/generate_tutorial_ui.py": "f482d695b3820acc1ad9156c633dc977ff432afa4084ef9cec51bea5f215ed04",
+    ".github/workflows/tutorial-review.yml": "2c9efb4395dc9de935df18dac22ca82841f70bdb5cc8cedc0a55ae2403ec6fd3",
+    ".github/workflows/static.yml": "afbbb8e0ced971f12c7d1f0382efc4eefa75613c855db0a09643db84fad6bdf3",
 }
 READER_TEXT_ASSET_PATHS = frozenset(READER_TEXT_ASSET_SHA256)
 

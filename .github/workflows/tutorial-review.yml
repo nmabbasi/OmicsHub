@@ -19,6 +19,8 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      - name: Install existing CSS build dependencies
+        run: npm ci --prefix tools --no-audit --no-fund
       - name: Verify generated legacy redirects
         run: python3 tools/generate_legacy_redirects.py --check
       - name: Verify generated learning paths

@@ -171,6 +171,26 @@ class ReaderTextColourTests(unittest.TestCase):
                 with self.assertRaisesRegex(AssertionError, "fingerprint mismatch"):
                     verify_reader_text_file(relative, data + b"\n")
 
+    def test_ci_workflow_fixes_change_only_dependency_setup_and_cleanup_order(self):
+        review_path = ".github/workflows/tutorial-review.yml"
+        previous = pre_reader_text_bytes(review_path).decode("utf-8")
+        anchor = "      - name: Verify generated legacy redirects\n"
+        setup = ("      - name: Install existing CSS build dependencies\n"
+                 "        run: npm ci --prefix tools --no-audit --no-fund\n")
+        self.assertEqual(previous.count(anchor), 1)
+        self.assertEqual((ROOT / review_path).read_text(), previous.replace(anchor, setup + anchor, 1))
+        deploy_path = ".github/workflows/static.yml"
+        previous = pre_reader_text_bytes(deploy_path).decode("utf-8")
+        cleanup = "          rm -rf tools/node_modules\n"
+        tests = "          python3 -m unittest discover -s tests -v\n"
+        self.assertEqual(previous.count(cleanup), 1)
+        self.assertEqual(previous.count(tests), 1)
+        expected = previous.replace(cleanup, "", 1).replace(tests, tests + cleanup, 1)
+        current = (ROOT / deploy_path).read_text()
+        self.assertEqual(current, expected)
+        self.assertLess(current.index(tests), current.index(cleanup))
+        self.assertLess(current.index(cleanup), current.index("      - name: Upload artifact"))
+
     def test_generated_home_bundle_and_navigation_ui_checks_are_reproducible(self):
         before = (ROOT / "home-page.min.css").read_bytes()
         result = subprocess.run(["node", "tools/build-home-css.cjs"], cwd=ROOT,

@@ -32,7 +32,6 @@ jobs:
           npm ci --prefix tools --no-audit --no-fund
           npm run --prefix tools build:home-css
           git diff --exit-code -- home-page.min.css
-          rm -rf tools/node_modules
 
       - name: Validate tutorial retention, links, SEO, and accessibility markup
         run: |
@@ -42,6 +41,7 @@ jobs:
           python3 tools/generate_tutorial_ui.py --check
           python3 tests/validate_tutorials.py
           python3 -m unittest discover -s tests -v
+          rm -rf tools/node_modules
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
