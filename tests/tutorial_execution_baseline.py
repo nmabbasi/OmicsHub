@@ -128,6 +128,8 @@ def normalize_execution_delta(relative_path, text):
     """Reverse one exact current page to 122bd bytes; leave mutations untouched."""
     if not isinstance(text, str):
         raise TypeError("execution-delta normalization requires decoded text")
+    from navigation_performance_baseline import normalize_navigation_performance
+    text = normalize_navigation_performance(relative_path, text)
     from latest_review_baseline import latest_review_fixture, normalize_latest_review
     latest = latest_review_fixture().get(relative_path)
     if latest is not None and _sha(text.encode('utf-8')) == latest['current_sha256']:

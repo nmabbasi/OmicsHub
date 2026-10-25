@@ -17,6 +17,11 @@ from pathlib import Path
 import subprocess
 import sys
 
+from navigation_performance_baseline import (
+    FIXTURE_PATHS as NAVIGATION_PERFORMANCE_PATHS,
+    restore_navigation_performance_bytes,
+)
+
 ROOT = Path(__file__).resolve().parents[1]
 BASE_COMMIT = "36bc46d"
 FIXTURE = ROOT / "tests/fixtures/latest-review-edits.json"
@@ -51,17 +56,21 @@ TEXT_PATHS = frozenset({
 ASSET_PATHS = frozenset({"home-page.min.css"})
 ALLOWED_PATHS = TEXT_PATHS | ASSET_PATHS
 TEST_INFRASTRUCTURE_PATHS = frozenset({
+    "tests/browser_navigation_performance.py",
     "tests/browser_sitewide_reference_fixes.py",
     "tests/fixtures/latest-review-edits.json",
+    "tests/fixtures/navigation-performance-edits.json",
     "tests/generate_latest_review_fixture.py",
     "tests/home_catalogue_baseline.py",
     "tests/latest_review_baseline.py",
+    "tests/navigation_performance_baseline.py",
     "tests/r_first_revision_baseline.py",
     "tests/reader_text_colour_baseline.py",
     "tests/remaining_validation_baseline.py",
     "tests/resource_content_baseline.py",
     "tests/test_home_catalogue_scope.py",
     "tests/test_latest_review_baseline.py",
+    "tests/test_navigation_performance_baseline.py",
     "tests/test_latest_sitemap_composition_negative.py",
     "tests/test_r_first_revision_baseline.py",
     "tests/test_reader_punctuation.py",
@@ -153,6 +162,15 @@ def build_fixture() -> dict:
         ["git", "diff", "--name-only", BASE_COMMIT, "--"], cwd=ROOT,
         text=True, stdout=subprocess.PIPE, check=True,
     ).stdout.splitlines()
+    # File-name diffs include the separately pinned 51 removals and workflow
+    # command. Drop a path from this historical review only when restoring the
+    # complete current hash yields its exact 36bc46d bytes.
+    performance_only = set()
+    for path in set(changed) & NAVIGATION_PERFORMANCE_PATHS:
+        normalized = restore_navigation_performance_bytes(path, (ROOT / path).read_bytes())
+        if normalized == git_base(path):
+            performance_only.add(path)
+    changed = [path for path in changed if path not in performance_only]
     unexpected = sorted(set(changed) - ALLOWED_PATHS - TEST_INFRASTRUCTURE_PATHS)
     # Untracked generated fixture and test helpers do not appear in `git diff`;
     # tracked source changes outside this explicit review boundary must stop.
@@ -162,6 +180,8 @@ def build_fixture() -> dict:
     for path in sorted(set(changed) & ALLOWED_PATHS):
         base = git_base(path)
         current = (ROOT / path).read_bytes()
+        if path in TEXT_PATHS:
+            current = restore_navigation_performance_bytes(path, current)
         if base == current:
             continue
         record = {
