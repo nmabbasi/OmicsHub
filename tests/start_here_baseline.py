@@ -11,6 +11,9 @@ import json
 from pathlib import Path
 import re
 import subprocess
+from reader_text_colour_baseline import (
+    READER_TEXT_ASSET_SHA256, normalize_reader_text, restore_reader_text_asset,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 PRE_REVIEW_COMMIT = "a4b6ead8251e0a3abcb748061a40155ae9523a82"
@@ -96,6 +99,7 @@ def normalize_start_here(relative_path, text):
     """Reverse exact reviewed chunks in start-here.html; leave every other byte alone."""
     if not isinstance(text, str):
         raise TypeError("Start Here normalization requires decoded text")
+    text = normalize_reader_text(relative_path, text)
     if relative_path != "start-here.html":
         return text
     for index, patch in reversed(list(enumerate(page_patches()["start-here.html"]))):
@@ -131,10 +135,13 @@ def verify_start_here_file(relative_path, data):
     expected = START_HERE_ASSET_SHA256[relative_path]
     if not isinstance(expected, str) or not re.fullmatch(r"[0-9a-f]{64}", expected):
         raise AssertionError(f"parent must refresh the exact SHA-256 pin for {relative_path}")
+    original_data = data
+    if hashlib.sha256(data).hexdigest() == READER_TEXT_ASSET_SHA256.get(relative_path):
+        data = restore_reader_text_asset(relative_path, data)
     observed = hashlib.sha256(data).hexdigest()
     if observed != expected:
         raise AssertionError(f"Start Here asset fingerprint mismatch for {relative_path}: {observed}")
-    return data
+    return original_data
 
 
 def normalize_start_here_asset(relative_path, data):

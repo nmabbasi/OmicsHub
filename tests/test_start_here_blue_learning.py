@@ -6,9 +6,13 @@ import re
 import subprocess
 import unittest
 
+from reader_text_colour_baseline import (
+    READER_TEXT_ASSET_PATHS, normalize_reader_text, restore_reader_text_asset,
+)
+
 ROOT = Path(__file__).resolve().parents[1]
 PUBLISHED = "45d660c5f53a0f4d8c2736057e2ab54fe7b8e718"
-CSS_VERSION = "20261025-circular-banner-v2"
+CSS_VERSION = "20261025-reader-colours-v1"
 JS_VERSION = "20261025-circular-path-v1"
 FOUNDATION = ("tutorials/command-line-part1.html", "tutorials/computer-data-fundamentals.html")
 LANGUAGE_CHOICES = ("tutorials/r-tidyverse-fundamentals.html", "tutorials/python-fundamentals-bioinformatics.html")
@@ -80,29 +84,35 @@ class StartHereBlueLearningTests(unittest.TestCase):
     def test_home_catalogue_lessons_and_shared_assets_are_unchanged(self):
         for relative in ("index.html", "tutorials.html"):
             with self.subTest(path=relative):
-                self.assertEqual((ROOT / relative).read_bytes(), git_bytes(PUBLISHED, relative))
+                restored = normalize_reader_text(relative, (ROOT / relative).read_text()).encode()
+                self.assertEqual(restored, git_bytes(PUBLISHED, relative))
         lessons = sorted((ROOT / "tutorials").glob("*.html"))
         self.assertEqual(len(lessons), 58)
         for page in lessons:
             relative = page.relative_to(ROOT).as_posix()
             with self.subTest(path=relative):
-                self.assertEqual(page.read_bytes(), git_bytes(PUBLISHED, relative))
+                restored = normalize_reader_text(relative, page.read_text()).encode()
+                self.assertEqual(restored, git_bytes(PUBLISHED, relative))
         protected = [path for path in pinned_paths()
                      if (path.endswith((".css", ".js")) and path not in {"start-here.css", "start-here.js"})
                      or path.startswith(("fonts/", "images/", "assets/")) or path == "ads.txt"]
         for relative in protected:
             with self.subTest(path=relative):
-                self.assertEqual((ROOT / relative).read_bytes(), git_bytes(PUBLISHED, relative))
+                current = (ROOT / relative).read_bytes()
+                if relative in READER_TEXT_ASSET_PATHS:
+                    current = restore_reader_text_asset(relative, current)
+                self.assertEqual(current, git_bytes(PUBLISHED, relative))
 
     def test_html_changes_only_in_main_and_start_here_asset_versions(self):
+        restored_source = normalize_reader_text("start-here.html", self.source)
         old_css = re.search(r'<link\b[^>]*href="(start-here\.css\?v=[^"]+)"', self.old).group(1)
-        new_css = re.search(r'<link\b[^>]*href="(start-here\.css\?v=[^"]+)"', self.source).group(1)
+        new_css = re.search(r'<link\b[^>]*href="(start-here\.css\?v=[^"]+)"', restored_source).group(1)
         old_js = re.search(r'<script\b[^>]*src="(start-here\.js\?v=[^"]+)"', self.old).group(1)
         new_js = re.search(r'<script\b[^>]*src="(start-here\.js\?v=[^"]+)"', self.source).group(1)
         expected = self.old.replace(main(self.old), self.current_main, 1)
         expected = expected.replace(old_css, new_css, 1).replace(old_js, new_js, 1)
-        self.assertEqual(self.source, expected)
-        self.assertEqual(new_css, f"start-here.css?v={CSS_VERSION}")
+        self.assertEqual(restored_source, expected)
+        self.assertIn(f'href="start-here.css?v={CSS_VERSION}"', self.source)
         self.assertEqual(new_js, f"start-here.js?v={JS_VERSION}")
 
     def test_four_ordered_lesson_panels_and_orbit_anchors(self):

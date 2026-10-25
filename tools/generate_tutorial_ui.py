@@ -15,6 +15,7 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 VERSION = '20261024-reader-ui-v3'
+NAVIGATION_CSS_VERSION = '20261025-reader-colours-v1'
 LANGUAGES = {'bash', 'python', 'r', 'text', 'yaml', 'json', 'csv', 'diff', 'powershell', 'lua', 'groovy', 'javascript', 'markdown', 'sql', 'ini', 'docker', 'rscript'}
 VOID = {'area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr'}
 
@@ -88,7 +89,7 @@ def load_metadata(root):
     return result
 
 CSS = (f'<link href="../tutorial-reader.css?v={VERSION}" rel="stylesheet"/>\n'
-       f'<link href="../tutorial-navigation.css?v={VERSION}" rel="stylesheet"/>\n'
+       f'<link href="../tutorial-navigation.css?v={NAVIGATION_CSS_VERSION}" rel="stylesheet"/>\n'
        f'<link href="../back-to-top.css?v={VERSION}" rel="stylesheet"/>')
 SCRIPTS = ('<script src="../assets/vendor/prism/prism-1.29.0.js"></script>\n'
            f'<script src="../tutorial-code-data.js?v={VERSION}"></script>\n'
@@ -110,7 +111,7 @@ def render_page(source):
     output = PRISM_LINK.sub('', source)
     output = PRISM_SCRIPT.sub('', output)
     output = re.sub(r'((?:href|src)="\.\./(?:tutorial-(?:reader|navigation)\.css|back-to-top\.css|tutorial-code-data\.js|code-tabs\.js))(?:\?[^\"]*)?(\")',
-                    r'\1?v=' + VERSION + r'\2', output)
+                    lambda match: match.group(1) + '?v=' + (NAVIGATION_CSS_VERSION if 'tutorial-navigation.css' in match.group(1) else VERSION) + match.group(2), output)
     for include in CSS.splitlines():
         if include not in output: output = output.replace('</head>', include + '\n</head>', 1)
     if SCRIPTS not in output:

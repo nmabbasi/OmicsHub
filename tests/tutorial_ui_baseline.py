@@ -12,6 +12,7 @@ from pathlib import Path
 import subprocess
 from start_here_baseline import normalize_start_here
 from home_catalogue_baseline import normalize_home_catalogue
+from reader_text_colour_baseline import READER_TEXT_ASSET_SHA256, restore_reader_text_asset
 
 ROOT = Path(__file__).resolve().parents[1]
 PRE_UI_COMMIT = '243bc04e5edff51b33bef1b9312a48f6b2ae5751'
@@ -77,6 +78,7 @@ def normalize_tutorial_ui(relative_path, text):
 
 def verify_tutorial_ui_file(relative_path, data):
     """Pin every explicitly authorized new/modified UI file, never whole folders."""
+    original_data = data
     from home_catalogue_baseline import HOME_CATALOGUE_ASSET_PATHS, verify_home_catalogue_file
     if relative_path in HOME_CATALOGUE_ASSET_PATHS and relative_path in TUTORIAL_UI_PATHS:
         observed = hashlib.sha256(data).hexdigest()
@@ -86,11 +88,15 @@ def verify_tutorial_ui_file(relative_path, data):
             return data
         return verify_home_catalogue_file(relative_path, data)
     if relative_path in TUTORIAL_UI_PATHS:
+        if (relative_path in READER_TEXT_ASSET_SHA256
+                and hashlib.sha256(data).hexdigest() == READER_TEXT_ASSET_SHA256[relative_path]):
+            data = restore_reader_text_asset(relative_path, data)
         observed = hashlib.sha256(data).hexdigest()
         if observed != TUTORIAL_UI_SHA256[relative_path]:
-            raise AssertionError(f'tutorial UI file fingerprint mismatch for {relative_path}: {observed}')
-        return data
-    return verify_home_catalogue_file(relative_path, data)
+            raise AssertionError(f"tutorial UI file fingerprint mismatch for {relative_path}: {observed}")
+        return original_data
+    verify_home_catalogue_file(relative_path, data)
+    return original_data
 
 
 def pre_ui_bytes(relative_path):

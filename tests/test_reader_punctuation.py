@@ -32,6 +32,9 @@ from start_here_baseline import (
     normalize_start_here,
     verify_start_here_file,
 )
+from reader_text_colour_baseline import (
+    READER_TEXT_ASSET_PATHS, READER_TEXT_VERSION, verify_reader_text_file,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 BASE = 'c030bc62bf6e4a4ad21f9ff64cb630c152157692'
@@ -227,6 +230,8 @@ class ReaderPunctuationTests(unittest.TestCase):
         verified_start_here_paths = set(changed) & START_HERE_ASSET_PATHS
         for relative in sorted(verified_start_here_paths):
             verify_start_here_file(relative, (ROOT / relative).read_bytes())
+        for relative in sorted(set(changed) & READER_TEXT_ASSET_PATHS):
+            verify_reader_text_file(relative, (ROOT / relative).read_bytes())
         forbidden = [path for path in changed
                      if path not in reviewed_scripts
                      and path not in verified_ui_paths
@@ -248,13 +253,19 @@ class ReaderPunctuationTests(unittest.TestCase):
                 self.assertNotRegex(text, r'(?i)\\u2014')
 
     def test_all_reading_pages_use_the_new_shared_stylesheet_version(self):
+        changed_stylesheets = (
+            'home-page.min.css', 'home-catalogue.css', 'style.css',
+            'start-here.css', 'tutorial-navigation.css',
+        )
         for relative in self.pages:
             with self.subTest(path=relative):
-                stylesheet = 'home-page.min.css' if relative == 'index.html' else 'style.css'
-                version = '20261024-home-catalogue-v1' if relative == 'index.html' else '20261023-reader-typography'
-                self.assertIn(stylesheet+'?v='+version, (ROOT/relative).read_text())
-        self.assertIn('home-page.min.css?v=20261024-home-catalogue-v1', (ROOT/'index.html').read_text())
-        self.assertIn('start-here.css?v=20261025-circular-banner-v2', (ROOT/'start-here.html').read_text())
+                text = (ROOT/relative).read_text()
+                for stylesheet in changed_stylesheets:
+                    matches = re.findall(r'href=["\']([^"\']*' + re.escape(stylesheet) + r'\?v=[^"\']+)', text)
+                    for href in matches:
+                        self.assertTrue(href.endswith('?v=' + READER_TEXT_VERSION), href)
+        self.assertIn('home-page.min.css?v='+READER_TEXT_VERSION, (ROOT/'index.html').read_text())
+        self.assertIn('start-here.css?v='+READER_TEXT_VERSION, (ROOT/'start-here.html').read_text())
 
 
 if __name__ == '__main__':

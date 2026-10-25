@@ -15,6 +15,7 @@ import unittest
 
 ROOT=Path(__file__).resolve().parents[1]
 PUBLISHED='911a5f0'
+from reader_text_colour_baseline import normalize_reader_text
 
 
 class Text(HTMLParser):
@@ -73,7 +74,7 @@ class HomeCatalogueUITests(unittest.TestCase):
         cls.metadata=json.loads(read('tools/catalogue-learning.json'))
 
     def test_homepage_is_byte_identical_to_published_version(self):
-        self.assertEqual(self.home,published('index.html'))
+        self.assertEqual(normalize_reader_text('index.html',self.home),published('index.html'))
         self.assertNotIn('home-catalogue.css',self.home)
         cards=re.findall(r'<article\b[^>]*class="[^"]*native-tutorial-card[^>]*>.*?</article>',self.home,re.S)
         self.assertEqual(len(cards),6)
@@ -85,7 +86,8 @@ class HomeCatalogueUITests(unittest.TestCase):
         for page in pages:
             relative=page.relative_to(ROOT).as_posix()
             with self.subTest(page=relative):
-                self.assertEqual(page.read_bytes(),subprocess.check_output(['git','show',f'{PUBLISHED}:{relative}'],cwd=ROOT))
+                restored=normalize_reader_text(relative,page.read_text(encoding='utf-8'))
+                self.assertEqual(restored.encode('utf-8'),subprocess.check_output(['git','show',f'{PUBLISHED}:{relative}'],cwd=ROOT))
 
     def test_catalogue_preserves_every_original_title_description_image_and_destination(self):
         original=catalogue_records(published('tutorials.html'))

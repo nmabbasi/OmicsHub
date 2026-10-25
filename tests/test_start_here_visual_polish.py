@@ -5,7 +5,7 @@ import re
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
-CSS_VERSION = "20261025-circular-banner-v2"
+CSS_VERSION = "20261025-reader-colours-v1"
 JS_VERSION = "20261025-circular-path-v1"
 
 

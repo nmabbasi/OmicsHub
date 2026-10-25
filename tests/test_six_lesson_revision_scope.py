@@ -309,7 +309,7 @@ class SixLessonRevisionScopeTests(unittest.TestCase):
                                 if relative == "start-here.html"
                                 or relative in {"index.html", "tutorials.html"}
                                 or (relative.startswith("tutorials/") and relative.endswith(".html"))
-                                else current_path.read_bytes())
+                                else current_raw)
                     self.assertEqual(observed, expected,
                                      "non-target source, CSS, navigation and site scripts are immutable")
 
