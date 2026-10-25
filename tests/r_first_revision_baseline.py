@@ -207,6 +207,11 @@ def normalize_r_first_revision(relative_path, text):
     """Reverse matching literal chunks; every unmatched edit remains visible."""
     if not isinstance(text, str):
         raise TypeError("R-first normalization requires decoded text")
+    # The execution-review layer is a separate exact-digest/context adapter.
+    # Once it returns the immutable 122bd bytes, the historical R-first patches
+    # below remain unchanged and naturally become an idempotent no-op.
+    from tutorial_execution_baseline import normalize_execution_delta
+    text = normalize_execution_delta(relative_path, text)
     if relative_path in page_patches():
         patches = page_patches()[relative_path]
     elif relative_path in non_navigation_patches():
@@ -236,6 +241,10 @@ def verify_r_first_asset(relative_path, data):
 
 def restore_r_first_asset(relative_path, data):
     """Verify a changed asset, then restore exact 2ad7731 bytes when tracked."""
+    # Compose the separately pinned execution-review asset layer first. Its
+    # exact 122bd bytes then pass through the original R-first restoration path.
+    from tutorial_execution_baseline import restore_overlapping_execution_asset
+    data = restore_overlapping_execution_asset(relative_path, data)
     original = pre_r_first_bytes(relative_path)
     # A second layer may receive an asset already restored to the pinned source.
     # Accept only exact historical bytes; an arbitrary mutation still has to

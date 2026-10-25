@@ -39,6 +39,9 @@ from reader_text_colour_baseline import (
 from r_first_revision_baseline import (
     R_FIRST_ASSET_PATHS, restore_r_first_asset, verify_r_first_asset,
 )
+from tutorial_execution_baseline import (
+    new_execution_asset_paths, verify_execution_asset_or_overlapping,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 BASE = 'c030bc62bf6e4a4ad21f9ff64cb630c152157692'
@@ -222,7 +225,11 @@ class ReaderPunctuationTests(unittest.TestCase):
         approved_assets = advanced_asset_paths()
         approved_r_first_assets = set(fixture_changes) & R_FIRST_ASSET_PATHS
         for relative in sorted(approved_r_first_assets):
-            verify_r_first_asset(relative, (ROOT / relative).read_bytes())
+            data = (ROOT / relative).read_bytes()
+            if relative in new_execution_asset_paths():
+                verify_execution_asset_or_overlapping(relative, data)
+            else:
+                verify_r_first_asset(relative, data)
         for relative in fixture_changes:
             if relative in approved_assets:
                 self.assertEqual(
@@ -233,6 +240,10 @@ class ReaderPunctuationTests(unittest.TestCase):
                     'the exact approved asset path must retain its manifest-pinned full bytes',
                 )
         approved_assets = approved_assets | approved_r_first_assets
+        verified_execution_paths = set(changed) & new_execution_asset_paths()
+        for relative in sorted(verified_execution_paths):
+            verify_execution_asset_or_overlapping(relative, (ROOT / relative).read_bytes())
+        approved_assets = approved_assets | verified_execution_paths
         # This consent repair authorizes one production script and its exact runtime fixture.
         reviewed_scripts = {'analytics.js', 'tests/test_analytics_load_order.js'}
         verified_ui_paths = set(changed) & (TUTORIAL_UI_PATHS | HOME_CATALOGUE_ASSET_PATHS)
@@ -246,6 +257,7 @@ class ReaderPunctuationTests(unittest.TestCase):
         forbidden = [path for path in changed
                      if path not in reviewed_scripts
                      and path not in verified_ui_paths
+                     and path not in verified_execution_paths
                      and path not in verified_start_here_paths
                      and not path.startswith('files/')]
         invalid_fixtures = [

@@ -169,33 +169,34 @@ def read_delimited(path: Path, delimiter: str = ",") -> list[dict[str, str]]:
 
 def prepare_stats_project(directory: Path) -> tuple[str, str, str, str, str]:
     lesson = "tutorials/statistics-for-bioinformatics.html"
-    setup = block(lesson, index=0, needles=("data/control.csv", "data/treated.csv"))
+    setup = block(lesson, needles=("printf \"value\\n8.9", "data/control.csv", "data/treated.csv"))
     control = printf_fixture(setup, "data/control.csv")
     treated = printf_fixture(setup, "data/treated.csv")
-    pvalue_setup = block(lesson, index=5, needles=("pvalues_all_features.txt",))
+    pvalue_setup = block(lesson, identifier="statistics-bh-shared-input",
+                         needles=("pvalues_all_features.txt",))
     pvalues = printf_fixture(pvalue_setup, "pvalues_all_features.txt")
     (directory / "data").mkdir()
     (directory / "results").mkdir()
     (directory / "data/control.csv").write_text(control, encoding="utf-8", newline="\n")
     (directory / "data/treated.csv").write_text(treated, encoding="utf-8", newline="\n")
-    python = block(lesson, index=2, needles=("from scipy import stats", "comparison.csv"))
-    r = block(lesson, index=3, needles=("t.test(trt, ctrl", "comparison_R.csv"))
+    python = block(lesson, needles=("from scipy import stats", "comparison.csv", "stats.ttest_ind"))
+    r = block(lesson, needles=("t.test(trt, ctrl", "comparison_R.csv"))
     return python, r, control, treated, pvalues
 
 
 def prepare_design_project(directory: Path) -> tuple[str, str, str, str, str, str]:
     lesson = "tutorials/experimental-design-batch-effects.html"
-    metadata_setup = block(lesson, index=1, needles=("cat > metadata.csv",))
-    counts_setup = block(lesson, index=6, needles=("cat > counts.csv",))
+    metadata_setup = block(lesson, needles=("cat > metadata.csv", "S04,Donor04"))
+    counts_setup = block(lesson, needles=("cat > counts.csv", "gene_D,50,45,55,60"))
     metadata = heredoc(metadata_setup, "metadata.csv")
     counts = heredoc(counts_setup, "counts.csv")
     (directory / "metadata.csv").write_text(metadata, encoding="utf-8", newline="\n")
     (directory / "counts.csv").write_text(counts, encoding="utf-8", newline="\n")
     return (
-        block(lesson, index=3, needles=("import pandas as pd", "metadata.validated.csv")),
-        block(lesson, index=4, needles=("meta <- read.csv", "metadata.validated.csv")),
-        block(lesson, index=7, needles=("prcomp(", "pca_coordinates.csv")),
-        block(lesson, index=9, needles=("np.linalg.svd", "pca_coordinates.csv")),
+        block(lesson, needles=("import pandas as pd", "metadata.validated.csv", "pd.crosstab")),
+        block(lesson, needles=("meta <- read.csv", "metadata.validated.csv", "write.csv(meta")),
+        block(lesson, needles=("prcomp(", "pca_coordinates.csv", "counts_df <- read.csv")),
+        block(lesson, needles=("np.linalg.svd", "pca_coordinates.csv", "DictReader")),
         metadata, counts,
     )
 
@@ -247,8 +248,8 @@ def stage_pbmc3k_archive(project: Path) -> dict[str, object]:
 class PublishedPythonFundamentalsTests(unittest.TestCase):
     def test_exact_fasta_script_reads_published_fixture_and_writes_expected_csv(self) -> None:
         lesson = "tutorials/python-fundamentals-bioinformatics.html"
-        setup = block(lesson, index=0, needles=("data/raw/example.fasta",))
-        script = block(lesson, index=2, needles=("def fasta_records", "gc_fraction"))
+        setup = block(lesson, needles=("cat > data/raw/example.fasta", "AGCTTAGC--NNNN", "Rscript --version"))
+        script = block(lesson, needles=("def fasta_records", "gc_fraction", "compute_fasta_stats.py"))
         fasta = heredoc(setup, "data/raw/example.fasta")
         with tempfile.TemporaryDirectory(prefix="omics-python-fundamentals-") as temp:
             project = Path(temp)
@@ -278,7 +279,7 @@ class PublishedStatisticsBranchesTests(unittest.TestCase):
             self.assertEqual(row["n_control"], "4")
             self.assertAlmostEqual(float(row["mean_difference_treated_minus_control"]), 1.7)
             self.assertLess(float(row["ci95_low"]), float(row["ci95_high"]))
-            bh = block("tutorials/statistics-for-bioinformatics.html", index=7,
+            bh = block("tutorials/statistics-for-bioinformatics.html",
                        needles=("multipletests", "pvalues_adjusted.txt"))
             (project / "pvalues_all_features.txt").write_text(pvalues, encoding="utf-8")
             adjusted = run_script(sys.executable, bh, "adjust_features.py", project)
@@ -301,7 +302,7 @@ class PublishedStatisticsBranchesTests(unittest.TestCase):
             self.assertEqual(row["n_control"], "4")
             self.assertAlmostEqual(float(row["mean_difference_treated_minus_control"]), 1.7)
             self.assertLess(float(row["ci95_low"]), float(row["ci95_high"]))
-            bh = block("tutorials/statistics-for-bioinformatics.html", index=8,
+            bh = block("tutorials/statistics-for-bioinformatics.html",
                        needles=("p.adjust(pvals, method = \"BH\")", "discoveries_fdr05.txt"))
             (project / "pvalues_all_features.txt").write_text(pvalues, encoding="utf-8")
             adjusted = run_script(rscript, bh, "adjust_features.R", project, env=r_environment())

@@ -73,7 +73,7 @@ gtag('consent', 'default', {
     }
   },
   "datePublished": "2026-09-04",
-  "dateModified": "2026-10-24",
+  "dateModified": "2026-10-25",
   "url": "https://theomicshub.com/tutorials/wes-variant-calling-pipeline.html",
   "name": "Whole Exome Sequencing (WES): Variant Calling & VAF",
   "isPartOf": {
@@ -347,9 +347,13 @@ chrToy 6    A    C,G  PASS    1/2  10      5       19         NA
 <h3>8. Quick VAF distribution plot (example in R)</h3>
 <pre><code># Input: vcf/NA12878_pass.withVAF.tsv
 # Output: diagnostics/VAF_distribution.png
-Rscript -e 'd&lt;-read.delim("vcf/NA12878_pass.withVAF.tsv", header=TRUE); \
-  png("diagnostics/VAF_distribution.png", width=800, height=600); \
-  hist(as.numeric(d$VAF[!is.na(d$VAF)]), breaks=100, col="steelblue", main="VAF distribution", xlab="VAF"); dev.off()'
+Rscript -e '
+d &lt;- read.delim("vcf/NA12878_pass.withVAF.tsv", header = TRUE)
+png("diagnostics/VAF_distribution.png", width = 800, height = 600)
+hist(as.numeric(d$VAF[!is.na(d$VAF)]), breaks = 100, col = "steelblue",
+     main = "VAF distribution", xlab = "VAF")
+dev.off()
+'
 </code></pre>
 <p>For a diploid, high-quality biallelic germline call, heterozygous and homozygous-alternate genotypes often have allele fractions near 0.5 and 1, respectively. A histogram is descriptive, not a genotype caller: depth, allele balance, ploidy, mapping/base quality, contamination, and capture bias affect the values. The included plot command assumes the table has a numeric VAF column and an existing diagnostics directory.</p>
 <h2>Output inspection and interpretation</h2>
@@ -541,7 +545,7 @@ gatk CollectHsMetrics \
 })();
 </script>
 <script src="../assets/vendor/prism/prism-1.29.0.js"></script>
-<script src="../tutorial-code-data.js?v=20261025-r-first-v1"></script>
+<script src="../tutorial-code-data.js?v=20261025-executed-examples-v1"></script>
 <script src="../code-tabs.js?v=20261025-r-first-v1"></script>
 <script src="../copy-code.js?v=20261025-r-first-v1"></script>
 <script src="../subscribe-fab.js?v=20261025-r-first-v1"></script>

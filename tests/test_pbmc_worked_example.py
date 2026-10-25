@@ -77,14 +77,19 @@ class PbmcWorkedExampleTests(unittest.TestCase):
             self.assertFalse(any('/data/' in name or name.endswith(('.h5ad', '.rds')) for name in z.namelist()))
 
     def test_real_figures_have_matching_intrinsic_dimensions(self):
-        expected = {'pbmc3k-tested-qc.png': (1508, 489), 'pbmc3k-tested-pca.png': (559, 468),
-                    'pbmc3k-tested-umap.png': (605, 440)}
+        expected = {
+            'scrna-seq-basics-r-pbmc3k-qc.png': (1200, 400),
+            'scrna-seq-basics-r-pbmc3k-elbow.png': (800, 600),
+            'scrna-seq-basics-r-pbmc3k-umap.png': (800, 600),
+        }
         text = (ROOT / 'tutorials/scrna-seq-basics.html').read_text()
         for name, size in expected.items():
             data = (ROOT / 'images/tutorial-figures' / name).read_bytes()
             self.assertEqual(data[:8], b'\x89PNG\r\n\x1a\n')
             self.assertEqual(struct.unpack('>II', data[16:24]), size)
-            tag = re.search(r'<img[^>]+src="../images/tutorial-figures/' + re.escape(name) + r'"[^>]+>', text).group()
+            match = re.search(r'<img[^>]+src="../images/tutorial-figures/' + re.escape(name) + r'"[^>]+>', text)
+            self.assertIsNotNone(match, 'current R figure must remain embedded: ' + name)
+            tag = match.group()
             self.assertIn('width="' + str(size[0]) + '"', tag)
             self.assertIn('height="' + str(size[1]) + '"', tag)
             self.assertIn('loading="lazy"', tag)

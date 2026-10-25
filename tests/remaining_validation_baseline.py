@@ -14,6 +14,7 @@ from advanced_validation_baseline import normalize_advanced_validation_if_allowe
 from start_here_baseline import normalize_start_here_sitemap
 from tutorial_ui_baseline import normalize_tutorial_ui
 from r_first_revision_baseline import R_FIRST_ASSET_SHA256, restore_r_first_asset
+from tutorial_execution_baseline import restore_overlapping_execution_asset
 
 ROOT = Path(__file__).resolve().parents[1]
 MANIFEST_PATH = ROOT / "tests/fixtures/remaining-validation-edits.json"
@@ -147,6 +148,7 @@ def restore_sitemap_to_published(data):
 
 def normalize_remaining_validation_sitemap(data):
     from advanced_validation_baseline import normalize_advanced_validation_sitemap
+    data = restore_overlapping_execution_asset("sitemap.xml", data)
     # This entry point also accepts already-restored older review layers. Only
     # the exact full-file current pin may remove the newer R-first date delta;
     # unknown edits remain visible to the old date guards and whole-file tests.

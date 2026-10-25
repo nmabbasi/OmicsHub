@@ -16,6 +16,7 @@ import sys
 ROOT = Path(__file__).resolve().parents[1]
 VERSION = '20261025-r-first-v1'
 NAVIGATION_CSS_VERSION = '20261025-learning-navigation-v2'
+CODE_DATA_VERSION = '20261025-executed-examples-v1'
 LANGUAGES = {'bash', 'python', 'r', 'text', 'yaml', 'json', 'csv', 'diff', 'powershell', 'lua', 'groovy', 'javascript', 'markdown', 'sql', 'ini', 'docker', 'rscript'}
 TAB_ORDER = ['r', 'python']
 VOID = {'area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr'}
@@ -95,7 +96,7 @@ CSS = (f'<link href="../tutorial-reader.css?v={VERSION}" rel="stylesheet"/>\n'
        f'<link href="../tutorial-navigation.css?v={NAVIGATION_CSS_VERSION}" rel="stylesheet"/>\n'
        f'<link href="../back-to-top.css?v={VERSION}" rel="stylesheet"/>')
 SCRIPTS = ('<script src="../assets/vendor/prism/prism-1.29.0.js"></script>\n'
-           f'<script src="../tutorial-code-data.js?v={VERSION}"></script>\n'
+           f'<script src="../tutorial-code-data.js?v={CODE_DATA_VERSION}"></script>\n'
            f'<script src="../code-tabs.js?v={VERSION}"></script>')
 PRISM_LINK = re.compile(r'<link\b[^>]*href="https://cdnjs.cloudflare.com/ajax/libs/prism/1\.29\.0/themes/prism-tomorrow\.min\.css"[^>]*/>')
 PRISM_SCRIPT = re.compile(r'<script\b[^>]*src="https://cdnjs.cloudflare.com/ajax/libs/prism/1\.29\.0/[^\"]+"[^>]*></script>\n?')
@@ -114,7 +115,7 @@ def render_page(source):
     output = PRISM_LINK.sub('', source)
     output = PRISM_SCRIPT.sub('', output)
     output = re.sub(r'((?:href|src)="\.\./(?:tutorial-(?:reader|navigation)\.css|back-to-top\.css|tutorial-code-data\.js|code-tabs\.js))(?:\?[^\"]*)?(\")',
-                    lambda match: match.group(1) + '?v=' + (NAVIGATION_CSS_VERSION if 'tutorial-navigation.css' in match.group(1) else VERSION) + match.group(2), output)
+                    lambda match: match.group(1) + '?v=' + (NAVIGATION_CSS_VERSION if 'tutorial-navigation.css' in match.group(1) else CODE_DATA_VERSION if 'tutorial-code-data.js' in match.group(1) else VERSION) + match.group(2), output)
     for include in CSS.splitlines():
         if include not in output: output = output.replace('</head>', include + '\n</head>', 1)
     if SCRIPTS not in output:

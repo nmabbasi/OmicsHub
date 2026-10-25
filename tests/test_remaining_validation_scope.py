@@ -39,6 +39,10 @@ from start_here_baseline import (
     normalize_start_here_asset,
     pre_review_bytes,
 )
+from tutorial_execution_baseline import (
+    new_execution_asset_paths,
+    verify_new_execution_asset,
+)
 
 QC_PATH = "tutorials/quality-control-fundamentals.html"
 REVISED_TUTORIALS = frozenset({
@@ -103,6 +107,10 @@ class RemainingValidationScopeTests(unittest.TestCase):
             if relative.startswith("tests/"):
                 continue
             current_path = ROOT / relative
+            if relative in new_execution_asset_paths():
+                self.assertTrue(current_path.is_file(), relative)
+                verify_new_execution_asset(relative, current_path.read_bytes())
+                continue
             if relative in TUTORIAL_UI_PATHS | HOME_CATALOGUE_ASSET_PATHS:
                 self.assertTrue(current_path.is_file(), relative)
                 verify_tutorial_ui_file(relative, current_path.read_bytes())
@@ -185,7 +193,7 @@ class RemainingValidationScopeTests(unittest.TestCase):
             r'\g<1>2030-01-01\2', current, count=1,
         )
         self.assertNotEqual(unknown_date, current, "the negative fixture must actually change the current date")
-        with self.assertRaisesRegex(AssertionError, "unapproved dateModified"):
+        with self.assertRaisesRegex(AssertionError, "unapproved dateModified|unregistered or stale article-body edit"):
             normalize_remaining_validation_edit(relative, unknown_date)
 
     def test_normalization_keeps_wrapper_navigation_and_other_metadata_visible(self):

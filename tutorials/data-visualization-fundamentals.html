@@ -84,6 +84,7 @@ gtag('consent', 'default', {
   "inLanguage": "en"
 }</script><link href="../tutorial-library.css" rel="stylesheet"/><link href="../tutorial-reader.css?v=20261025-r-first-v1" rel="stylesheet"/>
 <link href="../tutorial-navigation.css?v=20261025-learning-navigation-v2" rel="stylesheet"/><link href="../back-to-top.css?v=20261025-r-first-v1" rel="stylesheet"/>
+<link href="../analysis-results.css?v=20261025-verified-results-v1" rel="stylesheet"/>
 </head>
 <body class="bg-white text-gray-900">
 <script>
@@ -564,6 +565,37 @@ plt.close(fig)</code></pre>
 <h2>Use plots as diagnostics, then follow up</h2>
 <ul><li><strong>QC shifts:</strong> verify metric units, group sizes, and metadata; a batch shift can arise from technical or design differences, but a plot alone cannot identify its cause.</li><li><strong>PCA separation:</strong> inspect the explained variance, sample labels, design balance, and component loadings. Consider the experimental model before choosing batch correction; indiscriminate correction can remove biological signal.</li><li><strong>Fragmented UMAP:</strong> check feature selection, sample count, scaling, and parameter sensitivity. Raising <code>n_neighbors</code> broadens neighborhoods, while changing <code>min_dist</code> changes packing; neither guarantees meaningful clusters.</li><li><strong>Uniform heatmap:</strong> check transformation, selected features, and color limits. Row scaling may reveal relative patterns while hiding absolute amplitude.</li><li><strong>Volcano extremes:</strong> check missing or zero adjusted p-values, effect-size estimates, model formula, contrast, and multiplicity correction before labeling candidates.</li></ul>
 <p>Save the plotting code and intermediate coordinates alongside the figure. Captions should identify the dataset and number of samples, transformation and filtering, encoding and thresholds, package versions, and the main limitation. Use accessible palettes and do not encode an essential distinction by color alone.</p>
+<!-- Verified analysis outputs: 2026-10-25 -->
+<section class="lesson-results" aria-labelledby="observed-analysis-results">
+<h2 id="observed-analysis-results">What this run produced</h2>
+<div class="lesson-results__intro"><p>These are the actual PNG files saved by the downloadable <a href="../files/tutorial-examples/data-visualization-fundamentals/data-visualization-fundamentals.Rmd">R Markdown lab</a>, not illustrations. They use the supplied invented teaching tables. No biological observations or fitted differential-expression results are shown.</p></div>
+<figure class="analysis-result">
+<a href="../images/tutorial-figures/visualization-fundamentals-r-qc_boxplot.png" target="_blank" rel="noopener" aria-label="Open full-size plot: QC by batch"><img src="../images/tutorial-figures/visualization-fundamentals-r-qc_boxplot.png" alt="Boxplots of mitochondrial-read percentages by batch, with six synthetic sample points colored by condition." width="2400" height="1500" loading="lazy" decoding="async"/></a>
+<figcaption><strong>QC by batch.</strong> Each point is one of the six invented samples. Inspect individual values as well as the boxplot; this fixture does not establish a QC cutoff or a batch effect. <a href="#visualization-qc-r-stage">View the R source</a>. Select the image to open it at full size.</figcaption>
+</figure>
+<figure class="analysis-result">
+<a href="../images/tutorial-figures/visualization-fundamentals-r-qc_histogram.png" target="_blank" rel="noopener" aria-label="Open full-size plot: Sequencing depth"><img src="../images/tutorial-figures/visualization-fundamentals-r-qc_histogram.png" alt="Histogram of sequencing-depth values from the six-row synthetic QC table." width="1800" height="1200" loading="lazy" decoding="async"/></a>
+<figcaption><strong>Sequencing depth.</strong> The supplied QC values are displayed in millions of reads. Six invented samples support this descriptive count plot, not a population distribution or a quality threshold. <a href="#visualization-qc-r-stage">View the R source</a>. Select the image to open it at full size.</figcaption>
+</figure>
+<figure class="analysis-result">
+<a href="../images/tutorial-figures/visualization-fundamentals-r-pca_plot.png" target="_blank" rel="noopener" aria-label="Open full-size plot: PCA of the selected, scaled matrix"><img src="../images/tutorial-figures/visualization-fundamentals-r-pca_plot.png" alt="PCA scatterplot of six synthetic samples, colored by condition and shaped by batch." width="1800" height="1500" loading="lazy" decoding="async"/></a>
+<figcaption><strong>PCA of the selected, scaled matrix.</strong> Five genes pass the stated variance rule. The axes report variance for this transformed teaching matrix only; apparent separation is not biological evidence. <a href="#visualization-pca-r-stage">View the R source</a>. Select the image to open it at full size.</figcaption>
+</figure>
+<figure class="analysis-result">
+<a href="../images/tutorial-figures/visualization-fundamentals-r-umap_plot.png" target="_blank" rel="noopener" aria-label="Open full-size plot: UMAP from the saved PCA scores"><img src="../images/tutorial-figures/visualization-fundamentals-r-umap_plot.png" alt="UMAP scatterplot of six synthetic samples computed from the saved full PCA scores." width="1800" height="1500" loading="lazy" decoding="async"/></a>
+<figcaption><strong>UMAP from the saved PCA scores.</strong> This run uses five neighbors, min_dist = 0.1, and seed 7 on six invented samples. Island spacing and global distances are not calibrated biological measurements. <a href="#visualization-umap-r-stage">View the R source</a>. Select the image to open it at full size.</figcaption>
+</figure>
+<figure class="analysis-result">
+<a href="../images/tutorial-figures/visualization-fundamentals-r-heatmap_topgenes.png" target="_blank" rel="noopener" aria-label="Open full-size plot: Relative expression on a declared scale"><img src="../images/tutorial-figures/visualization-fundamentals-r-heatmap_topgenes.png" alt="Cluster-ordered heatmap of ten synthetic genes across six samples, colored by row z-score." width="2400" height="1800" loading="lazy" decoding="async"/></a>
+<figcaption><strong>Relative expression on a declared scale.</strong> Tiles show each gene relative to its own mean across the six invented samples. Rows and columns are ordered by hierarchical clustering; colors are not absolute expression or fold changes. <a href="#visualization-heatmap-r-stage">View the R source</a>. Select the image to open it at full size.</figcaption>
+</figure>
+<figure class="analysis-result">
+<a href="../images/tutorial-figures/visualization-fundamentals-r-volcano.png" target="_blank" rel="noopener" aria-label="Open full-size plot: A volcano display, not a fitted analysis"><img src="../images/tutorial-figures/visualization-fundamentals-r-volcano.png" alt="Volcano plot of synthetic DE-style results, showing illustrative fold-change and adjusted-p-value cutoffs." width="1800" height="1500" loading="lazy" decoding="async"/></a>
+<figcaption><strong>A volcano display, not a fitted analysis.</strong> The supplied DE-style values are invented. One row with a missing adjusted p-value is excluded before plotting. The dashed lines are illustrative display cutoffs, not a differential-expression model or biological validation. <a href="#visualization-volcano-stage">View the R source</a>. Select the image to open it at full size.</figcaption>
+</figure>
+<details class="lesson-results__details"><summary>Run details and limits</summary><p>The complete supplied R report rendered successfully with R 4.3.3, ggplot2 3.4.4, uwot 0.1.16, rmarkdown 2.25, and Pandoc 3.1.3 on Linux. All five Python plotting alternatives also ran on the same tables.</p><p>Checks confirmed six matching sample IDs, finite PCA and UMAP coordinates, and six non-empty figure files for each language. The volcano step omitted the one missing adjusted p-value. R and Python UMAP coordinates are not expected to match.</p><p>This verifies the supplied plotting exercise in this environment, not every possible input, operating system, or upstream biological analysis. <a href="../files/tutorial-examples/execution-evidence/2026-10-25.json">Inspect the execution evidence</a>.</p></details>
+</section>
+<!-- /Verified analysis outputs -->
 <h2>References</h2>
 <ul>
 <li><a href="https://stat.ethz.ch/R-manual/R-devel/library/stats/html/prcomp.html">R stats::prcomp documentation</a> and the <a href="https://cran.r-project.org/web/packages/uwot/vignettes/uwot.html">uwot package guide</a></li>
@@ -702,7 +734,7 @@ plt.close(fig)</code></pre>
 })();
 </script>
 <script src="../assets/vendor/prism/prism-1.29.0.js"></script>
-<script src="../tutorial-code-data.js?v=20261025-r-first-v1"></script>
+<script src="../tutorial-code-data.js?v=20261025-executed-examples-v1"></script>
 <script src="../code-tabs.js?v=20261025-r-first-v1"></script>
 <script src="../copy-code.js?v=20261025-r-first-v1"></script>
 <script src="../subscribe-fab.js?v=20261025-r-first-v1"></script>

@@ -409,9 +409,11 @@ def restore_sitemap_to_pr15(data, paths=None, entries=None):
 
 
 def normalize_resource_sitemap(data):
-    # The current sitemap is a fully pinned R-first asset. Restore only those
-    # exact bytes to 2ad7731 before applying the older manifest's row-level
-    # lastmod restoration; arbitrary/partial edits never match this digest.
+    # Restore the exact execution-review asset to 122bd first. Its digest is
+    # also the pinned R-first asset digest, so the historical restoration below
+    # can then proceed unchanged. Arbitrary/partial edits never match either pin.
+    from tutorial_execution_baseline import restore_overlapping_execution_asset
+    data = restore_overlapping_execution_asset("sitemap.xml", data)
     if hashlib.sha256(data).hexdigest() == R_FIRST_ASSET_SHA256.get("sitemap.xml"):
         data = restore_r_first_asset("sitemap.xml", data)
     return restore_sitemap_to_pr15(data)
