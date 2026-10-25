@@ -1,0 +1,171 @@
+"""Strict regressions for the approved 2026-10-25 compatibility layer."""
+import hashlib
+from html.parser import HTMLParser
+from pathlib import Path
+import re
+import subprocess
+import unittest
+
+from navigation_performance_baseline import (
+    APPROVED_PATHS,
+    BASE_COMMIT,
+    FIXTURE_PATH,
+    FIXTURE_PATHS,
+    FIXTURE_SHA256,
+    ROOT,
+    WORKFLOW_PATH,
+    navigation_performance_fixture,
+    normalize_navigation_performance,
+    restore_navigation_performance_bytes,
+)
+from latest_review_baseline import (
+    latest_review_fixture,
+    normalize_latest_review,
+    restore_latest_review_asset,
+)
+
+
+TEST_INFRASTRUCTURE_PATHS = {
+    "tests/browser_navigation_performance.py",
+    "tests/fixtures/navigation-performance-edits.json",
+    "tests/generate_latest_review_fixture.py",
+    "tests/latest_review_baseline.py",
+    "tests/navigation_performance_baseline.py",
+    "tests/test_latest_review_baseline.py",
+    "tests/test_navigation_performance_baseline.py",
+    "tests/test_remaining_reference_support.py",
+    "tests/tutorial_execution_baseline.py",
+}
+
+
+class ExecutableInlineScriptParser(HTMLParser):
+    TYPES = {"", "application/ecmascript", "application/javascript", "module", "text/ecmascript", "text/javascript"}
+
+    def __init__(self, text):
+        super().__init__(convert_charrefs=True)
+        self.scripts = []
+        self.current = None
+        self.feed(text)
+        self.close()
+
+    def handle_starttag(self, tag, attrs):
+        if tag == "script":
+            self.current = {"attrs": dict(attrs), "body": []}
+
+    def handle_data(self, data):
+        if self.current is not None:
+            self.current["body"].append(data)
+
+    def handle_endtag(self, tag):
+        if tag == "script" and self.current is not None:
+            attrs = self.current["attrs"]
+            if "src" not in attrs and attrs.get("type", "").strip().lower() in self.TYPES:
+                self.scripts.append((attrs, "".join(self.current["body"])))
+            self.current = None
+
+
+class NavigationPerformanceBaselineTests(unittest.TestCase):
+    def test_fixture_is_closed_hash_pinned_and_proves_each_exact_edit(self):
+        raw = FIXTURE_PATH.read_bytes()
+        self.assertEqual(hashlib.sha256(raw).hexdigest(), FIXTURE_SHA256)
+        fixture = navigation_performance_fixture()
+        self.assertEqual(set(fixture), FIXTURE_PATHS)
+        self.assertEqual(len(APPROVED_PATHS), 51)
+        self.assertEqual(FIXTURE_PATHS, APPROVED_PATHS | {WORKFLOW_PATH})
+
+        for path in sorted(APPROVED_PATHS):
+            with self.subTest(path=path):
+                entry = fixture[path]
+                current = (ROOT / path).read_bytes()
+                self.assertEqual(current, entry["after_bytes"])
+                self.assertEqual(
+                    hashlib.sha256(current).hexdigest(), entry["after_sha256"]
+                )
+                self.assertEqual(
+                    entry["before_bytes"].replace(
+                        entry["removed_block"].encode("utf-8"), b"", 1
+                    ),
+                    current,
+                )
+                self.assertEqual(
+                    normalize_navigation_performance(path, current.decode("utf-8")).encode("utf-8"),
+                    entry["before_bytes"],
+                )
+                before = entry["before_bytes"].decode("utf-8")
+                after = current.decode("utf-8")
+                for tag in ("pre", "code"):
+                    pattern = rf"<{tag}\b[^>]*>.*?</{tag}\s*>"
+                    self.assertEqual(
+                        re.findall(pattern, after, re.S | re.I),
+                        re.findall(pattern, before, re.S | re.I),
+                    )
+                self.assertEqual(
+                    ExecutableInlineScriptParser(after).scripts,
+                    ExecutableInlineScriptParser(before).scripts,
+                )
+
+    def test_workflow_restoration_is_exact_and_available_through_asset_api(self):
+        entry = navigation_performance_fixture()[WORKFLOW_PATH]
+        current = (ROOT / WORKFLOW_PATH).read_bytes()
+        self.assertEqual(current, entry["after_bytes"])
+        self.assertEqual(
+            restore_navigation_performance_bytes(WORKFLOW_PATH, current),
+            entry["before_bytes"],
+        )
+        self.assertEqual(
+            restore_latest_review_asset(WORKFLOW_PATH, current),
+            latest_review_fixture()[WORKFLOW_PATH]["base_bytes"],
+        )
+
+    def test_unknown_text_code_attribute_and_workflow_mutations_are_not_concealed(self):
+        tutorial = "tutorials/scrna-seq-basics.html"
+        current = (ROOT / tutorial).read_text(encoding="utf-8")
+        mutations = {
+            "text": current + "<!-- UNREVIEWED_TEXT_MUTATION -->\n",
+            "code": current + "<script>window.__UNREVIEWED_CODE_MUTATION__ = true;</script>\n",
+            "attribute": current.replace("<html", '<html data-unreviewed="true"', 1),
+        }
+        for label, changed in mutations.items():
+            with self.subTest(mutation=label):
+                self.assertNotEqual(changed, current)
+                self.assertEqual(normalize_navigation_performance(tutorial, changed), changed)
+                self.assertIn("UNREVIEWED_" if label != "attribute" else "data-unreviewed", normalize_latest_review(tutorial, changed))
+
+        workflow = (ROOT / WORKFLOW_PATH).read_bytes()
+        changed_workflow = workflow.replace(b"navigation-performance.json", b"unreviewed-performance.json", 1)
+        self.assertEqual(
+            restore_navigation_performance_bytes(WORKFLOW_PATH, changed_workflow),
+            changed_workflow,
+        )
+        self.assertEqual(
+            restore_latest_review_asset(WORKFLOW_PATH, changed_workflow),
+            changed_workflow,
+        )
+
+    def test_public_diff_is_exactly_the_51_approved_tutorial_files(self):
+        changed = set(subprocess.check_output(
+            ["git", "diff", "--name-only", BASE_COMMIT, "--"], cwd=ROOT, text=True
+        ).splitlines())
+        self.assertIn(WORKFLOW_PATH, changed)
+        self.assertEqual(changed - TEST_INFRASTRUCTURE_PATHS - {WORKFLOW_PATH}, APPROVED_PATHS)
+
+    def test_all_other_tracked_source_assets_and_site_surfaces_are_byte_preserved(self):
+        tracked = subprocess.check_output(
+            ["git", "ls-tree", "-r", "--name-only", BASE_COMMIT], cwd=ROOT, text=True
+        ).splitlines()
+        allowed = APPROVED_PATHS | {WORKFLOW_PATH}
+        for path in tracked:
+            if path.startswith("tests/") or path in allowed:
+                continue
+            if path.startswith(".github/") and path != WORKFLOW_PATH:
+                # Workflow/test configuration is not a public site surface.
+                continue
+            with self.subTest(path=path):
+                expected = subprocess.check_output(
+                    ["git", "show", f"{BASE_COMMIT}:{path}"], cwd=ROOT
+                )
+                self.assertEqual((ROOT / path).read_bytes(), expected)
+
+
+if __name__ == "__main__":
+    unittest.main()

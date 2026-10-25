@@ -13,6 +13,11 @@ from pathlib import Path
 import re
 import subprocess
 
+from navigation_performance_baseline import (
+    normalize_navigation_performance,
+    restore_navigation_performance_bytes,
+)
+
 ROOT = Path(__file__).resolve().parents[1]
 BASE_COMMIT = "36bc46d"
 FIXTURE_PATH = ROOT / "tests/fixtures/latest-review-edits.json"
@@ -173,6 +178,9 @@ def normalize_latest_review(relative_path, text):
     """Reverse only fixture-listed literal changes; leave unknown edits visible."""
     if not isinstance(text, str):
         raise TypeError("latest-review text normalization requires decoded text")
+    # First remove the exact, whole-file-pinned 2026-10-25 compatibility edit
+    # so the historical 30-path layer sees its unchanged published-PR bytes.
+    text = normalize_navigation_performance(relative_path, text)
     # While owners are still editing, the deliberately empty hash disables this
     # layer. The frozen manifest and pin are committed together after finalization.
     if not re.fullmatch(r"[0-9a-f]{64}", FIXTURE_SHA256):
@@ -188,9 +196,10 @@ def normalize_latest_review(relative_path, text):
 
 
 def restore_latest_review_asset(relative_path, data):
-    """Restore any reviewed file only for its exact complete current SHA-256 pin."""
+    """Restore any reviewed file only for its exact complete current SHA-256."""
     if not isinstance(data, bytes):
         raise TypeError("latest-review asset restoration requires bytes")
+    data = restore_navigation_performance_bytes(relative_path, data)
     if not re.fullmatch(r"[0-9a-f]{64}", FIXTURE_SHA256):
         return data
     entry = latest_review_fixture().get(relative_path)

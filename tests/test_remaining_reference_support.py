@@ -15,6 +15,10 @@ import unittest
 import xml.etree.ElementTree as ET
 
 from latest_review_baseline import normalize_latest_review
+from navigation_performance_baseline import (
+    APPROVED_PATHS as NAVIGATION_PERFORMANCE_PATHS,
+    normalize_navigation_performance,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 BASE_COMMIT = "d42231e"
@@ -34,17 +38,21 @@ SITEMAP_NS = {"s": "http://www.sitemaps.org/schemas/sitemap/0.9"}
 # cannot silently exempt a broad directory.
 TEST_INFRASTRUCTURE_PATHS = {
     ".github/workflows/tutorial-review.yml",
+    "tests/browser_navigation_performance.py",
     "tests/browser_sitewide_reference_fixes.py",
     "tests/fixtures/latest-review-edits.json",
+    "tests/fixtures/navigation-performance-edits.json",
     "tests/generate_latest_review_fixture.py",
     "tests/home_catalogue_baseline.py",
     "tests/latest_review_baseline.py",
+    "tests/navigation_performance_baseline.py",
     "tests/r_first_revision_baseline.py",
     "tests/reader_text_colour_baseline.py",
     "tests/remaining_validation_baseline.py",
     "tests/resource_content_baseline.py",
     "tests/test_home_catalogue_scope.py",
     "tests/test_latest_review_baseline.py",
+    "tests/test_navigation_performance_baseline.py",
     "tests/test_latest_sitemap_composition_negative.py",
     "tests/test_r_first_revision_baseline.py",
     "tests/test_reader_punctuation.py",
@@ -119,7 +127,8 @@ def baseline_text(path):
 
 
 def current_text(path):
-    return (ROOT / path).read_text(encoding="utf-8")
+    current = (ROOT / path).read_text(encoding="utf-8")
+    return normalize_navigation_performance(path, current)
 
 
 def tutorial_paths_at_base():
@@ -167,7 +176,13 @@ class RemainingReferenceSupportTests(unittest.TestCase):
             ["git", "diff", "--name-only", BASE_COMMIT, "--"],
             cwd=ROOT, text=True,
         ).splitlines())
-        public_changed = changed - TEST_INFRASTRUCTURE_PATHS
+        # A tutorial path is excluded only if strict whole-file restoration
+        # produces the exact d42231e bytes; otherwise it remains visible here.
+        performance_only = {
+            path for path in changed & NAVIGATION_PERFORMANCE_PATHS
+            if current_text(path).encode("utf-8") == baseline_bytes(path)
+        }
+        public_changed = changed - TEST_INFRASTRUCTURE_PATHS - performance_only
         self.assertEqual(public_changed, EXPECTED_PUBLIC_PATHS)
 
     def test_all_58_tutorials_preserve_pre_code_and_executable_inline_javascript(self):

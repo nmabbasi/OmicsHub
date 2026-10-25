@@ -59,7 +59,10 @@ class LatestReviewBaselineTests(unittest.TestCase):
         for relative_path, record in latest_review_fixture().items():
             with self.subTest(path=relative_path):
                 current = (baseline.ROOT / relative_path).read_bytes()
-                self.assertEqual(hashlib.sha256(current).hexdigest(), record["current_sha256"])
+                current_text = baseline.normalize_navigation_performance(
+                    relative_path, current.decode("utf-8")
+                ).encode("utf-8") if record["kind"] == "text" else current
+                self.assertEqual(hashlib.sha256(current_text).hexdigest(), record["current_sha256"])
                 if record["kind"] == "text":
                     normalized = normalize_latest_review(relative_path, current.decode("utf-8")).encode("utf-8")
                     base = record["base_bytes"]
