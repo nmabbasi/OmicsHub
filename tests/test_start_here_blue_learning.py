@@ -9,6 +9,7 @@ import unittest
 from reader_text_colour_baseline import (
     READER_TEXT_ASSET_PATHS, normalize_reader_text, restore_reader_text_asset,
 )
+from r_first_revision_baseline import R_FIRST_ASSET_PATHS, restore_r_first_asset
 
 ROOT = Path(__file__).resolve().parents[1]
 PUBLISHED = "45d660c5f53a0f4d8c2736057e2ab54fe7b8e718"
@@ -23,7 +24,7 @@ EVIDENCE = {
 CAUTIONS = (
     "not a required course", "not a bulk RNA-seq tutorial", "replicated single-cell samples",
     "not substitutes for basic QC", "authorized institutional access",
-    "not standardized on one Python or R version", "zero-byte placeholder files are not sequencing data",
+    "not standardized on one R or Python version", "zero-byte placeholder files are not sequencing data",
 )
 LEGACY_IDS = ("sh-foundation", "sh-language-choice", "sh-routes", "sh-curriculum", "sh-hpc")
 
@@ -101,6 +102,8 @@ class StartHereBlueLearningTests(unittest.TestCase):
                 current = (ROOT / relative).read_bytes()
                 if relative in READER_TEXT_ASSET_PATHS:
                     current = restore_reader_text_asset(relative, current)
+                elif relative in R_FIRST_ASSET_PATHS:
+                    current = restore_r_first_asset(relative, current)
                 self.assertEqual(current, git_bytes(PUBLISHED, relative))
 
     def test_html_changes_only_in_main_and_start_here_asset_versions(self):
@@ -109,7 +112,7 @@ class StartHereBlueLearningTests(unittest.TestCase):
         new_css = re.search(r'<link\b[^>]*href="(start-here\.css\?v=[^"]+)"', restored_source).group(1)
         old_js = re.search(r'<script\b[^>]*src="(start-here\.js\?v=[^"]+)"', self.old).group(1)
         new_js = re.search(r'<script\b[^>]*src="(start-here\.js\?v=[^"]+)"', self.source).group(1)
-        expected = self.old.replace(main(self.old), self.current_main, 1)
+        expected = self.old.replace(main(self.old), main(restored_source), 1)
         expected = expected.replace(old_css, new_css, 1).replace(old_js, new_js, 1)
         self.assertEqual(restored_source, expected)
         self.assertIn(f'href="start-here.css?v={CSS_VERSION}"', self.source)

@@ -1,0 +1,106 @@
+---
+title: "A reproducible report from a synthetic QC table"
+author: "The Omics Hub"
+date: "`r format(Sys.Date(), '%Y-%m-%d')`"
+output:
+  html_document:
+    toc: true
+    number_sections: true
+    df_print: paged
+bibliography: references.bib
+link-citations: true
+---
+
+# Purpose and provenance
+
+This is a small **synthetic teaching example**, not a biological analysis. The rows in `data/synthetic_qc.csv` are invented. The date in the report header is the date this document was knitted; it is not the experiment, download, or analysis date. Do not cite these rows as observations. For real work, cite the original data source and the methods actually used, and record accessions, retrieval dates, reference releases, and any access restrictions in the report.
+
+This file demonstrates the R Markdown report-assembly workflow described in the [Research Reporting and Interpretation lesson](https://theomicshub.com/tutorials/research-reporting-interpretation.html). The citation to the R Markdown Cookbook describes the document tool, not the synthetic values or a scientific result [@xie2020].
+
+# Declare and validate the input schema
+
+The input contract is one row per sample with exactly these columns, in this order: `sample_id` (unique, non-empty text), `condition` (non-empty label), `batch` (non-empty label), `mapped_reads` (positive whole-number count), and `pct_mapped` (finite percentage from 0 to 100). The code stops on a schema or value error rather than silently repairing the table.
+
+```{r validate-input}
+input_path <- "data/synthetic_qc.csv"
+if (!file.exists(input_path)) {
+  stop("Missing ", input_path, ". Run this report from its example project directory.")
+}
+qc <- read.csv(input_path, check.names = FALSE, stringsAsFactors = FALSE)
+expected_columns <- c("sample_id", "condition", "batch", "mapped_reads", "pct_mapped")
+if (!identical(names(qc), expected_columns)) {
+  stop("Input schema mismatch. Expected columns in order: ",
+       paste(expected_columns, collapse = ", "))
+}
+if (nrow(qc) == 0L || anyNA(qc$sample_id) || any(!nzchar(trimws(qc$sample_id))) ||
+    anyDuplicated(qc$sample_id)) {
+  stop("Expected at least one row with a unique, non-empty sample_id")
+}
+for (column in c("condition", "batch")) {
+  if (anyNA(qc[[column]]) || any(!nzchar(trimws(qc[[column]])))) {
+    stop("Column ", column, " must contain non-empty labels")
+  }
+}
+for (column in c("mapped_reads", "pct_mapped")) {
+  if (!is.numeric(qc[[column]]) || anyNA(qc[[column]]) ||
+      any(!is.finite(qc[[column]]))) {
+    stop("Column ", column, " must contain finite numeric values")
+  }
+}
+if (any(qc$mapped_reads <= 0) || any(qc$mapped_reads != floor(qc$mapped_reads))) {
+  stop("mapped_reads must be positive whole-number counts")
+}
+if (any(qc$pct_mapped < 0 | qc$pct_mapped > 100)) {
+  stop("pct_mapped must be recorded as percentages between 0 and 100")
+}
+
+knitr::kable(qc, caption = "Invented sample-level QC values; not biological observations.")
+```
+
+# Summarize only what this fixture supports
+
+The table reports a descriptive range. It does not test a treatment effect. There are only three invented rows, and condition and batch are not balanced, so this fixture cannot support a biological comparison or causal interpretation. For real data, verify the experimental unit, independent sample count, design, and provenance before choosing a statistical summary.
+
+```{r summarize-and-plot}
+qc_summary <- data.frame(
+  n_samples = nrow(qc),
+  mapped_reads_min = min(qc$mapped_reads),
+  mapped_reads_max = max(qc$mapped_reads),
+  pct_mapped_min = min(qc$pct_mapped),
+  pct_mapped_max = max(qc$pct_mapped)
+)
+knitr::kable(qc_summary, caption = "Descriptive range for the synthetic fixture.")
+
+if (!dir.exists("results")) dir.create("results", recursive = TRUE)
+write.csv(qc, "results/validated_qc.csv", row.names = FALSE, na = "")
+write.csv(qc_summary, "results/qc_summary.csv", row.names = FALSE, na = "")
+
+local({
+  old_par <- par(no.readonly = TRUE)
+  on.exit(par(old_par), add = TRUE)
+  barplot(qc$pct_mapped, names.arg = qc$sample_id, ylim = c(0, 100),
+          ylab = "Reads mapped (%)", xlab = "Synthetic sample",
+          main = "Invented QC values: descriptive only", col = "steelblue")
+})
+```
+
+The CSVs and plot are generated outputs. They should be reviewed before sharing and are not part of the source lesson. A checksum can show that a file has not changed; it does not anonymize it, prove its provenance, or establish biological validity.
+
+# Record software and report boundary
+
+A successful knit confirms that this small document rendered in the current environment. It does not validate an upstream analysis or guarantee identical output on another operating system. Record the exact run date separately from any experimental or data-retrieval date. For a project, keep the `.Rmd`, input schema, source data or access instructions, code revision, and output provenance together.
+
+```{r software-versions}
+cat("Report generated:", format(Sys.Date(), "%Y-%m-%d"), "\n")
+cat("R:", R.version.string, "\n")
+cat("rmarkdown:", as.character(utils::packageVersion("rmarkdown")), "\n")
+cat("knitr:", as.character(utils::packageVersion("knitr")), "\n")
+cat("Pandoc:", as.character(rmarkdown::pandoc_version()), "\n\n")
+utils::sessionInfo()
+```
+
+# Citation and claims check
+
+This report cites the document-tool reference listed in `references.bib`. The synthetic CSV has no external data citation because it is invented. Replace that statement for real work: cite the original dataset or accession, the publications or protocols that directly support methods and claims, and each relevant software package using its recommended citation. Verify author names, year, title, version, DOI or URL, and access date against the source itself. Never copy a citation merely because it appears in a template, and never attribute a biological observation to the example fixture.
+
+# References

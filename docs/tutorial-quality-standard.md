@@ -6,6 +6,24 @@ Before adding a page, answer: **What can this reader do or decide afterward that
 
 State the audience, what they should already know, and whether the page is a hands-on lab, conceptual guide, advanced template or reference. Link the relevant prerequisite. Distinguish required preparation from optional depth, accounts, HPC access and paid tools. Do not require both R and Python unless the exercise genuinely uses both.
 
+## Keep general analysis teaching R-first
+
+For general-purpose data analysis and visualization lessons, make R the primary worked path. Use R Markdown when a literate, reproducible report is part of the learner outcome. If a Python route teaches the same task, offer it as a clearly labelled alternate tab, with R physically first and selected by default. Preserve a reader's explicit language choice for the session, and let a code fragment reveal its own language without silently changing that preference.
+
+Only pair examples when they perform the same function on comparable inputs, preserve the same scientific assumptions, and lead to interpretable equivalent outputs. Do not add a Python route merely for symmetry, or imply that a Python-only tool has an R equivalent. Keep language- or tool-specific instruction in its natural form, including Python fundamentals, AI and model tooling, command-line workflows, and APIs without a genuine counterpart.
+
+When migrating a Python-led analysis lesson, first verify that the lesson is general analysis rather than tool training. Build and test the complete R route, including input checks, preprocessing, output and interpretation, before presenting Python as an alternate. Keep both source routes visible without JavaScript, fingerprint their reviewed ranges, and test tab order, the default, session preference, keyboard controls and fragment links. Migrate one lesson at a time; do not perform a sitewide language rewrite without validating each task and output.
+
+## Make R Markdown the primary report-assembly workflow
+
+When the learner outcome is a literate, reproducible analysis report, teach a runnable `.Rmd` workflow first. Quarto may be described as an optional alternative when a project or audience requires it; it does not replace the primary R Markdown lesson path. Keep the example bounded and avoid implying that report rendering itself validates the upstream biological analysis.
+
+A public report example should include its `.Rmd` source, only the small public or invented input fixtures needed to run it, and any verified bibliography source. Declare the input schema and units, check required columns, identifiers, types and ranges, and stop with a useful error when assumptions fail. Explain the knit command, R and package requirements, Pandoc requirement, expected output locations and a small deliberate failure. Record the R, package, Pandoc and session versions actually used. A knit date is not a sample collection, data retrieval or experiment date. Version records aid diagnosis but do not guarantee a bitwise-identical environment.
+
+Treat citations as evidence, not decoration. Cite the source of real data and the methods, software or publications actually used. Check author, title, year, version, DOI or URL against the cited source; do not fabricate references or leave template citations that do not support the claims. Clearly distinguish citations for report tooling from citations for scientific methods or data. Synthetic values have no scientific provenance and must never be presented or cited as observations.
+
+Keep the public repository limited to source code and authorized public or invented teaching data. Do not publish knitted HTML, generated figures or tables, private execution outputs, research datasets, credentials, patient identifiers or confidential paths. Review generated outputs privately before sharing them; a checksum verifies bytes, not privacy, provenance or biological validity.
+
 ## Match the evidence to the format
 
 - **Hands-on lab:** provide accessible public or invented inputs, a bounded route, environment requirements, an inspectable result, a deliberate failure or troubleshooting case, and a small variation with feedback. Test the code displayed on the page, not an unlinked replacement.

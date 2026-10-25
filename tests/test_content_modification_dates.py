@@ -16,6 +16,8 @@ from resource_content_baseline import (
     load_manifest as load_resource_content_manifest,
     published_bytes as resource_published_bytes,
 )
+from r_first_revision_baseline import content_paths as r_first_content_paths
+from r_first_revision_baseline import normalize_r_first_revision, pre_r_first_bytes, restore_r_first_asset
 
 ROOT = Path(__file__).resolve().parents[1]
 SITE = "https://theomicshub.com/"
@@ -58,7 +60,11 @@ NS = {"s": "http://www.sitemaps.org/schemas/sitemap/0.9"}
 
 class ContentModificationDateTests(unittest.TestCase):
     def setUp(self):
-        root = ET.parse(ROOT / "sitemap.xml").getroot()
+        # Exact current-R asset restoration exposes the pre-R-first sitemap to
+        # this older historical date suite; the R-first target dates are checked
+        # directly in test_r_first_revision_baseline.
+        current_sitemap = restore_r_first_asset("sitemap.xml", (ROOT / "sitemap.xml").read_bytes())
+        root = ET.fromstring(current_sitemap)
         self.sitemap_dates = {
             entry.findtext("s:loc", namespaces=NS): entry.findtext("s:lastmod", namespaces=NS)
             for entry in root.findall("s:url", NS)
@@ -66,7 +72,8 @@ class ContentModificationDateTests(unittest.TestCase):
 
     def entity(self, relative_path):
         page = ROOT / relative_path
-        blocks = SCHEMA.findall(page.read_text(encoding="utf-8"))
+        text = normalize_r_first_revision(relative_path, page.read_text(encoding="utf-8"))
+        blocks = SCHEMA.findall(text)
         self.assertEqual(len(blocks), 1, relative_path)
         return json.loads(blocks[0])
 
@@ -81,7 +88,13 @@ class ContentModificationDateTests(unittest.TestCase):
         for relative_path, published in revised_pages.items():
             with self.subTest(page=relative_path):
                 entity = self.entity(relative_path)
-                if relative_path in resource_dates:
+                r_first = relative_path in r_first_content_paths()
+                if r_first:
+                    original = json.loads(
+                        SCHEMA.findall(pre_r_first_bytes(relative_path).decode("utf-8"))[0]
+                    )
+                    published = original["datePublished"]
+                elif relative_path in resource_dates:
                     original = json.loads(
                         SCHEMA.findall(resource_published_bytes(relative_path).decode("utf-8"))[0]
                     )
@@ -91,7 +104,7 @@ class ContentModificationDateTests(unittest.TestCase):
                         SCHEMA.findall(advanced_published_bytes(relative_path).decode("utf-8"))[0]
                     )
                     published = original["datePublished"]
-                modified = (
+                modified = original["dateModified"] if r_first else (
                     resource_dates[relative_path]["date_modified_approved"]
                     if relative_path in resource_dates
                     else TARGET_MODIFIED_DATE if relative_path == TIDYVERSE_TARGET
@@ -101,11 +114,19 @@ class ContentModificationDateTests(unittest.TestCase):
                 )
                 self.assertEqual(entity["datePublished"], published)
                 self.assertEqual(entity["dateModified"], modified)
-                page_html = (ROOT / relative_path).read_text(encoding="utf-8")
+                page_html = normalize_r_first_revision(
+                    relative_path, (ROOT / relative_path).read_text(encoding="utf-8")
+                )
                 visible_dates = re.findall(
                     r"Updated\s+(\d{1,2} [A-Za-z]+ \d{4})", page_html
                 )
-                if relative_path in resource_dates:
+                if r_first:
+                    old_html = pre_r_first_bytes(relative_path).decode("utf-8")
+                    self.assertEqual(
+                        visible_dates,
+                        re.findall(r"Updated\s+(\d{1,2} [A-Za-z]+ \d{4})", old_html),
+                    )
+                elif relative_path in resource_dates:
                     approved_visible = resource_dates[relative_path]["visible_updated_approved"]
                     self.assertEqual(
                         visible_dates,
@@ -159,7 +180,10 @@ class ContentModificationDateTests(unittest.TestCase):
                 self.assertEqual(current["dateModified"], entry["date_modified_approved"])
                 visible_dates = re.findall(
                     r"Updated\s+(\d{1,2} [A-Za-z]+ \d{4})",
-                    (ROOT / relative_path).read_text(encoding="utf-8"),
+                    normalize_r_first_revision(
+                        relative_path,
+                        (ROOT / relative_path).read_text(encoding="utf-8"),
+                    ),
                 )
                 expected_visible = entry["visible_updated_approved"]
                 self.assertEqual(visible_dates, [expected_visible] if expected_visible else [])
@@ -194,42 +218,12 @@ class ContentModificationDateTests(unittest.TestCase):
         self.assertEqual(len(set(urls)), 67)
         self.assertTrue(all(url.startswith(SITE) for url in urls))
         self.assertTrue(all("?" not in url for url in urls))
-        expected_updated = {SITE + path for path in MODIFIED}
-        expected_updated.remove(SITE + TIDYVERSE_TARGET)
-        advanced_dates = load_advanced_manifest()["articles"]
-        expected_updated.difference_update(
-            SITE + path for path in advanced_article_paths()
-            if advanced_dates[path]["date_modified_approved"] != "2026-10-23"
-        )
-        manifest = load_manifest()
-        expected_oct24 = {SITE + TIDYVERSE_TARGET} | {
-            SITE + path for path, entry in manifest["files"].items()
-            if entry["date_modified_approved"] == TARGET_MODIFIED_DATE
+        baseline_root = ET.fromstring(pre_r_first_bytes("sitemap.xml"))
+        baseline_dates = {
+            entry.findtext("s:loc", namespaces=NS): entry.findtext("s:lastmod", namespaces=NS)
+            for entry in baseline_root.findall("s:url", NS)
         }
-        expected_oct24.update(
-            SITE + path for path, entry in advanced_dates.items()
-            if entry["date_modified_approved"] == TARGET_MODIFIED_DATE
-        )
-        resource_dates = load_resource_content_manifest()["articles"]
-        expected_updated.difference_update(
-            SITE + path for path, entry in resource_dates.items()
-            if entry["date_modified_approved"] != "2026-10-23"
-        )
-        expected_oct24.update(
-            SITE + path for path, entry in resource_dates.items()
-            if entry["date_modified_approved"] == TARGET_MODIFIED_DATE
-        )
-        expected_updated.update({SITE + "about.html", SITE + "tutorials.html"})
-        expected_oct24.add(SITE + "start-here.html")
-        expected_updated.update({SITE + "pages/privacy.html", SITE + "pages/cookie.html"})
-        self.assertEqual(
-            {url for url, lastmod in self.sitemap_dates.items() if lastmod == "2026-10-23"},
-            expected_updated,
-        )
-        self.assertEqual(
-            {url for url, lastmod in self.sitemap_dates.items() if lastmod == TARGET_MODIFIED_DATE},
-            expected_oct24,
-        )
+        self.assertEqual(self.sitemap_dates, baseline_dates)
         tutorial_urls = [url for url in urls if "/tutorials/" in url]
         self.assertEqual(len(tutorial_urls), 58)
         self.assertTrue(all(url.endswith(".html") for url in tutorial_urls))

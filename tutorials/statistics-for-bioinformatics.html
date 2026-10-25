@@ -73,7 +73,7 @@ gtag('consent', 'default', {
     }
   },
   "datePublished": "2026-08-15",
-  "dateModified": "2026-10-23",
+  "dateModified": "2026-10-25",
   "url": "https://theomicshub.com/tutorials/statistics-for-bioinformatics.html",
   "name": "Statistics for Bioinformatics",
   "isPartOf": {
@@ -82,8 +82,8 @@ gtag('consent', 'default', {
     "url": "https://theomicshub.com/"
   },
   "inLanguage": "en"
-}</script><link href="../tutorial-library.css" rel="stylesheet"/><link href="../tutorial-reader.css?v=20261024-reader-ui-v3" rel="stylesheet"/>
-<link href="../tutorial-navigation.css?v=20261025-reader-colours-v1" rel="stylesheet"/><link href="../back-to-top.css?v=20261024-reader-ui-v3" rel="stylesheet"/>
+}</script><link href="../tutorial-library.css" rel="stylesheet"/><link href="../tutorial-reader.css?v=20261025-r-first-v1" rel="stylesheet"/>
+<link href="../tutorial-navigation.css?v=20261025-learning-navigation-v2" rel="stylesheet"/><link href="../back-to-top.css?v=20261025-r-first-v1" rel="stylesheet"/>
 </head>
 <body class="bg-white text-gray-900">
 <script>
@@ -169,7 +169,7 @@ function toggleMobileMenu() {
 <div class="mb-12 rounded-2xl overflow-hidden shadow-lg border border-gray-100">
 <img alt="Statistics for Bioinformatics" class="w-full aspect-video object-cover" decoding="async" loading="eager" src="../images/statistics-bioinformatics-workstation.webp" width="1024" height="1024"/>
 </div>
-<nav aria-label="Learning path navigation" class="reader-toolbar"><a href="../start-here.html#sh-language-choice" class="reader-toolbar__previous"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5m0 0 7 7m-7-7 7-7"/></svg><span class="reader-toolbar__copy"><small>Previous path choice</small><strong>Back to R or Python choices</strong></span></a><a data-catalogue-return="" href="../tutorials.html" class="reader-toolbar__library"><span class="reader-toolbar__library-mark" aria-hidden="true">▤</span><span><small>Browse</small><strong>All tutorials</strong></span></a><a href="#reader-course-navigation" class="reader-toolbar__next"><span class="reader-toolbar__copy"><small>Several directions</small><strong>Choose a next step</strong></span><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14m0 0 7-7m-7 7-7-7"/></svg></a></nav>
+<nav aria-label="Learning path navigation" class="reader-toolbar"><span class="reader-toolbar__heading">Learning path</span><a href="../start-here.html#sh-language-choice" class="reader-toolbar__previous"><span class="reader-toolbar__direction"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5m0 0 7 7m-7-7 7-7"/></svg></span><span class="reader-toolbar__copy"><small>Previous path choice</small><strong>Back to R or Python choices</strong></span></a><a data-catalogue-return="" href="../tutorials.html" class="reader-toolbar__library"><span class="reader-toolbar__library-mark" aria-hidden="true"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="6" height="6" rx="1.3"/><rect x="14" y="4" width="6" height="6" rx="1.3"/><rect x="4" y="14" width="6" height="6" rx="1.3"/><rect x="14" y="14" width="6" height="6" rx="1.3"/></svg></span><span><small>Browse</small><strong>All tutorials</strong></span></a><a href="#reader-course-navigation" class="reader-toolbar__next"><span class="reader-toolbar__copy"><small>Several directions</small><strong>Choose a next step</strong></span><span class="reader-toolbar__direction"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14m0 0 7-7m-7 7-7-7"/></svg></span></a></nav>
 <article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--decision-guide">
 <p class="lesson-lead">A two-group test is only meaningful after you decide what counts as an independent sample. This guide uses one numeric feature measured in independent control and treated biological samples. It walks through the input contract, a Welch comparison, its uncertainty, and the separate problem of testing many features.</p>
 <section class="lesson-summary tutorial-learning-contract" data-tutorial-format="conceptual-guide" aria-label="Learning format">
@@ -185,6 +185,38 @@ function toggleMobileMenu() {
 mkdir -p data results
 printf "value\n8.9\n9.8\n10.4\n9.5\n" &gt; data/control.csv
 printf "value\n11.2\n10.7\n12.1\n11.4\n" &gt; data/treated.csv
+</code></pre>
+<h3>Equivalent test in base R</h3>
+<p>R's built-in <code>t.test</code> uses Welch's two-sample method by default. Save the displayed code as <code>compare_groups.R</code> and run it with the same two CSV files. This branch uses base R only and writes the estimate, interval, statistic, degrees of freedom, and p-value.</p>
+<pre><code>#!/usr/bin/env Rscript
+args &lt;- commandArgs(trailingOnly = TRUE)
+if (length(args) != 3) stop("Usage: Rscript compare_groups.R CONTROL.csv TREATED.csv OUTDIR")
+read_values &lt;- function(path) {
+  d &lt;- read.csv(path, check.names = FALSE, colClasses = "character",
+                na.strings = character(), blank.lines.skip = FALSE)
+  if (!("value" %in% names(d))) stop(paste(path, "must contain a value column"))
+  raw &lt;- trimws(as.character(d$value))
+  blank &lt;- is.na(d$value) | raw == ""
+  x &lt;- suppressWarnings(as.numeric(raw[!blank]))
+  if (anyNA(x)) stop(paste(path, "contains a nonblank value that is not numeric"))
+  cat(path, ": discarded ", sum(blank), " blank value(s)\n", sep = "")
+  if (length(x) &lt; 2 || any(!is.finite(x))) stop(paste(path, "needs at least two finite numeric values"))
+  if (var(x) == 0) stop(paste(path, "sample variance is zero; inspect these data"))
+  x
+}
+ctrl &lt;- read_values(args[1])
+trt &lt;- read_values(args[2])
+dir.create(args[3], recursive = TRUE, showWarnings = FALSE)
+res &lt;- t.test(trt, ctrl, var.equal = FALSE, conf.level = 0.95)
+write.csv(data.frame(
+  n_control = length(ctrl), n_treated = length(trt),
+  mean_difference_treated_minus_control = mean(trt) - mean(ctrl),
+  ci95_low = res$conf.int[1], ci95_high = res$conf.int[2],
+  statistic = unname(res$statistic), df = unname(res$parameter), p_value = res$p.value
+), file.path(args[3], "comparison_R.csv"), row.names = FALSE)
+</code></pre>
+<pre><code>Rscript --version
+Rscript compare_groups.R data/control.csv data/treated.csv results
 </code></pre>
 <p>For Python, use Python 3 and install NumPy, pandas, and SciPy 1.11 or newer in an environment you manage; save the displayed code as <code>compare_groups.py</code>. No R packages are needed for the base R route. The Python script tests one feature. Its Welch confidence interval is for the treated-minus-control mean difference; Cohen's d is a standardized descriptive effect estimate, not a substitute for the difference in the feature's original units.</p>
 <pre><code>python -m pip install numpy pandas 'scipy&gt;=1.11'
@@ -245,38 +277,6 @@ pd.DataFrame([{
 }]).to_csv(outdir / "comparison.csv", index=False)
 print(f"Wrote {outdir / 'comparison.csv'}")
 </code></pre>
-<h3>Equivalent test in base R</h3>
-<p>R's built-in <code>t.test</code> uses Welch's two-sample method by default. Save the displayed code as <code>compare_groups.R</code> and run it with the same two CSV files. This branch uses base R only and writes the estimate, interval, statistic, degrees of freedom, and p-value.</p>
-<pre><code>#!/usr/bin/env Rscript
-args &lt;- commandArgs(trailingOnly = TRUE)
-if (length(args) != 3) stop("Usage: Rscript compare_groups.R CONTROL.csv TREATED.csv OUTDIR")
-read_values &lt;- function(path) {
-  d &lt;- read.csv(path, check.names = FALSE, colClasses = "character",
-                na.strings = character(), blank.lines.skip = FALSE)
-  if (!("value" %in% names(d))) stop(paste(path, "must contain a value column"))
-  raw &lt;- trimws(as.character(d$value))
-  blank &lt;- is.na(d$value) | raw == ""
-  x &lt;- suppressWarnings(as.numeric(raw[!blank]))
-  if (anyNA(x)) stop(paste(path, "contains a nonblank value that is not numeric"))
-  cat(path, ": discarded ", sum(blank), " blank value(s)\n", sep = "")
-  if (length(x) &lt; 2 || any(!is.finite(x))) stop(paste(path, "needs at least two finite numeric values"))
-  if (var(x) == 0) stop(paste(path, "sample variance is zero; inspect these data"))
-  x
-}
-ctrl &lt;- read_values(args[1])
-trt &lt;- read_values(args[2])
-dir.create(args[3], recursive = TRUE, showWarnings = FALSE)
-res &lt;- t.test(trt, ctrl, var.equal = FALSE, conf.level = 0.95)
-write.csv(data.frame(
-  n_control = length(ctrl), n_treated = length(trt),
-  mean_difference_treated_minus_control = mean(trt) - mean(ctrl),
-  ci95_low = res$conf.int[1], ci95_high = res$conf.int[2],
-  statistic = unname(res$statistic), df = unname(res$parameter), p_value = res$p.value
-), file.path(args[3], "comparison_R.csv"), row.names = FALSE)
-</code></pre>
-<pre><code>Rscript --version
-Rscript compare_groups.R data/control.csv data/treated.csv results
-</code></pre>
 <div class="lesson-result"><p><strong>Output:</strong> Python writes <code>comparison.csv</code> with retained sample counts, group means and standard deviations, treated-minus-control estimate, Welch statistic/degrees of freedom/p-value, a 95% confidence interval, and pooled-SD Cohen's d. Base R writes the same core estimate, interval, statistic, degrees of freedom, and p-value to <code>comparison_R.csv</code>. The estimate and interval retain the feature's measurement units. A run on the synthetic fixture is a software check only; it does not establish a biological effect.</p></div>
 <h2>Inspect the data and interpret the comparison</h2>
 <ul>
@@ -291,6 +291,29 @@ Rscript compare_groups.R data/control.csv data/treated.csv results
 <p>Choose either language below. Each adjusts the same four synthetic p-values in their original order and writes an adjusted-value file plus a 0/1 rejection file. For real analyses, obtain p-values from a design-appropriate model for every feature, document the tested family and filtering rules, then adjust that complete vector. These four numbers are only a software demonstration.</p>
 <p>First, create the shared input below in a Bash terminal, not an R or Python console. This step applies to both routes. Then save and run only the script for your chosen language; you do not need the other language's installation or run commands.</p>
 <pre id="statistics-bh-shared-input"><code>printf "0.01\n0.04\n0.20\n0.80\n" &gt; pvalues_all_features.txt
+</code></pre>
+<h3>Base R with p.adjust</h3>
+<p>This equivalent route uses the base R <code>p.adjust</code> function with method <code>BH</code>; it needs no add-on packages. Save as <code>adjust_features.R</code> and run it in the same disposable working directory as the shared input above; skip the Python branch entirely.</p>
+<pre><code>#!/usr/bin/env Rscript
+lines &lt;- trimws(readLines("pvalues_all_features.txt", warn = FALSE))
+if (length(lines) == 0 || any(lines == "")) {
+  stop("Expected one nonblank p-value per line")
+}
+pvals &lt;- suppressWarnings(as.numeric(lines))
+if (anyNA(pvals)) stop("Every input line must be numeric")
+if (any(!is.finite(pvals)) || any(pvals &lt; 0 | pvals &gt; 1)) {
+  stop("P-values must be finite and between 0 and 1")
+}
+alpha &lt;- 0.05
+p_adjusted &lt;- p.adjust(pvals, method = "BH")
+write.table(p_adjusted, "pvalues_adjusted.txt", row.names = FALSE,
+            col.names = FALSE, quote = FALSE)
+write.table(as.integer(p_adjusted &lt;= alpha), "discoveries_fdr05.txt",
+            row.names = FALSE, col.names = FALSE, quote = FALSE)
+cat("adjusted:", paste(signif(p_adjusted, 8), collapse = " "), "\n")
+cat("reject:", as.integer(p_adjusted &lt;= alpha), "\n")</code></pre>
+<pre><code>Rscript --version
+Rscript adjust_features.R
 </code></pre>
 <h3>Python with statsmodels</h3>
 <p>This optional Python branch requires Python 3, NumPy, and statsmodels. Save the code as <code>adjust_features.py</code>. After saving it, run these commands in the same disposable working directory as the shared input.</p>
@@ -316,29 +339,6 @@ np.savetxt("pvalues_adjusted.txt", p_adjusted)
 np.savetxt("discoveries_fdr05.txt", reject.astype(int), fmt="%d")
 print("adjusted:", p_adjusted)
 print("reject:", reject.astype(int))</code></pre>
-<h3>Base R with p.adjust</h3>
-<p>This equivalent route uses the base R <code>p.adjust</code> function with method <code>BH</code>; it needs no add-on packages. Save as <code>adjust_features.R</code> and run it in the same disposable working directory as the shared input above; skip the Python branch entirely.</p>
-<pre><code>#!/usr/bin/env Rscript
-lines &lt;- trimws(readLines("pvalues_all_features.txt", warn = FALSE))
-if (length(lines) == 0 || any(lines == "")) {
-  stop("Expected one nonblank p-value per line")
-}
-pvals &lt;- suppressWarnings(as.numeric(lines))
-if (anyNA(pvals)) stop("Every input line must be numeric")
-if (any(!is.finite(pvals)) || any(pvals &lt; 0 | pvals &gt; 1)) {
-  stop("P-values must be finite and between 0 and 1")
-}
-alpha &lt;- 0.05
-p_adjusted &lt;- p.adjust(pvals, method = "BH")
-write.table(p_adjusted, "pvalues_adjusted.txt", row.names = FALSE,
-            col.names = FALSE, quote = FALSE)
-write.table(as.integer(p_adjusted &lt;= alpha), "discoveries_fdr05.txt",
-            row.names = FALSE, col.names = FALSE, quote = FALSE)
-cat("adjusted:", paste(signif(p_adjusted, 8), collapse = " "), "\n")
-cat("reject:", as.integer(p_adjusted &lt;= alpha), "\n")</code></pre>
-<pre><code>Rscript --version
-Rscript adjust_features.R
-</code></pre>
 <p>For this fixture, BH-adjusted values are [0.04, 0.08, 0.2666667, 0.8] (approximately), and rejection flags at alpha 0.05 are [1, 0, 0, 0]. Adjusted values quantify multiplicity-adjusted evidence; a rejection is not proof of a biological effect. Both scripts preserve input order, so keep feature IDs in a parallel file and verify row alignment before joining results. Report the correction procedure, alpha, number and definition of tests, raw and adjusted p-values, effect estimates, and uncertainty where available. Non-numeric, non-finite, or out-of-range p-values are errors, not values to silently discard.</p>
 <h2>Choose a method that matches the design</h2>
 <ul>
@@ -371,15 +371,16 @@ Rscript adjust_features.R
 </div>
 </section>
 <nav aria-label="Learning path continuation" class="reader-sequence" id="reader-course-navigation">
-<div class="reader-sequence-heading"><h2>Keep exploring</h2>
+<div class="reader-sequence-heading"><p class="reader-sequence-kicker">Continue learning</p><h2>Keep exploring</h2>
 <p class="reader-sequence-position"><span class="reader-sequence-route-label">Learning route</span><strong>Foundations · shared statistics</strong></p></div>
 <div class="reader-sequence-grid">
+<a href="../start-here.html#sh-language-choice" class="reader-path-card reader-path-card--previous"><span class="reader-path-card__copy"><span class="reader-path-card__eyebrow">Back to path</span><strong class="reader-path-card__title">Back to R or Python choices</strong></span><span class="reader-path-card__arrow"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5m0 0 7 7m-7-7 7-7"/></svg></span></a>
+<div class="reader-sequence-choices">
 <a href="experimental-design-batch-effects.html" rel="next" class="reader-path-card reader-path-card--suggested"><span class="reader-path-card__copy"><span class="reader-path-card__eyebrow">Suggested next step</span><strong class="reader-path-card__title">Experimental Design and Batch Effects</strong><span class="reader-path-card__reason">Apply statistical reasoning to replication, confounding, and batch structure.</span></span><span class="reader-path-card__arrow"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14m0 0-7-7m7 7-7 7"/></svg></span></a>
 <a href="data-visualization-fundamentals.html" rel="next" class="reader-path-card reader-path-card--suggested"><span class="reader-path-card__copy"><span class="reader-path-card__eyebrow">Suggested next step</span><strong class="reader-path-card__title">Data Visualization Fundamentals</strong><span class="reader-path-card__reason">Optional: review plotting choices for communicating analytical evidence.</span></span><span class="reader-path-card__arrow"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14m0 0-7-7m7 7-7 7"/></svg></span></a>
 <a href="single-cell-deconvolution.html" rel="next" class="reader-path-card reader-path-card--suggested"><span class="reader-path-card__copy"><span class="reader-path-card__eyebrow">Suggested next step</span><strong class="reader-path-card__title">Bulk RNA-seq cell-type deconvolution with MuSiC</strong><span class="reader-path-card__reason">Explore only if bulk deconvolution matches your data and question.</span></span><span class="reader-path-card__arrow"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14m0 0-7-7m7 7-7 7"/></svg></span></a>
-</div><div class="reader-sequence-utilities">
-<a href="../start-here.html#sh-language-choice" class="reader-path-card reader-path-card--previous"><span class="reader-path-card__copy"><span class="reader-path-card__eyebrow">Back to path</span><strong class="reader-path-card__title">Back to R or Python choices</strong></span><span class="reader-path-card__arrow"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5m0 0 7 7m-7-7 7-7"/></svg></span></a>
-<a data-catalogue-return="" href="../tutorials.html" class="reader-path-card reader-path-card--library"><span class="reader-path-card__copy"><span class="reader-path-card__eyebrow">Browse the collection</span><strong class="reader-path-card__title">All tutorials</strong></span><span class="reader-path-card__arrow" aria-hidden="true">▤</span></a>
+</div></div><div class="reader-sequence-utilities">
+<a data-catalogue-return="" href="../tutorials.html" class="reader-path-card reader-path-card--library"><span class="reader-path-card__copy"><span class="reader-path-card__eyebrow">Browse the collection</span><strong class="reader-path-card__title">All tutorials</strong></span><span class="reader-path-card__arrow" aria-hidden="true"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="6" height="6" rx="1.3"/><rect x="14" y="4" width="6" height="6" rx="1.3"/><rect x="4" y="14" width="6" height="6" rx="1.3"/><rect x="14" y="14" width="6" height="6" rx="1.3"/></svg></span></a>
 </div><div class="reader-sequence-footer"><p class="reader-sequence-note">Suggested links are not a completion tracker or a required linear course.</p></div></nav>
 </div></div></div>
 </div>
@@ -450,7 +451,7 @@ Rscript adjust_features.R
 <!-- Marked.js for markdown rendering -->
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <!-- Custom JS - loads tutorials from manifest -->
-<script src="../script.js?v=20261024-reader-ui-v3"></script>
+<script src="../script.js?v=20261025-r-first-v1"></script>
 <script id="navigation-accessibility">
 (function () {
   const legalButton = document.getElementById("legal-menu-button");
@@ -499,10 +500,10 @@ Rscript adjust_features.R
 })();
 </script>
 <script src="../assets/vendor/prism/prism-1.29.0.js"></script>
-<script src="../tutorial-code-data.js?v=20261024-reader-ui-v3"></script>
-<script src="../code-tabs.js?v=20261024-reader-ui-v3"></script>
-<script src="../copy-code.js?v=20261024-reader-ui-v3"></script>
-<script src="../subscribe-fab.js?v=20261024-reader-ui-v3"></script>
+<script src="../tutorial-code-data.js?v=20261025-r-first-v1"></script>
+<script src="../code-tabs.js?v=20261025-r-first-v1"></script>
+<script src="../copy-code.js?v=20261025-r-first-v1"></script>
+<script src="../subscribe-fab.js?v=20261025-r-first-v1"></script>
 <!-- Cookie Consent Banner -->
 <div class="fixed bottom-0 inset-x-0 z-[9999] transition-transform duration-500" id="cookie-consent-banner" style="font-family:'Inter',system-ui,sans-serif;">
 <div class="mx-auto max-w-4xl px-4 pb-4 sm:px-6">

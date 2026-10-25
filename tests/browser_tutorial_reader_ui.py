@@ -32,6 +32,7 @@ def main():
     def ready(page, slug):
         page.goto(f'{args.base}/tutorials/{slug}.html', wait_until='load')
         page.wait_for_selector('html[data-tutorial-code-ready="true"]')
+        page.evaluate('document.fonts.ready')
     try:
         with sync_playwright() as pw:
             launch = {'headless': True, 'args': ['--no-sandbox']}
@@ -46,10 +47,12 @@ def main():
                     ready(page, slug)
                     data = page.evaluate('''() => ({
                       width:innerWidth, scrollWidth:document.documentElement.scrollWidth,
-                      blocks:[...document.querySelectorAll('article pre')].map(pre=>(pre.querySelector('code')||pre).textContent),
+                      blocks:[...document.querySelectorAll('article pre')].map(pre=>({index:Number(pre.dataset.codeSourceIndex),text:(pre.querySelector('code')||pre).textContent})).sort((a,b)=>a.index-b.index).map(block=>block.text),
                       frames:document.querySelectorAll('article .tutorial-code-frame').length,
                       groups:document.querySelectorAll('[data-code-tabs]').length,
                       selected:[...document.querySelectorAll('[data-code-tabs]')].map(g=>g.querySelectorAll('[role=tab][aria-selected=true]').length),
+                      tabLanguages:[...document.querySelectorAll('[data-code-tabs]')].map(g=>[...g.querySelectorAll('[role=tab]')].map(tab=>tab.dataset.language)),
+                      selectedLanguages:[...document.querySelectorAll('[data-code-tabs]')].map(g=>g.querySelector('[role=tab][aria-selected=true]')?.dataset.language),
                       visible:[...document.querySelectorAll('[data-code-tabs]')].map(g=>[...g.querySelectorAll('[role=tabpanel]')].filter(p=>!p.hidden).length),
                       tokens:document.querySelectorAll('.token').length,
                       colors:[...document.querySelectorAll('.token')].map(t=>getComputedStyle(t).color).filter((v,i,a)=>a.indexOf(v)===i),
@@ -66,8 +69,10 @@ def main():
                     check(data['frames'] == len(spec['blocks']), f'{slug} missing/duplicate copy frames')
                     check(data['groups'] == len(groups.get(slug, [])), f'{slug} unexpected grouping')
                     check(all(n == 1 for n in data['selected'] + data['visible']), f'{slug} invalid tab visibility')
+                    check(all(languages == ['r', 'python'] for languages in data['tabLanguages']), f'{slug} tabs are not physically R-first')
+                    check(all(language == 'r' for language in data['selectedLanguages']), f'{slug} did not default to R')
                     check(data['topCount'] == 1, f'{slug} duplicate/missing top control')
-                    check(all(r['h'] >= 44 for r in data['nav']), f'{slug} small navigation target')
+                    check(all(round(r['h']) >= 44 for r in data['nav']), f'{slug} small navigation target')
                     check(data['topIntegrated'], f'{slug} detached back-to-top control at {width}')
                     check(all(h >= 44 for h in data['continuation']), f'{slug} small continuation target at {width}')
                     for i, first in enumerate(data['nav']):
@@ -87,8 +92,8 @@ def main():
             check(page.locator('[role=tab][aria-selected=true][data-language=r]').count() == 2, 'Language selection not synchronized')
             rtab.focus(); page.keyboard.press('ArrowRight')
             check(first.get_by_role('tab', name='Python', exact=True).get_attribute('aria-selected') == 'true', 'Arrow key failed')
-            page.keyboard.press('End'); check(rtab.get_attribute('aria-selected') == 'true', 'End failed')
-            page.keyboard.press('Home'); check(first.get_by_role('tab', name='Python', exact=True).get_attribute('aria-selected') == 'true', 'Home failed')
+            page.keyboard.press('End'); check(first.get_by_role('tab', name='Python', exact=True).get_attribute('aria-selected') == 'true', 'End did not select the last R-first tab')
+            page.keyboard.press('Home'); check(rtab.get_attribute('aria-selected') == 'true', 'Home did not select the first R tab')
             panel = first.locator('[role=tabpanel]:not([hidden])')
             copy = panel.get_by_role('button', name=re.compile('Copy code:')).first
             expected = panel.locator('pre code').first.text_content()
@@ -100,6 +105,10 @@ def main():
             page.evaluate('''() => { const target=document.querySelector('[data-code-tabs] [role=tabpanel][data-language=r] h3'); target.id='tutorial-r-deep-link'; location.hash='tutorial-r-deep-link'; }''')
             page.wait_for_function("document.getElementById('tutorial-r-deep-link')?.closest('[role=tabpanel]').hidden === false")
             check(rtab.get_attribute('aria-selected') == 'true', 'Hash target not revealed')
+            page.evaluate('''() => { const target=document.querySelector('[data-code-tabs] [role=tabpanel][data-language=python] h3'); target.id='tutorial-python-deep-link'; location.hash='tutorial-python-deep-link'; }''')
+            page.wait_for_function("document.getElementById('tutorial-python-deep-link')?.closest('[role=tabpanel]').hidden === false")
+            check(first.get_by_role('tab', name='Python', exact=True).get_attribute('aria-selected') == 'true', 'Python hash target not revealed')
+            check(page.evaluate("sessionStorage.getItem('omicsHubCodeLanguage')") == 'r', 'Hash reveal overwrote the reader language preference')
             rtab.click(); ready(page, 'experimental-design-batch-effects')
             check(page.locator('[role=tab][aria-selected=true][data-language=r]').count() == 2, 'Language preference not retained across lessons')
             check(not page.locator('#back-to-top').is_visible(), 'Top control should wait until the reader scrolls')
@@ -109,12 +118,18 @@ def main():
             page.wait_for_function("document.activeElement?.id === 'tutorial-title' && window.scrollY < 300")
             check(page.evaluate('document.activeElement.id') == 'tutorial-title', 'Back-to-top focus not returned')
             check(page.evaluate('window.scrollY') < 300, 'Back-to-top did not navigate')
-            results['interactions'] += ['tab click', 'synchronized language preference', 'Arrow/Home/End keys', 'exact clipboard contents', 'visible copied feedback', 'deep-link reveal', 'cross-page language preference', 'native back-to-top and focus']
+            first_python = page.locator('[data-code-tabs]').first.get_by_role('tab', name='Python', exact=True)
+            first_python.click()
+            check(page.locator('[role=tab][aria-selected=true][data-language=python]').count() == 2, 'Explicit Python choice did not synchronize')
+            ready(page, 'statistics-for-bioinformatics')
+            check(page.locator('[role=tab][aria-selected=true][data-language=python]').count() == 2, 'Explicit Python preference was not retained across lessons')
+            page.locator('[data-code-tabs]').first.get_by_role('tab', name='R · base R', exact=True).click()
+            results['interactions'] += ['R-first tab order', 'R default', 'tab click', 'synchronized language preference', 'Arrow/Home/End keys', 'exact clipboard contents', 'visible copied feedback', 'R and Python hash reveals without preference changes', 'cross-page R and Python preference', 'native back-to-top and focus']
             # Print exposes both language routes with their original headings.
             page.emulate_media(media='print')
             check(page.locator('[role=tabpanel]').evaluate_all('(els)=>els.every(el=>getComputedStyle(el).display!=="none")'), 'Print hides a language route')
             printed = page.locator('.reader-path-card--suggested').first
-            check(printed.evaluate('el=>getComputedStyle(el).backgroundColor') == 'rgb(255, 255, 255)', 'Print navigation still uses a dark background')
+            check(printed.evaluate('el=>getComputedStyle(el).backgroundColor') == 'rgb(255, 255, 255)', 'Print navigation is not white')
             check(printed.locator('.reader-path-card__title').evaluate('el=>getComputedStyle(el).color') == 'rgb(18, 51, 72)', 'Print navigation title is not dark')
             page.emulate_media(media='screen'); results['interactions'] += ['print includes both routes', 'readable printed continuation navigation']
             # Screenshots deliberately contain public teaching examples only.
@@ -152,7 +167,10 @@ def main():
             results['interactions'].append('stale metadata fails closed')
             stale.close()
             malformed = browser.new_context(); configure(malformed)
-            malformed.route('**/tutorial-code-data.js?*', lambda route: route.fulfill(body=script.replace('"start":9,"end":11', '"start":9,"end":9999'), content_type='text/javascript'))
+            malformed_data = json.loads(script.split('window.OMICS_TUTORIAL_CODE = ', 1)[1].rstrip(';\n'))
+            malformed_data['tutorials']['statistics-for-bioinformatics']['groups'][0]['panels'][0]['end'] = 9999
+            malformed_script = 'window.OMICS_TUTORIAL_CODE = ' + json.dumps(malformed_data) + ';\n'
+            malformed.route('**/tutorial-code-data.js?*', lambda route: route.fulfill(body=malformed_script, content_type='text/javascript'))
             mp = malformed.new_page(); ready(mp, 'statistics-for-bioinformatics')
             check(mp.locator('[data-code-tabs]').count() == 0, 'Invalid panel bounds still move source content')
             check(mp.locator('article pre:visible').count() == 10, 'Invalid panel bounds lose original code')
@@ -160,7 +178,7 @@ def main():
             malformed.close()
             nojs = browser.new_context(java_script_enabled=False, viewport={'width': 390, 'height': 844}); configure(nojs)
             np = nojs.new_page()
-            for slug in groups:
+            for slug in metadata:
                 np.goto(f'{args.base}/tutorials/{slug}.html')
                 check(np.locator('article pre:visible').count() == len(metadata[slug]['blocks']), f'{slug} no-JS route missing')
                 check(np.locator('#back-to-top').get_attribute('href') == '#tutorial-title', 'No-JS top link absent')

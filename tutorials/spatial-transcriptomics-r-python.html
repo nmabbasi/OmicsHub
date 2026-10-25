@@ -73,7 +73,7 @@ gtag('consent', 'default', {
     }
   },
   "datePublished": "2026-08-19",
-  "dateModified": "2026-10-24",
+  "dateModified": "2026-10-25",
   "url": "https://theomicshub.com/tutorials/spatial-transcriptomics-r-python.html",
   "name": "Spatial transcriptomics with R and Python: a Visium workflow",
   "isPartOf": {
@@ -82,8 +82,8 @@ gtag('consent', 'default', {
     "url": "https://theomicshub.com/"
   },
   "inLanguage": "en"
-}</script><link href="../tutorial-library.css" rel="stylesheet"/><link href="../tutorial-reader.css?v=20261024-reader-ui-v3" rel="stylesheet"/>
-<link href="../tutorial-navigation.css?v=20261025-reader-colours-v1" rel="stylesheet"/><link href="../back-to-top.css?v=20261024-reader-ui-v3" rel="stylesheet"/>
+}</script><link href="../tutorial-library.css" rel="stylesheet"/><link href="../tutorial-reader.css?v=20261025-r-first-v1" rel="stylesheet"/>
+<link href="../tutorial-navigation.css?v=20261025-learning-navigation-v2" rel="stylesheet"/><link href="../back-to-top.css?v=20261025-r-first-v1" rel="stylesheet"/>
 </head>
 <body class="bg-white text-gray-900">
 <script>
@@ -169,7 +169,7 @@ function toggleMobileMenu() {
 <div class="mb-12 rounded-2xl overflow-hidden shadow-lg border border-gray-100">
 <img alt="Spatial Transcriptomics" class="w-full aspect-video object-cover" decoding="async" loading="eager" src="../images/spatial-transcriptomics-workstation.webp" width="1024" height="1024"/>
 </div>
-<nav aria-label="Learning path navigation" class="reader-toolbar"><a href="scrna-seq-basics.html" rel="prev" class="reader-toolbar__previous"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5m0 0 7 7m-7-7 7-7"/></svg><span class="reader-toolbar__copy"><small>Previous prerequisite</small><strong>scRNA-seq Basics</strong></span></a><a data-catalogue-return="" href="../tutorials.html" class="reader-toolbar__library"><span class="reader-toolbar__library-mark" aria-hidden="true">▤</span><span><small>Browse</small><strong>All tutorials</strong></span></a><a href="../start-here.html#sh-single-cell" rel="next" class="reader-toolbar__next"><span class="reader-toolbar__copy"><small>Suggested next</small><strong>Return to single-cell and spatial choices</strong></span><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14m0 0-7-7m7 7-7 7"/></svg></a></nav>
+<nav aria-label="Learning path navigation" class="reader-toolbar"><span class="reader-toolbar__heading">Learning path</span><a href="scrna-seq-basics.html" rel="prev" class="reader-toolbar__previous"><span class="reader-toolbar__direction"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5m0 0 7 7m-7-7 7-7"/></svg></span><span class="reader-toolbar__copy"><small>Previous prerequisite</small><strong>scRNA-seq Basics</strong></span></a><a data-catalogue-return="" href="../tutorials.html" class="reader-toolbar__library"><span class="reader-toolbar__library-mark" aria-hidden="true"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="6" height="6" rx="1.3"/><rect x="14" y="4" width="6" height="6" rx="1.3"/><rect x="4" y="14" width="6" height="6" rx="1.3"/><rect x="14" y="14" width="6" height="6" rx="1.3"/></svg></span><span><small>Browse</small><strong>All tutorials</strong></span></a><a href="../start-here.html#sh-single-cell" rel="next" class="reader-toolbar__next"><span class="reader-toolbar__copy"><small>Suggested next</small><strong>Return to single-cell and spatial choices</strong></span><span class="reader-toolbar__direction"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14m0 0-7-7m7 7-7 7"/></svg></span></a></nav>
 <article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--lab">
 <p class="lesson-lead">Spatial assays retain a relationship between measured RNA and a position in a tissue section. This Visium-oriented walkthrough follows the same analysis questions in R and Python: load a Space Ranger output, inspect expression on the tissue image, and compare expression-based clusters with anatomy.</p>
 <section class="lesson-summary tutorial-learning-contract" data-tutorial-format="advanced-template" aria-label="Learning format">
@@ -192,6 +192,17 @@ function toggleMobileMenu() {
 <p><strong>Verified boundary:</strong> the source downloads, fingerprints, HDF5 signature, archive contents and shared-directory preparation were checked. Both branches then loaded 2,702 spots and 32,285 input features, preserved raw-count library-size QC, completed expression-neighbor clustering, and rendered the actual image-backed QC, marker and cluster plots. See the <a href="../files/visium-example/verified-inputs.json">recorded source fingerprints</a> and <a href="../files/visium-example/README.md">input-preparation notes</a>. Successful execution and inspected overlays do not establish tissue identity, biological cluster labels or a valid scientific conclusion. Before analysis, record versions in the active environments: Python <code>python -c "import scanpy,squidpy; print(scanpy.__version__, squidpy.__version__)"</code>; R <code>R -q -e 'sessionInfo()'</code>. Check official package documentation for compatibility.</p>
 <h2>1. Load a Visium library</h2>
 <p>Keep the expression matrix and tissue metadata together. Squidpy's Visium reader loads the count matrix and, when available in the expected output, spot coordinates, image, and scale factors. Seurat's loader similarly expects the matrix file and image data under the specified directory. A missing or mismatched <code>spatial/</code> directory is a common reason an image-backed plot cannot be made.</p>
+<h3>R: Seurat</h3>
+<p>The H5 reader requires <code>hdf5r</code> in the active R library. Install it with <code>install.packages("hdf5r")</code> if missing, then confirm it loads before this branch. On the tested Ubuntu source-install route, HDF5 development files (<code>libhdf5-dev</code>) and an existing R build toolchain were also needed. This is an additional reader dependency, not a complete fresh R/Seurat installation guide.</p>
+<pre><code class="language-r">library(Seurat)
+library(ggplot2)
+if (!requireNamespace("hdf5r", quietly = TRUE)) stop("Install hdf5r to read the H5 matrix.")
+
+shared_input &lt;- "data/visium/V1_Adult_Mouse_Brain"
+spatial_data &lt;- Load10X_Spatial(data.dir = shared_input, filename = "filtered_feature_bc_matrix.h5")
+spatial_data &lt;- SCTransform(spatial_data, assay = "Spatial", verbose = FALSE)
+</code></pre>
+<p><code>SCTransform</code> can take several minutes on this sample without the optional <code>glmGamPoi</code> backend. The tested run used Seurat's slower native fallback; inspect its messages and let the computation finish rather than changing packages midway through a run.</p>
 <h3>Python: Squidpy and Scanpy</h3>
 <pre><code class="language-python">import scanpy as sc
 import squidpy as sq
@@ -204,44 +215,33 @@ sc.pp.normalize_total(adata, inplace=True)
 sc.pp.log1p(adata)
 sc.pp.highly_variable_genes(adata, flavor="seurat", n_top_genes=2000)
 </code></pre>
-<h3>R: Seurat</h3>
-<p>The H5 reader requires <code>hdf5r</code> in the active R library. Install it with <code>install.packages("hdf5r")</code> if missing, then confirm it loads before this branch. On the tested Ubuntu source-install route, HDF5 development files (<code>libhdf5-dev</code>) and an existing R build toolchain were also needed. This is an additional reader dependency, not a complete fresh R/Seurat installation guide.</p>
-<pre><code class="language-r">library(Seurat)
-library(ggplot2)
-if (!requireNamespace("hdf5r", quietly = TRUE)) stop("Install hdf5r to read the H5 matrix.")
-
-shared_input &lt;- "data/visium/V1_Adult_Mouse_Brain"
-spatial_data &lt;- Load10X_Spatial(data.dir = shared_input, filename = "filtered_feature_bc_matrix.h5")
-spatial_data &lt;- SCTransform(spatial_data, assay = "Spatial", verbose = FALSE)
-</code></pre>
-<p><code>SCTransform</code> can take several minutes on this sample without the optional <code>glmGamPoi</code> backend. The tested run used Seurat's slower native fallback; inspect its messages and let the computation finish rather than changing packages midway through a run.</p>
 <p>Python's normalization and highly-variable-gene selection and Seurat's <code>SCTransform</code> are alternative preprocessing choices; they are not identical transformations or numerically interchangeable. Inspect object and assay/layer names when adapting to another release. If loading fails, confirm the selected directory directly contains <code>filtered_feature_bc_matrix.h5</code> and <code>spatial/</code>. For your own Space Ranger run this is usually <code>outs/</code>; the prepared public sample uses the named directory above. If counts load without an image, inspect the spatial assets and library metadata before interpreting plots.</p>
 <aside class="lesson-checkpoint"><strong>Before plotting:</strong> confirm that observations and genes are present, the intended tissue image is attached, and coordinates align with that image. Check the feature names in the object; gene-symbol capitalization and assay/layer selection can make a biologically plausible marker appear absent. Stop if the object has zero observations/features, coordinates are missing, or spot positions do not overlay the tissue; resolve input/library mismatches rather than interpreting a coordinate-only scatter as image validation.</aside>
 <h2>2. Plot a feature against tissue context</h2>
 <p>First plot a basic library-size QC measure, then choose a feature that exists in the object and plot it over the image. The code uses <code>Snap25</code> and <code>Mbp</code> as example labels only; their presence, biological relevance, and pattern depend on species, assay, tissue, and feature naming. Inspect the image key and color scale before interpreting a spatial gradient.</p>
-<h3>Python</h3>
-<pre><code class="language-python">sq.pl.spatial_scatter(adata, color=["total_counts", "Snap25"], img_alpha=0.5, cmap="magma")
-</code></pre>
 <h3>R</h3>
 <pre><code class="language-r">SpatialFeaturePlot(spatial_data, features = c("nCount_Spatial", "Snap25")) &amp;
   theme(legend.position = "right")
 </code></pre>
 <p>The returned R figure combines panels with patchwork. Its <code>&amp;</code> operator applies the legend theme to every panel; using <code>+</code> here only styles the last panel and can leave the QC colorbar cramped above the first plot.</p>
+<h3>Python</h3>
+<pre><code class="language-python">sq.pl.spatial_scatter(adata, color=["total_counts", "Snap25"], img_alpha=0.5, cmap="magma")
+</code></pre>
 <p>Calculate <code>total_counts</code> before normalization and log transformation, as above. It then records raw counts per spot; recomputing it from log-transformed expression would no longer measure library size. The marker panel uses the processed expression matrix, so its values are on a different scale from the raw-count QC panel.</p>
 <p>Squidpy's <code>spatial_scatter</code> is the current image-overlay plotting API. Older Scanpy examples use <code>sc.pl.spatial</code>, but current Scanpy documentation marks it deprecated in favor of Squidpy's plot. A quick success check is: nonzero observations and features; nonempty, finite library-size values; a tissue image visible beneath spatially aligned spots; and a readable color scale for QC and the selected marker. Library size is a QC view, not a universal pass/fail threshold. If the image is absent or spots are displaced, verify the input's <code>spatial/</code> files, library key, and image/coordinate scale; if the marker is missing, choose an observed feature and the intended assay/layer. Do not continue to biological interpretation until these checks pass.</p>
 <h2>3. Cluster expression profiles, then inspect their locations</h2>
 <p>Expression-neighbor clustering groups observations by transcriptional similarity. It does not by itself define spatial domains. Build the expression graph, cluster, and then display cluster labels in tissue coordinates. A spatial-neighbor graph is a separate choice for spatial statistics and should be constructed only when the question and coordinate system justify it.</p>
-<h3>Python</h3>
-<pre><code class="language-python">sc.pp.pca(adata)
-sc.pp.neighbors(adata)
-sc.tl.leiden(adata, key_added="clusters")
-sq.pl.spatial_scatter(adata, color="clusters", img_alpha=0.4)
-</code></pre>
 <h3>R</h3>
 <pre><code class="language-r">spatial_data &lt;- RunPCA(spatial_data, assay = "SCT", verbose = FALSE)
 spatial_data &lt;- FindNeighbors(spatial_data, reduction = "pca", dims = 1:30)
 spatial_data &lt;- FindClusters(spatial_data, verbose = FALSE)
 SpatialDimPlot(spatial_data, label = TRUE, label.size = 3)
+</code></pre>
+<h3>Python</h3>
+<pre><code class="language-python">sc.pp.pca(adata)
+sc.pp.neighbors(adata)
+sc.tl.leiden(adata, key_added="clusters")
+sq.pl.spatial_scatter(adata, color="clusters", img_alpha=0.4)
 </code></pre>
 <p>These are compact workflow fragments, not a fully specified analysis: package versions, feature filtering, dimensionality choices, clustering resolution, and reproducibility settings need to be chosen and recorded for the dataset. A cluster boundary can reflect cell mixture, tissue composition, depth, or technical structure. Compare the map with morphology and QC before assigning a tissue-domain label.</p>
 <h2>4. Interpret a pattern without overclaiming</h2>
@@ -277,13 +277,14 @@ SpatialDimPlot(spatial_data, label = TRUE, label.size = 3)
 </div>
 </section>
 <nav aria-label="Learning path continuation" class="reader-sequence" id="reader-course-navigation">
-<div class="reader-sequence-heading"><h2>Keep exploring</h2>
+<div class="reader-sequence-heading"><p class="reader-sequence-kicker">Continue learning</p><h2>Keep exploring</h2>
 <p class="reader-sequence-position"><span class="reader-sequence-route-label">Learning route</span><strong>Single-cell &amp; spatial · spatial methods</strong></p></div>
 <div class="reader-sequence-grid reader-sequence-grid--single">
-<a href="../start-here.html#sh-single-cell" rel="next" class="reader-path-card reader-path-card--suggested"><span class="reader-path-card__copy"><span class="reader-path-card__eyebrow">Suggested next step</span><strong class="reader-path-card__title">Return to single-cell and spatial choices</strong><span class="reader-path-card__reason">Spatial workflows depend on assay design, platform, and a spatially framed question.</span></span><span class="reader-path-card__arrow"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14m0 0-7-7m7 7-7 7"/></svg></span></a>
-</div><div class="reader-sequence-utilities">
 <a href="scrna-seq-basics.html" rel="prev" class="reader-path-card reader-path-card--previous"><span class="reader-path-card__copy"><span class="reader-path-card__eyebrow">Previous prerequisite</span><strong class="reader-path-card__title">scRNA-seq Basics</strong></span><span class="reader-path-card__arrow"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5m0 0 7 7m-7-7 7-7"/></svg></span></a>
-<a data-catalogue-return="" href="../tutorials.html" class="reader-path-card reader-path-card--library"><span class="reader-path-card__copy"><span class="reader-path-card__eyebrow">Browse the collection</span><strong class="reader-path-card__title">All tutorials</strong></span><span class="reader-path-card__arrow" aria-hidden="true">▤</span></a>
+<div class="reader-sequence-choices">
+<a href="../start-here.html#sh-single-cell" rel="next" class="reader-path-card reader-path-card--suggested"><span class="reader-path-card__copy"><span class="reader-path-card__eyebrow">Suggested next step</span><strong class="reader-path-card__title">Return to single-cell and spatial choices</strong><span class="reader-path-card__reason">Spatial workflows depend on assay design, platform, and a spatially framed question.</span></span><span class="reader-path-card__arrow"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14m0 0-7-7m7 7-7 7"/></svg></span></a>
+</div></div><div class="reader-sequence-utilities">
+<a data-catalogue-return="" href="../tutorials.html" class="reader-path-card reader-path-card--library"><span class="reader-path-card__copy"><span class="reader-path-card__eyebrow">Browse the collection</span><strong class="reader-path-card__title">All tutorials</strong></span><span class="reader-path-card__arrow" aria-hidden="true"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="6" height="6" rx="1.3"/><rect x="14" y="4" width="6" height="6" rx="1.3"/><rect x="4" y="14" width="6" height="6" rx="1.3"/><rect x="14" y="14" width="6" height="6" rx="1.3"/></svg></span></a>
 </div><div class="reader-sequence-footer"><p class="reader-sequence-note">Suggested links are not a completion tracker or a required linear course.</p></div></nav>
 </div></div></div>
 </div>
@@ -354,7 +355,7 @@ SpatialDimPlot(spatial_data, label = TRUE, label.size = 3)
 <!-- Marked.js for markdown rendering -->
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <!-- Custom JS - loads tutorials from manifest -->
-<script src="../script.js?v=20261024-reader-ui-v3"></script>
+<script src="../script.js?v=20261025-r-first-v1"></script>
 <script id="navigation-accessibility">
 (function () {
   const legalButton = document.getElementById("legal-menu-button");
@@ -403,10 +404,10 @@ SpatialDimPlot(spatial_data, label = TRUE, label.size = 3)
 })();
 </script>
 <script src="../assets/vendor/prism/prism-1.29.0.js"></script>
-<script src="../tutorial-code-data.js?v=20261024-reader-ui-v3"></script>
-<script src="../code-tabs.js?v=20261024-reader-ui-v3"></script>
-<script src="../copy-code.js?v=20261024-reader-ui-v3"></script>
-<script src="../subscribe-fab.js?v=20261024-reader-ui-v3"></script>
+<script src="../tutorial-code-data.js?v=20261025-r-first-v1"></script>
+<script src="../code-tabs.js?v=20261025-r-first-v1"></script>
+<script src="../copy-code.js?v=20261025-r-first-v1"></script>
+<script src="../subscribe-fab.js?v=20261025-r-first-v1"></script>
 <!-- Cookie Consent Banner -->
 <div class="fixed bottom-0 inset-x-0 z-[9999] transition-transform duration-500" id="cookie-consent-banner" style="font-family:'Inter',system-ui,sans-serif;">
 <div class="mx-auto max-w-4xl px-4 pb-4 sm:px-6">

@@ -73,7 +73,7 @@ gtag('consent', 'default', {
     }
   },
   "datePublished": "2026-09-18",
-  "dateModified": "2026-10-24",
+  "dateModified": "2026-10-25",
   "url": "https://theomicshub.com/tutorials/data-visualization-fundamentals.html",
   "name": "Data Visualization Fundamentals",
   "isPartOf": {
@@ -82,8 +82,8 @@ gtag('consent', 'default', {
     "url": "https://theomicshub.com/"
   },
   "inLanguage": "en"
-}</script><link href="../tutorial-library.css" rel="stylesheet"/><link href="../tutorial-reader.css?v=20261024-reader-ui-v3" rel="stylesheet"/>
-<link href="../tutorial-navigation.css?v=20261025-reader-colours-v1" rel="stylesheet"/><link href="../back-to-top.css?v=20261024-reader-ui-v3" rel="stylesheet"/>
+}</script><link href="../tutorial-library.css" rel="stylesheet"/><link href="../tutorial-reader.css?v=20261025-r-first-v1" rel="stylesheet"/>
+<link href="../tutorial-navigation.css?v=20261025-learning-navigation-v2" rel="stylesheet"/><link href="../back-to-top.css?v=20261025-r-first-v1" rel="stylesheet"/>
 </head>
 <body class="bg-white text-gray-900">
 <script>
@@ -169,22 +169,63 @@ function toggleMobileMenu() {
 <div class="mb-12 rounded-2xl overflow-hidden shadow-lg border border-gray-100">
 <img alt="Data Visualization Fundamentals" class="w-full aspect-video object-cover" decoding="async" loading="eager" src="../images/data-visualization-fundamentals-workstation.webp" width="1024" height="1024"/>
 </div>
-<nav aria-label="Learning path navigation" class="reader-toolbar"><a href="statistics-for-bioinformatics.html" rel="prev" class="reader-toolbar__previous"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5m0 0 7 7m-7-7 7-7"/></svg><span class="reader-toolbar__copy"><small>Previous prerequisite</small><strong>Statistics for Bioinformatics</strong></span></a><a data-catalogue-return="" href="../tutorials.html" class="reader-toolbar__library"><span class="reader-toolbar__library-mark" aria-hidden="true">▤</span><span><small>Browse</small><strong>All tutorials</strong></span></a><a href="../start-here.html#sh-routes" rel="next" class="reader-toolbar__next"><span class="reader-toolbar__copy"><small>Suggested next</small><strong>Choose a data-specific route</strong></span><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14m0 0-7-7m7 7-7 7"/></svg></a></nav>
+<nav aria-label="Learning path navigation" class="reader-toolbar"><span class="reader-toolbar__heading">Learning path</span><a href="statistics-for-bioinformatics.html" rel="prev" class="reader-toolbar__previous"><span class="reader-toolbar__direction"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5m0 0 7 7m-7-7 7-7"/></svg></span><span class="reader-toolbar__copy"><small>Previous prerequisite</small><strong>Statistics for Bioinformatics</strong></span></a><a data-catalogue-return="" href="../tutorials.html" class="reader-toolbar__library"><span class="reader-toolbar__library-mark" aria-hidden="true"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="6" height="6" rx="1.3"/><rect x="14" y="4" width="6" height="6" rx="1.3"/><rect x="4" y="14" width="6" height="6" rx="1.3"/><rect x="14" y="14" width="6" height="6" rx="1.3"/></svg></span><span><small>Browse</small><strong>All tutorials</strong></span></a><a href="../start-here.html#sh-routes" rel="next" class="reader-toolbar__next"><span class="reader-toolbar__copy"><small>Suggested next</small><strong>Choose a data-specific route</strong></span><span class="reader-toolbar__direction"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14m0 0-7-7m7 7-7 7"/></svg></span></a></nav>
 <article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--walkthrough">
-<p class="lesson-lead">A plot can reveal a pattern in an assay, but its appearance depends on preprocessing, model assumptions, and the samples included. This walkthrough follows common QC, sample-structure, expression-pattern, and differential-expression plots, with emphasis on what each view can and cannot support.</p>
+<p class="lesson-lead">A plot can reveal a pattern in an assay, but its appearance depends on preprocessing, model assumptions, and the samples included. This R-first walkthrough uses an R Markdown report to create and interpret common QC, sample-structure, expression-pattern, and differential-expression plots, with Python alternatives for the same plotting tasks.</p>
 <section class="lesson-summary tutorial-learning-contract" data-tutorial-format="hands-on-lab" aria-label="Learning format">
-<p><strong>Format: Hands-on lab.</strong> Learners with basic Python and tabular-data familiarity will generate and inspect QC, PCA, UMAP and heatmap outputs from supplied synthetic tables; a separate R example uses a supplied synthetic DE-style table. No biological data are supplied or analyzed.</p>
+<p><strong>Format: Hands-on lab.</strong> Learners with basic R and tabular-data familiarity will render a supplied R Markdown report and inspect QC, PCA, UMAP, heatmap, and volcano-plot outputs from synthetic tables. Python is available as an alternative for each plotting task. No biological data are supplied or analyzed.</p>
 </section>
 <h2>Start with the question and the data contract</h2>
 <p>Choose a plot to answer a defined question. Distributions help compare per-sample QC metrics; PCA summarizes major linear variation among samples; UMAP emphasizes neighborhood structure in a chosen feature space; a heatmap displays selected values across genes and samples; and a volcano plot combines an effect estimate with an adjusted significance measure from a differential-expression analysis.</p>
 <ul><li>Use sample-level QC values with one row per sample and columns such as <code>sample</code>, <code>batch</code>, <code>condition</code>, <code>total_reads</code>, <code>pct_mt</code>, and <code>mapping_rate</code>. Confirm whether percentages are stored as 5.2 or 0.052 before labeling the axis.</li><li>For the expression examples, <code>counts.tsv</code> has gene IDs in its first column and one sample per remaining column. Its sample names must match the QC table. Use non-negative raw counts for a count-based differential-expression method; a visualization transform such as log-CPM is not a replacement for that method's input contract.</li><li>Examples write into <code>results/</code>, which must exist first. Replace example paths with yours. These snippets are recipes, not evidence that any biological dataset was analyzed here.</li></ul>
-<p><strong>Run the synthetic lab.</strong> Download <a href="../files/tutorial-examples/data-visualization-fundamentals/qc_metrics.tsv">qc_metrics.tsv</a>, <a href="../files/tutorial-examples/data-visualization-fundamentals/counts.tsv">counts.tsv</a>, and (for the separate volcano example) <a href="../files/tutorial-examples/data-visualization-fundamentals/deseq2_results.tsv">deseq2_results.tsv</a>. These invented teaching values are not biological observations or results from a fitted DESeq2 model. In a new project directory, create <code>data/</code> and <code>results/</code> with <code>mkdir -p data results</code>; save the first two downloads as <code>data/qc_metrics.tsv</code> and <code>data/counts.tsv</code>. The count fixture has 10 genes and six samples (S01–S06), and the QC table has one row for each same sample. From the project directory, check Python with <code>python3 --version</code> and <code>python3 -m pip --version</code>; create an isolated environment with <code>python3 -m venv .venv</code>, activate it with <code>source .venv/bin/activate</code> (Windows PowerShell: <code>.venv\Scripts\Activate.ps1</code>), then install the Python dependencies with <code>python -m pip install pandas numpy matplotlib seaborn scikit-learn umap-learn</code>. Run each Python block below in order from this project directory (or save each as a script and run <code>python script_name.py</code>). The examples produce the two QC plots, PCA coordinates and plot, UMAP coordinates and plot, and heatmap in <code>results/</code>. Stop if a validation check fails or an expected file is absent; first verify the working directory, paths, columns, and sample IDs. Capture actual installed versions with <code>python -m pip freeze</code> rather than assuming versions.</p>
-<p>The volcano block is optional and independent: it needs R and ggplot2 and plots a DE-style results table; it does not run differential-expression analysis. Save the third download as <code>results/deseq2_results.tsv</code>, install ggplot2 if needed with <code>install.packages("ggplot2")</code>, and run the R block from the project directory. It should write <code>results/volcano.png</code>. In real work, use results from a documented model and contrast, not this fixture. Record <code>R.version.string</code> and <code>packageVersion("ggplot2")</code>.</p>
-<p>Success check: verify six QC rows, six matching count columns, and six sample rows in each coordinate TSV; confirm the QC, PCA, UMAP, heatmap, and (if run) volcano images exist. The synthetic volcano table deliberately has one missing adjusted p-value, which the code filters; inspect and report exclusions rather than interpreting the toy plot biologically.</p>
+<h3>Run the R Markdown lab</h3>
+<ol class="list-decimal pl-6 space-y-3">
+<li><strong>Download the files.</strong> Get the <a href="../files/tutorial-examples/data-visualization-fundamentals/data-visualization-fundamentals.Rmd">R Markdown report</a>, <a href="../files/tutorial-examples/data-visualization-fundamentals/qc_metrics.tsv">QC table</a>, <a href="../files/tutorial-examples/data-visualization-fundamentals/counts.tsv">count table</a>, and <a href="../files/tutorial-examples/data-visualization-fundamentals/deseq2_results.tsv">DE-style results table</a>. All three tables contain invented teaching values, not biological observations or results from a fitted DESeq2 model.</li>
+<li><strong>Set up the project.</strong> Place the report at the project root. In an R console, create folders with <code>dir.create("data", showWarnings = FALSE)</code> and <code>dir.create("results", showWarnings = FALSE)</code>. Save the QC and count tables as <code>data/qc_metrics.tsv</code> and <code>data/counts.tsv</code>; save the DE-style table as <code>results/deseq2_results.tsv</code>. The count fixture has 10 genes and six samples (S01–S06), matched to six QC rows.</li>
+<li><strong>Install the R packages once, if needed.</strong> Rendering requires <code>rmarkdown</code> and <code>knitr</code>; plots use <code>ggplot2</code> and <code>uwot</code>. In R, run <code>install.packages(c("rmarkdown", "ggplot2", "uwot"))</code>. This report does not install packages automatically.</li>
+<li><strong>Check Pandoc after installing those packages.</strong> RStudio includes Pandoc. With standalone R, run <code>Rscript -e 'rmarkdown::pandoc_available()'</code>; it should report <code>TRUE</code>. If it reports <code>FALSE</code>, install Pandoc using the <a href="https://pandoc.org/installing.html">official installation guide</a>, then check again.</li>
+<li><strong>Render the report.</strong> From the project directory, run <code>Rscript -e 'rmarkdown::render("data-visualization-fundamentals.Rmd", output_dir = "results")'</code>, or open the file in RStudio and choose <strong>Knit</strong>. The report checks inputs, writes figures and sample coordinates under <code>results/</code>, and stops if key assumptions fail. Verify the report, figures, and coordinate tables exist. The R panels below can also be run individually from the project root.</li>
+</ol>
+<p>The R and Python panels use the same synthetic inputs and address the same plotting task, but software defaults and implementations can change numerical coordinates, clustering order, or visual layout. Treat them as equivalent learning examples, not coordinate-by-coordinate reproductions.</p>
+<details class="mt-4"><summary>Optional Python setup for the alternative panels</summary><p>From the project directory, create an environment with <code>python3 -m venv .venv</code> and activate it with <code>source .venv/bin/activate</code> (Windows PowerShell: <code>.venv\Scripts\Activate.ps1</code>). Install the plotting dependencies with <code>python -m pip install numpy pandas matplotlib seaborn scikit-learn umap-learn</code>. Run the Python panels from the project root; they use the same synthetic TSV files and plotting tasks as the R examples.</p></details>
+<p>The volcano example only plots a DE-style results table; it does not run differential-expression analysis. In real work, use results from a documented model and contrast, not this fixture. The report includes visible R and package-version output.</p>
+<p>Success check: verify six QC rows, six matching count columns, and six sample rows in each coordinate TSV; confirm the QC, PCA, UMAP, heatmap, and volcano images exist. The synthetic volcano table deliberately has one missing adjusted p-value, which the code filters; inspect and report exclusions rather than interpreting the toy plot biologically.</p>
 <p>Record sample count, filtering, normalization or transformation, scaling, plotting parameters, software versions, and any exclusions with each figure. QC thresholds depend on assay and protocol; do not apply a universal cutoff just because it makes a plot cleaner.</p>
 <h2>Inspect distributions before reducing dimensions</h2>
-<p>Plot points as well as summaries where the number of samples permits. A boxplot can conceal group size, overlapping observations, or a single unusual sample. The Python snippet reads a tab-separated QC table and compares mitochondrial fraction across batches; the companion histogram shows sequencing depth in millions.</p>
-<pre><code>import numpy as np
+<p>Plot points as well as summaries where the number of samples permits. A boxplot can conceal group size, overlapping observations, or a single unusual sample. The R example reads a tab-separated QC table and compares mitochondrial fraction across batches; the companion histogram shows sequencing depth in millions. The Python panel performs the same two descriptive plots.</p>
+<h3>R</h3>
+<pre id="visualization-qc-r-stage"><code>library(ggplot2)
+qc &lt;- read.delim("data/qc_metrics.tsv", check.names = FALSE, stringsAsFactors = FALSE)
+required &lt;- c("sample", "batch", "condition", "total_reads", "pct_mt")
+missing &lt;- setdiff(required, names(qc))
+if (length(missing)) stop("QC table is missing columns: ", paste(missing, collapse = ", "))
+if (anyNA(qc$sample) || anyDuplicated(qc$sample)) stop("Expected one non-missing QC row per sample")
+for (column in c("total_reads", "pct_mt")) {
+  qc[[column]] &lt;- as.numeric(qc[[column]])
+  bad &lt;- is.na(qc[[column]]) | !is.finite(qc[[column]])
+  if (any(bad)) stop("Invalid ", column, " for samples: ", paste(qc$sample[bad], collapse = ", "))
+}
+
+qc_boxplot &lt;- ggplot(qc, aes(x = batch, y = pct_mt, color = condition)) +
+  geom_boxplot(aes(group = batch), outlier.shape = NA, color = "#52616B") +
+  geom_point(position = position_jitterdodge(jitter.width = 0.12, dodge.width = 0.75),
+             alpha = 0.75, size = 2) +
+  scale_color_brewer(palette = "Dark2") +
+  labs(x = "Batch", y = "Mitochondrial reads (%)",
+       title = "Mitochondrial fraction by batch", color = "Condition") +
+  theme_minimal(base_size = 12)
+ggsave("results/qc_boxplot.png", qc_boxplot, width = 8, height = 5, dpi = 300, bg = "white")
+print(qc_boxplot)
+
+qc_histogram &lt;- ggplot(qc, aes(x = total_reads / 1e6)) +
+  geom_histogram(bins = 5, fill = "#2C7FB8", color = "white") +
+  labs(x = "Total reads (millions)", y = "Samples",
+       title = "Sequencing depth") +
+  theme_minimal(base_size = 12)
+ggsave("results/qc_histogram.png", qc_histogram, width = 6, height = 4, dpi = 300, bg = "white")
+print(qc_histogram)</code></pre>
+<h3>Python alternative</h3>
+<pre id="visualization-qc-python-stage"><code>import numpy as np
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
@@ -222,8 +263,55 @@ fig.savefig("results/qc_histogram.png", dpi=300)
 plt.close(fig)</code></pre>
 <p>The code reports missing, non-numeric, or non-finite values with affected sample IDs. The boxplot shows individual observations; the histogram summarizes a distribution and cannot identify which sample is an outlier. Follow an apparent extreme back to the QC table by sample ID and inspect library size, units, and provenance. With very small groups, treat the histogram/KDE shape as descriptive only. These checks do not decide whether a sample passes QC, and metric names do not define assay-specific thresholds.</p>
 <h2>PCA: summarize broad sample variation</h2>
-<p>PCA expects observations in rows and features in columns. Here rows become samples and columns genes. The example computes a simple log2-CPM transform, filters genes by a stated variance rule, then standardizes each retained gene across samples. That last choice gives low-variance genes similar scale to high-variance genes and can amplify noise; it is an exploratory choice, not a universal RNA-seq recommendation. Compare with a suitable variance-stabilizing transform and/or without feature-wise scaling for the assay and question at hand.</p>
+<p>PCA expects observations in rows and features in columns. Here rows become samples and columns genes. Both language examples compute log2-CPM, apply the stated variance rule, then standardize retained genes. R and scikit-learn use slightly different standard-deviation conventions; component signs are arbitrary, so coordinates can differ or appear mirrored without changing the underlying interpretation. That last choice gives low-variance genes similar scale to high-variance genes and can amplify noise; it is an exploratory choice, not a universal RNA-seq recommendation. Compare with a suitable variance-stabilizing transform and/or without feature-wise scaling for the assay and question at hand.</p>
 <p>The cutoff of <code>0.01</code> below retains five of the ten genes in the supplied synthetic count table. A cutoff of <code>0.5</code> retains none, so there would be no matrix to plot or pass to UMAP. This small-fixture setting teaches the handoff; it is not a recommended threshold for a biological dataset. Inspect the variance distribution and justify feature selection for real data.</p>
+<h3>R</h3>
+<pre id="visualization-pca-r-stage"><code>library(ggplot2)
+counts &lt;- read.delim("data/counts.tsv", row.names = 1, check.names = FALSE)
+qc &lt;- read.delim("data/qc_metrics.tsv", check.names = FALSE, stringsAsFactors = FALSE)
+if (anyDuplicated(rownames(counts)) || anyDuplicated(colnames(counts))) {
+  stop("Gene IDs and sample IDs must be unique")
+}
+counts &lt;- as.matrix(counts)
+if (!is.numeric(counts) || any(!is.finite(counts)) || any(counts &lt; 0)) {
+  stop("Counts must be finite, numeric, and non-negative")
+}
+if (any(colSums(counts) == 0)) stop("A sample has zero library size")
+if (anyNA(qc$sample) || anyDuplicated(qc$sample)) stop("QC sample IDs must be unique and non-missing")
+if (!setequal(colnames(counts), qc$sample)) {
+  stop("Counts and QC sample IDs differ; check both tables before plotting")
+}
+qc &lt;- qc[match(colnames(counts), qc$sample), , drop = FALSE]
+if (!identical(qc$sample, colnames(counts))) stop("Could not align QC metadata to count-matrix sample order")
+
+logcpm &lt;- log2(sweep(counts, 2, colSums(counts), "/") * 1e6 + 1)
+variances &lt;- apply(logcpm, 1, var)
+keep &lt;- variances &gt; 0.01
+if (sum(keep) &lt; 2 || ncol(counts) &lt; 2) {
+  stop("PCA needs at least two samples and two retained genes")
+}
+mat &lt;- t(logcpm[keep, , drop = FALSE])
+pca &lt;- prcomp(mat, center = TRUE, scale. = TRUE)
+if (ncol(pca$x) &lt; 2) stop("PCA did not return two components for plotting")
+explained &lt;- pca$sdev^2 / sum(pca$sdev^2)
+pc_scores &lt;- as.data.frame(pca$x)
+pc_scores$sample &lt;- rownames(pc_scores)
+write.table(pc_scores, "results/pca_full.tsv", sep = "\t", quote = FALSE, row.names = FALSE)
+write.table(pc_scores[, c("sample", "PC1", "PC2")], "results/pca_coords.tsv",
+            sep = "\t", quote = FALSE, row.names = FALSE)
+
+plot_data &lt;- merge(pc_scores, qc[, c("sample", "condition", "batch")], by = "sample", sort = FALSE)
+plot_data &lt;- plot_data[match(pc_scores$sample, plot_data$sample), ]
+pca_plot &lt;- ggplot(plot_data, aes(x = PC1, y = PC2, color = condition, shape = batch)) +
+  geom_point(size = 3) +
+  scale_color_brewer(palette = "Dark2") +
+  labs(x = sprintf("PC1 (%.1f%% variance)", 100 * explained[1]),
+       y = sprintf("PC2 (%.1f%% variance)", 100 * explained[2]),
+       title = "PCA of filtered, scaled log2-CPM", color = "Condition", shape = "Batch") +
+  theme_minimal(base_size = 12)
+ggsave("results/pca_plot.png", pca_plot, width = 6, height = 5, dpi = 300, bg = "white")
+print(pca_plot)</code></pre>
+<h3>Python alternative</h3>
 <pre id="visualization-pca-stage"><code>import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -279,6 +367,44 @@ plt.close(fig)</code></pre>
 <p>The TSVs preserve sample coordinates for later checks. PC1/PC2 percentages describe variance represented by those components under this exact preprocessing. A separation by batch is a cue to inspect design balance, metadata, and possible technical effects; it does not by itself establish a correction method or prove confounding. PCA centers input internally, while the explicit scaler also changes each gene's variance contribution.</p>
 <h2>UMAP: explore neighborhoods with a specified input</h2>
 <p>UMAP embeds the rows supplied to it. The example uses all saved PCs available, not the two columns intended for plotting. Small datasets may not support the default neighborhood size, so set <code>n_neighbors</code> below the number of observations and evaluate several sensible settings. <code>n_neighbors</code> changes the local-versus-broader structure considered; <code>min_dist</code> affects how tightly points may pack in the embedding. The coordinates are a visualization, not a calibrated distance scale.</p>
+<h3>R</h3>
+<pre id="visualization-umap-r-stage"><code>library(ggplot2)
+pc_scores &lt;- read.delim("results/pca_full.tsv", check.names = FALSE)
+qc &lt;- read.delim("data/qc_metrics.tsv", check.names = FALSE, stringsAsFactors = FALSE)
+if (!"sample" %in% names(pc_scores) || anyDuplicated(pc_scores$sample)) {
+  stop("PCA scores need unique sample IDs")
+}
+if (anyDuplicated(qc$sample) || !setequal(pc_scores$sample, qc$sample)) {
+  stop("PCA and QC sample IDs differ or are not unique")
+}
+qc &lt;- qc[match(pc_scores$sample, qc$sample), , drop = FALSE]
+if (!identical(qc$sample, pc_scores$sample)) stop("Could not align QC metadata to PCA sample order")
+score_columns &lt;- grep("^PC[0-9]+$", names(pc_scores), value = TRUE)
+if (length(pc_scores$sample) &lt; 3 || length(score_columns) &lt; 2) {
+  stop("UMAP needs at least three samples and two PCA score columns")
+}
+n_neighbors &lt;- min(15, nrow(pc_scores) - 1)
+set.seed(7)
+embedding &lt;- uwot::umap(as.matrix(pc_scores[, score_columns, drop = FALSE]),
+                        n_neighbors = n_neighbors, min_dist = 0.1,
+                        n_components = 2, metric = "euclidean",
+                        n_threads = 1, n_sgd_threads = 1, verbose = FALSE)
+umap_coords &lt;- data.frame(sample = pc_scores$sample,
+                          UMAP1 = embedding[, 1], UMAP2 = embedding[, 2])
+write.table(umap_coords, "results/umap_coords.tsv", sep = "\t",
+            quote = FALSE, row.names = FALSE)
+umap_plot_data &lt;- merge(umap_coords, qc[, c("sample", "condition")],
+                         by = "sample", sort = FALSE)
+umap_plot_data &lt;- umap_plot_data[match(umap_coords$sample, umap_plot_data$sample), ]
+umap_plot &lt;- ggplot(umap_plot_data, aes(x = UMAP1, y = UMAP2, color = condition)) +
+  geom_point(size = 3) +
+  scale_color_brewer(palette = "Dark2") +
+  labs(title = sprintf("UMAP of saved PCA scores (n_neighbors=%d, min_dist=0.1)", n_neighbors),
+       color = "Condition") +
+  theme_minimal(base_size = 12)
+ggsave("results/umap_plot.png", umap_plot, width = 6, height = 5, dpi = 300, bg = "white")
+print(umap_plot)</code></pre>
+<h3>Python alternative</h3>
 <pre id="visualization-umap-stage"><code>import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -314,10 +440,44 @@ ax.set_title(f"UMAP of saved PCA scores (n_neighbors={n_neighbors}, min_dist=0.1
 fig.tight_layout()
 fig.savefig("results/umap_plot.png", dpi=300)
 plt.close(fig)</code></pre>
-<p>A fixed random state helps make a run repeatable under a fixed environment, but does not make the embedding biologically definitive or guarantee identical results across software versions and platforms. Compare labels and parameter choices without reading global distances or island spacing as quantitative evidence.</p>
+<p>A fixed random state helps make a run repeatable under a fixed environment, but does not make the embedding biologically definitive or guarantee identical coordinates across R and Python UMAP implementations, software versions, or platforms. Compare labels and parameter choices without reading global distances or island spacing as quantitative evidence.</p>
 <h2>Heatmaps: show a declared scale</h2>
 <p>The following approach selects variable genes from log-CPM and computes a row z-score so each gene's relative pattern across samples is visible. A red/blue cell then means above/below that gene's mean in the plotted samples, not an absolute expression level or a fold change between genes. Constant rows and missing values must be dealt with before hierarchical clustering.</p>
-<pre><code>import numpy as np
+<h3>R</h3>
+<pre id="visualization-heatmap-r-stage"><code>library(ggplot2)
+counts &lt;- read.delim("data/counts.tsv", row.names = 1, check.names = FALSE)
+counts &lt;- as.matrix(counts)
+if (!is.numeric(counts) || any(!is.finite(counts)) || any(counts &lt; 0) || any(colSums(counts) == 0)) {
+  stop("Counts must be finite and non-negative, with nonzero library sizes")
+}
+logcpm &lt;- log2(sweep(counts, 2, colSums(counts), "/") * 1e6 + 1)
+variances &lt;- apply(logcpm, 1, var)
+top &lt;- names(sort(variances, decreasing = TRUE))[seq_len(min(50, length(variances)))]
+selected &lt;- logcpm[top, , drop = FALSE]
+row_sd &lt;- apply(selected, 1, function(x) sqrt(mean((x - mean(x))^2)))
+selected &lt;- selected[row_sd &gt; 0, , drop = FALSE]
+if (anyNA(selected) || nrow(selected) &lt; 2 || ncol(selected) &lt; 2) {
+  stop("Need at least two non-constant genes, two samples, and no missing values")
+}
+z &lt;- t(apply(selected, 1, function(x) (x - mean(x)) / sqrt(mean((x - mean(x))^2))))
+row_order &lt;- hclust(dist(z), method = "average")$order
+column_order &lt;- hclust(dist(t(z)), method = "average")$order
+z_ordered &lt;- z[row_order, column_order, drop = FALSE]
+heatmap_data &lt;- as.data.frame(as.table(z_ordered), stringsAsFactors = FALSE)
+names(heatmap_data) &lt;- c("gene_id", "sample", "z_score")
+heatmap_data$gene_id &lt;- factor(heatmap_data$gene_id, levels = rev(rownames(z_ordered)))
+heatmap_data$sample &lt;- factor(heatmap_data$sample, levels = colnames(z_ordered))
+heatmap_plot &lt;- ggplot(heatmap_data, aes(x = sample, y = gene_id, fill = z_score)) +
+  geom_tile() +
+  scale_fill_gradient2(low = "#2166AC", mid = "white", high = "#B2182B", midpoint = 0) +
+  labs(x = "Sample", y = "Gene", fill = "Row z-score",
+       title = "Variable genes across samples") +
+  theme_minimal(base_size = 11) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+ggsave("results/heatmap_topgenes.png", heatmap_plot, width = 8, height = 6, dpi = 300, bg = "white")
+print(heatmap_plot)</code></pre>
+<h3>Python alternative</h3>
+<pre id="visualization-heatmap-python-stage"><code>import numpy as np
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
@@ -342,48 +502,87 @@ grid = sns.clustermap(z, method="average", metric="euclidean",
                       center=0, figsize=(10, 10))
 grid.savefig("results/heatmap_topgenes.png", dpi=300)
 plt.close(grid.fig)</code></pre>
-<p>Clustering method and distance metric affect the dendrogram. A heatmap can show relative patterns or sample groupings under those choices; it does not establish a pathway, shared regulation, or causal relationship. For very small tables, highly variable genes, or strongly imbalanced samples, state the selection rule and inspect whether clustering is stable.</p>
+<p>Clustering method and distance metric affect the ordering. The R panel orders rows and columns by hierarchical clustering but does not draw a dendrogram; the Python clustermap also displays dendrograms. A heatmap can show relative patterns or sample groupings under those choices; it does not establish a pathway, shared regulation, or causal relationship. For very small tables, highly variable genes, or strongly imbalanced samples, state the selection rule and inspect whether clustering is stable.</p>
 <h2>Volcano plots: display model results, not raw counts</h2>
 <p>A volcano plot uses differential-expression output. In this DESeq2-style table, <code>log2FoldChange</code> is the estimated effect and <code>padj</code> is the adjusted p-value; missing adjusted values can occur and should not be silently plotted as zero. The thresholds below are illustrative display cutoffs, not universal biological criteria. Do not use this plot as a substitute for checking the model, design, contrasts, and multiple-testing procedure.</p>
+<h3>R</h3>
 <pre id="visualization-volcano-stage"><code>library(ggplot2)
 res &lt;- read.delim("results/deseq2_results.tsv", stringsAsFactors = FALSE)
 required &lt;- c("log2FoldChange", "padj")
 if (!all(required %in% names(res))) stop("Input needs log2FoldChange and padj columns")
-res &lt;- res[is.finite(res$log2FoldChange) &amp; !is.na(res$padj) &amp;
-             is.finite(res$padj) &amp; res$padj &gt; 0 &amp; res$padj &lt;= 1, ]
+valid &lt;- is.finite(res$log2FoldChange) &amp; !is.na(res$padj) &amp;
+  is.finite(res$padj) &amp; res$padj &gt; 0 &amp; res$padj &lt;= 1
+cat("Rows omitted for non-finite effects, missing adjusted p-values, or padj outside (0, 1]: ",
+    sum(!valid), "\n", sep = "")
+res &lt;- res[valid, , drop = FALSE]
 res$label &lt;- ifelse(res$padj &lt; 0.05 &amp; abs(res$log2FoldChange) &gt; 1,
                     "passes display cutoffs", "does not pass")
-p &lt;- ggplot(res, aes(x = log2FoldChange, y = -log10(padj), color = label)) +
-  geom_point(alpha = 0.6, size = 1.5) +
+volcano_plot &lt;- ggplot(res, aes(x = log2FoldChange, y = -log10(padj), color = label)) +
+  geom_point(alpha = 0.7, size = 2) +
   scale_color_manual(values = c("does not pass" = "#777777",
                                 "passes display cutoffs" = "#B2182B")) +
   geom_vline(xintercept = c(-1, 1), linetype = "dashed") +
   geom_hline(yintercept = -log10(0.05), linetype = "dashed") +
   labs(x = "log2 fold change", y = "-log10 adjusted p-value",
-       color = NULL, title = "Differential-expression results") +
-  theme_minimal()
-ggsave("results/volcano.png", plot = p, width = 6, height = 5, dpi = 300, bg = "white")</code></pre>
+       color = NULL, title = "Synthetic differential-expression-style results") +
+  theme_minimal(base_size = 12)
+ggsave("results/volcano.png", volcano_plot, width = 6, height = 5, dpi = 300, bg = "white")
+print(volcano_plot)</code></pre>
+<h3>Python alternative</h3>
+<pre id="visualization-volcano-python-stage"><code>import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+res = pd.read_csv("results/deseq2_results.tsv", sep="\t")
+required = {"log2FoldChange", "padj"}
+missing = required.difference(res.columns)
+if missing:
+    raise ValueError(f"Input needs columns: {sorted(missing)}")
+for column in required:
+    res[column] = pd.to_numeric(res[column], errors="coerce")
+valid = (np.isfinite(res["log2FoldChange"]) &amp; res["padj"].notna() &amp;
+         np.isfinite(res["padj"]) &amp; res["padj"].gt(0) &amp; res["padj"].le(1))
+print(f"Rows omitted for non-finite effects, missing adjusted p-values, or padj outside (0, 1]: {(~valid).sum()}")
+res = res.loc[valid].copy()
+res["label"] = np.where((res["padj"] &lt; 0.05) &amp; (res["log2FoldChange"].abs() &gt; 1),
+                        "passes display cutoffs", "does not pass")
+fig, ax = plt.subplots(figsize=(6, 5))
+for label, group in res.groupby("label", sort=False):
+    color = "#B2182B" if label == "passes display cutoffs" else "#777777"
+    ax.scatter(group["log2FoldChange"], -np.log10(group["padj"]),
+               color=color, alpha=0.7, s=24, label=label)
+ax.axvline(-1, linestyle="--", color="#555555")
+ax.axvline(1, linestyle="--", color="#555555")
+ax.axhline(-np.log10(0.05), linestyle="--", color="#555555")
+ax.set(xlabel="log2 fold change", ylabel="-log10 adjusted p-value",
+       title="Synthetic differential-expression-style results")
+ax.legend(frameon=False)
+fig.tight_layout()
+fig.savefig("results/volcano-python.png", dpi=300, facecolor="white")
+plt.close(fig)</code></pre>
 <p>Rows with zero adjusted p-values would have an infinite plotted value and are omitted here along with missing values. Report how many rows were omitted and why in a real analysis, especially if filtering or independent filtering produced missing adjusted p-values. A small adjusted p-value can accompany a small effect; statistical evidence and biological importance are separate judgments.</p>
 <h2>Use plots as diagnostics, then follow up</h2>
 <ul><li><strong>QC shifts:</strong> verify metric units, group sizes, and metadata; a batch shift can arise from technical or design differences, but a plot alone cannot identify its cause.</li><li><strong>PCA separation:</strong> inspect the explained variance, sample labels, design balance, and component loadings. Consider the experimental model before choosing batch correction; indiscriminate correction can remove biological signal.</li><li><strong>Fragmented UMAP:</strong> check feature selection, sample count, scaling, and parameter sensitivity. Raising <code>n_neighbors</code> broadens neighborhoods, while changing <code>min_dist</code> changes packing; neither guarantees meaningful clusters.</li><li><strong>Uniform heatmap:</strong> check transformation, selected features, and color limits. Row scaling may reveal relative patterns while hiding absolute amplitude.</li><li><strong>Volcano extremes:</strong> check missing or zero adjusted p-values, effect-size estimates, model formula, contrast, and multiplicity correction before labeling candidates.</li></ul>
 <p>Save the plotting code and intermediate coordinates alongside the figure. Captions should identify the dataset and number of samples, transformation and filtering, encoding and thresholds, package versions, and the main limitation. Use accessible palettes and do not encode an essential distinction by color alone.</p>
 <h2>References</h2>
 <ul>
-<li><a href="https://scikit-learn.org/stable/modules/generated/sklearn.decomposition.PCA.html">scikit-learn PCA API</a> and <a href="https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.StandardScaler.html">StandardScaler API</a></li>
-<li><a href="https://umap-learn.readthedocs.io/en/latest/basic_usage.html">UMAP basic usage</a> and <a href="https://umap-learn.readthedocs.io/en/latest/parameters.html">parameter guide</a></li>
+<li><a href="https://stat.ethz.ch/R-manual/R-devel/library/stats/html/prcomp.html">R stats::prcomp documentation</a> and the <a href="https://cran.r-project.org/web/packages/uwot/vignettes/uwot.html">uwot package guide</a></li>
+<li><a href="https://scikit-learn.org/stable/modules/generated/sklearn.decomposition.PCA.html">scikit-learn PCA API</a> and <a href="https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.StandardScaler.html">StandardScaler API</a> (Python alternative)</li>
+<li><a href="https://cran.r-project.org/web/packages/uwot/uwot.pdf">uwot reference manual</a> and <a href="https://umap-learn.readthedocs.io/en/latest/basic_usage.html">umap-learn basic usage</a> (Python alternative)</li>
 <li><a href="https://seaborn.pydata.org/generated/seaborn.clustermap.html">seaborn clustermap API</a></li>
 <li><a href="https://bioconductor.org/packages/release/bioc/html/DESeq2.html">DESeq2 package documentation</a></li>
 <li><a href="https://ggplot2.tidyverse.org/reference/ggsave.html">ggplot2 ggsave documentation</a></li>
 </ul>
 <aside aria-labelledby="tutorial-feedback-title" class="lesson-feedback" id="tutorial-feedback"><h2 id="tutorial-feedback-title">Help improve this tutorial</h2><p>Found an error, a broken link, or a step that needs a clearer explanation? Please <a href="../contact.html">contact me</a>. Your feedback helps me keep this resource accurate and useful.</p></aside></article>
 <nav aria-label="Learning path continuation" class="reader-sequence" id="reader-course-navigation">
-<div class="reader-sequence-heading"><h2>Keep exploring</h2>
+<div class="reader-sequence-heading"><p class="reader-sequence-kicker">Continue learning</p><h2>Keep exploring</h2>
 <p class="reader-sequence-position"><span class="reader-sequence-route-label">Learning route</span><strong>Foundations · communicating data</strong></p></div>
 <div class="reader-sequence-grid reader-sequence-grid--single">
-<a href="../start-here.html#sh-routes" rel="next" class="reader-path-card reader-path-card--suggested"><span class="reader-path-card__copy"><span class="reader-path-card__eyebrow">Suggested next step</span><strong class="reader-path-card__title">Choose a data-specific route</strong><span class="reader-path-card__reason">Apply plotting choices in the context of your assay and research question.</span></span><span class="reader-path-card__arrow"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14m0 0-7-7m7 7-7 7"/></svg></span></a>
-</div><div class="reader-sequence-utilities">
 <a href="statistics-for-bioinformatics.html" rel="prev" class="reader-path-card reader-path-card--previous"><span class="reader-path-card__copy"><span class="reader-path-card__eyebrow">Previous prerequisite</span><strong class="reader-path-card__title">Statistics for Bioinformatics</strong></span><span class="reader-path-card__arrow"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5m0 0 7 7m-7-7 7-7"/></svg></span></a>
-<a data-catalogue-return="" href="../tutorials.html" class="reader-path-card reader-path-card--library"><span class="reader-path-card__copy"><span class="reader-path-card__eyebrow">Browse the collection</span><strong class="reader-path-card__title">All tutorials</strong></span><span class="reader-path-card__arrow" aria-hidden="true">▤</span></a>
+<div class="reader-sequence-choices">
+<a href="../start-here.html#sh-routes" rel="next" class="reader-path-card reader-path-card--suggested"><span class="reader-path-card__copy"><span class="reader-path-card__eyebrow">Suggested next step</span><strong class="reader-path-card__title">Choose a data-specific route</strong><span class="reader-path-card__reason">Apply plotting choices in the context of your assay and research question.</span></span><span class="reader-path-card__arrow"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14m0 0-7-7m7 7-7 7"/></svg></span></a>
+</div></div><div class="reader-sequence-utilities">
+<a data-catalogue-return="" href="../tutorials.html" class="reader-path-card reader-path-card--library"><span class="reader-path-card__copy"><span class="reader-path-card__eyebrow">Browse the collection</span><strong class="reader-path-card__title">All tutorials</strong></span><span class="reader-path-card__arrow" aria-hidden="true"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="6" height="6" rx="1.3"/><rect x="14" y="4" width="6" height="6" rx="1.3"/><rect x="4" y="14" width="6" height="6" rx="1.3"/><rect x="14" y="14" width="6" height="6" rx="1.3"/></svg></span></a>
 </div><div class="reader-sequence-footer"><p class="reader-sequence-note">Suggested links are not a completion tracker or a required linear course.</p></div></nav>
 </div></div></div>
 </div>
@@ -454,7 +653,7 @@ ggsave("results/volcano.png", plot = p, width = 6, height = 5, dpi = 300, bg = "
 <!-- Marked.js for markdown rendering -->
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <!-- Custom JS - loads tutorials from manifest -->
-<script src="../script.js?v=20261024-reader-ui-v3"></script>
+<script src="../script.js?v=20261025-r-first-v1"></script>
 <script id="navigation-accessibility">
 (function () {
   const legalButton = document.getElementById("legal-menu-button");
@@ -503,10 +702,10 @@ ggsave("results/volcano.png", plot = p, width = 6, height = 5, dpi = 300, bg = "
 })();
 </script>
 <script src="../assets/vendor/prism/prism-1.29.0.js"></script>
-<script src="../tutorial-code-data.js?v=20261024-reader-ui-v3"></script>
-<script src="../code-tabs.js?v=20261024-reader-ui-v3"></script>
-<script src="../copy-code.js?v=20261024-reader-ui-v3"></script>
-<script src="../subscribe-fab.js?v=20261024-reader-ui-v3"></script>
+<script src="../tutorial-code-data.js?v=20261025-r-first-v1"></script>
+<script src="../code-tabs.js?v=20261025-r-first-v1"></script>
+<script src="../copy-code.js?v=20261025-r-first-v1"></script>
+<script src="../subscribe-fab.js?v=20261025-r-first-v1"></script>
 <!-- Cookie Consent Banner -->
 <div class="fixed bottom-0 inset-x-0 z-[9999] transition-transform duration-500" id="cookie-consent-banner" style="font-family:'Inter',system-ui,sans-serif;">
 <div class="mx-auto max-w-4xl px-4 pb-4 sm:px-6">

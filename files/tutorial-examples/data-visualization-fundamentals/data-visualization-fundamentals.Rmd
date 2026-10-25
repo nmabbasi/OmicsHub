@@ -1,0 +1,239 @@
+---
+title: "Data Visualization Fundamentals: an R Markdown walkthrough"
+author: "The Omics Hub"
+date: ""
+output:
+  html_document:
+    toc: true
+    number_sections: true
+---
+
+# Before you render
+
+This report uses only the supplied **synthetic teaching tables**. They are invented values, not biological observations and not the output of a fitted differential-expression model.
+
+1. Download this `.Rmd` file and `qc_metrics.tsv`, `counts.tsv`, and `deseq2_results.tsv` from the lesson. Place the report at a new project root, with the QC and count tables in `data/` and the DE-style results table in `results/`.
+2. Create the folders in an R console or RStudio with `dir.create("data", showWarnings = FALSE)` and `dir.create("results", showWarnings = FALSE)`.
+3. If needed, install packages **before** checking Pandoc: `install.packages(c("rmarkdown", "ggplot2", "uwot"))`. This also installs the `knitr` dependency. The report never installs packages automatically.
+4. Rendering also needs Pandoc. RStudio includes Pandoc. With standalone R, run `Rscript -e 'rmarkdown::pandoc_available()'`; it should return `TRUE`. If it returns `FALSE`, install Pandoc using the [official installation guide](https://pandoc.org/installing.html), then check again.
+5. From the project directory, render with `Rscript -e 'rmarkdown::render("data-visualization-fundamentals.Rmd", output_dir = "results")'`, or open the report in RStudio and choose **Knit**. The report writes `results/data-visualization-fundamentals.html`, figures, and sample coordinates. Confirm the outputs exist and review the visible software-version record at the end.
+
+Rendering requires Pandoc plus `rmarkdown` and `knitr`; the plots require `ggplot2` and `uwot`. The examples are teaching recipes, not a validated biological workflow. Do not interpret the toy patterns biologically or apply the small-fixture filtering threshold to real data.
+# Inspect distributions before reducing dimensions
+
+The QC table should contain one row per sample. Check that percentages are stored as percent units (for example, `4.2`) or fractions (for example, `0.042`) before labeling an axis. A boxplot can hide group size or unusual observations, so the first plot overlays sample points. The small fixture is not large enough to support strong distributional conclusions.
+
+```{r qc-plots}
+library(ggplot2)
+qc <- read.delim("data/qc_metrics.tsv", check.names = FALSE, stringsAsFactors = FALSE)
+required <- c("sample", "batch", "condition", "total_reads", "pct_mt")
+missing <- setdiff(required, names(qc))
+if (length(missing)) stop("QC table is missing columns: ", paste(missing, collapse = ", "))
+if (anyNA(qc$sample) || anyDuplicated(qc$sample)) stop("Expected one non-missing QC row per sample")
+for (column in c("total_reads", "pct_mt")) {
+  qc[[column]] <- as.numeric(qc[[column]])
+  bad <- is.na(qc[[column]]) | !is.finite(qc[[column]])
+  if (any(bad)) stop("Invalid ", column, " for samples: ", paste(qc$sample[bad], collapse = ", "))
+}
+
+qc_boxplot <- ggplot(qc, aes(x = batch, y = pct_mt, color = condition)) +
+  geom_boxplot(aes(group = batch), outlier.shape = NA, color = "#52616B") +
+  geom_point(position = position_jitterdodge(jitter.width = 0.12, dodge.width = 0.75),
+             alpha = 0.75, size = 2) +
+  scale_color_brewer(palette = "Dark2") +
+  labs(x = "Batch", y = "Mitochondrial reads (%)",
+       title = "Mitochondrial fraction by batch", color = "Condition") +
+  theme_minimal(base_size = 12)
+ggsave("results/qc_boxplot.png", qc_boxplot, width = 8, height = 5, dpi = 300, bg = "white")
+print(qc_boxplot)
+
+qc_histogram <- ggplot(qc, aes(x = total_reads / 1e6)) +
+  geom_histogram(bins = 5, fill = "#2C7FB8", color = "white") +
+  labs(x = "Total reads (millions)", y = "Samples",
+       title = "Sequencing depth") +
+  theme_minimal(base_size = 12)
+ggsave("results/qc_histogram.png", qc_histogram, width = 6, height = 4, dpi = 300, bg = "white")
+print(qc_histogram)
+```
+
+These checks do not decide whether a sample passes QC. Follow unusual values back to sample IDs and inspect their units, metadata, and provenance. Thresholds depend on assay and protocol; do not apply a universal cutoff just because it makes a plot cleaner.
+
+# PCA: summarize broad sample variation
+
+PCA expects observations in rows and features in columns, so the matrix below is transposed to samples by genes. The example computes log2-CPM, keeps genes whose variance is greater than `0.01`, then scales each retained gene to unit variance. This cutoff retains five of the ten genes in this synthetic fixture; a cutoff of `0.5` retains none. The threshold is only a small-fixture teaching choice, not a recommendation for biological data. Feature-wise scaling gives low-variance genes similar scale to high-variance genes and can amplify noise; compare transformations and scaling choices suited to your assay and question.
+
+```{r pca}
+library(ggplot2)
+counts <- read.delim("data/counts.tsv", row.names = 1, check.names = FALSE)
+qc <- read.delim("data/qc_metrics.tsv", check.names = FALSE, stringsAsFactors = FALSE)
+if (anyDuplicated(rownames(counts)) || anyDuplicated(colnames(counts))) {
+  stop("Gene IDs and sample IDs must be unique")
+}
+counts <- as.matrix(counts)
+if (!is.numeric(counts) || any(!is.finite(counts)) || any(counts < 0)) {
+  stop("Counts must be finite, numeric, and non-negative")
+}
+if (any(colSums(counts) == 0)) stop("A sample has zero library size")
+if (anyNA(qc$sample) || anyDuplicated(qc$sample)) stop("QC sample IDs must be unique and non-missing")
+if (!setequal(colnames(counts), qc$sample)) {
+  stop("Counts and QC sample IDs differ; check both tables before plotting")
+}
+qc <- qc[match(colnames(counts), qc$sample), , drop = FALSE]
+if (!identical(qc$sample, colnames(counts))) stop("Could not align QC metadata to count-matrix sample order")
+
+logcpm <- log2(sweep(counts, 2, colSums(counts), "/") * 1e6 + 1)
+variances <- apply(logcpm, 1, var)
+keep <- variances > 0.01
+if (sum(keep) < 2 || ncol(counts) < 2) {
+  stop("PCA needs at least two samples and two retained genes")
+}
+mat <- t(logcpm[keep, , drop = FALSE])
+pca <- prcomp(mat, center = TRUE, scale. = TRUE)
+if (ncol(pca$x) < 2) stop("PCA did not return two components for plotting")
+explained <- pca$sdev^2 / sum(pca$sdev^2)
+pc_scores <- as.data.frame(pca$x)
+pc_scores$sample <- rownames(pc_scores)
+write.table(pc_scores, "results/pca_full.tsv", sep = "\t", quote = FALSE, row.names = FALSE)
+write.table(pc_scores[, c("sample", "PC1", "PC2")], "results/pca_coords.tsv",
+            sep = "\t", quote = FALSE, row.names = FALSE)
+
+plot_data <- merge(pc_scores, qc[, c("sample", "condition", "batch")], by = "sample", sort = FALSE)
+plot_data <- plot_data[match(pc_scores$sample, plot_data$sample), ]
+pca_plot <- ggplot(plot_data, aes(x = PC1, y = PC2, color = condition, shape = batch)) +
+  geom_point(size = 3) +
+  scale_color_brewer(palette = "Dark2") +
+  labs(x = sprintf("PC1 (%.1f%% variance)", 100 * explained[1]),
+       y = sprintf("PC2 (%.1f%% variance)", 100 * explained[2]),
+       title = "PCA of filtered, scaled log2-CPM", color = "Condition", shape = "Batch") +
+  theme_minimal(base_size = 12)
+ggsave("results/pca_plot.png", pca_plot, width = 6, height = 5, dpi = 300, bg = "white")
+print(pca_plot)
+```
+
+The coordinate tables preserve sample labels for follow-up. The R and Python panels address the same task and use the same synthetic input, but scikit-learn and R can use slightly different standard-deviation conventions; PCA component signs are arbitrary, so coordinates may differ or appear mirrored. Variance percentages apply only to this preprocessing. A batch pattern is a cue to inspect design balance and metadata, not proof of cause or a justification for a particular correction. PCA centers input internally; the explicit scaling choice changes each gene's contribution.
+
+# UMAP: explore neighborhoods with a specified input
+
+UMAP embeds the saved PCA scores, not the two coordinates used in the PCA plot. Neighborhood size is set below the number of observations for this small table. The coordinates are a visualization rather than a calibrated distance scale.
+
+```{r umap}
+library(ggplot2)
+pc_scores <- read.delim("results/pca_full.tsv", check.names = FALSE)
+qc <- read.delim("data/qc_metrics.tsv", check.names = FALSE, stringsAsFactors = FALSE)
+if (!"sample" %in% names(pc_scores) || anyDuplicated(pc_scores$sample)) {
+  stop("PCA scores need unique sample IDs")
+}
+if (anyDuplicated(qc$sample) || !setequal(pc_scores$sample, qc$sample)) {
+  stop("PCA and QC sample IDs differ or are not unique")
+}
+qc <- qc[match(pc_scores$sample, qc$sample), , drop = FALSE]
+if (!identical(qc$sample, pc_scores$sample)) stop("Could not align QC metadata to PCA sample order")
+score_columns <- grep("^PC[0-9]+$", names(pc_scores), value = TRUE)
+if (length(pc_scores$sample) < 3 || length(score_columns) < 2) {
+  stop("UMAP needs at least three samples and two PCA score columns")
+}
+n_neighbors <- min(15, nrow(pc_scores) - 1)
+set.seed(7)
+embedding <- uwot::umap(as.matrix(pc_scores[, score_columns, drop = FALSE]),
+                        n_neighbors = n_neighbors, min_dist = 0.1,
+                        n_components = 2, metric = "euclidean",
+                        n_threads = 1, n_sgd_threads = 1, verbose = FALSE)
+umap_coords <- data.frame(sample = pc_scores$sample,
+                          UMAP1 = embedding[, 1], UMAP2 = embedding[, 2])
+write.table(umap_coords, "results/umap_coords.tsv", sep = "\t",
+            quote = FALSE, row.names = FALSE)
+umap_plot_data <- merge(umap_coords, qc[, c("sample", "condition")],
+                         by = "sample", sort = FALSE)
+umap_plot_data <- umap_plot_data[match(umap_coords$sample, umap_plot_data$sample), ]
+umap_plot <- ggplot(umap_plot_data, aes(x = UMAP1, y = UMAP2, color = condition)) +
+  geom_point(size = 3) +
+  scale_color_brewer(palette = "Dark2") +
+  labs(title = sprintf("UMAP of saved PCA scores (n_neighbors=%d, min_dist=0.1)", n_neighbors),
+       color = "Condition") +
+  theme_minimal(base_size = 12)
+ggsave("results/umap_plot.png", umap_plot, width = 6, height = 5, dpi = 300, bg = "white")
+print(umap_plot)
+```
+
+A fixed seed helps with repeatability under a fixed environment but does not make the embedding biologically definitive or guarantee identical coordinates across R and Python UMAP implementations, software versions, and platforms. Compare parameter choices without treating global distances or island spacing as quantitative evidence.
+
+# Heatmaps: show a declared scale
+
+The heatmap selects variable genes from log2-CPM and displays a row z-score. A red or blue tile means above or below that gene's mean among the plotted samples, not an absolute expression level or a fold change between genes. Constant rows are removed before clustering.
+
+```{r heatmap}
+library(ggplot2)
+counts <- read.delim("data/counts.tsv", row.names = 1, check.names = FALSE)
+counts <- as.matrix(counts)
+if (!is.numeric(counts) || any(!is.finite(counts)) || any(counts < 0) || any(colSums(counts) == 0)) {
+  stop("Counts must be finite and non-negative, with nonzero library sizes")
+}
+logcpm <- log2(sweep(counts, 2, colSums(counts), "/") * 1e6 + 1)
+variances <- apply(logcpm, 1, var)
+top <- names(sort(variances, decreasing = TRUE))[seq_len(min(50, length(variances)))]
+selected <- logcpm[top, , drop = FALSE]
+row_sd <- apply(selected, 1, function(x) sqrt(mean((x - mean(x))^2)))
+selected <- selected[row_sd > 0, , drop = FALSE]
+if (anyNA(selected) || nrow(selected) < 2 || ncol(selected) < 2) {
+  stop("Need at least two non-constant genes, two samples, and no missing values")
+}
+z <- t(apply(selected, 1, function(x) (x - mean(x)) / sqrt(mean((x - mean(x))^2))))
+row_order <- hclust(dist(z), method = "average")$order
+column_order <- hclust(dist(t(z)), method = "average")$order
+z_ordered <- z[row_order, column_order, drop = FALSE]
+heatmap_data <- as.data.frame(as.table(z_ordered), stringsAsFactors = FALSE)
+names(heatmap_data) <- c("gene_id", "sample", "z_score")
+heatmap_data$gene_id <- factor(heatmap_data$gene_id, levels = rev(rownames(z_ordered)))
+heatmap_data$sample <- factor(heatmap_data$sample, levels = colnames(z_ordered))
+heatmap_plot <- ggplot(heatmap_data, aes(x = sample, y = gene_id, fill = z_score)) +
+  geom_tile() +
+  scale_fill_gradient2(low = "#2166AC", mid = "white", high = "#B2182B", midpoint = 0) +
+  labs(x = "Sample", y = "Gene", fill = "Row z-score",
+       title = "Variable genes across samples") +
+  theme_minimal(base_size = 11) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+ggsave("results/heatmap_topgenes.png", heatmap_plot, width = 8, height = 6, dpi = 300, bg = "white")
+print(heatmap_plot)
+```
+
+Clustering method and distance metric affect ordering. This R plot orders rows and columns by hierarchical clustering but does not draw a dendrogram. A heatmap can show relative patterns or sample groupings under those choices; it does not establish a pathway, shared regulation, or causal relationship. State the feature-selection rule and inspect stability when analyzing real data.
+
+# Volcano plots: display model results, not raw counts
+
+This DESeq2-style table is deliberately synthetic and is not the output of a fitted model. Here `log2FoldChange` is an estimated effect and `padj` is an adjusted p-value. The display cutoffs are illustrative, not universal criteria. In real work, use results from a documented model and contrast.
+
+```{r volcano}
+library(ggplot2)
+res <- read.delim("results/deseq2_results.tsv", stringsAsFactors = FALSE)
+required <- c("log2FoldChange", "padj")
+if (!all(required %in% names(res))) stop("Input needs log2FoldChange and padj columns")
+valid <- is.finite(res$log2FoldChange) & !is.na(res$padj) &
+  is.finite(res$padj) & res$padj > 0 & res$padj <= 1
+cat("Rows omitted for non-finite effects, missing adjusted p-values, or padj outside (0, 1]: ",
+    sum(!valid), "\n", sep = "")
+res <- res[valid, , drop = FALSE]
+res$label <- ifelse(res$padj < 0.05 & abs(res$log2FoldChange) > 1,
+                    "passes display cutoffs", "does not pass")
+volcano_plot <- ggplot(res, aes(x = log2FoldChange, y = -log10(padj), color = label)) +
+  geom_point(alpha = 0.7, size = 2) +
+  scale_color_manual(values = c("does not pass" = "#777777",
+                                "passes display cutoffs" = "#B2182B")) +
+  geom_vline(xintercept = c(-1, 1), linetype = "dashed") +
+  geom_hline(yintercept = -log10(0.05), linetype = "dashed") +
+  labs(x = "log2 fold change", y = "-log10 adjusted p-value",
+       color = NULL, title = "Synthetic differential-expression-style results") +
+  theme_minimal(base_size = 12)
+ggsave("results/volcano.png", volcano_plot, width = 6, height = 5, dpi = 300, bg = "white")
+print(volcano_plot)
+```
+
+Zero adjusted p-values would yield infinite plotted values, so this code omits them along with missing or invalid values and reports the number excluded. Inspect and document exclusions in real analyses. A small adjusted p-value can accompany a small effect; statistical evidence and biological importance are separate judgments.
+
+# Keep a reproducible record
+
+Save the input tables, this report, the code and intermediate coordinates alongside figures. Captions should identify the dataset and sample count, transformations and filtering, encodings and thresholds, software versions, and the main limitation. Use accessible palettes and do not encode an essential distinction by color alone. QC thresholds are assay-dependent, PCA depends on preprocessing, UMAP is a stochastic neighborhood embedding, heatmap clustering depends on its distance and linkage choices, and a volcano plot summarizes model output without validating the model.
+
+
+```{r session-info}
+sessionInfo()
+```

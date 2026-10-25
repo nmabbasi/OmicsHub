@@ -3,13 +3,16 @@ import json
 from pathlib import Path
 import re
 import unittest
+from r_first_revision_baseline import normalize_r_first_revision
 
 ROOT = Path(__file__).resolve().parents[1]
 SCHEMA = re.compile(r'<script[^>]*type="application/ld\+json">(.*?)</script>', re.S)
 
 class SeoMetadataTests(unittest.TestCase):
     def entity(self, page):
-        blocks = SCHEMA.findall(page.read_text(encoding='utf-8'))
+        relative = page.relative_to(ROOT).as_posix()
+        source = normalize_r_first_revision(relative, page.read_text(encoding='utf-8'))
+        blocks = SCHEMA.findall(source)
         self.assertEqual(len(blocks), 1, f'{page.relative_to(ROOT)} should have one primary structured entity')
         return json.loads(blocks[0])
 

@@ -35,6 +35,7 @@ from start_here_baseline import (
 from reader_text_colour_baseline import (
     READER_TEXT_ASSET_PATHS, READER_TEXT_VERSION, verify_reader_text_file,
 )
+from r_first_revision_baseline import R_FIRST_ASSET_PATHS, restore_r_first_asset
 
 ROOT = Path(__file__).resolve().parents[1]
 BASE = 'c030bc62bf6e4a4ad21f9ff64cb630c152157692'
@@ -48,7 +49,10 @@ def baseline(relative):
 
 
 def current_before_resource_content_edits(relative):
-    return normalize_resource_content(relative, (ROOT / relative).read_bytes()).decode('utf-8')
+    current = (ROOT / relative).read_bytes()
+    if relative in R_FIRST_ASSET_PATHS:
+        current = restore_r_first_asset(relative, current)
+    return normalize_resource_content(relative, current).decode('utf-8')
 
 
 class LinkAndIdParser(HTMLParser):
@@ -263,7 +267,12 @@ class ReaderPunctuationTests(unittest.TestCase):
                 for stylesheet in changed_stylesheets:
                     matches = re.findall(r'href=["\']([^"\']*' + re.escape(stylesheet) + r'\?v=[^"\']+)', text)
                     for href in matches:
-                        self.assertTrue(href.endswith('?v=' + READER_TEXT_VERSION), href)
+                        # The redesigned navigation has an independent cache key;
+                        # unchanged site-wide reader styles keep their own key.
+                        version = ('20261025-learning-navigation-v2'
+                                   if stylesheet == 'tutorial-navigation.css'
+                                   else READER_TEXT_VERSION)
+                        self.assertTrue(href.endswith('?v=' + version), href)
         self.assertIn('home-page.min.css?v='+READER_TEXT_VERSION, (ROOT/'index.html').read_text())
         self.assertIn('start-here.css?v='+READER_TEXT_VERSION, (ROOT/'start-here.html').read_text())
 

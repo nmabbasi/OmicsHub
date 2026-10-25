@@ -9,7 +9,7 @@
       const code = pre.querySelector('code');
       const languageClass = Array.from(code?.classList || []).find(name => name.startsWith('language-'));
       const language = pre.dataset.codeLanguage || languageClass?.slice(9) || 'text';
-      const languageName = languageNames[language] || language;
+      const languageName = pre.dataset.codeLabel || languageNames[language] || language;
       const isText = ['text', 'csv', 'none'].includes(language);
       const action = isText ? 'Copy text' : 'Copy code';
       const frame = document.createElement('div');

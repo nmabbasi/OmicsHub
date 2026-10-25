@@ -13,6 +13,7 @@ import subprocess
 from advanced_validation_baseline import normalize_advanced_validation_if_allowed
 from start_here_baseline import normalize_start_here_sitemap
 from tutorial_ui_baseline import normalize_tutorial_ui
+from r_first_revision_baseline import R_FIRST_ASSET_SHA256, restore_r_first_asset
 
 ROOT = Path(__file__).resolve().parents[1]
 MANIFEST_PATH = ROOT / "tests/fixtures/remaining-validation-edits.json"
@@ -146,5 +147,10 @@ def restore_sitemap_to_published(data):
 
 def normalize_remaining_validation_sitemap(data):
     from advanced_validation_baseline import normalize_advanced_validation_sitemap
+    # This entry point also accepts already-restored older review layers. Only
+    # the exact full-file current pin may remove the newer R-first date delta;
+    # unknown edits remain visible to the old date guards and whole-file tests.
+    if hashlib.sha256(data).hexdigest() == R_FIRST_ASSET_SHA256["sitemap.xml"]:
+        data = restore_r_first_asset("sitemap.xml", data)
     restored = restore_sitemap_to_published(normalize_advanced_validation_sitemap(data))
     return normalize_start_here_sitemap(restored)

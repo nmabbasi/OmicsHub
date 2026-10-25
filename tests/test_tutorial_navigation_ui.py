@@ -82,8 +82,10 @@ class TutorialNavigationMarkupTests(unittest.TestCase):
                                 markup.index('class="reader-sequence-utilities"'))
                 self.assertLess(markup.index('reader-path-card--suggested'),
                                 markup.index('class="reader-sequence-utilities"'))
-                self.assertLess(markup.index('class="reader-sequence-utilities"'),
-                                markup.index('reader-path-card--previous'))
+                self.assertLess(markup.index('reader-path-card--previous'),
+                                markup.index('class="reader-sequence-choices"'))
+                self.assertLess(markup.index('class="reader-sequence-choices"'),
+                                markup.index('reader-path-card--suggested'))
 
     def test_editorial_heading_and_compact_footer_preserve_route_context(self):
         for key, item in self.manifest['tutorials'].items():
@@ -150,6 +152,19 @@ class TutorialNavigationStyleTests(unittest.TestCase):
         self.assertIn(".reader-sequence-utilities .reader-path-card__eyebrow", self.css)
         self.assertIn("text-align: left", self.css)
         self.assertNotIn("text-align: center", self.css)
+
+    def test_paired_cards_use_navy_text_and_svg_library_icons(self):
+        manifest, facts = generator.load_site(ROOT)
+        item = manifest['tutorials']['data-visualization-fundamentals']
+        toolbar = generator.render_toolbar('data-visualization-fundamentals', item, manifest, facts)
+        bottom = generator.render_continuation('data-visualization-fundamentals', item, manifest, facts)
+        self.assertIn('reader-toolbar__heading', toolbar)
+        self.assertEqual(toolbar.count('class="reader-toolbar__direction"'), 2)
+        self.assertIn('reader-sequence-kicker', bottom)
+        self.assertIn('reader-sequence-choices', bottom)
+        self.assertNotIn('▤', toolbar + bottom)
+        self.assertIn('#eaf3ff', self.css)
+        self.assertIn('border-radius: 50%', self.css)
 
     def test_legacy_layout_overrides_are_reset_with_scoped_specificity(self):
         self.assertIn(".reader-sequence .reader-path-card", self.css)

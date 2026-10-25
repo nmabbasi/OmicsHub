@@ -64,9 +64,9 @@ class ResourceContentLearningTests(unittest.TestCase):
         self.assertFalse({'AlphaFold 3', 'ESMFold', 'ESM3', 'protein design'}.intersection(parser.keywords))
         self.assertNotIn('alphafold-esmfold.webp', page)
         text = article_text('protein-structure-design-alphafold')
-        self.assertIn('does not predict a new structure or design a protein', text)
-        self.assertIn('recorded retrieval', text)
-        self.assertIn('not a guaranteed result from a later fetch', text)
+        self.assertIn('does not predict a new structure, design a protein', text)
+        self.assertIn('Offline parsing cannot establish provenance.', text)
+        self.assertIn('Do not use these outputs alone for biological, therapeutic, or protein-design decisions.', text)
 
     def test_cluster_free_reading_route_does_not_claim_job_completion(self):
         connection = article_text('hpc-connection')
@@ -124,7 +124,9 @@ class ResourceContentLearningTests(unittest.TestCase):
         text = article_text('ai-prompt-engineering-seurat')
         self.assertIn('What this lesson provides', text)
         self.assertIn('A generated script and its outputs are not supplied', text)
-        self.assertIn('Align paths before using the prompt and template together', text)
+        self.assertIn('same input and output locations as the Seurat template', text)
+        for path in ('./data/seurat_obj.rds', './results/cluster2_markers.csv', './results/umap_seurat_clusters.png'):
+            self.assertIn(path, text)
         self.assertNotIn('so an assistant produces runnable code', text)
 
 

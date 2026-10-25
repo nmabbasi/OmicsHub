@@ -14,6 +14,7 @@ import re
 import subprocess
 
 from tutorial_ui_baseline import normalize_tutorial_ui
+from r_first_revision_baseline import R_FIRST_ASSET_SHA256, restore_r_first_asset
 
 ROOT = Path(__file__).resolve().parents[1]
 MANIFEST_PATH = ROOT / "tests/fixtures/resource-content-edits.json"
@@ -408,4 +409,9 @@ def restore_sitemap_to_pr15(data, paths=None, entries=None):
 
 
 def normalize_resource_sitemap(data):
+    # The current sitemap is a fully pinned R-first asset. Restore only those
+    # exact bytes to 2ad7731 before applying the older manifest's row-level
+    # lastmod restoration; arbitrary/partial edits never match this digest.
+    if hashlib.sha256(data).hexdigest() == R_FIRST_ASSET_SHA256.get("sitemap.xml"):
+        data = restore_r_first_asset("sitemap.xml", data)
     return restore_sitemap_to_pr15(data)

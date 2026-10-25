@@ -73,7 +73,7 @@ gtag('consent', 'default', {
     }
   },
   "datePublished": "2026-08-15",
-  "dateModified": "2026-10-21",
+  "dateModified": "2026-10-25",
   "url": "https://theomicshub.com/tutorials/reproducible-project-structure.html",
   "name": "Reproducible Project Structure",
   "isPartOf": {
@@ -82,8 +82,8 @@ gtag('consent', 'default', {
     "url": "https://theomicshub.com/"
   },
   "inLanguage": "en"
-}</script><link href="../tutorial-library.css" rel="stylesheet"/><link href="../tutorial-reader.css?v=20261024-reader-ui-v3" rel="stylesheet"/>
-<link href="../tutorial-navigation.css?v=20261025-reader-colours-v1" rel="stylesheet"/><link href="../back-to-top.css?v=20261024-reader-ui-v3" rel="stylesheet"/>
+}</script><link href="../tutorial-library.css" rel="stylesheet"/><link href="../tutorial-reader.css?v=20261025-r-first-v1" rel="stylesheet"/>
+<link href="../tutorial-navigation.css?v=20261025-learning-navigation-v2" rel="stylesheet"/><link href="../back-to-top.css?v=20261025-r-first-v1" rel="stylesheet"/>
 </head>
 <body class="bg-white text-gray-900">
 <script>
@@ -169,15 +169,15 @@ function toggleMobileMenu() {
 <div class="mb-12 rounded-2xl overflow-hidden shadow-lg border border-gray-100">
 <img alt="Reproducible Project Structure" class="w-full aspect-video object-cover" decoding="async" loading="eager" src="../images/reproducible-project-structure-workstation.webp" width="1024" height="1024"/>
 </div>
-<nav aria-label="Learning path navigation" class="reader-toolbar"><a href="../start-here.html#sh-foundation" class="reader-toolbar__previous"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5m0 0 7 7m-7-7 7-7"/></svg><span class="reader-toolbar__copy"><small>Previous path choice</small><strong>Back to the foundations</strong></span></a><a data-catalogue-return="" href="../tutorials.html" class="reader-toolbar__library"><span class="reader-toolbar__library-mark" aria-hidden="true">▤</span><span><small>Browse</small><strong>All tutorials</strong></span></a><a href="#reader-course-navigation" class="reader-toolbar__next"><span class="reader-toolbar__copy"><small>Several directions</small><strong>Choose a next step</strong></span><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14m0 0 7-7m-7 7-7-7"/></svg></a></nav>
+<nav aria-label="Learning path navigation" class="reader-toolbar"><span class="reader-toolbar__heading">Learning path</span><a href="../start-here.html#sh-foundation" class="reader-toolbar__previous"><span class="reader-toolbar__direction"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5m0 0 7 7m-7-7 7-7"/></svg></span><span class="reader-toolbar__copy"><small>Previous path choice</small><strong>Back to the foundations</strong></span></a><a data-catalogue-return="" href="../tutorials.html" class="reader-toolbar__library"><span class="reader-toolbar__library-mark" aria-hidden="true"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="6" height="6" rx="1.3"/><rect x="14" y="4" width="6" height="6" rx="1.3"/><rect x="4" y="14" width="6" height="6" rx="1.3"/><rect x="14" y="14" width="6" height="6" rx="1.3"/></svg></span><span><small>Browse</small><strong>All tutorials</strong></span></a><a href="#reader-course-navigation" class="reader-toolbar__next"><span class="reader-toolbar__copy"><small>Several directions</small><strong>Choose a next step</strong></span><span class="reader-toolbar__direction"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14m0 0 7-7m-7 7-7-7"/></svg></span></a></nav>
 <article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--walkthrough">
-<p class="lesson-lead">A reproducible analysis needs a clear boundary between inputs, code, derived files and reported results. This walkthrough builds that structure and records enough provenance to investigate a run later. The layout is a starting point; it does not supply a QC analysis or prove that an analysis is scientifically valid.</p>
+<p class="lesson-lead">A reproducible analysis needs a clear boundary between inputs, code, derived files and reported results. This walkthrough builds that structure and records enough provenance to investigate a run later. R is the main analysis language, with R Markdown reports kept alongside the analysis code. The layout is a starting point; it does not supply a QC analysis or prove that an analysis is scientifically valid.</p>
 <section class="lesson-summary tutorial-learning-contract" data-tutorial-format="conceptual-guide" aria-label="Learning format">
 <p><strong>Format: Conceptual guide.</strong> For learners organizing a bioinformatics project, this guide walks through a project skeleton, provenance records and a run-wrapper template. You create the small project structure and supply your own analysis code and data; no biological inputs or QC implementation are provided.</p>
 </section>
 <h2>Learning objectives and prerequisites</h2>
 <p>By the end, you can create a role-oriented project tree, record checksums and software versions, and prepare a run wrapper that logs its code revision and configuration path. You will also know what these records can and cannot establish.</p>
-<p><strong>Prerequisites:</strong> basic Bash and Git; a Unix-like shell with <code>mkdir</code>, <code>sha256sum</code>, <code>find</code>, and <code>git</code>. Conda, pip, and R/renv commands are optional examples and require those tools. Run the commands from the project root unless a step says otherwise.</p>
+<p><strong>Prerequisites:</strong> basic Bash and Git; a Unix-like shell with <code>mkdir</code>, <code>sha256sum</code>, <code>find</code>, and <code>git</code>. The main wrapper expects Rscript. Conda, renv, and the optional Python inventory require their respective tools. Run the commands from the project root unless a step says otherwise.</p>
 <h2>1. Create the project skeleton</h2>
 <p>From the parent directory, create a project directory. Replace <code>project</code> with your own name. The brace expansion below is Bash syntax.</p>
 <pre><code>mkdir -p project/{config,data/{raw,processed},envs,scripts,results/{figures,tables},logs}
@@ -206,20 +206,19 @@ output_dir: data/processed/qc</code></pre>
 <pre><code>find data/raw -maxdepth 1 -type f -print0 | sort -z | xargs -0 -r sha256sum &gt; config/raw_checksums.sha256
 sha256sum -c config/raw_checksums.sha256</code></pre>
 <p>The second command reports whether each recorded file matches its digest and returns failure if a check fails. This covers only files directly in <code>data/raw/</code>, not nested directories. Rebuild the manifest only after an intentional, documented input change; do not overwrite the evidence of an unexplained mismatch. Checksum agreement detects byte changes, not source authenticity or scientific suitability.</p>
-<p>From the project root, record versions of the tools available in the environment. Python and Git are used in the examples; R is optional, so its version is recorded only when <code>Rscript</code> is installed. Afterward, inspect <code>config/versions.txt</code> to confirm which entries were captured.</p>
-<pre><code>python --version 2&gt;&amp;1 | sed 's/^/python: /' &gt; config/versions.txt
-if command -v Rscript &gt;/dev/null 2&gt;&amp;1; then
-  Rscript --version 2&gt;&amp;1 | sed 's/^/R: /' &gt;&gt; config/versions.txt
-else
-  echo 'R: not installed (optional)' &gt;&gt; config/versions.txt
-fi
-git --version 2&gt;&amp;1 | sed 's/^/git: /' &gt;&gt; config/versions.txt
-# Optional: export the active Conda environment
-conda env export --no-builds &gt; envs/environment.yml
-# Optional: capture installed Python distributions in the active environment
-python -m pip freeze &gt; envs/requirements.txt
-# Optional, from an R session after configuring renv:
-renv::snapshot(lockfile = "envs/renv.lock")</code></pre>
+<p>From the project root, record versions of the tools available in the environment. R and Git are used in the main example. Python is recorded only when you use an optional Python tool. Afterward, inspect <code>config/versions.txt</code> to confirm which entries were captured.</p>
+<pre id="project-r-provenance"><code class="language-bash">Rscript --version &gt; config/versions.txt 2&gt;&amp;1
+Rscript --vanilla -e &#x27;sessionInfo()&#x27; &gt;&gt; config/versions.txt 2&gt;&amp;1
+git --version &gt;&gt; config/versions.txt 2&gt;&amp;1
+# Optional, only if this project uses a Conda environment:
+# conda env export --no-builds &gt; envs/environment.yml
+# Optional Python distributions, only when a Python tool is used:
+# python -m pip freeze &gt; envs/requirements.txt</code></pre>
+<p>For an R project, initialize <code>renv</code> deliberately from its project root, review the packages found, and keep the lockfile with the code. These R-console commands require the <code>renv</code> package; initialization changes the project environment, so use a fresh teaching project first.</p>
+<pre id="project-renv-console"><code class="language-r"># Run in the R console from the project root after installing renv.
+renv::init(bare = TRUE)
+renv::snapshot(lockfile = &quot;renv.lock&quot;)</code></pre>
+<p>Keep report sources such as <code>reports/analysis.Rmd</code> under version control. Write rendered reports and derived figures under <code>results/</code>; record the command used to render them. A lockfile records selected packages, not the source data, system libraries, or scientific validity.</p>
 <p><code>--no-builds</code> removes Conda package build specifications; it does not guarantee cross-platform recreation. <code>pip freeze</code> records installed distributions but does not itself capture Python, operating-system, or system-library details. Choose the manifest that matches the environment manager actually used, and record the platform separately when relevant.</p>
 <h2>4. Add a run wrapper</h2>
 <p>The following wrapper records the project path, current Git revision when available, configuration path, and command output. It assumes a project with <code>scripts/</code>, <code>config/</code>, and <code>logs/</code>. Save as <code>scripts/run_qc.sh</code>; adapt the final command to a real analysis implementation.</p>
@@ -242,11 +241,11 @@ COMMIT="$(git -C "$PROJECT_ROOT" rev-parse --short HEAD 2&gt;/dev/null || echo '
   cat "$CONFIG"
   echo "---"
   # Replace this placeholder with the analysis you have implemented.
-  python "$PROJECT_ROOT/scripts/qc_counts.py" --config "$CONFIG"
+  Rscript --vanilla "$PROJECT_ROOT/scripts/qc_counts.R" --config "$CONFIG"
   echo "Run finished: $(date --iso-8601=seconds)"
 } &gt;&amp; "$LOG"</code></pre>
 <p>The root calculation uses <code>scripts/..</code>, because the script resides one directory below the project root. The braces send both standard output and standard error to the log. The wrapper records the configuration path, its SHA-256 digest, and a copy of its contents in that run's log: the path alone would not identify parameter values if the file later changed. The digest helps detect a changed copy when compared with a retained file; the logged snapshot records the values used. With <code>set -e</code>, a failing analysis command normally stops the script before the finish line; Bash has documented exceptions to <code>-e</code>, so use explicit status handling if the wrapper grows more complex. The example uses GNU/Linux <code>date --iso-8601</code>; other systems may need a portable timestamp command.</p>
-<p><code>qc_counts.py</code> is an expected user-supplied implementation, not included here. It must accept the shown <code>--config</code> argument, parse the documented configuration, read the specified count table, and write the documented output. Until that program and its input contract exist, the wrapper is a template and will fail at the analysis step. Do not treat a created log or output filename as evidence of valid metrics.</p>
+<p><code>qc_counts.R</code> is an expected user-supplied R implementation, not included here. It must accept the shown <code>--config</code> argument, parse the documented configuration, read the specified count table, and write the documented output. Until that program and its input contract exist, the wrapper is a template and will fail at the analysis step. Do not treat a created log or output filename as evidence of valid metrics.</p>
 <h2>5. Initialize version control deliberately</h2>
 <p>Review your ignore rules and ensure no restricted data, credentials, or large generated files are staged. The following commands change Git metadata and create a commit in the project; inspect the staged file list before committing.</p>
 <pre><code>cd project
@@ -259,7 +258,7 @@ git rev-parse --short HEAD &gt; config/git_commit.txt</code></pre>
 <h2>6. Check the run and diagnose failures</h2>
 <ul>
 <li><strong>Checksum check fails:</strong> stop and compare the named file against its source or backup. Determine whether it changed intentionally before regenerating the manifest.</li>
-<li><strong>Python reports a missing module:</strong> confirm which interpreter runs the wrapper with <code>which python</code> and <code>python -m pip list</code>; activate or recreate the intended environment using the manifest appropriate to your project.</li>
+<li><strong>R reports a missing package:</strong> check <code>Rscript --version</code> and <code>.libPaths()</code> in the same environment as the wrapper. Inspect the project lockfile and restore the intended project library deliberately; do not install an arbitrary version just to bypass the error.</li>
 <li><strong>Configuration or input cannot be found:</strong> inspect the recorded absolute project/config paths, then verify that configured input paths resolve from the project root. Check delimiter, header, and required columns against the parser contract.</li>
 <li><strong>Metrics look implausible:</strong> inspect a small input excerpt and the analysis code's parsing and filtering steps. A structural check such as non-empty rows is not a universal biological QC threshold.</li>
 <li><strong>No Git revision appears:</strong> confirm that the project root is a Git repository and that it has at least one commit. A missing revision is a provenance gap, not proof the computation failed.</li>
@@ -287,14 +286,15 @@ git rev-parse --short HEAD &gt; config/git_commit.txt</code></pre>
 </div>
 </section>
 <nav aria-label="Learning path continuation" class="reader-sequence" id="reader-course-navigation">
-<div class="reader-sequence-heading"><h2>Keep exploring</h2>
+<div class="reader-sequence-heading"><p class="reader-sequence-kicker">Continue learning</p><h2>Keep exploring</h2>
 <p class="reader-sequence-position"><span class="reader-sequence-route-label">Learning route</span><strong>Reproducible computing · project organization</strong></p></div>
 <div class="reader-sequence-grid">
+<a href="../start-here.html#sh-foundation" class="reader-path-card reader-path-card--previous"><span class="reader-path-card__copy"><span class="reader-path-card__eyebrow">Back to path</span><strong class="reader-path-card__title">Back to the foundations</strong></span><span class="reader-path-card__arrow"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5m0 0 7 7m-7-7 7-7"/></svg></span></a>
+<div class="reader-sequence-choices">
 <a href="git-github-bioinformatics.html" rel="next" class="reader-path-card reader-path-card--suggested"><span class="reader-path-card__copy"><span class="reader-path-card__eyebrow">Suggested next step</span><strong class="reader-path-card__title">Git and GitHub for Bioinformatics</strong><span class="reader-path-card__reason">Version control can help track project changes.</span></span><span class="reader-path-card__arrow"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14m0 0-7-7m7 7-7 7"/></svg></span></a>
 <a href="docker-singularity-bioinformatics.html" rel="next" class="reader-path-card reader-path-card--suggested"><span class="reader-path-card__copy"><span class="reader-path-card__eyebrow">Suggested next step</span><strong class="reader-path-card__title">Docker and Apptainer for Bioinformatics</strong><span class="reader-path-card__reason">Containers are optional when dependency isolation across systems is needed.</span></span><span class="reader-path-card__arrow"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14m0 0-7-7m7 7-7 7"/></svg></span></a>
-</div><div class="reader-sequence-utilities">
-<a href="../start-here.html#sh-foundation" class="reader-path-card reader-path-card--previous"><span class="reader-path-card__copy"><span class="reader-path-card__eyebrow">Back to path</span><strong class="reader-path-card__title">Back to the foundations</strong></span><span class="reader-path-card__arrow"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5m0 0 7 7m-7-7 7-7"/></svg></span></a>
-<a data-catalogue-return="" href="../tutorials.html" class="reader-path-card reader-path-card--library"><span class="reader-path-card__copy"><span class="reader-path-card__eyebrow">Browse the collection</span><strong class="reader-path-card__title">All tutorials</strong></span><span class="reader-path-card__arrow" aria-hidden="true">▤</span></a>
+</div></div><div class="reader-sequence-utilities">
+<a data-catalogue-return="" href="../tutorials.html" class="reader-path-card reader-path-card--library"><span class="reader-path-card__copy"><span class="reader-path-card__eyebrow">Browse the collection</span><strong class="reader-path-card__title">All tutorials</strong></span><span class="reader-path-card__arrow" aria-hidden="true"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="6" height="6" rx="1.3"/><rect x="14" y="4" width="6" height="6" rx="1.3"/><rect x="4" y="14" width="6" height="6" rx="1.3"/><rect x="14" y="14" width="6" height="6" rx="1.3"/></svg></span></a>
 </div><div class="reader-sequence-footer"><p class="reader-sequence-note">Suggested links are not a completion tracker or a required linear course.</p></div></nav>
 </div></div></div>
 </div>
@@ -365,7 +365,7 @@ git rev-parse --short HEAD &gt; config/git_commit.txt</code></pre>
 <!-- Marked.js for markdown rendering -->
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <!-- Custom JS - loads tutorials from manifest -->
-<script src="../script.js?v=20261024-reader-ui-v3"></script>
+<script src="../script.js?v=20261025-r-first-v1"></script>
 <script id="navigation-accessibility">
 (function () {
   const legalButton = document.getElementById("legal-menu-button");
@@ -414,10 +414,10 @@ git rev-parse --short HEAD &gt; config/git_commit.txt</code></pre>
 })();
 </script>
 <script src="../assets/vendor/prism/prism-1.29.0.js"></script>
-<script src="../tutorial-code-data.js?v=20261024-reader-ui-v3"></script>
-<script src="../code-tabs.js?v=20261024-reader-ui-v3"></script>
-<script src="../copy-code.js?v=20261024-reader-ui-v3"></script>
-<script src="../subscribe-fab.js?v=20261024-reader-ui-v3"></script>
+<script src="../tutorial-code-data.js?v=20261025-r-first-v1"></script>
+<script src="../code-tabs.js?v=20261025-r-first-v1"></script>
+<script src="../copy-code.js?v=20261025-r-first-v1"></script>
+<script src="../subscribe-fab.js?v=20261025-r-first-v1"></script>
 <!-- Cookie Consent Banner -->
 <div class="fixed bottom-0 inset-x-0 z-[9999] transition-transform duration-500" id="cookie-consent-banner" style="font-family:'Inter',system-ui,sans-serif;">
 <div class="mx-auto max-w-4xl px-4 pb-4 sm:px-6">
