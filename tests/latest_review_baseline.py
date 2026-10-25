@@ -18,7 +18,7 @@ BASE_COMMIT = "36bc46d"
 FIXTURE_PATH = ROOT / "tests/fixtures/latest-review-edits.json"
 # Refreshed only after SOURCES FINAL; malformed/empty means the layer remains
 # dormant during active source work rather than inferring a baseline from it.
-FIXTURE_SHA256 = "4c6682a1793e1ee4475354b395537c9ed4dfdff09f21b0d41bf6e802bc6d6943"
+FIXTURE_SHA256 = "9823b9629a912f605c3f14823af40771516d237f1ee8cd6bd9642876ac3d2a04"
 FIXTURE_PATHS = frozenset({
     ".github/workflows/tutorial-review.yml", "home-page.min.css", "index.html",
     "script.js", "services.html", "sitemap.xml", "style.css", "tutorials.html",
@@ -35,6 +35,8 @@ FIXTURE_PATHS = frozenset({
     "tutorials/long-read-pacbio-nanopore.html",
     "tutorials/metagenomics-assembly-mapping.html",
     "tutorials/research-reporting-interpretation.html",
+    "tutorials/notebooklm-research-brain.html",
+    "tutorials/scrna-seq-basics.html",
     "tutorials/scrna-seq-integration-strategies.html",
     "tutorials/single-cell-foundation-models.html", "tutorials/wes-variant-calling-pipeline.html",
 })

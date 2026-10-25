@@ -42,12 +42,38 @@ TEXT_PATHS = frozenset({
     "tutorials/long-read-pacbio-nanopore.html",
     "tutorials/metagenomics-assembly-mapping.html",
     "tutorials/research-reporting-interpretation.html",
+    "tutorials/notebooklm-research-brain.html",
+    "tutorials/scrna-seq-basics.html",
     "tutorials/scrna-seq-integration-strategies.html",
     "tutorials/single-cell-foundation-models.html",
     "tutorials/wes-variant-calling-pipeline.html",
 })
 ASSET_PATHS = frozenset({"home-page.min.css"})
 ALLOWED_PATHS = TEXT_PATHS | ASSET_PATHS
+TEST_INFRASTRUCTURE_PATHS = frozenset({
+    "tests/browser_sitewide_reference_fixes.py",
+    "tests/fixtures/latest-review-edits.json",
+    "tests/generate_latest_review_fixture.py",
+    "tests/home_catalogue_baseline.py",
+    "tests/latest_review_baseline.py",
+    "tests/r_first_revision_baseline.py",
+    "tests/reader_text_colour_baseline.py",
+    "tests/remaining_validation_baseline.py",
+    "tests/resource_content_baseline.py",
+    "tests/test_home_catalogue_scope.py",
+    "tests/test_latest_review_baseline.py",
+    "tests/test_latest_sitemap_composition_negative.py",
+    "tests/test_r_first_revision_baseline.py",
+    "tests/test_reader_punctuation.py",
+    "tests/test_reader_text_colours.py",
+    "tests/test_remaining_reference_support.py",
+    "tests/test_search_reference_aliases.js",
+    "tests/test_sitewide_reference_fixes.py",
+    "tests/test_start_here_blue_learning.py",
+    "tests/tutorial_execution_baseline.py",
+    "tests/tutorial_ui_baseline.py",
+    "tools/generate_latest_review_fixture.py",
+})
 
 
 def git_base(path: str) -> bytes:
@@ -127,11 +153,7 @@ def build_fixture() -> dict:
         ["git", "diff", "--name-only", BASE_COMMIT, "--"], cwd=ROOT,
         text=True, stdout=subprocess.PIPE, check=True,
     ).stdout.splitlines()
-    unexpected = sorted(set(changed) - ALLOWED_PATHS - {
-        "tests/home_catalogue_baseline.py", "tests/reader_text_colour_baseline.py",
-        "tests/tutorial_ui_baseline.py", "tests/latest_review_baseline.py",
-        "tests/test_latest_review_baseline.py", "tools/generate_latest_review_fixture.py",
-    })
+    unexpected = sorted(set(changed) - ALLOWED_PATHS - TEST_INFRASTRUCTURE_PATHS)
     # Untracked generated fixture and test helpers do not appear in `git diff`;
     # tracked source changes outside this explicit review boundary must stop.
     if unexpected:
