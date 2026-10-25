@@ -1,0 +1,330 @@
+"""Focused invariants for the remaining bounded reference-support edits.
+
+All comparisons use immutable published main d42231e, never a moving branch or
+external site. These checks intentionally verify the cited links and local
+wording only; they do not infer that a reference is valid merely because it
+returns an HTTP response.
+"""
+from html import unescape
+from html.parser import HTMLParser
+import json
+from pathlib import Path
+import re
+import subprocess
+import unittest
+import xml.etree.ElementTree as ET
+
+from latest_review_baseline import normalize_latest_review
+
+ROOT = Path(__file__).resolve().parents[1]
+BASE_COMMIT = "d42231e"
+SITE = "https://theomicshub.com/"
+EXPECTED_PUBLIC_PATHS = {
+    "tutorials/scrna-seq-basics.html",
+    "tutorials/wes-variant-calling-pipeline.html",
+    "tutorials/notebooklm-research-brain.html",
+    "sitemap.xml",
+}
+NOTEBOOKLM = "tutorials/notebooklm-research-brain.html"
+NOTEBOOKLM_URL = SITE + NOTEBOOKLM
+SITEMAP_NS = {"s": "http://www.sitemaps.org/schemas/sitemap/0.9"}
+
+# These are already-existing review/test infrastructure files, not public
+# website sources. Keep this list explicit so the public-change scope check
+# cannot silently exempt a broad directory.
+TEST_INFRASTRUCTURE_PATHS = {
+    ".github/workflows/tutorial-review.yml",
+    "tests/browser_sitewide_reference_fixes.py",
+    "tests/fixtures/latest-review-edits.json",
+    "tests/generate_latest_review_fixture.py",
+    "tests/home_catalogue_baseline.py",
+    "tests/latest_review_baseline.py",
+    "tests/r_first_revision_baseline.py",
+    "tests/reader_text_colour_baseline.py",
+    "tests/remaining_validation_baseline.py",
+    "tests/resource_content_baseline.py",
+    "tests/test_home_catalogue_scope.py",
+    "tests/test_latest_review_baseline.py",
+    "tests/test_latest_sitemap_composition_negative.py",
+    "tests/test_r_first_revision_baseline.py",
+    "tests/test_reader_punctuation.py",
+    "tests/test_reader_text_colours.py",
+    "tests/test_remaining_reference_support.py",
+    "tests/test_search_reference_aliases.js",
+    "tests/test_sitewide_reference_fixes.py",
+    "tests/test_start_here_blue_learning.py",
+    "tests/tutorial_execution_baseline.py",
+    "tests/tutorial_ui_baseline.py",
+    "tools/generate_latest_review_fixture.py",
+}
+
+PROTECTED_UI_FILES = (
+    "index.html",
+    "start-here.html",
+    "start-here.css",
+    "start-here.js",
+    "tutorials.html",
+    "home-page.min.css",
+    "home-catalogue.css",
+    "catalogue-browser.js",
+    "script.js",
+    "style.css",
+)
+ASSET_SUFFIXES = {
+    ".avif", ".css", ".gif", ".ico", ".jpeg", ".jpg", ".js", ".png",
+    ".svg", ".ttf", ".webp", ".woff", ".woff2",
+}
+
+
+class InlineScriptParser(HTMLParser):
+    """Collect inline executable script attributes and exact source bodies."""
+
+    EXECUTABLE_TYPES = {
+        "", "application/ecmascript", "application/javascript", "module",
+        "text/ecmascript", "text/javascript",
+    }
+
+    def __init__(self, html):
+        super().__init__(convert_charrefs=True)
+        self.scripts = []
+        self._script = None
+        self.feed(html)
+        self.close()
+
+    def handle_starttag(self, tag, attrs):
+        if tag == "script":
+            self._script = {"attrs": dict(attrs), "body": []}
+
+    def handle_data(self, data):
+        if self._script is not None:
+            self._script["body"].append(data)
+
+    def handle_endtag(self, tag):
+        if tag == "script" and self._script is not None:
+            attrs = self._script["attrs"]
+            script_type = attrs.get("type", "").strip().lower()
+            if "src" not in attrs and script_type in self.EXECUTABLE_TYPES:
+                self.scripts.append((attrs, "".join(self._script["body"])))
+            self._script = None
+
+
+def baseline_bytes(path):
+    return subprocess.check_output(
+        ["git", "show", f"{BASE_COMMIT}:{path}"], cwd=ROOT
+    )
+
+
+def baseline_text(path):
+    return baseline_bytes(path).decode("utf-8")
+
+
+def current_text(path):
+    return (ROOT / path).read_text(encoding="utf-8")
+
+
+def tutorial_paths_at_base():
+    output = subprocess.check_output(
+        ["git", "ls-tree", "-r", "--name-only", BASE_COMMIT, "tutorials"],
+        cwd=ROOT, text=True,
+    )
+    return sorted(
+        path for path in output.splitlines()
+        if re.fullmatch(r"tutorials/[^/]+\.html", path)
+    )
+
+
+def strip_one(text, pattern, label):
+    updated, count = re.subn(pattern, "", text, count=1, flags=re.S)
+    if count != 1:
+        raise AssertionError(f"expected exactly one {label}; found {count}")
+    if re.search(pattern, updated, re.S):
+        raise AssertionError(f"more than one {label} remains")
+    return updated
+
+
+def jsonld_article(html):
+    blocks = re.findall(
+        r'<script\b[^>]*type="application/ld\+json"[^>]*>(.*?)</script>',
+        html, re.S | re.I,
+    )
+    if len(blocks) != 1:
+        raise AssertionError(f"expected one JSON-LD article block, found {len(blocks)}")
+    return json.loads(blocks[0])
+
+
+def sitemap_lastmods(xml_text):
+    root = ET.fromstring(xml_text)
+    return {
+        item.findtext("s:loc", namespaces=SITEMAP_NS):
+        item.findtext("s:lastmod", namespaces=SITEMAP_NS)
+        for item in root.findall("s:url", SITEMAP_NS)
+    }
+
+
+class RemainingReferenceSupportTests(unittest.TestCase):
+    def test_only_the_four_authorized_public_paths_changed_since_published_main(self):
+        changed = set(subprocess.check_output(
+            ["git", "diff", "--name-only", BASE_COMMIT, "--"],
+            cwd=ROOT, text=True,
+        ).splitlines())
+        public_changed = changed - TEST_INFRASTRUCTURE_PATHS
+        self.assertEqual(public_changed, EXPECTED_PUBLIC_PATHS)
+
+    def test_all_58_tutorials_preserve_pre_code_and_executable_inline_javascript(self):
+        paths = tutorial_paths_at_base()
+        self.assertEqual(len(paths), 58)
+        current_paths = sorted(
+            p.relative_to(ROOT).as_posix()
+            for p in (ROOT / "tutorials").glob("*.html")
+        )
+        self.assertEqual(current_paths, paths)
+        for path in paths:
+            with self.subTest(tutorial=path):
+                before = baseline_text(path)
+                after = current_text(path)
+                for tag in ("pre", "code"):
+                    pattern = rf"<{tag}\b[^>]*>.*?</{tag}\s*>"
+                    self.assertEqual(
+                        re.findall(pattern, after, re.S | re.I),
+                        re.findall(pattern, before, re.S | re.I),
+                        f"{tag} markup/content changed",
+                    )
+                self.assertEqual(
+                    InlineScriptParser(after).scripts,
+                    InlineScriptParser(before).scripts,
+                    "executable inline JavaScript changed",
+                )
+
+    def test_homepage_start_here_catalogue_and_site_assets_are_byte_preserved(self):
+        protected = set(PROTECTED_UI_FILES)
+        tracked = subprocess.check_output(
+            ["git", "ls-tree", "-r", "--name-only", BASE_COMMIT],
+            cwd=ROOT, text=True,
+        ).splitlines()
+        protected.update(
+            path for path in tracked
+            if path.startswith(("assets/", "images/"))
+            or ("/" not in path and Path(path).suffix.lower() in ASSET_SUFFIXES)
+        )
+        for path in sorted(protected):
+            with self.subTest(path=path):
+                self.assertEqual((ROOT / path).read_bytes(), baseline_bytes(path))
+
+    def test_scrna_support_change_is_exactly_the_narrow_universal_three_prime_link(self):
+        path = "tutorials/scrna-seq-basics.html"
+        before, after = baseline_text(path), current_text(path)
+        old_link = (
+            r'<li><a href="https://support\.10xgenomics\.com/single-cell-gene-expression">'
+            r'10x Genomics Single Cell Gene Expression support and dataset descriptions</a></li>'
+        )
+        new_link = (
+            r'<li><a href="https://www\.10xgenomics\.com/support/single-cell-gene-expression">'
+            r'10x Universal 3′ Gene Expression support and dataset links</a></li>'
+        )
+        self.assertRegex(before, old_link)
+        self.assertRegex(after, new_link)
+        self.assertNotIn("https://support.10xgenomics.com/single-cell-gene-expression", after)
+        self.assertEqual(
+            strip_one(before, old_link, "legacy 10x support link"),
+            strip_one(after, new_link, "narrow Universal 3′ support link"),
+            "the scRNA edit must not change unrelated page content",
+        )
+
+    def test_wes_igsr_advice_uses_collection_filters_and_stops_on_unverified_inputs(self):
+        path = "tutorials/wes-variant-calling-pipeline.html"
+        before, after = baseline_text(path), current_text(path)
+        paragraph = r'<p>To source public teaching data, begin at the .*?</p>'
+        before_match = re.search(paragraph, before, re.S)
+        after_match = re.search(paragraph, after, re.S)
+        self.assertIsNotNone(before_match)
+        self.assertIsNotNone(after_match)
+        updated = after_match.group(0)
+        self.assertIn("which links data collections", updated)
+        self.assertIn("technology and data-type filters", updated)
+        self.assertIn("not a preassembled compatible bundle", updated)
+        self.assertIn(
+            "If a suitable exome FASTQ pair or its matching capture BED cannot be verified, stop",
+            updated,
+        )
+        self.assertIn("Do not substitute a GIAB truth-region BED", updated)
+        self.assertEqual(
+            before[:before_match.start()] + before[before_match.end():],
+            after[:after_match.start()] + after[after_match.end():],
+            "the WES change must stay within the IGSR sourcing paragraph",
+        )
+
+    def test_notebooklm_faq_and_usage_link_are_scoped_and_date_metadata_agrees(self):
+        before, after = baseline_text(NOTEBOOKLM), current_text(NOTEBOOKLM)
+        old_faq = (
+            r'<li><a href="https://support\.google\.com/gemininotebook/answer/16269187\?hl=en">'
+            r'Google Gemini Notebook frequently asked questions and current limits</a></li>'
+        )
+        new_faq = (
+            r'<li><a href="https://support\.google\.com/gemininotebook/answer/16269187\?hl=en">'
+            r'Google Gemini Notebook FAQs, citation limitations, and source-import troubleshooting</a></li>'
+        )
+        usage_paragraph = r'<p>Google changes product limits and availability\..*?</p>'
+        before_article, after_article = jsonld_article(before), jsonld_article(after)
+        self.assertRegex(before, old_faq)
+        self.assertRegex(after, new_faq)
+        self.assertRegex(after, r'href="https://support\.google\.com/gemininotebook/answer/17670842\?hl=en"')
+        self.assertIn("current usage-limit guidance", after)
+        self.assertNotIn("answer/17670842", before)
+        self.assertEqual(before_article["datePublished"], after_article["datePublished"])
+        self.assertEqual(after_article["datePublished"], "2026-09-08")
+        self.assertEqual(after_article["dateModified"], "2026-10-25")
+
+        before_remainder = strip_one(before, old_faq, "old NotebookLM FAQ label")
+        after_remainder = strip_one(after, new_faq, "narrow NotebookLM FAQ label")
+        before_remainder = strip_one(before_remainder, usage_paragraph, "old usage-limit paragraph")
+        after_remainder = strip_one(after_remainder, usage_paragraph, "new usage-limit paragraph")
+        before_remainder, before_count = re.subn(
+            r'("dateModified"\s*:\s*)"2026-10-24"',
+            r'\1"2026-10-25"', before_remainder, count=1,
+        )
+        self.assertEqual(before_count, 1)
+        self.assertEqual(before_remainder, after_remainder)
+
+        old_dates = sitemap_lastmods(baseline_text("sitemap.xml"))
+        current_dates = sitemap_lastmods(current_text("sitemap.xml"))
+        self.assertEqual(set(old_dates), set(current_dates))
+        changed_dates = {
+            url for url in old_dates if old_dates[url] != current_dates[url]
+        }
+        self.assertEqual(changed_dates, {NOTEBOOKLM_URL})
+        self.assertEqual(current_dates[NOTEBOOKLM_URL], "2026-10-25")
+        for page in (
+            "tutorials/scrna-seq-basics.html",
+            "tutorials/wes-variant-calling-pipeline.html",
+            NOTEBOOKLM,
+        ):
+            with self.subTest(date_metadata=page):
+                article = jsonld_article(current_text(page))
+                self.assertEqual(
+                    current_dates[SITE + page], article["dateModified"]
+                )
+
+    def test_unknown_text_and_executable_code_mutations_survive_literal_normalization(self):
+        path = "tutorials/scrna-seq-basics.html"
+        current = current_text(path)
+        baseline_normalized = normalize_latest_review(path, current)
+        for marker, mutation in (
+            (
+                "UNREVIEWED_TEXT_MUTATION",
+                '<!-- UNREVIEWED_TEXT_MUTATION -->',
+            ),
+            (
+                "UNREVIEWED_CODE_MUTATION",
+                '<script>window.__UNREVIEWED_CODE_MUTATION__ = true;</script>',
+            ),
+        ):
+            with self.subTest(mutation=marker):
+                self.assertEqual(current.count("</body>"), 1)
+                changed = current.replace("</body>", mutation + "</body>", 1)
+                normalized = normalize_latest_review(path, changed)
+                self.assertIn(marker, normalized)
+                self.assertNotEqual(normalized, baseline_normalized)
+
+
+if __name__ == "__main__":
+    unittest.main()
