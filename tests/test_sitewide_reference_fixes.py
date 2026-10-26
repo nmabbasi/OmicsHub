@@ -6,6 +6,11 @@ import re
 import subprocess
 import unittest
 
+from start_here_desktop_baseline import (
+    normalize_start_here_desktop_html,
+    restore_start_here_desktop_asset,
+)
+
 ROOT = Path(__file__).resolve().parents[1]
 BASELINE = '36bc46d'
 
@@ -82,6 +87,12 @@ class SitewideReferenceFixesTests(unittest.TestCase):
                 if path == 'index.html':
                     current = current.replace('script.js?v=20261025-reference-support-v1', 'script.js?v=20261022-reader-review')
                     current = current.replace('home-page.min.css?v=20261025-reference-support-v1', 'home-page.min.css?v=20261025-reader-colours-v1')
+                elif path == 'start-here.html':
+                    current = normalize_start_here_desktop_html(path, current)
+                elif path == 'start-here.css':
+                    current = restore_start_here_desktop_asset(
+                        path, current.encode('utf-8')
+                    ).decode('utf-8')
                 self.assertEqual(current, baseline(path))
 
     def test_reference_edits_do_not_change_any_tutorial_code_or_approved_images(self):

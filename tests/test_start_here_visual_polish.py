@@ -3,9 +3,9 @@ from html.parser import HTMLParser
 from pathlib import Path
 import re
 import unittest
+from start_here_desktop_baseline import DESKTOP_CSS_VERSION
 
 ROOT = Path(__file__).resolve().parents[1]
-CSS_VERSION = "20261025-reader-colours-v1"
 JS_VERSION = "20261025-circular-path-v1"
 
 
@@ -143,7 +143,7 @@ class StartHereVisualPolishTests(unittest.TestCase):
         self.assertRegex(self.css, r"(?i)@media\s*\(max-width:")
         self.assertIn("hidden", self.js)
         self.assertIn("data-sh-step", self.js)
-        self.assertIn(f"start-here.css?v={CSS_VERSION}", self.source)
+        self.assertIn(f"start-here.css?v={DESKTOP_CSS_VERSION}", self.source)
         self.assertIn(f"start-here.js?v={JS_VERSION}", self.source)
 
     def test_orbit_and_navigation_do_not_claim_completion_or_progress(self):

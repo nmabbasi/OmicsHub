@@ -11,10 +11,10 @@ from reader_text_colour_baseline import (
 )
 from r_first_revision_baseline import R_FIRST_ASSET_PATHS, restore_r_first_asset
 from latest_review_baseline import restore_latest_review_asset
+from start_here_desktop_baseline import DESKTOP_CSS_VERSION
 
 ROOT = Path(__file__).resolve().parents[1]
 PUBLISHED = "45d660c5f53a0f4d8c2736057e2ab54fe7b8e718"
-CSS_VERSION = "20261025-reader-colours-v1"
 JS_VERSION = "20261025-circular-path-v1"
 FOUNDATION = ("tutorials/command-line-part1.html", "tutorials/computer-data-fundamentals.html")
 LANGUAGE_CHOICES = ("tutorials/r-tidyverse-fundamentals.html", "tutorials/python-fundamentals-bioinformatics.html")
@@ -116,7 +116,7 @@ class StartHereBlueLearningTests(unittest.TestCase):
         expected = self.old.replace(main(self.old), main(restored_source), 1)
         expected = expected.replace(old_css, new_css, 1).replace(old_js, new_js, 1)
         self.assertEqual(restored_source, expected)
-        self.assertIn(f'href="start-here.css?v={CSS_VERSION}"', self.source)
+        self.assertIn(f'href="start-here.css?v={DESKTOP_CSS_VERSION}"', self.source)
         self.assertEqual(new_js, f"start-here.js?v={JS_VERSION}")
 
     def test_four_ordered_lesson_panels_and_orbit_anchors(self):

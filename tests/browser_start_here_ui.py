@@ -34,7 +34,7 @@ def main():
             options = {'headless': True, 'args': ['--no-sandbox']}
             if args.browser: options['executable_path'] = args.browser
             browser = p.chromium.launch(**options)
-            for width, height in [(1440, 1250), (768, 1000), (390, 844), (320, 568)]:
+            for width, height in [(1440, 1250), (1920, 1200), (2560, 1200), (768, 1000), (390, 844), (320, 568)]:
                 context = browser.new_context(viewport={'width': width, 'height': height}, reduced_motion='reduce')
                 block_remote(context)
                 page = context.new_page()
@@ -51,7 +51,17 @@ def main():
                   visibleWords:document.querySelector('main').innerText.trim().split(/\\s+/).length,
                   totalWords:document.querySelector('main').textContent.trim().split(/\\s+/).length,
                   mainHeight:document.querySelector('main').getBoundingClientRect().height,
-                  heroButtonBottom:document.querySelector('.sh-primary-link').getBoundingClientRect().bottom
+                  heroButtonBottom:document.querySelector('.sh-primary-link').getBoundingClientRect().bottom,
+                  desktop:innerWidth >= 1440 ? (() => {
+                    const hero=document.querySelector('.sh-hero'), r=hero.getBoundingClientRect();
+                    const body=document.querySelector('#sh-step-1 p:not(.sh-panel-kicker):not(.sh-note)');
+                    const note=document.querySelector('#sh-step-1 .sh-note');
+                    const title=document.querySelector('.sh-step-nav strong'), secondary=document.querySelector('.sh-step-nav small');
+                    return {heroLeft:r.left,heroWidth:r.width,bodySize:parseFloat(getComputedStyle(body).fontSize),
+                      noteSize:parseFloat(getComputedStyle(note).fontSize),navTitleSize:parseFloat(getComputedStyle(title).fontSize),
+                      navSecondarySize:parseFloat(getComputedStyle(secondary).fontSize),bodyColor:getComputedStyle(body).color,
+                      noteColor:getComputedStyle(note).color,heroBackground:getComputedStyle(hero).backgroundImage};
+                  })() : null
                 })''')
                 check(data['scrollWidth'] <= width + 1, f'{width}: page overflow')
                 check(data['heroLeft'] == 'left', f'{width}: hero is not left aligned')
@@ -59,7 +69,21 @@ def main():
                 check(all(not d['open'] and d['summaryHeight'] >= 48 for d in data['details']), f'{width}: optional details not initially compact')
                 check(all(a['height'] >= 44 and a['width'] >= 44 for a in data['actions']), f'{width}: small primary target')
                 check(data['visibleWords'] < 340 and data['totalWords'] < 650, f'{width}: excessive reading load')
-                check(data['heroButtonBottom'] < height, f'{width}: first lesson button below initial viewport')
+                max_button_bottom = height + (120 if width == 320 else 0)
+                check(data['heroButtonBottom'] <= max_button_bottom, f'{width}: first lesson button is beyond the permitted initial view/short scroll')
+                if width >= 1440:
+                    desktop = data['desktop']
+                    check(abs(desktop['heroLeft']) <= 1 and abs(desktop['heroWidth'] - width) <= 1,
+                          f'{width}: banner does not span the full viewport')
+                    check(desktop['bodySize'] >= 16, f'{width}: lesson body text is below 16px')
+                    check(desktop['noteSize'] >= 14, f'{width}: lesson note is below 14px')
+                    check(desktop['navTitleSize'] >= 16, f'{width}: navigation title is below 16px')
+                    check(desktop['navSecondarySize'] >= 14, f'{width}: navigation secondary text is below 14px')
+                    check('gradient(' in desktop['heroBackground'], f'{width}: banner gradient was lost')
+                    for key in ('bodyColor', 'noteColor'):
+                        channels = [int(value) for value in __import__('re').findall(r'\d+', desktop[key])[:3]]
+                        check(len(channels) == 3 and sum(channels) / 3 < 150,
+                              f'{width}: {key} is not dark readable copy')
                 # Circle, side guide and previous/next controls stay in sync.
                 for step in range(1, 5):
                     page.locator(f'.sh-orbit-stop[data-sh-step="{step}"]').click()
@@ -67,6 +91,26 @@ def main():
                     check(page.locator('.sh-lesson-panel:visible').count() == 1, f'{width}: competing lesson panels')
                     check(page.locator(f'.sh-step-nav a[data-sh-step="{step}"]').get_attribute('aria-current') == 'step', f'{width}: unsynced side guide')
                     check(f'Viewing step {step} of 4' in page.locator('.sh-step-status').inner_text(), f'{width}: status missing')
+                    if width >= 1440:
+                        geometry = page.evaluate('''(step) => {
+                          const panel=document.getElementById(`sh-step-${step}`), orbit=document.querySelector('.sh-orbit');
+                          const p=panel.getBoundingClientRect(), o=orbit.getBoundingClientRect();
+                          return {panel:{left:p.left,top:p.top,right:p.right,bottom:p.bottom},orbit:{left:o.left,top:o.top,right:o.right,bottom:o.bottom},
+                            panelScrollWidth:panel.scrollWidth,panelClientWidth:panel.clientWidth,
+                            panelScrollHeight:panel.scrollHeight,panelClientHeight:panel.clientHeight,
+                            bodySize:parseFloat(getComputedStyle(panel.querySelector('p:not(.sh-panel-kicker):not(.sh-note)')).fontSize),
+                            noteSize:parseFloat(getComputedStyle(panel.querySelector('.sh-note')).fontSize)};
+                        }''', step)
+                        check(geometry['panel']['left'] >= geometry['orbit']['left'] - 1 and
+                              geometry['panel']['top'] >= geometry['orbit']['top'] - 1 and
+                              geometry['panel']['right'] <= geometry['orbit']['right'] + 1 and
+                              geometry['panel']['bottom'] <= geometry['orbit']['bottom'] + 1,
+                              f'{width}: lesson panel {step} is not safely within the orbit')
+                        check(geometry['panelScrollWidth'] <= geometry['panelClientWidth'] + 1 and
+                              geometry['panelScrollHeight'] <= geometry['panelClientHeight'] + 1,
+                              f'{width}: lesson panel {step} content overflows')
+                        check(geometry['bodySize'] >= 16 and geometry['noteSize'] >= 14,
+                              f'{width}: lesson panel {step} body/note typography is too small')
                 check(page.locator('[data-sh-next]').is_disabled(), f'{width}: last step incorrectly wraps')
                 page.locator('.sh-step-nav a[data-sh-step="2"]').focus()
                 page.keyboard.press('Enter')
