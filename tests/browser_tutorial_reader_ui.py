@@ -68,13 +68,19 @@ def main():
                       nav:[...document.querySelectorAll('.reader-toolbar > a')].map(a=>{const r=a.getBoundingClientRect();return {x:r.x,y:r.y,w:r.width,h:r.height,right:r.right,bottom:r.bottom}}),
                       topIntegrated:!!document.querySelector('#reader-course-navigation .reader-sequence-footer #back-to-top'),
                       continuation:[...document.querySelectorAll('#reader-course-navigation a')].filter(a=>a.getClientRects().length).map(a=>a.getBoundingClientRect().height),
-                      codeBg:document.querySelector('article pre')?getComputedStyle(document.querySelector('article pre')).backgroundColor:null
+                      codeBg:document.querySelector('article pre')?getComputedStyle(document.querySelector('article pre')).backgroundColor:null,
+                      hero:(()=>{const e=document.querySelector('#tutorial-page .tutorial-hero-banner');if(!e)return null;const r=e.getBoundingClientRect(),a=document.querySelector('#tutorial-page article')?.getBoundingClientRect();return {x:r.x,right:r.right,width:r.width,articleWidth:a?.width??0};})()
                     })''')
                     hashes = [hashlib.sha256(code.encode()).hexdigest() for code in data['blocks']]
                     # Tabs move whole branches but retain the original route order.
                     check(hashes == [block['sha256'] for block in spec['blocks']], f'{slug} code changed at {width}')
                     check(data['scrollWidth'] <= width + 1, f'{slug} horizontal page overflow at {width}: {data["scrollWidth"]}')
                     check(data['frames'] == len(spec['blocks']), f'{slug} missing/duplicate copy frames')
+                    if slug == 'rna-seq-count-matrix-qc-cpm':
+                        check(data['hero'] is not None, 'Count-Matrix intro hero is missing')
+                        check(data['hero']['x'] >= -1 and data['hero']['right'] <= width + 1, f'Count-Matrix hero exceeds viewport at {width}: {data["hero"]}')
+                        if width == 1440:
+                            check(data['hero']['width'] >= data['hero']['articleWidth'] + 200, f'Count-Matrix hero is not wider than the article: {data["hero"]}')
                     check(data['groups'] == len(groups.get(slug, [])), f'{slug} unexpected grouping')
                     check(all(n == 1 for n in data['selected'] + data['visible']), f'{slug} invalid tab visibility')
                     check(all(languages == ['r', 'python'] for languages in data['tabLanguages']), f'{slug} tabs are not physically R-first')
