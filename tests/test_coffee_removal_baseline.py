@@ -12,6 +12,7 @@ from coffee_removal_baseline import (
     coffee_removal_fixture,
     restore_coffee_removal_bytes,
 )
+from gget_mobile_baseline import restore_gget_mobile_bytes
 
 ROOT = Path(__file__).resolve().parents[1]
 HTML_ANCHOR = (
@@ -47,7 +48,9 @@ class CoffeeRemovalBaselineTests(unittest.TestCase):
 
         for relative_path, entry in sorted(fixture.items()):
             with self.subTest(path=relative_path):
-                current = (ROOT / relative_path).read_bytes()
+                current = restore_gget_mobile_bytes(
+                    relative_path, (ROOT / relative_path).read_bytes()
+                )
                 self.assertEqual(hashlib.sha256(current).hexdigest(), entry["current_sha256"])
                 original = entry["base_bytes"]
                 self.assertEqual(hashlib.sha256(original).hexdigest(), entry["base_sha256"])
@@ -59,8 +62,11 @@ class CoffeeRemovalBaselineTests(unittest.TestCase):
         for relative_path in sorted(path for path in fixture if path.endswith(".html")):
             with self.subTest(path=relative_path):
                 before = fixture[relative_path]["base_bytes"]
+                current = restore_gget_mobile_bytes(
+                    relative_path, (ROOT / relative_path).read_bytes()
+                )
                 self.assertEqual(before.count(HTML_ANCHOR), 1)
-                self.assertEqual(before.replace(HTML_ANCHOR, b"", 1), (ROOT / relative_path).read_bytes())
+                self.assertEqual(before.replace(HTML_ANCHOR, b"", 1), current)
 
         script_before = fixture["script.js"]["base_bytes"]
         self.assertEqual(script_before.count(SCRIPT_ANCHOR), 1)

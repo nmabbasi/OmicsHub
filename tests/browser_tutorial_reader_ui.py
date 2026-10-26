@@ -88,6 +88,37 @@ def main():
                             overlap = min(first['right'],second['right'])-max(first['x'],second['x']) > 1 and min(first['bottom'],second['bottom'])-max(first['y'],second['y']) > 1
                             check(not overlap, f'{slug} toolbar overlaps at {width}')
                     if spec['blocks']: check(data['codeBg'] == 'rgb(9, 12, 17)', f'{slug} code not black')
+                    if slug == 'deterministic-retrieval-gget-ai':
+                        table = page.evaluate('''() => {
+                          const wrappers=[...document.querySelectorAll('article .gget-table-scroll')];
+                          const wrapper=wrappers[0], element=wrapper?.querySelector('table');
+                          if (wrapper && innerWidth <= 720) wrapper.scrollLeft=wrapper.scrollWidth;
+                          const prompt=wrapper ? getComputedStyle(wrapper,'::before') : null;
+                          const rows=element ? [...element.rows].map(row=>[...row.cells].map(cell=>cell.innerText.trim())) : [];
+                          return {
+                            count:wrappers.length,
+                            overflowX:wrapper ? getComputedStyle(wrapper).overflowX : null,
+                            clientWidth:wrapper?.clientWidth ?? 0,
+                            scrollWidth:wrapper?.scrollWidth ?? 0,
+                            tableWidth:element?.getBoundingClientRect().width ?? 0,
+                            atEnd:wrapper ? wrapper.scrollLeft + wrapper.clientWidth >= wrapper.scrollWidth - 1 : false,
+                            prompt:prompt?.content ?? 'none',
+                            promptDisplay:prompt?.display ?? 'none',
+                            caption:element?.caption?.innerText.trim() ?? '',
+                            rows
+                          };
+                        }''')
+                        check(table['count'] == 1, f'gget table wrapper missing/duplicated at {width}')
+                        check(table['caption'] == 'Selected fields from the saved response, not a promise about future queries', f'gget table caption changed at {width}')
+                        check(table['rows'][0] == ['Returned field', 'Observed value', 'How to read it'], f'gget table headers changed at {width}')
+                        check(len(table['rows']) == 5 and any('ENSG00000130234.15' in ' '.join(row) for row in table['rows']), f'gget table data changed at {width}')
+                        if width <= 720:
+                            check(table['overflowX'] == 'auto', f'gget table wrapper is not horizontally scrollable at {width}')
+                            check(table['scrollWidth'] > table['clientWidth'] and table['tableWidth'] > table['clientWidth'], f'gget table does not overflow only inside its wrapper at {width}')
+                            check('Scroll horizontally to read the full table' in table['prompt'] and table['promptDisplay'] != 'none', f'gget mobile scroll prompt missing at {width}')
+                            check(table['atEnd'], f'gget table cannot scroll to its right edge at {width}')
+                        else:
+                            check(table['overflowX'] != 'auto' and table['prompt'] in ('none', 'normal'), f'gget mobile-only scroll styling leaked to desktop at {width}')
                     results['pages'].append({'slug': slug, 'width': width, 'blocks': len(hashes), 'groups': data['groups'], 'tokenColors': len(data['colors'])})
                 print(f'Checked all 58 tutorials at {width}px', flush=True)
             page.set_viewport_size({'width': 1440, 'height': 1000})

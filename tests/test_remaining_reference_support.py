@@ -46,6 +46,7 @@ EXPECTED_PUBLIC_PATHS = {
     "sitemap.xml",
     "start-here.html",
     "start-here.css",
+    "tutorial-library.css",
 }
 NOTEBOOKLM = "tutorials/notebooklm-research-brain.html"
 NOTEBOOKLM_URL = SITE + NOTEBOOKLM

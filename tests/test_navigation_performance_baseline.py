@@ -251,7 +251,7 @@ class NavigationPerformanceBaselineTests(unittest.TestCase):
         self.assertEqual(
             changed - TEST_INFRASTRUCTURE_PATHS - {WORKFLOW_PATH},
             STARTUP_TUTORIAL_PATHS | STARTUP_ASSET_PATHS
-            | {"home-page.min.css", "start-here.css", "start-here.html"},
+            | {"home-page.min.css", "start-here.css", "start-here.html", "tutorial-library.css"},
         )
 
     def test_all_other_tracked_source_assets_and_site_surfaces_are_byte_preserved(self):
