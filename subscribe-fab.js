@@ -146,29 +146,18 @@
 
     stylesheetReady.then(() => {
       let scheduled = false;
+      const cachedFooter = document.querySelector('footer');
+      const cachedHeader = document.querySelector('body > header');
       const update = () => {
         const focused = document.activeElement === existing;
         tools.hidden = window.scrollY < 240 && !focused;
         if (!tools.hidden && !focused) {
           const rect = existing.getBoundingClientRect();
-          const headerBottom = document.querySelector('body > header')?.getBoundingClientRect().bottom || 0;
-          const intersects = box => box.width > 0 && box.height > 0 &&
-            box.left < rect.right + 7 && box.right > rect.left - 7 &&
-            box.top < rect.bottom + 7 && box.bottom > rect.top - 7;
-          const controls = document.querySelectorAll('body a[href], body button, body summary, body input, body select, body textarea, body [tabindex]');
-          const controlOverlap = [...controls].some(control => control !== existing && [...control.getClientRects()].some(intersects));
-          // Measure text fragments, not full-width paragraph boxes: the circle
-          // uses whitespace only and yields to content, forms, navigation, and footer text.
-          const reading = document.querySelectorAll('body h1, body h2, body h3, body h4, body h5, body h6, body p, body li, body pre, body figcaption, body td, body th, body blockquote, body label, body dt, body dd, body address');
-          const textOverlap = !controlOverlap && [...reading].some(block => {
-            if (block.contains(existing) || !block.getClientRects().length) return false;
-            const bounds = block.getBoundingClientRect();
-            if (!intersects(bounds)) return false;
-            const range = document.createRange();
-            range.selectNodeContents(block);
-            return [...range.getClientRects()].some(intersects);
-          });
-          tools.hidden = controlOverlap || textOverlap || rect.top < headerBottom + 8;
+          const headerBottom = cachedHeader?.getBoundingClientRect().bottom || 0;
+          const footerTop = cachedFooter?.getBoundingClientRect().top ?? Infinity;
+          // Lightweight boundary check replaces expensive full-DOM collision
+          // scanning that froze the main thread on content-heavy pages.
+          tools.hidden = rect.top < headerBottom + 8 || rect.bottom > footerTop - 8;
         }
         scheduled = false;
       };
