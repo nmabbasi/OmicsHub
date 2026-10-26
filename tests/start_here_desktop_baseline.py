@@ -9,6 +9,7 @@ import hashlib
 from pathlib import Path
 import re
 import subprocess
+from coffee_removal_baseline import restore_coffee_removal_text
 
 ROOT = Path(__file__).resolve().parents[1]
 DESKTOP_BASELINE_COMMIT = "e846ce3fb6053ed611dc87fc62748865499913d0"
@@ -88,6 +89,7 @@ def normalize_start_here_desktop_html(relative_path, text):
     """Reverse only the exact reviewed page; otherwise normalize only the literal href."""
     if not isinstance(text, str):
         raise TypeError("Start Here HTML normalization requires decoded text")
+    text = restore_coffee_removal_text(relative_path, text, strict=False)
     if relative_path != "start-here.html":
         return text
     if text == _exact_restored_page() or hashlib.sha256(text.encode("utf-8")).hexdigest() == DESKTOP_HTML_SHA256:

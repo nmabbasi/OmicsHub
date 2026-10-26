@@ -35,9 +35,17 @@ from start_here_desktop_baseline import (
     normalize_start_here_desktop_html,
     restore_start_here_desktop_asset,
 )
+from coffee_removal_baseline import (
+    coffee_removal_fixture,
+    restore_coffee_removal_bytes,
+    restore_coffee_removal_text,
+)
 
 
 TEST_INFRASTRUCTURE_PATHS = {
+    'tests/coffee_removal_baseline.py',
+    'tests/fixtures/coffee-removal-review.json',
+    'tests/test_coffee_removal_baseline.py',
     'tests/browser_navigation_performance.py',
     'tests/browser_start_here_ui.py',
     'tests/browser_startup_performance.py',
@@ -173,6 +181,9 @@ class NavigationPerformanceBaselineTests(unittest.TestCase):
     def test_unknown_text_code_attribute_and_workflow_mutations_are_not_concealed(self):
         tutorial = "tutorials/scrna-seq-basics.html"
         current = (ROOT / tutorial).read_text(encoding="utf-8")
+        # The new closed adapter rejects raw unknown mutations separately;
+        # this test keeps exercising the original navigation-layer contract.
+        current = restore_coffee_removal_text(tutorial, current)
         mutations = {
             "text": current + "<!-- UNREVIEWED_TEXT_MUTATION -->\n",
             "code": current + "<script>window.__UNREVIEWED_CODE_MUTATION__ = true;</script>\n",
@@ -207,6 +218,17 @@ class NavigationPerformanceBaselineTests(unittest.TestCase):
         ).splitlines())
         changed -= EDITORIAL_REVIEW_PATHS - STARTUP_TUTORIAL_PATHS
         self.assertIn(WORKFLOW_PATH, changed)
+        # Exclude only new coffee-only paths after whole-file digest validation.
+        coffee = coffee_removal_fixture()
+        for path, entry in coffee.items():
+            self.assertEqual(
+                restore_coffee_removal_bytes(path, (ROOT / path).read_bytes()),
+                entry['base_bytes'],
+            )
+        changed -= set(coffee) - (
+            STARTUP_TUTORIAL_PATHS | STARTUP_ASSET_PATHS
+            | {'home-page.min.css', 'start-here.css', 'start-here.html'}
+        )
         # Verify the two explicitly authorized Start Here edits before including
         # them in the exact public-path set; unrelated CSS/HTML remains rejected.
         self.assertEqual(

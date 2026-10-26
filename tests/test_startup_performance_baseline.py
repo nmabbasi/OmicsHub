@@ -8,6 +8,7 @@ from unittest.mock import patch
 
 import startup_performance_baseline as baseline
 from editorial_review_baseline import normalize_editorial_review_bytes
+from coffee_removal_baseline import restore_coffee_removal_text
 from startup_performance_baseline import (
     ASSET_PATHS,
     BASE_COMMIT,
@@ -53,6 +54,8 @@ class StartupPerformanceBaselineTests(unittest.TestCase):
     def test_unknown_article_edit_survives_known_tutorial_reversal(self):
         relative_path = "tutorials/statistics-for-bioinformatics.html"
         current = (baseline.ROOT / relative_path).read_text(encoding="utf-8")
+        # Probe the historical startup layer on its exactly restored input.
+        current = restore_coffee_removal_text(relative_path, current)
         marker = "<!-- UNREVIEWED ARTICLE EDIT -->"
         self.assertIn("</article>", current)
         mutated = current.replace("</article>", marker + "</article>", 1)
