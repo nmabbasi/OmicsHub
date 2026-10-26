@@ -1,4 +1,5 @@
-"""Exact allowlist and restoration checks for the seven optional notebook reports."""
+"""Exact allowlist and restoration checks for reviewed notebook reports."""
+import hashlib
 from html import escape, unescape
 from pathlib import Path
 import re
@@ -6,6 +7,33 @@ import subprocess
 
 ROOT = Path(__file__).resolve().parents[1]
 PUBLISHED_REPORT_BASELINE = "f173d664e3023a9d74b0bc353dec621eed8ed5e9"
+PARTIAL_REPORT_BASELINE = "e5bd917ca15f39cf2ec2bdd4debed84e29e38df6"
+PARTIAL_REPORT_PATHS = frozenset({
+    "tutorials/examples/Benchmark_cell_Prediction_Methods_5_012_2025_on_Clusters_v2.html",
+    "tutorials/examples/TCR_Analysis_v2.html",
+    "tutorials/examples/WNN_analysis_of_CITE_seq_RNA_ADT.html",
+})
+PARTIAL_REPORT_SHA256 = {
+    "tutorials/examples/Benchmark_cell_Prediction_Methods_5_012_2025_on_Clusters_v2.html": "fb27f81a11beb1df4fa7ed1717fd24ca1f5c65d7992a23adc67aa8802efab4d5",
+    "tutorials/examples/TCR_Analysis_v2.html": "78a929988f4a3a570f34b773ca1b406afd30d7a66d57ab8ba539d610515a8cc6",
+    "tutorials/examples/WNN_analysis_of_CITE_seq_RNA_ADT.html": "fef0e2caf0af8d407f2ca2eba5190723d219e2221ad0e901bade8c85c98c5b1c",
+}
+PARTIAL_REPORT_NOTES = {
+    "tutorials/examples/Benchmark_cell_Prediction_Methods_5_012_2025_on_Clusters_v2.html": (
+        "Status: partial reference only.",
+        "This report requires two external Seurat objects that are not included here. Its saved table preview and heatmaps compare each method’s most frequent label per Seurat cluster; the plots do not test accuracy against a reference. The original heading claimed a normal CD4 subset, but the shown source only assigns cluster identities and does not subset cells. The input paths are placeholders, and the saved outputs have not been regenerated.",
+    ),
+    "tutorials/examples/TCR_Analysis_v2.html": (
+        "Status: partial reference only.",
+        "This HTML contains 51 saved plots, not verified reruns. Reproduction needs eight Cell Ranger contig files and a compatible Seurat object, none included here. Six output blocks contain only NA. Saved output also records invalid factor levels, the missing All_samples_Merged dataset, and six non-finite rows removed by a boxplot; affected panels are unverified.",
+    ),
+    "tutorials/examples/WNN_analysis_of_CITE_seq_RNA_ADT.html": (
+        "Status: partial reference only.",
+        "This page contains saved UMAP, feature, and modality-weight plots, but the source Seurat object is not included and the analyses have not been rerun. Saved output reports a 28-item PCA cap, a modality-weight name mismatch, and a missing adt_CD90 feature. Treat the embedded plots as references, not as results regenerated from the source shown here.",
+    ),
+}
+if set(PARTIAL_REPORT_SHA256) != PARTIAL_REPORT_PATHS or set(PARTIAL_REPORT_NOTES) != PARTIAL_REPORT_PATHS:
+    raise AssertionError("partial report paths, notes, and exact byte pins must match")
 STYLE = (
     "background:#f4f7fa;border:1px solid #c7d2dd;border-left:5px solid #35566f;"
     "border-radius:4px;box-sizing:border-box;color:#223746;line-height:1.55;"
@@ -67,13 +95,18 @@ REPORT_NOTES = {
         "displayed content does not support.",
     ),
 }
-OPTIONAL_REPORT_PATHS = frozenset(REPORT_NOTES)
+OPTIONAL_REPORT_PATHS = frozenset(REPORT_NOTES) | PARTIAL_REPORT_PATHS
 
 
 def status_note_markup(relative_path):
-    heading, body = REPORT_NOTES[relative_path]
+    if relative_path in PARTIAL_REPORT_NOTES:
+        heading, body = PARTIAL_REPORT_NOTES[relative_path]
+        note_class = "partial-report-status"
+    else:
+        heading, body = REPORT_NOTES[relative_path]
+        note_class = "optional-report-status"
     return (
-        '<aside class="optional-report-status" role="note" aria-label="Report status" '
+        f'<aside class="{note_class}" role="note" aria-label="Report status" '
         f'style="{STYLE}">'
         f'<p style="margin:0 0 .45rem;"><strong>{escape(heading, quote=False)}</strong></p>'
         f'<p style="margin:0;">{escape(body, quote=False)}</p></aside>'
@@ -83,8 +116,9 @@ def status_note_markup(relative_path):
 def published_report_bytes(relative_path):
     if relative_path not in OPTIONAL_REPORT_PATHS:
         raise AssertionError(f"not an approved optional report: {relative_path}")
+    baseline = PARTIAL_REPORT_BASELINE if relative_path in PARTIAL_REPORT_PATHS else PUBLISHED_REPORT_BASELINE
     return subprocess.check_output(
-        ["git", "show", f"{PUBLISHED_REPORT_BASELINE}:{relative_path}"], cwd=ROOT
+        ["git", "show", f"{baseline}:{relative_path}"], cwd=ROOT
     )
 
 
@@ -98,6 +132,15 @@ def _replace_once(text, before, after, label):
 def normalize_optional_report(relative_path, content):
     if relative_path not in OPTIONAL_REPORT_PATHS:
         return content
+    if relative_path in PARTIAL_REPORT_PATHS:
+        # These notebook exports carry large cached payloads, so authorize only
+        # the complete reviewed bytes rather than normalizing broad HTML regions.
+        raw = content.encode("utf-8") if isinstance(content, str) else content
+        digest = hashlib.sha256(raw).hexdigest()
+        if digest != PARTIAL_REPORT_SHA256[relative_path]:
+            raise AssertionError(f"exact partial-report source pin mismatch: {relative_path}")
+        baseline = published_report_bytes(relative_path)
+        return baseline.decode("utf-8") if isinstance(content, str) else baseline
     text = content.decode("utf-8") if isinstance(content, bytes) else content
     note = status_note_markup(relative_path)
     text = _replace_once(text, note + "\n\n", "", f"{relative_path} status note")
