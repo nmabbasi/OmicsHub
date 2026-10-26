@@ -247,7 +247,10 @@ class ReaderPunctuationTests(unittest.TestCase):
         approved_assets = approved_assets | verified_execution_paths
         # This consent repair authorizes one production script and its exact runtime fixture.
         reviewed_scripts = {'analytics.js', 'tests/test_analytics_load_order.js',
-                            'tests/test_search_reference_aliases.js'}
+                            'tests/test_search_reference_aliases.js',
+                            # Explicit startup test drivers, not website scripts.
+                            'tests/test_code_tabs_digest_memoization.js',
+                            'tests/test_reader_layout_batching.js'}
         verified_ui_paths = set(changed) & (TUTORIAL_UI_PATHS | HOME_CATALOGUE_ASSET_PATHS)
         for relative in sorted(verified_ui_paths):
             verify_tutorial_ui_file(relative, (ROOT / relative).read_bytes())

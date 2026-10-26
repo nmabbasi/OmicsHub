@@ -11,6 +11,7 @@ from latest_review_baseline import (
     FIXTURE_PATHS, FIXTURE_PATH, _check_context, latest_review_fixture,
     normalize_latest_review, normalize_patch_chunks, restore_latest_review_asset,
 )
+from startup_generated_asset_baseline import restore_startup_generated_asset
 
 
 class LatestReviewBaselineTests(unittest.TestCase):
@@ -62,6 +63,10 @@ class LatestReviewBaselineTests(unittest.TestCase):
                 current_text = baseline.normalize_navigation_performance(
                     relative_path, current.decode("utf-8")
                 ).encode("utf-8") if record["kind"] == "text" else current
+                if record["kind"] == "asset":
+                    current_text = restore_startup_generated_asset(
+                        relative_path, current_text, "main"
+                    )
                 self.assertEqual(hashlib.sha256(current_text).hexdigest(), record["current_sha256"])
                 if record["kind"] == "text":
                     normalized = normalize_latest_review(relative_path, current.decode("utf-8")).encode("utf-8")

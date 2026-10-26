@@ -145,6 +145,10 @@ def normalize_navigation_performance(relative_path, text):
     """Restore published-base text only for an exact complete-file after hash."""
     if not isinstance(text, str):
         raise TypeError("navigation-performance normalization requires decoded text")
+    # The startup layer is newer than this historical whole-file compatibility
+    # record, so peel it first while preserving this API for legacy guards.
+    from startup_performance_baseline import normalize_startup_performance
+    text = normalize_startup_performance(relative_path, text)
     return restore_navigation_performance_bytes(relative_path, text.encode("utf-8")).decode("utf-8")
 
 
@@ -152,6 +156,20 @@ def restore_navigation_performance_bytes(relative_path, data):
     """Byte-preserving form used by historical asset restorers."""
     if not isinstance(data, bytes):
         raise TypeError("navigation-performance byte restoration requires bytes")
+    # Local import avoids a module cycle: startup normalization is deliberately
+    # independent of all older baseline layers.
+    from startup_performance_baseline import (
+        TUTORIAL_PATHS,
+        normalize_startup_performance,
+        restore_startup_performance_asset,
+    )
+    data = restore_startup_performance_asset(relative_path, data)
+    if relative_path in TUTORIAL_PATHS:
+        try:
+            text = data.decode("utf-8")
+        except UnicodeDecodeError:
+            return data
+        data = normalize_startup_performance(relative_path, text).encode("utf-8")
     entry = navigation_performance_fixture().get(relative_path)
     if entry is None:
         return data

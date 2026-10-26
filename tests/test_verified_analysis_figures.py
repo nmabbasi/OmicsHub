@@ -97,6 +97,10 @@ class VerifiedAnalysisFigureTests(unittest.TestCase):
         self.assertEqual(renderer.CODE_DATA_VERSION,'20261025-executed-examples-v1');self.assertNotEqual(renderer.CODE_DATA_VERSION,renderer.VERSION)
         self.assertEqual(renderer.VERSION,'20261025-r-first-v1');self.assertEqual(renderer.NAVIGATION_CSS_VERSION,'20261025-learning-navigation-v2')
         for page in (ROOT/'tutorials').glob('*.html'):
-            text=page.read_text();self.assertIn('tutorial-code-data.js?v='+renderer.CODE_DATA_VERSION,text);self.assertIn('tutorial-reader.css?v='+renderer.VERSION,text)
+            text=page.read_text()
+            self.assertIn('id="tutorial-code-data"',text)
+            self.assertNotIn('src="../tutorial-code-data.js',text)
+            self.assertIn('code-tabs.js?v='+renderer.STARTUP_VERSION,text)
+            self.assertIn('tutorial-reader.css?v='+renderer.VERSION,text)
 
 if __name__=='__main__':unittest.main()

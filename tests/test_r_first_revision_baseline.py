@@ -18,6 +18,7 @@ from tutorial_execution_baseline import (
     verify_execution_asset_or_overlapping,
 )
 from latest_review_baseline import normalize_latest_review
+from startup_performance_baseline import restore_startup_performance_asset
 
 ROOT = Path(__file__).resolve().parents[1]
 TARGET_DATE = "2026-10-25"
@@ -157,7 +158,8 @@ class RFirstRevisionBaselineTests(unittest.TestCase):
                         restore_r_first_asset(relative, data + b"\n")
                     continue
                 self.assertEqual(verify_r_first_asset(relative, data), data)
-                self.assertEqual(hashlib.sha256(data).hexdigest(),
+                historical_data = restore_startup_performance_asset(relative, data)
+                self.assertEqual(hashlib.sha256(historical_data).hexdigest(),
                                  __import__("r_first_revision_baseline").R_FIRST_ASSET_SHA256[relative])
                 with self.assertRaisesRegex(AssertionError, "fingerprint mismatch"):
                     verify_r_first_asset(relative, data + b"\n")

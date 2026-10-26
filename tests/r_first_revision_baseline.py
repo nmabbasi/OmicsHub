@@ -236,6 +236,8 @@ def verify_r_first_asset(relative_path, data):
     if relative_path not in R_FIRST_ASSET_SHA256:
         raise AssertionError(f"not an authorized R-first asset: {relative_path}")
     original_data = data
+    from startup_performance_baseline import restore_startup_performance_asset
+    data = restore_startup_performance_asset(relative_path, data)
     data = restore_latest_review_asset(relative_path, data)
     observed = hashlib.sha256(data).hexdigest()
     expected = R_FIRST_ASSET_SHA256[relative_path]
@@ -246,6 +248,8 @@ def verify_r_first_asset(relative_path, data):
 
 def restore_r_first_asset(relative_path, data):
     """Verify a changed asset, then restore exact 2ad7731 bytes when tracked."""
+    from startup_performance_baseline import restore_startup_performance_asset
+    data = restore_startup_performance_asset(relative_path, data)
     data = restore_latest_review_asset(relative_path, data)
     # Compose the separately pinned execution-review asset layer first. Its
     # exact 122bd bytes then pass through the original R-first restoration path.

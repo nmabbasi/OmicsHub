@@ -16,6 +16,7 @@ import unittest
 ROOT=Path(__file__).resolve().parents[1]
 PUBLISHED='911a5f0'
 from reader_text_colour_baseline import normalize_reader_text
+from startup_performance_baseline import restore_startup_performance_asset
 
 
 class Text(HTMLParser):
@@ -236,6 +237,7 @@ class HomeCatalogueUITests(unittest.TestCase):
     def test_shared_script_is_published_identical_and_keeps_idempotent_category_guard(self):
         original=published('subscribe-fab.js')
         current=read('subscribe-fab.js')
+        current=restore_startup_performance_asset('subscribe-fab.js',current.encode()).decode()
         self.assertEqual(current,original)
         self.assertIn("if (!strip || document.getElementById('catalogue-category') || typeof window.filterTutorialsOnly !== 'function') return;",read('subscribe-fab.js'))
 

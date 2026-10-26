@@ -21,6 +21,7 @@ def main():
     ap.add_argument('--base', default='http://127.0.0.1:8767')
     ap.add_argument('--browser', default='/opt/google/chrome/chrome')
     ap.add_argument('--output', type=Path, default=Path('/tmp/omics-ui-check'))
+    ap.add_argument('--no-consent-actions', action='store_true', help='Leave all preference choices untouched during this local run')
     args = ap.parse_args(); args.output.mkdir(parents=True, exist_ok=True)
     metadata = json.loads((ROOT / 'tools/tutorial-code-languages.json').read_text())['tutorials']
     groups = json.loads((ROOT / 'tools/tutorial-code-groups.json').read_text())['tutorials']
@@ -29,6 +30,13 @@ def main():
         if not condition: raise AssertionError(message)
     def configure(context):
         context.route('https://**/*', lambda route: route.abort())
+    def override_statistics_metadata(context, data):
+        source = (ROOT / 'tutorials/statistics-for-bioinformatics.html').read_text()
+        encoded = json.dumps(data).replace('<', '\\u003c')
+        replacement = '<script id="tutorial-code-data">\nwindow.OMICS_TUTORIAL_CODE = ' + encoded + ';\n</script>'
+        source, count = re.subn(r'<script id="tutorial-code-data">.*?</script>', lambda _: replacement, source, flags=re.S)
+        check(count == 1, 'Expected exactly one inline metadata element')
+        context.route('**/tutorials/statistics-for-bioinformatics.html', lambda route: route.fulfill(body=source, content_type='text/html'))
     def ready(page, slug):
         page.goto(f'{args.base}/tutorials/{slug}.html', wait_until='load')
         page.wait_for_selector('html[data-tutorial-code-ready="true"]')
@@ -85,7 +93,7 @@ def main():
             page.set_viewport_size({'width': 1440, 'height': 1000})
             ready(page, 'statistics-for-bioinformatics')
             decline = page.get_by_role('button', name='Decline analytics', exact=True)
-            if decline.is_visible(): decline.click()
+            if not args.no_consent_actions and decline.is_visible(): decline.click()
             first = page.locator('[data-code-tabs]').first
             rtab = first.get_by_role('tab', name='R · base R', exact=True)
             rtab.click()
@@ -159,8 +167,9 @@ def main():
             # An altered fingerprint must leave both original alternatives visible.
             stale = browser.new_context(); configure(stale)
             script = (ROOT / 'tutorial-code-data.js').read_text()
-            bad_hash = metadata['statistics-for-bioinformatics']['blocks'][0]['sha256']
-            stale.route('**/tutorial-code-data.js?*', lambda route: route.fulfill(body=script.replace(bad_hash, '0'*64), content_type='text/javascript'))
+            stale_data = json.loads(script.split('window.OMICS_TUTORIAL_CODE = ', 1)[1].rstrip(';\n'))
+            stale_data['tutorials']['statistics-for-bioinformatics']['blocks'][0]['sha256'] = '0'*64
+            override_statistics_metadata(stale, stale_data)
             sp = stale.new_page(); ready(sp, 'statistics-for-bioinformatics')
             check(sp.locator('[data-code-tabs]').count() == 0, 'Stale code fingerprint still hides route')
             check(sp.locator('article pre:visible').count() == 10, 'Stale fallback loses original code')
@@ -169,8 +178,7 @@ def main():
             malformed = browser.new_context(); configure(malformed)
             malformed_data = json.loads(script.split('window.OMICS_TUTORIAL_CODE = ', 1)[1].rstrip(';\n'))
             malformed_data['tutorials']['statistics-for-bioinformatics']['groups'][0]['panels'][0]['end'] = 9999
-            malformed_script = 'window.OMICS_TUTORIAL_CODE = ' + json.dumps(malformed_data) + ';\n'
-            malformed.route('**/tutorial-code-data.js?*', lambda route: route.fulfill(body=malformed_script, content_type='text/javascript'))
+            override_statistics_metadata(malformed, malformed_data)
             mp = malformed.new_page(); ready(mp, 'statistics-for-bioinformatics')
             check(mp.locator('[data-code-tabs]').count() == 0, 'Invalid panel bounds still move source content')
             check(mp.locator('article pre:visible').count() == 10, 'Invalid panel bounds lose original code')
@@ -191,8 +199,14 @@ def main():
             check(page.url.endswith('/command-line-part2.html'), 'Suggested next link did not load the next lesson')
             page.go_back(); page.wait_for_selector('html[data-tutorial-code-ready="true"]')
             check(page.url == source_url and page.locator('article pre').count() > 0, 'Browser back lost the original lesson')
-            page.evaluate("window.scrollTo({top:650,behavior:'instant'})")
-            page.locator('#back-to-top').wait_for(state='visible')
+            # The circle deliberately yields to code/text and the untouched
+            # preference banner; a fixed scroll offset is not a visibility contract.
+            max_scroll = page.evaluate('document.documentElement.scrollHeight - innerHeight')
+            for y in range(240, int(max_scroll) + 1, 72):
+                page.evaluate("y => window.scrollTo({top:y,behavior:'instant'})", y)
+                page.evaluate('new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))')
+                if page.locator('#back-to-top').is_visible(): break
+            check(page.locator('#back-to-top').is_visible(), 'No safe visible gap for the native top control')
             page.locator('#back-to-top').click()
             page.wait_for_function('document.activeElement?.id === "tutorial-title"')
             check(page.locator('article pre').count() > 0, 'Native fragment replaced the restored lesson')
