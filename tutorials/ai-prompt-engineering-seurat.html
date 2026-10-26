@@ -212,7 +212,7 @@ Ask: show all package imports and version prints; explain any assumptions and ci
 <h2>Reproducible, sequential workflow examples</h2>
 <p>The R Seurat workflow below is the main route and implements the cluster-2 marker prompt. The optional Python Scanpy workflow is a separate QC → clustering → exploratory marker-ranking task; it is not an equivalent implementation of the Seurat prompt or a shared sequential pipeline. Both are templates for prepared objects.</p>
 <h3 id="seurat-workflow-r">Main workflow: Seurat cluster markers (R)</h3>
-<p>Prepare a serialized Seurat object at <code>./data/seurat_obj.rds</code>, with an RNA expression assay and a <code>seurat_clusters</code> metadata column. Check its structure from the project root before running the workflow:</p>
+<p>Prepare a serialized Seurat object at <code>./data/seurat_obj.rds</code>, with an assay named <code>RNA</code> and a <code>seurat_clusters</code> metadata column. Check its structure from the project root before running the workflow. The supplied script stops if RNA is absent, selects RNA for preprocessing and visualization, and records <code>assay = "RNA"</code> for the marker test.</p>
 <pre><code>Rscript -e 'x &lt;- readRDS("./data/seurat_obj.rds"); print(dim(x)); print(colnames(x@meta.data)); stopifnot("seurat_clusters" %in% colnames(x@meta.data))'</code></pre>
 <p>Expect nonzero feature-by-cell dimensions and the required metadata field. This structural check does not establish that counts, assay choice, identities, or biological annotations are appropriate. If the object or required field is missing, stop and prepare a compatible object first. The existing <code>seurat_clusters</code> labels define the marker comparison; if UMAP is absent, the script computes a visualization without reclustering or replacing those labels.</p>
 <ul>
@@ -233,8 +233,13 @@ dir.create(outdir, showWarnings = FALSE, recursive = TRUE)
 
 # Load object and report
 seurat_obj &lt;- readRDS(infile)
-cat("Seurat object dimensions (cells x genes):", dim(seurat_obj), "\n")
+cat("Seurat object dimensions (features x cells):", dim(seurat_obj), "\n")
 cat("Available metadata columns:", paste(colnames(seurat_obj@meta.data), collapse=", "), "\n")
+
+if (!("RNA" %in% Assays(seurat_obj))) {
+  stop("Required assay 'RNA' is missing; prepare or select the intended RNA assay before running this workflow.")
+}
+DefaultAssay(seurat_obj) &lt;- "RNA"
 
 # Validate metadata before plotting or using the cluster identities.
 if (!"seurat_clusters" %in% colnames(seurat_obj@meta.data)) {
@@ -254,7 +259,7 @@ comparison_metadata &lt;- list(
   ident.2 = NULL,
   reference = "all other cells",
   test = "MAST",
-  assay = DefaultAssay(seurat_obj),
+  assay = "RNA",
   logfc.threshold = 0.25,
   min.pct = 0.1
 )
@@ -489,6 +494,8 @@ print("Wrote results to", outdir)
 <h2>References</h2>
 <ul>
 <li><a href="https://satijalab.org/seurat/">Seurat official documentation (Satija Lab)</a></li>
+<li><a href="https://satijalab.org/seurat/reference/findmarkers">Seurat FindMarkers reference</a> for the assay used in marker testing.</li>
+<li><a href="https://satijalab.org/seurat/articles/essential_commands.html">Seurat essential commands</a> for object dimensions: features by rows and cells by columns.</li>
 <li><a href="https://scanpy.readthedocs.io/en/stable/">Scanpy documentation</a></li>
 <li><a href="https://bioconductor.org/packages/release/bioc/html/MAST.html">MAST package (Bioconductor)</a></li>
 <li><a href="https://doi.org/10.1016/j.cell.2019.05.031">Stuart et al., Comprehensive integration of single-cell data (Seurat v3 paper)</a></li>
@@ -582,7 +589,7 @@ print("Wrote results to", outdir)
 <script defer="" src="../mobile-navigation.js?v=20261026-startup-v1"></script>
 <script src="../assets/vendor/prism/prism-1.29.0.js"></script>
 <script id="tutorial-code-data">
-window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"ai-prompt-engineering-seurat":{"blocks":[{"language":"text","sha256":"2d7aaf229f4c5b9d70345930ec293718c2a1aebf846761dc9ecd9858543fdcfe"},{"language":"bash","sha256":"7c0aba9043305899ab71c569554bd2d8269f79808ae0ab6329bfc2b6a706f5d0"},{"language":"r","sha256":"cd491c2ec64c9ce86087ac38aecfd6f1aa950fcb84275ecda36fb019fbda2d46"},{"language":"bash","sha256":"6b1bbe1baa25dc9295fe636fca9c54d80b7b9c8de4da1627eeb73efb63d0a3e5"},{"language":"python","sha256":"27cdea466b95efaa6cc24137ca66a6e6d4afb50bd316af5908afbdbf18803d14"}],"groups":[]}}};
+window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"ai-prompt-engineering-seurat":{"blocks":[{"language":"text","sha256":"2d7aaf229f4c5b9d70345930ec293718c2a1aebf846761dc9ecd9858543fdcfe"},{"language":"bash","sha256":"7c0aba9043305899ab71c569554bd2d8269f79808ae0ab6329bfc2b6a706f5d0"},{"language":"r","sha256":"9d9bf560db9da3941c37aa7bea28a9ba8fba22ee1b288c2cf21ec50c20a1f7d1"},{"language":"bash","sha256":"6b1bbe1baa25dc9295fe636fca9c54d80b7b9c8de4da1627eeb73efb63d0a3e5"},{"language":"python","sha256":"27cdea466b95efaa6cc24137ca66a6e6d4afb50bd316af5908afbdbf18803d14"}],"groups":[]}}};
 </script>
 <script src="../code-tabs.js?v=20261026-startup-v1"></script>
 <script src="../copy-code.js?v=20261025-r-first-v1"></script>
