@@ -22,12 +22,13 @@ from reader_text_colour_baseline import (
 from r_first_revision_baseline import R_FIRST_ASSET_PATHS, restore_r_first_asset
 from latest_review_baseline import restore_latest_review_asset
 from editorial_review_baseline import normalize_editorial_review
+from route_migration_baseline import historical_route_path, published_tutorial_paths
 ROOT = Path(__file__).resolve().parents[1]
 
 
 def git_bytes(revision, path):
     result = subprocess.run(
-        ["git", "show", f"{revision}:{path}"], cwd=ROOT,
+        ["git", "show", f"{revision}:{historical_route_path(path)}"], cwd=ROOT,
         stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, check=False,
     )
     return result.stdout if result.returncode == 0 else None
@@ -225,7 +226,7 @@ class HomeCatalogueScopeTests(unittest.TestCase):
             normalize_home_catalogue(relative, current + guard_patch + guard_patch)
 
     def test_all_58_tutorial_pages_are_raw_identical_to_the_source_pin(self):
-        pages = sorted((ROOT / "tutorials").glob("*.html"))
+        pages = published_tutorial_paths(ROOT)
         self.assertEqual(len(pages), 58)
         for page in pages:
             relative = page.relative_to(ROOT).as_posix()

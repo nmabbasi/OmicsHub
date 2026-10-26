@@ -19,7 +19,7 @@ def main():
     ap.add_argument('--output',required=True,type=Path)
     args=ap.parse_args();args.output.mkdir(parents=True,exist_ok=True)
     servers=[];bases={};results={'visual_cases':[],'interactions':[],'errors':[],'consent_actions':False}
-    routes=['index.html','tutorials.html','start-here.html','tutorials/statistics-for-bioinformatics.html','tutorials/data-visualization-fundamentals.html','tutorials/hpc-submission-part1.html','tutorials/mcp-zotero.html','tutorials/autonomous-research-orchestrator.html']
+    routes=['index.html','tutorials.html','start-here.html','tutorials/statistics-for-bioinformatics.html','tutorials/data-visualization-fundamentals.html','tutorials/hpc-submission-part1.html','tutorials/mcp-zotero.html','tutorials/rna-seq-count-matrix-qc-cpm.html']
     def check(value,message):
         if not value:raise AssertionError(message)
     def ready(page,base,path):

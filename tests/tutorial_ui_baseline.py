@@ -17,6 +17,7 @@ from r_first_revision_baseline import (
     R_FIRST_ASSET_PATHS, normalize_r_first_revision, restore_r_first_asset,
 )
 from latest_review_baseline import normalize_latest_review, restore_latest_review_asset
+from route_migration_baseline import historical_route_path, normalize_route_migration, normalize_route_migration_text
 
 ROOT = Path(__file__).resolve().parents[1]
 PRE_UI_COMMIT = '243bc04e5edff51b33bef1b9312a48f6b2ae5751'
@@ -65,6 +66,7 @@ def normalize_tutorial_ui(relative_path, text):
     """
     if not isinstance(text, str):
         raise TypeError('tutorial UI normalization requires decoded text')
+    relative_path, text = normalize_route_migration_text(relative_path, text)
     text = normalize_latest_review(relative_path, text)
     text = normalize_r_first_revision(relative_path, text)
     text = normalize_home_catalogue(relative_path, text)
@@ -85,6 +87,7 @@ def normalize_tutorial_ui(relative_path, text):
 def verify_tutorial_ui_file(relative_path, data):
     """Pin every explicitly authorized new/modified UI file, never whole folders."""
     original_data = data
+    relative_path, data = normalize_route_migration(relative_path, data)
     data = restore_latest_review_asset(relative_path, data)
     if relative_path in R_FIRST_ASSET_PATHS:
         data = restore_r_first_asset(relative_path, data)
@@ -112,5 +115,6 @@ def verify_tutorial_ui_file(relative_path, data):
 
 
 def pre_ui_bytes(relative_path):
+    relative_path = historical_route_path(relative_path)
     result = subprocess.run(['git', 'show', f'{PRE_UI_COMMIT}:{relative_path}'], cwd=ROOT, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
     return result.stdout if result.returncode == 0 else None

@@ -75,7 +75,10 @@ def load_metadata() -> dict:
     if data.get('schemaVersion') != 1 or not isinstance(data.get('lessons'), dict):
         raise ValueError('Expected catalogue metadata schemaVersion 1 and a lesson mapping')
     metadata = data['lessons']
-    expected = {p.stem for p in (ROOT / 'tutorials').glob('*.html')}
+    expected = {
+        p.stem for p in (ROOT / 'tutorials').glob('*.html')
+        if '<meta name="tutorial-route-redirect"' not in p.read_text(encoding='utf-8')
+    }
     if len(expected) != 58 or set(metadata) != expected:
         raise ValueError('Metadata must cover exactly the same 58 published lessons')
     for slug, item in metadata.items():

@@ -13,6 +13,7 @@ import re
 import subprocess
 
 ROOT = Path(__file__).resolve().parents[1]
+from route_migration_baseline import historical_route_path, normalize_route_migration, normalize_route_migration_text
 BASE_COMMIT = "991991f99455d921a2fbc688621681b3a2295e1d"
 FIXTURE_PATH = ROOT / "tests/fixtures/navigation-performance-edits.json"
 FIXTURE_SHA256 = "277de8705c999457309688e40ec4ebbaf0f939f49946a6bf89ffabcdffcc69af"
@@ -74,6 +75,7 @@ FIXTURE_PATHS = APPROVED_PATHS | {WORKFLOW_PATH}
 
 
 def _base_bytes(path):
+    path = historical_route_path(path)
     if path not in FIXTURE_PATHS:
         raise AssertionError(f"unapproved navigation-performance path: {path!r}")
     result = subprocess.run(
@@ -145,6 +147,7 @@ def normalize_navigation_performance(relative_path, text):
     """Restore published-base text only for an exact complete-file after hash."""
     if not isinstance(text, str):
         raise TypeError("navigation-performance normalization requires decoded text")
+    relative_path, text = normalize_route_migration_text(relative_path, text)
     # The startup layer is newer than this historical whole-file compatibility
     # record, so peel it first while preserving this API for legacy guards.
     from startup_performance_baseline import normalize_startup_performance
@@ -156,6 +159,7 @@ def restore_navigation_performance_bytes(relative_path, data):
     """Byte-preserving form used by historical asset restorers."""
     if not isinstance(data, bytes):
         raise TypeError("navigation-performance byte restoration requires bytes")
+    relative_path, data = normalize_route_migration(relative_path, data)
     # Local import avoids a module cycle: startup normalization is deliberately
     # independent of all older baseline layers.
     from startup_performance_baseline import (

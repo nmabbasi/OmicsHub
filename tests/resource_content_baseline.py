@@ -15,6 +15,7 @@ import subprocess
 
 from tutorial_ui_baseline import normalize_tutorial_ui
 from r_first_revision_baseline import R_FIRST_ASSET_SHA256, restore_r_first_asset
+from route_migration_baseline import normalize_route_migration
 
 ROOT = Path(__file__).resolve().parents[1]
 MANIFEST_PATH = ROOT / "tests/fixtures/resource-content-edits.json"
@@ -369,6 +370,7 @@ def restore_page_to_pr15(relative_path, data, entry, original):
 
 def normalize_resource_content(relative_path, data):
     """Return non-allowlisted bytes unchanged; restore a listed page to exact PR15."""
+    relative_path, data = normalize_route_migration(relative_path, data)
     if relative_path.startswith("tutorials/") and relative_path.endswith(".html"):
         data = normalize_tutorial_ui(relative_path, data.decode("utf-8")).encode("utf-8")
     manifest = load_manifest()

@@ -12,6 +12,7 @@ from start_here_desktop_baseline import (
     normalize_start_here_desktop_html,
     restore_start_here_desktop_asset,
 )
+from route_migration_baseline import historical_route_path, published_tutorial_paths
 
 ROOT = Path(__file__).resolve().parents[1]
 BASELINE = '36bc46d'
@@ -35,14 +36,14 @@ def read(path):
 
 
 def baseline(path):
-    return subprocess.check_output(['git', 'show', f'{BASELINE}:{path}'], cwd=ROOT, text=True)
+    return subprocess.check_output(['git', 'show', f'{BASELINE}:{historical_route_path(path)}'], cwd=ROOT, text=True)
 
 
 class SitewideReferenceFixesTests(unittest.TestCase):
     def test_optional_python_links_have_real_source_targets(self):
         for slug, target in (
             ('single-cell-foundation-models', 'foundation-embedding-python-run-stage'),
-            ('autonomous-research-orchestrator', 'python-alternative'),
+            ('rna-seq-count-matrix-qc-cpm', 'python-alternative'),
         ):
             with self.subTest(slug=slug):
                 markup = Markup(read(f'tutorials/{slug}.html'))
@@ -100,7 +101,7 @@ class SitewideReferenceFixesTests(unittest.TestCase):
 
     def test_reference_edits_do_not_change_any_tutorial_code_or_approved_images(self):
         count = 0
-        for page in sorted((ROOT / 'tutorials').glob('*.html')):
+        for page in published_tutorial_paths(ROOT):
             relative = page.relative_to(ROOT).as_posix()
             before = baseline(relative)
             raw_after = page.read_text(encoding='utf-8')

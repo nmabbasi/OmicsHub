@@ -12,6 +12,7 @@ import subprocess
 from start_here_desktop_baseline import (
     normalize_start_here_desktop_html, restore_start_here_desktop_asset,
 )
+from route_migration_baseline import historical_route_path, normalize_route_migration, normalize_route_migration_text
 
 ROOT = Path(__file__).resolve().parents[1]
 from r_first_revision_baseline import normalize_r_first_revision, restore_r_first_asset, R_FIRST_ASSET_PATHS
@@ -36,6 +37,7 @@ READER_TEXT_ASSET_PATHS = frozenset(READER_TEXT_ASSET_SHA256)
 
 def pre_reader_text_bytes(relative_path):
     """Return raw bytes from the immutable baseline for one authorized source."""
+    relative_path = historical_route_path(relative_path)
     if relative_path not in READER_TEXT_ASSET_PATHS and (
         not isinstance(relative_path, str) or not relative_path.endswith(".html")
         or relative_path.startswith("/") or ".." in Path(relative_path).parts
@@ -100,6 +102,7 @@ def normalize_reader_text(relative_path, text):
     """Reverse only exact frozen HTML chunks; leave all unrecognized edits visible."""
     if not isinstance(text, str):
         raise TypeError("reader-text normalization requires decoded text")
+    relative_path, text = normalize_route_migration_text(relative_path, text)
     text = normalize_start_here_desktop_html(relative_path, text)
     text = normalize_latest_review(relative_path, text)
     text = normalize_r_first_revision(relative_path, text)
@@ -121,6 +124,7 @@ def verify_reader_text_file(relative_path, data):
     if relative_path not in READER_TEXT_ASSET_PATHS:
         raise AssertionError(f"not an authorized reader-text asset: {relative_path}")
     original_data = data
+    relative_path, data = normalize_route_migration(relative_path, data)
     if relative_path == "start-here.css":
         data = restore_start_here_desktop_asset(relative_path, data)
     data = restore_startup_generated_asset(relative_path, data, "reader-text")

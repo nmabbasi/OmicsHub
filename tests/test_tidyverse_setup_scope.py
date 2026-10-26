@@ -53,6 +53,7 @@ from optional_report_baseline import (
     OPTIONAL_REPORT_PATHS,
     verify_optional_report_file,
 )
+from route_migration_baseline import exact_route_migration_paths, historical_route_path, published_tutorial_paths
 
 SITE = "https://theomicshub.com/"
 SCRIPT = re.compile(r"<script\b[^>]*>.*?</script\s*>", re.S | re.I)
@@ -67,7 +68,7 @@ UPDATED = re.compile(r"Updated (2026-10-\d{2})")
 
 def git_bytes(relative_path):
     result = subprocess.run(
-        ["git", "show", f"{PUBLISHED_PR10}:{relative_path}"], cwd=ROOT,
+        ["git", "show", f"{PUBLISHED_PR10}:{historical_route_path(relative_path)}"], cwd=ROOT,
         stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, check=False,
     )
     return result.stdout if result.returncode == 0 else None
@@ -81,7 +82,7 @@ def changed_paths():
     untracked = subprocess.check_output(
         ["git", "ls-files", "--others", "--exclude-standard"], cwd=ROOT, text=True,
     ).splitlines()
-    return sorted(set(tracked) | set(untracked))
+    return sorted((set(tracked) | set(untracked)) - exact_route_migration_paths(ROOT))
 
 
 def scripts(text, executable_only=False):
@@ -153,7 +154,7 @@ class TidyverseSetupScopeTests(unittest.TestCase):
                 )
 
     def test_raw_executable_scripts_and_jsonld_except_date_are_unchanged(self):
-        pages = sorted((ROOT / "tutorials").glob("*.html"))
+        pages = published_tutorial_paths(ROOT)
         self.assertEqual(len(pages), 58)
         for page in pages:
             relative = page.relative_to(ROOT).as_posix()
@@ -190,7 +191,7 @@ class TidyverseSetupScopeTests(unittest.TestCase):
                                  "JSON-LD fields other than the approved date must remain exact")
 
     def test_all_other_tutorials_public_pages_assets_and_site_scripts_are_byte_identical(self):
-        tutorial_paths = sorted((ROOT / "tutorials").glob("*.html"))
+        tutorial_paths = published_tutorial_paths(ROOT)
         self.assertEqual(len(tutorial_paths), 58)
         self.assertTrue((ROOT / TIDYVERSE_SETUP_ARTICLE).is_file())
         for page in tutorial_paths:

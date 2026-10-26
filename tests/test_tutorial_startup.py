@@ -10,6 +10,7 @@ import subprocess
 import unittest
 from editorial_review_baseline import normalize_editorial_review, normalize_editorial_review_bytes
 from start_here_desktop_baseline import normalize_start_here_desktop_html
+from route_migration_baseline import historical_route_path, published_tutorial_paths
 
 ROOT=Path(__file__).resolve().parents[1]
 BASE='93f06260550dbc91c0f020c24e1e2b00b7e017b5'
@@ -25,7 +26,7 @@ class Tags(HTMLParser):
     handle_startendtag=handle_starttag
 
 def base_bytes(path):
-    return subprocess.check_output(['git','show',f'{BASE}:{path}'],cwd=ROOT)
+    return subprocess.check_output(['git','show',f'{BASE}:{historical_route_path(path)}'],cwd=ROOT)
 
 def inline_payload(source):
     match=re.search(r'<script id="tutorial-code-data">\s*window\.OMICS_TUTORIAL_CODE = (.*?);\s*</script>',source,re.S)
@@ -36,7 +37,7 @@ class TutorialStartupTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.metadata=generator.load_metadata(ROOT)
-        pages=sorted((ROOT/'tutorials').glob('*.html'))
+        pages=published_tutorial_paths(ROOT)
         cls.sources={p.stem:p.read_text() for p in pages}
         cls.normalized_sources={p.stem:normalize_editorial_review('tutorials/'+p.name,p.read_text()) for p in pages}
 

@@ -3,6 +3,8 @@ from pathlib import Path
 import re
 import unittest
 
+from route_migration_baseline import published_tutorial_paths
+
 ROOT = Path(__file__).resolve().parents[1]
 
 
@@ -46,7 +48,7 @@ class TextAlignmentTests(unittest.TestCase):
         self.assertNotRegex(self.shared_css, r"hyphens\s*:\s*auto\b")
 
     def test_alignment_rule_covers_all_current_tutorial_articles(self):
-        tutorial_pages = sorted((ROOT / "tutorials").glob("*.html"))
+        tutorial_pages = published_tutorial_paths(ROOT)
         self.assertEqual(len(tutorial_pages), 58)
         for page in tutorial_pages:
             with self.subTest(page=page.name):

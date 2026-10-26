@@ -44,9 +44,28 @@ from optional_report_baseline import (
     OPTIONAL_REPORT_PATHS,
     verify_optional_report_file,
 )
+from route_migration_baseline import NEW_ROUTE, OLD_ROUTE, exact_route_migration_paths
 
 
 TEST_INFRASTRUCTURE_PATHS = {
+    'tests/route_migration_baseline.py',
+    'tests/test_route_migration_baseline.py',
+    'tests/browser_learning_navigation_v2.py',
+    'tests/browser_sitewide_reference_fixes.py',
+    'tests/browser_sitewide_top_ui.py',
+    'tests/resource_content_baseline.py',
+    'tests/tutorial_ui_baseline.py',
+    'tests/test_accessibility_review.py',
+    'tests/test_analytics_preferences.py',
+    'tests/test_code_tabs.py',
+    'tests/test_hero_performance.py',
+    'tests/test_learner_revision_scope.py',
+    'tests/test_legacy_redirects.py',
+    'tests/test_mobile_loading.py',
+    'tests/test_pbmc_worked_example.py',
+    'tests/test_sitewide_top_ui.py',
+    'tests/test_tutorial_markup.py',
+    'tests/validate_tutorials.py',
     'tests/coffee_removal_baseline.py',
     'tests/optional_report_baseline.py',
     'tests/fixtures/coffee-removal-review.json',
@@ -229,6 +248,13 @@ class NavigationPerformanceBaselineTests(unittest.TestCase):
         changed = set(subprocess.check_output(
             ["git", "diff", "--name-only", BASE_COMMIT, "--"], cwd=ROOT, text=True
         ).splitlines())
+        exact_route_paths = exact_route_migration_paths(ROOT)
+        if NEW_ROUTE in changed and NEW_ROUTE in exact_route_paths:
+            changed.remove(NEW_ROUTE)
+            changed.add(OLD_ROUTE)
+        changed -= exact_route_paths - (
+            STARTUP_TUTORIAL_PATHS | STARTUP_ASSET_PATHS | {OLD_ROUTE}
+        )
         changed -= EDITORIAL_REVIEW_PATHS - STARTUP_TUTORIAL_PATHS
         self.assertIn(WORKFLOW_PATH, changed)
         # Exclude only new coffee-only paths after whole-file digest validation.
@@ -240,7 +266,7 @@ class NavigationPerformanceBaselineTests(unittest.TestCase):
             )
         changed -= set(coffee) - (
             STARTUP_TUTORIAL_PATHS | STARTUP_ASSET_PATHS
-            | {'home-page.min.css', 'start-here.css', 'start-here.html'}
+            | {'home-page.min.css', 'start-here.css', 'start-here.html', OLD_ROUTE}
         )
         # Verify the two explicitly authorized Start Here edits before including
         # them in the exact public-path set; unrelated CSS/HTML remains rejected.

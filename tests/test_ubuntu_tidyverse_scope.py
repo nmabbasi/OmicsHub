@@ -55,6 +55,7 @@ from optional_report_baseline import (
     OPTIONAL_REPORT_PATHS,
     verify_optional_report_file,
 )
+from route_migration_baseline import exact_route_migration_paths, historical_route_path, published_tutorial_paths
 
 SITE = "https://theomicshub.com/"
 SCRIPT = re.compile(r"<script\b[^>]*>.*?</script\s*>", re.S | re.I)
@@ -73,7 +74,7 @@ UPDATED = re.compile(r"Updated (2026-10-\d{2})")
 
 def git_bytes(relative_path):
     result = subprocess.run(
-        ["git", "show", f"{PUBLISHED_PR11}:{relative_path}"], cwd=ROOT,
+        ["git", "show", f"{PUBLISHED_PR11}:{historical_route_path(relative_path)}"], cwd=ROOT,
         stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, check=False,
     )
     return result.stdout if result.returncode == 0 else None
@@ -87,7 +88,7 @@ def changed_paths():
     untracked = subprocess.check_output(
         ["git", "ls-files", "--others", "--exclude-standard"], cwd=ROOT, text=True,
     ).splitlines()
-    return sorted(set(tracked) | set(untracked))
+    return sorted((set(tracked) | set(untracked)) - exact_route_migration_paths(ROOT))
 
 
 def scripts(text, jsonld=False):
@@ -166,7 +167,7 @@ class UbuntuTidyverseScopeTests(unittest.TestCase):
         self.assertIn('bg = "white"', new_workflows[0])
 
     def test_executable_scripts_and_jsonld_other_than_target_date_are_unchanged(self):
-        pages = sorted((ROOT / "tutorials").glob("*.html"))
+        pages = published_tutorial_paths(ROOT)
         self.assertEqual(len(pages), 58)
         for page in pages:
             relative = page.relative_to(ROOT).as_posix()
@@ -213,7 +214,7 @@ class UbuntuTidyverseScopeTests(unittest.TestCase):
                     self.assertEqual(new_jsonld, old_jsonld)
 
     def test_other_public_files_and_tutorials_remain_raw_byte_identical(self):
-        tutorial_paths = sorted((ROOT / "tutorials").glob("*.html"))
+        tutorial_paths = published_tutorial_paths(ROOT)
         for page in tutorial_paths:
             relative = page.relative_to(ROOT).as_posix()
             if relative == TIDYVERSE_SETUP_ARTICLE:

@@ -33,7 +33,7 @@ class TutorialCodeTabOrderingTests(unittest.TestCase):
             'protein-structure-design-alphafold': 2,
             'ai-bioinformatics-github-copilot': 1,
             'ai-coding-cursor-aider': 1,
-            'autonomous-research-orchestrator': 1,
+            'rna-seq-count-matrix-qc-cpm': 1,
             'python-fundamentals-bioinformatics': 1,
             'hpc-basic-commands': 2,
             'mcp-zotero': 1,

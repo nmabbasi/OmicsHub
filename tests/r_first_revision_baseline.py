@@ -14,6 +14,7 @@ import subprocess
 
 from latest_review_baseline import normalize_latest_review, restore_latest_review_asset
 from start_here_desktop_baseline import normalize_start_here_desktop_html
+from route_migration_baseline import historical_route_path, normalize_route_migration_text
 
 ROOT = Path(__file__).resolve().parents[1]
 PRE_R_FIRST_COMMIT = "2ad77315c9fbc48ac5b941df9998bbad4b76fb2f"
@@ -95,6 +96,7 @@ R_FIRST_ASSET_PATHS = AUTHORIZED_R_FIRST_ASSET_PATHS
 
 def pre_r_first_bytes(relative_path):
     """Read one safe path from the immutable task baseline, if it existed there."""
+    relative_path = historical_route_path(relative_path)
     if (not isinstance(relative_path, str) or relative_path.startswith("/")
             or ".." in Path(relative_path).parts):
         raise AssertionError(f"invalid R-first baseline path: {relative_path!r}")
@@ -210,6 +212,7 @@ def normalize_r_first_revision(relative_path, text):
     """Reverse matching literal chunks; every unmatched edit remains visible."""
     if not isinstance(text, str):
         raise TypeError("R-first normalization requires decoded text")
+    relative_path, text = normalize_route_migration_text(relative_path, text)
     text = normalize_start_here_desktop_html(relative_path, text)
     text = normalize_latest_review(relative_path, text)
     # The execution-review layer is a separate exact-digest/context adapter.

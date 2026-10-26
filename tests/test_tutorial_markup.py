@@ -10,6 +10,7 @@ import re
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
+from route_migration_baseline import published_tutorial_paths
 REDIRECT_MANIFEST = json.loads((ROOT / 'tools' / 'legacy-redirects.json').read_text(encoding='utf-8'))
 REDIRECT_PATHS = set(REDIRECT_MANIFEST['migration_root_urls']) | set(REDIRECT_MANIFEST['historical_aliases'])
 CODE_BLOCK = re.compile(
@@ -20,13 +21,13 @@ BARE_AMPERSAND = re.compile(r'&(?!#\d+;|#x[0-9a-fA-F]+;|[A-Za-z][A-Za-z0-9]+;)')
 
 class TutorialMarkupTests(unittest.TestCase):
     def test_no_duplicate_paragraph_tags(self):
-        for page in sorted((ROOT / 'tutorials').glob('*.html')):
+        for page in published_tutorial_paths(ROOT):
             with self.subTest(page=page.name):
                 text = page.read_text(encoding='utf-8')
                 self.assertIsNone(re.search(r'<p>\s*<p>|</p>\s*</p>', text))
 
     def test_code_uses_escaped_less_than(self):
-        for page in sorted((ROOT / 'tutorials').glob('*.html')):
+        for page in published_tutorial_paths(ROOT):
             for index, code in enumerate(CODE_BLOCK.findall(page.read_text(encoding='utf-8')), 1):
                 with self.subTest(page=page.name, block=index):
                     self.assertNotIn('<', code, 'Escape literal less-than operators as &lt;')
@@ -40,7 +41,7 @@ class TutorialMarkupTests(unittest.TestCase):
 
 class NavigationMarkupTests(unittest.TestCase):
     def test_every_tutorial_has_global_navigation(self):
-        for page in sorted((ROOT / 'tutorials').glob('*.html')):
+        for page in published_tutorial_paths(ROOT):
             with self.subTest(page=page.name):
                 text = page.read_text(encoding='utf-8')
                 self.assertIn('id="mobile-menu"', text)

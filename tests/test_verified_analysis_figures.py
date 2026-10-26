@@ -9,6 +9,7 @@ import struct
 import unittest
 
 ROOT=Path(__file__).resolve().parents[1]
+from route_migration_baseline import published_tutorial_paths
 EVIDENCE=ROOT/'files/tutorial-examples/execution-evidence/2026-10-25.json'
 EXPECTED={
  'images/tutorial-figures/visualization-fundamentals-r-qc_boxplot.png',
@@ -96,7 +97,7 @@ class VerifiedAnalysisFigureTests(unittest.TestCase):
         spec=importlib.util.spec_from_file_location('execution_review_renderer',ROOT/'tools/generate_tutorial_ui.py');renderer=importlib.util.module_from_spec(spec);spec.loader.exec_module(renderer)
         self.assertEqual(renderer.CODE_DATA_VERSION,'20261025-executed-examples-v1');self.assertNotEqual(renderer.CODE_DATA_VERSION,renderer.VERSION)
         self.assertEqual(renderer.VERSION,'20261025-r-first-v1');self.assertEqual(renderer.NAVIGATION_CSS_VERSION,'20261025-learning-navigation-v2')
-        for page in (ROOT/'tutorials').glob('*.html'):
+        for page in published_tutorial_paths(ROOT):
             text=page.read_text()
             self.assertIn('id="tutorial-code-data"',text)
             self.assertNotIn('src="../tutorial-code-data.js',text)

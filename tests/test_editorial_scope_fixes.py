@@ -34,7 +34,7 @@ RENAMED = {
             "tutorials/ai-prompt-engineering-seurat.html",
         ),
     },
-    "autonomous-research-orchestrator": {
+    "rna-seq-count-matrix-qc-cpm": {
         "title": "Bounded Count-Matrix QC and CPM Workflows",
         "description": (
             "Run deterministic, local RNA-seq count-matrix QC and optional CPM workflows in R or Python, "
@@ -133,7 +133,7 @@ class EditorialScopeFixTests(unittest.TestCase):
                 if "name" in article:
                     self.assertEqual(article["name"], title)
                 self.assertEqual(article["description"], desc)
-                if slug == "autonomous-research-orchestrator":
+                if slug == "rna-seq-count-matrix-qc-cpm":
                     keywords = p.metas.get("keywords", "")
                     self.assertIn("count matrix quality control", keywords)
                     self.assertNotIn("AI planner", keywords)
@@ -148,12 +148,12 @@ class EditorialScopeFixTests(unittest.TestCase):
                 self.assertIn(desc, card)
                 self.assertIn(f'href="tutorials/{slug}.html"', card)
 
-    def test_autonomous_root_redirect_uses_the_corrected_title_and_keeps_its_destination(self):
+    def test_autonomous_root_redirect_uses_the_corrected_title_and_new_destination(self):
         text = (ROOT / "autonomous-research-orchestrator.html").read_text(encoding="utf-8")
         self.assertIn("<title>Bounded Count-Matrix QC and CPM Workflows has moved", text)
         self.assertIn("Continue to the current tutorial: Bounded Count-Matrix QC and CPM Workflows", text)
-        self.assertIn('url=tutorials/autonomous-research-orchestrator.html', text)
-        self.assertIn('rel="canonical" href="https://theomicshub.com/tutorials/autonomous-research-orchestrator.html"', text)
+        self.assertIn('url=tutorials/rna-seq-count-matrix-qc-cpm.html', text)
+        self.assertIn('rel="canonical" href="https://theomicshub.com/tutorials/rna-seq-count-matrix-qc-cpm.html"', text)
 
     def test_method_guide_rows_link_to_existing_tutorials_and_official_sources(self):
         text = (ROOT / "tutorials/modern-bioinformatics-methods-2026.html").read_text(encoding="utf-8")

@@ -19,6 +19,9 @@ from navigation_performance_baseline import (
 )
 from startup_generated_asset_baseline import restore_startup_generated_asset
 from editorial_review_baseline import normalize_editorial_review, normalize_editorial_review_bytes
+from route_migration_baseline import (
+    historical_route_path, normalize_route_migration, normalize_route_migration_text,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 BASE_COMMIT = "36bc46d"
@@ -60,6 +63,7 @@ def _safe_relative_path(path):
 
 
 def _git_base_bytes(relative_path):
+    relative_path = historical_route_path(relative_path)
     if not _safe_relative_path(relative_path):
         raise AssertionError(f"unsafe latest-review fixture path: {relative_path!r}")
     result = subprocess.run(
@@ -180,6 +184,7 @@ def normalize_latest_review(relative_path, text):
     """Reverse only fixture-listed literal changes; leave unknown edits visible."""
     if not isinstance(text, str):
         raise TypeError("latest-review text normalization requires decoded text")
+    relative_path, text = normalize_route_migration_text(relative_path, text)
     text = normalize_editorial_review(relative_path, text)
     # First remove the exact, whole-file-pinned 2026-10-25 compatibility edit
     # so the historical 30-path layer sees its unchanged published-PR bytes.
@@ -202,6 +207,7 @@ def restore_latest_review_asset(relative_path, data):
     """Restore any reviewed file only for its exact complete current SHA-256."""
     if not isinstance(data, bytes):
         raise TypeError("latest-review asset restoration requires bytes")
+    relative_path, data = normalize_route_migration(relative_path, data)
     data = normalize_editorial_review_bytes(relative_path, data)
     data = restore_startup_generated_asset(relative_path, data, "main")
     data = restore_navigation_performance_bytes(relative_path, data)

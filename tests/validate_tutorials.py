@@ -71,7 +71,10 @@ def inspect(root: Path):
     errors: list[str] = []
     warnings: list[str] = []
     formats: Counter = Counter()
-    pages = sorted((root / "tutorials").glob("*.html"))
+    pages = sorted(
+        path for path in (root / "tutorials").glob("*.html")
+        if '<meta name="tutorial-route-redirect"' not in path.read_text(encoding="utf-8")
+    )
     if len(pages) != 58:
         errors.append(f"Expected 58 tutorials, found {len(pages)}")
     cache: dict[Path, Page] = {}

@@ -15,6 +15,7 @@ from urllib.parse import urlparse
 from playwright.sync_api import sync_playwright
 
 ROOT = Path(__file__).resolve().parents[1]
+from route_migration_baseline import published_tutorial_paths
 ROOT_PAGES = (
     "index.html", "start-here.html", "tutorials.html", "about.html",
     "contact.html", "services.html", "success.html", "404.html",
@@ -27,7 +28,7 @@ INTERACTION_PAGES = (
 
 
 def canonical_pages() -> list[str]:
-    return sorted([*ROOT_PAGES, *(f"tutorials/{p.name}" for p in (ROOT / "tutorials").glob("*.html")), *(f"pages/{p.name}" for p in (ROOT / "pages").glob("*.html"))])
+    return sorted([*ROOT_PAGES, *(p.relative_to(ROOT).as_posix() for p in published_tutorial_paths(ROOT)), *(f"pages/{p.name}" for p in (ROOT / "pages").glob("*.html"))])
 
 
 def main() -> None:

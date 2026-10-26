@@ -4,9 +4,10 @@ import subprocess
 import unittest
 
 from reader_typography_baseline import normalize_reader_typography
+from route_migration_baseline import is_redirect_stub
 
 ROOT = Path(__file__).resolve().parents[1]
-HTML_FILES = [p for p in ROOT.rglob("*.html") if "/.git/" not in str(p)]
+HTML_FILES = [p for p in ROOT.rglob("*.html") if "/.git/" not in str(p) and not is_redirect_stub(p)]
 
 
 class AccessibilityReviewTests(unittest.TestCase):

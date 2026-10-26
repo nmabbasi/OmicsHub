@@ -7,6 +7,8 @@ from pathlib import Path
 import re
 import unittest
 
+from route_migration_baseline import published_tutorial_paths
+
 ROOT = Path(__file__).resolve().parents[1]
 
 class DescriptionParser(HTMLParser):
@@ -48,7 +50,7 @@ class LearningPromiseTests(unittest.TestCase):
             'hands-on-lab': 21, 'conceptual-guide': 20,
             'advanced-template': 15, 'reference': 2,
         })
-        self.assertEqual(len(list((ROOT / 'tutorials').glob('*.html'))), 58)
+        self.assertEqual(len(published_tutorial_paths(ROOT)), 58)
         self.assertIn('aria-label="58 tutorials"', self.catalogue)
 
     def test_homepage_description_fields_agree(self):

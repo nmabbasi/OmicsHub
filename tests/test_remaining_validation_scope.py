@@ -47,6 +47,7 @@ from optional_report_baseline import (
     OPTIONAL_REPORT_PATHS,
     verify_optional_report_file,
 )
+from route_migration_baseline import exact_route_migration_paths
 
 QC_PATH = "tutorials/quality-control-fundamentals.html"
 REVISED_TUTORIALS = frozenset({
@@ -67,7 +68,7 @@ def changed_paths():
         ["git", "ls-files", "--others", "--exclude-standard"],
         cwd=ROOT, text=True,
     ).splitlines()
-    return sorted(set(tracked) | set(untracked))
+    return sorted((set(tracked) | set(untracked)) - exact_route_migration_paths(ROOT))
 
 
 class RemainingValidationScopeTests(unittest.TestCase):

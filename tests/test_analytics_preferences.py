@@ -19,6 +19,7 @@ from reviewed_tutorial_baseline import (
 from reader_typography_baseline import normalize_reader_typography
 from six_lesson_revision_baseline import normalize_six_lesson_revision
 from resource_content_baseline import normalize_resource_content
+from route_migration_baseline import published_tutorial_paths
 
 ROOT = Path(__file__).resolve().parents[1]
 TUTORIALS = ROOT / "tutorials"
@@ -119,7 +120,7 @@ def git_file(revision, path):
 class AnalyticsPreferencesTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.pages = sorted(TUTORIALS.glob("*.html"))
+        cls.pages = published_tutorial_paths(ROOT)
         cls.baseline_available = git_file(BASELINE, "analytics.js") is not None
 
     def parse(self, text):

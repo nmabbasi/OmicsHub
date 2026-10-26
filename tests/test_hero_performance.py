@@ -25,6 +25,7 @@ from resource_content_baseline import normalize_resource_content
 from tutorial_ui_baseline import (
     TUTORIAL_UI_PATHS, normalize_tutorial_ui, verify_tutorial_ui_file,
 )
+from route_migration_baseline import NEW_ROUTE, OLD_ROUTE, historical_route_path, pre_migration_bytes, published_tutorial_paths
 ROOT = Path(__file__).resolve().parents[1]
 BASELINE = 'e7037f1b9a9eea8f4338e7b6696f791d8172f844'
 class Tags(HTMLParser):
@@ -93,7 +94,7 @@ class HeroPerformanceTests(unittest.TestCase):
                                     stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
             return result.stdout if result.returncode == 0 else None
         def approved(name):
-            result = subprocess.run(['git', 'show', APPROVED_MAIN + ':' + name], cwd=ROOT,
+            result = subprocess.run(['git', 'show', APPROVED_MAIN + ':' + historical_route_path(name)], cwd=ROOT,
                                     stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
             return result.stdout if result.returncode == 0 else None
         baseline = old('index.html')
@@ -131,12 +132,14 @@ class HeroPerformanceTests(unittest.TestCase):
                 verify_tutorial_ui_file(name, current_asset)
             else:
                 self.assertEqual(old(name), current_asset, name)
-        for p in (ROOT / 'tutorials').glob('*.html'):
+        for p in published_tutorial_paths(ROOT):
             if p.name == 'scrna-seq-basics.html':
                 # The approved PBMC worked-example change is guarded by its dedicated tests.
                 continue
             relative_path = 'tutorials/' + p.name
             approved_bytes = approved(relative_path)
+            if relative_path == NEW_ROUTE:
+                approved_bytes = pre_migration_bytes(OLD_ROUTE)
             self.assertIsNotNone(approved_bytes, relative_path)
             raw_current_text = normalize_tutorial_ui(relative_path, p.read_text(encoding='utf-8'))
             if p.name in ('cell-type-annotation-methods.html', 'scrna-seq-integration-strategies.html'):

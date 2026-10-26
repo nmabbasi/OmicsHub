@@ -12,6 +12,7 @@ from r_first_revision_baseline import R_FIRST_ASSET_PATHS, restore_r_first_asset
 from latest_review_baseline import restore_latest_review_asset
 from start_here_desktop_baseline import DESKTOP_CSS_HREF, restore_start_here_desktop_asset
 from coffee_removal_baseline import restore_coffee_removal_text
+from route_migration_baseline import historical_route_path, published_tutorial_paths
 
 ROOT = Path(__file__).resolve().parents[1]
 HISTORICAL = "a4b6ead8251e0a3abcb748061a40155ae9523a82"
@@ -28,7 +29,7 @@ EXPECTED_IMAGES = {
 
 def git_bytes(revision, path):
     result = subprocess.run(
-        ["git", "show", f"{revision}:{path}"], cwd=ROOT,
+        ["git", "show", f"{revision}:{historical_route_path(path)}"], cwd=ROOT,
         stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, check=False,
     )
     return result.stdout if result.returncode == 0 else None
@@ -155,7 +156,7 @@ class StartHereImageLedTests(unittest.TestCase):
             with self.subTest(path=relative):
                 restored = normalize_reader_text(relative, (ROOT / relative).read_text()).encode()
                 self.assertEqual(restored, git_bytes(PUBLISHED, relative))
-        lessons = sorted((ROOT / "tutorials").glob("*.html"))
+        lessons = published_tutorial_paths(ROOT)
         self.assertEqual(len(lessons), 58)
         for page in lessons:
             relative = page.relative_to(ROOT).as_posix()

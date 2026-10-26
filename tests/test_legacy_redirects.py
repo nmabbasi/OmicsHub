@@ -57,13 +57,19 @@ class LegacyRedirectTests(unittest.TestCase):
         cls.aliases = cls.manifest["historical_aliases"]
         cls.redirects = {
             source: "tutorials/" + Path(source).name for source in cls.migrated
-        } | cls.aliases
+        } | cls.manifest.get("migration_target_overrides", {}) | cls.aliases
 
     def test_migration_mapping_is_complete_and_matches_all_58_current_tutorials(self):
         self.assertEqual(self.manifest["migration_commit"], "118e16e4a4ac4dcd4acf132c9019104784787d52")
         self.assertEqual(self.manifest["migration_root_url_count"], 58)
         self.assertEqual(len(self.migrated), 58)
-        expected_root_urls = {"/" + path.name for path in (ROOT / "tutorials").glob("*.html")}
+        expected_root_urls = {
+            "/" + path.name for path in (ROOT / "tutorials").glob("*.html")
+            if '<meta name="tutorial-route-redirect"' not in path.read_text(encoding="utf-8")
+        }
+        for source, target in self.manifest.get("migration_target_overrides", {}).items():
+            expected_root_urls.discard("/" + Path(target).name)
+            expected_root_urls.add(source)
         self.assertEqual(self.migrated, expected_root_urls)
         # Each of the six externally identified examples is covered by the exact
         # old-root-name -> same-name /tutorials/ migration recorded in commit 118e16e.
@@ -82,9 +88,23 @@ class LegacyRedirectTests(unittest.TestCase):
     def test_confirmed_earlier_hpc_aliases_have_their_historical_destinations(self):
         self.assertEqual(self.aliases, EXPECTED_HISTORICAL_ALIASES)
         self.assertEqual(self.redirects["/hpc-submission-part1.html"], "tutorials/hpc-submission-part1.html")
+        self.assertEqual(
+            self.redirects["/autonomous-research-orchestrator.html"],
+            "tutorials/rna-seq-count-matrix-qc-cpm.html",
+        )
         # The tracked pre-migration submission page was hpc-submission-part1.html;
         # no numbered "3-..." HTML path is present in the repository history.
         self.assertNotIn("/3-HPC_Submission.html", self.redirects)
+
+    def test_nested_old_lesson_url_is_noindex_and_redirects_directly(self):
+        stub = parse_page(ROOT / "tutorials" / "autonomous-research-orchestrator.html")
+        target = "rna-seq-count-matrix-qc-cpm.html"
+        target_page = parse_page(ROOT / "tutorials" / target)
+        self.assertEqual(stub.refreshes, [f"0; url={target}"])
+        self.assertTrue(any("noindex" in directive.lower() for directive in stub.robots))
+        self.assertEqual(stub.canonicals, [f"https://theomicshub.com/tutorials/{target}"])
+        self.assertEqual(stub.links, [target])
+        self.assertEqual(target_page.canonicals, stub.canonicals)
 
     def test_every_stub_exists_and_has_matching_refresh_canonical_and_accessible_link(self):
         for source, target in self.redirects.items():
@@ -117,11 +137,26 @@ class LegacyRedirectTests(unittest.TestCase):
                 canonical = parse_page(ROOT / target).canonicals[0]
                 self.assertEqual(urlsplit(canonical).path, resolved)
 
+    def test_old_nested_route_redirects_directly_to_the_new_canonical_page(self):
+        old = ROOT / "tutorials" / "autonomous-research-orchestrator.html"
+        new = ROOT / "tutorials" / "rna-seq-count-matrix-qc-cpm.html"
+        redirect = parse_page(old)
+        target = "rna-seq-count-matrix-qc-cpm.html"
+        self.assertTrue(old.is_file())
+        self.assertTrue(new.is_file())
+        self.assertEqual(redirect.refreshes, [f"0; url={target}"])
+        self.assertEqual(redirect.links, [target])
+        self.assertEqual(redirect.canonicals, ["https://theomicshub.com/tutorials/" + target])
+        self.assertEqual(redirect.robots, ["noindex, follow"])
+        self.assertEqual(urlsplit(parse_page(new).canonicals[0]).path, "/tutorials/" + target)
+
     def test_redirect_stubs_are_not_in_sitemap_and_live_pages_are_not_overwritten(self):
         sitemap = ET.parse(ROOT / "sitemap.xml")
         locations = [element.text for element in sitemap.iter() if element.tag.endswith("loc")]
         paths = {urlsplit(location or "").path for location in locations}
         self.assertTrue(paths.isdisjoint(self.redirects))
+        self.assertNotIn("/tutorials/autonomous-research-orchestrator.html", paths)
+        self.assertIn("/tutorials/rna-seq-count-matrix-qc-cpm.html", paths)
         for unchanged_page in ("about.html", "contact.html", "start-here.html", "tutorials.html", "services.html"):
             with self.subTest(page=unchanged_page):
                 self.assertNotIn("/" + unchanged_page, self.redirects)

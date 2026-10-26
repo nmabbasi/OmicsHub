@@ -14,6 +14,7 @@ from coffee_removal_baseline import (
     restore_coffee_removal_bytes,
     restore_coffee_removal_text,
 )
+from route_migration_baseline import historical_route_path, normalize_route_migration, normalize_route_migration_text
 
 ROOT = Path(__file__).resolve().parents[1]
 BASE_COMMIT = "e846ce3fb6053ed611dc87fc62748865499913d0"
@@ -33,6 +34,7 @@ PUBLIC_PATHS = frozenset({
 
 
 def _base_bytes(relative_path):
+    relative_path = historical_route_path(relative_path)
     if relative_path not in PUBLIC_PATHS:
         raise AssertionError(f"unapproved editorial-review path: {relative_path!r}")
     result = subprocess.run(
@@ -132,6 +134,7 @@ def normalize_editorial_review(relative_path, text):
     """Reverse only exact fixture chunks; unknown changes stay visible."""
     if not isinstance(text, str):
         raise TypeError("editorial-review normalization requires decoded text")
+    relative_path, text = normalize_route_migration_text(relative_path, text)
     # The coffee-review adapter runs first so every older fixture sees the
     # immutable be4429d source. Unknown source edits pass through untouched.
     text = restore_coffee_removal_text(relative_path, text, strict=False)
@@ -158,6 +161,7 @@ def normalize_editorial_review_bytes(relative_path, data):
     """Byte-preserving adapter for text assets; never treats a directory as scope."""
     if not isinstance(data, bytes):
         raise TypeError("editorial-review byte normalization requires bytes")
+    relative_path, data = normalize_route_migration(relative_path, data)
     data = restore_coffee_removal_bytes(relative_path, data, strict=False)
     if relative_path not in PUBLIC_PATHS:
         return data

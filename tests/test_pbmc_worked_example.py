@@ -15,6 +15,7 @@ from reviewed_tutorial_baseline import normalize_learner_revision
 from reader_typography_baseline import normalize_reader_typography
 from remaining_validation_baseline import normalize_remaining_validation_sitemap
 from resource_content_baseline import load_manifest as load_resource_content_manifest
+from route_migration_baseline import published_tutorial_paths
 
 ROOT = Path(__file__).resolve().parents[1]
 BASELINE = 'd10ec616cae67437db90427bee4e156dd2bfb7d7'
@@ -235,7 +236,7 @@ class PbmcWorkedExampleTests(unittest.TestCase):
         for phrase in ['scrna-basics-public-arabidopsis-umap', 'public-plant-clusters.png',
                        'GSE123818', 'CC BY 4.0', 'image unchanged']:
             self.assertIn(phrase, text)
-        self.assertEqual(len(list((ROOT / 'tutorials').glob('*.html'))), 58)
+        self.assertEqual(len(published_tutorial_paths(ROOT)), 58)
 
 
 if __name__ == '__main__':
