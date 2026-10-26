@@ -59,7 +59,10 @@ def load_metadata(root):
     languages = json.loads((root / 'tools/tutorial-code-languages.json').read_text())
     groups = json.loads((root / 'tools/tutorial-code-groups.json').read_text())
     if languages.get('schema') != 1 or groups.get('schema') != 1: raise ValueError('Unsupported UI metadata schema')
-    pages = sorted((root / 'tutorials').glob('*.html'))
+    pages = sorted(
+        page for page in (root / 'tutorials').glob('*.html')
+        if '<meta name="tutorial-route-redirect"' not in page.read_text(encoding='utf-8')
+    )
     if len(pages) != 58 or {p.stem for p in pages} != set(languages['tutorials']):
         raise ValueError('UI metadata must cover exactly the 58 public tutorials')
     if not set(groups['tutorials']).issubset(languages['tutorials']): raise ValueError('Unknown grouped tutorial')
@@ -164,7 +167,10 @@ def main(argv=None):
                 'window.OMICS_TUTORIAL_CODE = ' + json.dumps(metadata, ensure_ascii=False, separators=(',', ':')) + ';\n')
         changes = []
         outputs = {root / 'tutorial-code-data.js': data}
-        for page in sorted((root / 'tutorials').glob('*.html')): outputs[page] = render_page(page.read_text(), metadata, page.stem)
+        for page in sorted((root / 'tutorials').glob('*.html')):
+            if '<meta name="tutorial-route-redirect"' in page.read_text(encoding='utf-8'):
+                continue
+            outputs[page] = render_page(page.read_text(), metadata, page.stem)
         for path, text in outputs.items():
             if not path.exists() or path.read_text() != text:
                 changes.append(str(path.relative_to(root)))

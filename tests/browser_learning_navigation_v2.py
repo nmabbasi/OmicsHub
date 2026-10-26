@@ -6,6 +6,7 @@ from pathlib import Path
 from playwright.sync_api import sync_playwright
 
 ROOT = Path(__file__).resolve().parents[1]
+from route_migration_baseline import published_tutorial_paths
 
 
 def main():
@@ -15,7 +16,7 @@ def main():
     args = ap.parse_args()
     args.output.mkdir(parents=True, exist_ok=True)
     report = {'checks': [], 'errors': []}
-    pages = sorted((ROOT / 'tutorials').glob('*.html'))
+    pages = published_tutorial_paths(ROOT)
     with sync_playwright() as p:
         browser = p.chromium.launch(executable_path='/usr/bin/chromium', args=['--no-sandbox'])
         context = browser.new_context(viewport={'width': 1440, 'height': 1000}, device_scale_factor=2)

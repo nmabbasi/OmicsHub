@@ -70,7 +70,10 @@ class PageFacts(HTMLParser):
 def load_site(root: Path) -> tuple[dict, dict[str, PageFacts]]:
     manifest_path = root / "tools" / "learning-paths.json"
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-    pages = sorted((root / "tutorials").glob("*.html"))
+    pages = sorted(
+        page for page in (root / "tutorials").glob("*.html")
+        if '<meta name="tutorial-route-redirect"' not in page.read_text(encoding="utf-8")
+    )
     if len(pages) != EXPECTED_TUTORIALS:
         raise ValueError(f"Expected exactly {EXPECTED_TUTORIALS} tutorials; found {len(pages)}")
     facts: dict[str, PageFacts] = {}

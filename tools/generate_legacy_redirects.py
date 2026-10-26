@@ -26,7 +26,10 @@ def load_redirects() -> tuple[dict[str, str], dict]:
         source: "tutorials/" + PurePosixPath(source).name
         for source in manifest["migration_root_urls"]
     }
-    redirects = migration | manifest["historical_aliases"]
+    overrides = manifest.get("migration_target_overrides", {})
+    if not isinstance(overrides, dict) or set(overrides) - set(migration):
+        raise ValueError("Migration target overrides must name existing root migration URLs")
+    redirects = migration | overrides | manifest["historical_aliases"]
     if len(redirects) != len(migration) + len(manifest["historical_aliases"]):
         raise ValueError("Duplicate source URL in redirect manifest")
     display_titles = manifest.get("display_titles", {})

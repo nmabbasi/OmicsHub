@@ -3,6 +3,8 @@ from pathlib import Path
 import re
 import unittest
 
+from route_migration_baseline import published_tutorial_paths
+
 ROOT = Path(__file__).resolve().parents[1]
 ROOT_PAGES = (
     "index.html", "start-here.html", "tutorials.html", "about.html",
@@ -11,7 +13,7 @@ ROOT_PAGES = (
 
 
 def canonical_pages() -> list[Path]:
-    return [*(ROOT / name for name in ROOT_PAGES), *sorted((ROOT / "tutorials").glob("*.html")), *sorted((ROOT / "pages").glob("*.html"))]
+    return [*(ROOT / name for name in ROOT_PAGES), *published_tutorial_paths(ROOT), *sorted((ROOT / "pages").glob("*.html"))]
 
 
 class SitewideTopControlContracts(unittest.TestCase):

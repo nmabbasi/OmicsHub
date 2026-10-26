@@ -48,6 +48,7 @@ from optional_report_baseline import (
     OPTIONAL_REPORT_PATHS,
     verify_optional_report_file,
 )
+from route_migration_baseline import current_route_path, historical_route_path, published_tutorial_paths
 
 ROOT = Path(__file__).resolve().parents[1]
 BASE = 'c030bc62bf6e4a4ad21f9ff64cb630c152157692'
@@ -57,14 +58,15 @@ NAVIGATION = ['index.html', 'start-here.html', 'tutorials.html', 'about.html',
 
 
 def baseline(relative):
-    return subprocess.check_output(['git', 'show', f'{BASE}:{relative}'], cwd=ROOT).decode()
+    return subprocess.check_output(['git', 'show', f'{BASE}:{historical_route_path(relative)}'], cwd=ROOT).decode()
 
 
 def current_before_resource_content_edits(relative):
-    current = (ROOT / relative).read_bytes()
-    if relative in R_FIRST_ASSET_PATHS:
-        current = restore_r_first_asset(relative, current)
-    return normalize_resource_content(relative, current).decode('utf-8')
+    current_path = current_route_path(relative)
+    current = (ROOT / current_path).read_bytes()
+    if current_path in R_FIRST_ASSET_PATHS:
+        current = restore_r_first_asset(current_path, current)
+    return normalize_resource_content(current_path, current).decode('utf-8')
 
 
 class LinkAndIdParser(HTMLParser):
@@ -87,7 +89,7 @@ class ReaderPunctuationTests(unittest.TestCase):
     def setUpClass(cls):
         cls.manifest = json.loads(FIXTURE.read_text())
         cls.pages = NAVIGATION + sorted(str(p.relative_to(ROOT)) for p in (ROOT/'pages').glob('*.html'))
-        cls.pages += sorted(str(p.relative_to(ROOT)) for p in (ROOT/'tutorials').glob('*.html'))
+        cls.pages += sorted(str(p.relative_to(ROOT)) for p in published_tutorial_paths(ROOT))
         cls.old = {path: baseline(path) for path in cls.pages}
 
     def test_all_70_public_reading_pages_have_no_literal_or_encoded_em_dashes(self):
@@ -100,7 +102,10 @@ class ReaderPunctuationTests(unittest.TestCase):
 
     def test_edit_fixture_lists_only_public_pages_and_the_navigation_copy_source(self):
         self.assertEqual(self.manifest['schema_version'], 1)
-        self.assertEqual(set(self.manifest['files']), set(self.pages) | {'tools/learning-paths.json'})
+        self.assertEqual(
+            set(self.manifest['files']),
+            {historical_route_path(path) for path in self.pages} | {'tools/learning-paths.json'},
+        )
         for relative, changes in self.manifest['files'].items():
             for pair in changes['replacements']:
                 with self.subTest(path=relative, before=pair['before'][:60]):

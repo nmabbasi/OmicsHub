@@ -18,6 +18,7 @@ PUBLISHED='911a5f0'
 from reader_text_colour_baseline import normalize_reader_text
 from startup_performance_baseline import restore_startup_performance_asset
 from editorial_review_baseline import normalize_editorial_review
+from route_migration_baseline import historical_route_path, published_tutorial_paths
 
 
 class Text(HTMLParser):
@@ -83,13 +84,13 @@ class HomeCatalogueUITests(unittest.TestCase):
         self.assertTrue(all('<strong>' in c and 'Read tutorial' in c for c in cards))
 
     def test_all_58_scientific_lesson_files_are_byte_identical_to_published_version(self):
-        pages=sorted((ROOT/'tutorials').glob('*.html'))
+        pages=published_tutorial_paths(ROOT)
         self.assertEqual(len(pages),58)
         for page in pages:
             relative=page.relative_to(ROOT).as_posix()
             with self.subTest(page=relative):
                 restored=normalize_reader_text(relative,page.read_text(encoding='utf-8'))
-                self.assertEqual(restored.encode('utf-8'),subprocess.check_output(['git','show',f'{PUBLISHED}:{relative}'],cwd=ROOT))
+                self.assertEqual(restored.encode('utf-8'),subprocess.check_output(['git','show',f'{PUBLISHED}:{historical_route_path(relative)}'],cwd=ROOT))
 
     def test_catalogue_preserves_every_original_title_description_image_and_destination(self):
         original=catalogue_records(published('tutorials.html'))
@@ -122,7 +123,7 @@ class HomeCatalogueUITests(unittest.TestCase):
 
     def test_all_metadata_has_actual_lesson_body_evidence(self):
         lessons=self.metadata['lessons']
-        pages={p.stem for p in (ROOT/'tutorials').glob('*.html')}
+        pages={p.stem for p in published_tutorial_paths(ROOT)}
         self.assertEqual(set(lessons),pages)
         self.assertEqual(len(lessons),58)
         for slug,item in lessons.items():

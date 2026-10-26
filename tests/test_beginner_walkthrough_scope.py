@@ -51,6 +51,7 @@ from optional_report_baseline import (
     OPTIONAL_REPORT_PATHS,
     verify_optional_report_file,
 )
+from route_migration_baseline import exact_route_migration_paths, historical_route_path, published_tutorial_paths
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = re.compile(r"<script\b[^>]*>.*?</script\s*>", re.S | re.I)
@@ -59,7 +60,7 @@ JSONLD = re.compile(r"\btype\s*=\s*([\"'])application/ld\+json\1", re.I)
 
 def git_bytes(path):
     result = subprocess.run(
-        ["git", "show", f"{PUBLISHED_PR9}:{path}"], cwd=ROOT,
+        ["git", "show", f"{PUBLISHED_PR9}:{historical_route_path(path)}"], cwd=ROOT,
         stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, check=False,
     )
     return result.stdout if result.returncode == 0 else None
@@ -73,7 +74,7 @@ def changed_paths():
     untracked = subprocess.check_output(
         ["git", "ls-files", "--others", "--exclude-standard"], cwd=ROOT, text=True,
     ).splitlines()
-    return sorted(set(tracked) | set(untracked))
+    return sorted((set(tracked) | set(untracked)) - exact_route_migration_paths(ROOT))
 
 
 def executable_scripts(text):
@@ -142,7 +143,7 @@ class BeginnerWalkthroughScopeTests(unittest.TestCase):
                     self.assertIn(new_date[0], {"2026-10-21", "2026-10-23"})
 
     def test_all_tutorial_executable_scripts_remain_raw_byte_identical(self):
-        pages = sorted((ROOT / "tutorials").glob("*.html"))
+        pages = published_tutorial_paths(ROOT)
         self.assertEqual(len(pages), 58)
         for page in pages:
             relative = page.relative_to(ROOT).as_posix()

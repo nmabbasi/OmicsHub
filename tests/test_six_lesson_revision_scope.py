@@ -63,6 +63,7 @@ from optional_report_baseline import (
     OPTIONAL_REPORT_PATHS,
     verify_optional_report_file,
 )
+from route_migration_baseline import exact_route_migration_paths, historical_route_path, published_tutorial_paths
 
 ALLOWED_FIXTURE_PREFIXES = (
     "files/text-processing-lesson/",
@@ -82,7 +83,7 @@ JSONLD = re.compile(r"\btype\s*=\s*([\"'])application/ld\+json\1", re.I)
 
 def git_bytes(path):
     result = subprocess.run(
-        ["git", "show", f"{PUBLISHED_PR8}:{path}"], cwd=ROOT,
+        ["git", "show", f"{PUBLISHED_PR8}:{historical_route_path(path)}"], cwd=ROOT,
         stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, check=False,
     )
     return result.stdout if result.returncode == 0 else None
@@ -96,7 +97,7 @@ def changed_paths():
     untracked = subprocess.check_output(
         ["git", "ls-files", "--others", "--exclude-standard"], cwd=ROOT, text=True
     ).splitlines()
-    return sorted(set(tracked) | set(untracked))
+    return sorted((set(tracked) | set(untracked)) - exact_route_migration_paths(ROOT))
 
 
 class SixLessonRevisionScopeTests(unittest.TestCase):
@@ -159,7 +160,7 @@ class SixLessonRevisionScopeTests(unittest.TestCase):
                 )
 
     def test_executable_scripts_remain_byte_identical_on_all_tutorial_pages(self):
-        pages = sorted((ROOT / "tutorials").glob("*.html"))
+        pages = published_tutorial_paths(ROOT)
         self.assertEqual(len(pages), 58)
         for page in pages:
             relative = page.relative_to(ROOT).as_posix()

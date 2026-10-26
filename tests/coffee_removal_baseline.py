@@ -13,6 +13,7 @@ from pathlib import Path
 import re
 import subprocess
 from gget_mobile_baseline import restore_gget_mobile_bytes
+from route_migration_baseline import normalize_route_migration
 
 ROOT = Path(__file__).resolve().parents[1]
 BASE_COMMIT = "be4429d1ac4cfb0f2164239057cddd95c59620b1"
@@ -90,6 +91,7 @@ def restore_coffee_removal_bytes(relative_path, data, *, strict=True):
     """
     if not isinstance(data, bytes):
         raise TypeError("coffee-removal restoration requires bytes")
+    relative_path, data = normalize_route_migration(relative_path, data)
     data = restore_gget_mobile_bytes(relative_path, data)
     entry = coffee_removal_fixture().get(relative_path)
     if entry is None:

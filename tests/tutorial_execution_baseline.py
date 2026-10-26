@@ -12,6 +12,7 @@ import re
 import subprocess
 
 ROOT = Path(__file__).resolve().parents[1]
+from route_migration_baseline import historical_route_path, normalize_route_migration_text
 BASE_COMMIT = "122bd466feb11efd304769faff19e77bd40a98b4"
 FIXTURE_PATH = ROOT / "tests/fixtures/tutorial-execution-exact-delta.json"
 FIXTURE_SHA256 = "8d0c9125c92830f9b0f47fa956a593bf42da25db22093342d4064b72eaa42240"
@@ -36,6 +37,7 @@ def _three_line_context(before, after, label):
 
 
 def _base_bytes(relative_path):
+    relative_path = historical_route_path(relative_path)
     if (not isinstance(relative_path, str) or relative_path.startswith("/")
             or ".." in Path(relative_path).parts):
         raise AssertionError(f"invalid execution-delta path: {relative_path!r}")
@@ -128,6 +130,7 @@ def normalize_execution_delta(relative_path, text):
     """Reverse one exact current page to 122bd bytes; leave mutations untouched."""
     if not isinstance(text, str):
         raise TypeError("execution-delta normalization requires decoded text")
+    relative_path, text = normalize_route_migration_text(relative_path, text)
     from navigation_performance_baseline import normalize_navigation_performance
     text = normalize_navigation_performance(relative_path, text)
     from latest_review_baseline import latest_review_fixture, normalize_latest_review

@@ -9,6 +9,7 @@ import re
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
+from route_migration_baseline import published_tutorial_paths
 REDIRECT_MANIFEST = json.loads((ROOT / 'tools' / 'legacy-redirects.json').read_text(encoding='utf-8'))
 REDIRECT_PATHS = set(REDIRECT_MANIFEST['migration_root_urls']) | set(REDIRECT_MANIFEST['historical_aliases'])
 
@@ -22,7 +23,7 @@ class Tags(HTMLParser):
 
 class MobileLoadingTests(unittest.TestCase):
     def test_every_html_page_uses_existing_local_font_resources(self):
-        pages = list(ROOT.glob('*.html')) + list(ROOT.glob('pages/*.html')) + list(ROOT.glob('tutorials/*.html'))
+        pages = list(ROOT.glob('*.html')) + list(ROOT.glob('pages/*.html')) + published_tutorial_paths(ROOT)
         for page in pages:
             if '/' + page.relative_to(ROOT).as_posix() in REDIRECT_PATHS:
                 continue
@@ -87,7 +88,7 @@ class MobileLoadingTests(unittest.TestCase):
                 self.assertIn('defer', shared)
 
     def test_tutorial_code_and_advertising_setup_are_not_removed(self):
-        for page in ROOT.glob('tutorials/*.html'):
+        for page in published_tutorial_paths(ROOT):
             text = page.read_text(encoding='utf-8')
             with self.subTest(page=page.name):
                 self.assertIn('copy-code.js', text)
@@ -96,7 +97,7 @@ class MobileLoadingTests(unittest.TestCase):
                 self.assertIn('google-adsense-account', text)
 
     def test_local_images_have_positive_intrinsic_dimensions(self):
-        pages = list(ROOT.glob('*.html')) + list(ROOT.glob('pages/*.html')) + list(ROOT.glob('tutorials/*.html'))
+        pages = list(ROOT.glob('*.html')) + list(ROOT.glob('pages/*.html')) + published_tutorial_paths(ROOT)
         for page in pages:
             for tag, attrs in Tags(page.read_text(encoding='utf-8')).tags:
                 if tag != 'img' or not attrs.get('src'):
@@ -117,7 +118,7 @@ class MobileLoadingTests(unittest.TestCase):
         css = subset.read_text(encoding='utf-8')
         for selector in ['subscribe-community-button', 'hero-laptop-content', 'footer', 'html']:
             self.assertIn(selector, css)
-        for page in ROOT.glob('tutorials/*.html'):
+        for page in published_tutorial_paths(ROOT):
             self.assertIn('../style.css', page.read_text(encoding='utf-8'))
 
     def test_homepage_css_source_fingerprint_is_current(self):

@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<link as="font" crossorigin="anonymous" href="../fonts/inter-e3237528af.woff2" rel="preload" type="font/woff2"/>
+<link href="../fonts/fonts.css" rel="stylesheet"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<meta content="Run deterministic, local RNA-seq count-matrix QC and optional CPM workflows in R or Python, with synthetic fixtures, provenance records, and human review; the separate optional Python provider demo is not needed for the core exercises." name="description"/>
+<meta content="RNA-seq, count matrix quality control, CPM, R, Python, deterministic workflow, provenance, optional AI provider demo" name="keywords"/>
+<meta content="Nasir Mahmood Abbasi, PhD" name="author"/>
+<meta content="index, follow" name="robots"/>
+<meta content="Bounded Count-Matrix QC and CPM Workflows" property="og:title"/>
+<meta content="Run deterministic, local RNA-seq count-matrix QC and optional CPM workflows in R or Python, with synthetic fixtures, provenance records, and human review; the separate optional Python provider demo is not needed for the core exercises." property="og:description"/>
+<meta content="https://theomicshub.com/tutorials/rna-seq-count-matrix-qc-cpm.html" property="og:url"/>
+<meta content="website" property="og:type"/>
+<meta content="https://theomicshub.com/images/autonomous-research-orchestrator.webp" property="og:image"/>
+<meta content="summary_large_image" name="twitter:card"/>
+<meta content="Bounded Count-Matrix QC and CPM Workflows" name="twitter:title"/>
+<meta content="Run deterministic, local RNA-seq count-matrix QC and optional CPM workflows in R or Python, with synthetic fixtures, provenance records, and human review; the separate optional Python provider demo is not needed for the core exercises." name="twitter:description"/>
+<meta content="https://theomicshub.com/images/autonomous-research-orchestrator.webp" name="twitter:image"/>
+<title>Bounded Count-Matrix QC and CPM Workflows | The Omics Hub</title>
+<link href="../images/favicon.svg" rel="icon" type="image/svg+xml"/>
+<link href="../tailwind.min.css" rel="stylesheet"/>
+
+<link href="../style.css?v=20261025-reference-support-v1" rel="stylesheet"/>
+<script src="../analytics.js"></script>
+<script>
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('consent', 'default', {
+  'ad_storage': 'denied',
+  'ad_user_data': 'denied',
+  'ad_personalization': 'denied',
+  'analytics_storage': 'denied'
+});
+</script>
+<script async="" crossorigin="anonymous" src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2910340533244599"></script>
+<meta content="ca-pub-2910340533244599" name="google-adsense-account"/>
+<meta content="XioIUjAyO5PEAT-N6nLrowdiDe4ATl-vKdRGmmrDHZM" name="google-site-verification"/>
+<link href="https://theomicshub.com/tutorials/rna-seq-count-matrix-qc-cpm.html" rel="canonical"/>
+<script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "Bounded Count-Matrix QC and CPM Workflows",
+  "description": "Run deterministic, local RNA-seq count-matrix QC and optional CPM workflows in R or Python, with synthetic fixtures, provenance records, and human review; the separate optional Python provider demo is not needed for the core exercises.",
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://theomicshub.com/tutorials/rna-seq-count-matrix-qc-cpm.html"
+  },
+  "image": "https://theomicshub.com/images/autonomous-research-orchestrator.webp",
+  "author": {
+    "@type": "Person",
+    "name": "Nasir Mahmood Abbasi, PhD",
+    "url": "https://theomicshub.com/about.html"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "The Omics Hub",
+    "url": "https://theomicshub.com",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://theomicshub.com/images/favicon.svg"
+    }
+  },
+  "datePublished": "2026-08-27",
+  "dateModified": "2026-10-25"
+}</script>
+<link href="../tutorial-library.css" rel="stylesheet"/><link href="../tutorial-reader.css?v=20261025-r-first-v1" rel="stylesheet"/>
+<link href="../tutorial-navigation.css?v=20261025-learning-navigation-v2" rel="stylesheet"/><link href="../back-to-top.css?v=20261025-r-first-v1" rel="stylesheet"/>
+</head>
+<body class="bg-white text-gray-900">
+<script>
+function toggleMobileMenu() {
+  const menu = document.getElementById("mobile-menu");
+  const trigger = document.querySelector('[aria-controls="mobile-menu"]');
+  if (!menu) return;
+  const opening = menu.classList.contains("hidden");
+  menu.classList.toggle("hidden", !opening);
+  if (trigger) {
+    trigger.setAttribute("aria-expanded", String(opening));
+    trigger.setAttribute("aria-label", opening ? "Close navigation menu" : "Open navigation menu");
+  }
+}
+</script>
+<!-- Header -->
+<header class="bg-white border-b border-gray-200 sticky top-0 z-50">
+<nav class="container mx-auto px-6 py-4">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-6">
+<div class="flex items-center space-x-3">
+<div class="w-10 h-10 rounded-lg flex items-center justify-center shadow shadow-blue-900/30" style="width:40px;height:40px;background-color:#123B5D;flex:0 0 40px">
+<svg aria-hidden="true" class="w-7 h-7" role="img" viewbox="0 0 32 32">
+<path d="M6 10 L15 16 L25 7 M15 16 L25 25 M15 16 L7 25" fill="none" stroke="#ffffff" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2"></path>
+<circle cx="6" cy="10" fill="#22D3EE" r="3.2" stroke="#ffffff" stroke-width="1.2"></circle>
+<circle cx="25" cy="7" fill="#A78BFA" r="3.2" stroke="#ffffff" stroke-width="1.2"></circle>
+<circle cx="15" cy="16" fill="#ffffff" r="3.7" stroke="#123B5D" stroke-width="1.2"></circle>
+<circle cx="25" cy="25" fill="#FBBF24" r="3.2" stroke="#ffffff" stroke-width="1.2"></circle>
+<circle cx="7" cy="25" fill="#34D399" r="3.2" stroke="#ffffff" stroke-width="1.2"></circle>
+</svg>
+</div>
+<span class="text-xl font-bold text-gray-900 tracking-tight">The Omics Hub</span>
+</div>
+<div class="hidden md:flex items-center gap-3 pl-6 border-l border-gray-200">
+<a aria-label="LinkedIn Profile" class="text-gray-400 hover:text-[#0A66C2] transition-colors duration-200" href="https://www.linkedin.com/in/nmabbasi" rel="noopener noreferrer" target="_blank" title="LinkedIn">
+<svg class="w-4 h-4" fill="currentColor" viewbox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"></path></svg>
+</a>
+<a aria-label="ORCID Profile" class="text-gray-400 hover:text-[#A6CE39] transition-colors duration-200" href="https://orcid.org/0009-0005-0083-1984" rel="noopener noreferrer" target="_blank" title="ORCID">
+<svg class="w-4 h-4" fill="currentColor" viewbox="0 0 24 24"><path d="M12 0C5.372 0 0 5.372 0 12s5.372 12 12 12 12-5.372 12-12S18.628 0 12 0zM7.369 4.378c.525 0 .947.431.947.947s-.422.947-.947.947a.95.95 0 01-.947-.947c0-.525.422-.947.947-.947zm-.722 3.038h1.444v10.041H6.647V7.416zm3.562 0h3.9c3.712 0 5.344 2.653 5.344 5.025 0 2.578-2.016 5.016-5.325 5.016h-3.919V7.416zm1.444 1.303v7.444h2.297c3.272 0 3.872-2.484 3.872-3.722 0-2.016-1.284-3.722-3.862-3.722h-2.307z"></path></svg>
+</a>
+<a aria-label="GitHub Profile" class="text-gray-400 hover:text-gray-900 transition-colors duration-200" href="https://github.com/nmabbasi" rel="noopener noreferrer" target="_blank" title="GitHub">
+<svg class="w-4 h-4" fill="currentColor" viewbox="0 0 24 24"><path d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0112 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"></path></svg>
+</a>
+</div>
+</div>
+<!-- Desktop Nav -->
+<div class="hidden md:flex items-center space-x-1">
+<a class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-blue-600 rounded-md hover:bg-gray-50 transition-all" href="../index.html" id="nav-desktop-home">Home</a>
+<a class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-blue-600 rounded-md hover:bg-gray-50 transition-all flex items-center gap-1" href="../start-here.html" id="nav-desktop-starthere">Start Here <span aria-hidden="true" class="nav-network-mark"><svg viewbox="0 0 32 32"><path d="M6 10 L15 16 L25 7 M15 16 L25 25 M15 16 L7 25" fill="none" stroke="#FFFFFF" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2"></path><circle cx="6" cy="10" fill="#22D3EE" r="3.2" stroke="#FFFFFF" stroke-width="1.1"></circle><circle cx="25" cy="7" fill="#A78BFA" r="3.2" stroke="#FFFFFF" stroke-width="1.1"></circle><circle cx="15" cy="16" fill="#FFFFFF" r="3.6" stroke="#123B5D" stroke-width="1.1"></circle><circle cx="25" cy="25" fill="#FBBF24" r="3.2" stroke="#FFFFFF" stroke-width="1.1"></circle><circle cx="7" cy="25" fill="#55C7D9" r="3.2" stroke="#FFFFFF" stroke-width="1.1"></circle></svg></span></a>
+<a aria-current="page" class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-blue-600 rounded-md hover:bg-gray-50 transition-all cursor-pointer" href="../tutorials.html" id="nav-desktop-tutorials">Tutorials</a>
+<a class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-blue-600 rounded-md hover:bg-gray-50 transition-all" href="../services.html" id="nav-desktop-services">Services</a>
+<a class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-blue-600 rounded-md hover:bg-gray-50 transition-all" href="../about.html" id="nav-desktop-about">About</a>
+<a class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-blue-600 rounded-md hover:bg-gray-50 transition-all" href="../contact.html" id="nav-desktop-contact">Contact</a>
+<!-- Legal dropdown -->
+<div class="relative group ml-2">
+<button aria-controls="legal-menu" aria-expanded="false" aria-haspopup="true" class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center gap-1 rounded-md hover:bg-gray-50 transition-all" id="legal-menu-button">
+Legal
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+</button>
+<div class="absolute right-0 top-full mt-1 w-52 bg-white border border-gray-100 rounded-xl shadow-lg opacity-0 invisible transition-all duration-200 z-50 overflow-hidden" id="legal-menu" role="menu">
+<a class="block px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors" href="../pages/privacy.html">Privacy Policy</a>
+<a class="block px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors" href="../pages/terms.html">Terms of Service</a>
+<a class="block px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors" href="../pages/disclaimer.html">Disclaimer</a>
+<a class="block px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors" href="../pages/cookie.html">Cookie Policy</a>
+</div>
+</div>
+</div>
+<!-- Mobile Button -->
+<button aria-controls="mobile-menu" aria-expanded="false" aria-label="Open navigation menu" class="md:hidden p-2 rounded-md text-gray-600 hover:bg-gray-100" onclick="toggleMobileMenu()">
+<svg class="w-6 h-6" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+</button>
+</div>
+<!-- Mobile Nav -->
+<div class="md:hidden hidden mt-4 pb-2 border-t border-gray-100" id="mobile-menu">
+<div class="flex flex-col pt-3 space-y-1">
+<a class="px-4 py-2 text-sm text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors" href="../index.html" id="nav-mobile-home">Home</a>
+<a class="px-4 py-2 text-sm text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors" href="../start-here.html" id="nav-mobile-starthere">Start Here <span aria-hidden="true" class="nav-network-mark"><svg viewbox="0 0 32 32"><path d="M6 10 L15 16 L25 7 M15 16 L25 25 M15 16 L7 25" fill="none" stroke="#FFFFFF" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2"></path><circle cx="6" cy="10" fill="#22D3EE" r="3.2" stroke="#FFFFFF" stroke-width="1.1"></circle><circle cx="25" cy="7" fill="#A78BFA" r="3.2" stroke="#FFFFFF" stroke-width="1.1"></circle><circle cx="15" cy="16" fill="#FFFFFF" r="3.6" stroke="#123B5D" stroke-width="1.1"></circle><circle cx="25" cy="25" fill="#FBBF24" r="3.2" stroke="#FFFFFF" stroke-width="1.1"></circle><circle cx="7" cy="25" fill="#55C7D9" r="3.2" stroke="#FFFFFF" stroke-width="1.1"></circle></svg></span></a>
+<a aria-current="page" class="px-4 py-2 text-sm text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors cursor-pointer" href="../tutorials.html" id="nav-mobile-tutorials">Tutorials</a>
+<a class="px-4 py-2 text-sm text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors" href="../services.html" id="nav-mobile-services">Services</a>
+<a class="px-4 py-2 text-sm text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors" href="../about.html" id="nav-mobile-about">About</a>
+<a class="px-4 py-2 text-sm text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors" href="../contact.html" id="nav-mobile-contact">Contact</a>
+<div class="px-4 pt-2 pb-1 text-xs font-semibold text-gray-400 uppercase tracking-wide">Legal</div>
+<a class="px-4 py-2 text-sm text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors" href="../pages/privacy.html">Privacy Policy</a>
+<a class="px-4 py-2 text-sm text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors" href="../pages/terms.html">Terms of Service</a>
+<a class="px-4 py-2 text-sm text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors" href="../pages/disclaimer.html">Disclaimer</a>
+<a class="px-4 py-2 text-sm text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors" href="../pages/cookie.html">Cookie Policy</a>
+</div>
+</div>
+</nav>
+</header>
+<!-- Main Content -->
+<main class="min-h-screen">
+<div class="page-content" id="tutorial-page">
+<div class="container mx-auto px-4 py-8"><div class="max-w-4xl mx-auto"><div id="tutorial-content"><section class="mb-10">
+<div class="flex flex-wrap items-center gap-2 text-sm text-blue-600 font-medium mb-4"><span>AI-Driven Research &amp; Agentic Bioinformatics</span><span aria-hidden="true">•</span><span>Updated 2026-10-25</span></div>
+<h1 class="text-4xl md:text-5xl font-black text-gray-900 mb-6 leading-tight" id="tutorial-title">Bounded Count-Matrix QC and CPM Workflows</h1>
+<p class="text-xl text-gray-700 mb-6 lesson-lead">Build and inspect bounded RNA-seq count-matrix QC and optional counts-per-million (CPM) workflows, with an explicit human-review boundary.</p>
+<section class="lesson-summary tutorial-learning-contract" data-tutorial-format="hands-on-lab" aria-label="Learning format">
+<p><strong>Format: Hands-on lab.</strong> For readers with basic Python, CSV, and terminal experience: you will run and inspect a complete QC/CPM orchestrator against supplied synthetic count tables and tests; no biological dataset or API key is needed for the core lab.</p>
+</section>
+<div class="flex items-center gap-4"><div aria-hidden="true" class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 font-bold text-lg">NM</div><div><p class="font-bold text-gray-900">Nasir Mahmood Abbasi, PhD</p><p class="text-sm text-gray-500">Bioinformatics Educator</p></div></div>
+</section>
+<nav aria-label="Learning path navigation" class="reader-toolbar"><span class="reader-toolbar__heading">Learning path</span><a href="ai-prompt-engineering-seurat.html" rel="prev" class="reader-toolbar__previous"><span class="reader-toolbar__direction"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5m0 0 7 7m-7-7 7-7"/></svg></span><span class="reader-toolbar__copy"><small>Previous prerequisite</small><strong>Prompt Engineering for Seurat and Scanpy: A Reproducible Workflow</strong></span></a><a data-catalogue-return="" href="../tutorials.html" class="reader-toolbar__library"><span class="reader-toolbar__library-mark" aria-hidden="true"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="6" height="6" rx="1.3"/><rect x="14" y="4" width="6" height="6" rx="1.3"/><rect x="4" y="14" width="6" height="6" rx="1.3"/><rect x="14" y="14" width="6" height="6" rx="1.3"/></svg></span><span><small>Browse</small><strong>All tutorials</strong></span></a><a href="advanced-ai-orchestration-bioinformatics.html" rel="next" class="reader-toolbar__next"><span class="reader-toolbar__copy"><small>Suggested next</small><strong>Designing Auditable AI Workflows for Bioinformatics</strong></span><span class="reader-toolbar__direction"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14m0 0-7-7m7 7-7 7"/></svg></span></a></nav>
+<article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--walkthrough">
+<div class="p-6 bg-blue-50 border border-blue-100 rounded-xl mb-8 lesson-summary">
+<h2 id="outcomes">What you will build</h2>
+<p>A small, bounded local R workflow validates a count matrix and matching sample metadata, computes sample-level quality summaries, optionally calculates descriptive counts per million (CPM), records input and script provenance, and stops for human review.</p>
+<ul><li><strong>Prerequisites:</strong> basic terminal and CSV experience, plus R 4.0 or later.</li><li><strong>Offline path:</strong> base R only. No package installation, account, API key, network request, or paid call is needed.</li><li><strong>Success:</strong> reproduce the supplied synthetic results, trigger a deliberate zero-library failure safely, and explain why software checks are not biological validation.</li></ul>
+</div>
+<p><strong>This R implementation is deterministic local code, not an autonomous scientist or an AI planner.</strong> It has a fixed allowlist of QC and CPM steps; it does not call a language model, execute generated code, remove samples, or infer research conclusions. The original Python workflow is retained below as an optional alternative, including its separate optional provider demonstration.</p>
+<nav aria-label="Lesson contents" class="p-5 bg-gray-50 rounded-xl border border-gray-200">
+<strong>On this page</strong>
+<ol><li><a href="#r-download">Download the R workflow and tests</a></li><li><a href="#r-inputs">Inspect the matching synthetic inputs</a></li><li><a href="#r-qc">Run QC and read the output</a></li><li><a href="#r-cpm">Run CPM and inspect a safe failure</a></li><li><a href="#r-tests">Run the R tests and review provenance</a></li><li><a href="#python-alternative">Optional existing Python workflow</a></li></ol>
+</nav>
+<h2 id="r-download">1. Download and set up the R workflow</h2>
+<p>Save the R workflow and its test file in the same new folder. Both use base R and are intended to run locally on the public synthetic fixtures. The R implementation writes the same main result names and QC/CPM columns as the retained Python example, but its manifest identifies files with base R's MD5 function. MD5 is a change-detection identifier here, not a security or authenticity guarantee.</p>
+<ul><li><a download="" href="../files/orchestrator_workflow.R">Download orchestrator_workflow.R</a></li><li><a download="" href="../files/test_orchestrator_workflow.R">Download test_orchestrator_workflow.R</a></li></ul>
+<pre><code class="language-bash">R --version
+Rscript orchestrator_workflow.R --help</code></pre>
+<p>If <code>Rscript</code> is missing, install R from <a href="https://cran.r-project.org/" rel="noopener" target="_blank">CRAN</a>. No R packages are required. Keep the offline exercise separate from real research data until you understand its limits.</p>
+<h2 id="r-inputs">2. Inspect the matching synthetic inputs</h2>
+<pre><code class="language-bash">Rscript orchestrator_workflow.R --make-demo demo</code></pre>
+<p>This creates <code>counts.csv</code>, <code>counts_positive.csv</code>, and <code>metadata.csv</code> with the same values and headers as the existing Python workflow. The values are invented for teaching, not patient data or a downloaded GEO study. The output folder must not already exist.</p>
+<pre><code class="language-csv">gene_id,S1,S2,S3
+GENE1,10,20,0
+GENE2,0,5,0
+GENE3,90,75,0
+GENE4,0,0,0</code></pre>
+<p>The metadata header is exactly <code>sample_id,group</code>. The input validator requires matching unique sample IDs, simple identifiers, rectangular rows, and nonnegative integer counts. Metadata rows may be reordered because groups are joined by sample ID. This small implementation has explicit training limits of 2 MiB per file, 10,000 genes, and 100 samples; those are software limits, not biological thresholds.</p>
+<h2 id="r-qc">3. Run QC and read the result</h2>
+<pre><code class="language-bash">Rscript orchestrator_workflow.R --counts demo/counts.csv --metadata demo/metadata.csv --out run-qc</code></pre>
+<p>Open <code>run-qc/sample_qc.csv</code> and <code>run-qc/report.md</code>. The three sample totals should be <code>S1: 100</code>, <code>S2: 100</code>, and <code>S3: 0</code>; detected-gene counts are <code>2</code>, <code>3</code>, and <code>0</code>. The default low-library warning threshold of 50 is only an exercise setting. It does not remove samples and is not a recommended RNA-seq cutoff. A zero-count sample is a valid QC input, but its source needs human investigation.</p>
+<h2 id="r-cpm">4. Run CPM and inspect the deliberate failure</h2>
+<p>Use the positive-control fixture for a successful descriptive CPM run:</p>
+<pre><code class="language-bash">Rscript orchestrator_workflow.R --counts demo/counts_positive.csv --metadata demo/metadata.csv --out run-cpm --task normalize</code></pre>
+<p>Each nonzero sample column in <code>cpm.csv</code> should sum to approximately one million. This is simple column-total scaling, not TPM, composition-bias correction, differential expression, or evidence of a biological effect.</p>
+<p>Now request CPM for the fixture with an all-zero S3 column:</p>
+<pre><code class="language-bash">Rscript orchestrator_workflow.R --counts demo/counts.csv --metadata demo/metadata.csv --out run-zero-failure --task normalize</code></pre>
+<p>The command must fail with a nonzero status because dividing by a zero library total is undefined. It preserves the QC output and a failure event, but must not create <code>cpm.csv</code> or a successful report. Never invent replacement counts to make a real sample pass.</p>
+<h2 id="r-tests">5. Run tests and inspect provenance</h2>
+<pre><code class="language-bash">Rscript test_orchestrator_workflow.R orchestrator_workflow.R</code></pre>
+<p>The tests check the shared demo schema, known QC values, metadata reordering, valid CPM, zero-library refusal, invalid counts and metadata, overwrite protection, and provenance output. Each output directory records a fixed local plan in <code>plan.json</code>, input and script content identifiers and R version in <code>manifest.json</code>, and status events in <code>events.jsonl</code>. A completed report ends at <code>NEEDS_HUMAN_REVIEW</code>. A hash identifies bytes; it does not establish source authenticity, dataset suitability, or scientific correctness.</p>
+<p>Inspect files, units, sample identities, warnings, and study design before interpreting any real dataset. The workflow is not a security sandbox, a production pipeline, or an independent biological reviewer. Its calculations are descriptive, and software tests do not validate a research conclusion.</p>
+<p class="lesson-optional-route-summary" id="python-alternative">Optional Python implementation and provider exercise</p>
+<p>The tested Python workflow and its tests remain available as an alternative for readers who prefer Python. The following original Python instructions are retained. They use Python-native tools and are not needed to run the R workflow above. The AI planner described there is optional and makes a real provider request only if you explicitly run that separate command; the R implementation makes no provider call.</p>
+<h2 id="download">1. Download and set up</h2>
+<p>Save both files into the same new folder. The workflow file is the full implementation, not a pseudocode fragment; the second file contains its automated tests.</p>
+<ul><li><a download="" href="../files/orchestrator_workflow.py">Download orchestrator_workflow.py</a></li><li><a download="" href="../files/test_orchestrator_workflow.py">Download test_orchestrator_workflow.py</a></li></ul>
+<p>Open a terminal in that folder. On macOS or Linux:</p>
+<pre><code class="language-bash">python3 --version
+python3 -m venv .venv
+source .venv/bin/activate
+python orchestrator_workflow.py --help</code></pre>
+<p class="lesson-optional-route-summary">Windows PowerShell</p><pre><code class="language-powershell">py -3 --version
+py -3 -m venv .venv
+.\.venv\Scripts\python.exe orchestrator_workflow.py --help</code></pre><p>Use <code>.\.venv\Scripts\python.exe</code> instead of <code>python</code> in the remaining commands. Activation is not required; do not weaken your execution policy just to activate a virtual environment.</p>
+<p>Keep the offline lesson dependency-free. Only the optional provider integration below needs an extra package.</p>
+<h2 id="inputs">2. Inspect the synthetic inputs</h2>
+<pre><code class="language-bash">python orchestrator_workflow.py --make-demo demo</code></pre>
+<p>This creates a new directory containing <code>counts.csv</code>, <code>counts_positive.csv</code>, and <code>metadata.csv</code>. All values are invented for teaching. These are not a patient cohort or a downloaded GEO study.</p>
+<p><code>counts.csv</code> deliberately contains one all-zero sample:</p>
+<pre><code class="language-csv">gene_id,S1,S2,S3
+GENE1,10,20,0
+GENE2,0,5,0
+GENE3,90,75,0
+GENE4,0,0,0</code></pre>
+<pre><code class="language-csv">sample_id,group
+S1,control
+S2,case
+S3,case</code></pre>
+<p><code>counts_positive.csv</code> is a separate positive-control fixture: its S3 values are 5, 0, 45, and 0. It lets you test a valid normalization run without altering the zero-library example. <strong>Never invent replacement counts to repair a real failed sample.</strong></p>
+<p>The validator requires unique gene and sample identifiers, nonnegative integer counts, complete rectangular rows, and an exact sample-ID match between counts and metadata. Metadata order may differ: rows are joined by sample ID, never by their position. This teaching implementation accepts simple identifiers made from letters, numbers, underscores, dots, and hyphens; leading letters or digits are required. Count fields must contain 1–12 ASCII digits, with a maximum value of 999,999,999,999. It intentionally limits input size to 2 MiB per file, 10,000 genes, and 100 samples. These are software training limits, not biological thresholds.</p>
+<h2 id="plan">3. Validate a plan before execution</h2>
+<p>The orchestrator has a deliberately small tool registry. For <code>--task qc</code>, the only valid plan is <code>{"steps":["qc"]}</code>. For <code>--task normalize</code>, it is <code>{"steps":["qc","cpm"]}</code>. Unknown tools, extra or duplicate JSON keys, repeated tools, and changed ordering are rejected. A plan file is limited to 16 KiB. There is no shell tool and no generated-code execution.</p>
+<p>Start with a dry run:</p>
+<pre><code class="language-bash">python orchestrator_workflow.py --counts demo/counts.csv --metadata demo/metadata.csv --out run-plan --dry-run</code></pre>
+<p>Inspect <code>run-plan/plan.json</code>, the input manifest, and the event log. A dry run validates and records a plan but does not produce <code>sample_qc.csv</code> or <code>cpm.csv</code>. Every output directory must be new; the program refuses to overwrite a previous run.</p>
+<p>The design is intentionally conservative: an AI planner cannot remove a sample, change a threshold, select a new tool, or claim a result. The command-line task and parameters remain human choices.</p>
+<h2 id="qc">4. Run QC and read the result</h2>
+<pre><code class="language-bash">python orchestrator_workflow.py --counts demo/counts.csv --metadata demo/metadata.csv --out run-qc</code></pre>
+<p>Open <code>run-qc/sample_qc.csv</code> and <code>run-qc/report.md</code>. You should find:</p>
+<div aria-label="Scrollable table: tutorial reference data" class="overflow-x-auto lesson-table-wrap" role="region" tabindex="0"><table><thead><tr><th scope="col">Sample</th><th scope="col">Count total</th><th scope="col">Detected genes</th></tr></thead><tbody><tr><td>S1</td><td>100</td><td>2</td></tr><tr><td>S2</td><td>100</td><td>3</td></tr><tr><td>S3</td><td>0</td><td>0</td></tr></tbody></table></div>
+<p>These totals cover only the supplied four-gene matrix; they are not estimates of sequencing depth. The default low-total warning threshold is 50 counts solely to exercise the software. It is not a recommended RNA-seq QC cutoff. Warnings do not silently remove samples.</p>
+<p>The numerical reviewer checks the computed totals and detected-gene counts against the inputs. A completed run ends at <code>NEEDS_HUMAN_REVIEW</code>, not “biologically valid.” A zero-count sample is a valid software input for QC, but a warning requiring a person to investigate the source data.</p>
+<h2 id="normalization">5. Test successful CPM and a deliberate failure</h2>
+<p>First use the positive-control fixture:</p>
+<pre><code class="language-bash">python orchestrator_workflow.py --counts demo/counts_positive.csv --metadata demo/metadata.csv --out run-normalized --task normalize</code></pre>
+<p>Here the S3 total is 50, with two detected genes. Each sample column in <code>cpm.csv</code> should sum to approximately one million. The calculation is:</p>
+<pre><code class="language-text">CPM(gene, sample) = count(gene, sample) / column_total(sample) * 1,000,000</code></pre>
+<p>The reviewer checks nonnegative finite CPM values and their column sums. This descriptive scaling is not TPM, composition-bias correction, differential expression, or proof of a biological effect. Its denominator depends on the genes in the supplied matrix. Do not interpret the toy case/control labels as an experimental comparison.</p>
+<p>Now deliberately request normalization of the zero-library fixture:</p>
+<pre><code class="language-bash">python orchestrator_workflow.py --counts demo/counts.csv --metadata demo/metadata.csv --out run-zero-failure --task normalize</code></pre>
+<p>This command must fail with a nonzero exit status: dividing by a zero count-column total is undefined. Its QC output and failure event remain available for inspection, but it must not create a successful normalization report or <code>cpm.csv</code>. A useful orchestrator makes this failure explicit instead of hiding the sample or manufacturing a denominator.</p>
+<h2 id="ai-planner">6. Add an optional AI planner</h2>
+<p>Only attempt this after the offline commands and tests pass. Install the optional SDK with the same virtual-environment interpreter used to run the workflow. After activation, use:</p>
+<pre><code class="language-bash">python -m pip install openai</code></pre>
+<p>On Windows, where the earlier instructions do not activate the environment, use <code>.\.venv\Scripts\python.exe -m pip install openai</code>. On macOS or Linux without activation, use <code>.venv/bin/python -m pip install openai</code>. This keeps the SDK in the interpreter that will execute the script; if installation reports an error, stop and resolve it before trying the provider command.</p>
+<p>Configure <code>OPENAI_API_KEY</code> in your environment using your provider's instructions. Select a model available in your own account that supports Chat Completions with JSON-schema structured output. Replace <code>YOUR_MODEL_ID</code> below; it is a placeholder, not a working model name.</p>
+<pre><code class="language-bash">python orchestrator_workflow.py --counts demo/counts_positive.csv --metadata demo/metadata.csv --out run-ai --task normalize --planner openai --model YOUR_MODEL_ID</code></pre>
+<p>This path makes at most one model request, with a 30-second request timeout and no automatic retries. Provider charges may apply. It sends only the selected task and generic matrix dimensions, not gene IDs, sample IDs, group labels, or raw counts. The returned JSON still passes the same local allowlist and exact-plan checks as an offline plan. A refusal, malformed response, or provider failure stops the run; there is no hidden fallback claiming that AI succeeded.</p>
+<p>For an explicitly configured OpenAI-compatible endpoint, the SDK also accepts <code>OPENAI_BASE_URL</code>. Check that provider's schema support first. The offline test suite mocks the provider adapter; that is not a guarantee of compatibility with every live model, account, SDK release, or endpoint.</p>
+<p>Why such a narrow planner? A constrained first project lets you demonstrate an important boundary: the model may propose data, but trusted code decides which actions are allowed. Add tools only after defining their schemas, budgets, test cases, and approval points.</p>
+<p>For these two fixed plans, an LLM offers no analytical advantage over the offline planner. Its optional role here is to teach the provider/validation boundary, not to make simple arithmetic appear intelligent. Prefer the offline run unless you specifically want to test that integration.</p>
+<h2 id="review">7. Inspect provenance and review limits</h2>
+<ul><li><code>plan.json</code> records the actual accepted steps.</li><li><code>manifest.json</code> records input and script SHA-256 hashes, Python version, task, parameters, and planner mode. Hashes identify file contents; they do not prove a dataset is scientifically suitable.</li><li><code>events.jsonl</code> records the roles and success/failure states. A failed run keeps its failure record when an output directory has been created.</li><li><code>sample_qc.csv</code>, optional <code>cpm.csv</code>, and <code>report.md</code> separate numerical outputs from the human-review decision.</li></ul>
+<p>Before accepting any output, a person must confirm that sample identities and units are correct, warnings have been investigated, the chosen analysis answers the research question, and no result is being inferred beyond what the data support. The numerical reviewer is a second implementation check, not an independent biological expert.</p>
+<p>This is not a security sandbox or a production workflow engine. It runs with your Python process's normal permissions. Its small input caps, fixed tool registry, new output directories, and absence of generated-code execution reduce the teaching example's scope; they do not make arbitrary untrusted software safe.</p>
+<p>For a real study, first inspect the specific files and document how they were generated. A GEO accession or Series record does not guarantee an analysis-ready raw-count matrix: GEO distinguishes raw sequencing reads, submitter-supplied processed files, metadata, and, for some studies, NCBI-generated count matrices. Check the file description and units before using it. Do not feed log-normalized expression into this integer-count example or truncate a real matrix silently to pass its training limits. <a href="https://www.ncbi.nlm.nih.gov/geo/info/faq.html">GEO's official FAQ</a> describes these data types.</p>
+<h2 id="tests">8. Run tests and practice</h2>
+<pre><code class="language-bash">python -m unittest -v test_orchestrator_workflow.py</code></pre>
+<p>The downloadable tests exercise known QC values, metadata reordering, positive CPM, the zero-library refusal, invalid counts and schemas, blocked plans, dry runs, overwrite protection, and a mocked provider call. Tests check what this small implementation promises, not the accuracy of a scientific conclusion.</p>
+<h3>Troubleshooting</h3>
+<ul><li><strong>Output directory already exists:</strong> choose a new run name. Do not delete prior evidence just to make a rerun pass.</li><li><strong>Counts rejected:</strong> check for missing fields, duplicate identifiers, non-integer values, or negative counts. Confirm you exported raw counts, not transformed expression.</li><li><strong>Sample mismatch:</strong> compare identifiers exactly. Reordering metadata is allowed; inventing or silently dropping samples is not.</li><li><strong>Zero-library normalization failure:</strong> inspect the original data and QC warning. Do not add artificial counts merely to bypass the check.</li><li><strong>Optional provider failure:</strong> verify the SDK, model ID, account access, environment configuration, and schema support. Return to a clearly labeled offline run rather than silently treating it as AI output.</li></ul>
+<h3>Practice with an observable result</h3>
+<ol><li>Reorder the three metadata rows in a copy. Rerun QC into a new directory. Sample identities and metrics should remain the same.</li><li>Create a plan file containing <code>{"steps":["qc","run_shell"]}</code> and supply it with <code>--plan blocked-plan.json</code>. The plan must be rejected before tool execution.</li><li>Add a duplicate gene or a fractional count to a copied input. Explain which validator rejects it and why silently coercing the value would be unsafe.</li><li>Compare two offline runs of unchanged inputs. Match their hashes and numerical outputs; distinguish reproducibility of computation from validity of interpretation.</li></ol>
+<p class="lesson-optional-route-summary">Check your understanding</p><p><strong>Why can QC succeed when S3 has zero counts?</strong> Computing and flagging the zero total is valid; normalizing by that total is not. <strong>Does a valid model plan establish scientific correctness?</strong> No. It establishes only that the proposed tool sequence satisfies the local contract. <strong>What is the human approval point?</strong> Reviewing the evidence before using or reporting an analysis conclusion; the script never declares that approval on your behalf.</p>
+<h2 id="references">References and further learning</h2>
+<ul><li><a href="https://docs.python.org/3/library/csv.html">Python CSV documentation</a>: file parsing and its explicit conversion requirements.</li><li><a href="https://docs.python.org/3/library/argparse.html">Python argparse documentation</a>: CLI options, validation, and mutually exclusive arguments.</li><li><a href="https://platform.openai.com/docs/guides/structured-outputs">OpenAI structured-output guidance</a>: schemas, refusals, and incomplete responses; a schema is not a substitute for application validation.</li><li><a href="https://rdrr.io/bioc/edgeR/man/cpm.html">edgeR CPM reference</a>: descriptive CPM and the distinction between simple matrix column sums and normalized library sizes.</li></ul>
+<aside aria-labelledby="tutorial-feedback-title" class="lesson-feedback" id="tutorial-feedback"><h2 id="tutorial-feedback-title">Help improve this tutorial</h2><p>Found an error, a broken link, or a step that needs a clearer explanation? Please <a href="../contact.html">contact me</a>. Your feedback helps me keep this resource accurate and useful.</p></aside></article>
+<nav aria-label="Learning path continuation" class="reader-sequence" id="reader-course-navigation">
+<div class="reader-sequence-heading"><p class="reader-sequence-kicker">Continue learning</p><h2>Keep exploring</h2>
+<p class="reader-sequence-position"><span class="reader-sequence-route-label">Learning route</span><strong>AI methods · orchestration</strong></p></div>
+<div class="reader-sequence-grid reader-sequence-grid--single">
+<a href="ai-prompt-engineering-seurat.html" rel="prev" class="reader-path-card reader-path-card--previous"><span class="reader-path-card__copy"><span class="reader-path-card__eyebrow">Previous prerequisite</span><strong class="reader-path-card__title">Prompt Engineering for Seurat and Scanpy: A Reproducible Workflow</strong></span><span class="reader-path-card__arrow"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5m0 0 7 7m-7-7 7-7"/></svg></span></a>
+<div class="reader-sequence-choices">
+<a href="advanced-ai-orchestration-bioinformatics.html" rel="next" class="reader-path-card reader-path-card--suggested"><span class="reader-path-card__copy"><span class="reader-path-card__eyebrow">Suggested next step</span><strong class="reader-path-card__title">Designing Auditable AI Workflows for Bioinformatics</strong><span class="reader-path-card__reason">Explore an advanced design for auditable AI workflows.</span></span><span class="reader-path-card__arrow"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14m0 0-7-7m7 7-7 7"/></svg></span></a>
+</div></div><div class="reader-sequence-utilities">
+<a data-catalogue-return="" href="../tutorials.html" class="reader-path-card reader-path-card--library"><span class="reader-path-card__copy"><span class="reader-path-card__eyebrow">Browse the collection</span><strong class="reader-path-card__title">All tutorials</strong></span><span class="reader-path-card__arrow" aria-hidden="true"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="6" height="6" rx="1.3"/><rect x="14" y="4" width="6" height="6" rx="1.3"/><rect x="4" y="14" width="6" height="6" rx="1.3"/><rect x="14" y="14" width="6" height="6" rx="1.3"/></svg></span></a>
+</div><div class="reader-sequence-footer"><p class="reader-sequence-note">Suggested links are not a completion tracker or a required linear course.</p></div></nav>
+<section aria-label="Continue learning" class="mt-12 pt-8 border-t border-gray-200"><h2 class="text-2xl font-bold text-gray-900 mb-4">Continue learning</h2><p class="text-gray-700"><a class="text-blue-700 hover:underline" href="advanced-ai-orchestration-bioinformatics.html">Explore LangGraph, AutoGen, and foundation-model orchestration</a> or <a class="text-blue-700 hover:underline" href="../tutorials.html?category=AI-Driven%20Research%20%26%20Agentic%20Bioinformatics">return to the AI tutorial category</a>.</p></section>
+</div></div></div>
+</div>
+<script>window.STATIC_RENDERED = true; window.PRELOADED_TUTORIAL_ID = "ai-coding-cursor-aider";</script>
+</main>
+<!-- Tutorial top link -->
+<div class="reader-tools tutorial-top-tools"><a id="back-to-top" href="#tutorial-title" aria-label="Back to top"><span class="tutorial-top-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5m-6 6 6-6 6 6"/></svg></span><span>Back to top<small>Bounded Count-Matrix QC and CPM Workflows</small></span></a></div>
+<!-- /Tutorial top link -->
+<footer class="bg-gray-900 text-white mt-16">
+<div class="container mx-auto px-6 py-12">
+<div class="footer-grid gap-8 mb-8">
+<div class="footer-brand-column">
+<div class="flex items-center space-x-3 mb-3">
+<div class="w-10 h-10 rounded-lg flex items-center justify-center shadow shadow-blue-900/30" style="width:40px;height:40px;background-color:#123B5D;flex:0 0 40px">
+<svg aria-hidden="true" class="w-7 h-7" role="img" viewbox="0 0 32 32">
+<path d="M6 10 L15 16 L25 7 M15 16 L25 25 M15 16 L7 25" fill="none" stroke="#ffffff" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2"></path>
+<circle cx="6" cy="10" fill="#22D3EE" r="3.2" stroke="#ffffff" stroke-width="1.2"></circle>
+<circle cx="25" cy="7" fill="#A78BFA" r="3.2" stroke="#ffffff" stroke-width="1.2"></circle>
+<circle cx="15" cy="16" fill="#ffffff" r="3.7" stroke="#123B5D" stroke-width="1.2"></circle>
+<circle cx="25" cy="25" fill="#FBBF24" r="3.2" stroke="#ffffff" stroke-width="1.2"></circle>
+<circle cx="7" cy="25" fill="#34D399" r="3.2" stroke="#ffffff" stroke-width="1.2"></circle>
+</svg>
+</div>
+<span class="font-bold text-white">The Omics Hub</span>
+</div>
+<p class="text-gray-400 text-sm leading-relaxed mb-4">Practical, hands-on tutorials for bioinformatics, HPC, and single-cell RNA-seq analysis.</p>
+
+</div>
+<div>
+<h2 class="font-semibold text-white mb-3 text-sm uppercase tracking-wide">Explore</h2>
+<ul class="space-y-2 text-sm text-gray-400"><li><a class="hover:text-white transition-colors" href="../index.html">Home</a></li><li><a class="hover:text-white transition-colors" href="../start-here.html">Start Here</a></li><li><a class="hover:text-white transition-colors" href="../tutorials.html">Tutorials</a></li><li><a class="hover:text-white transition-colors" href="../services.html">Services</a></li><li><a class="hover:text-white transition-colors" href="../about.html">About</a></li><li><a class="hover:text-white transition-colors" href="../contact.html">Contact</a></li></ul>
+</div>
+<div>
+<h2 class="font-semibold text-white mb-3 text-sm uppercase tracking-wide">Policies</h2>
+<ul class="space-y-2 text-sm text-gray-400"><li><a class="hover:text-white transition-colors" href="../pages/privacy.html">Privacy Policy</a></li><li><a class="hover:text-white transition-colors" href="../pages/terms.html">Terms of Service</a></li><li><a class="hover:text-white transition-colors" href="../pages/disclaimer.html">Disclaimer</a></li><li><a class="hover:text-white transition-colors" href="../pages/cookie.html">Cookie Policy</a></li></ul>
+</div>
+</div>
+<div class="flex flex-col md:flex-row justify-between items-center mb-4 w-full gap-4">
+<a class="subscribe-community-button group inline-flex items-center gap-2 px-5 py-2.5 bg-white/5 text-gray-400 font-medium rounded-lg opacity-50 hover:opacity-100 transition-all duration-300 text-sm transform hover:-translate-y-0.5" href="../services.html#newsletter-title">
+<svg fill="none" height="18" stroke="currentColor" viewbox="0 0 24 24" width="18"><path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+<span>Subscribe &amp; Get Cheat Sheet</span>
+</a>
+</div>
+<div class="mt-8 pt-6 border-t border-gray-800 flex flex-col md:flex-row items-center justify-between gap-4">
+<div class="hidden md:block flex-1"></div>
+<div class="text-center text-gray-400 text-sm flex-1">
+<p>© 2026 The Omics Hub. All rights reserved.</p>
+</div>
+<div class="flex items-center justify-center md:justify-end gap-4 flex-1">
+<a aria-label="LinkedIn Profile" class="text-gray-400 hover:text-white transition-colors duration-200" href="https://www.linkedin.com/in/nmabbasi" rel="noopener noreferrer" target="_blank" title="LinkedIn">
+<svg class="w-6 h-6" fill="currentColor" viewbox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"></path></svg>
+</a>
+<a aria-label="ORCID Profile" class="text-gray-400 hover:text-white transition-colors duration-200" href="https://orcid.org/0009-0005-0083-1984" rel="noopener noreferrer" target="_blank" title="ORCID">
+<svg class="w-6 h-6" fill="currentColor" viewbox="0 0 24 24"><path d="M12 0C5.372 0 0 5.372 0 12s5.372 12 12 12 12-5.372 12-12S18.628 0 12 0zM7.369 4.378c.525 0 .947.431.947.947s-.422.947-.947.947a.95.95 0 01-.947-.947c0-.525.422-.947.947-.947zm-.722 3.038h1.444v10.041H6.647V7.416zm3.562 0h3.9c3.712 0 5.344 2.653 5.344 5.025 0 2.578-2.016 5.016-5.325 5.016h-3.919V7.416zm1.444 1.303v7.444h2.297c3.272 0 3.872-2.484 3.872-3.722 0-2.016-1.284-3.722-3.862-3.722h-2.307z"></path></svg>
+</a>
+<a aria-label="GitHub Profile" class="text-gray-400 hover:text-white transition-colors duration-200" href="https://github.com/nmabbasi" rel="noopener noreferrer" target="_blank" title="GitHub">
+<svg class="w-6 h-6" fill="currentColor" viewbox="0 0 24 24"><path d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0112 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"></path></svg>
+</a>
+</div>
+</div>
+</div>
+</footer>
+<script defer="" src="../mobile-navigation.js?v=20261026-startup-v1"></script>
+<script id="navigation-accessibility">
+(function () {
+  const legalButton = document.getElementById("legal-menu-button");
+  const legalMenu = document.getElementById("legal-menu");
+  const setLegalState = (open) => {
+    if (!legalButton || !legalMenu) return;
+    legalButton.setAttribute("aria-expanded", String(open));
+    legalMenu.classList.toggle("opacity-100", open);
+    legalMenu.classList.toggle("visible", open);
+    legalMenu.classList.toggle("opacity-0", !open);
+    legalMenu.classList.toggle("invisible", !open);
+  };
+  if (legalButton && legalMenu) {
+    legalButton.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      setLegalState(legalButton.getAttribute("aria-expanded") !== "true");
+    });
+    document.addEventListener("click", (event) => {
+      if (!legalMenu.contains(event.target) && !legalButton.contains(event.target)) setLegalState(false);
+    });
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") {
+        setLegalState(false);
+        legalButton.focus();
+      }
+    });
+  }
+})();
+</script>
+<script src="../assets/vendor/prism/prism-1.29.0.js"></script>
+<script id="tutorial-code-data">
+window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"rna-seq-count-matrix-qc-cpm":{"blocks":[{"language":"bash","sha256":"31c06e465aa382257c30b328603770142af79688266137132108b0e173838cea"},{"language":"bash","sha256":"07ed438773d0efa1f6a7c376208c0774c7c0b5bcec5df70f51935fa52ab1798a"},{"language":"csv","sha256":"6773b8dac2b6da941c0f16c11812dec89837b2a619769b5da2e6c9cc85d93954"},{"language":"bash","sha256":"41e717866d7f965ec399df860e6f40a59996054d10853a8fc29b75b67e44f28f"},{"language":"bash","sha256":"9b7094612e57ff05a0f25eb18bedaf3bdd8986f9fecbe8a8cebc6e707e2787f6"},{"language":"bash","sha256":"99af620b9ab64f4852cf6b0ee99dd64e430e68afb29ace95f2fcf662f74023fc"},{"language":"bash","sha256":"6eb851e73be176d15acbe0cf7ce6a5b6f8de47314d60b40891caac6e77d110bd"},{"language":"bash","sha256":"9c7d7a12a7e4f922ac623afedeed640dc0f3def6250f78779063767013a2eb80"},{"language":"powershell","sha256":"1efff17b7a49fdcc2aaaccb34a89828726e6e862c3f6945b9bf565dd72a9ce80"},{"language":"bash","sha256":"94e6be9faa408aad0d4610fc299bad7326795e6731b0a3000cdf38784b22cadf"},{"language":"csv","sha256":"6773b8dac2b6da941c0f16c11812dec89837b2a619769b5da2e6c9cc85d93954"},{"language":"csv","sha256":"f256b840aaea748ad5a67d0a13982b93ec7dd1f1263fb12ca53a262c53b9eb9e"},{"language":"bash","sha256":"8eaae8d8c469eb44e84ad70adc3a20b7bb9efc906103aaa9fbe43f37a237f1e0"},{"language":"bash","sha256":"cebd2b48b3a3cab752af6a6f47afb71e225c4e0076fd3d6ef17703abecf63a8f"},{"language":"bash","sha256":"10c9764b814c6041b2f11aa218c1fca6914ae5c8ed1a3da6c7913cee49834128"},{"language":"text","sha256":"f9e828faf708576ec74fc58ecdce9f1e372e4aae4d81f05a33278ef1b213947c"},{"language":"bash","sha256":"a7c278f515a02d7b82289e7c11d3547916085edb98ebac5046c3e1e296e8f615"},{"language":"bash","sha256":"73bb0bcaf6163236988699c62f9330843061eccc4c4710f1e183e625e61cb817"},{"language":"bash","sha256":"2aec442decfd6dfe733acdace516fef38a1cde5c1137ef1980c42af5c2e92d98"},{"language":"bash","sha256":"3a4217a54697e804672d261a1aff9960d83b59bfab00614ef8cc725136d2c3d2"}],"groups":[{"title":"Run the matching workflow","panels":[{"start":3,"end":26,"language":"r","label":"R \u00b7 main route"},{"start":27,"end":28,"language":"python","label":"Python"}],"members":[{"index":3,"tag":"h2","sha256":"529659de45f8b9c6730dd3e567afda79b0b7ca4190a80c85c5df56005196f4b5"},{"index":4,"tag":"p","sha256":"db0e053829671b14fb57b9170bfe38b56032cf45ec02028b9e6d598a92bac389"},{"index":5,"tag":"ul","sha256":"686db43dec436927413159e189c15e4898d88315aba68e891b791d1065bb6051"},{"index":6,"tag":"pre","sha256":"31c06e465aa382257c30b328603770142af79688266137132108b0e173838cea"},{"index":7,"tag":"p","sha256":"c6e74efc311f4ee374d44de8cbd44b375f33caf5926a90e68aa4a1fe1dc6fc70"},{"index":8,"tag":"h2","sha256":"0ff10ffd4d4e3c511f56e70e38f24c5247b92efb5200fd86226d24a97138da86"},{"index":9,"tag":"pre","sha256":"07ed438773d0efa1f6a7c376208c0774c7c0b5bcec5df70f51935fa52ab1798a"},{"index":10,"tag":"p","sha256":"2688547b2820c9bac52b197e13da3bb0e374b54c5e6ac4c7c06ae0516e105b26"},{"index":11,"tag":"pre","sha256":"6773b8dac2b6da941c0f16c11812dec89837b2a619769b5da2e6c9cc85d93954"},{"index":12,"tag":"p","sha256":"a97a1357ad74d0e7f21b514ae5496d41abb8b593af236cd8b50998cb6ca18dea"},{"index":13,"tag":"h2","sha256":"cf99a0feb1fea3fb08e4ad0eb736b7e64903b3dd440a7789b8c08a128967a729"},{"index":14,"tag":"pre","sha256":"41e717866d7f965ec399df860e6f40a59996054d10853a8fc29b75b67e44f28f"},{"index":15,"tag":"p","sha256":"99e8c6b9a117daaa809ec5f9dd4ad7444a3b68a8ab5e1aab072dcda374e0a370"},{"index":16,"tag":"h2","sha256":"91e29f1bc8dce3e45831b8718bc28b3017fe81e2f4debc0d41a9e38e9a77cff8"},{"index":17,"tag":"p","sha256":"b645361dd677f688aaf5deff17a7349788de2a1269f5708bc141b0b8b33238cb"},{"index":18,"tag":"pre","sha256":"9b7094612e57ff05a0f25eb18bedaf3bdd8986f9fecbe8a8cebc6e707e2787f6"},{"index":19,"tag":"p","sha256":"368a1f2df91845ea6b0cfc741beffc8c7705a18bc0878d8b89498b9fc6ea8530"},{"index":20,"tag":"p","sha256":"129f062923d21c95d979fbee6f3bfd9f270ca1314474f23766758aafd6415c32"},{"index":21,"tag":"pre","sha256":"99af620b9ab64f4852cf6b0ee99dd64e430e68afb29ace95f2fcf662f74023fc"},{"index":22,"tag":"p","sha256":"fe82f426fb97f409012efce90241430b1fb4b5d183105397e8d58ccbe564abe5"},{"index":23,"tag":"h2","sha256":"459d6d3041f653609f57c0d097e424630d792b76019519355e4a6cf270abaec0"},{"index":24,"tag":"pre","sha256":"6eb851e73be176d15acbe0cf7ce6a5b6f8de47314d60b40891caac6e77d110bd"},{"index":25,"tag":"p","sha256":"23de4a47a050802b831746e33d2f171b2387a3d0758ccc8688b40b6e805d34bc"},{"index":26,"tag":"p","sha256":"864425e1d514916f8cd7ece1dc6c3ce4caf065d8889546db8c7855bc91afc744"},{"index":27,"tag":"p","sha256":"ebf33bf592c7bfebfb403e91b0e925de4e43ea89b2baf3e771f287a2214c4c2f"},{"index":28,"tag":"p","sha256":"ca284d9dbe63d4f08abc5c7d275a77f0f499f39fcef78a3dc3ac6551a384892b"}],"tabOrder":["r","python"]}]}}};
+</script>
+<script src="../code-tabs.js?v=20261026-startup-v1"></script>
+<script src="../copy-code.js?v=20261025-r-first-v1"></script>
+<script src="../subscribe-fab.js?v=20261026-startup-v1"></script>
+<div class="fixed bottom-0 inset-x-0 z-[9999] transition-transform duration-500" id="cookie-consent-banner" style="font-family:'Inter',system-ui,sans-serif;">
+<div class="mx-auto max-w-4xl px-4 pb-4 sm:px-6">
+<div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-2xl sm:flex sm:items-start sm:gap-6">
+<div class="flex-1 min-w-0">
+<p class="text-sm font-semibold text-gray-900 mb-1">Analytics preferences</p>
+<p class="text-sm text-gray-600 leading-relaxed">
+          Allow optional Google Analytics cookies to help improve the site, or decline them. Your choice is stored in this browser. See our
+          <a class="text-blue-600 hover:underline font-medium" href="../pages/cookie.html">Cookie Policy</a> for details.
+        </p>
+</div>
+<div class="mt-4 flex flex-wrap items-center gap-2 sm:mt-0 sm:flex-shrink-0">
+<button class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500" data-cookie-choice="declined">Decline analytics</button>
+<button class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500" data-cookie-choice="accepted">Allow analytics</button>
+</div>
+</div>
+</div>
+</div>
+<script defer="" src="../cookie-consent.js"></script>
+</body>
+</html>

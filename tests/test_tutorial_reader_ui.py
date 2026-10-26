@@ -8,6 +8,7 @@ import tempfile
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
+from route_migration_baseline import historical_route_path
 from r_first_revision_baseline import (
     content_paths, normalize_r_first_revision, pre_r_first_bytes,
 )
@@ -19,7 +20,10 @@ class TutorialReaderUITests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.metadata = generator.load_metadata(ROOT)
-        cls.pages = sorted((ROOT / 'tutorials').glob('*.html'))
+        cls.pages = sorted(
+            page for page in (ROOT / 'tutorials').glob('*.html')
+            if '<meta name="tutorial-route-redirect"' not in page.read_text(encoding='utf-8')
+        )
 
     def test_every_lesson_body_is_byte_identical_outside_generated_navigation(self):
         for page in self.pages:
@@ -40,7 +44,7 @@ class TutorialReaderUITests(unittest.TestCase):
             'scrna-seq-basics', 'statistics-for-bioinformatics', 'experimental-design-batch-effects', 'spatial-transcriptomics-r-python',
             'quality-control-fundamentals', 'scrna-seq-quality-control', 'git-github-bioinformatics', 'biological-data-formats',
             'single-cell-foundation-models', 'protein-structure-design-alphafold', 'ai-bioinformatics-github-copilot',
-            'ai-coding-cursor-aider', 'autonomous-research-orchestrator', 'python-fundamentals-bioinformatics',
+            'ai-coding-cursor-aider', 'rna-seq-count-matrix-qc-cpm', 'python-fundamentals-bioinformatics',
             'hpc-basic-commands', 'mcp-zotero', 'evolutionary-phylogeny-analysis', 'data-visualization-fundamentals'
         })
         for slug in ['ai-prompt-engineering-seurat', 'scrna-seq-trajectory-inference', 'infercnv-copy-number-variation']:
@@ -84,7 +88,10 @@ class TutorialReaderUITests(unittest.TestCase):
     def test_prior_review_commit_upgrades_to_exact_current_markup(self):
         for page in self.pages:
             relative = page.relative_to(ROOT).as_posix()
-            previous = subprocess.check_output(['git', 'show', f'a4b6ead:tutorials/{page.name}'], cwd=ROOT).decode()
+            previous = subprocess.check_output(
+                ['git', 'show', f'a4b6ead:{historical_route_path(page.relative_to(ROOT).as_posix())}'],
+                cwd=ROOT,
+            ).decode()
             old_style_href = '../style.css?v=20261023-reader-typography'
             # The unchanged main-site stylesheet has its own independent key.
             new_style_href = '../style.css?v=20261025-reader-colours-v1'

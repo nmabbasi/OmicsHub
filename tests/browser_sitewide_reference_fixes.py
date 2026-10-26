@@ -86,7 +86,7 @@ def main():
                     check(page.evaluate('document.documentElement.scrollWidth') <= width + 1, 'Search view overflows')
                 run(f'R Markdown homepage/catalogue searches {width}', searches)
 
-                for slug, target in [('autonomous-research-orchestrator', 'python-alternative'), ('single-cell-foundation-models', 'foundation-embedding-python-run-stage')]:
+                for slug, target in [('rna-seq-count-matrix-qc-cpm', 'python-alternative'), ('single-cell-foundation-models', 'foundation-embedding-python-run-stage')]:
                     def anchor():
                         ready('tutorials/' + slug + '.html')
                         page.locator('[data-code-tabs] [role=tab][data-language=r]').first.click()
@@ -96,7 +96,7 @@ def main():
                         check(page.locator('[data-code-tabs] [role=tab][data-language=python]').first.get_attribute('aria-selected') == 'true', 'Deep link did not select Python')
                     run(f'Optional Python jump {slug} {width}', anchor)
 
-                for slug in ['ai-bioinformatics-github-copilot', 'ai-coding-cursor-aider', 'advanced-ai-single-cell', 'autonomous-research-orchestrator']:
+                for slug in ['ai-bioinformatics-github-copilot', 'ai-coding-cursor-aider', 'advanced-ai-single-cell', 'rna-seq-count-matrix-qc-cpm']:
                     def legal():
                         ready('tutorials/' + slug + '.html')
                         button = page.locator('#legal-menu-button')

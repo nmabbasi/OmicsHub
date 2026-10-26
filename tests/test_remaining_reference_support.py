@@ -39,6 +39,10 @@ from optional_report_baseline import (
     OPTIONAL_REPORT_PATHS,
     verify_optional_report_file,
 )
+from route_migration_baseline import (
+    current_route_path, exact_route_migration_paths, historical_route_path,
+    published_tutorial_paths,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 BASE_COMMIT = "d42231e"
@@ -60,6 +64,8 @@ SITEMAP_NS = {"s": "http://www.sitemaps.org/schemas/sitemap/0.9"}
 # website sources. Keep this list explicit so the public-change scope check
 # cannot silently exempt a broad directory.
 TEST_INFRASTRUCTURE_PATHS = {
+    'tests/browser_learning_navigation_v2.py',
+    'tests/browser_sitewide_top_ui.py',
     'tests/coffee_removal_baseline.py',
     'tests/optional_report_baseline.py',
     'tests/fixtures/coffee-removal-review.json',
@@ -120,6 +126,19 @@ TEST_INFRASTRUCTURE_PATHS = {
     'tests/test_start_here_ui.py',
     'tests/test_start_here_visual_polish.py',
     'tests/test_startup_performance_baseline.py',
+    'tests/test_accessibility_review.py',
+    'tests/test_analytics_preferences.py',
+    'tests/test_code_tabs.py',
+    'tests/test_hero_performance.py',
+    'tests/test_learner_revision_scope.py',
+    'tests/test_legacy_redirects.py',
+    'tests/test_mobile_loading.py',
+    'tests/test_pbmc_worked_example.py',
+    'tests/test_route_migration_baseline.py',
+    'tests/test_sitewide_top_ui.py',
+    'tests/test_tutorial_markup.py',
+    'tests/route_migration_baseline.py',
+    'tests/validate_tutorials.py',
     'tests/test_text_alignment.py',
     'tests/test_tutorial_execution_baseline.py',
     'tests/test_tutorial_reader_ui.py',
@@ -243,6 +262,7 @@ class RemainingReferenceSupportTests(unittest.TestCase):
             ["git", "diff", "--name-only", BASE_COMMIT, "--"],
             cwd=ROOT, text=True,
         ).splitlines())
+        changed -= exact_route_migration_paths(ROOT) - EXPECTED_PUBLIC_PATHS
         # A tutorial path is excluded only if strict whole-file restoration
         # produces the exact d42231e bytes; otherwise it remains visible here.
         performance_only = set()
@@ -277,14 +297,14 @@ class RemainingReferenceSupportTests(unittest.TestCase):
         paths = tutorial_paths_at_base()
         self.assertEqual(len(paths), 58)
         current_paths = sorted(
-            p.relative_to(ROOT).as_posix()
-            for p in (ROOT / "tutorials").glob("*.html")
+            historical_route_path(p.relative_to(ROOT).as_posix())
+            for p in published_tutorial_paths(ROOT)
         )
         self.assertEqual(current_paths, paths)
         for path in paths:
             with self.subTest(tutorial=path):
                 before = baseline_text(path)
-                after = current_text(path)
+                after = current_text(current_route_path(path))
                 for tag in ("pre", "code"):
                     pattern = rf"<{tag}\b[^>]*>.*?</{tag}\s*>"
                     self.assertEqual(
