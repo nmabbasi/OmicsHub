@@ -17,6 +17,7 @@ ROOT=Path(__file__).resolve().parents[1]
 PUBLISHED='911a5f0'
 from reader_text_colour_baseline import normalize_reader_text
 from startup_performance_baseline import restore_startup_performance_asset
+from editorial_review_baseline import normalize_editorial_review
 
 
 class Text(HTMLParser):
@@ -92,7 +93,7 @@ class HomeCatalogueUITests(unittest.TestCase):
 
     def test_catalogue_preserves_every_original_title_description_image_and_destination(self):
         original=catalogue_records(published('tutorials.html'))
-        current=catalogue_records(self.catalogue)
+        current=catalogue_records(normalize_editorial_review('tutorials.html',self.catalogue))
         self.assertEqual(len(original),58)
         self.assertEqual(len(current),58)
         self.assertEqual(current,original)

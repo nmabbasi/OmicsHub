@@ -17,6 +17,7 @@ import subprocess
 import sys
 
 from generate_latest_review_fixture import add_contextual_hunks
+from editorial_review_baseline import normalize_editorial_review_bytes
 from startup_performance_baseline import (
     ASSET_PATHS,
     BASE_COMMIT,
@@ -48,7 +49,9 @@ def build_fixture() -> dict:
     files = {}
     for relative_path in sorted(TUTORIAL_PATHS | ASSET_PATHS):
         base = git_base(relative_path)
-        current = (ROOT / relative_path).read_bytes()
+        current = normalize_editorial_review_bytes(
+            relative_path, (ROOT / relative_path).read_bytes()
+        )
         if base == current:
             raise AssertionError(f"expected a startup-performance delta but found identical bytes: {relative_path}")
         record = {

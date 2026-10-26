@@ -26,6 +26,11 @@ from startup_performance_baseline import (
 )
 from startup_generated_asset_baseline import restore_startup_generated_asset
 
+from editorial_review_baseline import (
+    PUBLIC_PATHS as EDITORIAL_PUBLIC_PATHS,
+    normalize_editorial_review,
+)
+
 ROOT = Path(__file__).resolve().parents[1]
 BASE_COMMIT = "d42231e"
 SITE = "https://theomicshub.com/"
@@ -44,6 +49,11 @@ SITEMAP_NS = {"s": "http://www.sitemaps.org/schemas/sitemap/0.9"}
 # cannot silently exempt a broad directory.
 TEST_INFRASTRUCTURE_PATHS = {
     ".github/workflows/tutorial-review.yml",
+    "tests/editorial_review_baseline.py",
+    "tests/fixtures/editorial-review-edits.json",
+    "tests/test_editorial_review_baseline.py",
+    "tests/test_editorial_scope_fixes.py",
+    "tests/test_revision_trajectory.py",
     "tests/browser_navigation_performance.py",
     "tests/browser_startup_performance.py",
     "tests/browser_startup_preservation.py",
@@ -149,6 +159,7 @@ def baseline_text(path):
 
 def current_text(path):
     current = (ROOT / path).read_text(encoding="utf-8")
+    current = normalize_editorial_review(path, current)
     return normalize_navigation_performance(path, current)
 
 
@@ -202,7 +213,7 @@ class RemainingReferenceSupportTests(unittest.TestCase):
         performance_only = set()
         for path in changed & (
             NAVIGATION_PERFORMANCE_PATHS | STARTUP_TUTORIAL_PATHS
-            | STARTUP_ASSET_PATHS | {"home-page.min.css"}
+            | STARTUP_ASSET_PATHS | EDITORIAL_PUBLIC_PATHS | {"home-page.min.css"}
         ):
             if path in STARTUP_ASSET_PATHS:
                 restored = restore_startup_performance_asset(path, (ROOT / path).read_bytes())

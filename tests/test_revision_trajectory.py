@@ -133,6 +133,17 @@ class TrajectoryLessonOfflineContractTests(unittest.TestCase):
         ):
             self.assertIn(phrase, self.article_text)
 
+    def test_legacy_report_is_clearly_optional_and_not_promised_as_reproducible(self) -> None:
+        self.assertIn("Legacy Slingshot report (reference only)", self.article_text)
+        self.assertIn('href="examples/Trajectory_inference_using_Slingshot.html"', self.source)
+        self.assertIn("local input file is not bundled", self.article_text)
+        self.assertIn("recorded execution includes errors", self.article_text)
+        self.assertNotIn("Live Case Studies", self.source)
+        self.assertNotIn("cancer single-cell datasets", self.source)
+        self.assertIn("Compare methods and review the result", self.article_text)
+        self.assertIn("Interpreting an inferred ordering", self.article_text)
+        self.assertIn("known invented graph", self.article_text)
+
     def test_reader_facing_article_has_no_em_dash_and_navigation_contract_remains(self) -> None:
         self.assertNotIn("\u2014", self.article_text)
         self.assertIn('lesson-format--decision-guide', self.source)

@@ -7,6 +7,7 @@ import unittest
 from unittest.mock import patch
 
 import startup_performance_baseline as baseline
+from editorial_review_baseline import normalize_editorial_review_bytes
 from startup_performance_baseline import (
     ASSET_PATHS,
     BASE_COMMIT,
@@ -37,7 +38,9 @@ class StartupPerformanceBaselineTests(unittest.TestCase):
         self.assertTrue(TUTORIAL_PATHS <= base_paths)
         for relative_path, entry in self.fixture.items():
             with self.subTest(path=relative_path):
-                current = (baseline.ROOT / relative_path).read_bytes()
+                current = normalize_editorial_review_bytes(
+                    relative_path, (baseline.ROOT / relative_path).read_bytes()
+                )
                 self.assertEqual(hashlib.sha256(current).hexdigest(), entry["current_sha256"])
                 if relative_path in TUTORIAL_PATHS:
                     self.assertEqual(

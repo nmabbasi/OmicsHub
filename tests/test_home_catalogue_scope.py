@@ -21,6 +21,7 @@ from reader_text_colour_baseline import (
 )
 from r_first_revision_baseline import R_FIRST_ASSET_PATHS, restore_r_first_asset
 from latest_review_baseline import restore_latest_review_asset
+from editorial_review_baseline import normalize_editorial_review
 ROOT = Path(__file__).resolve().parents[1]
 
 
@@ -235,6 +236,7 @@ class HomeCatalogueScopeTests(unittest.TestCase):
     def test_catalogue_retains_all_58_hrefs_titles_descriptions_and_categories(self):
         original = pre_home_catalogue_bytes("tutorials.html").decode("utf-8")
         current = (ROOT / "tutorials.html").read_text(encoding="utf-8")
+        current = normalize_editorial_review("tutorials.html", current)
         before, after = catalogue_records(original), catalogue_records(current)
         self.assertEqual(len(before), 58)
         self.assertEqual(len(after), 58)
@@ -246,6 +248,7 @@ class HomeCatalogueScopeTests(unittest.TestCase):
         review_source = git_bytes(review_start, "tutorials.html")
         self.assertIsNotNone(review_source)
         current = (ROOT / "tutorials.html").read_text(encoding="utf-8")
+        current = normalize_editorial_review("tutorials.html", current)
         original = pre_home_catalogue_bytes("tutorials.html").decode("utf-8")
         review_metadata = catalogue_metadata(review_source.decode("utf-8"))
         base_metadata = catalogue_metadata(original)
