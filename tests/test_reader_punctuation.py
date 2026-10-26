@@ -43,6 +43,7 @@ from tutorial_execution_baseline import (
     new_execution_asset_paths, verify_execution_asset_or_overlapping,
 )
 from latest_review_baseline import normalize_latest_review
+from start_here_desktop_baseline import DESKTOP_CSS_VERSION
 
 ROOT = Path(__file__).resolve().parents[1]
 BASE = 'c030bc62bf6e4a4ad21f9ff64cb630c152157692'
@@ -109,7 +110,7 @@ class ReaderPunctuationTests(unittest.TestCase):
         self.assertEqual(normalize_start_here('start-here.html', restored), restored)
 
         changed_claim = current.replace(
-            'Start with a question.', 'Unsupported new learning claim.', 1
+            'You have the biology.', 'Unsupported new learning claim.', 1
         )
         self.assertNotEqual(changed_claim, current, 'the mutation must exercise current reading text')
         self.assertNotEqual(
@@ -320,10 +321,12 @@ class ReaderPunctuationTests(unittest.TestCase):
                         # unchanged site-wide reader styles keep their own key.
                         version = ('20261025-learning-navigation-v2'
                                    if stylesheet == 'tutorial-navigation.css'
+                                   else DESKTOP_CSS_VERSION if (relative == 'start-here.html'
+                                                                and stylesheet == 'start-here.css')
                                    else READER_TEXT_VERSION)
                         self.assertTrue(href.endswith('?v=' + version), href)
         self.assertIn('home-page.min.css?v='+READER_TEXT_VERSION, normalize_latest_review('index.html', (ROOT/'index.html').read_text()))
-        self.assertIn('start-here.css?v='+READER_TEXT_VERSION, (ROOT/'start-here.html').read_text())
+        self.assertIn('start-here.css?v='+DESKTOP_CSS_VERSION, (ROOT/'start-here.html').read_text())
 
 
 if __name__ == '__main__':

@@ -7,6 +7,10 @@ import subprocess
 import unittest
 
 from editorial_review_baseline import normalize_editorial_review
+from start_here_desktop_baseline import (
+    normalize_start_here_desktop_html,
+    restore_start_here_desktop_asset,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 BASELINE = '36bc46d'
@@ -84,6 +88,12 @@ class SitewideReferenceFixesTests(unittest.TestCase):
                 if path == 'index.html':
                     current = current.replace('script.js?v=20261025-reference-support-v1', 'script.js?v=20261022-reader-review')
                     current = current.replace('home-page.min.css?v=20261025-reference-support-v1', 'home-page.min.css?v=20261025-reader-colours-v1')
+                elif path == 'start-here.html':
+                    current = normalize_start_here_desktop_html(path, current)
+                elif path == 'start-here.css':
+                    current = restore_start_here_desktop_asset(
+                        path, current.encode('utf-8')
+                    ).decode('utf-8')
                 self.assertEqual(current, baseline(path))
 
     def test_reference_edits_do_not_change_any_tutorial_code_or_approved_images(self):
@@ -91,10 +101,14 @@ class SitewideReferenceFixesTests(unittest.TestCase):
         for page in sorted((ROOT / 'tutorials').glob('*.html')):
             relative = page.relative_to(ROOT).as_posix()
             before = baseline(relative)
-            after = normalize_editorial_review(relative, page.read_text(encoding='utf-8'))
+            raw_after = page.read_text(encoding='utf-8')
+            after = normalize_editorial_review(relative, raw_after)
             code = lambda html: [unescape(re.sub('<[^>]+>', '', block)) for block in re.findall(r'<pre\b[^>]*>(.*?)</pre>', html, re.S)]
+            image_sources = lambda html: [attrs.get('src') for tag, attrs in Markup(html).tags if tag == 'img']
             with self.subTest(page=relative):
                 self.assertEqual(code(after), code(before), 'Reference review must not silently edit runnable code')
+                self.assertEqual(code(raw_after), code(before), 'Raw reviewed source must preserve runnable code')
+                self.assertEqual(image_sources(raw_after), image_sources(before), 'Reference review must preserve approved image sources')
                 self.assertEqual(re.findall(r'<img\b[^>]*>', after), re.findall(r'<img\b[^>]*>', before))
             count += 1
         self.assertEqual(count, 58)

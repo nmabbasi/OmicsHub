@@ -56,22 +56,17 @@ class TextAlignmentTests(unittest.TestCase):
                     "Tutorial should use the shared prose alignment scope",
                 )
 
-    def test_start_here_content_and_hero_remain_left_aligned(self):
-        main_props = declarations(css_rule(self.start_here_css, "#main-content"))
+    def test_start_here_retains_centered_hero_and_start_aligned_reading_sections(self):
+        container_props = declarations(css_rule(self.start_here_css, ".sh-container"))
         hero_props = declarations(css_rule(self.start_here_css, ".sh-hero"))
-        # English document direction makes the default inline alignment left;
-        # neither the content region nor the simplified hero may be centered.
-        self.assertIn(main_props.get("text-align", "left"), {"left", "start"})
-        self.assertIn(hero_props.get("text-align", "left"), {"left", "start"})
-        # Only short circular-control labels may be centered, never reading copy.
-        allowed_centered = {
-            "#main-content .sh-orbit-stop",
-            ".sh-enhanced .sh-orbit::after",
-        }
-        clean = re.sub(r"/\*.*?\*/", "", self.start_here_css, flags=re.DOTALL)
-        for selector, body in re.findall(r"([^{}]+)\{([^{}]*)\}", clean):
-            if declarations(body).get("text-align") == "center":
-                self.assertIn(selector.strip(), allowed_centered)
+        self.assertNotEqual(container_props.get("text-align"), "center")
+        self.assertEqual(hero_props.get("text-align"), "center")
+        grouped = re.search(
+            r"\.sh-section-header\s*,\s*\.sh-audience-intro\s*,\s*\.sh-step-body\s*,\s*\.sh-route-body\s*,\s*\.sh-catalogue-inner\s*>\s*div\s*\{([^{}]*)\}",
+            re.sub(r"/\*.*?\*/", "", self.start_here_css, flags=re.DOTALL),
+        )
+        self.assertIsNotNone(grouped, "Historical design aligns reading sections to a common edge")
+        self.assertEqual(declarations(grouped.group(1)).get("text-align"), "start")
 
     def test_table_headers_remain_left_aligned_and_code_wrapping_stays_specialized(self):
         self.assertEqual(declarations(css_rule(self.shared_css, ".prose th")).get("text-align"), "left")

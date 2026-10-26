@@ -31,46 +31,62 @@ from startup_performance_baseline import (
 )
 from startup_generated_asset_baseline import restore_startup_generated_asset
 from editorial_review_baseline import PUBLIC_PATHS as EDITORIAL_REVIEW_PATHS
+from start_here_desktop_baseline import (
+    normalize_start_here_desktop_html,
+    restore_start_here_desktop_asset,
+)
 
 
 TEST_INFRASTRUCTURE_PATHS = {
-    "tests/browser_navigation_performance.py",
-    "tests/browser_startup_performance.py",
-    "tests/browser_startup_preservation.py",
-    "tests/browser_tutorial_reader_ui.py",
-    "tests/fixtures/navigation-performance-edits.json",
-    "tests/fixtures/editorial-review-edits.json",
-    "tests/fixtures/startup-performance-edits.json",
-    "tests/generate_latest_review_fixture.py",
-    "tests/editorial_review_baseline.py",
-    "tests/generate_startup_performance_fixture.py",
-    "tests/home_catalogue_baseline.py",
-    "tests/latest_review_baseline.py",
-    "tests/navigation_performance_baseline.py",
-    "tests/reader_text_colour_baseline.py",
-    "tests/r_first_revision_baseline.py",
-    "tests/test_latest_review_baseline.py",
-    "tests/test_editorial_scope_fixes.py",
-    "tests/test_editorial_review_baseline.py",
-    "tests/test_revision_trajectory.py",
-    "tests/test_home_catalogue_scope.py",
-    "tests/test_home_catalogue_ui.py",
-    "tests/test_navigation_performance_baseline.py",
-    "tests/test_remaining_reference_support.py",
-    "tests/test_reader_punctuation.py",
-    "tests/test_sitewide_reference_fixes.py",
-    "tests/test_startup_performance_baseline.py",
-    "tests/test_r_first_revision_baseline.py",
-    "tests/test_tutorial_execution_baseline.py",
-    "tests/test_tutorial_reader_ui.py",
-    "tests/test_tutorial_startup.py",
-    "tests/test_verified_analysis_figures.py",
-    "tests/test_code_tabs_digest_memoization.js",
-    "tests/test_reader_layout_batching.js",
-    "tests/startup_generated_asset_baseline.py",
-    "tests/tutorial_execution_baseline.py",
-    "tests/startup_performance_baseline.py",
+    'tests/browser_navigation_performance.py',
+    'tests/browser_start_here_ui.py',
+    'tests/browser_startup_performance.py',
+    'tests/browser_startup_preservation.py',
+    'tests/browser_tutorial_reader_ui.py',
+    'tests/editorial_review_baseline.py',
+    'tests/fixtures/editorial-review-edits.json',
+    'tests/fixtures/navigation-performance-edits.json',
+    'tests/fixtures/startup-performance-edits.json',
+    'tests/generate_latest_review_fixture.py',
+    'tests/generate_startup_performance_fixture.py',
+    'tests/home_catalogue_baseline.py',
+    'tests/latest_review_baseline.py',
+    'tests/navigation_performance_baseline.py',
+    'tests/r_first_revision_baseline.py',
+    'tests/reader_text_colour_baseline.py',
+    'tests/start_here_baseline.py',
+    'tests/start_here_desktop_baseline.py',
+    'tests/startup_generated_asset_baseline.py',
+    'tests/startup_performance_baseline.py',
+    'tests/test_code_tabs_digest_memoization.js',
+    'tests/test_editorial_review_baseline.py',
+    'tests/test_editorial_scope_fixes.py',
+    'tests/test_home_catalogue_scope.py',
+    'tests/test_home_catalogue_ui.py',
+    'tests/test_latest_review_baseline.py',
+    'tests/test_learning_promises.py',
+    'tests/test_navigation_performance_baseline.py',
+    'tests/test_r_first_revision_baseline.py',
+    'tests/test_reader_layout_batching.js',
+    'tests/test_reader_punctuation.py',
+    'tests/test_reader_text_colours.py',
+    'tests/test_remaining_reference_support.py',
+    'tests/test_revision_trajectory.py',
+    'tests/test_sitewide_reference_fixes.py',
+    'tests/test_start_here_blue_learning.py',
+    'tests/test_start_here_desktop_baseline.py',
+    'tests/test_start_here_hover.py',
+    'tests/test_start_here_ui.py',
+    'tests/test_start_here_visual_polish.py',
+    'tests/test_startup_performance_baseline.py',
+    'tests/test_text_alignment.py',
+    'tests/test_tutorial_execution_baseline.py',
+    'tests/test_tutorial_reader_ui.py',
+    'tests/test_tutorial_startup.py',
+    'tests/test_verified_analysis_figures.py',
+    'tests/tutorial_execution_baseline.py',
 }
+
 
 
 class ExecutableInlineScriptParser(HTMLParser):
@@ -191,9 +207,29 @@ class NavigationPerformanceBaselineTests(unittest.TestCase):
         ).splitlines())
         changed -= EDITORIAL_REVIEW_PATHS - STARTUP_TUTORIAL_PATHS
         self.assertIn(WORKFLOW_PATH, changed)
+        # Verify the two explicitly authorized Start Here edits before including
+        # them in the exact public-path set; unrelated CSS/HTML remains rejected.
+        self.assertEqual(
+            restore_start_here_desktop_asset(
+                "start-here.css", (ROOT / "start-here.css").read_bytes()
+            ),
+            subprocess.check_output(
+                ["git", "show", "e846ce3fb6053ed611dc87fc62748865499913d0:start-here.css"],
+                cwd=ROOT,
+            ),
+        )
+        desktop_html = (ROOT / "start-here.html").read_text(encoding="utf-8")
+        self.assertEqual(
+            normalize_start_here_desktop_html("start-here.html", desktop_html),
+            subprocess.check_output(
+                ["git", "show", "e846ce3fb6053ed611dc87fc62748865499913d0:start-here.html"],
+                cwd=ROOT, text=True,
+            ),
+        )
         self.assertEqual(
             changed - TEST_INFRASTRUCTURE_PATHS - {WORKFLOW_PATH},
-            STARTUP_TUTORIAL_PATHS | STARTUP_ASSET_PATHS | {"home-page.min.css"},
+            STARTUP_TUTORIAL_PATHS | STARTUP_ASSET_PATHS
+            | {"home-page.min.css", "start-here.css", "start-here.html"},
         )
 
     def test_all_other_tracked_source_assets_and_site_surfaces_are_byte_preserved(self):
@@ -212,6 +248,12 @@ class NavigationPerformanceBaselineTests(unittest.TestCase):
                     ["git", "show", f"{BASE_COMMIT}:{path}"], cwd=ROOT
                 )
                 current = (ROOT / path).read_bytes()
+                if path == "start-here.css":
+                    current = restore_start_here_desktop_asset(path, current)
+                elif path == "start-here.html":
+                    current = normalize_start_here_desktop_html(
+                        path, current.decode("utf-8")
+                    ).encode("utf-8")
                 current = restore_startup_generated_asset(path, current, "main")
                 self.assertEqual(current, expected)
 

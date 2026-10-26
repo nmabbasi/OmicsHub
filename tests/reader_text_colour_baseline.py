@@ -9,6 +9,9 @@ import hashlib
 import json
 from pathlib import Path
 import subprocess
+from start_here_desktop_baseline import (
+    normalize_start_here_desktop_html, restore_start_here_desktop_asset,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 from r_first_revision_baseline import normalize_r_first_revision, restore_r_first_asset, R_FIRST_ASSET_PATHS
@@ -97,6 +100,7 @@ def normalize_reader_text(relative_path, text):
     """Reverse only exact frozen HTML chunks; leave all unrecognized edits visible."""
     if not isinstance(text, str):
         raise TypeError("reader-text normalization requires decoded text")
+    text = normalize_start_here_desktop_html(relative_path, text)
     text = normalize_latest_review(relative_path, text)
     text = normalize_r_first_revision(relative_path, text)
     patches = page_patches().get(relative_path)
@@ -117,6 +121,8 @@ def verify_reader_text_file(relative_path, data):
     if relative_path not in READER_TEXT_ASSET_PATHS:
         raise AssertionError(f"not an authorized reader-text asset: {relative_path}")
     original_data = data
+    if relative_path == "start-here.css":
+        data = restore_start_here_desktop_asset(relative_path, data)
     data = restore_startup_generated_asset(relative_path, data, "reader-text")
     data = restore_latest_review_asset(relative_path, data)
     if relative_path in R_FIRST_ASSET_PATHS:

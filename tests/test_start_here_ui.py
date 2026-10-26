@@ -1,5 +1,4 @@
-"""Accessible beginner-navigation contracts for the four-step Start Here journey."""
-from html import unescape
+"""Accessible navigation contracts for the image-led Start Here page and roadmap."""
 from html.parser import HTMLParser
 from pathlib import Path
 import json
@@ -8,6 +7,7 @@ import subprocess
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
+HISTORICAL = "a4b6ead8251e0a3abcb748061a40155ae9523a82"
 PUBLISHED = "45d660c5f53a0f4d8c2736057e2ab54fe7b8e718"
 MAIN = re.compile(r"<main\b[^>]*>.*?</main\s*>", re.S | re.I)
 
@@ -15,10 +15,7 @@ MAIN = re.compile(r"<main\b[^>]*>.*?</main\s*>", re.S | re.I)
 class Facts(HTMLParser):
     def __init__(self, source):
         super().__init__(convert_charrefs=True)
-        self.ids = []
-        self.links = []
-        self.elements = []
-        self.text = []
+        self.ids, self.links, self.elements, self.text = [], [], [], []
         self.feed(source)
 
     def handle_starttag(self, tag, attrs):
@@ -33,8 +30,8 @@ class Facts(HTMLParser):
         self.text.append(data)
 
 
-def original(path):
-    return subprocess.check_output(["git", "show", f"{PUBLISHED}:{path}"], cwd=ROOT).decode("utf-8")
+def original(revision, path):
+    return subprocess.check_output(["git", "show", f"{revision}:{path}"], cwd=ROOT).decode("utf-8")
 
 
 def page_main(source):
@@ -44,14 +41,12 @@ def page_main(source):
     return match.group()
 
 
-def panel(main, number):
-    match = re.search(
-        rf'<article\b(?=[^>]*\bid="sh-step-{number}")[^>]*>.*?</article\s*>',
-        main, re.S | re.I,
-    )
-    if not match:
-        raise AssertionError(f"missing lesson panel sh-step-{number}")
-    return match.group()
+def curriculum_region(source):
+    start_marker = "<!-- ── CURRICULUM ROADMAP & PREREQUISITES ── -->"
+    end_marker = "<!-- ── CATALOGUE ── -->"
+    start = source.index(start_marker)
+    end = source.index(end_marker, start)
+    return source[start:end]
 
 
 class StartHereJourneyUITests(unittest.TestCase):
@@ -59,81 +54,43 @@ class StartHereJourneyUITests(unittest.TestCase):
     def setUpClass(cls):
         cls.source = (ROOT / "start-here.html").read_text(encoding="utf-8")
         cls.main = page_main(cls.source)
-        cls.before = original("start-here.html")
-        cls.old_main = page_main(cls.before)
+        cls.historical_main = page_main(original(HISTORICAL, "start-here.html"))
+        cls.published_main = page_main(original(PUBLISHED, "start-here.html"))
         cls.facts = Facts(cls.main)
-        cls.js = (ROOT / "start-here.js").read_text(encoding="utf-8")
 
-    def test_hero_is_compact_and_has_no_call_to_action(self):
-        hero = re.search(r'<section\b[^>]*class="[^"]*\bsh-hero\b[^"]*".*?</section\s*>', self.main, re.S)
-        self.assertIsNotNone(hero)
-        hero_markup = hero.group()
-        self.assertTrue(re.search(r"<h1\b", hero_markup))
-        self.assertTrue(re.search(r"bioinformatics", hero_markup, re.I))
-        self.assertEqual(len(re.findall(r"<a\b", hero_markup)), 0, "the updated hero is deliberately CTA-free")
-        self.assertNotIn("sh-primary-link", hero_markup)
+    def test_main_preserves_the_historical_image_led_design_outside_the_roadmap(self):
+        current = self.main.replace(
+            curriculum_region(self.main), curriculum_region(self.historical_main), 1
+        )
+        self.assertEqual(current, self.historical_main)
+        self.assertIn("images/sh-three-laptop-learner-banner-with-copy.webp", self.main)
+        self.assertEqual(sum(tag == "img" for tag, _ in self.facts.elements), 5)
+        self.assertEqual(sum("sh-route-card" in attrs.get("class", "").split()
+                             for tag, attrs in self.facts.elements if tag == "a"), 4)
 
-    def test_journey_has_four_articles_and_the_expected_learning_sequence(self):
-        panels = [panel(self.main, number) for number in range(1, 5)]
-        self.assertIn("introduction-to-bioinformatics.html", panels[0])
-        self.assertIn("command-line-part1.html", panels[1])
-        self.assertIn("computer-data-fundamentals.html", panels[2])
-        self.assertLess(panels[1].index("command-line-part1.html"), len(panels[1]))
-        self.assertLess(self.main.index("command-line-part1.html"), self.main.index("computer-data-fundamentals.html"))
-        self.assertIn('id="sh-language-choice"', panels[3])
-        self.assertIn("tutorials/r-tidyverse-fundamentals.html", panels[3])
-        self.assertIn("tutorials/python-fundamentals-bioinformatics.html", panels[3])
-        self.assertIn("Start with R. Python is an optional alternative.", panels[3])
-        self.assertIn("Python (optional)", panels[3])
-        self.assertNotIn("conda-mamba-part1.html", "".join(panels))
-        self.assertIn("Bash on Linux, macOS, or Windows Subsystem for Linux (WSL)", self.main)
-
-    def test_orbit_and_sidebar_have_matching_real_fragment_navigation(self):
-        orbit_attrs = next(attrs for tag, attrs in self.facts.elements
-                           if "sh-orbit" in attrs.get("class", "").split())
-        self.assertIn("hidden", orbit_attrs, "the orbit container is revealed after enhancement")
-        orbit_anchors = [attrs for tag, attrs in self.facts.elements
-                         if tag == "a" and "sh-orbit-stop" in attrs.get("class", "").split()]
-        self.assertEqual(len(orbit_anchors), 4)
-        self.assertEqual([attrs.get("data-sh-step") for attrs in orbit_anchors], ["1", "2", "3", "4"])
-        for step, attrs in enumerate(orbit_anchors, 1):
-            with self.subTest(orbit_step=step):
-                self.assertEqual(attrs.get("href"), f"#sh-step-{step}")
-                self.assertNotIn("hidden", attrs)
-
-        guide_match = re.search(r'<aside\b[^>]*class="[^"]*\bsh-guide\b[^"]*".*?</aside\s*>', self.main, re.S)
-        self.assertIsNotNone(guide_match, "the page provides a guide sidebar")
-        guide = Facts(guide_match.group())
-        nav_list = next(attrs for tag, attrs in guide.elements
-                        if tag == "ol" and "sh-step-nav" in attrs.get("class", "").split())
-        self.assertTrue(nav_list)
-        step_links = [attrs for tag, attrs in guide.elements if tag == "a" and attrs.get("data-sh-step")]
-        self.assertEqual(len(step_links), 4)
-        self.assertEqual([attrs.get("data-sh-step") for attrs in step_links], ["1", "2", "3", "4"])
-        for step in range(1, 5):
-            self.assertIn(f'href="#sh-step-{step}"', guide_match.group())
-        buttons = [attrs for tag, attrs in guide.elements if tag == "button"]
-        self.assertGreaterEqual(len(buttons), 2)
-        labels = " ".join(attrs.get("aria-label", "") for attrs in buttons).lower()
-        button_text = " ".join(guide.text).lower()
-        self.assertTrue("prev" in labels + button_text or "previous" in labels + button_text)
-        self.assertIn("next", labels + button_text)
-        self.assertRegex(guide_match.group(), r'aria-live="polite"')
-
-    def test_panels_are_available_without_javascript_and_script_enhances_navigation(self):
-        for step in range(1, 5):
-            markup = panel(self.main, step)
-            self.assertNotRegex(markup.split(">", 1)[0], r"\bhidden(?:=|\s|>)")
-        self.assertIn("data-sh-step", self.js)
-        self.assertIn("hidden", self.js)
-        self.assertIn("aria-current", self.js)
-        self.assertRegex(self.js, r"(?s)(?:addEventListener|onclick)")
+    def test_setup_cards_and_tracks_keep_all_original_lesson_destinations(self):
+        current_region = curriculum_region(self.main)
+        historical_region = curriculum_region(self.historical_main)
+        current_links = {url for url in Facts(current_region).links if url.startswith("tutorials/")}
+        historical_links = {url for url in Facts(historical_region).links if url.startswith("tutorials/")}
+        self.assertEqual(current_links, historical_links)
+        self.assertEqual(sum("sh-ready-card" in attrs.get("class", "").split()
+                             for tag, attrs in self.facts.elements if tag == "article"), 3)
+        self.assertEqual(sum("sh-ready-more" in attrs.get("class", "").split()
+                             for tag, attrs in self.facts.elements if tag == "details"), 3)
+        self.assertEqual(sum("sh-track-card" in attrs.get("class", "").split()
+                             for tag, attrs in self.facts.elements if tag == "article"), 3)
+        for phrase in ("Pseudobulk differential expression", "not bulk RNA-seq",
+                       "not a single-cell route", "authorized access",
+                       "zero-byte placeholders", "what it cannot establish"):
+            with self.subTest(phrase=phrase):
+                self.assertIn(phrase.lower(), current_region.lower())
 
     def test_all_32_tutorial_destinations_and_manifest_anchors_are_preserved(self):
-        old_links = {url for url in Facts(self.old_main).links if url.startswith("tutorials/")}
-        new_links = {url for url in self.facts.links if url.startswith("tutorials/")}
-        self.assertEqual(len(old_links), 32)
-        self.assertEqual(new_links, old_links)
+        published_links = {url for url in Facts(self.published_main).links if url.startswith("tutorials/")}
+        current_links = {url for url in self.facts.links if url.startswith("tutorials/")}
+        self.assertEqual(len(published_links), 32)
+        self.assertEqual(current_links, published_links)
         targets = json.loads((ROOT / "tools/learning-paths.json").read_text(encoding="utf-8"))["start_targets"]
         for anchor in targets:
             with self.subTest(anchor=anchor):
@@ -143,32 +100,37 @@ class StartHereJourneyUITests(unittest.TestCase):
             if link.startswith("tutorials/"):
                 self.assertTrue((ROOT / link.split("#", 1)[0]).is_file(), link)
 
-    def test_six_native_disclosures_stay_collapsed_with_cautions_and_optional_setup(self):
-        details = [attrs for tag, attrs in self.facts.elements if tag == "details"]
-        self.assertEqual(len(details), 6)
-        self.assertTrue(all("open" not in attrs for attrs in details))
-        self.assertEqual(sum(tag == "summary" for tag, _ in self.facts.elements), 6)
-        text = " ".join(self.facts.text).lower()
-        for phrase in (
-            "not a required course", "not a bulk RNA-seq tutorial", "replicated single-cell samples",
-            "not substitutes for basic QC", "authorized institutional access",
-            "not standardized on one R or Python version", "zero-byte placeholder files are not sequencing data",
-        ):
-            with self.subTest(caution=phrase):
-                self.assertIn(phrase.lower(), text)
-        optional = re.search(r'<details\b[^>]*id="sh-optional-tools".*?</details\s*>', self.main, re.S)
-        self.assertIsNotNone(optional)
-        self.assertIn("tutorials/conda-mamba-part1.html", optional.group())
-        language_step = panel(self.main, 4)
-        self.assertIn("Start with R. Python is an optional alternative.", language_step)
-        self.assertIn("Python (optional)", language_step)
-        self.assertIn("tutorials/statistics-for-bioinformatics.html", self.main)
-        self.assertIn("tutorials/experimental-design-batch-effects.html", self.main)
+    def test_four_visual_routes_are_native_links_without_page_specific_javascript(self):
+        cards = re.findall(
+            r'<a\b(?=[^>]*\bclass="[^"]*\bsh-route-card\b)[^>]*>.*?</a\s*>',
+            self.main, re.S | re.I,
+        )
+        self.assertEqual(len(cards), 4)
+        for card in cards:
+            href = re.search(r'\bhref="([^"]+)"', card)
+            self.assertIsNotNone(href)
+            self.assertTrue((ROOT / href.group(1)).is_file())
+        self.assertEqual(sum("sh-step" in attrs.get("class", "").split()
+                             for tag, attrs in self.facts.elements if tag == "a"), 4)
+        self.assertNotRegex(self.source, r"start-here\.js\?v=")
+        self.assertNotIn("sh-orbit", self.main)
+        self.assertNotIn("data-sh-step", self.main)
 
-    def test_visible_page_copy_remains_concise_without_em_dash_or_completion_promise(self):
+    def test_foundation_language_choice_and_optional_hpc_sections_remain_available(self):
+        required_ids = {
+            "sh-foundation", "sh-language-choice", "sh-hpc", "sh-routes",
+            "sh-curriculum", "sh-hpc-track", "sh-optional-tools",
+        }
+        self.assertTrue(required_ids.issubset(set(self.facts.ids)))
+        self.assertIn("HPC knowledge is not required", " ".join(self.facts.text))
+        self.assertIn("Already comfortable with the basics?", " ".join(self.facts.text))
+        self.assertEqual(sum(tag == "details" for tag, _ in self.facts.elements), 6)
+        self.assertEqual(sum("sh-track-details" in attrs.get("class", "").split()
+                             for tag, attrs in self.facts.elements if tag == "details"), 3)
+
+    def test_page_copy_has_no_completion_claim_or_em_dash(self):
         text = " ".join(self.facts.text)
-        self.assertLess(len(unescape(text).split()), 650)
-        self.assertNotIn("\u2014", unescape(self.main))
+        self.assertNotIn("\u2014", self.main)
         self.assertNotRegex(text.lower(), r"\b(?:completed|completion|percent complete)\b")
 
 

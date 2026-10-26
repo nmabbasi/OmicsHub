@@ -30,6 +30,10 @@ from editorial_review_baseline import (
     PUBLIC_PATHS as EDITORIAL_PUBLIC_PATHS,
     normalize_editorial_review,
 )
+from start_here_desktop_baseline import (
+    normalize_start_here_desktop_html,
+    restore_start_here_desktop_asset,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 BASE_COMMIT = "d42231e"
@@ -39,6 +43,8 @@ EXPECTED_PUBLIC_PATHS = {
     "tutorials/wes-variant-calling-pipeline.html",
     "tutorials/notebooklm-research-brain.html",
     "sitemap.xml",
+    "start-here.html",
+    "start-here.css",
 }
 NOTEBOOKLM = "tutorials/notebooklm-research-brain.html"
 NOTEBOOKLM_URL = SITE + NOTEBOOKLM
@@ -48,54 +54,64 @@ SITEMAP_NS = {"s": "http://www.sitemaps.org/schemas/sitemap/0.9"}
 # website sources. Keep this list explicit so the public-change scope check
 # cannot silently exempt a broad directory.
 TEST_INFRASTRUCTURE_PATHS = {
-    ".github/workflows/tutorial-review.yml",
-    "tests/editorial_review_baseline.py",
-    "tests/fixtures/editorial-review-edits.json",
-    "tests/test_editorial_review_baseline.py",
-    "tests/test_editorial_scope_fixes.py",
-    "tests/test_revision_trajectory.py",
-    "tests/browser_navigation_performance.py",
-    "tests/browser_startup_performance.py",
-    "tests/browser_startup_preservation.py",
-    "tests/browser_sitewide_reference_fixes.py",
-    "tests/browser_tutorial_reader_ui.py",
-    "tests/fixtures/latest-review-edits.json",
-    "tests/fixtures/navigation-performance-edits.json",
-    "tests/fixtures/startup-performance-edits.json",
-    "tests/generate_latest_review_fixture.py",
-    "tests/generate_startup_performance_fixture.py",
-    "tests/home_catalogue_baseline.py",
-    "tests/latest_review_baseline.py",
-    "tests/navigation_performance_baseline.py",
-    "tests/startup_performance_baseline.py",
-    "tests/startup_generated_asset_baseline.py",
-    "tests/r_first_revision_baseline.py",
-    "tests/reader_text_colour_baseline.py",
-    "tests/remaining_validation_baseline.py",
-    "tests/resource_content_baseline.py",
-    "tests/test_home_catalogue_scope.py",
-    "tests/test_home_catalogue_ui.py",
-    "tests/test_latest_review_baseline.py",
-    "tests/test_navigation_performance_baseline.py",
-    "tests/test_startup_performance_baseline.py",
-    "tests/test_latest_sitemap_composition_negative.py",
-    "tests/test_r_first_revision_baseline.py",
-    "tests/test_reader_punctuation.py",
-    "tests/test_reader_text_colours.py",
-    "tests/test_remaining_reference_support.py",
-    "tests/test_search_reference_aliases.js",
-    "tests/test_sitewide_reference_fixes.py",
-    "tests/test_start_here_blue_learning.py",
-    "tests/test_tutorial_execution_baseline.py",
-    "tests/test_tutorial_startup.py",
-    "tests/test_tutorial_reader_ui.py",
-    "tests/test_verified_analysis_figures.py",
-    "tests/test_code_tabs_digest_memoization.js",
-    "tests/test_reader_layout_batching.js",
-    "tests/tutorial_execution_baseline.py",
-    "tests/tutorial_ui_baseline.py",
-    "tools/generate_latest_review_fixture.py",
+    '.github/workflows/tutorial-review.yml',
+    'tests/browser_navigation_performance.py',
+    'tests/browser_sitewide_reference_fixes.py',
+    'tests/browser_start_here_ui.py',
+    'tests/browser_startup_performance.py',
+    'tests/browser_startup_preservation.py',
+    'tests/browser_tutorial_reader_ui.py',
+    'tests/editorial_review_baseline.py',
+    'tests/fixtures/editorial-review-edits.json',
+    'tests/fixtures/latest-review-edits.json',
+    'tests/fixtures/navigation-performance-edits.json',
+    'tests/fixtures/startup-performance-edits.json',
+    'tests/generate_latest_review_fixture.py',
+    'tests/generate_startup_performance_fixture.py',
+    'tests/home_catalogue_baseline.py',
+    'tests/latest_review_baseline.py',
+    'tests/navigation_performance_baseline.py',
+    'tests/r_first_revision_baseline.py',
+    'tests/reader_text_colour_baseline.py',
+    'tests/remaining_validation_baseline.py',
+    'tests/resource_content_baseline.py',
+    'tests/start_here_baseline.py',
+    'tests/start_here_desktop_baseline.py',
+    'tests/startup_generated_asset_baseline.py',
+    'tests/startup_performance_baseline.py',
+    'tests/test_code_tabs_digest_memoization.js',
+    'tests/test_editorial_review_baseline.py',
+    'tests/test_editorial_scope_fixes.py',
+    'tests/test_home_catalogue_scope.py',
+    'tests/test_home_catalogue_ui.py',
+    'tests/test_latest_review_baseline.py',
+    'tests/test_latest_sitemap_composition_negative.py',
+    'tests/test_learning_promises.py',
+    'tests/test_navigation_performance_baseline.py',
+    'tests/test_r_first_revision_baseline.py',
+    'tests/test_reader_layout_batching.js',
+    'tests/test_reader_punctuation.py',
+    'tests/test_reader_text_colours.py',
+    'tests/test_remaining_reference_support.py',
+    'tests/test_revision_trajectory.py',
+    'tests/test_search_reference_aliases.js',
+    'tests/test_sitewide_reference_fixes.py',
+    'tests/test_start_here_blue_learning.py',
+    'tests/test_start_here_desktop_baseline.py',
+    'tests/test_start_here_hover.py',
+    'tests/test_start_here_ui.py',
+    'tests/test_start_here_visual_polish.py',
+    'tests/test_startup_performance_baseline.py',
+    'tests/test_text_alignment.py',
+    'tests/test_tutorial_execution_baseline.py',
+    'tests/test_tutorial_reader_ui.py',
+    'tests/test_tutorial_startup.py',
+    'tests/test_verified_analysis_figures.py',
+    'tests/tutorial_execution_baseline.py',
+    'tests/tutorial_ui_baseline.py',
+    'tools/generate_latest_review_fixture.py',
 }
+
 
 PROTECTED_UI_FILES = (
     "index.html",
@@ -160,6 +176,7 @@ def baseline_text(path):
 def current_text(path):
     current = (ROOT / path).read_text(encoding="utf-8")
     current = normalize_editorial_review(path, current)
+    current = normalize_start_here_desktop_html(path, current)
     return normalize_navigation_performance(path, current)
 
 
@@ -267,6 +284,12 @@ class RemainingReferenceSupportTests(unittest.TestCase):
         for path in sorted(protected):
             with self.subTest(path=path):
                 data = (ROOT / path).read_bytes()
+                if path == "start-here.css":
+                    data = restore_start_here_desktop_asset(path, data)
+                elif path == "start-here.html":
+                    data = normalize_start_here_desktop_html(
+                        path, data.decode("utf-8")
+                    ).encode("utf-8")
                 data = restore_startup_performance_asset(path, data)
                 data = restore_startup_generated_asset(path, data, "main")
                 self.assertEqual(data, baseline_bytes(path))

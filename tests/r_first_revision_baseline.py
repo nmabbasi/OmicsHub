@@ -13,6 +13,7 @@ import re
 import subprocess
 
 from latest_review_baseline import normalize_latest_review, restore_latest_review_asset
+from start_here_desktop_baseline import normalize_start_here_desktop_html
 
 ROOT = Path(__file__).resolve().parents[1]
 PRE_R_FIRST_COMMIT = "2ad77315c9fbc48ac5b941df9998bbad4b76fb2f"
@@ -209,6 +210,7 @@ def normalize_r_first_revision(relative_path, text):
     """Reverse matching literal chunks; every unmatched edit remains visible."""
     if not isinstance(text, str):
         raise TypeError("R-first normalization requires decoded text")
+    text = normalize_start_here_desktop_html(relative_path, text)
     text = normalize_latest_review(relative_path, text)
     # The execution-review layer is a separate exact-digest/context adapter.
     # Once it returns the immutable 122bd bytes, the historical R-first patches

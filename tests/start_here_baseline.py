@@ -11,6 +11,9 @@ import json
 from pathlib import Path
 import re
 import subprocess
+from start_here_desktop_baseline import (
+    normalize_start_here_desktop_html, restore_start_here_desktop_asset,
+)
 from reader_text_colour_baseline import (
     READER_TEXT_ASSET_SHA256, normalize_reader_text, restore_reader_text_asset,
 )
@@ -99,6 +102,7 @@ def normalize_start_here(relative_path, text):
     """Reverse exact reviewed chunks in start-here.html; leave every other byte alone."""
     if not isinstance(text, str):
         raise TypeError("Start Here normalization requires decoded text")
+    text = normalize_start_here_desktop_html(relative_path, text)
     text = normalize_reader_text(relative_path, text)
     if relative_path != "start-here.html":
         return text
@@ -136,6 +140,8 @@ def verify_start_here_file(relative_path, data):
     if not isinstance(expected, str) or not re.fullmatch(r"[0-9a-f]{64}", expected):
         raise AssertionError(f"parent must refresh the exact SHA-256 pin for {relative_path}")
     original_data = data
+    if relative_path == "start-here.css":
+        data = restore_start_here_desktop_asset(relative_path, data)
     if hashlib.sha256(data).hexdigest() == READER_TEXT_ASSET_SHA256.get(relative_path):
         data = restore_reader_text_asset(relative_path, data)
     observed = hashlib.sha256(data).hexdigest()
