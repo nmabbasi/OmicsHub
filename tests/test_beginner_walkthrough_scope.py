@@ -47,6 +47,10 @@ from tutorial_execution_baseline import (
     new_execution_asset_paths,
     verify_new_execution_asset,
 )
+from optional_report_baseline import (
+    OPTIONAL_REPORT_PATHS,
+    verify_optional_report_file,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = re.compile(r"<script\b[^>]*>.*?</script\s*>", re.S | re.I)
@@ -169,6 +173,10 @@ class BeginnerWalkthroughScopeTests(unittest.TestCase):
             if relative.startswith("tests/") or relative == "sitemap.xml":
                 continue
             current_path = ROOT / relative
+            if relative in OPTIONAL_REPORT_PATHS:
+                self.assertTrue(current_path.is_file(), relative)
+                verify_optional_report_file(relative, current_path.read_bytes())
+                continue
             if relative in new_execution_asset_paths():
                 self.assertTrue(current_path.is_file(), relative)
                 verify_new_execution_asset(relative, current_path.read_bytes())

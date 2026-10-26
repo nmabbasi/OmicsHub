@@ -49,6 +49,10 @@ from tutorial_execution_baseline import (
     new_execution_asset_paths,
     verify_new_execution_asset,
 )
+from optional_report_baseline import (
+    OPTIONAL_REPORT_PATHS,
+    verify_optional_report_file,
+)
 
 SITE = "https://theomicshub.com/"
 SCRIPT = re.compile(r"<script\b[^>]*>.*?</script\s*>", re.S | re.I)
@@ -218,6 +222,10 @@ class TidyverseSetupScopeTests(unittest.TestCase):
             if relative.startswith("tests/") or relative in {TIDYVERSE_SETUP_ARTICLE, "sitemap.xml"}:
                 continue
             path = ROOT / relative
+            if relative in OPTIONAL_REPORT_PATHS:
+                self.assertTrue(path.is_file(), relative)
+                verify_optional_report_file(relative, path.read_bytes())
+                continue
             if relative in new_execution_asset_paths():
                 self.assertTrue(path.is_file(), relative)
                 verify_new_execution_asset(relative, path.read_bytes())

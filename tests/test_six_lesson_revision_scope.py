@@ -59,6 +59,10 @@ from tutorial_execution_baseline import (
     new_execution_asset_paths,
     verify_new_execution_asset,
 )
+from optional_report_baseline import (
+    OPTIONAL_REPORT_PATHS,
+    verify_optional_report_file,
+)
 
 ALLOWED_FIXTURE_PREFIXES = (
     "files/text-processing-lesson/",
@@ -219,6 +223,9 @@ class SixLessonRevisionScopeTests(unittest.TestCase):
             current_text = current_bytes.decode("utf-8")
             old_text = normalize_tutorial_ui(relative, old_bytes.decode("utf-8")) if old_bytes else None
             with self.subTest(path=relative):
+                if relative in OPTIONAL_REPORT_PATHS:
+                    verify_optional_report_file(relative, current_path.read_bytes())
+                    continue
                 if relative in SIX_LESSON_ARTICLES:
                     self.assertIsNotNone(old_bytes)
                     self.assertTrue(current_path.is_file())

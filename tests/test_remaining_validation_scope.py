@@ -43,6 +43,10 @@ from tutorial_execution_baseline import (
     new_execution_asset_paths,
     verify_new_execution_asset,
 )
+from optional_report_baseline import (
+    OPTIONAL_REPORT_PATHS,
+    verify_optional_report_file,
+)
 
 QC_PATH = "tutorials/quality-control-fundamentals.html"
 REVISED_TUTORIALS = frozenset({
@@ -76,6 +80,11 @@ class RemainingValidationScopeTests(unittest.TestCase):
                             for path in allowed_paths()))
         self.assertEqual(set(manifest["files"]), set(allowed_paths()))
 
+    def test_optional_reports_restore_to_published_source_and_remain_noindex_ad_free(self):
+        for relative in sorted(OPTIONAL_REPORT_PATHS):
+            with self.subTest(path=relative):
+                verify_optional_report_file(relative, (ROOT / relative).read_bytes())
+
     def test_allowlisted_page_equals_pinned_source_plus_only_exact_body_and_dates(self):
         for relative in sorted(allowed_paths()):
             current_path = ROOT / relative
@@ -107,6 +116,10 @@ class RemainingValidationScopeTests(unittest.TestCase):
             if relative.startswith("tests/"):
                 continue
             current_path = ROOT / relative
+            if relative in OPTIONAL_REPORT_PATHS:
+                self.assertTrue(current_path.is_file(), relative)
+                verify_optional_report_file(relative, current_path.read_bytes())
+                continue
             if relative in new_execution_asset_paths():
                 self.assertTrue(current_path.is_file(), relative)
                 verify_new_execution_asset(relative, current_path.read_bytes())

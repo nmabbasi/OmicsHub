@@ -44,6 +44,10 @@ from tutorial_execution_baseline import (
 )
 from latest_review_baseline import normalize_latest_review
 from start_here_desktop_baseline import DESKTOP_CSS_VERSION
+from optional_report_baseline import (
+    OPTIONAL_REPORT_PATHS,
+    verify_optional_report_file,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 BASE = 'c030bc62bf6e4a4ad21f9ff64cb630c152157692'
@@ -255,6 +259,9 @@ class ReaderPunctuationTests(unittest.TestCase):
         verified_ui_paths = set(changed) & (TUTORIAL_UI_PATHS | HOME_CATALOGUE_ASSET_PATHS)
         for relative in sorted(verified_ui_paths):
             verify_tutorial_ui_file(relative, (ROOT / relative).read_bytes())
+        verified_report_paths = set(changed) & OPTIONAL_REPORT_PATHS
+        for relative in sorted(verified_report_paths):
+            verify_optional_report_file(relative, (ROOT / relative).read_bytes())
         verified_start_here_paths = set(changed) & START_HERE_ASSET_PATHS
         for relative in sorted(verified_start_here_paths):
             verify_start_here_file(relative, (ROOT / relative).read_bytes())
@@ -263,6 +270,7 @@ class ReaderPunctuationTests(unittest.TestCase):
         forbidden = [path for path in changed
                      if path not in reviewed_scripts
                      and path not in verified_ui_paths
+                     and path not in verified_report_paths
                      and path not in verified_execution_paths
                      and path not in verified_start_here_paths
                      and not path.startswith('files/')]
