@@ -42,7 +42,7 @@ class StartHereDesktopBaselineTests(unittest.TestCase):
         self.assertEqual(current.count(DESKTOP_CSS_HREF), 1)
         expected = current.replace(DESKTOP_CSS_HREF, old_href[0], 1)
         self.assertEqual(normalize_start_here_desktop_html("start-here.html", current), expected)
-        unrelated = current.replace(DESKTOP_CSS_HREF, DESKTOP_CSS_HREF.replace("readability-v1", "unapproved"), 1)
+        unrelated = current.replace(DESKTOP_CSS_HREF, DESKTOP_CSS_HREF.replace("editorial-route-index-v1", "unapproved"), 1)
         self.assertEqual(normalize_start_here_desktop_html("start-here.html", unrelated), unrelated)
 
     def test_duplicate_exact_href_is_rejected(self):
