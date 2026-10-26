@@ -12,6 +12,7 @@ from latest_review_baseline import (
     normalize_latest_review, normalize_patch_chunks, restore_latest_review_asset,
 )
 from startup_generated_asset_baseline import restore_startup_generated_asset
+from coffee_removal_baseline import restore_coffee_removal_text
 
 
 class LatestReviewBaselineTests(unittest.TestCase):
@@ -79,6 +80,9 @@ class LatestReviewBaselineTests(unittest.TestCase):
     def test_unrecognized_text_mutation_survives_known_patch_reversal(self):
         path = "index.html"
         current = (baseline.ROOT / path).read_text(encoding="utf-8")
+        # Restore the closed newer delta before probing this historical layer.
+        # Raw coffee-review mutations are separately rejected by its strict tests.
+        current = restore_coffee_removal_text(path, current)
         mutation = "<!-- unrecognized mutation remains visible -->\n"
         normalized = normalize_latest_review(path, current + mutation)
         base = latest_review_fixture()[path]["base_bytes"].decode("utf-8")

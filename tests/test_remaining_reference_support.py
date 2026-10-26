@@ -34,6 +34,7 @@ from start_here_desktop_baseline import (
     normalize_start_here_desktop_html,
     restore_start_here_desktop_asset,
 )
+from coffee_removal_baseline import coffee_removal_fixture, restore_coffee_removal_bytes
 
 ROOT = Path(__file__).resolve().parents[1]
 BASE_COMMIT = "d42231e"
@@ -54,6 +55,9 @@ SITEMAP_NS = {"s": "http://www.sitemaps.org/schemas/sitemap/0.9"}
 # website sources. Keep this list explicit so the public-change scope check
 # cannot silently exempt a broad directory.
 TEST_INFRASTRUCTURE_PATHS = {
+    'tests/coffee_removal_baseline.py',
+    'tests/fixtures/coffee-removal-review.json',
+    'tests/test_coffee_removal_baseline.py',
     '.github/workflows/tutorial-review.yml',
     'tests/browser_navigation_performance.py',
     'tests/browser_sitewide_reference_fixes.py',
@@ -228,9 +232,16 @@ class RemainingReferenceSupportTests(unittest.TestCase):
         # A tutorial path is excluded only if strict whole-file restoration
         # produces the exact d42231e bytes; otherwise it remains visible here.
         performance_only = set()
+        coffee = coffee_removal_fixture()
+        for path, entry in coffee.items():
+            self.assertEqual(
+                restore_coffee_removal_bytes(path, (ROOT / path).read_bytes()),
+                entry['base_bytes'],
+            )
         for path in changed & (
             NAVIGATION_PERFORMANCE_PATHS | STARTUP_TUTORIAL_PATHS
-            | STARTUP_ASSET_PATHS | EDITORIAL_PUBLIC_PATHS | {"home-page.min.css"}
+            | STARTUP_ASSET_PATHS | EDITORIAL_PUBLIC_PATHS
+            | (set(coffee) - EXPECTED_PUBLIC_PATHS) | {"home-page.min.css"}
         ):
             if path in STARTUP_ASSET_PATHS:
                 restored = restore_startup_performance_asset(path, (ROOT / path).read_bytes())

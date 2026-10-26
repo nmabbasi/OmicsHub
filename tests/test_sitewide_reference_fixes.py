@@ -7,6 +7,7 @@ import subprocess
 import unittest
 
 from editorial_review_baseline import normalize_editorial_review
+from coffee_removal_baseline import restore_coffee_removal_text
 from start_here_desktop_baseline import (
     normalize_start_here_desktop_html,
     restore_start_here_desktop_asset,
@@ -85,6 +86,7 @@ class SitewideReferenceFixesTests(unittest.TestCase):
         for path in ('index.html', 'start-here.html', 'start-here.css', 'start-here.js', 'home-catalogue.css'):
             with self.subTest(path=path):
                 current = read(path)
+                current = restore_coffee_removal_text(path, current)
                 if path == 'index.html':
                     current = current.replace('script.js?v=20261025-reference-support-v1', 'script.js?v=20261022-reader-review')
                     current = current.replace('home-page.min.css?v=20261025-reference-support-v1', 'home-page.min.css?v=20261025-reader-colours-v1')
