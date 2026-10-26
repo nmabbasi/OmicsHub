@@ -263,12 +263,14 @@ print("Rows:", len(records), "Columns:", list(records.columns))</code></pre>
 <h2 id="observed-ace2-title">Observed example: an actual ACE2 retrieval</h2>
 <p>The recorded run used <code>gget==0.28.6</code>, <code>numpy==1.26.4</code>, and <code>pandas==2.2.3</code>. Its <a href="../files/gget-example/requirements-direct.txt">direct dependency constraints</a> describe that historical CLI runtime, not universal requirements for R or a recommendation to replace your current environment.</p>
 <p>On 23 October 2026 UTC, both CLI queries above completed with exit status zero in the constrained environment. They were executed using the downloadable <a href="../files/gget-example/run_retrieval.py">bounded query runner</a>, which saves raw stdout/stderr, versions, hashes and UTC timestamps and refuses an existing results directory. See its <a href="../files/gget-example/README.md">reproduction notes</a> and <a href="../files/gget-example/observed/manifest.json">actual run manifest</a>. The separate Python API export above was not part of this recorded run.</p>
-<table><caption>Selected fields from the saved response, not a promise about future queries</caption><thead><tr><th scope="col">Returned field</th><th scope="col">Observed value</th><th scope="col">How to read it</th></tr></thead><tbody>
+<div class="gget-table-scroll">
+<table class="gget-responsive-table"><caption>Selected fields from the saved response, not a promise about future queries</caption><colgroup><col/><col/><col/></colgroup><thead><tr><th scope="col">Returned field</th><th scope="col">Observed value</th><th scope="col">How to read it</th></tr></thead><tbody>
 <tr><td>Ensembl ID / species</td><td><code>ENSG00000130234.15</code> / <code>homo_sapiens</code></td><td>A versioned gene record, not a transcript or protein ID.</td></tr>
 <tr><td>Assembly / region / strand</td><td><code>GRCh38</code> / <code>X</code> / <code>-1</code></td><td>The returned coordinate context; do not assign another build by assumption.</td></tr>
 <tr><td>Canonical transcript field</td><td><code>ENST00000252519.8</code></td><td>This field is reported by the gene response; it is not a universal gget sequence-selection rule.</td></tr>
 <tr><td>FASTA header / sequence</td><td><code>ENST00000252519</code>, UniProt <code>Q9BYF1</code>, 805 amino acids</td><td>The saved header and counted sequence agree on length; that does not validate protein function.</td></tr>
 </tbody></table>
+</div>
 <p>Inspect the <a href="../files/gget-example/observed/ACE2_info.json">complete raw gene response</a> and <a href="../files/gget-example/observed/ACE2_protein.fasta">returned FASTA</a> rather than relying on this table. The response does not establish an explicit annotation release, and missing NCBI/PDB fields are not evidence that no such records exist. These are dated database retrievals, not experimental results or clinical claims.</p>
 </section>
 <h2>Output inspection and interpretation</h2>

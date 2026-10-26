@@ -46,6 +46,9 @@ TEST_INFRASTRUCTURE_PATHS = {
     'tests/coffee_removal_baseline.py',
     'tests/fixtures/coffee-removal-review.json',
     'tests/test_coffee_removal_baseline.py',
+    'tests/fixtures/gget-mobile-baseline.json',
+    'tests/gget_mobile_baseline.py',
+    'tests/test_gget_mobile_baseline.py',
     'tests/browser_navigation_performance.py',
     'tests/browser_start_here_ui.py',
     'tests/browser_startup_performance.py',
@@ -251,7 +254,7 @@ class NavigationPerformanceBaselineTests(unittest.TestCase):
         self.assertEqual(
             changed - TEST_INFRASTRUCTURE_PATHS - {WORKFLOW_PATH},
             STARTUP_TUTORIAL_PATHS | STARTUP_ASSET_PATHS
-            | {"home-page.min.css", "start-here.css", "start-here.html"},
+            | {"home-page.min.css", "start-here.css", "start-here.html", "tutorial-library.css"},
         )
 
     def test_all_other_tracked_source_assets_and_site_surfaces_are_byte_preserved(self):

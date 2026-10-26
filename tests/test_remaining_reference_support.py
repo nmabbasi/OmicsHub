@@ -46,6 +46,7 @@ EXPECTED_PUBLIC_PATHS = {
     "sitemap.xml",
     "start-here.html",
     "start-here.css",
+    "tutorial-library.css",
 }
 NOTEBOOKLM = "tutorials/notebooklm-research-brain.html"
 NOTEBOOKLM_URL = SITE + NOTEBOOKLM
@@ -58,6 +59,9 @@ TEST_INFRASTRUCTURE_PATHS = {
     'tests/coffee_removal_baseline.py',
     'tests/fixtures/coffee-removal-review.json',
     'tests/test_coffee_removal_baseline.py',
+    'tests/fixtures/gget-mobile-baseline.json',
+    'tests/gget_mobile_baseline.py',
+    'tests/test_gget_mobile_baseline.py',
     '.github/workflows/tutorial-review.yml',
     'tests/browser_navigation_performance.py',
     'tests/browser_sitewide_reference_fixes.py',
