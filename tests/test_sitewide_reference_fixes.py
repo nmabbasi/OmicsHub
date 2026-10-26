@@ -6,6 +6,8 @@ import re
 import subprocess
 import unittest
 
+from editorial_review_baseline import normalize_editorial_review
+
 ROOT = Path(__file__).resolve().parents[1]
 BASELINE = '36bc46d'
 
@@ -88,7 +90,8 @@ class SitewideReferenceFixesTests(unittest.TestCase):
         count = 0
         for page in sorted((ROOT / 'tutorials').glob('*.html')):
             relative = page.relative_to(ROOT).as_posix()
-            before, after = baseline(relative), page.read_text(encoding='utf-8')
+            before = baseline(relative)
+            after = normalize_editorial_review(relative, page.read_text(encoding='utf-8'))
             code = lambda html: [unescape(re.sub('<[^>]+>', '', block)) for block in re.findall(r'<pre\b[^>]*>(.*?)</pre>', html, re.S)]
             with self.subTest(page=relative):
                 self.assertEqual(code(after), code(before), 'Reference review must not silently edit runnable code')

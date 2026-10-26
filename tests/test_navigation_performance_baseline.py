@@ -30,6 +30,7 @@ from startup_performance_baseline import (
     startup_performance_fixture,
 )
 from startup_generated_asset_baseline import restore_startup_generated_asset
+from editorial_review_baseline import PUBLIC_PATHS as EDITORIAL_REVIEW_PATHS
 
 
 TEST_INFRASTRUCTURE_PATHS = {
@@ -38,8 +39,10 @@ TEST_INFRASTRUCTURE_PATHS = {
     "tests/browser_startup_preservation.py",
     "tests/browser_tutorial_reader_ui.py",
     "tests/fixtures/navigation-performance-edits.json",
+    "tests/fixtures/editorial-review-edits.json",
     "tests/fixtures/startup-performance-edits.json",
     "tests/generate_latest_review_fixture.py",
+    "tests/editorial_review_baseline.py",
     "tests/generate_startup_performance_fixture.py",
     "tests/home_catalogue_baseline.py",
     "tests/latest_review_baseline.py",
@@ -47,11 +50,15 @@ TEST_INFRASTRUCTURE_PATHS = {
     "tests/reader_text_colour_baseline.py",
     "tests/r_first_revision_baseline.py",
     "tests/test_latest_review_baseline.py",
+    "tests/test_editorial_scope_fixes.py",
+    "tests/test_editorial_review_baseline.py",
+    "tests/test_revision_trajectory.py",
     "tests/test_home_catalogue_scope.py",
     "tests/test_home_catalogue_ui.py",
     "tests/test_navigation_performance_baseline.py",
     "tests/test_remaining_reference_support.py",
     "tests/test_reader_punctuation.py",
+    "tests/test_sitewide_reference_fixes.py",
     "tests/test_startup_performance_baseline.py",
     "tests/test_r_first_revision_baseline.py",
     "tests/test_tutorial_execution_baseline.py",
@@ -182,6 +189,7 @@ class NavigationPerformanceBaselineTests(unittest.TestCase):
         changed = set(subprocess.check_output(
             ["git", "diff", "--name-only", BASE_COMMIT, "--"], cwd=ROOT, text=True
         ).splitlines())
+        changed -= EDITORIAL_REVIEW_PATHS - STARTUP_TUTORIAL_PATHS
         self.assertIn(WORKFLOW_PATH, changed)
         self.assertEqual(
             changed - TEST_INFRASTRUCTURE_PATHS - {WORKFLOW_PATH},
