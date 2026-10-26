@@ -35,6 +35,10 @@ from start_here_desktop_baseline import (
     restore_start_here_desktop_asset,
 )
 from coffee_removal_baseline import coffee_removal_fixture, restore_coffee_removal_bytes
+from optional_report_baseline import (
+    OPTIONAL_REPORT_PATHS,
+    verify_optional_report_file,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 BASE_COMMIT = "d42231e"
@@ -57,6 +61,7 @@ SITEMAP_NS = {"s": "http://www.sitemaps.org/schemas/sitemap/0.9"}
 # cannot silently exempt a broad directory.
 TEST_INFRASTRUCTURE_PATHS = {
     'tests/coffee_removal_baseline.py',
+    'tests/optional_report_baseline.py',
     'tests/fixtures/coffee-removal-review.json',
     'tests/test_coffee_removal_baseline.py',
     'tests/fixtures/gget-mobile-baseline.json',
@@ -101,7 +106,12 @@ TEST_INFRASTRUCTURE_PATHS = {
     'tests/test_reader_punctuation.py',
     'tests/test_reader_text_colours.py',
     'tests/test_remaining_reference_support.py',
+    'tests/test_remaining_validation_scope.py',
     'tests/test_revision_trajectory.py',
+    'tests/test_beginner_walkthrough_scope.py',
+    'tests/test_six_lesson_revision_scope.py',
+    'tests/test_tidyverse_setup_scope.py',
+    'tests/test_ubuntu_tidyverse_scope.py',
     'tests/test_search_reference_aliases.js',
     'tests/test_sitewide_reference_fixes.py',
     'tests/test_start_here_blue_learning.py',
@@ -242,6 +252,9 @@ class RemainingReferenceSupportTests(unittest.TestCase):
                 restore_coffee_removal_bytes(path, (ROOT / path).read_bytes()),
                 entry['base_bytes'],
             )
+        verified_report_paths = changed & OPTIONAL_REPORT_PATHS
+        for path in sorted(verified_report_paths):
+            verify_optional_report_file(path, (ROOT / path).read_bytes())
         for path in changed & (
             NAVIGATION_PERFORMANCE_PATHS | STARTUP_TUTORIAL_PATHS
             | STARTUP_ASSET_PATHS | EDITORIAL_PUBLIC_PATHS
@@ -257,7 +270,7 @@ class RemainingReferenceSupportTests(unittest.TestCase):
                 restored = current_text(path).encode("utf-8")
             if restored == baseline_bytes(path):
                 performance_only.add(path)
-        public_changed = changed - TEST_INFRASTRUCTURE_PATHS - performance_only
+        public_changed = changed - TEST_INFRASTRUCTURE_PATHS - performance_only - verified_report_paths
         self.assertEqual(public_changed, EXPECTED_PUBLIC_PATHS)
 
     def test_all_58_tutorials_preserve_pre_code_and_executable_inline_javascript(self):

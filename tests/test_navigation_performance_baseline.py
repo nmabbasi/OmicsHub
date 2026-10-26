@@ -40,10 +40,15 @@ from coffee_removal_baseline import (
     restore_coffee_removal_bytes,
     restore_coffee_removal_text,
 )
+from optional_report_baseline import (
+    OPTIONAL_REPORT_PATHS,
+    verify_optional_report_file,
+)
 
 
 TEST_INFRASTRUCTURE_PATHS = {
     'tests/coffee_removal_baseline.py',
+    'tests/optional_report_baseline.py',
     'tests/fixtures/coffee-removal-review.json',
     'tests/test_coffee_removal_baseline.py',
     'tests/fixtures/gget-mobile-baseline.json',
@@ -79,10 +84,13 @@ TEST_INFRASTRUCTURE_PATHS = {
     'tests/test_navigation_performance_baseline.py',
     'tests/test_r_first_revision_baseline.py',
     'tests/test_reader_layout_batching.js',
+    'tests/test_beginner_walkthrough_scope.py',
     'tests/test_reader_punctuation.py',
     'tests/test_reader_text_colours.py',
     'tests/test_remaining_reference_support.py',
+    'tests/test_remaining_validation_scope.py',
     'tests/test_revision_trajectory.py',
+    'tests/test_six_lesson_revision_scope.py',
     'tests/test_sitewide_reference_fixes.py',
     'tests/test_start_here_blue_learning.py',
     'tests/test_start_here_desktop_baseline.py',
@@ -94,6 +102,8 @@ TEST_INFRASTRUCTURE_PATHS = {
     'tests/test_tutorial_execution_baseline.py',
     'tests/test_tutorial_reader_ui.py',
     'tests/test_tutorial_startup.py',
+    'tests/test_tidyverse_setup_scope.py',
+    'tests/test_ubuntu_tidyverse_scope.py',
     'tests/test_verified_analysis_figures.py',
     'tests/tutorial_execution_baseline.py',
 }
@@ -215,7 +225,7 @@ class NavigationPerformanceBaselineTests(unittest.TestCase):
             changed_workflow,
         )
 
-    def test_public_diff_is_exactly_the_51_approved_tutorial_files(self):
+    def test_public_diff_is_exactly_the_51_approved_tutorial_files_and_reports(self):
         changed = set(subprocess.check_output(
             ["git", "diff", "--name-only", BASE_COMMIT, "--"], cwd=ROOT, text=True
         ).splitlines())
@@ -251,10 +261,13 @@ class NavigationPerformanceBaselineTests(unittest.TestCase):
                 cwd=ROOT, text=True,
             ),
         )
+        for path in sorted(changed & OPTIONAL_REPORT_PATHS):
+            verify_optional_report_file(path, (ROOT / path).read_bytes())
         self.assertEqual(
             changed - TEST_INFRASTRUCTURE_PATHS - {WORKFLOW_PATH},
             STARTUP_TUTORIAL_PATHS | STARTUP_ASSET_PATHS
-            | {"home-page.min.css", "start-here.css", "start-here.html", "tutorial-library.css"},
+            | {"home-page.min.css", "start-here.css", "start-here.html", "tutorial-library.css"}
+            | OPTIONAL_REPORT_PATHS,
         )
 
     def test_all_other_tracked_source_assets_and_site_surfaces_are_byte_preserved(self):
@@ -263,6 +276,9 @@ class NavigationPerformanceBaselineTests(unittest.TestCase):
         ).splitlines()
         allowed = STARTUP_TUTORIAL_PATHS | STARTUP_ASSET_PATHS | {WORKFLOW_PATH}
         for path in tracked:
+            if path in OPTIONAL_REPORT_PATHS:
+                verify_optional_report_file(path, (ROOT / path).read_bytes())
+                continue
             if path.startswith("tests/") or path in allowed:
                 continue
             if path.startswith(".github/") and path != WORKFLOW_PATH:

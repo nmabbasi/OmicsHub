@@ -8148,6 +8148,8 @@ border-radius: 0px;
 <h4 class="date">2025-07-04</h4>
 </div>
 <!-- rnb-text-begin -->
+<aside class="optional-report-status" role="note" aria-label="Report status" style="background:#f4f7fa;border:1px solid #c7d2dd;border-left:5px solid #35566f;border-radius:4px;box-sizing:border-box;color:#223746;line-height:1.55;margin:1rem 0 1.25rem;max-width:100%;overflow-wrap:anywhere;padding:0.9rem 1rem;"><p style="margin:0 0 .45rem;"><strong>Status: saved recommendations contain corrected arithmetic and resource caveats.</strong></p><p style="margin:0;">The saved 30,000 nCount_RNA cutoff is 2,495 above its stated 95th percentile (27,505), and the 6,000 nFeature_RNA cutoff is 468 above its stated 95th percentile (5,532). Neither value is below its stated percentile. These are dataset-specific exploratory heuristics, not biological rules. The page also logs a sparse-to-dense allocation warning for 13.4 GiB. That warning does not prove the allocation completed or that the full workflow ran; check available memory and scope before rerunning.</p></aside>
+
 <div class="section level1" id="load-libraries">
 <h1>1. load libraries</h1>
 <!-- rnb-text-end -->
@@ -8183,13 +8185,13 @@ All_samples_Merged &lt;- readRDS("../../0-Seurat_RDS_OBJECT_FINAL/All_samples_Me
 **nCount_RNA:**
 
 * **Lower Cutoff:** 3500. This value is slightly below the 5th percentile (3690.2) to account for potential low-expressing cells that might still be biologically relevant, while still removing very low-quality cells.
-* **Upper Cutoff:** 30000. This value is chosen to be below the 95th percentile (27505) to remove high count outliers, which may represent cell doublets or other artifacts.  The value is set slightly higher to allow for some variability in highly expressing cells.
+* **Upper Cutoff:** 30000. This value is above the displayed 95th percentile (27,505) by 2,495. It is a dataset-specific heuristic from this saved recommendation, not a universal biological rule. Check it against the dataset and analysis goal before use.
 
 
 **nFeature_RNA:**
 
 * **Lower Cutoff:** 1500. This value is set at the 5th percentile (1595) to remove cells with very few detected genes.
-* **Upper Cutoff:** 6000. This value is slightly below the 95th percentile (5532) to remove cells with an unusually high number of detected genes, which may indicate doublets or other artifacts.
+* **Upper Cutoff:** 6000. This value is above the displayed 95th percentile (5,532) by 468. It is a dataset-specific heuristic from this saved recommendation, not a universal biological rule. Check it against the dataset and analysis goal before use.
 
 
 **percent.mt:**
