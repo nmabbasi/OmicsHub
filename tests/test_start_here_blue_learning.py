@@ -1,5 +1,4 @@
-"""Content, boundary, and visual contracts for the circular Start Here path."""
-from html import unescape
+"""Regression contracts for the restored pre-circular, image-led Start Here page."""
 from html.parser import HTMLParser
 from pathlib import Path
 import re
@@ -11,33 +10,33 @@ from reader_text_colour_baseline import (
 )
 from r_first_revision_baseline import R_FIRST_ASSET_PATHS, restore_r_first_asset
 from latest_review_baseline import restore_latest_review_asset
-from start_here_desktop_baseline import DESKTOP_CSS_VERSION
+from start_here_desktop_baseline import DESKTOP_CSS_HREF, expected_restored_css
 
 ROOT = Path(__file__).resolve().parents[1]
+HISTORICAL = "a4b6ead8251e0a3abcb748061a40155ae9523a82"
+PR_BASE = "e846ce3fb6053ed611dc87fc62748865499913d0"
 PUBLISHED = "45d660c5f53a0f4d8c2736057e2ab54fe7b8e718"
-JS_VERSION = "20261025-circular-path-v1"
-FOUNDATION = ("tutorials/command-line-part1.html", "tutorials/computer-data-fundamentals.html")
-LANGUAGE_CHOICES = ("tutorials/r-tidyverse-fundamentals.html", "tutorials/python-fundamentals-bioinformatics.html")
-EVIDENCE = {
-    FOUNDATION[0]: {"terminal", "location", "checking"},
-    FOUNDATION[1]: {"project", "synthetic", "file"},
+EXPECTED_IMAGES = {
+    "images/sh-three-laptop-learner-banner-with-copy.webp",
+    "images/sh-route-single-cell-laptop-v3.webp",
+    "images/sh-route-genomics-laptop-v3.webp",
+    "images/sh-route-microbial-laptop-v3.webp",
+    "images/sh-route-evolution-laptop-v3.webp",
 }
-CAUTIONS = (
-    "not a required course", "not a bulk RNA-seq tutorial", "replicated single-cell samples",
-    "not substitutes for basic QC", "authorized institutional access",
-    "not standardized on one R or Python version", "zero-byte placeholder files are not sequencing data",
-)
-LEGACY_IDS = ("sh-foundation", "sh-language-choice", "sh-routes", "sh-curriculum", "sh-hpc")
 
 
 def git_bytes(revision, path):
-    result = subprocess.run(["git", "show", f"{revision}:{path}"], cwd=ROOT, stdout=subprocess.PIPE,
-                            stderr=subprocess.DEVNULL, check=False)
+    result = subprocess.run(
+        ["git", "show", f"{revision}:{path}"], cwd=ROOT,
+        stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, check=False,
+    )
     return result.stdout if result.returncode == 0 else None
 
 
 def pinned_paths():
-    return subprocess.check_output(["git", "ls-tree", "-r", "--name-only", PUBLISHED], cwd=ROOT, text=True).splitlines()
+    return subprocess.check_output(
+        ["git", "ls-tree", "-r", "--name-only", PUBLISHED], cwd=ROOT, text=True
+    ).splitlines()
 
 
 class Facts(HTMLParser):
@@ -63,27 +62,75 @@ def main(markup):
     return match.group()
 
 
-def panel(markup, number):
-    match = re.search(rf'<article\b(?=[^>]*\bid="sh-step-{number}")[^>]*>.*?</article\s*>', markup, re.S | re.I)
-    if not match:
-        raise AssertionError(f"missing lesson panel sh-step-{number}")
-    return match.group()
-
-
-def tutorial_links(markup):
-    return {url for url in Facts(markup).links if url.startswith("tutorials/")}
-
-
-class StartHereBlueLearningTests(unittest.TestCase):
+class StartHereImageLedTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.source = (ROOT / "start-here.html").read_text(encoding="utf-8")
-        cls.old = git_bytes(PUBLISHED, "start-here.html").decode("utf-8")
-        cls.current_main, cls.old_main = main(cls.source), main(cls.old)
-        cls.css = (ROOT / "start-here.css").read_text(encoding="utf-8")
-        cls.js = (ROOT / "start-here.js").read_text(encoding="utf-8")
+        cls.current_main = main(cls.source)
+        cls.css = (ROOT / "start-here.css").read_bytes()
+        cls.historical = git_bytes(HISTORICAL, "start-here.html").decode("utf-8")
+        cls.historical_main = main(cls.historical)
+        cls.base = git_bytes(PR_BASE, "start-here.html").decode("utf-8")
 
-    def test_home_catalogue_lessons_and_shared_assets_are_unchanged(self):
+    def test_only_the_reviewed_start_here_design_changes_in_the_current_page_shell(self):
+        expected = self.base.replace(main(self.base), self.historical_main, 1)
+        old_css = re.findall(r'<link\b[^>]*href="(start-here\.css\?v=[^"]+)"[^>]*>', expected)
+        self.assertEqual(len(old_css), 1)
+        expected = expected.replace(old_css[0], DESKTOP_CSS_HREF, 1)
+        expected, removed = re.subn(
+            r'<script\b[^>]*\bsrc="start-here\.js\?v=[^"]+"[^>]*></script>\s*',
+            "", expected, count=1, flags=re.I,
+        )
+        self.assertEqual(removed, 1)
+        self.assertEqual(self.source, expected)
+        self.assertEqual(self.current_main, self.historical_main)
+        self.assertEqual(self.css, expected_restored_css())
+        self.assertEqual(
+            (ROOT / "start-here.js").read_bytes(),
+            git_bytes(PR_BASE, "start-here.js"),
+            "the existing script remains untouched but is no longer loaded by this page",
+        )
+
+    def test_original_banner_and_four_illustrated_route_cards_are_preserved(self):
+        facts = Facts(self.current_main)
+        images = [attrs for tag, attrs in facts.elements if tag == "img"]
+        image_sources = {attrs.get("src") for attrs in images}
+        self.assertEqual(image_sources, EXPECTED_IMAGES)
+        self.assertEqual(len(images), 5)
+        self.assertTrue(all(attrs.get("alt", "").strip() for attrs in images))
+        for src in EXPECTED_IMAGES:
+            with self.subTest(image=src):
+                self.assertTrue((ROOT / src).is_file())
+
+        cards = re.findall(
+            r'<a\b(?=[^>]*\bclass="[^"]*\bsh-route-card\b)[^>]*>.*?</a\s*>',
+            self.current_main, re.S | re.I,
+        )
+        self.assertEqual(len(cards), 4)
+        card_images = set()
+        for card in cards:
+            href = re.search(r'\bhref="([^"]+)"', card)
+            image = re.search(r'<img\b[^>]*\bsrc="([^"]+)"', card)
+            self.assertIsNotNone(href)
+            self.assertIsNotNone(image)
+            self.assertTrue((ROOT / href.group(1)).is_file())
+            card_images.add(image.group(1))
+        self.assertEqual(card_images, EXPECTED_IMAGES - {"images/sh-three-laptop-learner-banner-with-copy.webp"})
+
+    def test_historical_learning_links_remain_valid_and_no_circular_path_is_loaded(self):
+        facts = Facts(self.current_main)
+        lesson_links = {href for href in facts.links if href.startswith("tutorials/")}
+        self.assertEqual(len(lesson_links), 32)
+        for href in lesson_links:
+            with self.subTest(destination=href):
+                self.assertTrue((ROOT / href.split("#", 1)[0]).is_file())
+        self.assertEqual(sum("sh-step" in attrs.get("class", "").split()
+                             for tag, attrs in facts.elements if tag == "a"), 4)
+        self.assertNotIn("sh-orbit", self.current_main)
+        self.assertNotIn("data-sh-step", self.current_main)
+        self.assertNotRegex(self.source, r"start-here\.js\?v=")
+
+    def test_home_tutorials_shared_styles_and_images_are_unchanged(self):
         for relative in ("index.html", "tutorials.html"):
             with self.subTest(path=relative):
                 restored = normalize_reader_text(relative, (ROOT / relative).read_text()).encode()
@@ -95,9 +142,11 @@ class StartHereBlueLearningTests(unittest.TestCase):
             with self.subTest(path=relative):
                 restored = normalize_reader_text(relative, page.read_text()).encode()
                 self.assertEqual(restored, git_bytes(PUBLISHED, relative))
-        protected = [path for path in pinned_paths()
-                     if (path.endswith((".css", ".js")) and path not in {"start-here.css", "start-here.js"})
-                     or path.startswith(("fonts/", "images/", "assets/")) or path == "ads.txt"]
+        protected = [
+            path for path in pinned_paths()
+            if (path.endswith((".css", ".js")) and path not in {"start-here.css", "start-here.js"})
+            or path.startswith(("fonts/", "images/", "assets/")) or path == "ads.txt"
+        ]
         for relative in protected:
             with self.subTest(path=relative):
                 current = restore_latest_review_asset(relative, (ROOT / relative).read_bytes())
@@ -106,88 +155,6 @@ class StartHereBlueLearningTests(unittest.TestCase):
                 elif relative in R_FIRST_ASSET_PATHS:
                     current = restore_r_first_asset(relative, current)
                 self.assertEqual(current, git_bytes(PUBLISHED, relative))
-
-    def test_html_changes_only_in_main_and_start_here_asset_versions(self):
-        restored_source = normalize_reader_text("start-here.html", self.source)
-        old_css = re.search(r'<link\b[^>]*href="(start-here\.css\?v=[^"]+)"', self.old).group(1)
-        new_css = re.search(r'<link\b[^>]*href="(start-here\.css\?v=[^"]+)"', restored_source).group(1)
-        old_js = re.search(r'<script\b[^>]*src="(start-here\.js\?v=[^"]+)"', self.old).group(1)
-        new_js = re.search(r'<script\b[^>]*src="(start-here\.js\?v=[^"]+)"', self.source).group(1)
-        expected = self.old.replace(main(self.old), main(restored_source), 1)
-        expected = expected.replace(old_css, new_css, 1).replace(old_js, new_js, 1)
-        self.assertEqual(restored_source, expected)
-        self.assertIn(f'href="start-here.css?v={DESKTOP_CSS_VERSION}"', self.source)
-        self.assertEqual(new_js, f"start-here.js?v={JS_VERSION}")
-
-    def test_four_ordered_lesson_panels_and_orbit_anchors(self):
-        facts = Facts(self.current_main)
-        orbit = next(attrs for _, attrs in facts.elements if "sh-orbit" in attrs.get("class", "").split())
-        self.assertIn("hidden", orbit, "the orbit is revealed by the enhancement script")
-        orbit_anchors = [(tag, attrs) for tag, attrs in facts.elements
-                         if tag == "a" and "sh-orbit-stop" in attrs.get("class", "").split()]
-        self.assertEqual(len(orbit_anchors), 4)
-        for step, (_, attrs) in enumerate(orbit_anchors, 1):
-            self.assertEqual(attrs.get("data-sh-step"), str(step))
-            self.assertEqual(attrs.get("href"), f"#sh-step-{step}")
-            self.assertNotIn("hidden", attrs)
-        panels = [panel(self.current_main, step) for step in range(1, 5)]
-        self.assertIn("introduction-to-bioinformatics.html", panels[0])
-        self.assertIn(FOUNDATION[0], panels[1])
-        self.assertIn(FOUNDATION[1], panels[2])
-        self.assertLess(self.current_main.index(FOUNDATION[0]), self.current_main.index(FOUNDATION[1]))
-        self.assertIn('id="sh-language-choice"', panels[3])
-        for url in LANGUAGE_CHOICES:
-            self.assertIn(url, panels[3])
-        self.assertIn("Bash on Linux, macOS, or Windows Subsystem for Linux (WSL)", self.current_main)
-
-    def test_beginner_outcomes_are_supported_by_their_linked_lesson_content(self):
-        for number, href in ((2, FOUNDATION[0]), (3, FOUNDATION[1])):
-            item = " ".join(unescape(re.sub(r"<[^>]*>", " ", panel(self.current_main, number))).split()).lower()
-            lesson = (ROOT / href).read_text(encoding="utf-8").lower()
-            item_terms = set(re.findall(r"[a-z][a-z0-9-]{3,}", item))
-            lesson_terms = set(re.findall(r"[a-z][a-z0-9-]{3,}", lesson))
-            with self.subTest(lesson=href):
-                self.assertGreaterEqual(len(item.split()), 6)
-                self.assertTrue(EVIDENCE[href] <= item_terms & lesson_terms)
-
-    def test_all_32_tutorial_destinations_disclosure_cautions_and_legacy_targets_remain(self):
-        old_links, new_links = tutorial_links(self.old_main), tutorial_links(self.current_main)
-        self.assertEqual(len(old_links), 32)
-        self.assertEqual(new_links, old_links)
-        for url in new_links:
-            with self.subTest(destination=url):
-                self.assertTrue((ROOT / url.split("#", 1)[0]).is_file())
-        facts = Facts(self.current_main)
-        ids = [attrs["id"] for _, attrs in facts.elements if "id" in attrs]
-        for anchor in LEGACY_IDS:
-            self.assertEqual(ids.count(anchor), 1, anchor)
-        self.assertEqual(len(ids), len(set(ids)), "fragment targets are unique")
-        details = [attrs for tag, attrs in facts.elements if tag == "details"]
-        self.assertEqual(len(details), 6)
-        self.assertTrue(all("open" not in attrs for attrs in details))
-        text = " ".join(facts.text).lower()
-        for phrase in CAUTIONS:
-            with self.subTest(caution=phrase):
-                self.assertIn(phrase.lower(), text)
-        optional = re.search(r'<details\b[^>]*id="sh-optional-tools".*?</details\s*>', self.current_main, re.S)
-        self.assertIsNotNone(optional)
-        self.assertIn("tutorials/conda-mamba-part1.html", optional.group())
-        self.assertNotIn("tutorials/conda-mamba-part1.html", "".join(panel(self.current_main, n) for n in range(1, 5)))
-
-    def test_copy_is_concise_and_does_not_claim_completion_or_progress(self):
-        text = " ".join(Facts(self.current_main).text)
-        self.assertLess(len(text.split()), 650)
-        self.assertNotIn("\u2014", unescape(self.current_main))
-        self.assertNotRegex(text.lower(), r"\b(?:completed|completion|percent complete)\b")
-
-    def test_real_fragment_navigation_and_script_enhancement_are_present(self):
-        self.assertIn("data-sh-step", self.js)
-        self.assertIn("hidden", self.js)
-        self.assertIn("sh-step-", self.js)
-        self.assertRegex(self.js, r"(?:addEventListener|onclick)")
-        for step in range(1, 5):
-            self.assertIn(f'href="#sh-step-{step}"', self.current_main)
-            self.assertIn(f'data-sh-step="{step}"', self.current_main)
 
 
 if __name__ == "__main__":

@@ -110,7 +110,7 @@ class ReaderPunctuationTests(unittest.TestCase):
         self.assertEqual(normalize_start_here('start-here.html', restored), restored)
 
         changed_claim = current.replace(
-            'Start with a question.', 'Unsupported new learning claim.', 1
+            'You have the biology.', 'Unsupported new learning claim.', 1
         )
         self.assertNotEqual(changed_claim, current, 'the mutation must exercise current reading text')
         self.assertNotEqual(

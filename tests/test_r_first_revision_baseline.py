@@ -140,7 +140,9 @@ class RFirstRevisionBaselineTests(unittest.TestCase):
         self.assertIn('"dateModified": "2099-01-01"', normalized_date_mutation)
 
         start_current = (ROOT / "start-here.html").read_text(encoding="utf-8")
-        start_mutation = start_current.replace("Start with R.", "Unapproved language.", 1)
+        start_mutation = start_current.replace(
+            "Start with orientation", "Unapproved language.", 1
+        )
         self.assertIn("Unapproved language.", normalize_r_first_revision("start-here.html", start_mutation))
 
     def test_only_explicit_full_hash_assets_are_accepted(self):
