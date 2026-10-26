@@ -11,6 +11,7 @@ from reader_text_colour_baseline import (
 from r_first_revision_baseline import R_FIRST_ASSET_PATHS, restore_r_first_asset
 from latest_review_baseline import restore_latest_review_asset
 from start_here_desktop_baseline import DESKTOP_CSS_HREF, restore_start_here_desktop_asset
+from coffee_removal_baseline import restore_coffee_removal_text
 
 ROOT = Path(__file__).resolve().parents[1]
 HISTORICAL = "a4b6ead8251e0a3abcb748061a40155ae9523a82"
@@ -93,7 +94,7 @@ class StartHereImageLedTests(unittest.TestCase):
             "", expected, count=1, flags=re.I,
         )
         self.assertEqual(removed, 1)
-        self.assertEqual(self.source, expected)
+        self.assertEqual(restore_coffee_removal_text("start-here.html", self.source), expected)
         unchanged = self.current_main.replace(
             curriculum_region(self.current_main),
             curriculum_region(self.historical_main),
