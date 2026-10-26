@@ -151,11 +151,16 @@
     const slug = location.pathname.split('/').pop().replace(/\.html$/, '');
     const spec = window.OMICS_TUTORIAL_CODE?.tutorials?.[slug];
     let enhancedGroups = 0;
+    const digestPromises = new Map();
+    const memoizedFingerprint = text => {
+      if (!digestPromises.has(text)) digestPromises.set(text, fingerprint(text));
+      return digestPromises.get(text);
+    };
     try {
       if (article && spec) {
         const blocks = Array.from(article.querySelectorAll('pre'));
         const nodes = Array.from(article.children);
-        const hashes = await Promise.all(blocks.map(pre => fingerprint((pre.querySelector('code') || pre).textContent)));
+        const hashes = await Promise.all(blocks.map(pre => memoizedFingerprint((pre.querySelector('code') || pre).textContent)));
         const validBlocks = blocks.length === spec.blocks.length && hashes.every((hash, index) => hash && hash === spec.blocks[index].sha256);
         if (validBlocks) {
           blocks.forEach((pre, index) => {
@@ -173,7 +178,7 @@
             const prepared = await Promise.all(groups.map(async group => {
               const checks = await Promise.all(group.members.map(async member => {
                 const node = nodes[member.index];
-                return node.tagName.toLowerCase() === member.tag && await fingerprint(node.textContent) === member.sha256;
+                return node.tagName.toLowerCase() === member.tag && await memoizedFingerprint(node.textContent) === member.sha256;
               }));
               return checks.every(Boolean);
             }));

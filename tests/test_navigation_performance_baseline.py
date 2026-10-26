@@ -23,18 +23,46 @@ from latest_review_baseline import (
     normalize_latest_review,
     restore_latest_review_asset,
 )
+from startup_performance_baseline import (
+    ASSET_PATHS as STARTUP_ASSET_PATHS,
+    TUTORIAL_PATHS as STARTUP_TUTORIAL_PATHS,
+    normalize_startup_performance,
+    startup_performance_fixture,
+)
+from startup_generated_asset_baseline import restore_startup_generated_asset
 
 
 TEST_INFRASTRUCTURE_PATHS = {
     "tests/browser_navigation_performance.py",
+    "tests/browser_startup_performance.py",
+    "tests/browser_startup_preservation.py",
+    "tests/browser_tutorial_reader_ui.py",
     "tests/fixtures/navigation-performance-edits.json",
+    "tests/fixtures/startup-performance-edits.json",
     "tests/generate_latest_review_fixture.py",
+    "tests/generate_startup_performance_fixture.py",
+    "tests/home_catalogue_baseline.py",
     "tests/latest_review_baseline.py",
     "tests/navigation_performance_baseline.py",
+    "tests/reader_text_colour_baseline.py",
+    "tests/r_first_revision_baseline.py",
     "tests/test_latest_review_baseline.py",
+    "tests/test_home_catalogue_scope.py",
+    "tests/test_home_catalogue_ui.py",
     "tests/test_navigation_performance_baseline.py",
     "tests/test_remaining_reference_support.py",
+    "tests/test_reader_punctuation.py",
+    "tests/test_startup_performance_baseline.py",
+    "tests/test_r_first_revision_baseline.py",
+    "tests/test_tutorial_execution_baseline.py",
+    "tests/test_tutorial_reader_ui.py",
+    "tests/test_tutorial_startup.py",
+    "tests/test_verified_analysis_figures.py",
+    "tests/test_code_tabs_digest_memoization.js",
+    "tests/test_reader_layout_batching.js",
+    "tests/startup_generated_asset_baseline.py",
     "tests/tutorial_execution_baseline.py",
+    "tests/startup_performance_baseline.py",
 }
 
 
@@ -76,7 +104,9 @@ class NavigationPerformanceBaselineTests(unittest.TestCase):
         for path in sorted(APPROVED_PATHS):
             with self.subTest(path=path):
                 entry = fixture[path]
-                current = (ROOT / path).read_bytes()
+                current = normalize_startup_performance(
+                    path, (ROOT / path).read_text(encoding="utf-8")
+                ).encode("utf-8")
                 self.assertEqual(current, entry["after_bytes"])
                 self.assertEqual(
                     hashlib.sha256(current).hexdigest(), entry["after_sha256"]
@@ -125,10 +155,16 @@ class NavigationPerformanceBaselineTests(unittest.TestCase):
             "code": current + "<script>window.__UNREVIEWED_CODE_MUTATION__ = true;</script>\n",
             "attribute": current.replace("<html", '<html data-unreviewed="true"', 1),
         }
+        frozen_base = startup_performance_fixture()[tutorial]["base_bytes"].decode("utf-8")
+        expected = {
+            "text": frozen_base + "<!-- UNREVIEWED_TEXT_MUTATION -->\n",
+            "code": frozen_base + "<script>window.__UNREVIEWED_CODE_MUTATION__ = true;</script>\n",
+            "attribute": frozen_base.replace("<html", '<html data-unreviewed="true"', 1),
+        }
         for label, changed in mutations.items():
             with self.subTest(mutation=label):
                 self.assertNotEqual(changed, current)
-                self.assertEqual(normalize_navigation_performance(tutorial, changed), changed)
+                self.assertEqual(normalize_navigation_performance(tutorial, changed), expected[label])
                 self.assertIn("UNREVIEWED_" if label != "attribute" else "data-unreviewed", normalize_latest_review(tutorial, changed))
 
         workflow = (ROOT / WORKFLOW_PATH).read_bytes()
@@ -147,13 +183,16 @@ class NavigationPerformanceBaselineTests(unittest.TestCase):
             ["git", "diff", "--name-only", BASE_COMMIT, "--"], cwd=ROOT, text=True
         ).splitlines())
         self.assertIn(WORKFLOW_PATH, changed)
-        self.assertEqual(changed - TEST_INFRASTRUCTURE_PATHS - {WORKFLOW_PATH}, APPROVED_PATHS)
+        self.assertEqual(
+            changed - TEST_INFRASTRUCTURE_PATHS - {WORKFLOW_PATH},
+            STARTUP_TUTORIAL_PATHS | STARTUP_ASSET_PATHS | {"home-page.min.css"},
+        )
 
     def test_all_other_tracked_source_assets_and_site_surfaces_are_byte_preserved(self):
         tracked = subprocess.check_output(
             ["git", "ls-tree", "-r", "--name-only", BASE_COMMIT], cwd=ROOT, text=True
         ).splitlines()
-        allowed = APPROVED_PATHS | {WORKFLOW_PATH}
+        allowed = STARTUP_TUTORIAL_PATHS | STARTUP_ASSET_PATHS | {WORKFLOW_PATH}
         for path in tracked:
             if path.startswith("tests/") or path in allowed:
                 continue
@@ -164,7 +203,9 @@ class NavigationPerformanceBaselineTests(unittest.TestCase):
                 expected = subprocess.check_output(
                     ["git", "show", f"{BASE_COMMIT}:{path}"], cwd=ROOT
                 )
-                self.assertEqual((ROOT / path).read_bytes(), expected)
+                current = (ROOT / path).read_bytes()
+                current = restore_startup_generated_asset(path, current, "main")
+                self.assertEqual(current, expected)
 
 
 if __name__ == "__main__":

@@ -21,6 +21,12 @@ from navigation_performance_baseline import (
     FIXTURE_PATHS as NAVIGATION_PERFORMANCE_PATHS,
     restore_navigation_performance_bytes,
 )
+from startup_performance_baseline import (
+    FIXTURE_PATHS as STARTUP_PERFORMANCE_PATHS,
+    TUTORIAL_PATHS as STARTUP_TUTORIAL_PATHS,
+    restore_startup_performance_asset,
+)
+from startup_generated_asset_baseline import restore_startup_generated_asset
 
 ROOT = Path(__file__).resolve().parents[1]
 BASE_COMMIT = "36bc46d"
@@ -57,28 +63,43 @@ ASSET_PATHS = frozenset({"home-page.min.css"})
 ALLOWED_PATHS = TEXT_PATHS | ASSET_PATHS
 TEST_INFRASTRUCTURE_PATHS = frozenset({
     "tests/browser_navigation_performance.py",
+    "tests/browser_startup_performance.py",
+    "tests/browser_startup_preservation.py",
+    "tests/browser_tutorial_reader_ui.py",
     "tests/browser_sitewide_reference_fixes.py",
     "tests/fixtures/latest-review-edits.json",
     "tests/fixtures/navigation-performance-edits.json",
+    "tests/fixtures/startup-performance-edits.json",
     "tests/generate_latest_review_fixture.py",
+    "tests/generate_startup_performance_fixture.py",
     "tests/home_catalogue_baseline.py",
     "tests/latest_review_baseline.py",
     "tests/navigation_performance_baseline.py",
+    "tests/startup_performance_baseline.py",
+    "tests/startup_generated_asset_baseline.py",
     "tests/r_first_revision_baseline.py",
     "tests/reader_text_colour_baseline.py",
     "tests/remaining_validation_baseline.py",
     "tests/resource_content_baseline.py",
     "tests/test_home_catalogue_scope.py",
+    "tests/test_home_catalogue_ui.py",
     "tests/test_latest_review_baseline.py",
     "tests/test_navigation_performance_baseline.py",
+    "tests/test_startup_performance_baseline.py",
     "tests/test_latest_sitemap_composition_negative.py",
     "tests/test_r_first_revision_baseline.py",
     "tests/test_reader_punctuation.py",
     "tests/test_reader_text_colours.py",
     "tests/test_remaining_reference_support.py",
+    "tests/test_start_here_blue_learning.py",
+    "tests/test_tutorial_execution_baseline.py",
+    "tests/test_tutorial_reader_ui.py",
+    "tests/test_tutorial_startup.py",
+    "tests/test_verified_analysis_figures.py",
+    "tests/test_code_tabs_digest_memoization.js",
+    "tests/test_reader_layout_batching.js",
     "tests/test_search_reference_aliases.js",
     "tests/test_sitewide_reference_fixes.py",
-    "tests/test_start_here_blue_learning.py",
     "tests/tutorial_execution_baseline.py",
     "tests/tutorial_ui_baseline.py",
     "tools/generate_latest_review_fixture.py",
@@ -166,8 +187,14 @@ def build_fixture() -> dict:
     # command. Drop a path from this historical review only when restoring the
     # complete current hash yields its exact 36bc46d bytes.
     performance_only = set()
-    for path in set(changed) & NAVIGATION_PERFORMANCE_PATHS:
-        normalized = restore_navigation_performance_bytes(path, (ROOT / path).read_bytes())
+    exact_compatibility_paths = (
+        NAVIGATION_PERFORMANCE_PATHS | STARTUP_PERFORMANCE_PATHS | {"home-page.min.css"}
+    )
+    for path in set(changed) & exact_compatibility_paths:
+        normalized = (ROOT / path).read_bytes()
+        normalized = restore_startup_generated_asset(path, normalized, "home-catalogue")
+        normalized = restore_startup_performance_asset(path, normalized)
+        normalized = restore_navigation_performance_bytes(path, normalized)
         if normalized == git_base(path):
             performance_only.add(path)
     changed = [path for path in changed if path not in performance_only]
@@ -180,6 +207,8 @@ def build_fixture() -> dict:
     for path in sorted(set(changed) & ALLOWED_PATHS):
         base = git_base(path)
         current = (ROOT / path).read_bytes()
+        current = restore_startup_generated_asset(path, current, "home-catalogue")
+        current = restore_startup_performance_asset(path, current)
         if path in TEXT_PATHS:
             current = restore_navigation_performance_bytes(path, current)
         if base == current:

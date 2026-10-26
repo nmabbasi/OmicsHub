@@ -190,11 +190,17 @@
     const row = header?.querySelector('nav > div:first-child');
     const update = () => {
       const h = banner && getComputedStyle(banner).display !== 'none' ? Math.ceil(banner.getBoundingClientRect().height) : 0;
-      document.documentElement.style.setProperty('--reader-banner-space', `${h}px`);
+      let headerHeight;
       if (row && header) {
         const height = row.getBoundingClientRect().bottom - header.getBoundingClientRect().top + parseFloat(getComputedStyle(header.querySelector('nav')).paddingBottom) + 1;
-        document.documentElement.style.setProperty('--reader-header-height', `${Math.ceil(height)}px`);
+        headerHeight = `${Math.ceil(height)}px`;
       }
+      const rootStyle = document.documentElement.style;
+      const bannerSpace = `${h}px`;
+      const currentBannerSpace = rootStyle.getPropertyValue('--reader-banner-space');
+      const currentHeaderHeight = headerHeight === undefined ? null : rootStyle.getPropertyValue('--reader-header-height');
+      if (currentBannerSpace !== bannerSpace) rootStyle.setProperty('--reader-banner-space', bannerSpace);
+      if (headerHeight !== undefined && currentHeaderHeight !== headerHeight) rootStyle.setProperty('--reader-header-height', headerHeight);
       window.dispatchEvent(new Event('readerlayoutchange'));
     };
     if ('ResizeObserver' in window) {

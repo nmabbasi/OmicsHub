@@ -19,6 +19,12 @@ from navigation_performance_baseline import (
     APPROVED_PATHS as NAVIGATION_PERFORMANCE_PATHS,
     normalize_navigation_performance,
 )
+from startup_performance_baseline import (
+    ASSET_PATHS as STARTUP_ASSET_PATHS,
+    TUTORIAL_PATHS as STARTUP_TUTORIAL_PATHS,
+    restore_startup_performance_asset,
+)
+from startup_generated_asset_baseline import restore_startup_generated_asset
 
 ROOT = Path(__file__).resolve().parents[1]
 BASE_COMMIT = "d42231e"
@@ -39,20 +45,29 @@ SITEMAP_NS = {"s": "http://www.sitemaps.org/schemas/sitemap/0.9"}
 TEST_INFRASTRUCTURE_PATHS = {
     ".github/workflows/tutorial-review.yml",
     "tests/browser_navigation_performance.py",
+    "tests/browser_startup_performance.py",
+    "tests/browser_startup_preservation.py",
     "tests/browser_sitewide_reference_fixes.py",
+    "tests/browser_tutorial_reader_ui.py",
     "tests/fixtures/latest-review-edits.json",
     "tests/fixtures/navigation-performance-edits.json",
+    "tests/fixtures/startup-performance-edits.json",
     "tests/generate_latest_review_fixture.py",
+    "tests/generate_startup_performance_fixture.py",
     "tests/home_catalogue_baseline.py",
     "tests/latest_review_baseline.py",
     "tests/navigation_performance_baseline.py",
+    "tests/startup_performance_baseline.py",
+    "tests/startup_generated_asset_baseline.py",
     "tests/r_first_revision_baseline.py",
     "tests/reader_text_colour_baseline.py",
     "tests/remaining_validation_baseline.py",
     "tests/resource_content_baseline.py",
     "tests/test_home_catalogue_scope.py",
+    "tests/test_home_catalogue_ui.py",
     "tests/test_latest_review_baseline.py",
     "tests/test_navigation_performance_baseline.py",
+    "tests/test_startup_performance_baseline.py",
     "tests/test_latest_sitemap_composition_negative.py",
     "tests/test_r_first_revision_baseline.py",
     "tests/test_reader_punctuation.py",
@@ -61,6 +76,12 @@ TEST_INFRASTRUCTURE_PATHS = {
     "tests/test_search_reference_aliases.js",
     "tests/test_sitewide_reference_fixes.py",
     "tests/test_start_here_blue_learning.py",
+    "tests/test_tutorial_execution_baseline.py",
+    "tests/test_tutorial_startup.py",
+    "tests/test_tutorial_reader_ui.py",
+    "tests/test_verified_analysis_figures.py",
+    "tests/test_code_tabs_digest_memoization.js",
+    "tests/test_reader_layout_batching.js",
     "tests/tutorial_execution_baseline.py",
     "tests/tutorial_ui_baseline.py",
     "tools/generate_latest_review_fixture.py",
@@ -178,10 +199,21 @@ class RemainingReferenceSupportTests(unittest.TestCase):
         ).splitlines())
         # A tutorial path is excluded only if strict whole-file restoration
         # produces the exact d42231e bytes; otherwise it remains visible here.
-        performance_only = {
-            path for path in changed & NAVIGATION_PERFORMANCE_PATHS
-            if current_text(path).encode("utf-8") == baseline_bytes(path)
-        }
+        performance_only = set()
+        for path in changed & (
+            NAVIGATION_PERFORMANCE_PATHS | STARTUP_TUTORIAL_PATHS
+            | STARTUP_ASSET_PATHS | {"home-page.min.css"}
+        ):
+            if path in STARTUP_ASSET_PATHS:
+                restored = restore_startup_performance_asset(path, (ROOT / path).read_bytes())
+            elif path == "home-page.min.css":
+                restored = restore_startup_generated_asset(
+                    path, (ROOT / path).read_bytes(), "main"
+                )
+            else:
+                restored = current_text(path).encode("utf-8")
+            if restored == baseline_bytes(path):
+                performance_only.add(path)
         public_changed = changed - TEST_INFRASTRUCTURE_PATHS - performance_only
         self.assertEqual(public_changed, EXPECTED_PUBLIC_PATHS)
 
@@ -223,7 +255,10 @@ class RemainingReferenceSupportTests(unittest.TestCase):
         )
         for path in sorted(protected):
             with self.subTest(path=path):
-                self.assertEqual((ROOT / path).read_bytes(), baseline_bytes(path))
+                data = (ROOT / path).read_bytes()
+                data = restore_startup_performance_asset(path, data)
+                data = restore_startup_generated_asset(path, data, "main")
+                self.assertEqual(data, baseline_bytes(path))
 
     def test_scrna_reference_changes_are_exactly_the_support_link_and_bibliographic_label(self):
         path = "tutorials/scrna-seq-basics.html"

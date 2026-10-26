@@ -13,6 +13,7 @@ from tutorial_execution_baseline import (
     overlapping_execution_asset_paths, restore_overlapping_execution_asset,
     verify_execution_asset_or_overlapping, verify_new_execution_asset,
 )
+from navigation_performance_baseline import normalize_navigation_performance
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -54,13 +55,18 @@ class TutorialExecutionBaselineTests(unittest.TestCase):
             "prose": current.replace("<p>", "<p>Unapproved prose. ", 1),
             "date": current.replace('"dateModified": "2026-10-25"', '"dateModified": "2099-01-01"', 1),
             "cache_key": current.replace(
-                "20261025-executed-examples-v1", "unapproved-cache-key", 1
+                "20261026-startup-v1", "unapproved-cache-key", 1
             ),
         }
         for label, text in mutations.items():
             with self.subTest(mutation=label):
                 self.assertNotEqual(text, current)
-                self.assertEqual(normalize_execution_delta(relative, text), text)
+                # The startup adapter must still peel its exact pinned hunks;
+                # all unknown edits remain in the normalized historical text.
+                self.assertEqual(
+                    normalize_execution_delta(relative, text),
+                    normalize_navigation_performance(relative, text),
+                )
                 normalized = normalize_r_first_revision(relative, text)
                 self.assertNotEqual(normalized, baseline)
                 if label == "date":

@@ -17,6 +17,7 @@ from navigation_performance_baseline import (
     normalize_navigation_performance,
     restore_navigation_performance_bytes,
 )
+from startup_generated_asset_baseline import restore_startup_generated_asset
 
 ROOT = Path(__file__).resolve().parents[1]
 BASE_COMMIT = "36bc46d"
@@ -199,6 +200,7 @@ def restore_latest_review_asset(relative_path, data):
     """Restore any reviewed file only for its exact complete current SHA-256."""
     if not isinstance(data, bytes):
         raise TypeError("latest-review asset restoration requires bytes")
+    data = restore_startup_generated_asset(relative_path, data, "main")
     data = restore_navigation_performance_bytes(relative_path, data)
     if not re.fullmatch(r"[0-9a-f]{64}", FIXTURE_SHA256):
         return data

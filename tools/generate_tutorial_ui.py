@@ -17,6 +17,7 @@ ROOT = Path(__file__).resolve().parents[1]
 VERSION = '20261025-r-first-v1'
 NAVIGATION_CSS_VERSION = '20261025-learning-navigation-v2'
 CODE_DATA_VERSION = '20261025-executed-examples-v1'
+STARTUP_VERSION = '20261026-startup-v1'
 LANGUAGES = {'bash', 'python', 'r', 'text', 'yaml', 'json', 'csv', 'diff', 'powershell', 'lua', 'groovy', 'javascript', 'markdown', 'sql', 'ini', 'docker', 'rscript'}
 TAB_ORDER = ['r', 'python']
 VOID = {'area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr'}
@@ -95,9 +96,6 @@ def load_metadata(root):
 CSS = (f'<link href="../tutorial-reader.css?v={VERSION}" rel="stylesheet"/>\n'
        f'<link href="../tutorial-navigation.css?v={NAVIGATION_CSS_VERSION}" rel="stylesheet"/>\n'
        f'<link href="../back-to-top.css?v={VERSION}" rel="stylesheet"/>')
-SCRIPTS = ('<script src="../assets/vendor/prism/prism-1.29.0.js"></script>\n'
-           f'<script src="../tutorial-code-data.js?v={CODE_DATA_VERSION}"></script>\n'
-           f'<script src="../code-tabs.js?v={VERSION}"></script>')
 PRISM_LINK = re.compile(r'<link\b[^>]*href="https://cdnjs.cloudflare.com/ajax/libs/prism/1\.29\.0/themes/prism-tomorrow\.min\.css"[^>]*/>')
 PRISM_SCRIPT = re.compile(r'<script\b[^>]*src="https://cdnjs.cloudflare.com/ajax/libs/prism/1\.29\.0/[^\"]+"[^>]*></script>\n?')
 TOP_START = '<!-- Tutorial top link -->'
@@ -111,17 +109,36 @@ def top_link(title):
             '<path d="M12 19V5m-6 6 6-6 6 6"/></svg></span>'
             '<span>Back to top<small>' + escape(title) + '</small></span></a></div>\n' + TOP_END + '\n')
 
-def render_page(source):
+def render_page(source, metadata, slug):
     output = PRISM_LINK.sub('', source)
     output = PRISM_SCRIPT.sub('', output)
+    # Keep every reviewed comparison, but ship only this lesson's metadata.
+    # Escaping '<' prevents metadata text from closing its generated script.
+    payload = {'schema': metadata['schema'], 'tutorials': {slug: metadata['tutorials'][slug]}}
+    encoded = json.dumps(payload, ensure_ascii=True, separators=(',', ':')).replace('<', '\\u003c')
+    scripts = ('<script src="../assets/vendor/prism/prism-1.29.0.js"></script>\n'
+               '<script id="tutorial-code-data">\nwindow.OMICS_TUTORIAL_CODE = ' + encoded + ';\n</script>\n'
+               f'<script src="../code-tabs.js?v={STARTUP_VERSION}"></script>')
     output = re.sub(r'((?:href|src)="\.\./(?:tutorial-(?:reader|navigation)\.css|back-to-top\.css|tutorial-code-data\.js|code-tabs\.js))(?:\?[^\"]*)?(\")',
                     lambda match: match.group(1) + '?v=' + (NAVIGATION_CSS_VERSION if 'tutorial-navigation.css' in match.group(1) else CODE_DATA_VERSION if 'tutorial-code-data.js' in match.group(1) else VERSION) + match.group(2), output)
     for include in CSS.splitlines():
         if include not in output: output = output.replace('</head>', include + '\n</head>', 1)
-    if SCRIPTS not in output:
-        output, count = re.subn(r'<script src="\.\./code-tabs\.js(?:\?[^\"]*)?"></script>', SCRIPTS, output)
-        if count != 1: raise ValueError('Expected one code-tabs script')
-    output = re.sub(r'(src="\.\./(?:script|copy-code|subscribe-fab)\.js)(?:\?[^\"]*)?(\")', r'\1?v=' + VERSION + r'\2', output)
+    marker = '__OMICS_REVIEWED_TUTORIAL_SCRIPTS__'
+    output, count = re.subn(r'<script\b[^>]*src="\.\./code-tabs\.js(?:\?[^\"]*)?"[^>]*></script>', marker, output)
+    if count != 1: raise ValueError('Expected one code-tabs script')
+    output = re.sub(r'<script\b[^>]*src="\.\./(?:assets/vendor/prism/prism-1\.29\.0|tutorial-code-data)\.js(?:\?[^\"]*)?"[^>]*></script>\n?', '', output)
+    output = re.sub(r'<script id="tutorial-code-data">.*?</script>\n?', '', output, flags=re.S)
+    output = output.replace(marker, scripts, 1)
+    # Static articles already own rendering, native routes and Legal behavior.
+    # Reuse the small menu-dismissal helper instead of downloading the SPA bundle.
+    output, count = re.subn(r'<script\b[^>]*src="\.\./(?:script|mobile-navigation)\.js(?:\?[^\"]*)?"[^>]*></script>',
+                           f'<script defer="" src="../mobile-navigation.js?v={STARTUP_VERSION}"></script>', output)
+    if count != 1: raise ValueError('Expected one static-page navigation helper')
+    for name in ['copy-code', 'subscribe-fab']:
+        version = STARTUP_VERSION if name == 'subscribe-fab' else VERSION
+        output, count = re.subn(r'<script\b[^>]*src="\.\./' + name + r'\.js(?:\?[^\"]*)?"[^>]*></script>',
+                               f'<script src="../{name}.js?v={version}"></script>', output)
+        if count != 1: raise ValueError(f'Expected one {name} script')
     title_match = re.search(r'<h1\b[^>]*>(.*?)</h1>', output, re.S)
     if not title_match: raise ValueError('Missing tutorial title')
     title = re.sub('<[^>]*>', '', title_match.group(1))
@@ -147,7 +164,7 @@ def main(argv=None):
                 'window.OMICS_TUTORIAL_CODE = ' + json.dumps(metadata, ensure_ascii=False, separators=(',', ':')) + ';\n')
         changes = []
         outputs = {root / 'tutorial-code-data.js': data}
-        for page in sorted((root / 'tutorials').glob('*.html')): outputs[page] = render_page(page.read_text())
+        for page in sorted((root / 'tutorials').glob('*.html')): outputs[page] = render_page(page.read_text(), metadata, page.stem)
         for path, text in outputs.items():
             if not path.exists() or path.read_text() != text:
                 changes.append(str(path.relative_to(root)))

@@ -168,6 +168,8 @@ def verify_new_execution_asset(relative_path, data):
 
 def restore_overlapping_execution_asset(relative_path, data):
     """Return exact 122bd bytes for an overlapping asset only at its pinned digest."""
+    from startup_performance_baseline import restore_startup_performance_asset
+    data = restore_startup_performance_asset(relative_path, data)
     if relative_path == "sitemap.xml":
         # The newest review is a text-delta layer over the execution snapshot.
         # Compose it here only for its exact current whole-file pin; partial
