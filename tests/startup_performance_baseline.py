@@ -12,6 +12,7 @@ import re
 import subprocess
 
 ROOT = Path(__file__).resolve().parents[1]
+from editorial_review_baseline import normalize_editorial_review, normalize_editorial_review_bytes
 BASE_COMMIT = "93f06260550dbc91c0f020c24e1e2b00b7e017b5"
 FIXTURE_PATH = ROOT / "tests/fixtures/startup-performance-edits.json"
 # Set only after the deterministic fixture is generated and reviewed.
@@ -204,6 +205,7 @@ def normalize_startup_performance(relative_path, text):
     """Reverse only exact fixture-listed contextual changes; preserve unknown edits."""
     if not isinstance(text, str):
         raise TypeError("startup-performance text normalization requires decoded text")
+    text = normalize_editorial_review(relative_path, text)
     entry = startup_performance_fixture().get(relative_path)
     if entry is None or entry["kind"] != "text":
         return text
@@ -218,6 +220,7 @@ def restore_startup_performance_asset(relative_path, data):
     """Restore a listed asset only when its entire current SHA-256 matches."""
     if not isinstance(data, bytes):
         raise TypeError("startup-performance asset restoration requires bytes")
+    data = normalize_editorial_review_bytes(relative_path, data)
     entry = startup_performance_fixture().get(relative_path)
     if entry is None or entry["kind"] != "asset":
         return data

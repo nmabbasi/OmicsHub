@@ -30,6 +30,7 @@ from startup_performance_baseline import (
     startup_performance_fixture,
 )
 from startup_generated_asset_baseline import restore_startup_generated_asset
+from editorial_review_baseline import PUBLIC_PATHS as EDITORIAL_REVIEW_PATHS
 from start_here_desktop_baseline import (
     normalize_start_here_desktop_html,
     restore_start_here_desktop_asset,
@@ -37,49 +38,55 @@ from start_here_desktop_baseline import (
 
 
 TEST_INFRASTRUCTURE_PATHS = {
-    "tests/browser_navigation_performance.py",
-    "tests/browser_startup_performance.py",
-    "tests/browser_startup_preservation.py",
-    "tests/browser_tutorial_reader_ui.py",
-    "tests/browser_start_here_ui.py",
-    "tests/fixtures/navigation-performance-edits.json",
-    "tests/fixtures/startup-performance-edits.json",
-    "tests/generate_latest_review_fixture.py",
-    "tests/generate_startup_performance_fixture.py",
-    "tests/home_catalogue_baseline.py",
-    "tests/latest_review_baseline.py",
-    "tests/navigation_performance_baseline.py",
-    "tests/reader_text_colour_baseline.py",
-    "tests/start_here_baseline.py",
-    "tests/start_here_desktop_baseline.py",
-    "tests/r_first_revision_baseline.py",
-    "tests/test_latest_review_baseline.py",
-    "tests/test_home_catalogue_scope.py",
-    "tests/test_home_catalogue_ui.py",
-    "tests/test_navigation_performance_baseline.py",
-    "tests/test_remaining_reference_support.py",
-    "tests/test_reader_punctuation.py",
-    "tests/test_reader_text_colours.py",
-    "tests/test_sitewide_reference_fixes.py",
-    "tests/test_start_here_blue_learning.py",
-    "tests/test_start_here_desktop_baseline.py",
-    "tests/test_start_here_visual_polish.py",
-    "tests/test_start_here_hover.py",
-    "tests/test_start_here_ui.py",
-    "tests/test_text_alignment.py",
-    "tests/test_learning_promises.py",
-    "tests/test_startup_performance_baseline.py",
-    "tests/test_r_first_revision_baseline.py",
-    "tests/test_tutorial_execution_baseline.py",
-    "tests/test_tutorial_reader_ui.py",
-    "tests/test_tutorial_startup.py",
-    "tests/test_verified_analysis_figures.py",
-    "tests/test_code_tabs_digest_memoization.js",
-    "tests/test_reader_layout_batching.js",
-    "tests/startup_generated_asset_baseline.py",
-    "tests/tutorial_execution_baseline.py",
-    "tests/startup_performance_baseline.py",
+    'tests/browser_navigation_performance.py',
+    'tests/browser_start_here_ui.py',
+    'tests/browser_startup_performance.py',
+    'tests/browser_startup_preservation.py',
+    'tests/browser_tutorial_reader_ui.py',
+    'tests/editorial_review_baseline.py',
+    'tests/fixtures/editorial-review-edits.json',
+    'tests/fixtures/navigation-performance-edits.json',
+    'tests/fixtures/startup-performance-edits.json',
+    'tests/generate_latest_review_fixture.py',
+    'tests/generate_startup_performance_fixture.py',
+    'tests/home_catalogue_baseline.py',
+    'tests/latest_review_baseline.py',
+    'tests/navigation_performance_baseline.py',
+    'tests/r_first_revision_baseline.py',
+    'tests/reader_text_colour_baseline.py',
+    'tests/start_here_baseline.py',
+    'tests/start_here_desktop_baseline.py',
+    'tests/startup_generated_asset_baseline.py',
+    'tests/startup_performance_baseline.py',
+    'tests/test_code_tabs_digest_memoization.js',
+    'tests/test_editorial_review_baseline.py',
+    'tests/test_editorial_scope_fixes.py',
+    'tests/test_home_catalogue_scope.py',
+    'tests/test_home_catalogue_ui.py',
+    'tests/test_latest_review_baseline.py',
+    'tests/test_learning_promises.py',
+    'tests/test_navigation_performance_baseline.py',
+    'tests/test_r_first_revision_baseline.py',
+    'tests/test_reader_layout_batching.js',
+    'tests/test_reader_punctuation.py',
+    'tests/test_reader_text_colours.py',
+    'tests/test_remaining_reference_support.py',
+    'tests/test_revision_trajectory.py',
+    'tests/test_sitewide_reference_fixes.py',
+    'tests/test_start_here_blue_learning.py',
+    'tests/test_start_here_desktop_baseline.py',
+    'tests/test_start_here_hover.py',
+    'tests/test_start_here_ui.py',
+    'tests/test_start_here_visual_polish.py',
+    'tests/test_startup_performance_baseline.py',
+    'tests/test_text_alignment.py',
+    'tests/test_tutorial_execution_baseline.py',
+    'tests/test_tutorial_reader_ui.py',
+    'tests/test_tutorial_startup.py',
+    'tests/test_verified_analysis_figures.py',
+    'tests/tutorial_execution_baseline.py',
 }
+
 
 
 class ExecutableInlineScriptParser(HTMLParser):
@@ -198,6 +205,7 @@ class NavigationPerformanceBaselineTests(unittest.TestCase):
         changed = set(subprocess.check_output(
             ["git", "diff", "--name-only", BASE_COMMIT, "--"], cwd=ROOT, text=True
         ).splitlines())
+        changed -= EDITORIAL_REVIEW_PATHS - STARTUP_TUTORIAL_PATHS
         self.assertIn(WORKFLOW_PATH, changed)
         # Verify the two explicitly authorized Start Here edits before including
         # them in the exact public-path set; unrelated CSS/HTML remains rejected.

@@ -29,6 +29,11 @@ def load_redirects() -> tuple[dict[str, str], dict]:
     redirects = migration | manifest["historical_aliases"]
     if len(redirects) != len(migration) + len(manifest["historical_aliases"]):
         raise ValueError("Duplicate source URL in redirect manifest")
+    display_titles = manifest.get("display_titles", {})
+    if not isinstance(display_titles, dict) or set(display_titles) - set(redirects):
+        raise ValueError("Redirect display titles must name existing source URLs")
+    if any(not isinstance(title, str) or not title.strip() for title in display_titles.values()):
+        raise ValueError("Redirect display titles must be non-empty strings")
     return redirects, manifest
 
 
@@ -42,7 +47,7 @@ def canonical_url(target: str) -> str:
     return match.group(1)
 
 
-def render(source: str, target: str) -> str:
+def render(source: str, target: str, display_title: str | None = None) -> str:
     source_path = PurePosixPath(source)
     target_path = PurePosixPath(target)
     if not source_path.is_absolute() or source_path.parent != PurePosixPath("/"):
@@ -51,7 +56,7 @@ def render(source: str, target: str) -> str:
         raise ValueError(f"Target must be a relative tutorials/ route: {target}")
     canonical = html.escape(canonical_url(target), quote=True)
     href = html.escape(target, quote=True)
-    title = html.escape(source_path.stem.replace("-", " ").replace("_", " ").title())
+    title = html.escape(display_title or source_path.stem.replace("-", " ").replace("_", " ").title())
     return f'''<!doctype html>
 <html lang="en">
 <head>
@@ -81,7 +86,7 @@ def generate(check: bool = False) -> list[str]:
             raise ValueError(f"Redirect chain detected: {source} -> {target}")
         relative_path = source.lstrip("/")
         output = ROOT / relative_path
-        content = render(source, target)
+        content = render(source, target, manifest.get("display_titles", {}).get(source))
         if check:
             if not output.is_file() or output.read_text(encoding="utf-8") != content:
                 failed.append(relative_path)

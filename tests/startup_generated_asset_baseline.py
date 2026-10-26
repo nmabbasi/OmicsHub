@@ -8,6 +8,7 @@ three explicitly pinned historical bundles for their own legacy comparison.
 import hashlib
 from pathlib import Path
 import subprocess
+from editorial_review_baseline import normalize_editorial_review_bytes
 
 ROOT = Path(__file__).resolve().parents[1]
 PATH = "home-page.min.css"
@@ -37,6 +38,7 @@ def restore_startup_generated_asset(relative_path, data, historical_bundle):
     """
     if not isinstance(data, bytes):
         raise TypeError("startup-generated asset restoration requires bytes")
+    data = normalize_editorial_review_bytes(relative_path, data)
     if relative_path != PATH or hashlib.sha256(data).hexdigest() != STARTUP_GENERATED_SHA256:
         return data
     if historical_bundle not in HISTORICAL_BUNDLES:

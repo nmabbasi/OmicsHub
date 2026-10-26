@@ -6,6 +6,7 @@ import re
 import subprocess
 import unittest
 
+from editorial_review_baseline import normalize_editorial_review
 from start_here_desktop_baseline import (
     normalize_start_here_desktop_html,
     restore_start_here_desktop_asset,
@@ -99,10 +100,15 @@ class SitewideReferenceFixesTests(unittest.TestCase):
         count = 0
         for page in sorted((ROOT / 'tutorials').glob('*.html')):
             relative = page.relative_to(ROOT).as_posix()
-            before, after = baseline(relative), page.read_text(encoding='utf-8')
+            before = baseline(relative)
+            raw_after = page.read_text(encoding='utf-8')
+            after = normalize_editorial_review(relative, raw_after)
             code = lambda html: [unescape(re.sub('<[^>]+>', '', block)) for block in re.findall(r'<pre\b[^>]*>(.*?)</pre>', html, re.S)]
+            image_sources = lambda html: [attrs.get('src') for tag, attrs in Markup(html).tags if tag == 'img']
             with self.subTest(page=relative):
                 self.assertEqual(code(after), code(before), 'Reference review must not silently edit runnable code')
+                self.assertEqual(code(raw_after), code(before), 'Raw reviewed source must preserve runnable code')
+                self.assertEqual(image_sources(raw_after), image_sources(before), 'Reference review must preserve approved image sources')
                 self.assertEqual(re.findall(r'<img\b[^>]*>', after), re.findall(r'<img\b[^>]*>', before))
             count += 1
         self.assertEqual(count, 58)
