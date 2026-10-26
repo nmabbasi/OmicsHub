@@ -69,7 +69,7 @@ def main():
                       topIntegrated:!!document.querySelector('#reader-course-navigation .reader-sequence-footer #back-to-top'),
                       continuation:[...document.querySelectorAll('#reader-course-navigation a')].filter(a=>a.getClientRects().length).map(a=>a.getBoundingClientRect().height),
                       codeBg:document.querySelector('article pre')?getComputedStyle(document.querySelector('article pre')).backgroundColor:null,
-                      hero:(()=>{const e=document.querySelector('#tutorial-page .tutorial-hero-banner');if(!e)return null;const r=e.getBoundingClientRect(),a=document.querySelector('#tutorial-page article')?.getBoundingClientRect();return {x:r.x,right:r.right,width:r.width,articleWidth:a?.width??0};})()
+                      hero:(()=>{const e=document.querySelector('#tutorial-page .tutorial-hero-banner');if(!e)return null;const r=e.getBoundingClientRect(),a=document.querySelector('#tutorial-page article')?.getBoundingClientRect(),h=document.querySelector('header')?.getBoundingClientRect();return {x:r.x,right:r.right,y:r.y,width:r.width,articleWidth:a?.width??0,headerBottom:h?.bottom??0};})()
                     })''')
                     hashes = [hashlib.sha256(code.encode()).hexdigest() for code in data['blocks']]
                     # Tabs move whole branches but retain the original route order.
@@ -78,9 +78,13 @@ def main():
                     check(data['frames'] == len(spec['blocks']), f'{slug} missing/duplicate copy frames')
                     if slug == 'rna-seq-count-matrix-qc-cpm':
                         check(data['hero'] is not None, 'Count-Matrix intro hero is missing')
-                        check(data['hero']['x'] >= -1 and data['hero']['right'] <= width + 1, f'Count-Matrix hero exceeds viewport at {width}: {data["hero"]}')
+                        gutter = 16 if width <= 720 else 24
+                        check(abs(data['hero']['x'] - gutter) <= 2 and abs(data['hero']['right'] - (width - gutter)) <= 2, f'Count-Matrix hero does not fill content width at {width}: {data["hero"]}')
+                        expected_top_gap = 16 if width <= 720 else 24
+                        top_gap = data['hero']['y'] - data['hero']['headerBottom']
+                        check(abs(top_gap - expected_top_gap) <= 9, f'Count-Matrix hero is not directly below the header at {width}: {data["hero"]}')
                         if width == 1440:
-                            check(data['hero']['width'] >= data['hero']['articleWidth'] + 200, f'Count-Matrix hero is not wider than the article: {data["hero"]}')
+                            check(data['hero']['articleWidth'] < data['hero']['width'] - 400, f'Count-Matrix article body widened with the hero: {data["hero"]}')
                     check(data['groups'] == len(groups.get(slug, [])), f'{slug} unexpected grouping')
                     check(all(n == 1 for n in data['selected'] + data['visible']), f'{slug} invalid tab visibility')
                     check(all(languages == ['r', 'python'] for languages in data['tabLanguages']), f'{slug} tabs are not physically R-first')
