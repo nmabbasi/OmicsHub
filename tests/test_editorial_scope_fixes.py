@@ -34,6 +34,23 @@ RENAMED = {
             "tutorials/ai-prompt-engineering-seurat.html",
         ),
     },
+    "autonomous-research-orchestrator": {
+        "title": "Bounded Count-Matrix QC and CPM Workflows",
+        "description": (
+            "Run deterministic, local RNA-seq count-matrix QC and optional CPM workflows in R or Python, "
+            "with synthetic fixtures, provenance records, and human review; the separate optional Python "
+            "provider demo is not needed for the core exercises."
+        ),
+    },
+    "modern-bioinformatics-methods-2026": {
+        "title": "Modern Bioinformatics Method Decision Guide",
+        "description": (
+            "A conceptual decision guide for matching bioinformatics methods to study questions, data inputs, "
+            "assumptions, and validation checks; it compares single-cell, spatial, isoform, trajectory, and "
+            "donor-aware approaches without a dataset or runnable pipeline."
+        ),
+        "check_neighbors": False,
+    },
 }
 
 
@@ -111,10 +128,16 @@ class EditorialScopeFixTests(unittest.TestCase):
                 for key in ("description", "og:description", "twitter:description"):
                     self.assertEqual(p.metas.get(key), desc)
                 schema = [json.loads(item) for item in p.jsonld]
-                article = next(item for item in schema if item.get("@type") == "TechArticle")
+                article = next(item for item in schema if item.get("@type") in {"TechArticle", "Article"})
                 self.assertEqual(article["headline"], title)
-                self.assertEqual(article["name"], title)
+                if "name" in article:
+                    self.assertEqual(article["name"], title)
                 self.assertEqual(article["description"], desc)
+                if slug == "autonomous-research-orchestrator":
+                    keywords = p.metas.get("keywords", "")
+                    self.assertIn("count matrix quality control", keywords)
+                    self.assertNotIn("AI planner", keywords)
+                    self.assertIn("optional AI provider demo", keywords)
                 card_start = catalogue.index(f'data-search="{slug} ')
                 card_start = catalogue.rfind("<article ", 0, card_start)
                 card_end = catalogue.index("</article>", card_start) + len("</article>")
@@ -125,8 +148,35 @@ class EditorialScopeFixTests(unittest.TestCase):
                 self.assertIn(desc, card)
                 self.assertIn(f'href="tutorials/{slug}.html"', card)
 
+    def test_autonomous_root_redirect_uses_the_corrected_title_and_keeps_its_destination(self):
+        text = (ROOT / "autonomous-research-orchestrator.html").read_text(encoding="utf-8")
+        self.assertIn("<title>Bounded Count-Matrix QC and CPM Workflows has moved", text)
+        self.assertIn("Continue to the current tutorial: Bounded Count-Matrix QC and CPM Workflows", text)
+        self.assertIn('url=tutorials/autonomous-research-orchestrator.html', text)
+        self.assertIn('rel="canonical" href="https://theomicshub.com/tutorials/autonomous-research-orchestrator.html"', text)
+
+    def test_method_guide_rows_link_to_existing_tutorials_and_official_sources(self):
+        text = (ROOT / "tutorials/modern-bioinformatics-methods-2026.html").read_text(encoding="utf-8")
+        for target in (
+            'href="cell-type-annotation-methods.html"',
+            'href="cite-seq-wnn-multiomics.html"',
+            'href="spatial-transcriptomics-r-python.html"',
+            'href="long-read-pacbio-nanopore.html"',
+            'href="scrna-seq-trajectory-inference.html"',
+            'href="transcriptomics-differential-expression.html"',
+            'href="https://www.celltypist.org/"',
+            'href="https://satijalab.org/seurat/articles/seurat5_integration_bridge"',
+            'href="https://squidpy.readthedocs.io/en/latest/api/squidpy.gr.nhood_enrichment.html"',
+            'href="https://scvelo.readthedocs.io/en/stable/"',
+            'href="https://pydeseq2.readthedocs.io/en/latest/auto_examples/plot_minimal_pydeseq2_pipeline.html"',
+        ):
+            with self.subTest(target=target):
+                self.assertIn(target, text)
+
     def test_neighbor_navigation_uses_renamed_titles(self):
         for slug, spec in RENAMED.items():
+            if not spec.get("check_neighbors", True):
+                continue
             title = spec["title"]
             escaped_title = title.replace("&", "&amp;")
             target = f"{slug}.html"
