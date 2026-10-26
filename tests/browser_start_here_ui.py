@@ -73,8 +73,13 @@ def main():
                   return {viewport:innerWidth,scrollWidth:document.documentElement.scrollWidth,
                     heroBounds:{left:heroRect.left,right:heroRect.right,width:heroRect.width},
                     title:document.title,h1:h1?.innerText,heroBackground:getComputedStyle(hero).backgroundColor,
-                    images,cards,steps:main.querySelectorAll('a.sh-step').length,
-                    orbit:main.querySelectorAll('.sh-orbit,[data-sh-step]').length,
+                    images,cards,steps:main.querySelectorAll("a.sh-step").length,
+                    setupCards:main.querySelectorAll(".sh-ready-card").length,
+                    setupDisclosures:main.querySelectorAll("#sh-curriculum details.sh-ready-more").length,
+                    routeTracks:main.querySelectorAll(".sh-track-card").length,
+                    routeStages:main.querySelectorAll(".sh-track-steps li").length,
+                    hpcLinks:main.querySelectorAll(".sh-hpc-steps a").length,
+                    orbit:main.querySelectorAll(".sh-orbit,[data-sh-step]").length,
                     words:main.innerText.trim().split(/\\s+/).length};
                 }""")
                 check(data["scrollWidth"] <= width + 1, f"{width}px: horizontal overflow ({data['scrollWidth']})")
@@ -85,6 +90,9 @@ def main():
                 check(len(data["cards"]) == 4 and all(card["visible"] for card in data["cards"]), f"{width}px: route cards missing")
                 check(all(card["left"] >= -1 and card["right"] <= width + 1 for card in data["cards"]), f"{width}px: route card escapes viewport")
                 check(data["steps"] == 4, f"{width}px: foundation steps missing")
+                check(data["setupCards"] == 3 and data["setupDisclosures"] == 3, f"{width}px: setup cards/disclosures missing")
+                check(data["routeTracks"] == 3 and data["routeStages"] == 14, f"{width}px: study tracks/stages missing")
+                check(data["hpcLinks"] == 4, f"{width}px: optional HPC route incomplete")
                 check(data["orbit"] == 0, f"{width}px: circular path markup returned")
                 check("Start Here" in data["title"], f"{width}px: page title missing")
                 if width in (1440, 390):
@@ -110,7 +118,16 @@ def main():
             check(page.locator("a.sh-route-card").count() == 4, "No-JS route cards are unavailable")
             check(page.locator('a.sh-btn[href="#sh-foundation"]').get_attribute("href") == "#sh-foundation", "No-JS native learning path link missing")
             check(page.locator(".sh-orbit,[data-sh-step]").count() == 0, "No-JS circular path markup returned")
-            results["interactions"].append("native no-JS content and image links")
+            check(page.locator("#sh-curriculum details.sh-ready-more").count() == 3, "No-JS setup disclosures are missing")
+            for disclosure in page.locator("#sh-curriculum details.sh-ready-more").all():
+                disclosure.locator("summary").click()
+                check(disclosure.locator("a").count() > 0 or disclosure.locator(".sh-ready-detail").is_visible(), "No-JS setup detail is inaccessible")
+            route_disclosures = page.locator("#sh-curriculum details.sh-track-details")
+            check(route_disclosures.count() == 3, "No-JS study route disclosures are missing")
+            for disclosure in route_disclosures.all():
+                disclosure.locator("summary").click()
+                check(disclosure.locator("a").count() > 0 and disclosure.locator("a").first.is_visible(), "No-JS study route links are inaccessible")
+            results["interactions"].append("native no-JS content, setup disclosures, route disclosures, and image links")
             context.close()
             browser.close()
         check(not results["errors"], str(results["errors"]))

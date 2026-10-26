@@ -10,7 +10,7 @@ from reader_text_colour_baseline import (
 )
 from r_first_revision_baseline import R_FIRST_ASSET_PATHS, restore_r_first_asset
 from latest_review_baseline import restore_latest_review_asset
-from start_here_desktop_baseline import DESKTOP_CSS_HREF, expected_restored_css
+from start_here_desktop_baseline import DESKTOP_CSS_HREF, restore_start_here_desktop_asset
 
 ROOT = Path(__file__).resolve().parents[1]
 HISTORICAL = "a4b6ead8251e0a3abcb748061a40155ae9523a82"
@@ -62,6 +62,12 @@ def main(markup):
     return match.group()
 
 
+def curriculum_region(markup):
+    start = markup.index("<!-- ── CURRICULUM ROADMAP & PREREQUISITES ── -->")
+    end = markup.index("<!-- ── CATALOGUE ── -->", start)
+    return markup[start:end]
+
+
 class StartHereImageLedTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -74,6 +80,11 @@ class StartHereImageLedTests(unittest.TestCase):
 
     def test_only_the_reviewed_start_here_design_changes_in_the_current_page_shell(self):
         expected = self.base.replace(main(self.base), self.historical_main, 1)
+        expected = expected.replace(
+            curriculum_region(self.historical_main),
+            curriculum_region(self.current_main),
+            1,
+        )
         old_css = re.findall(r'<link\b[^>]*href="(start-here\.css\?v=[^"]+)"[^>]*>', expected)
         self.assertEqual(len(old_css), 1)
         expected = expected.replace(old_css[0], DESKTOP_CSS_HREF, 1)
@@ -83,8 +94,16 @@ class StartHereImageLedTests(unittest.TestCase):
         )
         self.assertEqual(removed, 1)
         self.assertEqual(self.source, expected)
-        self.assertEqual(self.current_main, self.historical_main)
-        self.assertEqual(self.css, expected_restored_css())
+        unchanged = self.current_main.replace(
+            curriculum_region(self.current_main),
+            curriculum_region(self.historical_main),
+            1,
+        )
+        self.assertEqual(unchanged, self.historical_main)
+        self.assertEqual(
+            restore_start_here_desktop_asset("start-here.css", self.css),
+            git_bytes(PR_BASE, "start-here.css"),
+        )
         self.assertEqual(
             (ROOT / "start-here.js").read_bytes(),
             git_bytes(PR_BASE, "start-here.js"),

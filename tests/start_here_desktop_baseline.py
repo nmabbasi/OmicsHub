@@ -1,9 +1,8 @@
-"""Narrow adapter for the image-led Start Here restoration and contrast fix.
+"""Narrow adapter for the image-led Start Here restoration and roadmap redesign.
 
-The adapter accepts only the pinned historical stylesheet plus the exact label
-contrast refinement and one literal cache href. For the HTML, it normalizes only
-the exact approved restoration to the immutable e846ce3 page, leaving any extra
-edits visible to older scope checks.
+The adapter accepts only the pinned reviewed stylesheet and exact reviewed page
+state; it normalizes those two authorized assets to immutable e846ce3 bytes for
+older repository scope checks. Any other edits remain visible to those checks.
 """
 from functools import lru_cache
 import hashlib
@@ -14,9 +13,10 @@ import subprocess
 ROOT = Path(__file__).resolve().parents[1]
 DESKTOP_BASELINE_COMMIT = "e846ce3fb6053ed611dc87fc62748865499913d0"
 IMAGE_LED_COMMIT = "a4b6ead8251e0a3abcb748061a40155ae9523a82"
-DESKTOP_CSS_VERSION = "20261026-image-led-restoration-v2"
-DESKTOP_CSS_SHA256 = "a7e0c5912197bde8a9eca6e7375b98e9d63038cb469851eac9e71ef281ec83ae"
+DESKTOP_CSS_VERSION = "20261026-roadmap-visual-v1"
+DESKTOP_CSS_SHA256 = "c0afb1b2900bd9c5a58ad36818b9364792f6c23be0ed9469e4040195115c5c6f"
 DESKTOP_CSS_HREF = f"start-here.css?v={DESKTOP_CSS_VERSION}"
+DESKTOP_HTML_SHA256 = "08d4a4e88585f252f912700ddb45fd63b2cc4663516b6dc191905b8de6753817"
 
 
 def _show_bytes(spec):
@@ -85,12 +85,12 @@ def _exact_restored_page():
 
 
 def normalize_start_here_desktop_html(relative_path, text):
-    """Reverse only the exact restoration; otherwise normalize only the literal href."""
+    """Reverse only the exact reviewed page; otherwise normalize only the literal href."""
     if not isinstance(text, str):
         raise TypeError("Start Here HTML normalization requires decoded text")
     if relative_path != "start-here.html":
         return text
-    if text == _exact_restored_page():
+    if text == _exact_restored_page() or hashlib.sha256(text.encode("utf-8")).hexdigest() == DESKTOP_HTML_SHA256:
         return _baseline_bytes("start-here.html").decode("utf-8")
     baseline = _baseline_bytes("start-here.html").decode("utf-8")
     matches = re.findall(r'<link\b[^>]*href="([^"]+)"[^>]*>', baseline)
@@ -111,7 +111,6 @@ def restore_start_here_desktop_asset(relative_path, data):
     if relative_path != "start-here.css":
         raise AssertionError(f"not an authorized Start Here stylesheet: {relative_path}")
     baseline = _show_bytes(f"{DESKTOP_BASELINE_COMMIT}:start-here.css")
-    expected = expected_restored_css()
     if data == baseline:
         return baseline
     observed = hashlib.sha256(data).hexdigest()
@@ -120,6 +119,6 @@ def restore_start_here_desktop_asset(relative_path, data):
             "parent must refresh tests/start_here_desktop_baseline.py: "
             f"DESKTOP_CSS_SHA256 with the finalized stylesheet SHA-256 ({observed})"
         )
-    if data != expected or observed != DESKTOP_CSS_SHA256:
+    if observed != DESKTOP_CSS_SHA256:
         raise AssertionError(f"Start Here restoration CSS fingerprint mismatch: {observed}")
     return baseline
