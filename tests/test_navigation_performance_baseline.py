@@ -45,13 +45,22 @@ from optional_report_baseline import (
     OPTIONAL_REPORT_PATHS,
     verify_optional_report_file,
 )
+from core_tutorial_corrections_baseline import (
+    CORE_TUTORIAL_CORRECTION_PATHS,
+    PR37_BASE_COMMIT,
+    normalize_core_tutorial_corrections,
+)
 
 
 TEST_INFRASTRUCTURE_PATHS = {
     'tests/coffee_removal_baseline.py',
+    'tests/core_tutorial_corrections_baseline.py',
     'tests/optional_report_baseline.py',
     'tests/fixtures/coffee-removal-review.json',
     'tests/test_coffee_removal_baseline.py',
+    'tests/test_content_modification_dates.py',
+    'tests/test_core_tutorial_corrections.py',
+    'tests/test_core_tutorial_corrections_baseline.py',
     'tests/fixtures/gget-mobile-baseline.json',
     'tests/gget_mobile_baseline.py',
     'tests/test_gget_mobile_baseline.py',
@@ -85,6 +94,7 @@ TEST_INFRASTRUCTURE_PATHS = {
     'tests/test_learning_promises.py',
     'tests/test_navigation_performance_baseline.py',
     'tests/test_r_first_revision_baseline.py',
+    'tests/test_r_first_foundation_utilities.py',
     'tests/test_reader_layout_batching.js',
     'tests/test_beginner_walkthrough_scope.py',
     'tests/test_reader_punctuation.py',
@@ -108,6 +118,7 @@ TEST_INFRASTRUCTURE_PATHS = {
     'tests/test_ubuntu_tidyverse_scope.py',
     'tests/test_verified_analysis_figures.py',
     'tests/tutorial_execution_baseline.py',
+    'tests/tutorial_ui_baseline.py',
 }
 
 
@@ -232,6 +243,14 @@ class NavigationPerformanceBaselineTests(unittest.TestCase):
             ["git", "diff", "--name-only", BASE_COMMIT, "--"], cwd=ROOT, text=True
         ).splitlines())
         changed -= EDITORIAL_REVIEW_PATHS - STARTUP_TUTORIAL_PATHS
+        for path in sorted(changed & CORE_TUTORIAL_CORRECTION_PATHS):
+            current = (ROOT / path).read_bytes()
+            self.assertEqual(
+                normalize_core_tutorial_corrections(path, current),
+                subprocess.check_output(
+                    ["git", "show", f"{PR37_BASE_COMMIT}:{path}"], cwd=ROOT
+                ),
+            )
         self.assertIn(WORKFLOW_PATH, changed)
         # Exclude only new coffee-only paths after whole-file digest validation.
         coffee = coffee_removal_fixture()
@@ -269,6 +288,7 @@ class NavigationPerformanceBaselineTests(unittest.TestCase):
             changed - TEST_INFRASTRUCTURE_PATHS - {WORKFLOW_PATH},
             STARTUP_TUTORIAL_PATHS | STARTUP_ASSET_PATHS
             | {"home-page.min.css", "start-here.css", "start-here.html", "tutorial-library.css", "home-catalogue.css"}
+            | CORE_TUTORIAL_CORRECTION_PATHS
             | OPTIONAL_REPORT_PATHS,
         )
 
@@ -278,6 +298,16 @@ class NavigationPerformanceBaselineTests(unittest.TestCase):
         ).splitlines()
         allowed = STARTUP_TUTORIAL_PATHS | STARTUP_ASSET_PATHS | {WORKFLOW_PATH}
         for path in tracked:
+            if path in CORE_TUTORIAL_CORRECTION_PATHS:
+                with self.subTest(path=path):
+                    current = normalize_core_tutorial_corrections(
+                        path, (ROOT / path).read_bytes()
+                    )
+                    expected = subprocess.check_output(
+                        ["git", "show", f"{PR37_BASE_COMMIT}:{path}"], cwd=ROOT
+                    )
+                    self.assertEqual(current, expected)
+                continue
             if path in OPTIONAL_REPORT_PATHS:
                 verify_optional_report_file(path, (ROOT / path).read_bytes())
                 continue

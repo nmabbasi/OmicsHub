@@ -48,6 +48,11 @@ MODIFIED = {
 }
 TIDYVERSE_TARGET = "tutorials/r-tidyverse-fundamentals.html"
 TARGET_MODIFIED_DATE = "2026-10-24"
+# The trajectory lesson has a separately reviewed current date after the
+# historical R-first snapshot; validate that date directly rather than undoing it.
+CURRENT_DATE_OVERRIDES = {
+    "tutorials/scrna-seq-trajectory-inference.html": ("2026-10-25", "25 October 2026"),
+}
 # These earlier PR changes only propagate adjacent-lesson title updates;
 # they remain navigation-only, unlike the six newly revised lessons above.
 NAVIGATION_ONLY = (
@@ -63,16 +68,23 @@ class ContentModificationDateTests(unittest.TestCase):
         # Exact current-R asset restoration exposes the pre-R-first sitemap to
         # this older historical date suite; the R-first target dates are checked
         # directly in test_r_first_revision_baseline.
-        current_sitemap = restore_r_first_asset("sitemap.xml", (ROOT / "sitemap.xml").read_bytes())
-        root = ET.fromstring(current_sitemap)
-        self.sitemap_dates = {
-            entry.findtext("s:loc", namespaces=NS): entry.findtext("s:lastmod", namespaces=NS)
-            for entry in root.findall("s:url", NS)
-        }
+        raw_sitemap = (ROOT / "sitemap.xml").read_bytes()
+
+        def dates(data):
+            root = ET.fromstring(data)
+            return {
+                entry.findtext("s:loc", namespaces=NS): entry.findtext("s:lastmod", namespaces=NS)
+                for entry in root.findall("s:url", NS)
+            }
+
+        self.current_sitemap_dates = dates(raw_sitemap)
+        self.sitemap_dates = dates(restore_r_first_asset("sitemap.xml", raw_sitemap))
 
     def entity(self, relative_path):
         page = ROOT / relative_path
-        text = normalize_r_first_revision(relative_path, page.read_text(encoding="utf-8"))
+        text = page.read_text(encoding="utf-8")
+        if relative_path not in CURRENT_DATE_OVERRIDES:
+            text = normalize_r_first_revision(relative_path, text)
         blocks = SCHEMA.findall(text)
         self.assertEqual(len(blocks), 1, relative_path)
         return json.loads(blocks[0])
@@ -104,28 +116,37 @@ class ContentModificationDateTests(unittest.TestCase):
                         SCHEMA.findall(advanced_published_bytes(relative_path).decode("utf-8"))[0]
                     )
                     published = original["datePublished"]
-                modified = original["dateModified"] if r_first else (
-                    resource_dates[relative_path]["date_modified_approved"]
-                    if relative_path in resource_dates
-                    else TARGET_MODIFIED_DATE if relative_path == TIDYVERSE_TARGET
-                    else advanced_dates[relative_path]["date_modified_approved"]
-                    if relative_path in advanced_article_paths()
-                    else "2026-10-23"
-                )
+                if relative_path in CURRENT_DATE_OVERRIDES:
+                    modified = CURRENT_DATE_OVERRIDES[relative_path][0]
+                elif r_first:
+                    modified = original["dateModified"]
+                elif relative_path in resource_dates:
+                    modified = resource_dates[relative_path]["date_modified_approved"]
+                elif relative_path == TIDYVERSE_TARGET:
+                    modified = TARGET_MODIFIED_DATE
+                elif relative_path in advanced_article_paths():
+                    modified = advanced_dates[relative_path]["date_modified_approved"]
+                else:
+                    modified = "2026-10-23"
                 self.assertEqual(entity["datePublished"], published)
                 self.assertEqual(entity["dateModified"], modified)
-                page_html = normalize_r_first_revision(
-                    relative_path, (ROOT / relative_path).read_text(encoding="utf-8")
-                )
+                page_html = (ROOT / relative_path).read_text(encoding="utf-8")
+                if relative_path not in CURRENT_DATE_OVERRIDES:
+                    page_html = normalize_r_first_revision(relative_path, page_html)
                 visible_dates = re.findall(
                     r"Updated\s+(\d{1,2} [A-Za-z]+ \d{4})", page_html
                 )
                 if r_first:
-                    old_html = pre_r_first_bytes(relative_path).decode("utf-8")
-                    self.assertEqual(
-                        visible_dates,
-                        re.findall(r"Updated\s+(\d{1,2} [A-Za-z]+ \d{4})", old_html),
-                    )
+                    if relative_path in CURRENT_DATE_OVERRIDES:
+                        self.assertEqual(
+                            visible_dates, [CURRENT_DATE_OVERRIDES[relative_path][1]]
+                        )
+                    else:
+                        old_html = pre_r_first_bytes(relative_path).decode("utf-8")
+                        self.assertEqual(
+                            visible_dates,
+                            re.findall(r"Updated\s+(\d{1,2} [A-Za-z]+ \d{4})", old_html),
+                        )
                 elif relative_path in resource_dates:
                     approved_visible = resource_dates[relative_path]["visible_updated_approved"]
                     self.assertEqual(
@@ -143,9 +164,12 @@ class ContentModificationDateTests(unittest.TestCase):
                         datetime.strptime(visible_date, "%d %B %Y").date().isoformat(),
                         modified,
                     )
-                self.assertEqual(
-                    self.sitemap_dates[SITE + relative_path], modified
+                sitemap_dates = (
+                    self.current_sitemap_dates
+                    if relative_path in CURRENT_DATE_OVERRIDES
+                    else self.sitemap_dates
                 )
+                self.assertEqual(sitemap_dates[SITE + relative_path], modified)
 
     def test_catalogue_about_and_beginner_path_dates_reflect_content_revision(self):
         for relative_path in ("about.html", "tutorials.html"):

@@ -13,6 +13,7 @@ from start_here_desktop_baseline import (
     restore_start_here_desktop_asset,
 )
 from home_catalogue_banner_baseline import restore_home_catalogue_banner_asset
+from core_tutorial_corrections_baseline import normalize_core_tutorial_corrections
 
 ROOT = Path(__file__).resolve().parents[1]
 BASELINE = '36bc46d'
@@ -114,7 +115,11 @@ class SitewideReferenceFixesTests(unittest.TestCase):
             image_sources = lambda html: [attrs.get('src') for tag, attrs in Markup(html).tags if tag == 'img']
             with self.subTest(page=relative):
                 self.assertEqual(code(after), code(before), 'Reference review must not silently edit runnable code')
-                self.assertEqual(code(raw_after), code(before), 'Raw reviewed source must preserve runnable code')
+                normalized_raw = normalize_core_tutorial_corrections(relative, raw_after)
+                self.assertEqual(
+                    code(normalized_raw), code(before),
+                    'Raw reviewed source must preserve runnable code outside exact PR #37 corrections',
+                )
                 self.assertEqual(image_sources(raw_after), image_sources(before), 'Reference review must preserve approved image sources')
                 self.assertEqual(re.findall(r'<img\b[^>]*>', after), re.findall(r'<img\b[^>]*>', before))
             count += 1
