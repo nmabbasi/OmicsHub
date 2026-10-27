@@ -18,6 +18,7 @@ from reader_text_colour_baseline import (
 from r_first_revision_baseline import R_FIRST_ASSET_PATHS, restore_r_first_asset
 from latest_review_baseline import normalize_latest_review, restore_latest_review_asset
 from startup_generated_asset_baseline import restore_startup_generated_asset
+from core_tutorial_corrections_baseline import normalize_core_tutorial_corrections
 
 ROOT = Path(__file__).resolve().parents[1]
 HOME_CATALOGUE_BASELINE = "fa26faa8d20a31de1211652e8ebffcf99534b9a6"
@@ -120,6 +121,7 @@ def normalize_home_catalogue(relative_path, text):
     """Reverse only exact frozen chunks; unknown page edits remain visible."""
     if not isinstance(text, str):
         raise TypeError("home-catalogue normalization requires decoded text")
+    text = normalize_core_tutorial_corrections(relative_path, text)
     text = restore_startup_generated_asset(
         relative_path, text.encode("utf-8"), "home-catalogue"
     ).decode("utf-8")
@@ -180,6 +182,7 @@ def normalize_home_catalogue(relative_path, text):
 def verify_home_catalogue_file(relative_path, data):
     """Verify a feature asset only when its exact path has a complete hash pin."""
     original_data = data
+    data = normalize_core_tutorial_corrections(relative_path, data)
     data = restore_startup_generated_asset(relative_path, data, "home-catalogue")
     data = restore_latest_review_asset(relative_path, data)
     if relative_path.endswith(".html"):
