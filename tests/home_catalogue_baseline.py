@@ -18,6 +18,7 @@ from reader_text_colour_baseline import (
 from r_first_revision_baseline import R_FIRST_ASSET_PATHS, restore_r_first_asset
 from latest_review_baseline import normalize_latest_review, restore_latest_review_asset
 from startup_generated_asset_baseline import restore_startup_generated_asset
+from home_catalogue_banner_baseline import restore_home_catalogue_banner_asset
 
 ROOT = Path(__file__).resolve().parents[1]
 HOME_CATALOGUE_BASELINE = "fa26faa8d20a31de1211652e8ebffcf99534b9a6"
@@ -131,6 +132,8 @@ def normalize_home_catalogue(relative_path, text):
     text = normalize_reader_text(relative_path, text)
     if relative_path in R_FIRST_ASSET_PATHS:
         text = restore_r_first_asset(relative_path, text.encode("utf-8")).decode("utf-8")
+    if relative_path == "home-catalogue.css":
+        text = restore_home_catalogue_banner_asset(relative_path, text.encode("utf-8")).decode("utf-8")
     if (relative_path in {"home-page.min.css", "home-catalogue.css", "style.css",
                           ".github/workflows/tutorial-review.yml", ".github/workflows/static.yml"}
             and hashlib.sha256(text.encode("utf-8")).hexdigest() == READER_TEXT_ASSET_SHA256[relative_path]):
@@ -180,6 +183,8 @@ def normalize_home_catalogue(relative_path, text):
 def verify_home_catalogue_file(relative_path, data):
     """Verify a feature asset only when its exact path has a complete hash pin."""
     original_data = data
+    if relative_path == "home-catalogue.css":
+        data = restore_home_catalogue_banner_asset(relative_path, data)
     data = restore_startup_generated_asset(relative_path, data, "home-catalogue")
     data = restore_latest_review_asset(relative_path, data)
     if relative_path.endswith(".html"):

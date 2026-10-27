@@ -8,12 +8,8 @@
 
   async function fingerprint(text) {
     if (!window.crypto?.subtle || !window.TextEncoder) return null;
-    try {
-      const digest = crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
-      const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('digest timeout')), 3000));
-      const bytes = await Promise.race([digest, timeout]);
-      return Array.from(new Uint8Array(bytes), byte => byte.toString(16).padStart(2, '0')).join('');
-    } catch (_) { return null; }
+    const bytes = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+    return Array.from(new Uint8Array(bytes), byte => byte.toString(16).padStart(2, '0')).join('');
   }
 
   function validGroupRanges(groups, nodes) {

@@ -34,6 +34,7 @@ from start_here_desktop_baseline import (
     normalize_start_here_desktop_html,
     restore_start_here_desktop_asset,
 )
+from home_catalogue_banner_baseline import restore_home_catalogue_banner_asset
 from coffee_removal_baseline import coffee_removal_fixture, restore_coffee_removal_bytes
 from optional_report_baseline import (
     OPTIONAL_REPORT_PATHS,
@@ -81,6 +82,7 @@ TEST_INFRASTRUCTURE_PATHS = {
     'tests/fixtures/startup-performance-edits.json',
     'tests/generate_latest_review_fixture.py',
     'tests/generate_startup_performance_fixture.py',
+    'tests/home_catalogue_banner_baseline.py',
     'tests/home_catalogue_baseline.py',
     'tests/latest_review_baseline.py',
     'tests/navigation_performance_baseline.py',
@@ -258,13 +260,17 @@ class RemainingReferenceSupportTests(unittest.TestCase):
         for path in changed & (
             NAVIGATION_PERFORMANCE_PATHS | STARTUP_TUTORIAL_PATHS
             | STARTUP_ASSET_PATHS | EDITORIAL_PUBLIC_PATHS
-            | (set(coffee) - EXPECTED_PUBLIC_PATHS) | {"home-page.min.css"}
+            | (set(coffee) - EXPECTED_PUBLIC_PATHS) | {"home-page.min.css", "home-catalogue.css"}
         ):
             if path in STARTUP_ASSET_PATHS:
                 restored = restore_startup_performance_asset(path, (ROOT / path).read_bytes())
             elif path == "home-page.min.css":
                 restored = restore_startup_generated_asset(
                     path, (ROOT / path).read_bytes(), "main"
+                )
+            elif path == "home-catalogue.css":
+                restored = restore_home_catalogue_banner_asset(
+                    path, (ROOT / path).read_bytes()
                 )
             else:
                 restored = current_text(path).encode("utf-8")
@@ -314,6 +320,8 @@ class RemainingReferenceSupportTests(unittest.TestCase):
                 data = (ROOT / path).read_bytes()
                 if path == "start-here.css":
                     data = restore_start_here_desktop_asset(path, data)
+                elif path == "home-catalogue.css":
+                    data = restore_home_catalogue_banner_asset(path, data)
                 elif path == "start-here.html":
                     data = normalize_start_here_desktop_html(
                         path, data.decode("utf-8")

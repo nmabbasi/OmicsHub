@@ -35,6 +35,7 @@ from start_here_desktop_baseline import (
     normalize_start_here_desktop_html,
     restore_start_here_desktop_asset,
 )
+from home_catalogue_banner_baseline import restore_home_catalogue_banner_asset
 from coffee_removal_baseline import (
     coffee_removal_fixture,
     restore_coffee_removal_bytes,
@@ -65,6 +66,7 @@ TEST_INFRASTRUCTURE_PATHS = {
     'tests/fixtures/startup-performance-edits.json',
     'tests/generate_latest_review_fixture.py',
     'tests/generate_startup_performance_fixture.py',
+    'tests/home_catalogue_banner_baseline.py',
     'tests/home_catalogue_baseline.py',
     'tests/latest_review_baseline.py',
     'tests/navigation_performance_baseline.py',
@@ -266,7 +268,7 @@ class NavigationPerformanceBaselineTests(unittest.TestCase):
         self.assertEqual(
             changed - TEST_INFRASTRUCTURE_PATHS - {WORKFLOW_PATH},
             STARTUP_TUTORIAL_PATHS | STARTUP_ASSET_PATHS
-            | {"home-page.min.css", "start-here.css", "start-here.html", "tutorial-library.css"}
+            | {"home-page.min.css", "start-here.css", "start-here.html", "tutorial-library.css", "home-catalogue.css"}
             | OPTIONAL_REPORT_PATHS,
         )
 
@@ -291,6 +293,8 @@ class NavigationPerformanceBaselineTests(unittest.TestCase):
                 current = (ROOT / path).read_bytes()
                 if path == "start-here.css":
                     current = restore_start_here_desktop_asset(path, current)
+                elif path == "home-catalogue.css":
+                    current = restore_home_catalogue_banner_asset(path, current)
                 elif path == "start-here.html":
                     current = normalize_start_here_desktop_html(
                         path, current.decode("utf-8")

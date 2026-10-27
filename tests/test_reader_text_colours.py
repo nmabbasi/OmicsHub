@@ -19,6 +19,7 @@ from latest_review_baseline import normalize_latest_review, restore_latest_revie
 from start_here_desktop_baseline import (
     normalize_start_here_desktop_html, restore_start_here_desktop_asset,
 )
+from home_catalogue_banner_baseline import restore_home_catalogue_banner_asset
 
 ROOT = Path(__file__).resolve().parents[1]
 CSS_CHANGES = [
@@ -133,6 +134,8 @@ class ReaderTextColourTests(unittest.TestCase):
                 current = restore_latest_review_asset(path, (ROOT / path).read_bytes())
                 if path == "start-here.css":
                     current = restore_start_here_desktop_asset(path, current)
+                elif path == "home-catalogue.css":
+                    current = restore_home_catalogue_banner_asset(path, current)
                 if path in R_FIRST_ASSET_PATHS:
                     current = restore_r_first_asset(path, current)
                 self.assertEqual(normalized[path].encode(), current)

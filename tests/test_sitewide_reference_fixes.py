@@ -12,6 +12,7 @@ from start_here_desktop_baseline import (
     normalize_start_here_desktop_html,
     restore_start_here_desktop_asset,
 )
+from home_catalogue_banner_baseline import restore_home_catalogue_banner_asset
 
 ROOT = Path(__file__).resolve().parents[1]
 BASELINE = '36bc46d'
@@ -94,6 +95,10 @@ class SitewideReferenceFixesTests(unittest.TestCase):
                     current = normalize_start_here_desktop_html(path, current)
                 elif path == 'start-here.css':
                     current = restore_start_here_desktop_asset(
+                        path, current.encode('utf-8')
+                    ).decode('utf-8')
+                elif path == 'home-catalogue.css':
+                    current = restore_home_catalogue_banner_asset(
                         path, current.encode('utf-8')
                     ).decode('utf-8')
                 self.assertEqual(current, baseline(path))

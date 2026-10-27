@@ -12,6 +12,7 @@ import subprocess
 from start_here_desktop_baseline import (
     normalize_start_here_desktop_html, restore_start_here_desktop_asset,
 )
+from home_catalogue_banner_baseline import restore_home_catalogue_banner_asset
 
 ROOT = Path(__file__).resolve().parents[1]
 from r_first_revision_baseline import normalize_r_first_revision, restore_r_first_asset, R_FIRST_ASSET_PATHS
@@ -23,7 +24,7 @@ FIXTURE_SHA256 = "2a14ddda16eeb0ecec8a44e6ab69a8d567c01b9cd04b6769e1008fff9598b9
 READER_TEXT_VERSION = "20261025-reader-colours-v1"
 READER_TEXT_ASSET_SHA256 = {
     "start-here.css": "cbc36b830dbd7356a1c47a313775f6191b5a30b1539849fbd2ad776f42ff2793",
-    "home-catalogue.css": "bb5d49b07212f011917b4fa7498c8b8e1fdf05a3081dded7b07e0e142cfb1c4e",
+    "home-catalogue.css": "1f5d32d83d6230e5d37065bdce11894a30e3c93da6a1c8233130db420d52369d",
     "style.css": "92cd9efb1cd9f09294461e658e3289b658b0a3976dbe61fef2f55053c4f16c97",
     "tutorial-navigation.css": "725db31e5855afdb868a43d9ada12787fe76723657ca454be9e1ac89904cd3e8",
     "home-page.min.css": "c4bc6262003d9fdff311a02b0b8939adef7362d15ef970e7940796b729f838bc",
@@ -123,6 +124,8 @@ def verify_reader_text_file(relative_path, data):
     original_data = data
     if relative_path == "start-here.css":
         data = restore_start_here_desktop_asset(relative_path, data)
+    elif relative_path == "home-catalogue.css":
+        data = restore_home_catalogue_banner_asset(relative_path, data)
     data = restore_startup_generated_asset(relative_path, data, "reader-text")
     data = restore_latest_review_asset(relative_path, data)
     if relative_path in R_FIRST_ASSET_PATHS:
