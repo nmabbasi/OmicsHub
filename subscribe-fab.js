@@ -136,11 +136,46 @@
     const navigationFooter = document.querySelector('#reader-course-navigation .reader-sequence-footer');
     if (existing.matches('a[href="#tutorial-title"]') && navigationFooter) navigationFooter.appendChild(tools);
 
-    existing.addEventListener('click', () => {
+    existing.addEventListener('click', event => {
       const target = existing.hash ? document.getElementById(existing.hash.slice(1)) : null;
-      if (target) {
-        target.tabIndex = -1;
+      if (!target || event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+
+      event.preventDefault();
+      if (location.hash) {
+        const cleanUrl = `${location.pathname}${location.search}`;
+        try {
+          if (typeof window.history.replaceState === 'function') {
+            window.history.replaceState(window.history.state, '', cleanUrl);
+          } else {
+            window.location.replace(cleanUrl);
+          }
+        } catch (error) {
+          window.location.replace(cleanUrl);
+        }
+      }
+      target.tabIndex = -1;
+      try {
         target.focus({ preventScroll: true });
+      } catch (error) {
+        target.focus();
+      }
+      const scrollTarget = () => {
+        const currentY = window.scrollY || window.pageYOffset || document.documentElement.scrollTop || 0;
+        const targetY = target.getBoundingClientRect().top + currentY;
+        window.scrollTo(0, targetY);
+      };
+      try {
+        if (typeof target.scrollIntoView === 'function') {
+          try {
+            target.scrollIntoView({ block: 'start' });
+          } catch (error) {
+            target.scrollIntoView(true);
+          }
+        } else {
+          scrollTarget();
+        }
+      } catch (error) {
+        scrollTarget();
       }
     });
 

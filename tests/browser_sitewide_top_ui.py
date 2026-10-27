@@ -40,7 +40,7 @@ def main() -> None:
     pages = canonical_pages()
     if len(pages) != 70:
         raise AssertionError(f"Expected 70 canonical display pages, found {len(pages)}")
-    results: dict[str, object] = {"canonical_pages": len(pages), "layouts": [], "interactions": [], "edge_cases": [], "errors": []}
+    results: dict[str, object] = {"canonical_pages": len(pages), "layouts": [], "interactions": [], "history": [], "edge_cases": [], "errors": []}
 
     def check(condition: bool, message: str) -> None:
         if not condition:
@@ -143,13 +143,43 @@ def main() -> None:
                     check(find_safe_scroll(page, path, width, height), f"{path} at {width}px: no safe place to test keyboard return")
                     anchor = page.locator("#back-to-top")
                     anchor.focus()
+                    history_length = page.evaluate("history.length")
                     page.keyboard.press("Enter")
                     target_id = anchor.get_attribute("href")[1:]
-                    page.wait_for_function("id => location.hash === '#' + id && document.activeElement?.id === id && scrollY < 300", arg=target_id)
+                    page.wait_for_function("id => location.hash === '' && document.activeElement?.id === id && scrollY < 300", arg=target_id)
                     check(page.evaluate("id => document.getElementById(id)?.tabIndex === -1", target_id), f"{path} at {width}px: target not focusable after return")
+                    check(page.evaluate("history.length") == history_length, f"{path} at {width}px: Back-to-top added a history entry")
                     page.wait_for_function("document.querySelector('.tutorial-top-tools').hidden")
-                    results["interactions"].append({"path": path, "width": width, "keyboard": "Enter", "focus_return": target_id})
+                    results["interactions"].append({"path": path, "width": width, "keyboard": "Enter", "focus_return": target_id, "fragment": "unchanged"})
                 context.close()
+
+            for width, height in VIEWPORTS:
+                context = browser.new_context(viewport={"width": width, "height": height}, reduced_motion="reduce")
+                block_external(context)
+                page = context.new_page()
+                page.on("pageerror", lambda error: results["errors"].append(str(error)))
+                for path in ("start-here.html", "contact.html"):
+                    wait_ready(page, "index.html")
+                    if width <= 639:
+                        page.locator('button[aria-controls="mobile-menu"]').click()
+                        page.locator(f'#mobile-menu a[href="{path}"]').click()
+                    else:
+                        page.locator(f'header nav a[id^="nav-desktop-"][href="{path}"]').click()
+                    page.wait_for_url(f"{args.base}/{path}", wait_until="domcontentloaded")
+                    wait_ready(page, path)
+                    check(find_safe_scroll(page, path, width, height), f"{path} at {width}px: no safe place to test Back-to-top history")
+                    anchor = page.locator("#back-to-top")
+                    target_id = anchor.get_attribute("href")[1:]
+                    history_length = page.evaluate("history.length")
+                    anchor.click()
+                    page.wait_for_function("id => location.hash === '' && document.activeElement?.id === id && scrollY < 300", arg=target_id)
+                    check(page.evaluate("history.length") == history_length, f"{path} at {width}px: Back-to-top added a history entry")
+                    page.go_back(wait_until="domcontentloaded")
+                    page.wait_for_url(f"{args.base}/index.html", wait_until="domcontentloaded")
+                    check("The Omics Hub" in page.title(), f"{path} at {width}px: one Back press did not return to Home")
+                    results["history"].append({"path": path, "width": width, "back_to_top": "no new entry", "one_back": "Home"})
+                context.close()
+
             context = browser.new_context(viewport={"width": 390, "height": 844}, reduced_motion="reduce")
             block_external(context)
             page = context.new_page()
@@ -166,6 +196,69 @@ def main() -> None:
             results["edge_cases"].append({"check": "nested missing-URL 404 loads root-resolving shared arrow", "passed": True})
             context.close()
             browser.close()
+
+            for engine_name in ("firefox", "webkit"):
+                compatibility_browser = getattr(pw, engine_name).launch(headless=True)
+                for width, height in VIEWPORTS:
+                    context = compatibility_browser.new_context(viewport={"width": width, "height": height}, reduced_motion="reduce")
+                    block_external(context)
+                    page = context.new_page()
+                    page.on("pageerror", lambda error, name=engine_name: results["errors"].append(f"{name}: {error}"))
+                    for path in ("start-here.html", "contact.html"):
+                        for mode in ("keyboard", "mouse"):
+                            wait_ready(page, "index.html")
+                            if width <= 639:
+                                page.locator('button[aria-controls="mobile-menu"]').click()
+                                page.locator(f'#mobile-menu a[href="{path}"]').click()
+                            else:
+                                page.locator(f'header nav a[id^="nav-desktop-"][href="{path}"]').click()
+                            page.wait_for_url(f"{args.base}/{path}", wait_until="domcontentloaded")
+                            wait_ready(page, path)
+                            check(find_safe_scroll(page, path, width, height), f"{engine_name} {path} at {width}px: no safe place to test top control")
+                            anchor = page.locator("#back-to-top")
+                            target_id = anchor.get_attribute("href")[1:]
+                            history_length = page.evaluate("history.length")
+                            legacy_fallback = engine_name in ("firefox", "webkit") and width == 390 and path == "start-here.html" and mode == "mouse"
+                            if legacy_fallback:
+                                page.evaluate("""id => {
+                                  const target = document.getElementById(id);
+                                  const nativeFocus = target.focus.bind(target);
+                                  const nativeScroll = target.scrollIntoView.bind(target);
+                                  const state = {historyDisabled:false, focusOptionsRejected:false, focusFallback:false, scrollOptionsRejected:false, scrollFallback:false};
+                                  Object.defineProperty(window.history, 'replaceState', {configurable:true, value:undefined});
+                                  state.historyDisabled = typeof window.history.replaceState === 'undefined';
+                                  target.focus = function(options) {
+                                    if (options && typeof options === 'object') { state.focusOptionsRejected = true; throw new TypeError('focus options unsupported'); }
+                                    state.focusFallback = true;
+                                    return nativeFocus();
+                                  };
+                                  target.scrollIntoView = function(options) {
+                                    if (options && typeof options === 'object') { state.scrollOptionsRejected = true; throw new TypeError('scroll options unsupported'); }
+                                    state.scrollFallback = true;
+                                    return nativeScroll(true);
+                                  };
+                                  window.__legacyTopFallback = state;
+                                }""", target_id)
+                                check(page.evaluate("window.__legacyTopFallback.historyDisabled"), f"{engine_name}: could not simulate older History API")
+                            if mode == "keyboard":
+                                anchor.focus()
+                                page.keyboard.press("Enter")
+                            else:
+                                anchor.click()
+                            page.wait_for_function("id => location.hash === '' && document.activeElement?.id === id && scrollY < 300", arg=target_id)
+                            check(page.evaluate("history.length") == history_length, f"{engine_name} {path} at {width}px: {mode} Back-to-top added a history entry")
+                            check(page.evaluate("id => document.getElementById(id)?.tabIndex === -1", target_id), f"{engine_name} {path}: target not focusable")
+                            if legacy_fallback:
+                                state = page.evaluate("window.__legacyTopFallback")
+                                check(all(state[key] for key in ("historyDisabled", "focusOptionsRejected", "focusFallback", "scrollOptionsRejected", "scrollFallback")), f"{engine_name}: legacy fallbacks not all exercised: {state}")
+                                results["edge_cases"].append({"engine": engine_name, "check": "legacy history, focus, and scroll API fallbacks", "passed": True})
+                            results["interactions"].append({"engine": engine_name, "path": path, "width": width, "input": mode, "focus_return": target_id})
+                            page.go_back(wait_until="domcontentloaded")
+                            page.wait_for_url(f"{args.base}/index.html", wait_until="domcontentloaded")
+                            check("The Omics Hub" in page.title(), f"{engine_name} {path}: one Back press did not return to Home")
+                            results["history"].append({"engine": engine_name, "path": path, "width": width, "input": mode, "back_to_top": "no new entry", "one_back": "Home"})
+                    context.close()
+                compatibility_browser.close()
         check(not results["errors"], f"Browser errors: {results['errors']}")
         results["passed"] = True
     except Exception as error:
@@ -174,7 +267,7 @@ def main() -> None:
         raise
     finally:
         (args.output / "sitewide-top-ui-results.json").write_text(json.dumps(results, indent=2) + "\n", encoding="utf-8")
-    print(f"PASS: {len(results['layouts'])} page/layout checks, {len(results['interactions'])} keyboard/focus interactions, and {len(results['edge_cases'])} nested-404 check", flush=True)
+    print(f"PASS: {len(results['layouts'])} page/layout checks, {len(results['interactions'])} keyboard/focus interactions, {len(results['history'])} one-press history checks, and {len(results['edge_cases'])} nested-404 check", flush=True)
 
 
 if __name__ == "__main__":
