@@ -12,6 +12,11 @@ from start_here_desktop_baseline import (
     normalize_start_here_desktop_html,
     restore_start_here_desktop_asset,
 )
+from core_tutorial_corrections_baseline import (
+    CORE_TUTORIAL_CORRECTION_PATHS,
+    PR36_BASE_COMMIT,
+    normalize_core_tutorial_corrections,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 BASELINE = '36bc46d'
@@ -109,7 +114,19 @@ class SitewideReferenceFixesTests(unittest.TestCase):
             image_sources = lambda html: [attrs.get('src') for tag, attrs in Markup(html).tags if tag == 'img']
             with self.subTest(page=relative):
                 self.assertEqual(code(after), code(before), 'Reference review must not silently edit runnable code')
-                self.assertEqual(code(raw_after), code(before), 'Raw reviewed source must preserve runnable code')
+                if relative in CORE_TUTORIAL_CORRECTION_PATHS:
+                    restored_core = normalize_core_tutorial_corrections(
+                        relative, raw_after.encode('utf-8')
+                    )
+                    published_main = subprocess.check_output(
+                        ['git', 'show', f'{PR36_BASE_COMMIT}:{relative}'], cwd=ROOT
+                    )
+                    self.assertEqual(
+                        restored_core, published_main,
+                        'PR #36 code changes must be exact to its pinned parent main',
+                    )
+                else:
+                    self.assertEqual(code(raw_after), code(before), 'Raw reviewed source must preserve runnable code')
                 self.assertEqual(image_sources(raw_after), image_sources(before), 'Reference review must preserve approved image sources')
                 self.assertEqual(re.findall(r'<img\b[^>]*>', after), re.findall(r'<img\b[^>]*>', before))
             count += 1

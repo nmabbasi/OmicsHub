@@ -12,6 +12,7 @@ from gget_mobile_baseline import (
     restore_gget_mobile_bytes,
     restore_gget_mobile_text,
 )
+from core_tutorial_corrections_baseline import normalize_core_tutorial_corrections
 
 ROOT = Path(__file__).resolve().parents[1]
 EXPECTED_PATHS = frozenset({
@@ -32,7 +33,12 @@ class GgetMobileBaselineTests(unittest.TestCase):
             with self.subTest(path=relative_path):
                 current = (ROOT / relative_path).read_bytes()
                 base = entry["base_bytes"]
-                self.assertEqual(hashlib.sha256(current).hexdigest(), entry["current_sha256"])
+                # PR #36 updates this same lesson; pin the older Gget fixture
+                # only after exact restoration to the correction's parent-main bytes.
+                current_at_parent = normalize_core_tutorial_corrections(
+                    relative_path, current
+                )
+                self.assertEqual(hashlib.sha256(current_at_parent).hexdigest(), entry["current_sha256"])
                 self.assertEqual(hashlib.sha256(base).hexdigest(), entry["base_sha256"])
                 self.assertEqual(restore_gget_mobile_bytes(relative_path, current), base)
                 self.assertEqual(restore_gget_mobile_bytes(relative_path, base), base)
