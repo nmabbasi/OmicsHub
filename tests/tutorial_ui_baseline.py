@@ -12,7 +12,7 @@ from pathlib import Path
 import subprocess
 from start_here_baseline import normalize_start_here
 from home_catalogue_baseline import normalize_home_catalogue
-from reader_text_colour_baseline import READER_TEXT_ASSET_SHA256, restore_reader_text_asset
+from reader_text_colour_baseline import is_reader_text_asset, restore_reader_text_asset
 from r_first_revision_baseline import (
     R_FIRST_ASSET_PATHS, normalize_r_first_revision, restore_r_first_asset,
 )
@@ -100,8 +100,7 @@ def verify_tutorial_ui_file(relative_path, data):
         verify_home_catalogue_file(relative_path, data)
         return original_data
     if relative_path in TUTORIAL_UI_PATHS:
-        if (relative_path in READER_TEXT_ASSET_SHA256
-                and hashlib.sha256(data).hexdigest() == READER_TEXT_ASSET_SHA256[relative_path]):
+        if is_reader_text_asset(relative_path, data):
             data = restore_reader_text_asset(relative_path, data)
         observed = hashlib.sha256(data).hexdigest()
         if observed != TUTORIAL_UI_SHA256[relative_path]:

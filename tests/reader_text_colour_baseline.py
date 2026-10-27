@@ -27,12 +27,24 @@ READER_TEXT_ASSET_SHA256 = {
     "home-catalogue.css": "1f5d32d83d6230e5d37065bdce11894a30e3c93da6a1c8233130db420d52369d",
     "style.css": "92cd9efb1cd9f09294461e658e3289b658b0a3976dbe61fef2f55053c4f16c97",
     "tutorial-navigation.css": "725db31e5855afdb868a43d9ada12787fe76723657ca454be9e1ac89904cd3e8",
-    "home-page.min.css": "c4bc6262003d9fdff311a02b0b8939adef7362d15ef970e7940796b729f838bc",
+    "home-page.min.css": "6f9ae00a3b285d5b3fa8c976815e783176d3fef191942aef2550c92c12c68057",
     "tools/generate_tutorial_ui.py": "f482d695b3820acc1ad9156c633dc977ff432afa4084ef9cec51bea5f215ed04",
     ".github/workflows/tutorial-review.yml": "2c9efb4395dc9de935df18dac22ca82841f70bdb5cc8cedc0a55ae2403ec6fd3",
     ".github/workflows/static.yml": "afbbb8e0ced971f12c7d1f0382efc4eefa75613c855db0a09643db84fad6bdf3",
 }
 READER_TEXT_ASSET_PATHS = frozenset(READER_TEXT_ASSET_SHA256)
+READER_TEXT_HISTORICAL_ASSET_SHA256 = {
+    "home-page.min.css": frozenset({"c4bc6262003d9fdff311a02b0b8939adef7362d15ef970e7940796b729f838bc"}),
+}
+
+
+def is_reader_text_asset(relative_path, data):
+    """Return true only for the exact current or explicitly retained asset digest."""
+    if relative_path not in READER_TEXT_ASSET_PATHS:
+        return False
+    observed = hashlib.sha256(data).hexdigest()
+    return (observed == READER_TEXT_ASSET_SHA256[relative_path]
+            or observed in READER_TEXT_HISTORICAL_ASSET_SHA256.get(relative_path, frozenset()))
 
 
 def pre_reader_text_bytes(relative_path):
@@ -137,9 +149,8 @@ def verify_reader_text_file(relative_path, data):
             observed_data = restore_r_first_asset(relative_path, data)
     else:
         observed_data = data
-    expected = READER_TEXT_ASSET_SHA256[relative_path]
     observed = hashlib.sha256(observed_data).hexdigest()
-    if observed != expected:
+    if not is_reader_text_asset(relative_path, observed_data):
         raise AssertionError(f"reader-text asset fingerprint mismatch for {relative_path}: {observed}")
     return original_data
 

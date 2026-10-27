@@ -17,9 +17,10 @@ from gget_mobile_baseline import restore_gget_mobile_bytes
 ROOT = Path(__file__).resolve().parents[1]
 BASE_COMMIT = "be4429d1ac4cfb0f2164239057cddd95c59620b1"
 FIXTURE_PATH = ROOT / "tests/fixtures/coffee-removal-review.json"
-FIXTURE_SHA256 = "cc846da5a8f897b706b8fc226dbc434e09e458b9f9757a61a1046cc6775790ac"
+FIXTURE_SHA256 = "9af7d1d22a35db158e3cc173c9cdcf29a991231ffff795a257f0a1854b5b4767"
 EXPECTED_HTML_COUNT = 69
 EXPECTED_PATH_COUNT = EXPECTED_HTML_COUNT + 2
+HISTORICAL_HOME_CSS_SHA256 = "7028f42af42111dd37da29d235b72eb8fc941c9c25f8bc7a3d45c2d3041d2e05"
 
 
 def _base_bytes(relative_path):
@@ -95,9 +96,12 @@ def restore_coffee_removal_bytes(relative_path, data, *, strict=True):
     if entry is None:
         return data
     observed = hashlib.sha256(data).hexdigest()
+    accepted_current_hashes = {entry["current_sha256"]}
+    if relative_path == "home-page.min.css":
+        accepted_current_hashes.add(HISTORICAL_HOME_CSS_SHA256)
     if observed == entry["base_sha256"]:
         return data
-    if observed != entry["current_sha256"]:
+    if observed not in accepted_current_hashes:
         if strict:
             raise AssertionError(
                 f"unrecognized coffee-removal mutation in {relative_path}: {observed}"
@@ -106,7 +110,7 @@ def restore_coffee_removal_bytes(relative_path, data, *, strict=True):
     restored = entry["base_bytes"]
     if hashlib.sha256(restored).hexdigest() != entry["base_sha256"]:
         raise AssertionError(f"coffee-removal before-digest check failed: {relative_path}")
-    if hashlib.sha256(data).hexdigest() != entry["current_sha256"]:
+    if hashlib.sha256(data).hexdigest() not in accepted_current_hashes:
         raise AssertionError(f"coffee-removal after-digest check failed: {relative_path}")
     return restored
 

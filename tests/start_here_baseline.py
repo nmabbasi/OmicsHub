@@ -15,7 +15,7 @@ from start_here_desktop_baseline import (
     normalize_start_here_desktop_html, restore_start_here_desktop_asset,
 )
 from reader_text_colour_baseline import (
-    READER_TEXT_ASSET_SHA256, normalize_reader_text, restore_reader_text_asset,
+    is_reader_text_asset, normalize_reader_text, restore_reader_text_asset,
 )
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -142,7 +142,7 @@ def verify_start_here_file(relative_path, data):
     original_data = data
     if relative_path == "start-here.css":
         data = restore_start_here_desktop_asset(relative_path, data)
-    if hashlib.sha256(data).hexdigest() == READER_TEXT_ASSET_SHA256.get(relative_path):
+    if is_reader_text_asset(relative_path, data):
         data = restore_reader_text_asset(relative_path, data)
     observed = hashlib.sha256(data).hexdigest()
     if observed != expected:

@@ -106,6 +106,7 @@ TEST_INFRASTRUCTURE_PATHS = {
     'tests/test_tutorial_execution_baseline.py',
     'tests/test_tutorial_reader_ui.py',
     'tests/test_tutorial_startup.py',
+    'tests/tutorial_ui_baseline.py',
     'tests/test_tidyverse_setup_scope.py',
     'tests/test_ubuntu_tidyverse_scope.py',
     'tests/test_verified_analysis_figures.py',

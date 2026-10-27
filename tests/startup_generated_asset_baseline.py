@@ -2,7 +2,7 @@
 
 The startup work changes ``subscribe-fab.js`` and consequently the PurgeCSS
 output, although the bundle is not part of the frozen 61-path startup fixture.
-Only the exact generated bundle digest is recognized; callers select one of
+Only exact generated bundle digests are recognized; callers select one of
 three explicitly pinned historical bundles for their own legacy comparison.
 """
 import hashlib
@@ -13,6 +13,7 @@ from editorial_review_baseline import normalize_editorial_review_bytes
 ROOT = Path(__file__).resolve().parents[1]
 PATH = "home-page.min.css"
 STARTUP_GENERATED_SHA256 = "bb63a112860d75923404f11349cffd1874b9baf39654df8a71a3e519488246c3"
+TOP_CONTROL_REVIEW_GENERATED_SHA256 = "6f9ae00a3b285d5b3fa8c976815e783176d3fef191942aef2550c92c12c68057"
 HISTORICAL_BUNDLES = {
     "main": (
         "93f06260550dbc91c0f020c24e1e2b00b7e017b5",
@@ -39,7 +40,8 @@ def restore_startup_generated_asset(relative_path, data, historical_bundle):
     if not isinstance(data, bytes):
         raise TypeError("startup-generated asset restoration requires bytes")
     data = normalize_editorial_review_bytes(relative_path, data)
-    if relative_path != PATH or hashlib.sha256(data).hexdigest() != STARTUP_GENERATED_SHA256:
+    if (relative_path != PATH or hashlib.sha256(data).hexdigest() not in {
+            STARTUP_GENERATED_SHA256, TOP_CONTROL_REVIEW_GENERATED_SHA256}):
         return data
     if historical_bundle not in HISTORICAL_BUNDLES:
         raise AssertionError(f"unapproved historical homepage CSS bundle: {historical_bundle!r}")

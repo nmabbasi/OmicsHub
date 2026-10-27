@@ -13,7 +13,7 @@ import re
 import subprocess
 from sitewide_top_baseline import normalize_sitewide_top
 from reader_text_colour_baseline import (
-    READER_TEXT_ASSET_SHA256, normalize_reader_text, restore_reader_text_asset,
+    READER_TEXT_ASSET_SHA256, is_reader_text_asset, normalize_reader_text, restore_reader_text_asset,
 )
 from r_first_revision_baseline import R_FIRST_ASSET_PATHS, restore_r_first_asset
 from latest_review_baseline import normalize_latest_review, restore_latest_review_asset
@@ -141,7 +141,7 @@ def normalize_home_catalogue(relative_path, text):
         text = restore_home_catalogue_banner_asset(relative_path, text.encode("utf-8")).decode("utf-8")
     if (relative_path in {"home-page.min.css", "home-catalogue.css", "style.css",
                           ".github/workflows/tutorial-review.yml", ".github/workflows/static.yml"}
-            and hashlib.sha256(text.encode("utf-8")).hexdigest() == READER_TEXT_ASSET_SHA256[relative_path]):
+            and is_reader_text_asset(relative_path, text.encode("utf-8"))):
         text = restore_reader_text_asset(relative_path, text.encode("utf-8")).decode("utf-8")
     text = normalize_sitewide_top(relative_path, text)
     if relative_path == "subscribe-fab.js":
@@ -196,7 +196,7 @@ def verify_home_catalogue_file(relative_path, data):
         data = normalize_reader_text(relative_path, data.decode("utf-8")).encode("utf-8")
     if (relative_path in {"home-page.min.css", "home-catalogue.css",
                           ".github/workflows/tutorial-review.yml", ".github/workflows/static.yml"}
-            and hashlib.sha256(data).hexdigest() == READER_TEXT_ASSET_SHA256[relative_path]):
+            and is_reader_text_asset(relative_path, data)):
         data = restore_reader_text_asset(relative_path, data)
     if relative_path not in HOME_CATALOGUE_ASSET_PATHS:
         raise AssertionError(f"not an authorized home-catalogue asset: {relative_path}")
