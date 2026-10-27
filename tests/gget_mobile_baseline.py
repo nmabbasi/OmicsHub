@@ -10,6 +10,7 @@ import json
 from pathlib import Path
 import re
 import subprocess
+from core_tutorial_corrections_baseline import normalize_core_tutorial_corrections
 
 ROOT = Path(__file__).resolve().parents[1]
 BASE_COMMIT = "0caaeabb050845dcb07905fc5bf99cd699866baa"
@@ -119,6 +120,7 @@ def restore_gget_mobile_bytes(relative_path, data):
     """Restore only complete, exact PR #32 files; preserve all other bytes."""
     if not isinstance(data, bytes):
         raise TypeError("gget mobile restoration requires bytes")
+    data = normalize_core_tutorial_corrections(relative_path, data)
     entry = gget_mobile_fixture().get(relative_path)
     if entry is None:
         return data

@@ -59,7 +59,7 @@ class RFoundationUtilityTests(unittest.TestCase):
         good2 = '@read_A/2 instrument\nTGCA\n+\n####\n'
         cases = [
             ('paired suffix normalization', good1, good2, True, '1 paired records'),
-            ('both empty', '', '', True, 'both files are empty'),
+            ('both empty', '', '', False, 'FAIL: both files are empty'),
             ('different counts', good1, '', False, 'different record counts'),
             ('different identifiers', good1, good2.replace('read_A','read_B'), False, 'identifiers/order differ'),
             ('incomplete record', good1, '@read_A/2\nTGCA\n', False, 'incomplete four-line record'),

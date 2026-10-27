@@ -43,6 +43,11 @@ from start_here_baseline import (
     normalize_start_here_asset,
     pre_review_bytes,
 )
+from core_tutorial_corrections_baseline import (
+    CORE_TUTORIAL_CORRECTION_PATHS,
+    PR36_BASE_COMMIT,
+    normalize_core_tutorial_corrections,
+)
 from tutorial_execution_baseline import (
     new_execution_asset_paths,
     verify_new_execution_asset,
@@ -173,6 +178,15 @@ class BeginnerWalkthroughScopeTests(unittest.TestCase):
             if relative.startswith("tests/") or relative == "sitemap.xml":
                 continue
             current_path = ROOT / relative
+            if relative in CORE_TUTORIAL_CORRECTION_PATHS:
+                normalized = normalize_core_tutorial_corrections(
+                    relative, current_path.read_bytes()
+                )
+                published = subprocess.check_output(
+                    ["git", "show", f"{PR36_BASE_COMMIT}:{relative}"], cwd=ROOT
+                )
+                self.assertEqual(normalized, published, relative)
+                continue
             if relative in OPTIONAL_REPORT_PATHS:
                 self.assertTrue(current_path.is_file(), relative)
                 verify_optional_report_file(relative, current_path.read_bytes())

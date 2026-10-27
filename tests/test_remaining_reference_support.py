@@ -39,6 +39,11 @@ from optional_report_baseline import (
     OPTIONAL_REPORT_PATHS,
     verify_optional_report_file,
 )
+from core_tutorial_corrections_baseline import (
+    CORE_TUTORIAL_CORRECTION_PATHS,
+    PR36_BASE_COMMIT,
+    normalize_core_tutorial_corrections,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 BASE_COMMIT = "d42231e"
@@ -61,9 +66,13 @@ SITEMAP_NS = {"s": "http://www.sitemaps.org/schemas/sitemap/0.9"}
 # cannot silently exempt a broad directory.
 TEST_INFRASTRUCTURE_PATHS = {
     'tests/coffee_removal_baseline.py',
+    'tests/core_tutorial_corrections_baseline.py',
     'tests/optional_report_baseline.py',
     'tests/fixtures/coffee-removal-review.json',
     'tests/test_coffee_removal_baseline.py',
+    'tests/test_content_modification_dates.py',
+    'tests/test_core_tutorial_corrections.py',
+    'tests/test_core_tutorial_corrections_baseline.py',
     'tests/fixtures/gget-mobile-baseline.json',
     'tests/gget_mobile_baseline.py',
     'tests/test_gget_mobile_baseline.py',
@@ -105,6 +114,7 @@ TEST_INFRASTRUCTURE_PATHS = {
     'tests/test_reader_layout_batching.js',
     'tests/test_reader_punctuation.py',
     'tests/test_reader_text_colours.py',
+    'tests/test_r_first_foundation_utilities.py',
     'tests/test_remaining_reference_support.py',
     'tests/test_remaining_validation_scope.py',
     'tests/test_revision_trajectory.py',
@@ -252,14 +262,23 @@ class RemainingReferenceSupportTests(unittest.TestCase):
                 restore_coffee_removal_bytes(path, (ROOT / path).read_bytes()),
                 entry['base_bytes'],
             )
+        for path in sorted(changed & CORE_TUTORIAL_CORRECTION_PATHS):
+            restored = normalize_core_tutorial_corrections(
+                path, (ROOT / path).read_bytes()
+            )
+            published_main = subprocess.check_output(
+                ["git", "show", f"{PR36_BASE_COMMIT}:{path}"], cwd=ROOT
+            )
+            self.assertEqual(restored, published_main, path)
+            performance_only.add(path)
         verified_report_paths = changed & OPTIONAL_REPORT_PATHS
         for path in sorted(verified_report_paths):
             verify_optional_report_file(path, (ROOT / path).read_bytes())
-        for path in changed & (
+        for path in (changed & (
             NAVIGATION_PERFORMANCE_PATHS | STARTUP_TUTORIAL_PATHS
             | STARTUP_ASSET_PATHS | EDITORIAL_PUBLIC_PATHS
             | (set(coffee) - EXPECTED_PUBLIC_PATHS) | {"home-page.min.css"}
-        ):
+        )) - CORE_TUTORIAL_CORRECTION_PATHS:
             if path in STARTUP_ASSET_PATHS:
                 restored = restore_startup_performance_asset(path, (ROOT / path).read_bytes())
             elif path == "home-page.min.css":

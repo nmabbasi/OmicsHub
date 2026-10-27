@@ -1,13 +1,6 @@
-"""Offline contracts and optional runtime check for the trajectory lesson.
-
-The default tests use only the Python standard library. The integration test runs
-only when Scanpy and its scientific dependencies are already installed; it never
-installs or modifies packages.
-"""
+"""Offline contracts for the R-first trajectory lesson."""
 from __future__ import annotations
 
-import ast
-import importlib.util
 from html.parser import HTMLParser
 from pathlib import Path
 import unittest
@@ -61,54 +54,25 @@ class TrajectoryLessonOfflineContractTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         cls.source, cls.page = load_lesson()
-        cls.python = "\n".join(cls.page.python_blocks[0])
-        cls.r_code = "\n".join(cls.page.r_blocks[0])
+        cls.r_code = "\n".join(cls.page.r_blocks[0]) if cls.page.r_blocks else ""
         cls.article_text = " ".join(cls.page.article_text)
 
-    def test_displayed_scanpy_example_parses_as_python(self) -> None:
-        self.assertEqual(len(self.page.python_blocks), 1)
-        ast.parse(self.python, filename=str(PAGE))
+    def test_worked_routes_are_r_only_and_no_non_equivalent_python_is_offered(self) -> None:
+        self.assertGreaterEqual(len(self.page.r_blocks), 1)
+        self.assertEqual(self.page.python_blocks, [])
+        self.assertIn("R methods are the worked routes.", self.article_text)
+        self.assertIn("This guide therefore shows no Python workflow", self.article_text)
 
-    def test_neighbor_graph_reuse_is_exact_or_requires_approval(self) -> None:
-        code = self.python
-        for contract in (
-            'GRAPH_KEY = "trajectory_pca30"',
-            'REP_KEY = "X_pca"',
-            'N_PCS = 30',
-            'N_NEIGHBORS = 15',
-            '"use_rep": REP_KEY',
-            '"n_pcs": N_PCS',
-            '"n_neighbors": N_NEIGHBORS',
-            '"random_state": RANDOM_STATE',
-            "if matches:",
-            "if not APPROVE_REBUILD_NEIGHBORS:",
-            'key_added=GRAPH_KEY',
-            'adata.uns["trajectory_provenance"]',
-        ):
-            self.assertIn(contract, code)
-        self.assertIn("coords.shape[1] < N_PCS", code)
-        self.assertIn("not np.isfinite(coords[:, :N_PCS]).all()", code)
-        self.assertNotIn("n_pcs=40", code)
-
-    def test_roots_are_named_validated_sensitivity_checked_and_component_aware(self) -> None:
-        code = self.python
-        self.assertIn('"primary"', code)
-        self.assertIn('"sensitivity"', code)
-        self.assertIn("adata.obs_names.get_loc(cell_id)", code)
-        self.assertIn("EXPECTED_ROOT_STATE", code)
-        self.assertIn('"rationale":', code)
-        self.assertIn("connected_components(", code)
-        self.assertIn("values[component != component[root_index]] = np.nan", code)
-        self.assertNotIn("root_cells[0]", code)
-        self.assertNotIn("np.flatnonzero(adata.obs", code)
-
-    def test_umap_is_display_only_and_dpt_values_are_colored_not_projected(self) -> None:
-        code = self.python
-        self.assertIn('color="dpt_primary"', code)
-        self.assertIn("UMAP display only", code)
-        self.assertIn("grey = disconnected", code)
-        self.assertNotIn("sc.tl.umap", code)
-        self.assertNotIn("init_pos", code)
+    def test_paga_and_dpt_are_described_as_distinct_scanpy_methods(self) -> None:
+        self.assertIn(
+            "PAGA and DPT are distinct Scanpy methods, not Python translations of Slingshot or Monocle3.",
+            self.article_text,
+        )
+        self.assertIn(
+            "PAGA summarizes connectivity among selected partitions, while DPT calculates a root-relative diffusion ordering on a neighbor graph.",
+            self.article_text,
+        )
+        self.assertIn("scanpy.readthedocs.io", self.source)
 
     def test_slingshot_fits_pca_and_does_not_draw_pca_curves_on_umap(self) -> None:
         self.assertIn("reducedDim = 'PCA'", self.r_code)
@@ -146,95 +110,10 @@ class TrajectoryLessonOfflineContractTests(unittest.TestCase):
 
     def test_reader_facing_article_has_no_em_dash_and_navigation_contract_remains(self) -> None:
         self.assertNotIn("\u2014", self.article_text)
-        self.assertIn('lesson-format--decision-guide', self.source)
+        self.assertIn("lesson-format--decision-guide", self.source)
         self.assertIn('href="cell-type-annotation-methods.html" rel="prev"', self.source)
         self.assertIn('href="../start-here.html#sh-single-cell" rel="next"', self.source)
         self.assertIn('data-tutorial-format="conceptual-guide"', self.source)
-
-
-SCANPY_AVAILABLE = importlib.util.find_spec("scanpy") is not None
-
-
-@unittest.skipUnless(SCANPY_AVAILABLE, "optional scientific runtime skipped: Scanpy is not installed")
-class TrajectoryLessonScanpyRuntimeTests(unittest.TestCase):
-    def test_visible_code_runs_on_an_invented_disconnected_graph(self) -> None:
-        import matplotlib
-        matplotlib.use("Agg")
-        import matplotlib.pyplot as plt
-        import anndata as ad
-        import numpy as np
-        import pandas as pd
-        import scanpy as sc
-        from scipy.sparse import coo_matrix
-        from unittest.mock import patch
-
-        _, page = load_lesson()
-        code = "\n".join(page.python_blocks[0])
-        code = code.replace("N_PCS = 30", "N_PCS = 3")
-        code = code.replace("N_NEIGHBORS = 15", "N_NEIGHBORS = 3")
-        code = code.replace('"REPLACE_WITH_REVIEWED_EARLY_CELL_A"', '"e0"')
-        code = code.replace('"REPLACE_WITH_REVIEWED_EARLY_CELL_B"', '"e1"')
-        code = code.replace("Replace with evidence for the proposed starting state.",
-                            "Invented fixture: e0 is designated early.")
-
-        connected_count, island_count = 16, 4
-        n_obs = connected_count + island_count
-        obs_names = [f"e{i}" if i < 2 else f"c{i}" for i in range(connected_count)]
-        obs_names += [f"x{i}" for i in range(island_count)]
-        first = np.column_stack((np.arange(connected_count, dtype=float),
-                                 np.zeros(connected_count),
-                                 np.linspace(0.0, 1.0, connected_count)))
-        island = np.column_stack((100.0 + np.arange(island_count, dtype=float),
-                                  np.full(island_count, 100.0),
-                                  np.linspace(4.0, 5.0, island_count)))
-        pca = np.vstack((first, island))
-        states = ["early", "early"] + ["middle"] * (connected_count - 2) + ["other"] * island_count
-        cluster_labels = (["early"] * 2 + ["middle"] * 8 + ["late"] * 6 + ["island"] * island_count)
-        adata = ad.AnnData(
-            X=np.zeros((n_obs, 5), dtype=float),
-            obs=pd.DataFrame({"state": states, "leiden": cluster_labels}, index=obs_names),
-        )
-        adata.obsm["X_pca"] = pca
-        adata.obsm["X_umap"] = np.column_stack((pca[:, 0], pca[:, 1] + np.linspace(0, 1, n_obs)))
-        sc.pp.neighbors(adata, n_neighbors=3, use_rep="X_pca", n_pcs=3,
-                        method="umap", metric="euclidean", random_state=0,
-                        key_added="trajectory_pca30")
-
-        # Make the teaching fixture contain two known components while retaining
-        # Scanpy's actual graph metadata and graph objects.
-        group = np.array([0] * connected_count + [1] * island_count)
-        for key in ("trajectory_pca30_connectivities", "trajectory_pca30_distances"):
-            graph = adata.obsp[key].tocoo()
-            keep = group[graph.row] == group[graph.col]
-            adata.obsp[key] = coo_matrix(
-                (graph.data[keep], (graph.row[keep], graph.col[keep])),
-                shape=graph.shape,
-            ).tocsr()
-
-        namespace = {"adata": adata}
-        # PAGA alone is bypassed because this shared runtime has no igraph.
-        # Neighbor metadata, diffusion maps, both DPT roots, graph components,
-        # unassigned masking, and UMAP display still use the real Scanpy code.
-        with patch.object(sc.tl, "paga"), patch.object(sc.pl, "paga"):
-            exec(compile(code, str(PAGE), "exec"), namespace)
-
-        self.assertEqual(adata.uns["trajectory_provenance"]["graph_action"],
-                         "reused: graph key, representation, dimensions, and settings match")
-        self.assertEqual(adata.uns["trajectory_provenance"]["connected_components"], 2)
-        self.assertEqual(adata.uns["trajectory_roots"]["primary"]["cell_id"], "e0")
-        self.assertEqual(adata.uns["trajectory_roots"]["sensitivity"]["cell_id"], "e1")
-        self.assertTrue(np.isfinite(adata.obs.loc[obs_names[:connected_count], "dpt_primary"]).all())
-        self.assertTrue(adata.obs.loc[obs_names[connected_count:], "dpt_primary"].isna().all())
-        self.assertTrue(np.isfinite(adata.obs.loc[obs_names[:connected_count], "dpt_sensitivity"]).all())
-        self.assertTrue(adata.obs.loc[obs_names[connected_count:], "dpt_sensitivity"].isna().all())
-        self.assertAlmostEqual(float(adata.obs.loc["e0", "dpt_primary"]), 0.0, places=6)
-        self.assertAlmostEqual(float(adata.obs.loc["e1", "dpt_sensitivity"]), 0.0, places=6)
-        self.assertFalse(np.allclose(
-            adata.obs.loc[obs_names[:connected_count], "dpt_primary"].to_numpy(),
-            adata.obs.loc[obs_names[:connected_count], "dpt_sensitivity"].to_numpy(),
-        ))
-        self.assertEqual(int(adata.uns["iroot"]), int(adata.obs_names.get_loc("e0")))
-        plt.close("all")
 
 
 if __name__ == "__main__":

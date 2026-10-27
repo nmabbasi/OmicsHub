@@ -19,6 +19,7 @@ from navigation_performance_baseline import (
 )
 from startup_generated_asset_baseline import restore_startup_generated_asset
 from editorial_review_baseline import normalize_editorial_review, normalize_editorial_review_bytes
+from core_tutorial_corrections_baseline import normalize_core_tutorial_corrections
 
 ROOT = Path(__file__).resolve().parents[1]
 BASE_COMMIT = "36bc46d"
@@ -180,6 +181,7 @@ def normalize_latest_review(relative_path, text):
     """Reverse only fixture-listed literal changes; leave unknown edits visible."""
     if not isinstance(text, str):
         raise TypeError("latest-review text normalization requires decoded text")
+    text = normalize_core_tutorial_corrections(relative_path, text)
     text = normalize_editorial_review(relative_path, text)
     # First remove the exact, whole-file-pinned 2026-10-25 compatibility edit
     # so the historical 30-path layer sees its unchanged published-PR bytes.
@@ -202,6 +204,7 @@ def restore_latest_review_asset(relative_path, data):
     """Restore any reviewed file only for its exact complete current SHA-256."""
     if not isinstance(data, bytes):
         raise TypeError("latest-review asset restoration requires bytes")
+    data = normalize_core_tutorial_corrections(relative_path, data)
     data = normalize_editorial_review_bytes(relative_path, data)
     data = restore_startup_generated_asset(relative_path, data, "main")
     data = restore_navigation_performance_bytes(relative_path, data)
