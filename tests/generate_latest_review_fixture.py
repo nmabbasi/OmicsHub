@@ -74,6 +74,7 @@ TEST_INFRASTRUCTURE_PATHS = frozenset({
     "tests/generate_startup_performance_fixture.py",
     "tests/home_catalogue_baseline.py",
     "tests/latest_review_baseline.py",
+    "tests/navigation_guard_baseline.py",
     "tests/navigation_performance_baseline.py",
     "tests/startup_performance_baseline.py",
     "tests/startup_generated_asset_baseline.py",

@@ -216,11 +216,10 @@
     if (navigator.connection?.saveData || /(^|-)2g$/.test(navigator.connection?.effectiveType || '')) return;
     const prefetched = new Set();
     const prefetch = event => {
-      if (event.pointerType === 'touch') return;
       const anchor = event.target.closest('a[href]');
       if (!anchor || anchor.target || anchor.hasAttribute('download')) return;
       const url = new URL(anchor.href, location.href);
-      if (url.origin !== location.origin || !url.pathname.endsWith('.html') || url.pathname === location.pathname || prefetched.has(url.href) || prefetched.size >= 3) return;
+      if (url.origin !== location.origin || !url.pathname.endsWith('.html') || url.pathname === location.pathname || prefetched.has(url.href) || prefetched.size >= 8) return;
       prefetched.add(url.href);
       const link = document.createElement('link');
       link.rel = 'prefetch';
@@ -228,7 +227,70 @@
       document.head.appendChild(link);
     };
     document.addEventListener('pointerover', prefetch, { passive: true });
+    document.addEventListener('touchstart', prefetch, { passive: true });
     document.addEventListener('focusin', prefetch);
+  }
+  function initNavigationGuard() {
+    const getPageName = url => {
+      try {
+        const path = new URL(url, location.href).pathname;
+        const file = path.split('/').pop() || 'index.html';
+        return file === '' ? 'index.html' : file;
+      } catch (_) { return ''; }
+    };
+    const currentPage = getPageName(location.href);
+
+    const closeMobileMenu = () => {
+      const menu = document.getElementById('mobile-menu');
+      const trigger = document.querySelector('button[aria-controls="mobile-menu"]');
+      if (menu && !menu.classList.contains('hidden')) {
+        menu.classList.add('hidden');
+        if (trigger) {
+          trigger.setAttribute('aria-expanded', 'false');
+          trigger.setAttribute('aria-label', 'Open navigation menu');
+        }
+      }
+    };
+
+    let navInFlight = false;
+    let lastNavTime = 0;
+
+    document.addEventListener('click', event => {
+      const anchor = event.target.closest('header nav a[href], a[id^="nav-desktop-"], a[id^="nav-mobile-"], a[title="The Omics Hub home"], a[aria-label="Go to The Omics Hub home"]');
+      if (!anchor || anchor.target || anchor.hasAttribute('download')) return;
+
+      const href = anchor.getAttribute('href');
+      if (!href || href.startsWith('#') || href.startsWith('mailto:') || href.startsWith('tel:') || href.startsWith('javascript:')) return;
+
+      const url = new URL(anchor.href, location.href);
+      if (url.origin !== location.origin) return;
+
+      const targetPage = getPageName(url.href);
+
+      // Active tab zero-reload guard: if clicking current page tab, smoothly scroll to top and close menu
+      if (targetPage === currentPage && !url.hash) {
+        event.preventDefault();
+        closeMobileMenu();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
+        return;
+      }
+
+      // Rapid-click debounce: ignore duplicate navigation requests within 400ms while one is in flight
+      const now = Date.now();
+      if (navInFlight || (now - lastNavTime < 400)) {
+        event.preventDefault();
+        return;
+      }
+
+      lastNavTime = now;
+      navInFlight = true;
+      closeMobileMenu();
+      setTimeout(() => { navInFlight = false; }, 1000);
+    }, { capture: true });
+
+    window.addEventListener('pageshow', () => { navInFlight = false; });
+    window.addEventListener('pagehide', () => { navInFlight = false; });
   }
   document.addEventListener('DOMContentLoaded', () => {
     initCompactCategories();
@@ -236,6 +298,7 @@
     initInFlowTopControl();
     initLayoutMetrics();
     initIntentPrefetch();
+    initNavigationGuard();
     const input = document.querySelector('#home-page #search-input');
     if (input) {
       const original = input.placeholder;
