@@ -240,7 +240,11 @@ class HomeCatalogueUITests(unittest.TestCase):
         current=read('subscribe-fab.js')
         current=restore_startup_performance_asset('subscribe-fab.js',current.encode()).decode()
         self.assertEqual(current,original)
-        self.assertIn("if (!strip || document.getElementById('catalogue-category') || typeof window.filterTutorialsOnly !== 'function') return;",read('subscribe-fab.js'))
+        script=read('subscribe-fab.js')
+        self.assertIn("if (!strip || document.getElementById('catalogue-category') || typeof window.filterTutorialsOnly !== 'function') return;",script)
+        self.assertIn('event.preventDefault();',script)
+        self.assertIn('window.history.replaceState',script)
+        self.assertIn("target.scrollIntoView({ block: 'start' })",script)
 
 
 if __name__=='__main__':unittest.main()
