@@ -51,6 +51,11 @@ from optional_report_baseline import (
     OPTIONAL_REPORT_PATHS,
     verify_optional_report_file,
 )
+from core_tutorial_corrections_baseline import (
+    CORE_TUTORIAL_CORRECTION_PATHS,
+    PR37_BASE_COMMIT,
+    normalize_core_tutorial_corrections,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = re.compile(r"<script\b[^>]*>.*?</script\s*>", re.S | re.I)
@@ -173,6 +178,15 @@ class BeginnerWalkthroughScopeTests(unittest.TestCase):
             if relative.startswith("tests/") or relative == "sitemap.xml":
                 continue
             current_path = ROOT / relative
+            if relative in CORE_TUTORIAL_CORRECTION_PATHS:
+                normalized = normalize_core_tutorial_corrections(
+                    relative, current_path.read_bytes()
+                )
+                published = subprocess.check_output(
+                    ["git", "show", f"{PR37_BASE_COMMIT}:{relative}"], cwd=ROOT
+                )
+                self.assertEqual(normalized, published, relative)
+                continue
             if relative in OPTIONAL_REPORT_PATHS:
                 self.assertTrue(current_path.is_file(), relative)
                 verify_optional_report_file(relative, current_path.read_bytes())

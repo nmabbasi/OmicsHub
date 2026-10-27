@@ -40,6 +40,10 @@ from optional_report_baseline import (
     OPTIONAL_REPORT_PATHS,
     verify_optional_report_file,
 )
+from core_tutorial_corrections_baseline import (
+    CORE_TUTORIAL_CORRECTION_PATHS,
+    normalize_core_tutorial_corrections,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 BASE_COMMIT = "d42231e"
@@ -62,9 +66,13 @@ SITEMAP_NS = {"s": "http://www.sitemaps.org/schemas/sitemap/0.9"}
 # cannot silently exempt a broad directory.
 TEST_INFRASTRUCTURE_PATHS = {
     'tests/coffee_removal_baseline.py',
+    'tests/core_tutorial_corrections_baseline.py',
     'tests/optional_report_baseline.py',
     'tests/fixtures/coffee-removal-review.json',
     'tests/test_coffee_removal_baseline.py',
+    'tests/test_content_modification_dates.py',
+    'tests/test_core_tutorial_corrections.py',
+    'tests/test_core_tutorial_corrections_baseline.py',
     'tests/fixtures/gget-mobile-baseline.json',
     'tests/gget_mobile_baseline.py',
     'tests/test_gget_mobile_baseline.py',
@@ -104,6 +112,7 @@ TEST_INFRASTRUCTURE_PATHS = {
     'tests/test_learning_promises.py',
     'tests/test_navigation_performance_baseline.py',
     'tests/test_r_first_revision_baseline.py',
+    'tests/test_r_first_foundation_utilities.py',
     'tests/test_reader_layout_batching.js',
     'tests/test_reader_punctuation.py',
     'tests/test_reader_text_colours.py',
@@ -195,6 +204,7 @@ def baseline_text(path):
 
 def current_text(path):
     current = (ROOT / path).read_text(encoding="utf-8")
+    current = normalize_core_tutorial_corrections(path, current)
     current = normalize_editorial_review(path, current)
     current = normalize_start_here_desktop_html(path, current)
     return normalize_navigation_performance(path, current)
@@ -260,6 +270,7 @@ class RemainingReferenceSupportTests(unittest.TestCase):
         for path in changed & (
             NAVIGATION_PERFORMANCE_PATHS | STARTUP_TUTORIAL_PATHS
             | STARTUP_ASSET_PATHS | EDITORIAL_PUBLIC_PATHS
+            | CORE_TUTORIAL_CORRECTION_PATHS
             | (set(coffee) - EXPECTED_PUBLIC_PATHS) | {"home-page.min.css", "home-catalogue.css"}
         ):
             if path in STARTUP_ASSET_PATHS:

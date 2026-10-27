@@ -12,6 +12,7 @@ from gget_mobile_baseline import (
     restore_gget_mobile_bytes,
     restore_gget_mobile_text,
 )
+from core_tutorial_corrections_baseline import normalize_core_tutorial_corrections
 
 ROOT = Path(__file__).resolve().parents[1]
 EXPECTED_PATHS = frozenset({
@@ -31,6 +32,7 @@ class GgetMobileBaselineTests(unittest.TestCase):
         for relative_path, entry in fixture.items():
             with self.subTest(path=relative_path):
                 current = (ROOT / relative_path).read_bytes()
+                current = normalize_core_tutorial_corrections(relative_path, current)
                 base = entry["base_bytes"]
                 self.assertEqual(hashlib.sha256(current).hexdigest(), entry["current_sha256"])
                 self.assertEqual(hashlib.sha256(base).hexdigest(), entry["base_sha256"])
@@ -42,6 +44,7 @@ class GgetMobileBaselineTests(unittest.TestCase):
         for relative_path, entry in fixture.items():
             with self.subTest(path=relative_path):
                 current = (ROOT / relative_path).read_bytes()
+                current = normalize_core_tutorial_corrections(relative_path, current)
                 mutation = current + b"\n/* unrelated unapproved mutation */\n"
                 self.assertNotEqual(hashlib.sha256(mutation).hexdigest(), entry["current_sha256"])
                 self.assertEqual(restore_gget_mobile_bytes(relative_path, mutation), mutation)
@@ -49,6 +52,7 @@ class GgetMobileBaselineTests(unittest.TestCase):
     def test_mutation_inside_the_approved_hunk_stays_visible(self):
         relative_path = "tutorials/deterministic-retrieval-gget-ai.html"
         current = (ROOT / relative_path).read_bytes()
+        current = normalize_core_tutorial_corrections(relative_path, current)
         mutation = current.replace(b"gget-responsive-table", b"gget-responsive-table-unapproved", 1)
         self.assertNotEqual(mutation, current)
         self.assertEqual(restore_gget_mobile_bytes(relative_path, mutation), mutation)
