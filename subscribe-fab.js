@@ -233,9 +233,9 @@
   function initNavigationGuard() {
     const getPageName = url => {
       try {
-        const path = new URL(url, location.href).pathname;
-        const file = path.split('/').pop() || 'index.html';
-        return file === '' ? 'index.html' : file;
+        const path = new URL(url, location.href).pathname.replace(/\/+$/, '');
+        const file = path.split('/').pop() || 'index';
+        return file.replace(/\.html$/, '') || 'index';
       } catch (_) { return ''; }
     };
     const currentPage = getPageName(location.href);
@@ -252,11 +252,11 @@
       }
     };
 
-    let navInFlight = false;
+    let inFlightTarget = '';
     let lastNavTime = 0;
 
     document.addEventListener('click', event => {
-      const anchor = event.target.closest('header nav a[href], a[id^="nav-desktop-"], a[id^="nav-mobile-"], a[title="The Omics Hub home"], a[aria-label="Go to The Omics Hub home"]');
+      const anchor = event.target.closest('header nav a[href], a[id^="nav-desktop-"], a[id^="nav-mobile-"], a[title="The Omics Hub home"], a[aria-label="Go to The Omics Hub home"], footer a[href]');
       if (!anchor || anchor.target || anchor.hasAttribute('download')) return;
 
       const href = anchor.getAttribute('href');
@@ -276,23 +276,23 @@
         return;
       }
 
-      // Rapid-click debounce: ignore duplicate navigation requests within 400ms while one is in flight
+      // Rapid-click debounce: ignore duplicate navigation requests to the same target within 800ms, or any rapid click within 350ms
       const now = Date.now();
-      if (navInFlight || (now - lastNavTime < 400)) {
+      if ((inFlightTarget === targetPage && now - lastNavTime < 800) || (now - lastNavTime < 350)) {
         event.preventDefault();
         return;
       }
 
       lastNavTime = now;
-      navInFlight = true;
+      inFlightTarget = targetPage;
       closeMobileMenu();
-      setTimeout(() => { navInFlight = false; }, 1000);
+      setTimeout(() => { inFlightTarget = ''; }, 1000);
     }, { capture: true });
 
-    window.addEventListener('pageshow', () => { navInFlight = false; });
-    window.addEventListener('pagehide', () => { navInFlight = false; });
+    window.addEventListener('pageshow', () => { inFlightTarget = ''; });
+    window.addEventListener('pagehide', () => { inFlightTarget = ''; });
   }
-  document.addEventListener('DOMContentLoaded', () => {
+  const initAll = () => {
     initCompactCategories();
     initResultReturnLinks();
     initInFlowTopControl();
@@ -307,5 +307,10 @@
       narrow.addEventListener('change', update);
       update();
     }
-  });
+  };
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initAll);
+  } else {
+    initAll();
+  }
 })();

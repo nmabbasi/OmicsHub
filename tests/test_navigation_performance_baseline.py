@@ -70,6 +70,7 @@ TEST_INFRASTRUCTURE_PATHS = {
     'tests/home_catalogue_baseline.py',
     'tests/latest_review_baseline.py',
     'tests/navigation_guard_baseline.py',
+    'tests/test_navigation_guard.py',
     'tests/navigation_performance_baseline.py',
     'tests/r_first_revision_baseline.py',
     'tests/reader_text_colour_baseline.py',
