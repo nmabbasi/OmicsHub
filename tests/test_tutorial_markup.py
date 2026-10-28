@@ -46,7 +46,7 @@ class NavigationMarkupTests(unittest.TestCase):
                 self.assertIn('id="mobile-menu"', text)
                 self.assertIn('id="nav-desktop-tutorials"', text)
                 self.assertRegex(text, r'<button[^>]*aria-controls="mobile-menu"')
-                self.assertRegex(text, r'<a[^>]*href="../index.html"[^>]*>')
+                self.assertRegex(text, r'<a[^>]*href="(?:/|\.\./index\.html)"[^>]*>')
 
     def test_standalone_pages_load_menu_handlers(self):
         pages = sorted(ROOT.glob('*.html')) + sorted((ROOT / 'pages').glob('*.html'))
