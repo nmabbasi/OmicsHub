@@ -93,7 +93,7 @@ class ContentModificationDateTests(unittest.TestCase):
         self.assertEqual(len(blocks), 1, relative_path)
         return json.loads(blocks[0])
 
-    def test_article_content_dates_remain_approved_and_sitemap_lastmods_are_current(self):
+    def test_substantively_revised_articles_have_matching_dates(self):
         advanced_dates = load_advanced_manifest()["articles"]
         resource_dates = load_resource_content_manifest()["articles"]
         revised_pages = dict(MODIFIED)
@@ -163,7 +163,7 @@ class ContentModificationDateTests(unittest.TestCase):
                     self.sitemap_dates[SITE + relative_path], "2026-10-28"
                 )
 
-    def test_catalogue_and_beginner_paths_have_current_sitemap_lastmods(self):
+    def test_catalogue_about_and_beginner_path_dates_reflect_content_revision(self):
         for relative_path in ("about.html", "tutorials.html"):
             with self.subTest(page=relative_path):
                 self.assertEqual(
@@ -172,7 +172,7 @@ class ContentModificationDateTests(unittest.TestCase):
         self.assertEqual(self.sitemap_dates[SITE + "start-here.html"], "2026-10-28")
         self.assertEqual(self.entity("start-here.html")["dateModified"], TARGET_MODIFIED_DATE)
 
-    def test_consent_policy_content_dates_remain_separate_from_sitemap_lastmods(self):
+    def test_consent_policy_revision_dates_match_the_sitemap(self):
         for relative_path in ("pages/privacy.html", "pages/cookie.html"):
             with self.subTest(page=relative_path):
                 self.assertIn(
@@ -213,7 +213,7 @@ class ContentModificationDateTests(unittest.TestCase):
                     "2026-10-28",
                 )
 
-    def test_navigation_only_and_unchanged_lessons_keep_content_dates(self):
+    def test_navigation_only_and_unchanged_lessons_are_not_freshened(self):
         resource_dates = load_resource_content_manifest()["articles"]
         for relative_path in NAVIGATION_ONLY:
             with self.subTest(page=relative_path):

@@ -108,7 +108,7 @@ class PbmcWorkedExampleTests(unittest.TestCase):
         self.assertNotIn(OLD_VALIDITY, text)
         self.assertNotIn(OLD_RANDOM, text)
 
-    def test_exact_current_sitemap_and_historical_structure_are_preserved(self):
+    def test_sitemap_dates_match_reviewed_updates_and_historical_baseline(self):
         ns = {'s': 'http://www.sitemaps.org/schemas/sitemap/0.9'}
         raw_sitemap = (ROOT / 'sitemap.xml').read_bytes()
         self.assertEqual(raw_sitemap, current_published_bytes('sitemap.xml'))
