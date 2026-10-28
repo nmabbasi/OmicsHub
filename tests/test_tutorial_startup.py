@@ -1,4 +1,4 @@
-"""Startup-only optimization contracts against the published PR #27 source."""
+"""Startup-only optimization contracts against the exact approved-change parent."""
 import copy
 import hashlib
 import importlib.util
@@ -8,11 +8,10 @@ from pathlib import Path
 import re
 import subprocess
 import unittest
-from editorial_review_baseline import normalize_editorial_review, normalize_editorial_review_bytes
-from start_here_desktop_baseline import normalize_start_here_desktop_html
+from current_publication_baseline import normalize_approved_navigation
 
 ROOT=Path(__file__).resolve().parents[1]
-BASE='93f06260550dbc91c0f020c24e1e2b00b7e017b5'
+BASE='d88a278f0a988a9318df6ea96e1b0d0da7695241'
 spec=importlib.util.spec_from_file_location('startup_ui_generator',ROOT/'tools/generate_tutorial_ui.py')
 generator=importlib.util.module_from_spec(spec);spec.loader.exec_module(generator)
 
@@ -38,7 +37,10 @@ class TutorialStartupTests(unittest.TestCase):
         cls.metadata=generator.load_metadata(ROOT)
         pages=sorted((ROOT/'tutorials').glob('*.html'))
         cls.sources={p.stem:p.read_text() for p in pages}
-        cls.normalized_sources={p.stem:normalize_editorial_review('tutorials/'+p.name,p.read_text()) for p in pages}
+        cls.normalized_sources={
+            p.stem:normalize_approved_navigation('tutorials/'+p.name,p.read_bytes()).decode('utf-8')
+            for p in pages
+        }
 
     def test_all_58_lessons_receive_only_their_complete_reviewed_metadata(self):
         self.assertEqual(len(self.sources),58)
@@ -79,9 +81,7 @@ class TutorialStartupTests(unittest.TestCase):
     def test_design_homepage_catalogue_privacy_and_vendor_assets_are_unchanged(self):
         for name in ['index.html','tutorials.html','start-here.html','style.css','tailwind.min.css','tutorial-reader.css','tutorial-navigation.css','back-to-top.css','mobile-navigation.js','script.js','analytics.js','cookie-consent.js','adsense-consent.js','assets/vendor/prism/prism-1.29.0.js','tutorial-code-data.js']:
             with self.subTest(path=name):
-                current=normalize_editorial_review_bytes(name,(ROOT/name).read_bytes())
-                if name=='start-here.html':
-                    current=normalize_start_here_desktop_html(name,current.decode()).encode()
+                current=normalize_approved_navigation(name,(ROOT/name).read_bytes())
                 self.assertEqual(current,base_bytes(name))
 
     def test_homepage_css_rules_are_identical_and_only_build_checksum_refreshes(self):

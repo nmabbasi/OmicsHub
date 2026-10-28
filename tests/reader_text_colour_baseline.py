@@ -101,8 +101,8 @@ def normalize_reader_text(relative_path, text):
     """Reverse only exact frozen HTML chunks; leave all unrecognized edits visible."""
     if not isinstance(text, str):
         raise TypeError("reader-text normalization requires decoded text")
-    text = normalize_start_here_desktop_html(relative_path, text)
     text = normalize_latest_review(relative_path, text)
+    text = normalize_start_here_desktop_html(relative_path, text)
     text = normalize_r_first_revision(relative_path, text)
     patches = page_patches().get(relative_path)
     if patches is None:

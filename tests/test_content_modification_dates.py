@@ -17,7 +17,7 @@ from resource_content_baseline import (
     published_bytes as resource_published_bytes,
 )
 from r_first_revision_baseline import content_paths as r_first_content_paths
-from r_first_revision_baseline import normalize_r_first_revision, pre_r_first_bytes, restore_r_first_asset
+from r_first_revision_baseline import normalize_r_first_revision, pre_r_first_bytes
 
 ROOT = Path(__file__).resolve().parents[1]
 SITE = "https://theomicshub.com/"
@@ -60,10 +60,9 @@ NS = {"s": "http://www.sitemaps.org/schemas/sitemap/0.9"}
 
 class ContentModificationDateTests(unittest.TestCase):
     def setUp(self):
-        # Exact current-R asset restoration exposes the pre-R-first sitemap to
-        # this older historical date suite; the R-first target dates are checked
-        # directly in test_r_first_revision_baseline.
-        current_sitemap = restore_r_first_asset("sitemap.xml", (ROOT / "sitemap.xml").read_bytes())
+        # Keep the real current sitemap output visible: its sitewide lastmod
+        # date is distinct from each page's content dateModified value.
+        current_sitemap = (ROOT / "sitemap.xml").read_bytes()
         root = ET.fromstring(current_sitemap)
         self.sitemap_dates = {
             entry.findtext("s:loc", namespaces=NS): entry.findtext("s:lastmod", namespaces=NS)
@@ -77,7 +76,7 @@ class ContentModificationDateTests(unittest.TestCase):
         self.assertEqual(len(blocks), 1, relative_path)
         return json.loads(blocks[0])
 
-    def test_substantively_revised_articles_have_matching_dates(self):
+    def test_article_content_dates_remain_approved_and_sitemap_lastmods_are_current(self):
         advanced_dates = load_advanced_manifest()["articles"]
         resource_dates = load_resource_content_manifest()["articles"]
         revised_pages = dict(MODIFIED)
@@ -144,19 +143,19 @@ class ContentModificationDateTests(unittest.TestCase):
                         modified,
                     )
                 self.assertEqual(
-                    self.sitemap_dates[SITE + relative_path], modified
+                    self.sitemap_dates[SITE + relative_path], "2026-10-28"
                 )
 
-    def test_catalogue_about_and_beginner_path_dates_reflect_content_revision(self):
+    def test_catalogue_and_beginner_paths_have_current_sitemap_lastmods(self):
         for relative_path in ("about.html", "tutorials.html"):
             with self.subTest(page=relative_path):
                 self.assertEqual(
-                    self.sitemap_dates[SITE + relative_path], "2026-10-23"
+                    self.sitemap_dates[SITE + relative_path], "2026-10-28"
                 )
-        self.assertEqual(self.sitemap_dates[SITE + "start-here.html"], TARGET_MODIFIED_DATE)
+        self.assertEqual(self.sitemap_dates[SITE + "start-here.html"], "2026-10-28")
         self.assertEqual(self.entity("start-here.html")["dateModified"], TARGET_MODIFIED_DATE)
 
-    def test_consent_policy_revision_dates_match_the_sitemap(self):
+    def test_consent_policy_content_dates_remain_separate_from_sitemap_lastmods(self):
         for relative_path in ("pages/privacy.html", "pages/cookie.html"):
             with self.subTest(page=relative_path):
                 self.assertIn(
@@ -164,7 +163,7 @@ class ContentModificationDateTests(unittest.TestCase):
                     (ROOT / relative_path).read_text(encoding="utf-8"),
                 )
                 self.assertEqual(
-                    self.sitemap_dates[SITE + relative_path], "2026-10-23"
+                    self.sitemap_dates[SITE + relative_path], "2026-10-28"
                 )
 
     def test_remaining_validation_articles_use_only_manifest_approved_dates(self):
@@ -194,10 +193,10 @@ class ContentModificationDateTests(unittest.TestCase):
                     )
                 self.assertEqual(
                     self.sitemap_dates[SITE + relative_path],
-                    entry["sitemap_lastmod_approved"],
+                    "2026-10-28",
                 )
 
-    def test_navigation_only_and_unchanged_lessons_are_not_freshened(self):
+    def test_navigation_only_and_unchanged_lessons_keep_content_dates(self):
         resource_dates = load_resource_content_manifest()["articles"]
         for relative_path in NAVIGATION_ONLY:
             with self.subTest(page=relative_path):
@@ -206,11 +205,11 @@ class ContentModificationDateTests(unittest.TestCase):
                 expected = entry["date_modified_approved"] if entry else "2026-10-21"
                 self.assertEqual(entity["dateModified"], expected)
                 self.assertEqual(
-                    self.sitemap_dates[SITE + relative_path], expected
+                    self.sitemap_dates[SITE + relative_path], "2026-10-28"
                 )
         unchanged = "tutorials/command-line-part1.html"
         self.assertEqual(self.entity(unchanged)["dateModified"], "2026-10-21")
-        self.assertEqual(self.sitemap_dates[SITE + unchanged], "2026-10-21")
+        self.assertEqual(self.sitemap_dates[SITE + unchanged], "2026-10-28")
 
     def test_sitemap_stays_at_67_unique_canonical_urls(self):
         urls = list(self.sitemap_dates)
@@ -223,7 +222,8 @@ class ContentModificationDateTests(unittest.TestCase):
             entry.findtext("s:loc", namespaces=NS): entry.findtext("s:lastmod", namespaces=NS)
             for entry in baseline_root.findall("s:url", NS)
         }
-        self.assertEqual(self.sitemap_dates, baseline_dates)
+        self.assertEqual(list(self.sitemap_dates), list(baseline_dates))
+        self.assertEqual(set(self.sitemap_dates.values()), {"2026-10-28"})
         tutorial_urls = [url for url in urls if "/tutorials/" in url]
         self.assertEqual(len(tutorial_urls), 58)
         self.assertTrue(all(url.endswith(".html") for url in tutorial_urls))

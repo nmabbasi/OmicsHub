@@ -11,6 +11,7 @@ import json
 from pathlib import Path
 import re
 import subprocess
+from latest_review_baseline import normalize_latest_review
 from start_here_desktop_baseline import (
     normalize_start_here_desktop_html, restore_start_here_desktop_asset,
 )
@@ -102,6 +103,7 @@ def normalize_start_here(relative_path, text):
     """Reverse exact reviewed chunks in start-here.html; leave every other byte alone."""
     if not isinstance(text, str):
         raise TypeError("Start Here normalization requires decoded text")
+    text = normalize_latest_review(relative_path, text)
     text = normalize_start_here_desktop_html(relative_path, text)
     text = normalize_reader_text(relative_path, text)
     if relative_path != "start-here.html":

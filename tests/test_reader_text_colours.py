@@ -17,7 +17,7 @@ from r_first_revision_baseline import restore_r_first_asset, R_FIRST_ASSET_PATHS
 from r_first_revision_baseline import normalize_r_first_revision
 from latest_review_baseline import normalize_latest_review, restore_latest_review_asset
 from start_here_desktop_baseline import (
-    normalize_start_here_desktop_html, restore_start_here_desktop_asset,
+    restore_start_here_desktop_asset,
 )
 from home_catalogue_banner_baseline import restore_home_catalogue_banner_asset
 
@@ -152,7 +152,6 @@ class ReaderTextColourTests(unittest.TestCase):
                 # reviewed layer. Reverse only those pinned chunks before
                 # checking that this reader-colour pass changed only its own
                 # cache tokens and utility classes.
-                current = normalize_start_here_desktop_html(relative, current)
                 r_first_normalized = normalize_r_first_revision(relative, current)
                 self.assertEqual(r_first_normalized, expected)
                 self.assertEqual(normalize_reader_text(relative, current), before)
