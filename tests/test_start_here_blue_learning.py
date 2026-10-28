@@ -12,6 +12,8 @@ from r_first_revision_baseline import R_FIRST_ASSET_PATHS, restore_r_first_asset
 from latest_review_baseline import restore_latest_review_asset
 from start_here_desktop_baseline import DESKTOP_CSS_HREF, restore_start_here_desktop_asset
 from coffee_removal_baseline import restore_coffee_removal_text
+from startup_performance_baseline import ASSET_PATHS as STARTUP_ASSET_PATHS, restore_startup_performance_asset
+from startup_generated_asset_baseline import restore_startup_generated_asset
 
 ROOT = Path(__file__).resolve().parents[1]
 HISTORICAL = "a4b6ead8251e0a3abcb748061a40155ae9523a82"
@@ -169,7 +171,11 @@ class StartHereImageLedTests(unittest.TestCase):
         ]
         for relative in protected:
             with self.subTest(path=relative):
-                current = restore_latest_review_asset(relative, (ROOT / relative).read_bytes())
+                current = (ROOT / relative).read_bytes()
+                if relative in STARTUP_ASSET_PATHS:
+                    current = restore_startup_performance_asset(relative, current)
+                current = restore_startup_generated_asset(relative, current, "reader-text")
+                current = restore_latest_review_asset(relative, current)
                 if relative in READER_TEXT_ASSET_PATHS:
                     current = restore_reader_text_asset(relative, current)
                 elif relative in R_FIRST_ASSET_PATHS:

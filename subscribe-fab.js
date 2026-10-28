@@ -150,25 +150,72 @@
         const focused = document.activeElement === existing;
         tools.hidden = window.scrollY < 240 && !focused;
         if (!tools.hidden && !focused) {
-          const rect = existing.getBoundingClientRect();
           const headerBottom = document.querySelector('body > header')?.getBoundingClientRect().bottom || 0;
-          const intersects = box => box.width > 0 && box.height > 0 &&
-            box.left < rect.right + 7 && box.right > rect.left - 7 &&
-            box.top < rect.bottom + 7 && box.bottom > rect.top - 7;
-          const controls = document.querySelectorAll('body a[href], body button, body summary, body input, body select, body textarea, body [tabindex]');
-          const controlOverlap = [...controls].some(control => control !== existing && [...control.getClientRects()].some(intersects));
-          // Measure text fragments, not full-width paragraph boxes: the circle
-          // uses whitespace only and yields to content, forms, navigation, and footer text.
+          const banner = document.getElementById('cookie-consent-banner');
+          const bannerStyle = banner ? getComputedStyle(banner) : null;
+          const bannerRect = banner?.getBoundingClientRect();
+          const bannerVisible = !!banner && bannerStyle.display !== 'none' &&
+            bannerStyle.visibility !== 'hidden' && bannerRect.width > 0 &&
+            bannerRect.height > 0 && bannerRect.top < window.innerHeight && bannerRect.bottom > 0;
+          const lastBottom = bannerVisible ? bannerRect.top - 8 : window.innerHeight - 8;
+          const intersects = (box, target) => box.width > 0 && box.height > 0 &&
+            box.left < target.right + 7 && box.right > target.left - 7 &&
+            box.top < target.bottom + 7 && box.bottom > target.top - 7;
+          const controls = [...document.querySelectorAll('body a[href], body button, body summary, body input, body select, body textarea, body [tabindex]')]
+            .filter(control => control !== existing);
           const reading = document.querySelectorAll('body h1, body h2, body h3, body h4, body h5, body h6, body p, body li, body pre, body figcaption, body td, body th, body blockquote, body label, body dt, body dd, body address');
-          const textOverlap = !controlOverlap && [...reading].some(block => {
-            if (block.contains(existing) || !block.getClientRects().length) return false;
-            const bounds = block.getBoundingClientRect();
-            if (!intersects(bounds)) return false;
-            const range = document.createRange();
-            range.selectNodeContents(block);
-            return [...range.getClientRects()].some(intersects);
-          });
-          tools.hidden = controlOverlap || textOverlap || rect.top < headerBottom + 8;
+          const hasContentOverlap = target => {
+            if (bannerVisible && intersects(bannerRect, target)) return true;
+            if (controls.some(control => [...control.getClientRects()].some(box => intersects(box, target)))) return true;
+            // Measure text fragments, not full-width paragraph boxes: the circle
+            // uses whitespace only and yields to content, forms, navigation, and footer text.
+            return [...reading].some(block => {
+              if (block.contains(existing) || !block.getClientRects().length) return false;
+              const bounds = block.getBoundingClientRect();
+              if (!intersects(bounds, target)) return false;
+              const range = document.createRange();
+              range.selectNodeContents(block);
+              return [...range.getClientRects()].some(box => intersects(box, target));
+            });
+          };
+          let safe = false;
+          for (const side of ['right', 'left']) {
+            tools.style.removeProperty('top');
+            tools.style.removeProperty('bottom');
+            if (side === 'left') {
+              tools.style.left = window.matchMedia('(max-width: 639px)').matches
+                ? 'max(.85rem, env(safe-area-inset-left, 0px))'
+                : 'max(1rem, env(safe-area-inset-left, 0px))';
+              tools.style.right = 'auto';
+            } else {
+              tools.style.removeProperty('left');
+              tools.style.removeProperty('right');
+            }
+            let rect = existing.getBoundingClientRect();
+            safe = rect.top >= headerBottom + 8 && rect.bottom <= lastBottom && !hasContentOverlap(rect);
+            if (!safe) {
+              const firstTop = Math.ceil(Math.max(8, headerBottom + 8));
+              const lastTop = Math.floor(lastBottom - rect.height);
+              const step = Math.max(16, Math.ceil(rect.height / 2));
+              for (let top = firstTop; top <= lastTop; top += step) {
+                tools.style.top = `${top}px`;
+                tools.style.bottom = 'auto';
+                rect = existing.getBoundingClientRect();
+                if (rect.top >= headerBottom + 8 && rect.bottom <= lastBottom && !hasContentOverlap(rect)) {
+                  safe = true;
+                  break;
+                }
+              }
+            }
+            if (safe) break;
+          }
+          if (!safe) {
+            tools.style.removeProperty('top');
+            tools.style.removeProperty('bottom');
+            tools.style.removeProperty('left');
+            tools.style.removeProperty('right');
+          }
+          tools.hidden = !safe;
         }
         scheduled = false;
       };
