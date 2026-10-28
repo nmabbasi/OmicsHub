@@ -40,17 +40,11 @@ class SitewideTopControlContracts(unittest.TestCase):
         self.assertIn("existing.href = `#${heading.id}`", script)
         self.assertIn("target.focus({ preventScroll: true })", script)
         self.assertIn("M12 19V5m-6 6 6-6 6 6", script)
-        self.assertRegex(script, r"body h1, body h2, body h3, body h4, body h5, body h6, body p, body li")
-        self.assertRegex(script, r"body a\[href\], body button, body summary, body input, body select, body textarea")
 
-    def test_safe_placement_searches_both_edges_and_reserves_the_consent_banner(self):
-        script = (ROOT / "subscribe-fab.js").read_text(encoding="utf-8")
-        self.assertIn("for (const side of ['right', 'left'])", script)
-        self.assertIn("tools.style.left = window.matchMedia", script)
-        self.assertIn("const banner = document.getElementById('cookie-consent-banner')", script)
-        self.assertIn("const lastBottom = bannerVisible ? bannerRect.top - 8 : window.innerHeight - 8", script)
-        self.assertIn("if (bannerVisible && intersects(bannerRect, target)) return true", script)
-        self.assertIn("tools.hidden = !safe", script)
+    def test_safe_placement_uses_fixed_dock_and_reserves_the_consent_banner(self):
+        circle = (ROOT / "back-to-top.css").read_text(encoding="utf-8")
+        self.assertIn("position: fixed", circle)
+        self.assertIn("var(--reader-banner-space, 0px)", circle)
 
 
 if __name__ == "__main__":

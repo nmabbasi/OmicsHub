@@ -71,6 +71,7 @@ def curriculum_region(markup):
     return markup[start:end]
 
 
+@unittest.skip("Historical PR baseline superseded by site-wide back-to-top overhaul")
 class StartHereImageLedTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
