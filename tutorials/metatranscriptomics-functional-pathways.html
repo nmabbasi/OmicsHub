@@ -223,11 +223,28 @@ humann_join_tables \
 <h2>Interpret abundance and coverage together</h2>
 <ul>
 <li><strong>Pathway abundance</strong> summarizes mapped gene-family evidence assigned to a MetaCyc pathway. A larger estimate indicates more mapped abundance under the chosen profiling and normalization context; it is not a direct rate of pathway operation.</li>
-<li><strong>Pathway coverage</strong> is a pathway completeness/coverage estimate based on detected pathway components. Interpret its scale and calculation in the HUMAnN version and output format used; do not describe it as a direct assay of every enzymatic step.</li>
+<li><strong>Pathway coverage</strong> in HUMAnN 3-style output is a separate 0-to-1 confidence/support score related to reaction evidence. It is not the percentage of pathway reactions or enzymes present, and it is not a direct assay of pathway activity. Check the meaning and availability in the installed HUMAnN version; the coverage output is retired in HUMAnN 4.</li>
 <li><strong>Gene-family rows</strong> help trace which UniRef families contribute to a pathway estimate. Shared or ambiguously mapped functions can contribute to multiple interpretations.</li>
 <li><strong>Stratification</strong> attributes contributions using the taxonomic profile and reference mappings. Treat small or uncertain taxon contributions cautiously, especially for conserved gene families.</li>
 </ul>
-<div class="lesson-result"><p><strong>Worked interpretation (hypothetical):</strong> Suppose a pathway has appreciable abundance and broad coverage in a sample. This supports the interpretation that transcripts mapping to multiple components of that pathway were detected. It does not show that the pathway carried flux. If the signal is concentrated in one taxon-stratified contribution, check the underlying gene families and taxonomic profile before describing that taxon as the source.</p></div>
+<h3>R example: compare abundance and coverage across samples</h3>
+<p>The following tiny table is deliberately synthetic and hand-entered to demonstrate how the two HUMAnN 3-style outputs can differ. It is not generated from a HUMAnN run or biological data. Use it only to practise describing separate columns; for real work, join the same pathway row across samples from the matching HUMAnN outputs and record whether abundance is RPK or CPM-normalized.</p>
+<pre><code class="language-r">worked &lt;- data.frame(
+  sample = c("SYN_A", "SYN_B", "SYN_C"),
+  pathway = rep("PWY-SYNTHETIC-01", 3),
+  abundance_rpk = c(120, 45, 95),
+  pathcoverage = c(0.82, 0.91, 0.27)
+)
+print(worked)
+
+plot(worked$pathcoverage, worked$abundance_rpk,
+     xlim = c(0, 1), pch = 19,
+     xlab = "HUMAnN 3-style pathcoverage output (synthetic)",
+     ylab = "Pathway abundance (synthetic RPK)",
+     main = "Separate measures, not pathway activity")
+text(worked$pathcoverage, worked$abundance_rpk,
+     labels = worked$sample, pos = 3)</code></pre>
+<div class="lesson-result"><p><strong>Worked interpretation:</strong> SYN_A has higher synthetic RPK abundance than SYN_B (120 versus 45), while its pathcoverage value is lower (0.82 versus 0.91). The two outputs therefore tell different stories: mapped abundance is not interchangeable with the coverage/support score. SYN_C's lower value of 0.27 does not mean that exactly 27% of its pathway reactions occurred. All six values are invented for teaching. Even real HUMAnN abundance and coverage do not establish reaction rate, pathway flux, or causality; inspect contributing gene families, pathway definitions, normalization, database version, and study design.</p></div>
 <h2>Troubleshoot before drawing conclusions</h2>
 <ul>
 <li><strong>Run is slow:</strong> translated search can be computationally demanding, particularly when many reads remain after nucleotide search. Check logs, available threads, storage/I/O, and database configuration. Any sensitivity or bypass option changes what is searched; consult the installed version's help and document the change rather than applying an undocumented speed tweak.</li>
@@ -241,6 +258,7 @@ humann_join_tables \
 <ul>
 <li><a href="https://github.com/biobakery/humann">HUMAnN official documentation and utility reference</a></li>
 <li><a href="https://huttenhower.sph.harvard.edu/humann/">Huttenhower Lab HUMAnN 3 overview and release information</a></li>
+<li><a href="https://forum.biobakery.org/t/genefamilies-pathabundance-pathcoverage/4120">bioBakery discussion of gene-family, pathway-abundance, and pathcoverage outputs</a></li>
 <li><a href="https://metacyc.org/">MetaCyc Pathway/Genome Database</a></li>
 <li><a href="https://huttenhower.sph.harvard.edu/metaphlan/">MetaPhlAn documentation</a></li>
 <li><a href="https://doi.org/10.7554/eLife.65088">Beghini et al. (2021), bioBakery 3 profiling framework</a></li>
@@ -373,7 +391,7 @@ humann_join_tables \
 </script>
 <script src="../assets/vendor/prism/prism-1.29.0.js"></script>
 <script id="tutorial-code-data">
-window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"metatranscriptomics-functional-pathways":{"blocks":[{"language":"bash","sha256":"b7e15e694078c30625b999ef305322bbd4ce0eb6071f011ba2651942caac3f97"},{"language":"bash","sha256":"99aec9138a94cd50cbd983dc217a5a8ea43465c5ed117be7d162e24ae9a297dc"},{"language":"bash","sha256":"0c98baff435cd15ef23e8b5adb635ba508df7d29d316d387d23e5cb79b2b669c"},{"language":"bash","sha256":"f17bf92a51af5fd634f2d645e82eb853267eac9494736036db2d980e8241a5f6"}],"groups":[]}}};
+window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"metatranscriptomics-functional-pathways":{"blocks":[{"language":"bash","sha256":"b7e15e694078c30625b999ef305322bbd4ce0eb6071f011ba2651942caac3f97"},{"language":"bash","sha256":"99aec9138a94cd50cbd983dc217a5a8ea43465c5ed117be7d162e24ae9a297dc"},{"language":"bash","sha256":"0c98baff435cd15ef23e8b5adb635ba508df7d29d316d387d23e5cb79b2b669c"},{"language":"bash","sha256":"f17bf92a51af5fd634f2d645e82eb853267eac9494736036db2d980e8241a5f6"},{"language":"r","sha256":"bd3a71bc30635ceebfa85c39815eb8d4ae9a069d65f5e81ef6e8629982990225"}],"groups":[]}}};
 </script>
 <script src="../code-tabs.js?v=20261026-startup-v1"></script>
 <script src="../copy-code.js?v=20261025-r-first-v1"></script>

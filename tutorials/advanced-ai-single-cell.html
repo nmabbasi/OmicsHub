@@ -216,15 +216,52 @@ labels &lt;- as.character(colData(reference)$cell_type)
 if (anyNA(labels) || any(!nzchar(labels))) {
   stop("Reference labels must be present and non-empty")
 }
-shared_genes &lt;- intersect(rownames(query), rownames(reference))
-if (length(shared_genes) &lt; 2L) {
-  stop("Too few exact shared gene identifiers; resolve the feature contract first")
+query_genes &lt;- rownames(query)
+reference_genes &lt;- rownames(reference)
+if (is.null(query_genes) || is.null(reference_genes) ||
+    length(query_genes) == 0L || length(reference_genes) == 0L ||
+    anyNA(query_genes) || anyNA(reference_genes) ||
+    any(!nzchar(trimws(query_genes))) || any(!nzchar(trimws(reference_genes)))) {
+  stop("Both inputs need non-empty, non-missing gene identifiers")
+}
+if (anyDuplicated(query_genes) || anyDuplicated(reference_genes)) {
+  stop("Resolve duplicate gene identifiers before measuring overlap")
+}
+shared_genes &lt;- intersect(query_genes, reference_genes)
+unmatched_query &lt;- setdiff(query_genes, reference_genes)
+unmatched_reference &lt;- setdiff(reference_genes, query_genes)
+query_fraction &lt;- length(shared_genes) / length(query_genes)
+reference_fraction &lt;- length(shared_genes) / length(reference_genes)
+message("Exact shared genes: ", length(shared_genes),
+        " / ", length(query_genes), " query features (", signif(query_fraction, 3), ")",
+        "; ", length(shared_genes), " / ", length(reference_genes),
+        " reference features (", signif(reference_fraction, 3), ")")
+message("Unmatched query IDs: ", length(unmatched_query),
+        "; examples: ", paste(utils::head(unmatched_query, 10L), collapse = ", "))
+message("Unmatched reference IDs: ", length(unmatched_reference),
+        "; examples: ", paste(utils::head(unmatched_reference, 10L), collapse = ", "))
+write.csv(data.frame(
+  shared_genes = length(shared_genes), query_features = length(query_genes),
+  query_fraction = query_fraction, reference_features = length(reference_genes),
+  reference_fraction = reference_fraction
+), "singleR_gene_overlap.csv", row.names = FALSE)
+write.csv(data.frame(
+  source = c(rep("query_only", length(unmatched_query)),
+             rep("reference_only", length(unmatched_reference))),
+  gene_id = c(unmatched_query, unmatched_reference)
+), "singleR_unmatched_gene_ids.csv", row.names = FALSE)
+
+# Example refusal gate only, not a SingleR requirement; justify for the assay/reference.
+min_shared_genes &lt;- 1000L
+min_query_fraction &lt;- 0.50
+min_reference_fraction &lt;- 0.50
+if (length(shared_genes) &lt; min_shared_genes ||
+    query_fraction &lt; min_query_fraction ||
+    reference_fraction &lt; min_reference_fraction) {
+  stop("Gene overlap is below the declared analysis thresholds; investigate IDs and reference fit")
 }
 query &lt;- query[shared_genes, ]
 reference &lt;- reference[shared_genes, ]
-if (anyDuplicated(rownames(query)) || anyDuplicated(rownames(reference))) {
-  stop("Resolve duplicate gene identifiers before annotation")
-}
 if (is.null(colnames(query)) || anyDuplicated(colnames(query))) {
   stop("Query cell names must be present and unique")
 }
@@ -604,7 +641,7 @@ print("Saved manifest and cell-aligned diagnostics for", adata.n_obs, "cells")
 </script>
 <script src="../assets/vendor/prism/prism-1.29.0.js"></script>
 <script id="tutorial-code-data">
-window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"advanced-ai-single-cell":{"blocks":[{"language":"r","sha256":"502aabc3f689f4e486483883d84a0b99747f3c29aa08b37e6fa3abcbf2b96663"},{"language":"bash","sha256":"9bdc559aaec05de71e2f3bfe06d60f980dd2dd895129606e5cd3f8e6c7811a37"},{"language":"python","sha256":"d5551d3af1b919b04151d5b0c12531bd51fe657fbec69cf7a716928dbf0a0ed7"}],"groups":[]}}};
+window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"advanced-ai-single-cell":{"blocks":[{"language":"r","sha256":"273267af90588ffafa6fc5363f67618c34edebfdd87bd364e1857bfdd95a397b"},{"language":"bash","sha256":"9bdc559aaec05de71e2f3bfe06d60f980dd2dd895129606e5cd3f8e6c7811a37"},{"language":"python","sha256":"d5551d3af1b919b04151d5b0c12531bd51fe657fbec69cf7a716928dbf0a0ed7"}],"groups":[]}}};
 </script>
 <script src="../code-tabs.js?v=20261026-startup-v1"></script>
 <script src="../copy-code.js?v=20261025-r-first-v1"></script>

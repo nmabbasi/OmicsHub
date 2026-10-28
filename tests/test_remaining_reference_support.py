@@ -36,6 +36,7 @@ from start_here_desktop_baseline import (
 )
 from home_catalogue_banner_baseline import restore_home_catalogue_banner_asset
 from coffee_removal_baseline import coffee_removal_fixture, restore_coffee_removal_bytes
+from tutorial_58_review_baseline import normalize_58_review, restore_58_review_asset
 from optional_report_baseline import (
     OPTIONAL_REPORT_PATHS,
     verify_optional_report_file,
@@ -48,6 +49,11 @@ EXPECTED_PUBLIC_PATHS = {
     "tutorials/scrna-seq-basics.html",
     "tutorials/wes-variant-calling-pipeline.html",
     "tutorials/notebooklm-research-brain.html",
+    "files/tutorial-examples/16s-dada2-taxonomy/dada2-taxonomy-workflow.Rmd",
+    "files/tutorial-examples/research-reporting-interpretation/research-reporting-workflow.Rmd",
+    "files/tutorial-examples/execution-evidence/2026-10-28-reporting.json",
+    "tools/catalogue-learning.json",
+    "tutorial-code-data.js",
     "sitemap.xml",
     "start-here.html",
     "start-here.css",
@@ -113,6 +119,9 @@ TEST_INFRASTRUCTURE_PATHS = {
     'tests/test_reader_punctuation.py',
     'tests/test_reader_text_colours.py',
     'tests/test_remaining_reference_support.py',
+    'tests/test_remaining_cite_longread.py',
+    'tests/test_execution_scope_assets.py',
+    'tests/test_priority_slurm.py',
     'tests/test_remaining_validation_scope.py',
     'tests/test_revision_trajectory.py',
     'tests/test_beginner_walkthrough_scope.py',
@@ -135,6 +144,13 @@ TEST_INFRASTRUCTURE_PATHS = {
     'tests/test_verified_analysis_figures.py',
     'tests/tutorial_execution_baseline.py',
     'tests/tutorial_ui_baseline.py',
+    'tests/tutorial_58_review_baseline.py',
+    'tests/fixtures/tutorial-58-review-hashes.json',
+    'tests/fixtures/tutorial-execution-exact-delta.json',
+    'tests/test_58_tutorial_review_fixes.py',
+    'tests/test_code_tabs.py',
+    'tools/tutorial-code-groups.json',
+    'tools/tutorial-code-languages.json',
     'tools/generate_latest_review_fixture.py',
 }
 
@@ -201,6 +217,7 @@ def baseline_text(path):
 
 def current_text(path):
     current = (ROOT / path).read_text(encoding="utf-8")
+    current = normalize_58_review(path, current)
     current = normalize_editorial_review(path, current)
     current = normalize_start_here_desktop_html(path, current)
     return normalize_navigation_performance(path, current)
@@ -246,7 +263,7 @@ def sitemap_lastmods(xml_text):
 
 
 class RemainingReferenceSupportTests(unittest.TestCase):
-    def test_only_the_four_authorized_public_paths_changed_since_published_main(self):
+    def test_only_explicitly_authorized_public_paths_changed_since_published_main(self):
         changed = set(subprocess.check_output(
             ["git", "diff", "--name-only", BASE_COMMIT, "--"],
             cwd=ROOT, text=True,
@@ -256,8 +273,10 @@ class RemainingReferenceSupportTests(unittest.TestCase):
         performance_only = set()
         coffee = coffee_removal_fixture()
         for path, entry in coffee.items():
+            current = (ROOT / path).read_text(encoding="utf-8")
+            current = normalize_58_review(path, current).encode("utf-8")
             self.assertEqual(
-                restore_coffee_removal_bytes(path, (ROOT / path).read_bytes()),
+                restore_coffee_removal_bytes(path, current),
                 entry['base_bytes'],
             )
         verified_report_paths = changed & OPTIONAL_REPORT_PATHS
@@ -324,6 +343,7 @@ class RemainingReferenceSupportTests(unittest.TestCase):
         for path in sorted(protected):
             with self.subTest(path=path):
                 data = (ROOT / path).read_bytes()
+                data = restore_58_review_asset(path, data)
                 if path == "start-here.css":
                     data = restore_start_here_desktop_asset(path, data)
                 elif path == "home-catalogue.css":

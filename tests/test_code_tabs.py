@@ -13,7 +13,7 @@ class TutorialCodeTabOrderingTests(unittest.TestCase):
 
     def test_all_paired_groups_declare_r_then_python_display_and_source_order(self):
         groups = [group for tutorial in self.groups.values() for group in tutorial]
-        self.assertEqual(len(groups), 29)
+        self.assertEqual(len(groups), 28)
         self.assertTrue(all(group['tabOrder'] == ['r', 'python'] for group in groups))
         self.assertTrue(all([p['language'] for p in group['panels']] == ['r', 'python'] for group in groups))
         self.assertTrue(all(group['panels'][0]['end'] + 1 == group['panels'][1]['start'] for group in groups))
@@ -36,7 +36,6 @@ class TutorialCodeTabOrderingTests(unittest.TestCase):
             'autonomous-research-orchestrator': 1,
             'python-fundamentals-bioinformatics': 1,
             'hpc-basic-commands': 2,
-            'mcp-zotero': 1,
             'evolutionary-phylogeny-analysis': 2,
         }
         self.assertEqual({slug: len(groups) for slug, groups in self.groups.items()}, expected)

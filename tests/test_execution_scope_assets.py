@@ -27,7 +27,11 @@ PINNED_EXECUTION_PNGS = {
 class ExecutionScopeAssetTests(unittest.TestCase):
     def test_all_exact_new_execution_assets_verify(self):
         paths = new_execution_asset_paths()
-        self.assertEqual(len(paths), 14)
+        self.assertEqual(len(paths), 16)
+        self.assertTrue({
+            "files/tutorial-examples/16s-dada2-taxonomy/dada2-taxonomy-workflow.Rmd",
+            "files/tutorial-examples/execution-evidence/2026-10-28-reporting.json",
+        } <= paths)
         self.assertEqual(paths & PINNED_EXECUTION_PNGS, PINNED_EXECUTION_PNGS)
         for relative in sorted(paths):
             with self.subTest(path=relative):

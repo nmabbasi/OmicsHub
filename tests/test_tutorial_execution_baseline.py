@@ -26,7 +26,7 @@ class TutorialExecutionBaselineTests(unittest.TestCase):
         self.assertEqual(fixture["base_commit"], BASE_COMMIT)
         self.assertEqual(len(fixture["page_map"]), 58)
         self.assertEqual(len(fixture["overlapping_asset_map"]), 6)
-        self.assertEqual(len(fixture["new_asset_map"]), 14)
+        self.assertEqual(len(fixture["new_asset_map"]), 16)
         self.assertTrue(all(path.startswith("tutorials/") for path in fixture["page_map"]))
 
     def test_exact_pages_restore_to_base_and_are_idempotent(self):
@@ -77,7 +77,7 @@ class TutorialExecutionBaselineTests(unittest.TestCase):
                     self.assertIn("Unapproved prose.", normalized)
 
     def test_new_asset_scope_is_exact_and_mutation_rejected(self):
-        self.assertEqual(len(new_execution_asset_paths()), 14)
+        self.assertEqual(len(new_execution_asset_paths()), 16)
         for relative in sorted(new_execution_asset_paths()):
             with self.subTest(asset=relative):
                 data = (ROOT / relative).read_bytes()

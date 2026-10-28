@@ -197,7 +197,36 @@ stopifnot(is.matrix(bulk_counts),
           !is.null(rownames(bulk_counts)),
           !is.null(colnames(bulk_counts)),
           inherits(sc_reference, "SingleCellExperiment"))
-stopifnot(all(c("cell_type", "donor_id") %in% colnames(colData(sc_reference))))
+cell_type_col &lt;- "cell_type" # Change to the cell-type annotation field in colData.
+donor_col &lt;- "donor_id"     # Change to the independent subject/donor field in colData.
+stopifnot(all(c(cell_type_col, donor_col) %in% colnames(colData(sc_reference))))
+
+# Preflight donor coverage before fitting MuSiC.
+reference_meta &lt;- data.frame(
+  cell_type = trimws(as.character(colData(sc_reference)[[cell_type_col]])),
+  donor_id = trimws(as.character(colData(sc_reference)[[donor_col]])),
+  stringsAsFactors = FALSE
+)
+if (nrow(reference_meta) == 0L || anyNA(reference_meta) ||
+    any(!nzchar(reference_meta$cell_type)) || any(!nzchar(reference_meta$donor_id))) {
+  stop("Every reference cell needs a non-empty cell-type label and donor ID")
+}
+donor_type_pairs &lt;- unique(reference_meta[c("cell_type", "donor_id")])
+donors_per_type &lt;- aggregate(donor_id ~ cell_type, data = donor_type_pairs, FUN = length)
+names(donors_per_type)[2] &lt;- "n_donors"
+cells_per_type &lt;- as.data.frame(table(reference_meta$cell_type), stringsAsFactors = FALSE)
+names(cells_per_type) &lt;- c("cell_type", "n_cells")
+reference_coverage &lt;- merge(cells_per_type, donors_per_type, by = "cell_type", all = TRUE)
+reference_coverage &lt;- reference_coverage[order(reference_coverage$cell_type), ]
+print(reference_coverage, row.names = FALSE)
+donor_cell_counts &lt;- xtabs(~ donor_id + cell_type, data = reference_meta)
+print(donor_cell_counts)
+single_donor_types &lt;- reference_coverage$cell_type[reference_coverage$n_donors &lt; 2L]
+if (length(single_donor_types)) {
+  warning("These cell types occur in fewer than two donors: ",
+          paste(single_donor_types, collapse = ", "),
+          ". Cross-donor variation for them cannot be assessed.")
+}
 
 # Keep shared genes in the same order in both inputs.
 shared_genes &lt;- intersect(rownames(bulk_counts), rownames(sc_reference))
@@ -221,8 +250,8 @@ sc_use &lt;- sc_reference[shared_genes, ]
 music_results &lt;- music_prop(
   bulk.mtx = bulk_use,
   sc.sce = sc_use,
-  clusters = "cell_type",
-  samples = "donor_id"
+  clusters = cell_type_col,
+  samples = donor_col
 )
 
 # Weighted estimates: rows are bulk samples; columns are cell types.
@@ -230,7 +259,7 @@ prop_estimates &lt;- music_results$Est.prop.weighted
 stopifnot(is.data.frame(prop_estimates) || is.matrix(prop_estimates))
 dim(prop_estimates)
 head(prop_estimates)</code></pre>
-<p>The identifier columns <code>cell_type</code> and <code>donor_id</code> are examples, not required names; change them to columns actually present in <code>colData(sc_reference)</code>. MuSiC uses genes shared between the bulk matrix and reference when markers are left at their default. The output list also contains an all-gene NNLS estimate, gene weights, fit summaries, and variance estimates in the documented implementation. Check the installed version's documentation if an output name differs.</p>
+<p>The preflight table reports cells and distinct donors for each cell type, while the donor-by-type table reveals missing or highly uneven combinations. A type represented in one donor cannot provide cross-donor variation for that type; many cells from that donor are not independent donor replicates. Consider whether cell types are shared across donors, donors represent the bulk cohort, and cell counts are adequate for the study's question. There is no universal donor-count cutoff: document a study-specific suitability decision, and do not interpret a successful fit as evidence that an underrepresented type is reliable. The configurable <code>cell_type_col</code> and <code>donor_col</code> values are passed to MuSiC; change them to fields actually present in <code>colData(sc_reference)</code>. MuSiC uses genes shared between the bulk matrix and reference when markers are left at their default. Check the installed version's documentation if an output name differs.</p>
 <h2>Inspect, plot, and interpret</h2>
 <p>First inspect dimensions, sample names, cell-type columns, missing values, and whether estimates are finite. MuSiC documents estimates normalized across the included cell types. That sum is conditional on the cell types included in the fit; it does not prove that the reference contains every cell population in the tissue.</p>
 <pre><code class="language-r"># Basic output checks; investigate failures rather than silently dropping values.
@@ -377,7 +406,7 @@ names(plot_df) &lt;- c("bulk_sample", "cell_type", "proportion")
 </script>
 <script src="../assets/vendor/prism/prism-1.29.0.js"></script>
 <script id="tutorial-code-data">
-window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"single-cell-deconvolution":{"blocks":[{"language":"r","sha256":"aa4fac11a0c2fe4fb5e0481460de0d9b169f1268ec65cdc88810e2e16a007281"},{"language":"r","sha256":"5fd35e8c72cc4fe22c3c06e2c8b91f2e6d9b134b6995b4e2a24be90ca17f8723"}],"groups":[]}}};
+window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"single-cell-deconvolution":{"blocks":[{"language":"r","sha256":"0227902d16f0925ba3c514f7093aedc11a07098ad15caf09e39b0f429ce9f604"},{"language":"r","sha256":"5fd35e8c72cc4fe22c3c06e2c8b91f2e6d9b134b6995b4e2a24be90ca17f8723"}],"groups":[]}}};
 </script>
 <script src="../code-tabs.js?v=20261026-startup-v1"></script>
 <script src="../copy-code.js?v=20261025-r-first-v1"></script>

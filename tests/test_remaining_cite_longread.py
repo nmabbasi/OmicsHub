@@ -57,7 +57,7 @@ class CITEWorkflowContractTests(unittest.TestCase):
     @unittest.skipUnless(shutil.which('Rscript'), 'Rscript optional for pure dimension logic')
     def test_exact_dimension_logic_accepts_small_panels_and_rejects_too_few_pcs(self):
         full = cite()['cite-wnn-stage']
-        code = full[full.index('# Bound each requested range'):full.index('# Find multi-modal')]
+        code = full[full.index('rna_available <-'):full.index('# Find multi-modal')]
         for rna, adt, valid in [(50, 12, True), (10, 3, True), (30, 1, False), (0, 12, False)]:
             with self.subTest(rna=rna, adt=adt):
                 setup = ('seurat_obj <- NULL\n'

@@ -200,8 +200,18 @@ class HomeCatalogueUITests(unittest.TestCase):
         self.assertIn('min-height: 3rem',self.css)
 
     def test_generated_catalogue_metadata_and_home_css_are_current(self):
-        result=subprocess.run([sys.executable,'tools/generate_catalogue_learning.py','--check'],cwd=ROOT,capture_output=True,text=True)
-        self.assertEqual(result.returncode,0,result.stdout+result.stderr)
+        spec=importlib.util.spec_from_file_location('catalogue_generator_current_evidence',ROOT/'tools/generate_catalogue_learning.py')
+        module=importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        previous_argv=sys.argv
+        try:
+            sys.argv=['generate_catalogue_learning.py','--check']
+            output=io.StringIO()
+            with redirect_stdout(output):
+                status=module.main()
+            self.assertEqual(status,0,output.getvalue())
+        finally:
+            sys.argv=previous_argv
         for path in ('catalogue-browser.js','subscribe-fab.js'):
             result=subprocess.run(['node','--check',path],cwd=ROOT,capture_output=True,text=True)
             self.assertEqual(result.returncode,0,result.stdout+result.stderr)

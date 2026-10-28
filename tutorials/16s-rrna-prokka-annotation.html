@@ -173,7 +173,7 @@ function toggleMobileMenu() {
 <article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--decision-guide">
 <p class="lesson-lead">A 16S amplicon table describes marker-gene sequences recovered from a mixed sample. Prokka annotates an assembled genome. Choose the analysis from the material you have and the question you need to answer; one workflow cannot substitute for the other.</p>
 <section class="lesson-summary tutorial-learning-contract" data-tutorial-format="conceptual-guide" aria-label="Learning format">
-<p><strong>Format: Conceptual guide.</strong> For readers deciding between marker-gene profiling and isolate-genome annotation, this guide traces each workflow’s input, output, and interpretive limits. It uses illustrative commands rather than supplied data; readers need to prepare their own QIIME 2 artifact or genome assembly to run them.</p>
+<p><strong>Format: Decision guide with a runnable exercise.</strong> For readers deciding between marker-gene profiling and isolate-genome annotation, this guide traces each workflow’s input, output, and interpretive limits. It includes a self-contained synthetic R Markdown exercise; no biological 16S reads or curated taxonomy reference are bundled. The real-data commands still require your own input and a region-matched reference.</p>
 </section>
 <section aria-labelledby="choose-heading" class="lesson-decision"><h2 id="choose-heading">Start with the input and question</h2>
 <div aria-label="Scrollable table: Choose a workflow by its input and output" class="lesson-table-wrap" role="region" tabindex="0"><table><caption>Choose a workflow by its input and output</caption><thead><tr><th scope="col">Your input</th><th scope="col">Useful question</th><th scope="col">Workflow and main output</th></tr></thead><tbody>
@@ -183,15 +183,39 @@ function toggleMobileMenu() {
 <h2 id="amplicon">16S rRNA amplicon profiling</h2>
 <p>Primers amplify a selected region of the 16S rRNA gene from sample DNA. Conserved stretches support primer binding; sequence variation within the amplified region helps distinguish some taxa. Results depend on primers, read quality, denoising, and reference database. Different taxa can share a marker sequence, so species-level labels are not always resolvable.</p>
 <p>DADA2 models sequencing errors to infer amplicon sequence variants (ASVs). An ASV is an inferred sequence variant after denoising, not proof that each sequence represents a distinct organism or species. Historical OTU workflows cluster reads by a chosen similarity threshold; 97% is not a universal species boundary. Record method and parameters when comparing studies.</p>
-<h3 id="qiime-workflow">A QIIME 2 paired-read example</h3>
-<p>This command expects an existing QIIME 2 artifact of type <code>SampleData[PairedEndSequencesWithQuality]</code>, already demultiplexed by sample; it does not import FASTQ files or create sample metadata. Inspect the artifact with <code>qiime tools peek demux.qza</code> and view per-cycle quality with <code>qiime demux summarize --i-data demux.qza --o-visualization demux-summary.qzv</code>, then open it with <code>qiime tools view demux-summary.qzv</code>. Choose truncation lengths from those plots and the target region, retaining sufficient paired-read overlap. The example produces a frequency table, representative sequences, and denoising statistics; compare input and retained read counts rather than treating file creation as success.</p>
+<h3 id="dada2-r-workflow">R first: DADA2 denoising output through taxonomy assignment</h3>
+<p>In a real paired-read analysis, quality filtering, error learning, sequence inference, paired-read merging, and chimera removal produce <code>seqtab.nochim</code>. The code below starts at that explicit sequence-table boundary, then calls DADA2 taxonomy assignment with a versioned training FASTA suitable for the primer region. Taxonomy assignment is separate from denoising. The linked <a href="../files/tutorial-examples/16s-dada2-taxonomy/dada2-taxonomy-workflow.Rmd">runnable synthetic R Markdown exercise</a> constructs a tiny synthetic reference and table in R; its invented labels are a software demonstration, not a biological result or a substitute for a curated database.</p>
+<pre><code class="language-r">library(dada2)
+
+# seqtab.nochim comes from your documented DADA2 read-processing workflow.
+# Replace these reference paths with the versioned FASTA files for your region.
+taxa &lt;- assignTaxonomy(
+  seqtab.nochim,
+  "reference/silva_nr99_v138.2_toSpecies_trainset.fa.gz",
+  minBoot = 80,
+  multithread = FALSE
+)
+
+# Optional species-level exact-fragment matching; use the matching release.
+taxa &lt;- addSpecies(taxa, "reference/silva_species_assignment_v138.2.fa.gz")
+write.csv(taxa, "taxonomy_assignments.csv", row.names = TRUE)</code></pre>
+<aside class="lesson-warning"><p><code>minBoot = 80</code> is a bootstrap-support threshold, not an 80% probability that an assignment is correct. Keep unassigned ranks unresolved. <code>addSpecies()</code> is a separate exact-fragment reference match; it does not establish species identity when the amplified region cannot distinguish species. Check the reference release and filename against the current DADA2 training-data page.</p></aside>
+<div class="lesson-result"><p><strong>Worked synthetic result:</strong> the linked R Markdown rendered successfully with R 4.3.3 and DADA2 1.30.0. Its two invented sequences, ASV_SYN_A (200 artificial reads) and ASV_SYN_B (30), were assigned their matching fabricated genera with minimum reported bootstrap support of 100. The exact synthetic references were designed to make the software pathway easy to inspect; this result is not evidence of taxonomic accuracy, a real sample profile, or species-level resolution. Replace the fixture with an appropriate versioned reference and real project data before making any biological interpretation.</p></div>
+<h3 id="qiime-workflow">Optional secondary route: QIIME 2 paired reads</h3>
+<p>This command expects an existing QIIME 2 artifact of type <code>SampleData[PairedEndSequencesWithQuality]</code>, already demultiplexed by sample; it does not import FASTQ files or create sample metadata. Inspect the artifact with <code>qiime tools peek demux.qza</code> and view per-cycle quality with <code>qiime demux summarize --i-data demux.qza --o-visualization demux-summary.qzv</code>, then open it with <code>qiime tools view demux-summary.qzv</code>. Choose truncation lengths from those plots and the target region, retaining sufficient paired-read overlap. After denoising, use a region- and release-matched classifier to assign taxonomy to the representative sequences.</p>
 <pre><code class="language-bash">qiime dada2 denoise-paired \
   --i-demultiplexed-seqs demux.qza \
   --p-trunc-len-f 250 \
   --p-trunc-len-r 250 \
   --o-table table.qza \
   --o-representative-sequences rep-seqs.qza \
-  --o-denoising-stats denoising-stats.qza</code></pre>
+  --o-denoising-stats denoising-stats.qza
+
+# Optional next step: classifier.qza must match the target region and database.
+qiime feature-classifier classify-sklearn \
+  --i-classifier classifier.qza \
+  --i-reads rep-seqs.qza \
+  --o-classification taxonomy.qza</code></pre>
 <aside class="lesson-warning"><p>Do not copy 250 as a universal setting. Truncation removes 3′ bases and discards reads shorter than the selected length. Paired reads must retain sufficient overlap to merge; the documented default minimum is 12 nt. Poor choices can discard reads or prevent merging. Review quality plots and denoising statistics. Taxonomy assignment is separate and needs a reference compatible with the amplified region and classifier.</p></aside>
 <p>Match the QIIME 2 installation and DADA2 plugin to the documentation for the installed release. The 2024.10 reference below is archived; current QIIME 2 documentation points users to the amplicon distribution documentation.</p>
 <h2 id="prokka">Annotating an assembled genome with Prokka</h2>
@@ -225,6 +249,8 @@ prokka --listdb</code></pre>
 <section class="lesson-exercise"><h2 id="exercise">Check your workflow choice</h2><p>You receive (A) demultiplexed paired-end 16S reads from a community and (B) a FASTA assembly for one isolate. For each, name the workflow, one output to inspect, and one limitation.</p><details><summary>Check your answer</summary><p>(A) Use an amplicon workflow such as QIIME 2 with DADA2; inspect the feature table, representative sequences, and denoising statistics. Marker resolution, primer bias, and taxonomy-reference limits remain. (B) Annotate assembled contigs with Prokka; inspect GFF3/GenBank annotations plus logs and summary. Predictions depend on assembly quality and reference/database evidence.</p></details></section>
 <section aria-label="References and further reading" class="lesson-reference"><h2 id="references">Documentation and further reading</h2><ul>
 <li><a href="https://amplicon-docs.qiime2.org/" rel="noopener noreferrer" target="_blank">Current QIIME 2 amplicon documentation</a></li>
+<li><a href="https://benjjneb.github.io/dada2/assign.html" rel="noopener noreferrer" target="_blank">DADA2 taxonomy assignment and species matching</a></li>
+<li><a href="https://benjjneb.github.io/dada2/training.html" rel="noopener noreferrer" target="_blank">DADA2 formatted training FASTA and versioned reference data</a></li>
 <li><a href="https://docs.qiime2.org/2024.10/plugins/available/dada2/denoise-paired/" rel="noopener noreferrer" target="_blank">QIIME 2 2024.10 DADA2 paired-read reference (archived)</a></li>
 <li><a href="https://github.com/tseemann/prokka" rel="noopener noreferrer" target="_blank">Prokka upstream documentation and maintenance notice</a></li>
 <li><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC4927377/" rel="noopener noreferrer" target="_blank">Callahan et al., DADA2 method paper</a></li></ul></section>
@@ -356,7 +382,7 @@ prokka --listdb</code></pre>
 </script>
 <script src="../assets/vendor/prism/prism-1.29.0.js"></script>
 <script id="tutorial-code-data">
-window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"16s-rrna-prokka-annotation":{"blocks":[{"language":"bash","sha256":"40ed140eeb1dfb90e24aa7274c76897391733c450613b24c0bd8a467fa1861c1"},{"language":"bash","sha256":"da3e630988ec5576287685a912ca8a459a537f23c803f4b5e5d27703676827d2"},{"language":"bash","sha256":"52c95c786975a60c3787a371967acca292ece494685031243f8ed422ebc31118"},{"language":"bash","sha256":"db1553b62b970d3e3b3b1ddb5fdd077902822f47fa2e2a9d14988d2694d656a6"},{"language":"bash","sha256":"f46f1c3e3d1b11ca3708961fd9d32169f434141ddbff395ae82e78c4d8cf8f4a"}],"groups":[]}}};
+window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"16s-rrna-prokka-annotation":{"blocks":[{"language":"r","sha256":"17338ba36511bb7fe2f17c0c1bbafd7176f600aa05e7f9ad292cebb1ec5a4bfe"},{"language":"bash","sha256":"2118325aebca3ffd3811bb8961665108674913a4704bccaf9df53f16ec485712"},{"language":"bash","sha256":"da3e630988ec5576287685a912ca8a459a537f23c803f4b5e5d27703676827d2"},{"language":"bash","sha256":"52c95c786975a60c3787a371967acca292ece494685031243f8ed422ebc31118"},{"language":"bash","sha256":"db1553b62b970d3e3b3b1ddb5fdd077902822f47fa2e2a9d14988d2694d656a6"},{"language":"bash","sha256":"f46f1c3e3d1b11ca3708961fd9d32169f434141ddbff395ae82e78c4d8cf8f4a"}],"groups":[]}}};
 </script>
 <script src="../code-tabs.js?v=20261026-startup-v1"></script>
 <script src="../copy-code.js?v=20261025-r-first-v1"></script>
