@@ -64,6 +64,8 @@ class TutorialReviewFixTests(unittest.TestCase):
         self.assertIn("has_one_sample_prefix", code)
         self.assertIn("vapply(vdj_barcodes, has_one_sample_prefix", code)
         self.assertIn("exactly one sample prefix", code)
+        self.assertIn("length(min_expected_vdj_overlap) != length(sample_ids)", code)
+        self.assertIn("anyDuplicated(names(min_expected_vdj_overlap))", code)
         self.assertIn("0.95 minimum is a configurable teaching refusal gate", article)
 
     def test_singler_reports_overlap_and_refuses_below_documented_thresholds(self):

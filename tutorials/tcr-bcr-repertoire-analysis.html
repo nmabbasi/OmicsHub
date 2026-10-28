@@ -274,7 +274,9 @@ seurat_obj &lt;- RenameCells(seurat_obj, new.names = qualified_rna_barcodes)
 
 # Set expected unique-VDJ-barcode overlap before inspecting this run's result.
 min_expected_vdj_overlap &lt;- c(sample_A = 0.95, sample_B = 0.95)
-if (!setequal(names(min_expected_vdj_overlap), sample_ids) ||
+if (length(min_expected_vdj_overlap) != length(sample_ids) ||
+    anyDuplicated(names(min_expected_vdj_overlap)) ||
+    !setequal(names(min_expected_vdj_overlap), sample_ids) ||
     any(!is.finite(min_expected_vdj_overlap)) ||
     any(min_expected_vdj_overlap &lt; 0 | min_expected_vdj_overlap &gt; 1)) {
   stop("Declare one expected overlap fraction between 0 and 1 for every sample")
@@ -474,7 +476,7 @@ DimPlot(seurat_obj, group.by = "cloneSize")</code></pre>
 </script>
 <script src="../assets/vendor/prism/prism-1.29.0.js"></script>
 <script id="tutorial-code-data">
-window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"tcr-bcr-repertoire-analysis":{"blocks":[{"language":"r","sha256":"a1aae3efbafaad3727fd4320d16c38513ec340521c37874ebebc567744c7db6d"},{"language":"r","sha256":"5f4e38c29b78357f60e670228890091529c4a9573b1236388a0d852d9b517166"},{"language":"r","sha256":"394ab0f104f23c4ff5cf0dad86b4158bdcff69541325cde78301474f8a65eadc"}],"groups":[]}}};
+window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"tcr-bcr-repertoire-analysis":{"blocks":[{"language":"r","sha256":"a1aae3efbafaad3727fd4320d16c38513ec340521c37874ebebc567744c7db6d"},{"language":"r","sha256":"5f4e38c29b78357f60e670228890091529c4a9573b1236388a0d852d9b517166"},{"language":"r","sha256":"56aa7268b6ada40e53e2b2f75fefdd99a1c75966f6b44b11512af2f456904c70"}],"groups":[]}}};
 </script>
 <script src="../code-tabs.js?v=20261026-startup-v1"></script>
 <script src="../copy-code.js?v=20261025-r-first-v1"></script>
