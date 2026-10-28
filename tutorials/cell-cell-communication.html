@@ -183,19 +183,33 @@ function toggleMobileMenu() {
 seurat_obj &lt;- readRDS("seurat_obj.rds")
 stopifnot(inherits(seurat_obj, "Seurat"))
 stopifnot("cell_type" %in% colnames(seurat_obj[[]]))
-cell_counts &lt;- table(seurat_obj$cell_type, useNA = "ifany")
+cell_type_labels &lt;- as.character(seurat_obj$cell_type)
+if (anyNA(cell_type_labels) || any(!nzchar(trimws(cell_type_labels))) ||
+    any(cell_type_labels != trimws(cell_type_labels))) {
+  stop("cell_type must contain non-empty labels without leading/trailing whitespace")
+}
+expected_cell_types &lt;- c("cell_type_A", "cell_type_B") # Replace with the labels planned for this analysis.
+if (anyNA(expected_cell_types) || any(!nzchar(expected_cell_types)) ||
+    any(expected_cell_types != trimws(expected_cell_types)) || anyDuplicated(expected_cell_types)) {
+  stop("Declare unique, non-empty expected cell-type labels without surrounding whitespace")
+}
+observed_cell_types &lt;- sort(unique(cell_type_labels))
+print(observed_cell_types)
+if (!setequal(observed_cell_types, expected_cell_types)) {
+  stop("Observed cell_type labels differ from the declared analysis labels")
+}
+cell_counts &lt;- table(cell_type_labels)
 print(cell_counts)
-stopifnot(!anyNA(seurat_obj$cell_type))
 
 # Inspect the assay and available layers before selecting expression input.
 Assays(seurat_obj)
 Layers(seurat_obj[[DefaultAssay(seurat_obj)]])</code></pre>
-<p>The file path is an input you supply; this is not a self-contained dataset. In R, save your processed Seurat object as <code>seurat_obj.rds</code> in the working directory from which you run the code, or replace the path with its actual location. Check that the selected assay contains normalized values and that group labels match your intended annotations. Seurat v5 stores expression in layers; do not assume a layer called <code>data</code> exists or that the default assay is the one you intend. The check above stops on missing group labels; investigate any very small groups before proceeding.</p>
+<p>The file path is an input you supply; this is not a self-contained dataset. In R, save your processed Seurat object as <code>seurat_obj.rds</code> in the working directory from which you run the code, or replace the path with its actual location. Replace <code>expected_cell_types</code> with the exact cell-population labels declared in your analysis plan; this equality check catches missing, misspelled, or unexpected levels before LIANA runs. These labels are user annotations, not a vocabulary prescribed by LIANA. Check that the selected assay contains normalized values and that Seurat v5 layers match your intent; do not assume a layer called <code>data</code> exists.</p>
 <aside class="lesson-checkpoint"><strong>Stop if:</strong> the cell-type table includes missing labels, unexpected tiny groups, or annotation names that do not match your analysis plan. Investigate first rather than treating a tool's minimum-cell setting as biological quality control.</aside>
 <h2>2. Run LIANA and inspect its consensus ranking</h2>
-<p>The R LIANA tutorial documents <code>liana_wrap()</code> followed by <code>liana_aggregate()</code>. The aggregation step returns consensus rank columns, including <code>aggregate_rank</code>; this is not the <code>consensus_score</code> used in some older examples. The code below follows the documented default workflow and leaves assay selection to the input object's active assay. Verify that this is appropriate for your installed LIANA/Seurat versions before running.</p>
+<p>The current LIANA wrapper takes cell labels through <code>idents_col</code>; set it to the metadata column containing the intended per-cell cell-population labels. Do not use the older <code>groupby</code> argument here. The R workflow then calls <code>liana_aggregate()</code>, whose consensus rank column is <code>aggregate_rank</code>, not the <code>consensus_score</code> used in some older examples. Confirm the wrapper's documented defaults against your installed package version.</p>
 <pre><code class="language-r">library(liana)
-liana_raw &lt;- liana_wrap(seurat_obj, groupby = "cell_type")
+liana_raw &lt;- liana_wrap(seurat_obj, idents_col = "cell_type")
 liana_ranked &lt;- liana_aggregate(liana_raw)
 
 # Confirm actual output fields, then rank smallest aggregate_rank first.
@@ -236,6 +250,7 @@ saveRDS(liana_raw, "liana_raw_results.rds")</code></pre>
 <h2>Further reading</h2>
 <ul>
 <li><a href="https://saezlab.github.io/liana/articles/liana_tutorial.html">LIANA R tutorial</a>: documented wrapper and aggregation workflow.</li>
+<li><a href="https://saezlab.github.io/liana/reference/liana_wrap.html">LIANA <code>liana_wrap()</code> reference</a>: current cell-label argument and wrapper inputs.</li>
 <li><a href="https://github.com/jinworks/CellChat">CellChat official repository and tutorials</a>: current analysis protocol, versions, and database updates.</li>
 <li><a href="https://satijalab.org/seurat/">Seurat documentation</a>: object, assay, and layer behavior.</li>
 <li><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC11139546/">Armingol et al., review of cell–cell interaction inference</a>.</li>
@@ -379,7 +394,7 @@ saveRDS(liana_raw, "liana_raw_results.rds")</code></pre>
 </script>
 <script src="../assets/vendor/prism/prism-1.29.0.js"></script>
 <script id="tutorial-code-data">
-window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"cell-cell-communication":{"blocks":[{"language":"r","sha256":"23b0555eb2cc475e2c346f3bc380d96572325faf5a0d3d6d2d82b825698f670a"},{"language":"r","sha256":"6535e2d07022642d5e0cc99ad8e3b416681edec896071c04de1d4a5ce33b1a14"}],"groups":[]}}};
+window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"cell-cell-communication":{"blocks":[{"language":"r","sha256":"beff7f7968ce298cb29e5e8165e38b98fddb5e055b497ce5c80f7fc54f7cbc24"},{"language":"r","sha256":"25d012438295c1e43d8871bc4f1c7ed1ed26064d8643e164e43597229695c98b"}],"groups":[]}}};
 </script>
 <script src="../code-tabs.js?v=20261026-startup-v1"></script>
 <script src="../copy-code.js?v=20261025-r-first-v1"></script>

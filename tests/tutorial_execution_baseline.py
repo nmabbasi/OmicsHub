@@ -14,7 +14,25 @@ import subprocess
 ROOT = Path(__file__).resolve().parents[1]
 BASE_COMMIT = "122bd466feb11efd304769faff19e77bd40a98b4"
 FIXTURE_PATH = ROOT / "tests/fixtures/tutorial-execution-exact-delta.json"
-FIXTURE_SHA256 = "8d0c9125c92830f9b0f47fa956a593bf42da25db22093342d4064b72eaa42240"
+FIXTURE_SHA256 = "e768f1aa7b3b14f19b67c41461ae127aa58bda72f428f3e40f3cddd55bc46aeb"
+EXPECTED_NEW_ASSET_PATHS = frozenset({
+    "analysis-results.css",
+    "files/tutorial-examples/16s-dada2-taxonomy/dada2-taxonomy-workflow.Rmd",
+    "files/tutorial-examples/execution-evidence/2026-10-25.json",
+    "files/tutorial-examples/execution-evidence/2026-10-28-reporting.json",
+    "images/tutorial-figures/quality-control-r-public-pbmc3k-violin.png",
+    "images/tutorial-figures/research-reporting-r-synthetic-qc.png",
+    "images/tutorial-figures/scrna-seq-basics-r-pbmc3k-elbow.png",
+    "images/tutorial-figures/scrna-seq-basics-r-pbmc3k-qc.png",
+    "images/tutorial-figures/scrna-seq-basics-r-pbmc3k-umap.png",
+    "images/tutorial-figures/tidyverse-r-supplied-count-totals.png",
+    "images/tutorial-figures/visualization-fundamentals-r-heatmap_topgenes.png",
+    "images/tutorial-figures/visualization-fundamentals-r-pca_plot.png",
+    "images/tutorial-figures/visualization-fundamentals-r-qc_boxplot.png",
+    "images/tutorial-figures/visualization-fundamentals-r-qc_histogram.png",
+    "images/tutorial-figures/visualization-fundamentals-r-umap_plot.png",
+    "images/tutorial-figures/visualization-fundamentals-r-volcano.png",
+})
 
 
 def _sha(data):
@@ -65,8 +83,14 @@ def _fixture():
     date_paths = fixture.get("date_modified_paths")
     if not isinstance(pages, list) or len(pages) != 58:
         raise AssertionError("execution-delta page scope must contain the explicit 58-page list")
-    if not isinstance(assets, list) or not isinstance(new_assets, list) or len(new_assets) != 14:
+    if not isinstance(assets, list) or not isinstance(new_assets, list):
         raise AssertionError("execution-delta asset scope is invalid")
+    new_asset_paths = {
+        entry.get("path") for entry in new_assets if isinstance(entry, dict)
+    }
+    if (len(new_assets) != len(EXPECTED_NEW_ASSET_PATHS)
+            or new_asset_paths != EXPECTED_NEW_ASSET_PATHS):
+        raise AssertionError("execution-delta new-asset path set is invalid")
     if date_paths != [
             "tutorials/r-tidyverse-fundamentals.html",
             "tutorials/wes-variant-calling-pipeline.html"]:
@@ -128,6 +152,8 @@ def normalize_execution_delta(relative_path, text):
     """Reverse one exact current page to 122bd bytes; leave mutations untouched."""
     if not isinstance(text, str):
         raise TypeError("execution-delta normalization requires decoded text")
+    from tutorial_58_review_baseline import normalize_58_review
+    text = normalize_58_review(relative_path, text)
     from navigation_performance_baseline import normalize_navigation_performance
     text = normalize_navigation_performance(relative_path, text)
     from latest_review_baseline import latest_review_fixture, normalize_latest_review
@@ -157,6 +183,8 @@ def normalize_execution_delta(relative_path, text):
 
 def verify_new_execution_asset(relative_path, data):
     """Verify a newly introduced asset by explicit path and complete digest."""
+    from tutorial_58_review_baseline import restore_58_review_asset
+    data = restore_58_review_asset(relative_path, data)
     entry = _fixture()["new_asset_map"].get(relative_path)
     if entry is None:
         raise AssertionError(f"not an authorized new execution asset: {relative_path}")
@@ -223,3 +251,22 @@ def overlapping_execution_asset_paths():
 
 def execution_date_paths():
     return frozenset(_fixture()["date_modified_paths"])
+FIXTURE_SHA256 = "e768f1aa7b3b14f19b67c41461ae127aa58bda72f428f3e40f3cddd55bc46aeb"
+EXPECTED_NEW_ASSET_PATHS = frozenset({
+    "analysis-results.css",
+    "files/tutorial-examples/16s-dada2-taxonomy/dada2-taxonomy-workflow.Rmd",
+    "files/tutorial-examples/execution-evidence/2026-10-25.json",
+    "files/tutorial-examples/execution-evidence/2026-10-28-reporting.json",
+    "images/tutorial-figures/quality-control-r-public-pbmc3k-violin.png",
+    "images/tutorial-figures/research-reporting-r-synthetic-qc.png",
+    "images/tutorial-figures/scrna-seq-basics-r-pbmc3k-elbow.png",
+    "images/tutorial-figures/scrna-seq-basics-r-pbmc3k-qc.png",
+    "images/tutorial-figures/scrna-seq-basics-r-pbmc3k-umap.png",
+    "images/tutorial-figures/tidyverse-r-supplied-count-totals.png",
+    "images/tutorial-figures/visualization-fundamentals-r-heatmap_topgenes.png",
+    "images/tutorial-figures/visualization-fundamentals-r-pca_plot.png",
+    "images/tutorial-figures/visualization-fundamentals-r-qc_boxplot.png",
+    "images/tutorial-figures/visualization-fundamentals-r-qc_histogram.png",
+    "images/tutorial-figures/visualization-fundamentals-r-umap_plot.png",
+    "images/tutorial-figures/visualization-fundamentals-r-volcano.png",
+})

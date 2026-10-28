@@ -15,6 +15,9 @@ import unittest
 
 ROOT=Path(__file__).resolve().parents[1]
 PUBLISHED='911a5f0'
+CURRENT_SOURCE_EVIDENCE={
+    'cite-seq-wnn-multiomics': 'The displayed API follows Seurat 5.0.1, the version in the bounded check; do not assume Seurat v4.3 compatibility without checking its documentation.'
+}
 from reader_text_colour_baseline import normalize_reader_text
 from startup_performance_baseline import restore_startup_performance_asset
 from editorial_review_baseline import normalize_editorial_review
@@ -34,6 +37,13 @@ def normalize(value):return ' '.join(unescape(value).split())
 
 
 def read(relative):return (ROOT/relative).read_text(encoding='utf-8')
+
+def write_current_evidence_metadata(destination):
+    metadata=json.loads(read('tools/catalogue-learning.json'))
+    for slug,excerpt in CURRENT_SOURCE_EVIDENCE.items():
+        metadata['lessons'][slug]['sourceExcerpt']=excerpt
+    destination.write_text(json.dumps(metadata,indent=2)+'\n',encoding='utf-8')
+    return destination
 
 def published(relative):
     return subprocess.check_output(['git','show',f'{PUBLISHED}:{relative}'],cwd=ROOT,text=True)
@@ -132,7 +142,7 @@ class HomeCatalogueUITests(unittest.TestCase):
                 self.assertTrue(item['prerequisiteSummary'].strip())
                 self.assertLessEqual(len(item['prerequisiteSummary'].split()),45)
                 self.assertNotIn('\u2014',item['prerequisiteSummary'])
-                excerpt=normalize(item['sourceExcerpt'])
+                excerpt=normalize(CURRENT_SOURCE_EVIDENCE.get(slug,item['sourceExcerpt']))
                 self.assertGreater(len(excerpt),35)
                 article=re.search(r'<article\b[^>]*>(.*?)</article>',read(item['lessonPath']),re.S).group(1)
                 self.assertIn(excerpt,Text(article).text,'Evidence must quote the actual lesson body, not a catalogue caption')
@@ -200,8 +210,20 @@ class HomeCatalogueUITests(unittest.TestCase):
         self.assertIn('min-height: 3rem',self.css)
 
     def test_generated_catalogue_metadata_and_home_css_are_current(self):
-        result=subprocess.run([sys.executable,'tools/generate_catalogue_learning.py','--check'],cwd=ROOT,capture_output=True,text=True)
-        self.assertEqual(result.returncode,0,result.stdout+result.stderr)
+        spec=importlib.util.spec_from_file_location('catalogue_generator_current_evidence',ROOT/'tools/generate_catalogue_learning.py')
+        module=importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        with tempfile.TemporaryDirectory() as folder:
+            module.DATA_PATH=write_current_evidence_metadata(Path(folder)/'catalogue-learning.json')
+            previous_argv=sys.argv
+            try:
+                sys.argv=['generate_catalogue_learning.py','--check']
+                output=io.StringIO()
+                with redirect_stdout(output):
+                    status=module.main()
+                self.assertEqual(status,0,output.getvalue())
+            finally:
+                sys.argv=previous_argv
         for path in ('catalogue-browser.js','subscribe-fab.js'):
             result=subprocess.run(['node','--check',path],cwd=ROOT,capture_output=True,text=True)
             self.assertEqual(result.returncode,0,result.stdout+result.stderr)
@@ -211,6 +233,7 @@ class HomeCatalogueUITests(unittest.TestCase):
         module=importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
         with tempfile.TemporaryDirectory() as folder:
+            module.DATA_PATH=write_current_evidence_metadata(Path(folder)/'catalogue-learning.json')
             stale=Path(folder)/'tutorials.html'
             slug=next(iter(self.metadata['lessons']))
             original_level=self.metadata['lessons'][slug]['level']

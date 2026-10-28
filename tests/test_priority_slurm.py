@@ -37,17 +37,22 @@ class LearnerPathTests(unittest.TestCase):
         text = PAGE.read_text(encoding="utf-8")
         for target in (
             "before-submit", "smoke-job", "resources", "submit-job", "job-state",
-            "optional-parallel", "optional-x11", "optional-custom-modules",
-            "optional-conda", "optional-compression",
+            "optional-parallel", "optional-conda",
         ):
             with self.subTest(target=target):
                 self.assertIn(f'href="#{target}"', text)
                 self.assertIn(f'id="{target}"', text)
         for target in (
-            "optional-parallel", "optional-x11", "optional-custom-modules",
-            "optional-conda", "optional-compression",
+            "optional-parallel", "optional-conda",
         ):
             self.assertRegex(text, rf'<h2 id="{target}">Optional\b')
+        for removed_target in ("optional-x11", "optional-custom-modules", "optional-compression"):
+            with self.subTest(removed_target=removed_target):
+                self.assertNotIn(f'href="#{removed_target}"', text)
+                self.assertNotIn(f'id="{removed_target}"', text)
+        self.assertRegex(text, r'<nav\b[^>]*aria-label="First-job learning route"')
+        self.assertIn('<h2>First-job route</h2>', text)
+        self.assertIn('id="smoke-job">First job: a safe smoke test</h2>', text)
 
     def test_environment_variables_are_documented_individually_with_conditions(self):
         text = PAGE.read_text(encoding="utf-8")

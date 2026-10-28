@@ -9,6 +9,7 @@ from unittest.mock import patch
 import startup_performance_baseline as baseline
 from editorial_review_baseline import normalize_editorial_review_bytes
 from coffee_removal_baseline import restore_coffee_removal_text
+from tutorial_58_review_baseline import normalize_58_review, restore_58_review_asset
 from startup_performance_baseline import (
     ASSET_PATHS,
     BASE_COMMIT,
@@ -39,8 +40,11 @@ class StartupPerformanceBaselineTests(unittest.TestCase):
         self.assertTrue(TUTORIAL_PATHS <= base_paths)
         for relative_path, entry in self.fixture.items():
             with self.subTest(path=relative_path):
-                current = normalize_editorial_review_bytes(
+                review_restored = restore_58_review_asset(
                     relative_path, (baseline.ROOT / relative_path).read_bytes()
+                )
+                current = normalize_editorial_review_bytes(
+                    relative_path, review_restored
                 )
                 self.assertEqual(hashlib.sha256(current).hexdigest(), entry["current_sha256"])
                 if relative_path in TUTORIAL_PATHS:
@@ -55,6 +59,7 @@ class StartupPerformanceBaselineTests(unittest.TestCase):
         relative_path = "tutorials/statistics-for-bioinformatics.html"
         current = (baseline.ROOT / relative_path).read_text(encoding="utf-8")
         # Probe the historical startup layer on its exactly restored input.
+        current = normalize_58_review(relative_path, current)
         current = restore_coffee_removal_text(relative_path, current)
         marker = "<!-- UNREVIEWED ARTICLE EDIT -->"
         self.assertIn("</article>", current)
@@ -113,9 +118,19 @@ class StartupPerformanceBaselineTests(unittest.TestCase):
 
     def test_fixture_generator_refuses_article_byte_changes(self):
         # The production article invariant is separately verified for every
-        # generated HTML record; this stable fixture should build successfully.
+        # generated HTML record after only the exact review baseline is restored.
         import generate_startup_performance_fixture as generator
-        generated = generator.build_fixture()
+
+        def review_then_editorial(relative_path, data):
+            return normalize_editorial_review_bytes(
+                relative_path, restore_58_review_asset(relative_path, data)
+            )
+
+        with patch.object(
+            generator, "normalize_editorial_review_bytes",
+            side_effect=review_then_editorial,
+        ):
+            generated = generator.build_fixture()
         self.assertEqual(set(generated["files"]), FIXTURE_PATHS)
 
 

@@ -45,6 +45,15 @@ from optional_report_baseline import (
     OPTIONAL_REPORT_PATHS,
     verify_optional_report_file,
 )
+from tutorial_58_review_baseline import (
+    REVIEW_PATHS as TUTORIAL_58_REVIEW_PATHS,
+    normalize_58_review,
+    restore_58_review_asset,
+)
+from tutorial_execution_baseline import (
+    new_execution_asset_paths,
+    verify_new_execution_asset,
+)
 
 
 TEST_INFRASTRUCTURE_PATHS = {
@@ -72,6 +81,14 @@ TEST_INFRASTRUCTURE_PATHS = {
     'tests/navigation_guard_baseline.py',
     'tests/test_navigation_guard.py',
     'tests/navigation_performance_baseline.py',
+    'tests/fixtures/tutorial-58-review-hashes.json',
+    'tests/fixtures/tutorial-execution-exact-delta.json',
+    'tests/test_58_tutorial_review_fixes.py',
+    'tests/test_code_tabs.py',
+    'tests/test_execution_scope_assets.py',
+    'tests/test_priority_slurm.py',
+    'tests/test_remaining_cite_longread.py',
+    'tests/tutorial_58_review_baseline.py',
     'tests/r_first_revision_baseline.py',
     'tests/reader_text_colour_baseline.py',
     'tests/start_here_baseline.py',
@@ -153,7 +170,9 @@ class NavigationPerformanceBaselineTests(unittest.TestCase):
             with self.subTest(path=path):
                 entry = fixture[path]
                 current = normalize_startup_performance(
-                    path, (ROOT / path).read_text(encoding="utf-8")
+                    path, normalize_58_review(
+                        path, (ROOT / path).read_text(encoding="utf-8")
+                    )
                 ).encode("utf-8")
                 self.assertEqual(current, entry["after_bytes"])
                 self.assertEqual(
@@ -200,6 +219,7 @@ class NavigationPerformanceBaselineTests(unittest.TestCase):
         current = (ROOT / tutorial).read_text(encoding="utf-8")
         # The new closed adapter rejects raw unknown mutations separately;
         # this test keeps exercising the original navigation-layer contract.
+        current = normalize_58_review(tutorial, current)
         current = restore_coffee_removal_text(tutorial, current)
         mutations = {
             "text": current + "<!-- UNREVIEWED_TEXT_MUTATION -->\n",
@@ -239,7 +259,10 @@ class NavigationPerformanceBaselineTests(unittest.TestCase):
         coffee = coffee_removal_fixture()
         for path, entry in coffee.items():
             self.assertEqual(
-                restore_coffee_removal_bytes(path, (ROOT / path).read_bytes()),
+                restore_coffee_removal_bytes(
+                    path,
+                    restore_58_review_asset(path, (ROOT / path).read_bytes()),
+                ),
                 entry['base_bytes'],
             )
         changed -= set(coffee) - (
@@ -267,6 +290,39 @@ class NavigationPerformanceBaselineTests(unittest.TestCase):
         )
         for path in sorted(changed & OPTIONAL_REPORT_PATHS):
             verify_optional_report_file(path, (ROOT / path).read_bytes())
+        review_only_paths = TUTORIAL_58_REVIEW_PATHS - (
+            STARTUP_TUTORIAL_PATHS | STARTUP_ASSET_PATHS
+            | {"home-page.min.css", "start-here.css", "start-here.html"}
+        )
+        self.assertEqual(review_only_paths, {
+            "files/tutorial-examples/research-reporting-interpretation/research-reporting-workflow.Rmd",
+            "tools/tutorial-code-groups.json",
+            "tools/tutorial-code-languages.json",
+            "tutorial-code-data.js",
+        })
+        for path in sorted(changed & review_only_paths):
+            current = (ROOT / path).read_bytes()
+            restored = (
+                normalize_58_review(path, current.decode("utf-8")).encode("utf-8")
+                if path.endswith(".Rmd")
+                else restore_58_review_asset(path, current)
+            )
+            self.assertNotEqual(restored, current, path)
+        changed -= review_only_paths
+        execution_review_paths = {
+            "files/tutorial-examples/16s-dada2-taxonomy/dada2-taxonomy-workflow.Rmd",
+            "files/tutorial-examples/execution-evidence/2026-10-28-reporting.json",
+        }
+        self.assertEqual(
+            new_execution_asset_paths() & execution_review_paths,
+            execution_review_paths,
+        )
+        for path in sorted(changed & execution_review_paths):
+            self.assertEqual(
+                verify_new_execution_asset(path, (ROOT / path).read_bytes()),
+                (ROOT / path).read_bytes(),
+            )
+        changed -= execution_review_paths
         self.assertEqual(
             changed - TEST_INFRASTRUCTURE_PATHS - {WORKFLOW_PATH},
             STARTUP_TUTORIAL_PATHS | STARTUP_ASSET_PATHS
@@ -292,7 +348,7 @@ class NavigationPerformanceBaselineTests(unittest.TestCase):
                 expected = subprocess.check_output(
                     ["git", "show", f"{BASE_COMMIT}:{path}"], cwd=ROOT
                 )
-                current = (ROOT / path).read_bytes()
+                current = restore_58_review_asset(path, (ROOT / path).read_bytes())
                 if path == "start-here.css":
                     current = restore_start_here_desktop_asset(path, current)
                 elif path == "home-catalogue.css":

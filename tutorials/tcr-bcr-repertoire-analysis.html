@@ -181,7 +181,7 @@ function toggleMobileMenu() {
 <p>Before loading, verify that each sample directory contains <code>filtered_contig_annotations.csv</code> with expected <code>barcode</code>, <code>chain</code>, <code>productive</code>, and CDR3 columns. Cell Ranger describes this as contig-level rows for high-confidence cells, so multiple chain rows per barcode are expected. Record the Cell Ranger run/version and reference configuration.</p>
 <p>At the end, record a clone-size summary and a UMAP colored by clone-size category, alongside the exact clone definition, chain handling, sample grouping, and number of receptor-bearing cells included. These are summaries to interpret, not biological findings supplied in advance.</p>
 <h2>1. Load contigs and make sample-aware clone calls</h2>
-<p>Cell Ranger's <code>filtered_contig_annotations.csv</code> contains contigs associated with high-confidence cell barcodes; it is not a table with one row per cell because a cell can have multiple receptor-chain contigs. Keep sample identity explicit: barcodes can recur between libraries, and a sample prefix prevents accidental merging of identical barcode strings.</p>
+<p>Cell Ranger's <code>filtered_contig_annotations.csv</code> contains contigs associated with high-confidence cell barcodes; it is not a table with one row per cell because a cell can have multiple receptor-chain contigs. A 10x barcode such as <code>AAACCTGAGACAGGTA-1</code> includes its GEM-well suffix; preserve the <code>-1</code>. Keep sample identity explicit because barcodes can recur between libraries.</p>
 <pre><code class="language-r">library(scRepertoire)
 library(Seurat)
 library(ggplot2)
@@ -189,18 +189,29 @@ library(ggplot2)
 # Replace these directories with one directory per V(D)J sample.
 sample_dirs &lt;- c("data/sample_A", "data/sample_B")
 sample_ids &lt;- c("sample_A", "sample_B")
-stopifnot(length(sample_dirs) == length(sample_ids))
+stopifnot(length(sample_dirs) == length(sample_ids), !anyNA(sample_ids),
+          all(nzchar(sample_ids)), !anyDuplicated(sample_ids))
 
 contig_list &lt;- lapply(sample_dirs, function(path) {
   loadContigs(input = path, format = "10X")[[1]]
 })
+names(contig_list) &lt;- sample_ids
 combined_tcr &lt;- combineTCR(
   contig_list,
-  samples = sample_ids,
-  ID = sample_ids
-)</code></pre>
-<p>The directories must contain Cell Ranger's named filtered-contig CSV. Check that each list element loaded the intended sample, that barcode prefixes distinguish samples, and that productive chains and missing/extra chains are handled as intended. The defaults for removing or retaining incomplete and multi-chain cells are analysis choices, not neutral cleanup; inspect the package documentation before changing them.</p>
-<p><strong>Barcode check before attachment:</strong> <code>samples</code> and <code>ID</code> add sample strings as prefixes in <code>combineTCR()</code>; with both set to <code>sample_A</code>, do not assume the result remains the raw 10x barcode. Inspect <code>head(combined_tcr[[1]]$barcode)</code> against <code>head(colnames(seurat_obj))</code>. If RNA barcodes are not sample-qualified, apply one documented convention consistently to both assays before combining; do not strip suffixes blindly, which can merge cells across samples. Require exact overlap and inspect unmatched counts; stop if overlap is unexpectedly low.</p>
+  samples = sample_ids
+)
+if (length(combined_tcr) != length(sample_ids)) stop("Expected one combined repertoire per sample")
+names(combined_tcr) &lt;- sample_ids
+
+# Explicit before/after example; the barcode suffix is retained.
+raw_10x_barcode &lt;- "AAACCTGAGACAGGTA-1"
+cat("Before (raw 10x): ", raw_10x_barcode, "\n", sep = "")
+cat("After one sample prefix: ", paste0("sample_A_", raw_10x_barcode), "\n", sep = "")
+cat("If samples and ID both add sample_A: ",
+    paste0("sample_A_sample_A_", raw_10x_barcode), "\n", sep = "")</code></pre>
+<p>The directories must contain Cell Ranger's named filtered-contig CSV. Check that each list element loaded the intended sample and that productive chains and missing/extra chains are handled as intended. The defaults for removing or retaining incomplete and multi-chain cells are analysis choices, not neutral cleanup.</p>
+<p>With <code>samples = "sample_A"</code> and no <code>ID</code> argument, the intended convention is <code>AAACCTGAGACAGGTA-1</code> before combination and <code>sample_A_AAACCTGAGACAGGTA-1</code> after; setting both <code>samples</code> and <code>ID</code> to <code>sample_A</code> would duplicate the prefix. Inspect the actual <code>head(combined_tcr[[1]]$barcode)</code> for your installed scRepertoire version before proceeding. Never strip the 10x suffix to force a match.</p>
+<p>The prefix shown in code is a convention, not an identifier rule enforced by 10x. Ensure the Seurat object uses the same one-prefix convention for each sample. The overlap check below uses unique V(D)J barcodes as its denominator; RNA cells without a receptor call are expected and are not counted as a barcode mismatch.</p>
 <aside class="lesson-checkpoint"><h3>Before comparing samples</h3><p>Confirm that your RNA object's cell barcodes use the same sample-prefix convention as the combined contigs. Check which cells lack receptor calls, how many have multiple or incomplete chains, and whether the sample labels refer to the same biological units in both assays. A barcode mismatch can prevent annotation transfer.</p></aside>
 <h2>2. Compare clone-size structure</h2>
 <p>Choose a clonotype definition before interpreting an expansion plot. The example uses <code>aa</code>, amino-acid CDR3 calls. Amino-acid matching can group distinct nucleotide rearrangements that encode the same sequence; nucleotide-based definitions are more stringent for sequence identity. The package's available definitions and chain rules depend on current version and receptor type.</p>
@@ -220,18 +231,62 @@ clonalProportion(
 <p>Homeostasis groups clones by their proportion of the selected repertoire; proportion plots rank clones into abundance groups. Neither is a diversity estimate by itself. Read the plot with its denominator and grouping in mind: the same clone may be assigned differently when the compared group changes. Record the clone-call definition, chain selection, grouping variable, and whether cells or reads underpin the input data.</p>
 <aside class="lesson-warning"><h3>Depth and sampling affect the picture</h3><p>Observed richness and rare-clone detection depend on sampling depth and cell recovery. Equalizing depth can be useful for a chosen comparison, but rarefaction is not a universal prerequisite or a cure for differences in tissue, capture, or library quality. Report the normalization or subsampling method and assess whether conclusions hold under reasonable alternatives. Do not label a large clone as antigen-specific from abundance alone.</p></aside>
 <h2>3. Attach clone labels to Seurat metadata</h2>
-<p>Make the RNA object's sample metadata agree with the sample names used above. The attachment relies on matching cell barcodes. The example groups frequencies within each sample and requests amino-acid clonotypes; inspect the resulting metadata columns rather than assuming a particular label or bin exists.</p>
+<p>Make the RNA object's sample metadata agree with the sample names used above. The attachment relies on matching cell barcodes. The code prefixes raw RNA barcodes using the Seurat sample field, reports unique V(D)J-to-RNA overlap for each sample, and stops below thresholds you set before running. The example then groups frequencies within each sample and requests amino-acid clonotypes.</p>
 <pre><code class="language-r"># Load your matched Seurat object, e.g.:
 # seurat_obj &lt;- readRDS("data/combined_seurat.rds")
 # Metadata column "sample" must contain values in sample_ids.
 stopifnot(exists("seurat_obj"), "sample" %in% colnames(seurat_obj[[]]))
-stopifnot(all(unique(as.character(seurat_obj$sample)) %in% sample_ids))
-contig_barcodes &lt;- unique(unlist(lapply(combined_tcr, `[[`, "barcode")))
-rna_barcodes &lt;- colnames(seurat_obj)
-barcode_overlap &lt;- intersect(contig_barcodes, rna_barcodes)
-message(length(barcode_overlap), " exact barcode matches; ",
-        length(setdiff(contig_barcodes, rna_barcodes)), " contig barcodes unmatched")
-if (length(barcode_overlap) == 0L) stop("No exact barcode overlap; resolve prefixes before attachment")
+sample_labels &lt;- trimws(as.character(seurat_obj$sample))
+if (anyNA(sample_labels) || any(!nzchar(sample_labels)) ||
+    !setequal(unique(sample_labels), sample_ids)) {
+  stop("Seurat sample labels must be non-empty and match sample_ids exactly")
+}
+raw_rna_barcodes &lt;- colnames(seurat_obj)
+if (is.null(raw_rna_barcodes) || anyDuplicated(raw_rna_barcodes)) {
+  stop("Seurat cell barcodes must be present and unique")
+}
+qualify_barcode &lt;- function(barcode, sample_id) {
+  prefix &lt;- paste0(sample_id, "_")
+  if (startsWith(barcode, prefix)) return(barcode)
+  if (grepl("^[ACGTN]+-[0-9]+$", barcode)) return(paste0(prefix, barcode))
+  stop("Unexpected RNA barcode convention for ", sample_id, ": ", barcode)
+}
+qualified_rna_barcodes &lt;- mapply(
+  qualify_barcode, raw_rna_barcodes, sample_labels, USE.NAMES = FALSE
+)
+if (anyDuplicated(qualified_rna_barcodes)) stop("Sample-qualified RNA barcodes are not unique")
+seurat_obj &lt;- RenameCells(seurat_obj, new.names = qualified_rna_barcodes)
+
+# Set expected unique-VDJ-barcode overlap before inspecting this run's result.
+min_expected_vdj_overlap &lt;- c(sample_A = 0.95, sample_B = 0.95)
+if (!setequal(names(min_expected_vdj_overlap), sample_ids) ||
+    any(!is.finite(min_expected_vdj_overlap)) ||
+    any(min_expected_vdj_overlap &lt; 0 | min_expected_vdj_overlap &gt; 1)) {
+  stop("Declare one expected overlap fraction between 0 and 1 for every sample")
+}
+rna_by_sample &lt;- split(colnames(seurat_obj), factor(sample_labels, levels = sample_ids))
+overlap_by_sample &lt;- do.call(rbind, lapply(sample_ids, function(sample_id) {
+  vdj_barcodes &lt;- unique(as.character(combined_tcr[[sample_id]]$barcode))
+  rna_barcodes &lt;- rna_by_sample[[sample_id]]
+  if (length(vdj_barcodes) == 0L || length(rna_barcodes) == 0L) {
+    stop("No V(D)J barcodes or RNA cells for sample ", sample_id)
+  }
+  if (!all(startsWith(vdj_barcodes, paste0(sample_id, "_")))) {
+    stop("V(D)J barcodes do not have exactly the declared sample prefix for ", sample_id)
+  }
+  matched &lt;- intersect(vdj_barcodes, rna_barcodes)
+  data.frame(
+    sample = sample_id, n_vdj = length(vdj_barcodes), n_rna = length(rna_barcodes),
+    n_matched = length(matched), n_vdj_unmatched = length(setdiff(vdj_barcodes, rna_barcodes)),
+    min_expected = unname(min_expected_vdj_overlap[[sample_id]]),
+    overlap_fraction = length(matched) / length(vdj_barcodes)
+  )
+}))
+print(overlap_by_sample, row.names = FALSE)
+if (any(overlap_by_sample$n_matched == 0L) ||
+    any(overlap_by_sample$overlap_fraction &lt; overlap_by_sample$min_expected)) {
+  stop("At least one sample failed its predeclared V(D)J-to-RNA overlap check")
+}
 seurat_obj &lt;- combineExpression(
   combined_tcr,
   seurat_obj,
@@ -242,7 +297,7 @@ seurat_obj &lt;- combineExpression(
 # Inspect the values actually added before plotting.
 colnames(seurat_obj[[]])
 DimPlot(seurat_obj, group.by = "cloneSize")</code></pre>
-<p>If cells are unexpectedly unannotated, compare the barcode strings on both sides, including any sample prefixes, and verify that the sample metadata column has the intended values. Also check whether filtering removed receptor-negative cells. The plot describes where labeled cells lie in the embedding; it does not demonstrate that a clone caused a transcriptional state or that the cells are malignant.</p>
+<p>The code reports unique V(D)J barcodes, RNA cells, matches, unmatched V(D)J barcodes, and the match fraction separately for each sample. The example 0.95 minimum is a configurable teaching refusal gate, not a universal biological threshold; set it before examining results based on the same-run data, Cell Ranger filtering, and any known subset of RNA cells, and document that rationale. Do not lower it simply to make a mismatched dataset pass. RNA cells without receptor calls are not evidence of a mismatch. A plot describes where labeled cells lie in the embedding; it does not demonstrate that a clone caused a transcriptional state or that the cells are malignant.</p>
 <h2>Interpreting clone-associated expression</h2>
 <p>A clone-size category is an abundance grouping, not a malignancy label. In a lymphoma study, determining whether a clone is malignant requires disease-specific evidence and study design beyond this repertoire workflow. A cell-level contrast such as <code>FindMarkers()</code> can be exploratory, but cells from the same donor are not independent biological replicates. For condition-level claims, account for between-sample variation, for example with an appropriate pseudobulk design, and validate findings independently.</p>
 <p>TCRs and BCRs share V(D)J-based diversity but differ in chain organization and biology. This code is TCR-focused, not a worked BCR analysis. For BCR data, substitute <code>combineBCR()</code> on filtered contig annotations and verify productive IGH plus IGK and/or IGL chains and CDR3 fields. For <code>combineExpression()</code>, choose a BCR-appropriate <code>clone.call</code> and <code>chain</code> (documented choices include <code>IGH</code>, <code>IGL</code>, and <code>both</code>); a heavy-chain-only call does not represent paired receptors. Check barcode overlap and resulting metadata before plotting. Interpret pairing and somatic hypermutation with BCR-specific methods; this is a planning checklist, not a validated BCR recipe.</p>
@@ -257,8 +312,10 @@ DimPlot(seurat_obj, group.by = "cloneSize")</code></pre>
 <section aria-labelledby="exercise-title" class="lesson-exercise"><h2 id="exercise-title">Exercise: audit a two-sample comparison</h2><p>Run the workflow on two of your own samples. Save the two plots and write a short caption containing the four decisions above. Then inspect barcode overlap, receptor-call recovery, chain pairing, and sample-level replication before making a biological comparison.</p><p><strong>Check your work:</strong> another analyst should be able to tell exactly how you defined a clone and what cells formed each denominator. A visually dominant category without that information is not an interpretable comparison.</p></section>
 <section aria-label="References and further reading" class="lesson-reference"><h2>Official documentation</h2><ul>
 <li><a href="https://www.borch.dev/uploads/screpertoire/reference/loadcontigs" rel="noopener" target="_blank">scRepertoire: loadContigs</a></li>
+<li><a href="https://www.borch.dev/uploads/screpertoire/reference/combinetcr" rel="noopener" target="_blank">scRepertoire: combineTCR</a>, including sample and ID prefix behavior</li>
 <li><a href="https://www.borch.dev/uploads/screpertoire/articles/attaching_sc" rel="noopener" target="_blank">scRepertoire: attaching clonal information to single-cell objects</a></li>
 <li><a href="https://www.borch.dev/uploads/screpertoire/reference/clonalhomeostasis" rel="noopener" target="_blank">scRepertoire: clonalHomeostasis</a></li>
+<li><a href="https://www.10xgenomics.com/support/software/cell-ranger/10.0/analysis/outputs/cr-outputs-mex-matrices" rel="noopener" target="_blank">10x Genomics: feature-barcode matrix and barcode suffixes</a></li>
 <li><a href="https://www.10xgenomics.com/support/software/cell-ranger/latest/analysis/outputs/cr-5p-outputs-annotations-vdj" rel="noopener" target="_blank">10x Genomics: Cell Ranger V(D)J annotation outputs</a></li>
 <li><a href="https://satijalab.org/seurat/reference/findmarkers" rel="noopener" target="_blank">Seurat: FindMarkers and sample-level differential-expression caveat</a></li>
 </ul></section>
@@ -401,7 +458,7 @@ DimPlot(seurat_obj, group.by = "cloneSize")</code></pre>
 </script>
 <script src="../assets/vendor/prism/prism-1.29.0.js"></script>
 <script id="tutorial-code-data">
-window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"tcr-bcr-repertoire-analysis":{"blocks":[{"language":"r","sha256":"af2c7cf84ca586ce05dedace8a87a30af8fac35410065ccd3af3c8a091cd7fc8"},{"language":"r","sha256":"5f4e38c29b78357f60e670228890091529c4a9573b1236388a0d852d9b517166"},{"language":"r","sha256":"672851f154d0d0d6742f90caf2cb524662245175dfbef7bfa272fb59381158b2"}],"groups":[]}}};
+window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"tcr-bcr-repertoire-analysis":{"blocks":[{"language":"r","sha256":"a1aae3efbafaad3727fd4320d16c38513ec340521c37874ebebc567744c7db6d"},{"language":"r","sha256":"5f4e38c29b78357f60e670228890091529c4a9573b1236388a0d852d9b517166"},{"language":"r","sha256":"63957eb4b616ee69c2ba434d86a8fde36a69c078fd76b9a8cb89672b9c6895a4"}],"groups":[]}}};
 </script>
 <script src="../code-tabs.js?v=20261026-startup-v1"></script>
 <script src="../copy-code.js?v=20261025-r-first-v1"></script>

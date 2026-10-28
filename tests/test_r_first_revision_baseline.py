@@ -14,7 +14,7 @@ from r_first_revision_baseline import (
 )
 from tutorial_ui_baseline import TUTORIAL_UI_PATHS
 from tutorial_execution_baseline import (
-    execution_date_paths, overlapping_execution_asset_paths,
+    execution_date_paths, new_execution_asset_paths, overlapping_execution_asset_paths,
     verify_execution_asset_or_overlapping,
 )
 from latest_review_baseline import normalize_latest_review
@@ -22,6 +22,10 @@ from startup_performance_baseline import restore_startup_performance_asset
 
 ROOT = Path(__file__).resolve().parents[1]
 TARGET_DATE = "2026-10-25"
+NEW_PUBLIC_TEACHING_ASSETS = frozenset({
+    "files/tutorial-examples/16s-dada2-taxonomy/dada2-taxonomy-workflow.Rmd",
+    "files/tutorial-examples/execution-evidence/2026-10-28-reporting.json",
+})
 
 
 def _jsonld(text):
@@ -167,11 +171,21 @@ class RFirstRevisionBaselineTests(unittest.TestCase):
                     verify_r_first_asset(relative, data + b"\n")
                 baseline = pre_r_first_bytes(relative)
                 restored = restore_r_first_asset(relative, data)
-                self.assertEqual(restored, baseline if baseline is not None else data)
+                self.assertEqual(restored, baseline if baseline is not None else historical_data)
                 if baseline is not None:
                     self.assertEqual(restore_r_first_asset(relative, restored), baseline)
                     with self.assertRaisesRegex(AssertionError, "fingerprint mismatch"):
                         restore_r_first_asset(relative, baseline + b"\n")
+                else:
+                    self.assertEqual(restore_r_first_asset(relative, restored), historical_data)
+
+        self.assertTrue(NEW_PUBLIC_TEACHING_ASSETS <= new_execution_asset_paths())
+        for relative in sorted(NEW_PUBLIC_TEACHING_ASSETS):
+            with self.subTest(execution_asset=relative):
+                data = (ROOT / relative).read_bytes()
+                self.assertEqual(verify_execution_asset_or_overlapping(relative, data), data)
+                with self.assertRaisesRegex(AssertionError, "fingerprint mismatch"):
+                    verify_execution_asset_or_overlapping(relative, data + b"\n")
 
     def test_unknown_paths_are_never_implicitly_authorized(self):
         sample = "<p>Unrelated</p>"

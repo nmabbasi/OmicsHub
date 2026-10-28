@@ -19,6 +19,7 @@ from latest_review_baseline import normalize_latest_review, restore_latest_revie
 from start_here_desktop_baseline import (
     normalize_start_here_desktop_html, restore_start_here_desktop_asset,
 )
+from tutorial_58_review_baseline import normalize_58_review
 from home_catalogue_banner_baseline import restore_home_catalogue_banner_asset
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -152,6 +153,7 @@ class ReaderTextColourTests(unittest.TestCase):
                 # reviewed layer. Reverse only those pinned chunks before
                 # checking that this reader-colour pass changed only its own
                 # cache tokens and utility classes.
+                current = normalize_58_review(relative, current)
                 current = normalize_start_here_desktop_html(relative, current)
                 r_first_normalized = normalize_r_first_revision(relative, current)
                 self.assertEqual(r_first_normalized, expected)
@@ -163,6 +165,7 @@ class ReaderTextColourTests(unittest.TestCase):
         for relative in sorted(page_patches()):
             before = pre_reader_text_bytes(relative).decode("utf-8")
             current = (ROOT / relative).read_text(encoding="utf-8")
+            current = normalize_58_review(relative, current)
             current = normalize_r_first_revision(relative, current)
             with self.subTest(page=relative):
                 for pattern in tags:

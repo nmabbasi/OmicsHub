@@ -172,7 +172,7 @@ function toggleMobileMenu() {
 <nav aria-label="Learning path navigation" class="reader-toolbar"><span class="reader-toolbar__heading">Learning path</span><a href="scrna-seq-basics.html" rel="prev" class="reader-toolbar__previous"><span class="reader-toolbar__direction"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5m0 0 7 7m-7-7 7-7"/></svg></span><span class="reader-toolbar__copy"><small>Previous prerequisite</small><strong>scRNA-seq Basics</strong></span></a><a data-catalogue-return="" href="../tutorials.html" class="reader-toolbar__library"><span class="reader-toolbar__library-mark" aria-hidden="true"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="6" height="6" rx="1.3"/><rect x="14" y="4" width="6" height="6" rx="1.3"/><rect x="4" y="14" width="6" height="6" rx="1.3"/><rect x="14" y="14" width="6" height="6" rx="1.3"/></svg></span><span><small>Browse</small><strong>All tutorials</strong></span></a><a href="../start-here.html#sh-single-cell" rel="next" class="reader-toolbar__next"><span class="reader-toolbar__copy"><small>Suggested next</small><strong>Return to single-cell choices</strong></span><span class="reader-toolbar__direction"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14m0 0-7-7m7 7-7 7"/></svg></span></a></nav>
 <article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--lab"><p class="lesson-lead">CITE-seq measures RNA and antibody-derived tags (ADTs) in the same cells. This template follows the two assays from matched count matrices through separate preprocessing, a Seurat weighted-nearest-neighbor (WNN) graph, and checks that help you interpret modality weights without treating them as biological truth.</p>
 <section class="lesson-summary tutorial-learning-contract" data-tutorial-format="advanced-template" aria-label="Learning format"><p><strong>Format: Advanced template.</strong> For readers familiar with R and single-cell analysis, this adaptable workflow builds and inspects a WNN Seurat object from paired RNA and ADT count matrices you prepare; no dataset is bundled.</p></section>
-<div class="lesson-result" id="cite-tested-scope"><p><strong>Checked route:</strong> the five displayed R stages ran on the first 1,000 paired cells from the official <a href="https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE100866">CBMC RNA/ADT matrices</a>, using Ubuntu 24.04, R 4.3.3 and Seurat 5.0.1. The example retained 999 cells, produced 12 PCs from 13 ADT features, completed WNN and generated all five PNGs with opaque white backgrounds. This is a bounded software check, not a full-cohort benchmark, biological validation, clean installation test or cross-platform result. Thresholds and dimension caps still need study-specific justification.</p></div>
+<div class="lesson-result" id="cite-tested-scope"><p><strong>Earlier bounded software check:</strong> the page's five-stage run report describes the first 1,000 paired cells from the official <a href="https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE100866">GSE100866 CBMC RNA/ADT matrices</a>; 999 cells were retained and 13 ADT features were available. It reports Ubuntu 24.04, R 4.3.3 and Seurat 5.0.1. The PCA request was 50 RNA components; WNN used the first 30 available RNA PCs and all 12 available ADT PCs under the 30/18 caps. These are implementation bounds, not dimensions shown to be biologically optimal. That earlier run completed WNN and generated five PNGs; the two elbow-plot outputs were added afterward and have not been rerun against those matrices. This was not a full-cohort benchmark or biological validation. No per-file input checksums or full run manifest are recorded here, so the exact input subset is not independently reproducible from this page alone.</p></div>
 <h2>Learning objectives &amp; prerequisites</h2>
 <p>
 By the end of this lesson you will be able to:
@@ -187,8 +187,8 @@ By the end of this lesson you will be able to:
 Prerequisites:
 </p>
 <ul>
-<li>Familiarity with single-cell RNA-seq and R. The function names below follow Seurat v4.3 and the current Seurat reference; check the installed version if an argument or object accessor differs.</li>
-<li>Installed software: R and Seurat. ggplot2 is needed only for plotting. The code uses the Seurat v4.3 WNN API and current documented function names; it is not a record of a tested software installation.</li>
+<li>Familiarity with single-cell RNA-seq and R. The displayed API follows Seurat 5.0.1, the version in the bounded check; do not assume Seurat v4.3 compatibility without checking its documentation.</li>
+<li>Installed software: R, Seurat, and ggplot2 for plotting. The article-reported run used R 4.3.3 and Seurat 5.0.1 on Ubuntu 24.04. No other version combination is claimed as tested.</li>
 <li>Input files: two RDS matrices, with features in rows and cell barcodes in columns. The RNA matrix has genes; the ADT matrix has antibody features. They must use the same barcode convention. This example intersects their barcodes before object construction and reports how many cells are retained. It does not load an already-built Seurat object.</li>
 </ul>
 <h2>Why analyze RNA and ADT together?</h2>
@@ -287,7 +287,12 @@ DefaultAssay(seurat_obj) &lt;- "RNA"
 seurat_obj &lt;- NormalizeData(seurat_obj, normalization.method = "LogNormalize", scale.factor = 1e4)
 seurat_obj &lt;- FindVariableFeatures(seurat_obj, selection.method = "vst", nfeatures = 3000)
 seurat_obj &lt;- ScaleData(seurat_obj, features = VariableFeatures(seurat_obj))
-seurat_obj &lt;- RunPCA(seurat_obj, features = VariableFeatures(seurat_obj), reduction.name = "pca")
+rna_npcs &lt;- min(50L, length(VariableFeatures(seurat_obj)), ncol(seurat_obj) - 1L)
+if (rna_npcs &lt; 2L) stop("Too few RNA features or cells for this PCA/WNN example")
+seurat_obj &lt;- RunPCA(seurat_obj, features = VariableFeatures(seurat_obj),
+                      npcs = rna_npcs, reduction.name = "pca")
+rna_elbow &lt;- ElbowPlot(seurat_obj, reduction = "pca", ndims = rna_npcs)
+ggsave("results/rna_pca_elbow.png", plot = rna_elbow, width = 7, height = 5, dpi = 300)
 
 # Save
 saveRDS(seurat_obj, file = "results/seurat_rna_pca.rds")
@@ -296,7 +301,7 @@ saveRDS(seurat_obj, file = "results/seurat_rna_pca.rds")
 Produces:
 </p>
 <ul>
-<li>PCA embedding stored in seurat_obj[["pca"]].</li>
+<li>PCA embedding stored in seurat_obj[["pca"]], with the RNA elbow plot saved as <code>results/rna_pca_elbow.png</code>.</li>
 <li>Results checkpoint results/seurat_rna_pca.rds.</li>
 </ul>
 <h3>Preprocess ADT: CLR normalization and protein PCA</h3>
@@ -313,6 +318,8 @@ seurat_obj &lt;- ScaleData(seurat_obj, features = adt_features)
 adt_npcs &lt;- min(18L, length(adt_features) - 1L, ncol(seurat_obj) - 1L)
 if (adt_npcs &lt; 2L) stop("Too few ADT features or cells for this PCA/WNN example")
 seurat_obj &lt;- RunPCA(seurat_obj, features = adt_features, npcs = adt_npcs, reduction.name = "apca")
+adt_elbow &lt;- ElbowPlot(seurat_obj, reduction = "apca", ndims = adt_npcs)
+ggsave("results/adt_pca_elbow.png", plot = adt_elbow, width = 7, height = 5, dpi = 300)
 
 # Save
 saveRDS(seurat_obj, file = "results/seurat_adt_pca.rds")
@@ -321,15 +328,16 @@ saveRDS(seurat_obj, file = "results/seurat_adt_pca.rds")
 Produces:
 </p>
 <ul>
-<li>ADT PCA stored in seurat_obj[["apca"]].</li>
+<li>ADT PCA stored in seurat_obj[["apca"]], with its elbow plot saved as <code>results/adt_pca_elbow.png</code>.</li>
 <li>Checkpoint results/seurat_adt_pca.rds.</li>
 </ul>
 <h3>Run WNN integration, embedding, and clustering</h3>
-<p>Use only PCs that actually exist in each reduction. The named CBMC panel has 13 ADT features, not enough for 18 protein PCs. The caps below are software limits, not a biological selection rule: inspect the reductions and choose fewer informative PCs when appropriate.</p>
+<p>Use only PCs that actually exist in each reduction. The bounded CBMC check had 13 ADT features, so it produced 12 ADT PCs; the code's WNN caps then selected 30 RNA PCs and all 12 available ADT PCs. This is a reproducible dimension bound, not a data-driven elbow choice or a claim that every selected PC is informative. Inspect the saved elbow plots and PC loadings; choose and record study-specific dimensions before interpreting clusters or modality weights. Changes in those dimensions can alter the WNN graph and downstream results.</p>
 <pre id="cite-wnn-stage"><code># Ensure RNA is default for the function that requires "pca" as an entry
 DefaultAssay(seurat_obj) &lt;- "RNA"
 
-# Bound each requested range by the dimensions actually produced.
+# The example uses up to 30 RNA and 18 ADT PCs, bounded by availability.
+# Inspect the saved elbow plots and loadings, then revise these cutoffs for your study.
 rna_available &lt;- ncol(Embeddings(seurat_obj, reduction = "pca"))
 adt_available &lt;- ncol(Embeddings(seurat_obj, reduction = "apca"))
 if (rna_available &lt; 2L || adt_available &lt; 2L) stop("Need at least two PCs per modality for this example")
@@ -619,7 +627,7 @@ Responsible-use notes:
 </script>
 <script src="../assets/vendor/prism/prism-1.29.0.js"></script>
 <script id="tutorial-code-data">
-window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"cite-seq-wnn-multiomics":{"blocks":[{"language":"bash","sha256":"e24fa56fa1bab6ce699baa678e06b15bceabdd3bc0da29557e829f4d181d2850"},{"language":"r","sha256":"79f8f0b8413002526438e9ee4c441505dc2f7cd0044eed9634b25ee0877b492c"},{"language":"r","sha256":"ecae8da89f3b12a8dea2d74ed14fe205e6d1f45ca7c6e350f33990c964de29f0"},{"language":"r","sha256":"f90ce67cec8321f00f56ccf37a32369f626231b7ecababf31773f041a8691821"},{"language":"r","sha256":"9249e3b1759c3ec6343c131bf18e01d415b1315e183ddec83d4b4d91fc11ab17"},{"language":"r","sha256":"7e87c3429ee1a5e0f18c456a05b7656da9123270e4dbef90c622790b823318fd"},{"language":"r","sha256":"ffdbe5bb40dd470afa5c96fc0bc56b7a5a8cb82817bd579f16ece4dc81cf53de"}],"groups":[]}}};
+window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"cite-seq-wnn-multiomics":{"blocks":[{"language":"bash","sha256":"e24fa56fa1bab6ce699baa678e06b15bceabdd3bc0da29557e829f4d181d2850"},{"language":"r","sha256":"79f8f0b8413002526438e9ee4c441505dc2f7cd0044eed9634b25ee0877b492c"},{"language":"r","sha256":"ecae8da89f3b12a8dea2d74ed14fe205e6d1f45ca7c6e350f33990c964de29f0"},{"language":"r","sha256":"0fdd4b716045df20c4bab77d6d4162b93b1b46094aa158be191415b644a97af5"},{"language":"r","sha256":"6bc6180316430d31f13dee922d1f91e36e8038fe59326886b1856fa0cc99e062"},{"language":"r","sha256":"2d94f2bbc016676abc006bd4faa56723fa2714a76643ad9766036145c462ba23"},{"language":"r","sha256":"ffdbe5bb40dd470afa5c96fc0bc56b7a5a8cb82817bd579f16ece4dc81cf53de"}],"groups":[]}}};
 </script>
 <script src="../code-tabs.js?v=20261026-startup-v1"></script>
 <script src="../copy-code.js?v=20261025-r-first-v1"></script>

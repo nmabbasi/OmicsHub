@@ -13,6 +13,7 @@ from start_here_desktop_baseline import (
     restore_start_here_desktop_asset,
 )
 from home_catalogue_banner_baseline import restore_home_catalogue_banner_asset
+from tutorial_58_review_baseline import normalize_58_review
 
 ROOT = Path(__file__).resolve().parents[1]
 BASELINE = '36bc46d'
@@ -109,13 +110,14 @@ class SitewideReferenceFixesTests(unittest.TestCase):
             relative = page.relative_to(ROOT).as_posix()
             before = baseline(relative)
             raw_after = page.read_text(encoding='utf-8')
-            after = normalize_editorial_review(relative, raw_after)
+            after_58_review = normalize_58_review(relative, raw_after)
+            after = normalize_editorial_review(relative, after_58_review)
             code = lambda html: [unescape(re.sub('<[^>]+>', '', block)) for block in re.findall(r'<pre\b[^>]*>(.*?)</pre>', html, re.S)]
             image_sources = lambda html: [attrs.get('src') for tag, attrs in Markup(html).tags if tag == 'img']
             with self.subTest(page=relative):
                 self.assertEqual(code(after), code(before), 'Reference review must not silently edit runnable code')
-                self.assertEqual(code(raw_after), code(before), 'Raw reviewed source must preserve runnable code')
-                self.assertEqual(image_sources(raw_after), image_sources(before), 'Reference review must preserve approved image sources')
+                self.assertEqual(code(after_58_review), code(before), 'Raw reviewed source must preserve runnable code')
+                self.assertEqual(image_sources(after_58_review), image_sources(before), 'Reference review must preserve approved image sources')
                 self.assertEqual(re.findall(r'<img\b[^>]*>', after), re.findall(r'<img\b[^>]*>', before))
             count += 1
         self.assertEqual(count, 58)

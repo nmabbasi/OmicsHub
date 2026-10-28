@@ -61,7 +61,7 @@ knitr::kable(qc, caption = "Invented sample-level QC values; not biological obse
 
 The table reports a descriptive range. It does not test a treatment effect. There are only three invented rows, and condition and batch are not balanced, so this fixture cannot support a biological comparison or causal interpretation. For real data, verify the experimental unit, independent sample count, design, and provenance before choosing a statistical summary.
 
-```{r summarize-and-plot}
+```{r summarize-and-plot, fig.cap="Mapped-read percentages for the three invented samples: SYN_A (control, batch_1), 90.0%; SYN_B (treated, batch_1), 84.0%; SYN_C (control, batch_2), 93.0%. Each bar is one sample; no inferential test is shown."}
 qc_summary <- data.frame(
   n_samples = nrow(qc),
   mapped_reads_min = min(qc$mapped_reads),
@@ -71,9 +71,25 @@ qc_summary <- data.frame(
 )
 knitr::kable(qc_summary, caption = "Descriptive range for the synthetic fixture.")
 
+condition_summary <- do.call(rbind, lapply(unique(qc$condition), function(group) {
+  group_rows <- qc[qc$condition == group, , drop = FALSE]
+  data.frame(
+    condition = group,
+    n_samples = nrow(group_rows),
+    pct_mapped_min = min(group_rows$pct_mapped),
+    pct_mapped_max = max(group_rows$pct_mapped),
+    batches = paste(sort(unique(group_rows$batch)), collapse = ", ")
+  )
+}))
+knitr::kable(condition_summary, digits = 1,
+             caption = "Descriptive mapped-read range by condition; not a test.")
+knitr::kable(qc[, c("sample_id", "condition", "batch", "pct_mapped")], digits = 1,
+             caption = "Values and sample labels shown in Figure 1.")
+
 if (!dir.exists("results")) dir.create("results", recursive = TRUE)
 write.csv(qc, "results/validated_qc.csv", row.names = FALSE, na = "")
 write.csv(qc_summary, "results/qc_summary.csv", row.names = FALSE, na = "")
+write.csv(condition_summary, "results/qc_summary_by_condition.csv", row.names = FALSE, na = "")
 
 local({
   old_par <- par(no.readonly = TRUE)
@@ -83,6 +99,10 @@ local({
           main = "Invented QC values: descriptive only", col = "steelblue")
 })
 ```
+
+**Worked interpretation:** the invented control samples are SYN_A at 90.0% mapped in batch_1 and SYN_C at 93.0% in batch_2; the single treated sample is SYN_B at 84.0% in batch_1. The values span 84.0% to 93.0%. This is a description of three fixture rows only. With two controls, one treated sample, and an uneven batch layout, the example cannot estimate a treatment effect or support a biological or causal conclusion.
+
+**Figure 1 legend:** Each bar is one invented sample and shows its mapped-read percentage: SYN_A (control, batch_1), 90.0%; SYN_B (treated, batch_1), 84.0%; and SYN_C (control, batch_2), 93.0%. The plot contains no inferential test; the sample, condition, and batch counts are shown in the accompanying table.
 
 The CSVs and plot are generated outputs. They should be reviewed before sharing and are not part of the source lesson. A checksum can show that a file has not changed; it does not anonymize it, prove its provenance, or establish biological validity.
 

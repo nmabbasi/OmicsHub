@@ -1,0 +1,134 @@
+---
+title: "A synthetic DADA2 taxonomy assignment example"
+author: "The Omics Hub"
+output:
+  html_document:
+    toc: true
+    number_sections: true
+---
+
+# What this example demonstrates
+
+This R Markdown document demonstrates DADA2's taxonomy-assignment interface using a tiny, reproducible **synthetic** training FASTA and two invented ASV-like sequences. The sequences and taxon names are generated for this lesson and are not biological 16S observations or a curated database. The count matrix is also invented. This example checks that the classifier can assign synthetic labels and report bootstrap support; it does not run read filtering, error learning, denoising, chimera removal, or a biological study.
+
+For a real analysis, start with a verified DADA2 sequence table after your documented denoising and chimera-removal steps. Replace the toy training FASTA with a versioned, DADA2-formatted reference appropriate to the amplicon region and organisms of interest. Cite both DADA2 and the underlying taxonomy database. Do not treat a successful software example as evidence that a reference is suitable for your samples.
+
+# Make the deterministic synthetic training fixture
+
+The reference is constructed inside this document so no sample data or external reference files are needed. Lineage names intentionally begin with `Synthetic` to prevent accidental interpretation as actual taxa.
+
+```{r make-synthetic-fixture}
+if (!requireNamespace("dada2", quietly = TRUE)) {
+  stop("Install DADA2 from Bioconductor before knitting this example")
+}
+
+set.seed(1602)
+random_sequence <- function(n = 300L) {
+  paste(sample(c("A", "C", "G", "T"), n, replace = TRUE), collapse = "")
+}
+mutate_sequence <- function(sequence, n_changes = 6L) {
+  bases <- strsplit(sequence, "", fixed = TRUE)[[1]]
+  positions <- sample(seq_along(bases), n_changes)
+  for (position in positions) {
+    bases[[position]] <- sample(setdiff(c("A", "C", "G", "T"), bases[[position]]), 1L)
+  }
+  paste(bases, collapse = "")
+}
+
+query_a <- random_sequence()
+query_b <- random_sequence()
+reference_a <- c(query_a, replicate(7L, mutate_sequence(query_a)))
+reference_b <- c(query_b, replicate(7L, mutate_sequence(query_b)))
+lineage_a <- "SyntheticDomain;SyntheticPhylumA;SyntheticClassA;SyntheticOrderA;SyntheticFamilyA;SyntheticGenusA;"
+lineage_b <- "SyntheticDomain;SyntheticPhylumB;SyntheticClassB;SyntheticOrderB;SyntheticFamilyB;SyntheticGenusB;"
+
+training_fasta <- tempfile(fileext = ".fa")
+training_lines <- unlist(lapply(list(
+  list(lineage = lineage_a, sequences = reference_a),
+  list(lineage = lineage_b, sequences = reference_b)
+), function(group) {
+  unlist(lapply(group$sequences, function(sequence) c(paste0(">", group$lineage), sequence)))
+}), use.names = FALSE)
+writeLines(training_lines, training_fasta)
+
+# Rows are synthetic samples; columns are unique ASV-like sequences.
+seqtab.nochim <- matrix(
+  c(120L, 5L, 80L, 25L), nrow = 2L, byrow = TRUE,
+  dimnames = list(c("SYN_A", "SYN_B"), c(query_a, query_b))
+)
+stopifnot(all(seqtab.nochim >= 0), !anyDuplicated(colnames(seqtab.nochim)))
+knitr::kable(
+  data.frame(sample = rownames(seqtab.nochim),
+             ASV_SYN_A_reads = seqtab.nochim[, query_a],
+             ASV_SYN_B_reads = seqtab.nochim[, query_b]),
+  caption = "Invented counts for two synthetic ASV-like sequences; not sample observations."
+)
+```
+
+# Assign taxonomy and retain the evidence
+
+`assignTaxonomy()` applies DADA2's naive Bayes classifier and returns labels at supported ranks. `minBoot` is a bootstrap-support threshold for including a rank; it is not a posterior probability that a taxon is correct. A real reference can omit a rank or produce ambiguous assignments, and those should remain unresolved rather than being filled in by guesswork.
+
+```{r assign-taxonomy}
+taxonomy_result <- dada2::assignTaxonomy(
+  seqtab.nochim,
+  training_fasta,
+  minBoot = 80,
+  outputBootstraps = TRUE,
+  multithread = FALSE
+)
+taxonomy <- taxonomy_result$tax
+bootstrap <- taxonomy_result$boot
+stopifnot(is.matrix(taxonomy), is.matrix(bootstrap),
+          identical(dim(taxonomy), dim(bootstrap)))
+
+asv_reads <- colSums(seqtab.nochim)
+most_specific <- vapply(seq_len(nrow(taxonomy)), function(i) {
+  supported <- which(!is.na(taxonomy[i, ]))
+  if (!length(supported)) return("Unassigned")
+  rank <- max(supported)
+  paste0(colnames(taxonomy)[rank], ": ", taxonomy[i, rank])
+}, character(1))
+lowest_bootstrap <- vapply(seq_len(nrow(bootstrap)), function(i) {
+  supported <- bootstrap[i, !is.na(taxonomy[i, ])]
+  if (!length(supported)) return(NA_real_)
+  min(supported)
+}, numeric(1))
+
+assignment_table <- data.frame(
+  asv = c("ASV_SYN_A", "ASV_SYN_B")[match(rownames(taxonomy), c(query_a, query_b))],
+  synthetic_reads = unname(asv_reads[rownames(taxonomy)]),
+  assigned_lineage = apply(taxonomy, 1L, function(x) paste(stats::na.omit(x), collapse = ";")),
+  lowest_reported_rank = most_specific,
+  minimum_bootstrap_among_reported_ranks = lowest_bootstrap,
+  stringsAsFactors = FALSE
+)
+knitr::kable(assignment_table, digits = 1,
+             caption = "Worked classifier output for invented sequences and invented taxon labels.")
+
+if (!dir.exists("results")) dir.create("results", recursive = TRUE)
+write.csv(assignment_table, "results/dada2_synthetic_taxonomy.csv", row.names = FALSE)
+```
+
+# Worked interpretation and limits
+
+The output table reports a synthetic read total, the ranks that passed the chosen bootstrap threshold, and the minimum bootstrap value among those reported ranks. In this fixture, the expected purpose is to distinguish the two generated lineages, not to identify organisms. If a rank is `NA`, DADA2 did not report that rank at the selected threshold; keep it unresolved. Even a high bootstrap value describes support under this reference and classifier, not the probability that a species is present or an independent validation.
+
+For a real table, inspect the full taxonomy and bootstrap output alongside denoising statistics, the amplicon region, primer set, and reference release. Do not compare taxonomy labels from incompatible databases as if they shared a single naming standard. A species-level call requires suitable reference coverage and stronger evidence than a genus-level marker sequence alone.
+
+`addSpecies()` is a separate optional exact-fragment matching step that needs its own versioned species-assignment FASTA. It is not run here because the synthetic training set contains no species reference. An exact match is still a reference match, not proof of species identity in a biological sample.
+
+# Record the software used
+
+```{r software-versions}
+cat("R:", R.version.string, "\n")
+cat("DADA2:", as.character(utils::packageVersion("dada2")), "\n\n")
+utils::sessionInfo()
+```
+
+# References
+
+- DADA2 taxonomy assignment: <https://benjjneb.github.io/dada2/assign.html>
+- DADA2 reference-data and training FASTA format: <https://benjjneb.github.io/dada2/training.html>
+- DADA2 method paper: Callahan et al. (2016), *DADA2: High-resolution sample inference from Illumina amplicon data*. <https://doi.org/10.1038/nmeth.3869>
+- For real assignments, use a versioned reference listed in the DADA2 training-data documentation and cite the underlying database release as well as DADA2.

@@ -205,6 +205,7 @@ def normalize_startup_performance(relative_path, text):
     """Reverse only exact fixture-listed contextual changes; preserve unknown edits."""
     if not isinstance(text, str):
         raise TypeError("startup-performance text normalization requires decoded text")
+    text = normalize_58_review(relative_path, text)
     text = normalize_editorial_review(relative_path, text)
     entry = startup_performance_fixture().get(relative_path)
     if entry is None or entry["kind"] != "text":
@@ -220,6 +221,7 @@ def restore_startup_performance_asset(relative_path, data):
     """Restore a listed asset only when its entire current SHA-256 matches."""
     if not isinstance(data, bytes):
         raise TypeError("startup-performance asset restoration requires bytes")
+    data = restore_58_review_asset(relative_path, data)
     data = normalize_editorial_review_bytes(relative_path, data)
     entry = startup_performance_fixture().get(relative_path)
     if entry is None or entry["kind"] != "asset":
@@ -229,3 +231,4 @@ def restore_startup_performance_asset(relative_path, data):
     if hashlib.sha256(entry["base_bytes"]).hexdigest() != entry["base_sha256"]:
         raise AssertionError(f"startup-performance asset base verification failed: {relative_path}")
     return entry["base_bytes"]
+from tutorial_58_review_baseline import normalize_58_review, restore_58_review_asset

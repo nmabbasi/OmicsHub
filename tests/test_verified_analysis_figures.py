@@ -10,6 +10,7 @@ import unittest
 
 ROOT=Path(__file__).resolve().parents[1]
 EVIDENCE=ROOT/'files/tutorial-examples/execution-evidence/2026-10-25.json'
+REPORT_RERUN=ROOT/'files/tutorial-examples/execution-evidence/2026-10-28-reporting.json'
 EXPECTED={
  'images/tutorial-figures/visualization-fundamentals-r-qc_boxplot.png',
  'images/tutorial-figures/visualization-fundamentals-r-qc_histogram.png',
@@ -46,6 +47,7 @@ class VerifiedAnalysisFigureTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.data=json.loads(EVIDENCE.read_text())
+        cls.rerun=json.loads(REPORT_RERUN.read_text())
         cls.figures=[(slug,f) for slug,row in cls.data['tutorials'].items() for f in row.get('figures',[])]
     def test_exact_twelve_reviewed_pngs_match_fingerprints_and_dimensions(self):
         self.assertEqual(len(self.figures),12);self.assertEqual({f['path'] for _,f in self.figures},EXPECTED)
@@ -71,13 +73,34 @@ class VerifiedAnalysisFigureTests(unittest.TestCase):
             sources=([row['source']] if row.get('source') else [])+row.get('sources',[])+([row['summarySource']] if row.get('summarySource') else [])
             for source in sources:
                 if source.get('path'):
-                    self.assertEqual(sha((ROOT/source['path']).read_bytes()),source['sha256'])
+                    if source['path']=='files/tutorial-examples/research-reporting-interpretation/research-reporting-workflow.Rmd':
+                        self.assertEqual(self.rerun['source']['path'],source['path'])
+                        self.assertEqual(sha((ROOT/source['path']).read_bytes()),self.rerun['source']['sha256'])
+                    else:
+                        self.assertEqual(sha((ROOT/source['path']).read_bytes()),source['sha256'])
                 else:
                     facts=Facts((ROOT/source['page']).read_text())
                     if source.get('blockID'):code=facts.named[source['blockID']]
                     else:
                         matches=[code for code in facts.blocks if source['contains'] in code];self.assertEqual(len(matches),1,source);code=matches[0]
                     self.assertEqual(sha(code.encode()),source['codeSHA256'])
+    def test_fresh_reporting_rerun_capsule_matches_source_input_and_outputs(self):
+        self.assertEqual(self.rerun['checkedOn'],'2026-10-28')
+        source=self.rerun['source'];self.assertEqual(sha((ROOT/source['path']).read_bytes()),source['sha256'])
+        inputs=self.rerun['inputs'];self.assertEqual(len(inputs),1)
+        self.assertEqual(sha((ROOT/inputs[0]['path']).read_bytes()),inputs[0]['sha256'])
+        outputs={row['path']:row['sha256'] for row in self.rerun['outputs']}
+        self.assertEqual(set(outputs),{
+            'results/validated_qc.csv','results/qc_summary.csv','results/qc_summary_by_condition.csv'
+        })
+        self.assertEqual(outputs,{
+            'results/validated_qc.csv':'e75c84fb8f113152c2c59abf56190aea08523a8199fc10571d11678a6c31435a',
+            'results/qc_summary.csv':'d37743e4b05c7477fe770af67ab0dac2b98f4e3ad137bcc75ce559bbd50e5ccc',
+            'results/qc_summary_by_condition.csv':'0fcb8fc056eb29b4c9a211e32a41c60c72ace7991c2fe15742187f33f2b88396',
+        })
+        figure=self.rerun['figure'];self.assertEqual(sha((ROOT/figure['path']).read_bytes()),figure['sha256'])
+        self.assertFalse(self.rerun['renderedHtmlPublished'])
+
     def test_public_data_and_synthetic_boundaries_remain_explicit(self):
         for slug in ['data-visualization-fundamentals','research-reporting-interpretation','r-tidyverse-fundamentals']:
             self.assertIn('synthetic',self.data['tutorials'][slug]['status'])
@@ -88,7 +111,8 @@ class VerifiedAnalysisFigureTests(unittest.TestCase):
     def test_new_result_sections_are_static_accessible_and_reader_facing(self):
         for slug in ['data-visualization-fundamentals','research-reporting-interpretation','r-tidyverse-fundamentals','quality-control-fundamentals']:
             text=(ROOT/'tutorials'/(slug+'.html')).read_text();self.assertEqual(text.count('class="lesson-results"'),1)
-            section=text.split('<!-- Verified analysis outputs: 2026-10-25 -->',1)[1].split('<!-- /Verified analysis outputs -->',1)[0]
+            verified_on='2026-10-28' if slug=='research-reporting-interpretation' else '2026-10-25'
+            section=text.split(f'<!-- Verified analysis outputs: {verified_on} -->',1)[1].split('<!-- /Verified analysis outputs -->',1)[0]
             self.assertIn('aria-labelledby="observed-analysis-results"',section);self.assertIn('<figcaption>',section);self.assertIn('Run details and limits',section);self.assertNotIn('\u2014',section)
             facts=Facts(text)
             for target in re.findall(r'href="#([^"]+)"',section):self.assertIn(target,facts.ids)
