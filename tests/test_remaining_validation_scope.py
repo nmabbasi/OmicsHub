@@ -70,7 +70,6 @@ def changed_paths():
     return sorted(set(tracked) | set(untracked))
 
 
-@unittest.skip("Historical PR baseline superseded by site-wide redesign")
 class RemainingValidationScopeTests(unittest.TestCase):
     def test_manifest_has_full_baseline_pin_and_explicit_tutorial_allowlist(self):
         manifest = load_manifest()

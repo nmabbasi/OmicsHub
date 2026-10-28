@@ -14,9 +14,9 @@ from latest_review_baseline import (
 from startup_generated_asset_baseline import restore_startup_generated_asset
 from coffee_removal_baseline import restore_coffee_removal_text
 from gget_mobile_baseline import restore_gget_mobile_bytes
+from current_publication_baseline import normalize_current_publication
 
 
-@unittest.skip("Historical PR baseline superseded by site-wide redesign")
 class LatestReviewBaselineTests(unittest.TestCase):
     def setUp(self):
         self.before = "one\ntwo\nthree\nold literal\nfive\nsix\nseven\n"
@@ -63,6 +63,7 @@ class LatestReviewBaselineTests(unittest.TestCase):
         for relative_path, record in latest_review_fixture().items():
             with self.subTest(path=relative_path):
                 current = (baseline.ROOT / relative_path).read_bytes()
+                current = normalize_current_publication(relative_path, current)
                 current = restore_gget_mobile_bytes(relative_path, current)
                 current_text = baseline.normalize_navigation_performance(
                     relative_path, current.decode("utf-8")
@@ -82,7 +83,9 @@ class LatestReviewBaselineTests(unittest.TestCase):
 
     def test_unrecognized_text_mutation_survives_known_patch_reversal(self):
         path = "index.html"
-        current = (baseline.ROOT / path).read_text(encoding="utf-8")
+        current = normalize_current_publication(
+            path, (baseline.ROOT / path).read_bytes()
+        ).decode("utf-8")
         # Restore the closed newer delta before probing this historical layer.
         # Raw coffee-review mutations are separately rejected by its strict tests.
         current = restore_coffee_removal_text(path, current)

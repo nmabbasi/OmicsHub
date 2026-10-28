@@ -31,7 +31,6 @@ ARTICLE = re.compile(r"<article\b[^>]*>.*?</article>", re.S)
 SCRIPT = re.compile(r"<script\b[^>]*>.*?</script>", re.S)
 
 
-@unittest.skip("Historical PR baseline superseded by site-wide redesign")
 class LearnerRevisionScopeTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):

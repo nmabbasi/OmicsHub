@@ -11,6 +11,8 @@ from pathlib import Path
 import re
 import subprocess
 
+from current_publication_baseline import normalize_current_publication
+
 ROOT = Path(__file__).resolve().parents[1]
 BASE_COMMIT = "122bd466feb11efd304769faff19e77bd40a98b4"
 FIXTURE_PATH = ROOT / "tests/fixtures/tutorial-execution-exact-delta.json"
@@ -128,6 +130,7 @@ def normalize_execution_delta(relative_path, text):
     """Reverse one exact current page to 122bd bytes; leave mutations untouched."""
     if not isinstance(text, str):
         raise TypeError("execution-delta normalization requires decoded text")
+    text = normalize_current_publication(relative_path, text.encode("utf-8")).decode("utf-8")
     from navigation_performance_baseline import normalize_navigation_performance
     text = normalize_navigation_performance(relative_path, text)
     from latest_review_baseline import latest_review_fixture, normalize_latest_review
@@ -168,6 +171,7 @@ def verify_new_execution_asset(relative_path, data):
 
 def restore_overlapping_execution_asset(relative_path, data):
     """Return exact 122bd bytes for an overlapping asset only at its pinned digest."""
+    data = normalize_current_publication(relative_path, data)
     from startup_performance_baseline import restore_startup_performance_asset
     data = restore_startup_performance_asset(relative_path, data)
     if relative_path == "sitemap.xml":

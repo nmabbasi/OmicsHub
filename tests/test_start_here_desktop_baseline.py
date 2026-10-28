@@ -5,6 +5,7 @@ import re
 import subprocess
 import unittest
 
+from latest_review_baseline import normalize_latest_review
 from start_here_desktop_baseline import (
     DESKTOP_BASELINE_COMMIT,
     DESKTOP_CSS_HREF,
@@ -22,7 +23,6 @@ def baseline(path):
     )
 
 
-@unittest.skip("Historical PR baseline superseded by site-wide redesign")
 class StartHereDesktopBaselineTests(unittest.TestCase):
     def test_historical_css_hash_is_pinned_and_restores_exact_base_bytes(self):
         current = (ROOT / "start-here.css").read_bytes()
@@ -36,7 +36,9 @@ class StartHereDesktopBaselineTests(unittest.TestCase):
             restore_start_here_desktop_asset("start-here.css", current + b"\n")
 
     def test_exact_image_led_restoration_normalizes_to_base_but_unapproved_text_does_not(self):
-        current = (ROOT / "start-here.html").read_text(encoding="utf-8")
+        current = normalize_latest_review(
+            "start-here.html", (ROOT / "start-here.html").read_text(encoding="utf-8")
+        )
         original = baseline("start-here.html").decode("utf-8")
         self.assertEqual(normalize_start_here_desktop_html("start-here.html", current), original)
 
@@ -48,7 +50,9 @@ class StartHereDesktopBaselineTests(unittest.TestCase):
         self.assertEqual(normalize_start_here_desktop_html("start-here.html", changed), expected)
 
     def test_duplicate_exact_href_is_rejected(self):
-        current = (ROOT / "start-here.html").read_text(encoding="utf-8")
+        current = normalize_latest_review(
+            "start-here.html", (ROOT / "start-here.html").read_text(encoding="utf-8")
+        )
         with self.assertRaisesRegex(AssertionError, "duplicate exact Start Here restoration CSS href"):
             normalize_start_here_desktop_html("start-here.html", current + DESKTOP_CSS_HREF)
 

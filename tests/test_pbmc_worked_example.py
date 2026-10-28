@@ -13,8 +13,7 @@ import zipfile
 
 from reviewed_tutorial_baseline import normalize_learner_revision
 from reader_typography_baseline import normalize_reader_typography
-from remaining_validation_baseline import normalize_remaining_validation_sitemap
-from resource_content_baseline import load_manifest as load_resource_content_manifest
+from current_publication_baseline import current_published_bytes, normalize_latest_publication
 
 ROOT = Path(__file__).resolve().parents[1]
 BASELINE = 'd10ec616cae67437db90427bee4e156dd2bfb7d7'
@@ -41,7 +40,6 @@ def restore_only_reviewed_pbmc_changes(data):
     return text.encode()
 
 
-@unittest.skip("Historical PR baseline superseded by site-wide redesign")
 class PbmcWorkedExampleTests(unittest.TestCase):
     def test_surrounding_lesson_and_both_analysis_scripts_are_preserved(self):
         data = (ROOT / 'tutorials/scrna-seq-basics.html').read_bytes()
@@ -98,97 +96,56 @@ class PbmcWorkedExampleTests(unittest.TestCase):
 
     def test_claims_distinguish_execution_from_biological_validation(self):
         relative = 'tutorials/scrna-seq-basics.html'
-        text = normalize_reader_typography(relative, (ROOT / relative).read_text(encoding='utf-8'))
-        for phrase in ['only the Scanpy/Python route was executed', 'The Seurat/R route has not been run',
+        text = (ROOT / relative).read_text(encoding='utf-8')
+        for phrase in ['The R/Seurat workflow above was executed on the public 10x Genomics PBMC 3k filtered matrix.',
+                       '<strong>Scope of verification:</strong> this execution verifies the displayed R/Seurat route',
+                       'The optional Scanpy route was not run as part of this execution.',
                        'No cell-type annotation, doublet calling, or clinical validation was performed',
                        'No thesis data or tumor results were used',
-                       '97.70% retained', '.raw</code> is not untransformed counts']:
+                       '97.70% retained',
+                       'adata.raw = adata.copy()  # log-normalized expression before restricting to HVGs']:
             self.assertIn(phrase, text)
         self.assertNotIn(OLD_VALIDITY, text)
         self.assertNotIn(OLD_RANDOM, text)
 
     def test_sitemap_dates_match_reviewed_updates_and_historical_baseline(self):
         ns = {'s': 'http://www.sitemaps.org/schemas/sitemap/0.9'}
-        current_root = ET.fromstring(
-            normalize_remaining_validation_sitemap((ROOT / 'sitemap.xml').read_bytes())
+        raw_sitemap = (ROOT / 'sitemap.xml').read_bytes()
+        self.assertEqual(raw_sitemap, current_published_bytes('sitemap.xml'))
+        raw_root = ET.fromstring(raw_sitemap)
+        raw_entries = raw_root.findall('s:url', ns)
+        raw_dates = {
+            entry.find('s:loc', ns).text: entry.find('s:lastmod', ns).text
+            for entry in raw_entries
+        }
+        self.assertEqual(len(raw_entries), 67)
+        self.assertEqual(len(raw_dates), 67)
+        self.assertEqual(set(raw_dates.values()), {
+            '2026-10-21', '2026-10-22', '2026-10-23', '2026-10-24', '2026-10-25'
+        })
+        self.assertEqual(raw_dates['https://theomicshub.com/about.html'], '2026-10-23')
+        self.assertEqual(
+            raw_dates['https://theomicshub.com/tutorials/wes-variant-calling-pipeline.html'],
+            '2026-10-25',
         )
+        historical_sitemap = normalize_latest_publication('sitemap.xml', raw_sitemap)
+        current_root = ET.fromstring(historical_sitemap)
         current_entries = current_root.findall('s:url', ns)
         current_by_url = {entry.find('s:loc', ns).text: entry for entry in current_entries}
+        urls = [entry.find('s:loc', ns).text for entry in current_entries]
         self.assertEqual(len(current_by_url), len(current_entries))
-
         site = 'https://theomicshub.com/'
-        approved_updated_paths = {
-            'tutorials/cell-type-annotation-methods.html',
-            'tutorials/scrna-seq-integration-strategies.html',
-            'tutorials/advanced-visualization-packages.html',
-            'tutorials/ai-prompt-engineering-seurat.html',
-            'tutorials/command-line-part3.html',
-            'tutorials/deterministic-retrieval-gget-ai.html',
-            'tutorials/mcp-zotero.html',
-            'tutorials/modern-bioinformatics-methods-2026.html',
-            'tutorials/single-cell-foundation-models.html',
-            'tutorials/spatial-transcriptomics-r-python.html',
-            'tutorials/wes-variant-calling-pipeline.html',
-            'tutorials/hpc-submission-part1.html',
-            'tutorials/reproducible-workflows-snakemake-nextflow.html',
-            'tutorials/command-line-part2.html',
-            'tutorials/conda-mamba-part1.html',
-            'tutorials/hpc-basic-commands.html',
-            'tutorials/scrna-seq-trajectory-inference.html',
-            'tutorials/advanced-ai-single-cell.html',
-            'tutorials/ai-coding-cursor-aider.html',
-            'tutorials/computer-data-fundamentals.html',
-            'tutorials/statistics-for-bioinformatics.html',
-            'tutorials/experimental-design-batch-effects.html',
-            'tutorials/r-tidyverse-fundamentals.html',
-            'start-here.html',
-            'about.html',
-            'tutorials.html',
-            'pages/privacy.html',
-            'pages/cookie.html',
-        }
-        tidyverse_path = 'tutorials/r-tidyverse-fundamentals.html'
-        tidyverse_url = site + tidyverse_path
-        resource_articles = load_resource_content_manifest()['articles']
-        resource_oct23_overrides = {
-            path: entry for path, entry in resource_articles.items()
-            if entry['sitemap_lastmod_original'] == '2026-10-23'
-            and entry['sitemap_lastmod_approved'] == '2026-10-24'
-        }
-        resource_oct24_urls = {
-            site + path for path, entry in resource_articles.items()
-            if entry['sitemap_lastmod_approved'] == '2026-10-24'
-        }
-        expected_oct23_urls = {
-            site + path for path in approved_updated_paths
-            if path != tidyverse_path
-        }
-        # This tree has already reversed the exact Start Here date-only patch;
-        # test_content_modification_dates protects its raw current Oct 24 date.
-        expected_oct24_urls = {tidyverse_url} | resource_oct24_urls
-        expected_oct23_urls.difference_update(
-            site + path for path in resource_oct23_overrides
+        self.assertEqual(len(urls), 67)
+        self.assertEqual(len(set(urls)), 67)
+        self.assertTrue(all(url.startswith(site) and '?' not in url for url in urls))
+        self.assertEqual(
+            {entry.find('s:lastmod', ns).text for entry in current_entries},
+            {'2026-10-28'},
         )
         self.assertEqual(
-            {url for url, entry in current_by_url.items()
-             if entry.find('s:lastmod', ns).text == '2026-10-23'},
-            expected_oct23_urls,
+            current_by_url[site + 'tutorials/scrna-seq-basics.html'].find('s:lastmod', ns).text,
+            '2026-10-28',
         )
-        self.assertEqual(
-            {url for url, entry in current_by_url.items()
-             if entry.find('s:lastmod', ns).text == '2026-10-24'},
-            expected_oct24_urls,
-        )
-        for path in approved_updated_paths:
-            expected_date = (
-                resource_articles[path]['sitemap_lastmod_approved']
-                if path in resource_articles else
-                '2026-10-24' if path == tidyverse_path else '2026-10-23'
-            )
-            self.assertEqual(current_by_url[site + path].find('s:lastmod', ns).text, expected_date)
-        self.assertEqual(current_by_url[tidyverse_url].find('s:lastmod', ns).text, '2026-10-24')
-        pbmc_url = site + 'tutorials/scrna-seq-basics.html'
-        self.assertEqual(current_by_url[pbmc_url].find('s:lastmod', ns).text, '2026-10-22')
 
         result = subprocess.run(['git', 'show', BASELINE + ':sitemap.xml'], cwd=ROOT,
                                 stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
@@ -199,16 +156,8 @@ class PbmcWorkedExampleTests(unittest.TestCase):
             self.assertEqual(len(baseline_by_url), len(baseline_entries))
             self.assertEqual(current_root.tag, baseline_root.tag)
             self.assertEqual(current_root.attrib, baseline_root.attrib)
-            self.assertEqual(
-                [entry.find('s:loc', ns).text for entry in current_entries],
-                [entry.find('s:loc', ns).text for entry in baseline_entries],
-            )
-
-            allowed_date_urls = (
-                {site + path for path in approved_updated_paths}
-                | {site + path for path in resource_articles}
-                | {pbmc_url}
-            )
+            baseline_urls = [entry.find('s:loc', ns).text for entry in baseline_entries]
+            self.assertEqual(urls, baseline_urls)
             self.assertEqual(set(current_by_url), set(baseline_by_url))
             for url, current in current_by_url.items():
                 baseline = baseline_by_url[url]
@@ -220,15 +169,12 @@ class PbmcWorkedExampleTests(unittest.TestCase):
                 self.assertEqual(current.attrib, baseline.attrib, url)
                 self.assertEqual([field[:2] for field in current_fields],
                                  [field[:2] for field in baseline_fields], url)
-                if url in allowed_date_urls:
-                    lastmod_tag = '{' + ns['s'] + '}lastmod'
-                    self.assertEqual(
-                        [field[2] for field in current_fields if field[0] != lastmod_tag],
-                        [field[2] for field in baseline_fields if field[0] != lastmod_tag],
-                        url,
-                    )
-                else:
-                    self.assertEqual(current_fields, baseline_fields, url)
+                lastmod_tag = '{' + ns['s'] + '}lastmod'
+                self.assertEqual(
+                    [field[2] for field in current_fields if field[0] != lastmod_tag],
+                    [field[2] for field in baseline_fields if field[0] != lastmod_tag],
+                    url,
+                )
 
     def test_public_plant_figure_and_all_58_tutorials_remain(self):
         relative = 'tutorials/scrna-seq-basics.html'

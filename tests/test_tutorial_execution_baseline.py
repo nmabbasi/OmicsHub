@@ -18,7 +18,6 @@ from navigation_performance_baseline import normalize_navigation_performance
 ROOT = Path(__file__).resolve().parents[1]
 
 
-@unittest.skip("Historical PR baseline superseded by site-wide redesign")
 class TutorialExecutionBaselineTests(unittest.TestCase):
     def test_fixture_pin_and_explicit_scopes_are_frozen(self):
         raw = FIXTURE_PATH.read_bytes()

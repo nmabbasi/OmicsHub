@@ -210,8 +210,8 @@ def normalize_r_first_revision(relative_path, text):
     """Reverse matching literal chunks; every unmatched edit remains visible."""
     if not isinstance(text, str):
         raise TypeError("R-first normalization requires decoded text")
-    text = normalize_start_here_desktop_html(relative_path, text)
     text = normalize_latest_review(relative_path, text)
+    text = normalize_start_here_desktop_html(relative_path, text)
     # The execution-review layer is a separate exact-digest/context adapter.
     # Once it returns the immutable 122bd bytes, the historical R-first patches
     # below remain unchanged and naturally become an idempotent no-op.

@@ -45,6 +45,10 @@ from optional_report_baseline import (
     OPTIONAL_REPORT_PATHS,
     verify_optional_report_file,
 )
+from current_publication_baseline import (
+    normalize_current_publication,
+    publication_layers,
+)
 
 
 TEST_INFRASTRUCTURE_PATHS = {
@@ -95,6 +99,10 @@ TEST_INFRASTRUCTURE_PATHS = {
     'tests/test_beginner_walkthrough_scope.py',
     'tests/test_reader_punctuation.py',
     'tests/test_reader_text_colours.py',
+    'tests/test_content_modification_dates.py',
+    'tests/test_current_publication_baseline.py',
+    'tests/test_execution_sitemap_composition.py',
+    'tests/test_pbmc_worked_example.py',
     'tests/test_remaining_reference_support.py',
     'tests/test_remaining_validation_scope.py',
     'tests/test_revision_trajectory.py',
@@ -108,11 +116,14 @@ TEST_INFRASTRUCTURE_PATHS = {
     'tests/test_startup_performance_baseline.py',
     'tests/test_text_alignment.py',
     'tests/test_tutorial_execution_baseline.py',
+    'tests/test_tutorial_markup.py',
     'tests/test_tutorial_reader_ui.py',
     'tests/test_tutorial_startup.py',
     'tests/test_tidyverse_setup_scope.py',
     'tests/test_ubuntu_tidyverse_scope.py',
     'tests/test_verified_analysis_figures.py',
+    'tests/current_publication_baseline.py',
+    'tests/fixtures/current-publication-revisions.json',
     'tests/tutorial_execution_baseline.py',
 }
 
@@ -144,7 +155,6 @@ class ExecutableInlineScriptParser(HTMLParser):
             self.current = None
 
 
-@unittest.skip("Historical PR baseline superseded by site-wide redesign")
 class NavigationPerformanceBaselineTests(unittest.TestCase):
     def test_fixture_is_closed_hash_pinned_and_proves_each_exact_edit(self):
         raw = FIXTURE_PATH.read_bytes()
@@ -272,6 +282,17 @@ class NavigationPerformanceBaselineTests(unittest.TestCase):
         )
         for path in sorted(changed & OPTIONAL_REPORT_PATHS):
             verify_optional_report_file(path, (ROOT / path).read_bytes())
+        current_publication_paths = set().union(
+            *(set(layer["files"]) for layer in publication_layers())
+        )
+        for path in sorted(changed & current_publication_paths):
+            restored = normalize_current_publication(path, (ROOT / path).read_bytes())
+            base = subprocess.run(
+                ["git", "show", f"{BASE_COMMIT}:{path}"], cwd=ROOT,
+                stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, check=False,
+            )
+            if base.returncode == 0 and restored == base.stdout:
+                changed.discard(path)
         self.assertEqual(
             changed - TEST_INFRASTRUCTURE_PATHS - {WORKFLOW_PATH},
             STARTUP_TUTORIAL_PATHS | STARTUP_ASSET_PATHS

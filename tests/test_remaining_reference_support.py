@@ -40,6 +40,10 @@ from optional_report_baseline import (
     OPTIONAL_REPORT_PATHS,
     verify_optional_report_file,
 )
+from current_publication_baseline import (
+    normalize_current_publication,
+    publication_layers,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 BASE_COMMIT = "d42231e"
@@ -116,6 +120,10 @@ TEST_INFRASTRUCTURE_PATHS = {
     'tests/test_remaining_validation_scope.py',
     'tests/test_revision_trajectory.py',
     'tests/test_beginner_walkthrough_scope.py',
+    'tests/test_content_modification_dates.py',
+    'tests/test_current_publication_baseline.py',
+    'tests/test_execution_sitemap_composition.py',
+    'tests/test_pbmc_worked_example.py',
     'tests/test_six_lesson_revision_scope.py',
     'tests/test_tidyverse_setup_scope.py',
     'tests/test_ubuntu_tidyverse_scope.py',
@@ -133,6 +141,9 @@ TEST_INFRASTRUCTURE_PATHS = {
     'tests/test_tutorial_reader_ui.py',
     'tests/test_tutorial_startup.py',
     'tests/test_verified_analysis_figures.py',
+    'tests/test_tutorial_markup.py',
+    'tests/current_publication_baseline.py',
+    'tests/fixtures/current-publication-revisions.json',
     'tests/tutorial_execution_baseline.py',
     'tests/tutorial_ui_baseline.py',
     'tools/generate_latest_review_fixture.py',
@@ -245,7 +256,6 @@ def sitemap_lastmods(xml_text):
     }
 
 
-@unittest.skip("Historical PR baseline superseded by site-wide redesign")
 class RemainingReferenceSupportTests(unittest.TestCase):
     def test_only_the_four_authorized_public_paths_changed_since_published_main(self):
         changed = set(subprocess.check_output(
@@ -282,6 +292,17 @@ class RemainingReferenceSupportTests(unittest.TestCase):
             else:
                 restored = current_text(path).encode("utf-8")
             if restored == baseline_bytes(path):
+                performance_only.add(path)
+        current_publication_paths = set().union(
+            *(set(layer["files"]) for layer in publication_layers())
+        )
+        for path in changed & current_publication_paths:
+            restored = normalize_current_publication(path, (ROOT / path).read_bytes())
+            try:
+                original = baseline_bytes(path)
+            except subprocess.CalledProcessError:
+                continue
+            if restored == original:
                 performance_only.add(path)
         public_changed = changed - TEST_INFRASTRUCTURE_PATHS - performance_only - verified_report_paths
         self.assertEqual(public_changed, EXPECTED_PUBLIC_PATHS)
