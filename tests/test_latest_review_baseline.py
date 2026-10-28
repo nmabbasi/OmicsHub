@@ -17,7 +17,6 @@ from gget_mobile_baseline import restore_gget_mobile_bytes
 from current_publication_baseline import normalize_current_publication
 
 
-@unittest.skip("Historical PR baseline superseded by site-wide redesign")
 class LatestReviewBaselineTests(unittest.TestCase):
     def setUp(self):
         self.before = "one\ntwo\nthree\nold literal\nfive\nsix\nseven\n"

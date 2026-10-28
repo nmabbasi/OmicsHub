@@ -67,7 +67,6 @@ def catalogue_records(markup):
     return records
 
 
-@unittest.skip("Historical PR baseline superseded by site-wide redesign")
 class HomeCatalogueUITests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):

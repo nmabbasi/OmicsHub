@@ -82,7 +82,6 @@ class LinkAndIdParser(HTMLParser):
             self.links.append((attrs.get('href'), attrs.get('target'), attrs.get('rel')))
 
 
-@unittest.skip("Historical PR baseline superseded by site-wide redesign")
 class ReaderPunctuationTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):

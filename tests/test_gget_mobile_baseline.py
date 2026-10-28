@@ -21,7 +21,6 @@ EXPECTED_PATHS = frozenset({
 })
 
 
-@unittest.skip("Historical PR baseline superseded by site-wide redesign")
 class GgetMobileBaselineTests(unittest.TestCase):
     def test_fixture_is_exactly_two_hash_pinned_paths_and_restores_to_main(self):
         self.assertEqual(APPROVED_PATHS, EXPECTED_PATHS)

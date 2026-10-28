@@ -58,7 +58,6 @@ SCHEMA = re.compile(r'<script[^>]*type="application/ld\+json">(.*?)</script>', r
 NS = {"s": "http://www.sitemaps.org/schemas/sitemap/0.9"}
 
 
-@unittest.skip("Historical PR baseline superseded by site-wide redesign")
 class ContentModificationDateTests(unittest.TestCase):
     def setUp(self):
         # Keep the real current sitemap output visible: its sitewide lastmod

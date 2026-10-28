@@ -15,7 +15,6 @@ spec = importlib.util.spec_from_file_location('tutorial_ui_generator', ROOT / 't
 generator = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(generator)
 
-@unittest.skip("Historical PR baseline superseded by site-wide redesign")
 class TutorialReaderUITests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):

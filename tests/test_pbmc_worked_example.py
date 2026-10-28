@@ -39,7 +39,6 @@ def restore_only_reviewed_pbmc_changes(data):
     return text.encode()
 
 
-@unittest.skip("Historical PR baseline superseded by site-wide redesign")
 class PbmcWorkedExampleTests(unittest.TestCase):
     def test_surrounding_lesson_and_both_analysis_scripts_are_preserved(self):
         data = (ROOT / 'tutorials/scrna-seq-basics.html').read_bytes()

@@ -256,7 +256,6 @@ def sitemap_lastmods(xml_text):
     }
 
 
-@unittest.skip("Historical PR baseline superseded by site-wide redesign")
 class RemainingReferenceSupportTests(unittest.TestCase):
     def test_only_the_four_authorized_public_paths_changed_since_published_main(self):
         changed = set(subprocess.check_output(

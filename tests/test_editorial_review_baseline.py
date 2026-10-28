@@ -11,7 +11,6 @@ from editorial_review_baseline import (
 ROOT = Path(__file__).resolve().parents[1]
 
 
-@unittest.skip("Historical PR baseline superseded by site-wide redesign")
 class EditorialReviewBaselineTests(unittest.TestCase):
     def test_fixture_is_pinned_closed_and_restores_every_public_path_exactly(self):
         self.assertEqual(BASE_COMMIT, "e846ce3fb6053ed611dc87fc62748865499913d0")
