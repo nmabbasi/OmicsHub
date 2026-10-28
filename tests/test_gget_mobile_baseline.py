@@ -12,6 +12,7 @@ from gget_mobile_baseline import (
     restore_gget_mobile_bytes,
     restore_gget_mobile_text,
 )
+from current_publication_baseline import normalize_current_publication
 
 ROOT = Path(__file__).resolve().parents[1]
 EXPECTED_PATHS = frozenset({
@@ -30,7 +31,9 @@ class GgetMobileBaselineTests(unittest.TestCase):
 
         for relative_path, entry in fixture.items():
             with self.subTest(path=relative_path):
-                current = (ROOT / relative_path).read_bytes()
+                current = normalize_current_publication(
+                    relative_path, (ROOT / relative_path).read_bytes()
+                )
                 base = entry["base_bytes"]
                 self.assertEqual(hashlib.sha256(current).hexdigest(), entry["current_sha256"])
                 self.assertEqual(hashlib.sha256(base).hexdigest(), entry["base_sha256"])

@@ -15,6 +15,7 @@ from navigation_guard_baseline import (
     restore_navigation_guard_asset,
     normalize_navigation_guard_text,
 )
+from current_publication_baseline import normalize_current_publication
 
 ROOT = Path(__file__).resolve().parents[1]
 BASE_COMMIT = "0caaeabb050845dcb07905fc5bf99cd699866baa"
@@ -124,6 +125,7 @@ def restore_gget_mobile_bytes(relative_path, data):
     """Restore only complete, exact PR #32 files; preserve all other bytes."""
     if not isinstance(data, bytes):
         raise TypeError("gget mobile restoration requires bytes")
+    data = normalize_current_publication(relative_path, data)
     data = restore_navigation_guard_asset(relative_path, data)
     entry = gget_mobile_fixture().get(relative_path)
     if entry is None:
