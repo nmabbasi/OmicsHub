@@ -52,6 +52,7 @@ EXPECTED_PUBLIC_PATHS = {
     "files/tutorial-examples/16s-dada2-taxonomy/dada2-taxonomy-workflow.Rmd",
     "files/tutorial-examples/research-reporting-interpretation/research-reporting-workflow.Rmd",
     "files/tutorial-examples/execution-evidence/2026-10-28-reporting.json",
+    "tools/catalogue-learning.json",
     "tutorial-code-data.js",
     "sitemap.xml",
     "start-here.html",

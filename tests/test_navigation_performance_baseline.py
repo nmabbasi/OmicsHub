@@ -296,6 +296,7 @@ class NavigationPerformanceBaselineTests(unittest.TestCase):
         )
         self.assertEqual(review_only_paths, {
             "files/tutorial-examples/research-reporting-interpretation/research-reporting-workflow.Rmd",
+            "tools/catalogue-learning.json",
             "tools/tutorial-code-groups.json",
             "tools/tutorial-code-languages.json",
             "tutorial-code-data.js",
