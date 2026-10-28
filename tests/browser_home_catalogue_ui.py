@@ -226,6 +226,36 @@ def main():
                         results['interactions'].append({'width':width,'check':'category/search filters, URL reload, history, lesson return, legacy URL normalization, no-match recovery','passed':True})
                 context.close()
                 print(f'PASS homepage/catalogue layout and interaction checks at {width}px',flush=True)
+            consent_cases=[(1440,1100,'index.html','site-page-title',500),(1024,900,'index.html','site-page-title',2200),(768,1024,'tutorials.html','catalogue-hero-title',500),(390,844,'tutorials.html','catalogue-hero-title',500),(320,568,'index.html','site-page-title',500)]
+            for width,height,path,target,scroll_y in consent_cases:
+                consent_context=browser.new_context(viewport={'width':width,'height':height},reduced_motion='reduce')
+                consent_context.route('https://**/*',lambda route:route.abort())
+                consent_page=consent_context.new_page()
+                response=consent_page.goto(args.base+'/'+path,wait_until='networkidle')
+                check(response.status==200,f'{path} {width}: consent-visible response status {response.status}')
+                banner=consent_page.locator('#cookie-consent-banner')
+                check(banner.is_visible(),f'{path} {width}: fresh context did not show the consent banner')
+                consent_page.evaluate('(y)=>scrollTo({top:y,behavior:"instant"})',scroll_y)
+                consent_page.evaluate('()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)))')
+                circle=consent_page.locator('#back-to-top')
+                check(circle.is_visible(),f'{path} {width} at scrollY={scroll_y}: arrow is hidden with consent visible')
+                geometry=circle.evaluate('''e=>{
+                  const r=e.getBoundingClientRect(),b=document.querySelector('#cookie-consent-banner').getBoundingClientRect();
+                  const intersects=(x,y)=>x.width>0&&x.height>0&&x.left<y.right+7&&x.right>y.left-7&&x.top<y.bottom+7&&x.bottom>y.top-7;
+                  const controls=[...document.querySelectorAll('body a[href],body button,body summary,body input,body select,body textarea,body [tabindex]')].filter(x=>x!==e);
+                  const controlOverlap=controls.some(x=>[...x.getClientRects()].some(q=>intersects(q,r)));
+                  const text=[...document.querySelectorAll('body h1,body h2,body h3,body h4,body h5,body h6,body p,body li,body pre,body figcaption,body td,body th,body blockquote,body label,body dt,body dd,body address')];
+                  const textOverlap=text.some(x=>{if(x.contains(e)||!x.getClientRects().length||!intersects(x.getBoundingClientRect(),r))return false;const q=document.createRange();q.selectNodeContents(x);return [...q.getClientRects()].some(z=>intersects(z,r));});
+                  return {x:r.x,y:r.y,width:r.width,height:r.height,bannerTop:b.top,bannerOverlap:intersects(b,r),controlOverlap,textOverlap};
+                }''')
+                check(geometry['width']>=48 and geometry['height']>=48,f'{path} {width}: arrow is too small: {geometry}')
+                check(not geometry['bannerOverlap'],f'{path} {width}: arrow overlaps the consent banner: {geometry}')
+                check(not geometry['controlOverlap'] and not geometry['textOverlap'],f'{path} {width}: arrow covers content or an interactive control: {geometry}')
+                circle.focus()
+                consent_page.keyboard.press('Enter')
+                consent_page.wait_for_function('(id)=>location.hash==="#"+id&&document.activeElement?.id===id&&scrollY<300',arg=target)
+                results['interactions'].append({'page':path,'width':width,'check':'consent-visible safe arrow and keyboard return','passed':True,'scrollY':scroll_y,'x':geometry['x'],'y':geometry['y']})
+                consent_context.close()
             context=browser.new_context(viewport={'width':390,'height':844},java_script_enabled=False,reduced_motion='reduce')
             context.route('https://**/*',lambda route:route.abort())
             page=context.new_page()

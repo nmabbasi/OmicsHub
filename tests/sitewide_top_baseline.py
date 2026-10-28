@@ -16,7 +16,7 @@ from reader_text_colour_baseline import normalize_reader_text
 ROOT = Path(__file__).resolve().parents[1]
 SITEWIDE_TOP_BASELINE = "fa26faa8d20a31de1211652e8ebffcf99534b9a6"
 FIXTURE_PATH = ROOT / "tests/fixtures/sitewide-top-review-edits.json"
-FIXTURE_SHA256 = "893d2fb6c4715cce4c7021f7d3600edbecdae94d43c91a24fbdc4476e9ed6e33"
+FIXTURE_SHA256 = "5fdd2d584a6c6a6b33b7d9261194448b91c6fdc7937c8748e4363d6147835ee2"
 SITEWIDE_TOP_PATHS = frozenset({"subscribe-fab.js", "404.html"})
 
 
