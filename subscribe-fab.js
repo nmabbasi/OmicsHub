@@ -197,7 +197,17 @@
               const firstTop = Math.ceil(Math.max(8, headerBottom + 8));
               const lastTop = Math.floor(lastBottom - rect.height);
               const step = Math.max(16, Math.ceil(rect.height / 2));
-              for (let top = firstTop; top <= lastTop; top += step) {
+              // Check the lower boundary exactly: a narrow clear band can fall
+              // between the regular samples when a consent banner reduces space.
+              if (lastTop >= firstTop) {
+                tools.style.top = `${lastTop}px`;
+                tools.style.bottom = 'auto';
+                rect = existing.getBoundingClientRect();
+                if (rect.top >= headerBottom + 8 && rect.bottom <= lastBottom && !hasContentOverlap(rect)) {
+                  safe = true;
+                }
+              }
+              for (let top = firstTop; !safe && top <= lastTop; top += step) {
                 tools.style.top = `${top}px`;
                 tools.style.bottom = 'auto';
                 rect = existing.getBoundingClientRect();
