@@ -16,7 +16,7 @@ from editorial_review_baseline import normalize_editorial_review, normalize_edit
 BASE_COMMIT = "93f06260550dbc91c0f020c24e1e2b00b7e017b5"
 FIXTURE_PATH = ROOT / "tests/fixtures/startup-performance-edits.json"
 # Set only after the deterministic fixture is generated and reviewed.
-FIXTURE_SHA256 = "dfa108bf881ddace5d33afc7d5bdacd1e094bdfb385a58eb2722acfcfe2fa8d8"
+FIXTURE_SHA256 = "16ddc83bd6cb4fc831cc83e78989c9986818e4835457dd613b7426e9f3f7b25a"
 TUTORIAL_PATHS = frozenset({
     "tutorials/16s-rrna-prokka-annotation.html",
     "tutorials/advanced-ai-orchestration-bioinformatics.html",

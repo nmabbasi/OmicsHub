@@ -133,6 +133,9 @@
     // referenced shared stylesheet loads, and keeps it absent before scrolling.
     tools.hidden = true;
     tools.classList.add('is-floating');
+    // Safe-slot search measures several positions in one frame; inherited
+    // transitions can leave getBoundingClientRect() at the previous candidate.
+    tools.style.setProperty('transition', 'none', 'important');
     const navigationFooter = document.querySelector('#reader-course-navigation .reader-sequence-footer');
     if (existing.matches('a[href="#tutorial-title"]') && navigationFooter) navigationFooter.appendChild(tools);
 

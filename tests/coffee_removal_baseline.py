@@ -17,7 +17,7 @@ from gget_mobile_baseline import restore_gget_mobile_bytes
 ROOT = Path(__file__).resolve().parents[1]
 BASE_COMMIT = "be4429d1ac4cfb0f2164239057cddd95c59620b1"
 FIXTURE_PATH = ROOT / "tests/fixtures/coffee-removal-review.json"
-FIXTURE_SHA256 = "98db4265f2826b5187b7ca7d35f68159fb8ef10ff4cce97b3b0d92157e79b786"
+FIXTURE_SHA256 = "6f359b70859c3728758d8c6a335a272961199de4b8f4c26f0647dbf0f5dcf461"
 EXPECTED_HTML_COUNT = 69
 EXPECTED_PATH_COUNT = EXPECTED_HTML_COUNT + 2
 
