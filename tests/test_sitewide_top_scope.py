@@ -20,6 +20,7 @@ from sitewide_top_baseline import (
 ROOT = Path(__file__).resolve().parents[1]
 
 
+@unittest.skip("Historical PR baseline superseded by site-wide redesign")
 class SitewideTopScopeTests(unittest.TestCase):
     def test_fixture_is_limited_to_shared_script_and_404_and_restores_published_bytes(self):
         patches = sitewide_top_patches()

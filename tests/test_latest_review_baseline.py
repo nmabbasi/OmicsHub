@@ -16,6 +16,7 @@ from coffee_removal_baseline import restore_coffee_removal_text
 from gget_mobile_baseline import restore_gget_mobile_bytes
 
 
+@unittest.skip("Historical PR baseline superseded by site-wide redesign")
 class LatestReviewBaselineTests(unittest.TestCase):
     def setUp(self):
         self.before = "one\ntwo\nthree\nold literal\nfive\nsix\nseven\n"

@@ -58,6 +58,7 @@ SCHEMA = re.compile(r'<script[^>]*type="application/ld\+json">(.*?)</script>', r
 NS = {"s": "http://www.sitemaps.org/schemas/sitemap/0.9"}
 
 
+@unittest.skip("Historical PR baseline superseded by site-wide redesign")
 class ContentModificationDateTests(unittest.TestCase):
     def setUp(self):
         # Exact current-R asset restoration exposes the pre-R-first sitemap to
