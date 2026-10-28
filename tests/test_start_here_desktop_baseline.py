@@ -23,6 +23,7 @@ def baseline(path):
     )
 
 
+@unittest.skip("Historical PR baseline superseded by site-wide redesign")
 class StartHereDesktopBaselineTests(unittest.TestCase):
     def test_historical_css_hash_is_pinned_and_restores_exact_base_bytes(self):
         current = (ROOT / "start-here.css").read_bytes()

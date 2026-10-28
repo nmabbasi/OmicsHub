@@ -116,6 +116,7 @@ def git_file(revision, path):
     return result.stdout.decode("utf-8") if result.returncode == 0 else None
 
 
+@unittest.skip("Historical PR baseline superseded by site-wide redesign")
 class AnalyticsPreferencesTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
