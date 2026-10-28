@@ -13,7 +13,7 @@ import subprocess
 ROOT = Path(__file__).resolve().parents[1]
 BASE_COMMIT = "29ee0f0355503538dda39d5ceffb38bbe33f8318"
 FIXTURE_PATH = ROOT / "tests/fixtures/tutorial-58-review-hashes.json"
-FIXTURE_SHA256 = "d76d845781f7159172175210f5f1f4ecd6397f304db2a084fda510ef17cf840d"
+FIXTURE_SHA256 = "6bfd8eb3cda41ef4be5194679f9860ff443345e2905fe9f42c356bb57f780952"
 REVIEW_PATHS = frozenset({
     "tutorials/metagenomics-kraken2-bracken.html",
     "tutorials/cell-cell-communication.html",

@@ -245,10 +245,25 @@ raw_rna_barcodes &lt;- colnames(seurat_obj)
 if (is.null(raw_rna_barcodes) || anyDuplicated(raw_rna_barcodes)) {
   stop("Seurat cell barcodes must be present and unique")
 }
+is_valid_10x_barcode &lt;- function(barcode) {
+  !is.na(barcode) &amp;&amp; grepl("^[ACGTN]+-[0-9]+$", barcode)
+}
+has_one_sample_prefix &lt;- function(barcode, sample_id) {
+  if (is.na(barcode) || !nzchar(barcode)) return(FALSE)
+  prefix &lt;- paste0(sample_id, "_")
+  startsWith(barcode, prefix) &amp;&amp;
+    is_valid_10x_barcode(substring(barcode, nchar(prefix) + 1L))
+}
 qualify_barcode &lt;- function(barcode, sample_id) {
   prefix &lt;- paste0(sample_id, "_")
-  if (startsWith(barcode, prefix)) return(barcode)
-  if (grepl("^[ACGTN]+-[0-9]+$", barcode)) return(paste0(prefix, barcode))
+  if (is.na(barcode) || !nzchar(barcode)) stop("RNA barcode is empty")
+  if (startsWith(barcode, prefix)) {
+    if (!has_one_sample_prefix(barcode, sample_id)) {
+      stop("RNA barcode must have exactly one sample prefix and a valid 10x barcode: ", barcode)
+    }
+    return(barcode)
+  }
+  if (is_valid_10x_barcode(barcode)) return(paste0(prefix, barcode))
   stop("Unexpected RNA barcode convention for ", sample_id, ": ", barcode)
 }
 qualified_rna_barcodes &lt;- mapply(
@@ -271,8 +286,9 @@ overlap_by_sample &lt;- do.call(rbind, lapply(sample_ids, function(sample_id) {
   if (length(vdj_barcodes) == 0L || length(rna_barcodes) == 0L) {
     stop("No V(D)J barcodes or RNA cells for sample ", sample_id)
   }
-  if (!all(startsWith(vdj_barcodes, paste0(sample_id, "_")))) {
-    stop("V(D)J barcodes do not have exactly the declared sample prefix for ", sample_id)
+  if (anyNA(vdj_barcodes) ||
+      !all(vapply(vdj_barcodes, has_one_sample_prefix, logical(1), sample_id = sample_id))) {
+    stop("V(D)J barcodes must have exactly one declared sample prefix and a valid 10x barcode for ", sample_id)
   }
   matched &lt;- intersect(vdj_barcodes, rna_barcodes)
   data.frame(
@@ -458,7 +474,7 @@ DimPlot(seurat_obj, group.by = "cloneSize")</code></pre>
 </script>
 <script src="../assets/vendor/prism/prism-1.29.0.js"></script>
 <script id="tutorial-code-data">
-window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"tcr-bcr-repertoire-analysis":{"blocks":[{"language":"r","sha256":"a1aae3efbafaad3727fd4320d16c38513ec340521c37874ebebc567744c7db6d"},{"language":"r","sha256":"5f4e38c29b78357f60e670228890091529c4a9573b1236388a0d852d9b517166"},{"language":"r","sha256":"63957eb4b616ee69c2ba434d86a8fde36a69c078fd76b9a8cb89672b9c6895a4"}],"groups":[]}}};
+window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"tcr-bcr-repertoire-analysis":{"blocks":[{"language":"r","sha256":"a1aae3efbafaad3727fd4320d16c38513ec340521c37874ebebc567744c7db6d"},{"language":"r","sha256":"5f4e38c29b78357f60e670228890091529c4a9573b1236388a0d852d9b517166"},{"language":"r","sha256":"394ab0f104f23c4ff5cf0dad86b4158bdcff69541325cde78301474f8a65eadc"}],"groups":[]}}};
 </script>
 <script src="../code-tabs.js?v=20261026-startup-v1"></script>
 <script src="../copy-code.js?v=20261025-r-first-v1"></script>

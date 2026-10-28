@@ -27,6 +27,10 @@ class TutorialReviewFixTests(unittest.TestCase):
         article = page("metagenomics-kraken2-bracken")
         self.assertIn("620 = 20 direct assignments + 250 + 350", article)
         self.assertIn("The bacterial clade is 900, leaving 280", article)
+        self.assertIn("complete species-level Bracken output totals 900 estimated reads", article)
+        self.assertIn("unshown rows totaling 740", article)
+        self.assertIn("fraction 100/900", article)
+        self.assertIn("fraction 60/900", article)
         self.assertIn("deliberately stops before Krona", article)
         self.assertIn("not the query-ID/taxonomy-ID input", article)
 
@@ -56,6 +60,10 @@ class TutorialReviewFixTests(unittest.TestCase):
         self.assertIn("After one sample prefix", code)
         self.assertIn("If samples and ID both add sample_A", code)
         self.assertIn("min_expected_vdj_overlap", code)
+        self.assertIn("is_valid_10x_barcode", code)
+        self.assertIn("has_one_sample_prefix", code)
+        self.assertIn("vapply(vdj_barcodes, has_one_sample_prefix", code)
+        self.assertIn("exactly one sample prefix", code)
         self.assertIn("0.95 minimum is a configurable teaching refusal gate", article)
 
     def test_singler_reports_overlap_and_refuses_below_documented_thresholds(self):
@@ -83,7 +91,15 @@ class TutorialReviewFixTests(unittest.TestCase):
         self.assertIn("classify-sklearn", code)
         self.assertIn("DADA2 1.30.0", article)
         self.assertIn("not evidence of taxonomic accuracy", article)
-        self.assertTrue((ROOT / "files/tutorial-examples/16s-dada2-taxonomy/dada2-taxonomy-workflow.Rmd").is_file())
+        workflow = ROOT / "files/tutorial-examples/16s-dada2-taxonomy/dada2-taxonomy-workflow.Rmd"
+        self.assertTrue(workflow.is_file())
+        workflow_text = workflow.read_text(encoding="utf-8")
+        self.assertIn("taxonomy_result$tax", workflow_text)
+        self.assertIn("taxonomy_result$boot", workflow_text)
+        self.assertNotIn("taxonomy_result$taxa", workflow_text)
+        self.assertIn("taxonomy <- taxonomy_result$tax", workflow_text)
+        self.assertIn("bootstrap <- taxonomy_result$boot", workflow_text)
+        self.assertNotIn("&lt;-", workflow_text)
 
     def test_reporting_has_worked_values_and_one_to_multi_sample_handoff(self):
         article = page("research-reporting-interpretation")
@@ -111,7 +127,8 @@ class TutorialReviewFixTests(unittest.TestCase):
         self.assertIn("GSE100866", article)
         self.assertIn("R 4.3.3", article)
         self.assertIn("Seurat 5.0.1", article)
-        self.assertNotIn("follow Seurat v4.3", article)
+        self.assertNotIn("Seurat v4.3 example", article)
+        self.assertIn("displayed calls follow the documented Seurat 5.0.1 API", article)
         self.assertIn("npcs = rna_npcs", code)
         self.assertIn('ElbowPlot(seurat_obj, reduction = "pca"', code)
         self.assertIn('ElbowPlot(seurat_obj, reduction = "apca"', code)
