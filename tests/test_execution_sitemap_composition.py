@@ -46,7 +46,18 @@ class ExecutionSitemapCompositionTests(unittest.TestCase):
             normalize_remaining_validation_sitemap(current),
             normalize_remaining_validation_sitemap(base),
         )
-        mutation = current.replace(b"<lastmod>2026-10-28</lastmod>", b"<lastmod>2099-01-01</lastmod>", 1)
+        target = b"https://theomicshub.com/about.html"
+        row = re.search(rb"<url>\s*<loc>" + re.escape(target) + rb"</loc>.*?</url>", current, re.S)
+        self.assertIsNotNone(row)
+        current_date = re.search(rb"<lastmod>(\d{4}-\d{2}-\d{2})</lastmod>", row.group(0))
+        self.assertIsNotNone(current_date)
+        self.assertEqual(current_date.group(1), b"2026-10-23")
+        mutated_row = row.group(0).replace(
+            b"<lastmod>" + current_date.group(1) + b"</lastmod>",
+            b"<lastmod>2099-01-01</lastmod>",
+            1,
+        )
+        mutation = current[:row.start()] + mutated_row + current[row.end():]
         self.assertNotEqual(mutation, current)
         with self.assertRaisesRegex(AssertionError, "unapproved sitemap lastmod"):
             normalize_remaining_validation_sitemap(mutation)
@@ -60,7 +71,14 @@ class ExecutionSitemapCompositionTests(unittest.TestCase):
         target = b"https://theomicshub.com/tutorials/wes-variant-calling-pipeline.html"
         row = re.search(rb"<url>\s*<loc>" + re.escape(target) + rb"</loc>.*?</url>", current, re.S)
         self.assertIsNotNone(row)
-        mutated_row = row.group(0).replace(b"<lastmod>2026-10-28</lastmod>", b"<lastmod>2099-01-01</lastmod>", 1)
+        current_date = re.search(rb"<lastmod>(\d{4}-\d{2}-\d{2})</lastmod>", row.group(0))
+        self.assertIsNotNone(current_date)
+        self.assertEqual(current_date.group(1), b"2026-10-25")
+        mutated_row = row.group(0).replace(
+            b"<lastmod>" + current_date.group(1) + b"</lastmod>",
+            b"<lastmod>2099-01-01</lastmod>",
+            1,
+        )
         self.assertNotEqual(mutated_row, row.group(0))
         future_date = current[:row.start()] + mutated_row + current[row.end():]
         self.assertEqual(restore_overlapping_execution_asset("sitemap.xml", future_date), future_date)

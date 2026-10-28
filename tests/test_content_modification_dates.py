@@ -12,6 +12,7 @@ from advanced_validation_baseline import (
     load_manifest as load_advanced_manifest,
     published_bytes as advanced_published_bytes,
 )
+from current_publication_baseline import current_published_bytes, normalize_latest_publication
 from resource_content_baseline import (
     load_manifest as load_resource_content_manifest,
     published_bytes as resource_published_bytes,
@@ -60,9 +61,25 @@ NS = {"s": "http://www.sitemaps.org/schemas/sitemap/0.9"}
 
 class ContentModificationDateTests(unittest.TestCase):
     def setUp(self):
-        # Keep the real current sitemap output visible: its sitewide lastmod
-        # date is distinct from each page's content dateModified value.
-        current_sitemap = (ROOT / "sitemap.xml").read_bytes()
+        # Pin the real current sitemap exactly, then restore only that known
+        # mainline revision for the historical content-date checks below.
+        raw_sitemap = (ROOT / "sitemap.xml").read_bytes()
+        self.assertEqual(raw_sitemap, current_published_bytes("sitemap.xml"))
+        raw_root = ET.fromstring(raw_sitemap)
+        raw_entries = raw_root.findall("s:url", NS)
+        raw_dates = {
+            entry.findtext("s:loc", namespaces=NS): entry.findtext("s:lastmod", namespaces=NS)
+            for entry in raw_entries
+        }
+        self.assertEqual(len(raw_entries), 67)
+        self.assertEqual(len(raw_dates), 67)
+        self.assertEqual(
+            raw_dates[SITE + "about.html"], "2026-10-23"
+        )
+        self.assertEqual(
+            raw_dates[SITE + "tutorials/wes-variant-calling-pipeline.html"], "2026-10-25"
+        )
+        current_sitemap = normalize_latest_publication("sitemap.xml", raw_sitemap)
         root = ET.fromstring(current_sitemap)
         self.sitemap_dates = {
             entry.findtext("s:loc", namespaces=NS): entry.findtext("s:lastmod", namespaces=NS)

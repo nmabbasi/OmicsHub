@@ -13,6 +13,7 @@ import zipfile
 
 from reviewed_tutorial_baseline import normalize_learner_revision
 from reader_typography_baseline import normalize_reader_typography
+from current_publication_baseline import current_published_bytes, normalize_latest_publication
 
 ROOT = Path(__file__).resolve().parents[1]
 BASELINE = 'd10ec616cae67437db90427bee4e156dd2bfb7d7'
@@ -107,9 +108,28 @@ class PbmcWorkedExampleTests(unittest.TestCase):
         self.assertNotIn(OLD_VALIDITY, text)
         self.assertNotIn(OLD_RANDOM, text)
 
-    def test_sitemap_uses_current_lastmods_and_preserves_historical_structure(self):
+    def test_exact_current_sitemap_and_historical_structure_are_preserved(self):
         ns = {'s': 'http://www.sitemaps.org/schemas/sitemap/0.9'}
-        current_root = ET.fromstring((ROOT / 'sitemap.xml').read_bytes())
+        raw_sitemap = (ROOT / 'sitemap.xml').read_bytes()
+        self.assertEqual(raw_sitemap, current_published_bytes('sitemap.xml'))
+        raw_root = ET.fromstring(raw_sitemap)
+        raw_entries = raw_root.findall('s:url', ns)
+        raw_dates = {
+            entry.find('s:loc', ns).text: entry.find('s:lastmod', ns).text
+            for entry in raw_entries
+        }
+        self.assertEqual(len(raw_entries), 67)
+        self.assertEqual(len(raw_dates), 67)
+        self.assertEqual(set(raw_dates.values()), {
+            '2026-10-21', '2026-10-22', '2026-10-23', '2026-10-24', '2026-10-25'
+        })
+        self.assertEqual(raw_dates['https://theomicshub.com/about.html'], '2026-10-23')
+        self.assertEqual(
+            raw_dates['https://theomicshub.com/tutorials/wes-variant-calling-pipeline.html'],
+            '2026-10-25',
+        )
+        historical_sitemap = normalize_latest_publication('sitemap.xml', raw_sitemap)
+        current_root = ET.fromstring(historical_sitemap)
         current_entries = current_root.findall('s:url', ns)
         current_by_url = {entry.find('s:loc', ns).text: entry for entry in current_entries}
         urls = [entry.find('s:loc', ns).text for entry in current_entries]

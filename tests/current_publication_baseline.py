@@ -1,4 +1,4 @@
-"""Exact restoration for the two latest published mainline revisions.
+"""Exact restoration for the three latest published mainline revisions.
 
 Only complete file bytes from the pinned commits are normalized. For the
 homepage stylesheet, the one deterministic generated output is also accepted
@@ -14,7 +14,7 @@ import subprocess
 
 ROOT = Path(__file__).resolve().parents[1]
 FIXTURE_PATH = ROOT / "tests/fixtures/current-publication-revisions.json"
-FIXTURE_SHA256 = "27a501cd1a859412f6a2c62f0aac944bcc55fd85ced4c49f4cdd52a1ab3ca897"
+FIXTURE_SHA256 = "07ad1bdebc6e046beed6133767923827fa24556ca6b056fa4852f0c9727bc473"
 
 
 def _git_bytes(revision, relative_path):
@@ -62,8 +62,8 @@ def publication_layers():
     if not isinstance(fixture, dict) or fixture.get("schema") != 1:
         raise AssertionError("current-publication fixture must use schema 1")
     layers = fixture.get("layers")
-    if not isinstance(layers, list) or len(layers) != 2:
-        raise AssertionError("fixture must pin the approved and its parent mainline revisions")
+    if not isinstance(layers, list) or len(layers) != 3:
+        raise AssertionError("fixture must pin the latest publication and two parent mainline revisions")
 
     validated = []
     for layer in layers:
@@ -110,9 +110,38 @@ def publication_layers():
                 "generated_head_sha256": generated_hash,
             }
         validated.append({"name": layer["name"], "files": records})
-    if [layer["name"] for layer in validated] != ["approved-navigation", "parent-sitewide"]:
+    if [layer["name"] for layer in validated] != [
+        "deployment-css-sitemap", "approved-navigation", "parent-sitewide"
+    ]:
         raise AssertionError("publication layers are out of the required newest-to-oldest order")
     return tuple(validated)
+
+
+def current_published_bytes(relative_path):
+    """Return the newest exactly pinned published bytes for one changed path."""
+    for layer in publication_layers():
+        entry = layer["files"].get(relative_path)
+        if entry is not None:
+            return entry["head"]
+    raise AssertionError(f"path is not pinned by current-publication fixture: {relative_path}")
+
+
+def normalize_latest_publication(relative_path, data):
+    """Restore only the newest exact publication layer; preserve unknown bytes."""
+    if not isinstance(data, bytes):
+        raise TypeError("current-publication normalization requires bytes")
+    entry = publication_layers()[0]["files"].get(relative_path)
+    if entry is None:
+        return data
+    digest = _sha(data)
+    accepted = {entry["head_sha256"]}
+    if entry["generated_head_sha256"]:
+        accepted.add(entry["generated_head_sha256"])
+    if digest not in accepted:
+        return data
+    if digest == entry["generated_head_sha256"]:
+        _css_rules(data)
+    return entry["base"]
 
 
 def normalize_current_publication(relative_path, data):
@@ -138,7 +167,7 @@ def normalize_approved_navigation(relative_path, data):
     """Restore only the approved 775 navigation revision to its d88 parent."""
     if not isinstance(data, bytes):
         raise TypeError("approved-navigation normalization requires bytes")
-    layer = publication_layers()[0]
+    layer = next(layer for layer in publication_layers() if layer["name"] == "approved-navigation")
     entry = layer["files"].get(relative_path)
     if entry is None:
         return data
