@@ -14,10 +14,10 @@ from coffee_removal_baseline import restore_coffee_removal_text
 ROOT = Path(__file__).resolve().parents[1]
 DESKTOP_BASELINE_COMMIT = "e846ce3fb6053ed611dc87fc62748865499913d0"
 IMAGE_LED_COMMIT = "a4b6ead8251e0a3abcb748061a40155ae9523a82"
-DESKTOP_CSS_VERSION = "20261026-roadmap-visual-v1"
+DESKTOP_CSS_VERSION = "20261029-academic-v1"
 DESKTOP_CSS_SHA256 = "4712e18351b3d0ab30d226317203da9fc52b253b3ff7e7b0e6f10ee73e0b507f"
 DESKTOP_CSS_HREF = f"start-here.css?v={DESKTOP_CSS_VERSION}"
-DESKTOP_HTML_SHA256 = "c5cc5813274d96b63bbdad3f71b30784ce379a24d99af7749a4e9a44e66aa6e4"
+DESKTOP_HTML_SHA256 = "3d5867f5fbdd1d7579d007f35ddf2553799ef92f0c66eb6a235c205e7c6f2929"
 
 
 def _show_bytes(spec):
