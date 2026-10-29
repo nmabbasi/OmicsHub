@@ -136,10 +136,8 @@
     const navigationFooter = document.querySelector('#reader-course-navigation .reader-sequence-footer');
     if (existing.matches('a[href="#tutorial-title"]') && navigationFooter) navigationFooter.appendChild(tools);
 
-    existing.addEventListener('click', event => {
-      event.preventDefault();
-      existing.blur();
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+    existing.addEventListener('click', () => {
+      // Keep the anchor's native fragment update and scroll; add focus for keyboard users.
       const targetId = existing.hash ? existing.hash.slice(1) : '';
       const target = targetId ? document.getElementById(targetId) : null;
       if (target) {
