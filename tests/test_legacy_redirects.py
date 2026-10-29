@@ -101,7 +101,7 @@ class LegacyRedirectTests(unittest.TestCase):
                 self.assertEqual(len(target_page.canonicals), 1)
                 self.assertEqual(stub.canonicals[0], target_page.canonicals[0])
                 self.assertEqual(stub.links, [target])
-                self.assertFalse(any("noindex" in directive.lower() for directive in stub.robots))
+                self.assertTrue(any("noindex" in directive.lower() for directive in stub.robots))
 
     def test_targets_are_relative_valid_and_do_not_chain(self):
         for source, target in self.redirects.items():

@@ -18,7 +18,7 @@ from coffee_removal_baseline import (
 ROOT = Path(__file__).resolve().parents[1]
 BASE_COMMIT = "e846ce3fb6053ed611dc87fc62748865499913d0"
 FIXTURE_PATH = ROOT / "tests/fixtures/editorial-review-edits.json"
-FIXTURE_SHA256 = "159a57c0be3574e186f24ecdfa4dbbd64ec403b22ce58d6cc5696b28453d79a9"
+FIXTURE_SHA256 = "40b70db4d6dd10bd5b2ddcd73c94027063ef7f476fa85adf7b23f69f5fef0995"
 PUBLIC_PATHS = frozenset({
     "autonomous-research-orchestrator.html",
     "tools/generate_legacy_redirects.py",

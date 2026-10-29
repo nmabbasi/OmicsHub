@@ -20,11 +20,24 @@
   justify-content: space-between;
   gap: .75rem;
   min-height: 3.35rem;
-  padding: .3rem .65rem .3rem 1.15rem;
+  padding: .3rem .65rem .3rem 4.3rem;
   border-bottom: 1px solid var(--code-line);
   background: var(--code-chrome);
   color: #cbd8eb;
   font: 600 .78rem/1.3 Inter, system-ui, sans-serif;
+  position: relative;
+}
+.code-block-toolbar::before {
+  content: "";
+  position: absolute;
+  left: 1.15rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #ff5f56;
+  box-shadow: 16px 0 0 #ffbd2e, 32px 0 0 #27c93f;
 }
 .code-block-language { min-width: 0; letter-spacing: .025em; }
 .code-copy-button {
@@ -191,7 +204,11 @@
   background: #e7eef8;
   font: 700 .72rem/1 ui-monospace, monospace;
 }
-.tutorial-language-group .code-tab-panel { padding: .5rem 1.15rem 1.1rem; min-width: 0; }
+.tutorial-language-group .code-tab-panel {
+  padding: .5rem 1.15rem 1.1rem;
+  min-width: 0;
+  transition: opacity 120ms ease-in-out;
+}
 .tutorial-language-group .code-tab-panel[hidden] { display: none; }
 .tutorial-language-group .code-tab-panel:focus-visible { outline: 3px solid #2473bc; outline-offset: -4px; }
 .prose .tutorial-language-group .code-tab-panel > h3:first-child { margin-top: 1.05rem; }
@@ -202,16 +219,48 @@
   .tutorial-language-group .code-tab-list { padding-inline: .65rem; gap: .25rem; }
   .tutorial-language-group .code-tab-button { padding-inline: .65rem; font-size: .8rem; }
   .tutorial-language-group .code-tab-panel { padding: .3rem .7rem .85rem; }
-  .code-block-toolbar { padding-left: .85rem; }
+  .code-block-toolbar { padding-left: 3.8rem; }
   .tutorial-code-frame pre, .prose .tutorial-code-frame pre { padding: 1rem .95rem !important; }
   .tutorial-code-frame pre code, .prose .tutorial-code-frame pre code { font-size: .79rem; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .code-copy-button, .tutorial-language-group .code-tab-button { transition: none; }
+  .code-copy-button, .tutorial-language-group .code-tab-button, .tutorial-language-group .code-tab-panel { transition: none; }
 }
 @media print {
   .tutorial-language-group .code-tab-list, .code-block-toolbar, .code-copy-status, .tutorial-top-tools { display: none !important; }
   .tutorial-language-group .code-tab-panel[hidden] { display: block !important; }
   .tutorial-code-frame { box-shadow: none; overflow: visible; break-inside: auto; }
   .tutorial-code-frame pre, .tutorial-code-frame pre code { white-space: pre-wrap; overflow-wrap: anywhere; }
+}
+
+/* Enhanced Biological Callout Notice Boxes */
+.lesson-page .lesson-summary {
+  background: var(--lesson-tint);
+  border-color: #cbd8e8;
+  border-left: 4px solid var(--lesson-accent);
+  box-shadow: 0 2px 8px -2px rgba(15, 23, 42, 0.04);
+}
+.lesson-page .lesson-checkpoint {
+  background: #f0fdf9;
+  border-color: #a7f3d0;
+  border-left: 4px solid #059669;
+  box-shadow: 0 2px 8px -2px rgba(5, 150, 105, 0.04);
+}
+.lesson-page .lesson-result {
+  background: #f4f8fc;
+  border-color: #cfdfed;
+  box-shadow: 0 2px 8px -2px rgba(15, 23, 42, 0.03);
+}
+.lesson-page .lesson-warning {
+  background: #fffbeb;
+  border-color: #fde68a;
+  border-left: 4px solid #d97706;
+  color: #78350f;
+  box-shadow: 0 2px 8px -2px rgba(217, 119, 6, 0.04);
+}
+.lesson-page .lesson-decision {
+  background: #faf5ff;
+  border-color: #e9d5ff;
+  border-left: 4px solid #7c3aed;
+  box-shadow: 0 2px 8px -2px rgba(124, 58, 237, 0.04);
 }

@@ -5,18 +5,18 @@
     "autonomous-research-orchestrator.html": {
       "kind": "text",
       "base_sha256": "242b3e82cab0eebb9156bea4d1ae6492bde49e15b07545adb9533ce19093b6f6",
-      "current_sha256": "3fbcc570f7a4169233d9b4c8aa3d7839ebc999fa88298e5ab9bcdb1696f70955",
+      "current_sha256": "4ce54d680a275a4b194523d5e6c2b9e1ac0bf011324eb270693b193254621a40",
       "patches": [
         {
           "before": "<head>\n  <meta charset=\"utf-8\">\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n  <title>Autonomous Research Orchestrator has moved | The Omics Hub</title>\n  <meta http-equiv=\"refresh\" content=\"0; url=tutorials/autonomous-research-orchestrator.html\">\n  <link rel=\"canonical\" href=\"https://theomicshub.com/tutorials/autonomous-research-orchestrator.html\">\n</head>\n<body>\n  <main>\n    <h1>This tutorial has moved</h1>\n    <p><a href=\"tutorials/autonomous-research-orchestrator.html\">Continue to the current tutorial: Autonomous Research Orchestrator</a></p>\n  </main>\n</body>\n</html>\n",
-          "after": "<head>\n  <meta charset=\"utf-8\">\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n  <title>Bounded Count-Matrix QC and CPM Workflows has moved | The Omics Hub</title>\n  <meta http-equiv=\"refresh\" content=\"0; url=tutorials/autonomous-research-orchestrator.html\">\n  <link rel=\"canonical\" href=\"https://theomicshub.com/tutorials/autonomous-research-orchestrator.html\">\n</head>\n<body>\n  <main>\n    <h1>This tutorial has moved</h1>\n    <p><a href=\"tutorials/autonomous-research-orchestrator.html\">Continue to the current tutorial: Bounded Count-Matrix QC and CPM Workflows</a></p>\n  </main>\n</body>\n</html>\n"
+          "after": "<head>\n  <meta charset=\"utf-8\">\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n  <meta name=\"robots\" content=\"noindex, follow\">\n  <title>Bounded Count-Matrix QC and CPM Workflows has moved | The Omics Hub</title>\n  <meta http-equiv=\"refresh\" content=\"0; url=tutorials/autonomous-research-orchestrator.html\">\n  <link rel=\"canonical\" href=\"https://theomicshub.com/tutorials/autonomous-research-orchestrator.html\">\n</head>\n<body>\n  <main>\n    <h1>This tutorial has moved</h1>\n    <p><a href=\"tutorials/autonomous-research-orchestrator.html\">Continue to the current tutorial: Bounded Count-Matrix QC and CPM Workflows</a></p>\n  </main>\n</body>\n</html>\n"
         }
       ]
     },
     "tools/generate_legacy_redirects.py": {
       "kind": "text",
       "base_sha256": "d28aad14616b832eebcc4c3849775bdacdeaa7ecc0100be75d4087596a88469b",
-      "current_sha256": "c35008e83edd42804fed7d8d356014a4c5d10f05d9fe95b2c35ff7f111adcb4b",
+      "current_sha256": "3e9d3e16e7a6b90e2240685ea352356f2bdfffeb70adf6bb8e869999c58ae891",
       "patches": [
         {
           "before": "    redirects = migration | manifest[\"historical_aliases\"]\n    if len(redirects) != len(migration) + len(manifest[\"historical_aliases\"]):\n        raise ValueError(\"Duplicate source URL in redirect manifest\")\n    return redirects, manifest\n\n\n",
@@ -27,8 +27,8 @@
           "after": "    return match.group(1)\n\n\ndef render(source: str, target: str, display_title: str | None = None) -> str:\n    source_path = PurePosixPath(source)\n    target_path = PurePosixPath(target)\n    if not source_path.is_absolute() or source_path.parent != PurePosixPath(\"/\"):\n"
         },
         {
-          "before": "        raise ValueError(f\"Target must be a relative tutorials/ route: {target}\")\n    canonical = html.escape(canonical_url(target), quote=True)\n    href = html.escape(target, quote=True)\n    title = html.escape(source_path.stem.replace(\"-\", \" \").replace(\"_\", \" \").title())\n    return f'''<!doctype html>\n<html lang=\"en\">\n<head>\n",
-          "after": "        raise ValueError(f\"Target must be a relative tutorials/ route: {target}\")\n    canonical = html.escape(canonical_url(target), quote=True)\n    href = html.escape(target, quote=True)\n    title = html.escape(display_title or source_path.stem.replace(\"-\", \" \").replace(\"_\", \" \").title())\n    return f'''<!doctype html>\n<html lang=\"en\">\n<head>\n"
+          "before": "        raise ValueError(f\"Target must be a relative tutorials/ route: {target}\")\n    canonical = html.escape(canonical_url(target), quote=True)\n    href = html.escape(target, quote=True)\n    title = html.escape(source_path.stem.replace(\"-\", \" \").replace(\"_\", \" \").title())\n    return f'''<!doctype html>\n<html lang=\"en\">\n<head>\n  <meta charset=\"utf-8\">\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n  <title>{title} has moved | The Omics Hub</title>\n  <meta http-equiv=\"refresh\" content=\"0; url={href}\">\n  <link rel=\"canonical\" href=\"{canonical}\">\n</head>\n",
+          "after": "        raise ValueError(f\"Target must be a relative tutorials/ route: {target}\")\n    canonical = html.escape(canonical_url(target), quote=True)\n    href = html.escape(target, quote=True)\n    title = html.escape(display_title or source_path.stem.replace(\"-\", \" \").replace(\"_\", \" \").title())\n    return f'''<!doctype html>\n<html lang=\"en\">\n<head>\n  <meta charset=\"utf-8\">\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n  <meta name=\"robots\" content=\"noindex, follow\">\n  <title>{title} has moved | The Omics Hub</title>\n  <meta http-equiv=\"refresh\" content=\"0; url={href}\">\n  <link rel=\"canonical\" href=\"{canonical}\">\n</head>\n"
         },
         {
           "before": "            raise ValueError(f\"Redirect chain detected: {source} -> {target}\")\n        relative_path = source.lstrip(\"/\")\n        output = ROOT / relative_path\n        content = render(source, target)\n        if check:\n            if not output.is_file() or output.read_text(encoding=\"utf-8\") != content:\n                failed.append(relative_path)\n",
