@@ -38,10 +38,19 @@ def main(source):
 
 
 def rule(css, selector):
-    match = re.search(re.escape(selector) + r"\s*\{([^}]*)\}", css, re.S | re.I)
+    clean_css = re.sub(r"/\*.*?\*/", "", css, flags=re.S)
+    match = re.search(re.escape(selector) + r"\s*\{([^{}]*)\}", clean_css, re.S | re.I)
     if not match:
         raise AssertionError(f"missing CSS rule: {selector}")
     return re.sub(r"\s+", " ", match.group(1)).strip().lower()
+
+
+def grouped_rule(css, selector):
+    clean_css = re.sub(r"/\*.*?\*/", "", css, flags=re.S)
+    for match in re.finditer(r"([^{}]+)\{([^{}]*)\}", clean_css, re.S | re.I):
+        if selector in [part.strip() for part in match.group(1).split(",")]:
+            return re.sub(r"\s+", " ", match.group(2)).strip().lower()
+    raise AssertionError(f"missing grouped CSS rule: {selector}")
 
 
 class StartHereVisualPolishTests(unittest.TestCase):
@@ -128,6 +137,37 @@ class StartHereVisualPolishTests(unittest.TestCase):
         self.assertNotIn("sh-orbit", self.main)
         self.assertNotIn("data-sh-step", self.main)
         self.assertNotRegex(self.source, r"start-here\.js\?v=")
+
+    def test_pictured_sections_use_distinct_non_card_layouts(self):
+        route_index = rule(self.css, "#sh-routes .sh-routes-grid")
+        route_rows = grouped_rule(self.css, "#sh-routes .sh-route-card")
+        readiness = rule(self.css, "#sh-curriculum .sh-ready-grid")
+        ready_item = grouped_rule(self.css, "#sh-curriculum .sh-ready-card")
+        study_tracks = rule(self.css, "#sh-curriculum .sh-track-grid")
+        track_row = grouped_rule(self.css, "#sh-curriculum .sh-track-card")
+        hpc_strip = rule(self.css, "#sh-curriculum .sh-hpc-callout")
+        reflection = rule(self.css, "#sh-curriculum .sh-progress-checks")
+        catalogue = rule(self.css, "#sh-catalogue .sh-catalogue-inner")
+        catalogue_button = rule(self.css, "#sh-catalogue .sh-btn-dark")
+
+        self.assertIn("grid-template-columns: minmax(0, 1fr)", route_index)
+        self.assertIn("display: grid", route_rows)
+        self.assertIn("border-radius: 0", route_rows)
+        self.assertIn("box-shadow: none", route_rows)
+        self.assertIn("repeat(3, minmax(0, 1fr))", readiness)
+        self.assertIn("background: transparent", ready_item)
+        self.assertIn("box-shadow: none", ready_item)
+        self.assertIn("grid-template-columns: minmax(0, 1fr)", study_tracks)
+        self.assertIn("border-bottom: 1px solid", track_row)
+        self.assertIn("box-shadow: none", track_row)
+        self.assertIn("border-left: 4px solid #b7791f", hpc_strip)
+        self.assertIn("border-radius: 0", hpc_strip)
+        self.assertIn("background: #123b5d", reflection)
+        self.assertIn("border-right: 1px solid", rule(self.css, "#sh-curriculum .sh-checkpoint"))
+        self.assertIn("background: #0b2741", catalogue)
+        self.assertIn("background: #ffffff", catalogue_button)
+        self.assertIn('id="sh-catalogue"', self.main)
+        self.assertIn('href="tutorials.html"', self.main)
 
     def test_learning_copy_and_historical_tutorial_destinations_remain(self):
         links = {href for href in self.facts.links if href.startswith("tutorials/")}
