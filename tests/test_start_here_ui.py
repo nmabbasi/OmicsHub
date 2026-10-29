@@ -1,4 +1,4 @@
-"""Accessible navigation contracts for the image-led Start Here page and roadmap."""
+"""Accessible navigation contracts for the learner-first Start Here page."""
 from html.parser import HTMLParser
 from pathlib import Path
 import json
@@ -41,9 +41,9 @@ def page_main(source):
     return match.group()
 
 
-def curriculum_region(source):
-    start_marker = "<!-- ── CURRICULUM ROADMAP & PREREQUISITES ── -->"
-    end_marker = "<!-- ── CATALOGUE ── -->"
+def redesigned_region(source):
+    start_marker = "<!-- ── FOUNDATION ── -->"
+    end_marker = "</main>"
     start = source.index(start_marker)
     end = source.index(end_marker, start)
     return source[start:end]
@@ -58,9 +58,9 @@ class StartHereJourneyUITests(unittest.TestCase):
         cls.published_main = page_main(original(PUBLISHED, "start-here.html"))
         cls.facts = Facts(cls.main)
 
-    def test_main_preserves_the_historical_image_led_design_outside_the_roadmap(self):
+    def test_main_preserves_the_historical_page_shell_outside_redesigned_sections(self):
         current = self.main.replace(
-            curriculum_region(self.main), curriculum_region(self.historical_main), 1
+            redesigned_region(self.main), redesigned_region(self.historical_main), 1
         )
         self.assertEqual(current, self.historical_main)
         self.assertIn("images/sh-three-laptop-learner-banner-with-copy.webp", self.main)
@@ -69,11 +69,11 @@ class StartHereJourneyUITests(unittest.TestCase):
                              for tag, attrs in self.facts.elements if tag == "a"), 4)
 
     def test_setup_cards_and_tracks_keep_all_original_lesson_destinations(self):
-        current_region = curriculum_region(self.main)
-        historical_region = curriculum_region(self.historical_main)
+        current_region = redesigned_region(self.main)
+        historical_region = redesigned_region(self.historical_main)
         current_links = {url for url in Facts(current_region).links if url.startswith("tutorials/")}
         historical_links = {url for url in Facts(historical_region).links if url.startswith("tutorials/")}
-        self.assertEqual(current_links, historical_links)
+        self.assertEqual(current_links, historical_links | {"tutorials/research-reporting-interpretation.html"})
         self.assertEqual(sum("sh-ready-card" in attrs.get("class", "").split()
                              for tag, attrs in self.facts.elements if tag == "article"), 3)
         self.assertEqual(sum("sh-ready-more" in attrs.get("class", "").split()
@@ -86,11 +86,12 @@ class StartHereJourneyUITests(unittest.TestCase):
             with self.subTest(phrase=phrase):
                 self.assertIn(phrase.lower(), current_region.lower())
 
-    def test_all_32_tutorial_destinations_and_manifest_anchors_are_preserved(self):
+    def test_all_tutorial_destinations_and_manifest_anchors_are_preserved(self):
         published_links = {url for url in Facts(self.published_main).links if url.startswith("tutorials/")}
         current_links = {url for url in self.facts.links if url.startswith("tutorials/")}
         self.assertEqual(len(published_links), 32)
-        self.assertEqual(current_links, published_links)
+        self.assertEqual(current_links, published_links | {"tutorials/research-reporting-interpretation.html"})
+        self.assertEqual(len(current_links), 33)
         targets = json.loads((ROOT / "tools/learning-paths.json").read_text(encoding="utf-8"))["start_targets"]
         for anchor in targets:
             with self.subTest(anchor=anchor):
@@ -122,7 +123,7 @@ class StartHereJourneyUITests(unittest.TestCase):
             "sh-curriculum", "sh-hpc-track", "sh-optional-tools",
         }
         self.assertTrue(required_ids.issubset(set(self.facts.ids)))
-        self.assertIn("HPC knowledge is not required", " ".join(self.facts.text))
+        self.assertIn("HPC is not required to begin", " ".join(self.facts.text))
         self.assertIn("Already comfortable with the basics?", " ".join(self.facts.text))
         self.assertEqual(sum(tag == "details" for tag, _ in self.facts.elements), 6)
         self.assertEqual(sum("sh-track-details" in attrs.get("class", "").split()

@@ -19,7 +19,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--base", default="http://127.0.0.1:8767")
     parser.add_argument("--browser", default="/opt/google/chrome/chrome")
-    parser.add_argument("--output", type=Path, default=Path("/tmp/omics-start-here-image-led"))
+    parser.add_argument("--output", type=Path, default=Path("/tmp/omics-start-here-learner-review"))
     args = parser.parse_args()
     args.output.mkdir(parents=True, exist_ok=True)
     results = {"layouts": [], "interactions": [], "errors": [], "passed": False}
@@ -30,6 +30,12 @@ def main():
 
     def block_remote(context):
         context.route("https://**/*", lambda route: route.abort())
+
+    def dismiss_analytics_prompt(page):
+        decline = page.get_by_role("button", name="Decline analytics", exact=True)
+        if decline.count() and decline.first.is_visible():
+            decline.first.click()
+            page.wait_for_timeout(80)
 
     try:
         with sync_playwright() as p:
@@ -48,6 +54,7 @@ def main():
                 page.on("pageerror", lambda error: results["errors"].append(str(error)))
                 page.goto(args.base + "/start-here.html", wait_until="domcontentloaded")
                 page.wait_for_selector("main#main-content")
+                dismiss_analytics_prompt(page)
                 images = page.locator("main img")
                 check(images.count() == 5, f"{width}px: original image count changed")
                 for image in images.all():
@@ -74,12 +81,19 @@ def main():
                     heroBounds:{left:heroRect.left,right:heroRect.right,width:heroRect.width},
                     title:document.title,h1:h1?.innerText,heroBackground:getComputedStyle(hero).backgroundColor,
                     images,cards,steps:main.querySelectorAll("a.sh-step").length,
+                    loopMaps:main.querySelectorAll(".sh-loop-map").length,
+                    loopStages:main.querySelectorAll("ol.sh-loop-steps > li.sh-loop-stage").length,
+                    loopArrows:main.querySelectorAll(".sh-loop-arrow").length,
+                    startHere:main.querySelectorAll("a.sh-step--start").length,
+                    sideSteps:main.querySelectorAll(".sh-side-step-nav a").length,
+                    languageCards:main.querySelectorAll(".sh-language-card").length,
+                    rFirst:main.querySelectorAll(".sh-language-card--recommended").length,
+                    pythonAlternative:main.querySelectorAll(".sh-language-card--alternative").length,
                     setupCards:main.querySelectorAll(".sh-ready-card").length,
                     setupDisclosures:main.querySelectorAll("#sh-curriculum details.sh-ready-more").length,
                     routeTracks:main.querySelectorAll(".sh-track-card").length,
                     routeStages:main.querySelectorAll(".sh-track-steps li").length,
                     hpcLinks:main.querySelectorAll(".sh-hpc-steps a").length,
-                    orbit:main.querySelectorAll(".sh-orbit,[data-sh-step]").length,
                     words:main.innerText.trim().split(/\\s+/).length};
                 }""")
                 check(data["scrollWidth"] <= width + 1, f"{width}px: horizontal overflow ({data['scrollWidth']})")
@@ -90,10 +104,13 @@ def main():
                 check(len(data["cards"]) == 4 and all(card["visible"] for card in data["cards"]), f"{width}px: route cards missing")
                 check(all(card["left"] >= -1 and card["right"] <= width + 1 for card in data["cards"]), f"{width}px: route card escapes viewport")
                 check(data["steps"] == 4, f"{width}px: foundation steps missing")
+                check(data["loopMaps"] == 1 and data["loopStages"] == 4 and data["loopArrows"] == 4, f"{width}px: learning loop is incomplete")
+                check(data["startHere"] == 1, f"{width}px: one obvious starting point is required")
+                check(data["sideSteps"] == 3, f"{width}px: optional side-step navigation is incomplete")
+                check(data["languageCards"] == 2 and data["rFirst"] == 1 and data["pythonAlternative"] == 1, f"{width}px: R/Python branch hierarchy is missing")
                 check(data["setupCards"] == 3 and data["setupDisclosures"] == 3, f"{width}px: setup cards/disclosures missing")
                 check(data["routeTracks"] == 3 and data["routeStages"] == 14, f"{width}px: study tracks/stages missing")
                 check(data["hpcLinks"] == 4, f"{width}px: optional HPC route incomplete")
-                check(data["orbit"] == 0, f"{width}px: circular path markup returned")
                 check("Start Here" in data["title"], f"{width}px: page title missing")
                 if width in (1440, 390):
                     page.evaluate("window.scrollTo(0, 0)")
@@ -117,7 +134,9 @@ def main():
             check(page.locator("main#main-content").is_visible(), "No-JS main content is unavailable")
             check(page.locator("a.sh-route-card").count() == 4, "No-JS route cards are unavailable")
             check(page.locator('a.sh-btn[href="#sh-foundation"]').get_attribute("href") == "#sh-foundation", "No-JS native learning path link missing")
-            check(page.locator(".sh-orbit,[data-sh-step]").count() == 0, "No-JS circular path markup returned")
+            check(page.locator(".sh-loop-map").is_visible(), "No-JS learning loop is unavailable")
+            check(page.locator("a.sh-step").count() == 4, "No-JS foundation links are unavailable")
+            check(page.locator("[data-sh-step]").count() == 0, "Obsolete scripted step controls returned")
             check(page.locator("#sh-curriculum details.sh-ready-more").count() == 3, "No-JS setup disclosures are missing")
             for disclosure in page.locator("#sh-curriculum details.sh-ready-more").all():
                 disclosure.locator("summary").click()

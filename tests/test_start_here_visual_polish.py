@@ -1,4 +1,4 @@
-"""Visual hierarchy, responsive behavior, and accessibility contracts for image-led Start Here."""
+"""Visual hierarchy, responsive behavior, and accessibility contracts for learner-first Start Here."""
 from html.parser import HTMLParser
 from pathlib import Path
 import re
@@ -116,21 +116,29 @@ class StartHereVisualPolishTests(unittest.TestCase):
                 ratio = 1.05 / (luminance(colors[token]) + 0.05)
                 self.assertGreaterEqual(ratio, 4.5, f"{selector} contrast is {ratio:.2f}:1")
 
-    def test_responsive_reduced_motion_and_no_circular_path_script(self):
+    def test_responsive_reduced_motion_and_static_learning_loop(self):
         self.assertRegex(self.css, r"(?i)@media\s*\(max-width:")
         self.assertRegex(self.css, r"(?i)@media\s*\(prefers-reduced-motion:\s*reduce\)")
         self.assertIn("object-fit: cover", rule(self.css, ".sh-route-img"))
         self.assertIn("aspect-ratio: 16 / 9", rule(self.css, ".sh-route-img"))
+        self.assertIn('class="sh-loop-map"', self.main)
+        self.assertIn('aria-label="Suggested beginner route, follow clockwise"', self.main)
+        self.assertEqual(self.main.count('class="sh-loop-arrow"'), 4)
+        self.assertIn('class="sh-loop-return"', self.main)
         self.assertNotIn("sh-orbit", self.main)
         self.assertNotIn("data-sh-step", self.main)
         self.assertNotRegex(self.source, r"start-here\.js\?v=")
 
     def test_learning_copy_and_historical_tutorial_destinations_remain(self):
         links = {href for href in self.facts.links if href.startswith("tutorials/")}
-        self.assertEqual(len(links), 32)
+        self.assertEqual(len(links), 33)
         self.assertTrue(all((ROOT / href.split("#", 1)[0]).is_file() for href in links))
         self.assertIn("You have the biology.", " ".join(self.facts.text))
-        self.assertIn("Choose a comfortable entry point", " ".join(self.facts.text))
+        self.assertIn("Start with one lesson", " ".join(self.facts.text))
+        self.assertIn("R + R Markdown", " ".join(self.facts.text))
+        self.assertIn("equivalent route", " ".join(self.facts.text))
+        self.assertIn("tutorials/research-reporting-interpretation.html", links)
+        self.assertIn('class="sh-step sh-step--start"', self.main)
 
 
 if __name__ == "__main__":
