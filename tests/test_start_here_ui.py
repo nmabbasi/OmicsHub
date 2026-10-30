@@ -1,4 +1,4 @@
-"""Accessible navigation contracts for the image-led Start Here page and roadmap."""
+"""Accessible navigation contracts for the learner-first Start Here page."""
 from html.parser import HTMLParser
 from pathlib import Path
 import json
@@ -9,7 +9,10 @@ import unittest
 ROOT = Path(__file__).resolve().parents[1]
 HISTORICAL = "a4b6ead8251e0a3abcb748061a40155ae9523a82"
 PUBLISHED = "45d660c5f53a0f4d8c2736057e2ab54fe7b8e718"
+BASELINE = "6c86efaa43624f7ec2dfca74c4b64a94533488e7"
+APPROVED_SECTIONS = ("sh-foundation", "sh-routes", "sh-curriculum", "sh-catalogue")
 MAIN = re.compile(r"<main\b[^>]*>.*?</main\s*>", re.S | re.I)
+BODY = re.compile(r"<body\b[^>]*>.*?</body\s*>", re.S | re.I)
 
 
 class Facts(HTMLParser):
@@ -41,12 +44,48 @@ def page_main(source):
     return match.group()
 
 
-def curriculum_region(source):
-    start_marker = "<!-- ── CURRICULUM ROADMAP & PREREQUISITES ── -->"
-    end_marker = "<!-- ── CATALOGUE ── -->"
+def page_body(source):
+    match = BODY.search(source)
+    if not match:
+        raise AssertionError("Start Here page must contain a body element")
+    return match.group()
+
+
+def redesigned_region(source):
+    start_marker = "<!-- ── FOUNDATION ── -->"
+    end_marker = "</main>"
     start = source.index(start_marker)
     end = source.index(end_marker, start)
     return source[start:end]
+
+
+def replace_approved_sections(source):
+    source = re.sub(r"<!--.*?-->", "", source, flags=re.S)
+    spans = []
+    for section_id in APPROVED_SECTIONS:
+        opening = re.search(
+            rf'<section\b(?=[^>]*\bid="{re.escape(section_id)}")[^>]*>', source, re.I
+        )
+        if not opening and section_id == "sh-catalogue":
+            opening = re.search(
+                r'<section\b(?=[^>]*\bclass="[^"]*\bsh-catalogue-wrap\b)[^>]*>', source, re.I
+            )
+        if not opening:
+            raise AssertionError(f"missing approved section: {section_id}")
+        depth = 0
+        closing = None
+        for token in re.finditer(r"</?section\b[^>]*>", source[opening.start():], re.I):
+            markup = token.group()
+            depth += -1 if markup.startswith("</") else 1
+            if depth == 0:
+                closing = opening.start() + token.end()
+                break
+        if closing is None:
+            raise AssertionError(f"unclosed approved section: {section_id}")
+        spans.append((opening.start(), closing, f"<!-- approved:{section_id} -->"))
+    for start, end, marker in sorted(spans, reverse=True):
+        source = source[:start] + marker + source[end:]
+    return re.sub(r"\s+", " ", source).strip()
 
 
 class StartHereJourneyUITests(unittest.TestCase):
@@ -58,9 +97,9 @@ class StartHereJourneyUITests(unittest.TestCase):
         cls.published_main = page_main(original(PUBLISHED, "start-here.html"))
         cls.facts = Facts(cls.main)
 
-    def test_main_preserves_the_historical_image_led_design_outside_the_roadmap(self):
+    def test_main_preserves_the_historical_page_shell_outside_redesigned_sections(self):
         current = self.main.replace(
-            curriculum_region(self.main), curriculum_region(self.historical_main), 1
+            redesigned_region(self.main), redesigned_region(self.historical_main), 1
         )
         self.assertEqual(current, self.historical_main)
         self.assertIn("images/sh-three-laptop-learner-banner-with-copy.webp", self.main)
@@ -68,12 +107,17 @@ class StartHereJourneyUITests(unittest.TestCase):
         self.assertEqual(sum("sh-route-card" in attrs.get("class", "").split()
                              for tag, attrs in self.facts.elements if tag == "a"), 4)
 
+    def test_only_the_approved_start_here_sections_differ_from_the_current_review_draft(self):
+        baseline = page_body(original(BASELINE, "start-here.html"))
+        current = page_body(self.source)
+        self.assertEqual(replace_approved_sections(current), replace_approved_sections(baseline))
+
     def test_setup_cards_and_tracks_keep_all_original_lesson_destinations(self):
-        current_region = curriculum_region(self.main)
-        historical_region = curriculum_region(self.historical_main)
+        current_region = redesigned_region(self.main)
+        historical_region = redesigned_region(self.historical_main)
         current_links = {url for url in Facts(current_region).links if url.startswith("tutorials/")}
         historical_links = {url for url in Facts(historical_region).links if url.startswith("tutorials/")}
-        self.assertEqual(current_links, historical_links)
+        self.assertEqual(current_links, historical_links | {"tutorials/research-reporting-interpretation.html"})
         self.assertEqual(sum("sh-ready-card" in attrs.get("class", "").split()
                              for tag, attrs in self.facts.elements if tag == "article"), 3)
         self.assertEqual(sum("sh-ready-more" in attrs.get("class", "").split()
@@ -86,11 +130,12 @@ class StartHereJourneyUITests(unittest.TestCase):
             with self.subTest(phrase=phrase):
                 self.assertIn(phrase.lower(), current_region.lower())
 
-    def test_all_32_tutorial_destinations_and_manifest_anchors_are_preserved(self):
+    def test_all_tutorial_destinations_and_manifest_anchors_are_preserved(self):
         published_links = {url for url in Facts(self.published_main).links if url.startswith("tutorials/")}
         current_links = {url for url in self.facts.links if url.startswith("tutorials/")}
         self.assertEqual(len(published_links), 32)
-        self.assertEqual(current_links, published_links)
+        self.assertEqual(current_links, published_links | {"tutorials/research-reporting-interpretation.html"})
+        self.assertEqual(len(current_links), 33)
         targets = json.loads((ROOT / "tools/learning-paths.json").read_text(encoding="utf-8"))["start_targets"]
         for anchor in targets:
             with self.subTest(anchor=anchor):
@@ -106,6 +151,10 @@ class StartHereJourneyUITests(unittest.TestCase):
             self.main, re.S | re.I,
         )
         self.assertEqual(len(cards), 4)
+        route_copy = " ".join(self.facts.text)
+        self.assertIn("Each route links to related guides, labs, and templates", route_copy)
+        self.assertIn("not a complete analysis pipeline", route_copy)
+        self.assertNotIn("These cards are entry points", self.main)
         for card in cards:
             href = re.search(r'\bhref="([^"]+)"', card)
             self.assertIsNotNone(href)
@@ -119,14 +168,37 @@ class StartHereJourneyUITests(unittest.TestCase):
     def test_foundation_language_choice_and_optional_hpc_sections_remain_available(self):
         required_ids = {
             "sh-foundation", "sh-language-choice", "sh-hpc", "sh-routes",
-            "sh-curriculum", "sh-hpc-track", "sh-optional-tools",
+            "sh-curriculum", "sh-hpc-track", "sh-optional-tools", "sh-progress-checks",
+            "sh-catalogue",
         }
         self.assertTrue(required_ids.issubset(set(self.facts.ids)))
-        self.assertIn("HPC knowledge is not required", " ".join(self.facts.text))
-        self.assertIn("Already comfortable with the basics?", " ".join(self.facts.text))
+        self.assertIn("HPC is not required to begin", " ".join(self.facts.text))
+        self.assertIn("Explore beyond the basics", " ".join(self.facts.text))
+        self.assertIn("BROWSE THE LIBRARY", " ".join(self.facts.text))
         self.assertEqual(sum(tag == "details" for tag, _ in self.facts.elements), 6)
         self.assertEqual(sum("sh-track-details" in attrs.get("class", "").split()
                              for tag, attrs in self.facts.elements if tag == "details"), 3)
+
+    def test_photographed_hpc_progress_and_catalogue_copy_uses_actions_not_questions(self):
+        text = " ".join(self.facts.text)
+        for phrase in (
+            "Use HPC only when needed",
+            "Recreate your environment, record versions, and run a small check.",
+            "Run a small test to estimate memory and runtime before requesting resources.",
+            "Explain why your quality checks fit the data and name what to check next.",
+            "Explore beyond the basics",
+        ):
+            with self.subTest(phrase=phrase):
+                self.assertIn(phrase, text)
+        for question in (
+            "Need a cluster for a larger job?",
+            "Can you recreate your environment, record versions, and run a small check?",
+            "Can a small test help you estimate memory and runtime before requesting resources?",
+            "Can you explain why your quality checks fit the data and name what to check next?",
+            "Already know what you need?",
+        ):
+            with self.subTest(question=question):
+                self.assertNotIn(question, text)
 
     def test_page_copy_has_no_completion_claim_or_em_dash(self):
         text = " ".join(self.facts.text)

@@ -10,6 +10,7 @@ from start_here_desktop_baseline import (
     DESKTOP_BASELINE_COMMIT,
     DESKTOP_CSS_HREF,
     DESKTOP_CSS_SHA256,
+    _normalize_approved_screenshot_copy,
     normalize_start_here_desktop_html,
     restore_start_here_desktop_asset,
 )
@@ -42,12 +43,23 @@ class StartHereDesktopBaselineTests(unittest.TestCase):
         original = baseline("start-here.html").decode("utf-8")
         self.assertEqual(normalize_start_here_desktop_html("start-here.html", current), original)
 
-        changed = current.replace("You have the biology.", "Unapproved new claim.", 1)
-        self.assertNotEqual(changed, current)
         old_href = re.findall(r'<link\b[^>]*href="(start-here\.css\?v=[^"]+)"[^>]*>', original)
         self.assertEqual(len(old_href), 1)
-        expected = changed.replace(DESKTOP_CSS_HREF, old_href[0], 1)
-        self.assertEqual(normalize_start_here_desktop_html("start-here.html", changed), expected)
+        mutations = (
+            ("You have the biology.", "Unapproved new claim."),
+            ("images/sh-three-laptop-learner-banner-with-copy.webp", "images/unapproved-start-here-image.webp"),
+            ("Recreate your environment, record versions, and run a small check.", "Record versions and rerun checks."),
+        )
+        for before, after in mutations:
+            with self.subTest(before=before):
+                self.assertEqual(current.count(before), 1)
+                changed = current.replace(before, after, 1)
+                self.assertNotEqual(changed, current)
+                expected = _normalize_approved_screenshot_copy(changed)
+                expected = expected.replace(DESKTOP_CSS_HREF, old_href[0], 1)
+                normalized = normalize_start_here_desktop_html("start-here.html", changed)
+                self.assertEqual(normalized, expected)
+                self.assertNotEqual(normalized, original)
 
     def test_duplicate_exact_href_is_rejected(self):
         current = normalize_latest_review(

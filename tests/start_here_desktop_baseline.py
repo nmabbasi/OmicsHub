@@ -14,10 +14,21 @@ from coffee_removal_baseline import restore_coffee_removal_text
 ROOT = Path(__file__).resolve().parents[1]
 DESKTOP_BASELINE_COMMIT = "e846ce3fb6053ed611dc87fc62748865499913d0"
 IMAGE_LED_COMMIT = "a4b6ead8251e0a3abcb748061a40155ae9523a82"
-DESKTOP_CSS_VERSION = "20261029-learner-v2"
-DESKTOP_CSS_SHA256 = "453914cf203e49115f1ddc412de2dc660ecd01119b1f55510c1f7ee7bb54999f"
+DESKTOP_CSS_VERSION = "20261029-learner-v4"
+DESKTOP_CSS_SHA256 = "f3eaea626677ba61eeb3d7fd161340767d8b3e737134e9f37fab5a79b3c29728"
 DESKTOP_CSS_HREF = f"start-here.css?v={DESKTOP_CSS_VERSION}"
-DESKTOP_HTML_SHA256 = "d0adebb18ca4449b47c07b95c578e9e727247636d133c11096461f93eb9deae8"
+DESKTOP_HTML_SHA256 = "f595cf0782c480f4e00e6391f3b37219a4efc1a640eee4feaf93f8ff3b95aed7"
+
+APPROVED_SCREENSHOT_COPY_REPLACEMENTS = (
+    ("Use HPC only when needed", "Need a cluster for a larger job?"),
+    ("Recreate your environment, record versions, and run a small check.",
+     "Can you recreate your environment, record versions, and run a small check?"),
+    ("Run a small test to estimate memory and runtime before requesting resources.",
+     "Can a small test help you estimate memory and runtime before requesting resources?"),
+    ("Explain why your quality checks fit the data and name what to check next.",
+     "Can you explain why your quality checks fit the data and name what to check next?"),
+    ("Explore beyond the basics", "Already know what you need?"),
+)
 
 
 def _show_bytes(spec):
@@ -85,6 +96,17 @@ def _exact_restored_page():
     return page
 
 
+def _normalize_approved_screenshot_copy(text):
+    """Reverse only the five exact approved phrases; partial or duplicate edits stay visible."""
+    revised, original = zip(*APPROVED_SCREENSHOT_COPY_REPLACEMENTS)
+    if (any(text.count(phrase) != 1 for phrase in revised)
+            or any(text.count(phrase) for phrase in original)):
+        return text
+    for approved, pinned in APPROVED_SCREENSHOT_COPY_REPLACEMENTS:
+        text = text.replace(approved, pinned, 1)
+    return text
+
+
 def normalize_start_here_desktop_html(relative_path, text):
     """Reverse only the exact reviewed page; otherwise normalize only the literal href."""
     if not isinstance(text, str):
@@ -92,6 +114,7 @@ def normalize_start_here_desktop_html(relative_path, text):
     text = restore_coffee_removal_text(relative_path, text, strict=False)
     if relative_path != "start-here.html":
         return text
+    text = _normalize_approved_screenshot_copy(text)
     if text == _exact_restored_page() or hashlib.sha256(text.encode("utf-8")).hexdigest() == DESKTOP_HTML_SHA256:
         return _baseline_bytes("start-here.html").decode("utf-8")
     baseline = _baseline_bytes("start-here.html").decode("utf-8")
