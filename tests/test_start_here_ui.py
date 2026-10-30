@@ -173,11 +173,32 @@ class StartHereJourneyUITests(unittest.TestCase):
         }
         self.assertTrue(required_ids.issubset(set(self.facts.ids)))
         self.assertIn("HPC is not required to begin", " ".join(self.facts.text))
-        self.assertIn("Already know what you need?", " ".join(self.facts.text))
+        self.assertIn("Explore beyond the basics", " ".join(self.facts.text))
         self.assertIn("BROWSE THE LIBRARY", " ".join(self.facts.text))
         self.assertEqual(sum(tag == "details" for tag, _ in self.facts.elements), 6)
         self.assertEqual(sum("sh-track-details" in attrs.get("class", "").split()
                              for tag, attrs in self.facts.elements if tag == "details"), 3)
+
+    def test_photographed_hpc_progress_and_catalogue_copy_uses_actions_not_questions(self):
+        text = " ".join(self.facts.text)
+        for phrase in (
+            "Use HPC only when needed",
+            "Recreate your environment, record versions, and run a small check.",
+            "Run a small test to estimate memory and runtime before requesting resources.",
+            "Explain why your quality checks fit the data and name what to check next.",
+            "Explore beyond the basics",
+        ):
+            with self.subTest(phrase=phrase):
+                self.assertIn(phrase, text)
+        for question in (
+            "Need a cluster for a larger job?",
+            "Can you recreate your environment, record versions, and run a small check?",
+            "Can a small test help you estimate memory and runtime before requesting resources?",
+            "Can you explain why your quality checks fit the data and name what to check next?",
+            "Already know what you need?",
+        ):
+            with self.subTest(question=question):
+                self.assertNotIn(question, text)
 
     def test_page_copy_has_no_completion_claim_or_em_dash(self):
         text = " ".join(self.facts.text)

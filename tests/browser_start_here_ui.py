@@ -133,6 +133,31 @@ def main():
                 check(data["hpcLinks"] == 4, f"{width}px: optional HPC route incomplete")
                 check(data["checkpoints"] == 3, f"{width}px: progress self-check prompts missing")
                 check(data["catalogueHref"] == "tutorials.html", f"{width}px: browse-all-tutorials destination changed")
+                if width == 1024:
+                    page.wait_for_selector("#back-to-top")
+                    catalogue_link = page.locator("#sh-catalogue .sh-catalogue-inner > a")
+                    catalogue_link.scroll_into_view_if_needed()
+                    page.evaluate("""() => {
+                      const link=document.querySelector('#sh-catalogue .sh-catalogue-inner > a');
+                      const control=document.querySelector('#back-to-top');
+                      const l=link.getBoundingClientRect(), c=control.getBoundingClientRect();
+                      const target=scrollY+l.top+l.height/2-(c.top+c.height/2);
+                      const limit=document.documentElement.scrollHeight-innerHeight;
+                      scrollTo({top:Math.max(0,Math.min(limit,target)),behavior:'instant'});
+                    }""")
+                    page.evaluate("() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))")
+                    clearance = page.evaluate("""() => {
+                      const link=document.querySelector('#sh-catalogue .sh-catalogue-inner > a');
+                      const control=document.querySelector('#back-to-top');
+                      const l=link.getBoundingClientRect(), c=control.getBoundingClientRect();
+                      const tools=control.closest('.tutorial-top-tools');
+                      return {controlVisible:!!tools && !tools.hidden && getComputedStyle(tools).visibility==='visible',
+                        overlap:c.left<l.right+7 && c.right>l.left-7 && c.top<l.bottom+7 && c.bottom>l.top-7,
+                        link:{left:l.left,right:l.right,top:l.top,bottom:l.bottom},
+                        control:{left:c.left,right:c.right,top:c.top,bottom:c.bottom}};
+                    }""")
+                    check(clearance["controlVisible"], f"{width}px: Back to top control did not appear for the catalogue clearance check")
+                    check(not clearance["overlap"], f"{width}px: catalogue CTA enters the Back to top control clearance zone: {clearance}")
                 check(all("rgba(0, 0, 0, 0)" not in color for color in data["readerColors"]), f"{width}px: reader-facing text became transparent")
                 check("Start Here" in data["title"], f"{width}px: page title missing")
                 if width in (1440, 390):
