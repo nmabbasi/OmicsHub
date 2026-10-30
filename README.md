@@ -71,6 +71,6 @@ OmicsHub/
 ## Author & Contact
 
 **Nasir Mahmood Abbasi, PhD**  
-Computational Biologist | Université de Bordeaux / CNRS  
+Computational Biologist • Open to New Opportunities  
 - Website: [nmabbasi.github.io](https://nmabbasi.github.io/)  
 - Email: [nmabbasi@gmail.com](mailto:nmabbasi@gmail.com)
