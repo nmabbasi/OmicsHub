@@ -34,7 +34,7 @@ class TutorialReaderUITests(unittest.TestCase):
 
     def test_inventory_is_complete_and_every_code_hash_is_checked(self):
         self.assertEqual(len(self.metadata['tutorials']), 58)
-        self.assertEqual(sum(len(s['blocks']) for s in self.metadata['tutorials'].values()), 380)
+        self.assertEqual(sum(len(s['blocks']) for s in self.metadata['tutorials'].values()), 384)
         self.assertEqual(sum(len(s['groups']) for s in self.metadata['tutorials'].values()), 29)
         self.assertEqual({slug for slug, s in self.metadata['tutorials'].items() if s['groups']}, {
             'scrna-seq-basics', 'statistics-for-bioinformatics', 'experimental-design-batch-effects', 'spatial-transcriptomics-r-python',

@@ -16,7 +16,7 @@ from current_publication_baseline import normalize_current_publication
 ROOT = Path(__file__).resolve().parents[1]
 BASE_COMMIT = "122bd466feb11efd304769faff19e77bd40a98b4"
 FIXTURE_PATH = ROOT / "tests/fixtures/tutorial-execution-exact-delta.json"
-FIXTURE_SHA256 = "8d0c9125c92830f9b0f47fa956a593bf42da25db22093342d4064b72eaa42240"
+FIXTURE_SHA256 = "28b80fdacbcef044a72f8312f516b889db2974354acb5d58ecb08e939dc2461b"
 
 
 def _sha(data):

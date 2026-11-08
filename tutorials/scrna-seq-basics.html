@@ -359,6 +359,35 @@ adata.write("results/pbmc_scanpy.h5ad")
 <p>The saved object <code>results/pbmc_seurat.rds</code> contains the post-filter Seurat analysis. In this execution, 2,638 cells remained after the example filters; 2,000 variable features were selected, 50 PCs computed, and the first 10 PCs used for neighbors, clustering, and UMAP. The plotted groups are computational communities, not validated cell types.</p>
 <p><strong>Scope of verification:</strong> this execution verifies the displayed R/Seurat route on the public filtered count matrix only. The optional Scanpy route was not run as part of this execution. No marker-based annotation, doublet calling, clinical validation, or raw-read processing is represented by these figures.</p>
 <p><strong>Data source:</strong> <a href="https://cf.10xgenomics.com/samples/cell/pbmc3k/pbmc3k_filtered_gene_bc_matrices.tar.gz">10x Genomics PBMC 3k filtered matrix</a>, hg19 legacy layout. The cached official archive used for this run had SHA256 <code>847d6ebd9a1ec9a768f2be7e40ca42cbfe75ebeb6d76a4c24167041699dc28b5</code>.</p>
+<h3>Optional PBMC marker sanity check</h3>
+<p>This illustrative marker-candidate panel lets you inspect expression across the saved Seurat clusters. It is a sanity check, not cell-type annotation. Confirm candidate gene symbols in your matrix; no marker pattern or cell identity is assumed here.</p>
+<pre><code class="language-r">library(Seurat)
+
+pbmc &lt;- readRDS("results/pbmc_seurat.rds")
+if (!("RNA" %in% SeuratObject::Assays(pbmc))) {
+  stop("The saved object has no RNA assay")
+}
+if (!("seurat_clusters" %in% colnames(pbmc[[]]))) {
+  stop("The saved object has no seurat_clusters column")
+}
+
+candidates &lt;- c("MS4A1", "CD79A", "CD3D", "IL7R",
+                "NKG7", "LYZ", "FCGR3A", "PPBP")
+features &lt;- intersect(candidates, rownames(pbmc[["RNA"]]))
+message("Candidates not present: ",
+        paste(setdiff(candidates, features), collapse = ", "))
+
+if (length(features)) {
+  p &lt;- DotPlot(pbmc, features = features, assay = "RNA",
+               group.by = "seurat_clusters") + RotatedAxis()
+  print(p)
+  dir.create("results/figures", recursive = TRUE, showWarnings = FALSE)
+  ggplot2::ggsave("results/figures/pbmc_marker_dotplot.png",
+                  plot = p, width = 8, height = 5)
+} else {
+  message("No candidate genes are present; no plot made.")
+}</code></pre>
+<p>Candidate expression alone does not establish cell identity. Interpret any plot alongside broader marker patterns, QC, and biological context.</p>
 </section>
 <figure id="scrna-basics-public-arabidopsis-umap" class="my-8" aria-labelledby="scrna-basics-public-arabidopsis-umap-caption">
 <a href="../images/tutorial-figures/public-plant-clusters.png" target="_blank" rel="noopener noreferrer" aria-label="Open this figure at full size"><img src="../images/tutorial-figures/public-plant-clusters.png" alt="Two views of the same UMAP embedding of Arabidopsis root cells, with axes UMAP1 and UMAP2. Each point is a cell. The left panel, titled “leiden,” colors cells by clusters 0–12; these numbers are cluster identifiers, not cell-type names. The right panel, titled “batch” in the source, colors short-root mutant cells (shr) purple and wild-type cells (wt) red; these labels identify biological genotypes, not technical batches. This is a separate public example, not an output of the OmicsHub PBMC workflow." width="1221" height="429" loading="lazy" decoding="async" style="display:block;width:100%;height:auto"/></a>
@@ -579,7 +608,7 @@ adata.write("results/pbmc_scanpy.h5ad")
 </script>
 <script src="../assets/vendor/prism/prism-1.29.0.js"></script>
 <script id="tutorial-code-data">
-window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"scrna-seq-basics":{"blocks":[{"language":"bash","sha256":"f68a64402c57ba060c2ccfc592828a80a666f62cbe830cdf01466cc7b6a97883"},{"language":"r","sha256":"65f9516fb31f7de082048fef07fe91109adab1cbb65980679bcdb9ea706c6f9d"},{"language":"python","sha256":"ae3d41dec12b09a51865e692381014f813a0df8d30db29115be2d269e03df81a"}],"groups":[{"title":"QC and clustering","panels":[{"start":15,"end":19,"language":"r","label":"R \u00b7 Seurat"},{"start":20,"end":23,"language":"python","label":"Python \u00b7 Scanpy"}],"members":[{"index":15,"tag":"h3","sha256":"fffdb7014be67b88220bc33cb0e9051dbddc6e71117cdd39a85a53c661ee08bf"},{"index":16,"tag":"pre","sha256":"65f9516fb31f7de082048fef07fe91109adab1cbb65980679bcdb9ea706c6f9d"},{"index":17,"tag":"p","sha256":"68e667d153df3e84cf91cf11a1dc00bb105c66bdfbfb4bc41806a66daa975b7e"},{"index":18,"tag":"p","sha256":"3df2127912210ef4139e531f2e6e08bdd8c2ffa465be1d98dec5eb665de0008e"},{"index":19,"tag":"ul","sha256":"fe79f3a7bbec5a1386ec6fc306c74d49f201651785bc837d48c5be182d22cbf7"},{"index":20,"tag":"h3","sha256":"70cd4f647d6c605d98691a18d0178e7d8f163c2dfbe1ee8acadaac90b15a460f"},{"index":21,"tag":"pre","sha256":"ae3d41dec12b09a51865e692381014f813a0df8d30db29115be2d269e03df81a"},{"index":22,"tag":"p","sha256":"3df2127912210ef4139e531f2e6e08bdd8c2ffa465be1d98dec5eb665de0008e"},{"index":23,"tag":"ul","sha256":"74ccef7ecae8884b88037545ebca582f93deec9f05904c54fae462a86e3e1bf8"}],"tabOrder":["r","python"]}]}}};
+window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"scrna-seq-basics":{"blocks":[{"language":"bash","sha256":"f68a64402c57ba060c2ccfc592828a80a666f62cbe830cdf01466cc7b6a97883"},{"language":"r","sha256":"65f9516fb31f7de082048fef07fe91109adab1cbb65980679bcdb9ea706c6f9d"},{"language":"python","sha256":"ae3d41dec12b09a51865e692381014f813a0df8d30db29115be2d269e03df81a"},{"language":"r","sha256":"185dfc63e833ec359e82c1b64469c45cd5cfcac0cc05a78ca8b692254c8c8cc7"}],"groups":[{"title":"QC and clustering","panels":[{"start":15,"end":19,"language":"r","label":"R \u00b7 Seurat"},{"start":20,"end":23,"language":"python","label":"Python \u00b7 Scanpy"}],"members":[{"index":15,"tag":"h3","sha256":"fffdb7014be67b88220bc33cb0e9051dbddc6e71117cdd39a85a53c661ee08bf"},{"index":16,"tag":"pre","sha256":"65f9516fb31f7de082048fef07fe91109adab1cbb65980679bcdb9ea706c6f9d"},{"index":17,"tag":"p","sha256":"68e667d153df3e84cf91cf11a1dc00bb105c66bdfbfb4bc41806a66daa975b7e"},{"index":18,"tag":"p","sha256":"3df2127912210ef4139e531f2e6e08bdd8c2ffa465be1d98dec5eb665de0008e"},{"index":19,"tag":"ul","sha256":"fe79f3a7bbec5a1386ec6fc306c74d49f201651785bc837d48c5be182d22cbf7"},{"index":20,"tag":"h3","sha256":"70cd4f647d6c605d98691a18d0178e7d8f163c2dfbe1ee8acadaac90b15a460f"},{"index":21,"tag":"pre","sha256":"ae3d41dec12b09a51865e692381014f813a0df8d30db29115be2d269e03df81a"},{"index":22,"tag":"p","sha256":"3df2127912210ef4139e531f2e6e08bdd8c2ffa465be1d98dec5eb665de0008e"},{"index":23,"tag":"ul","sha256":"74ccef7ecae8884b88037545ebca582f93deec9f05904c54fae462a86e3e1bf8"}],"tabOrder":["r","python"]}]}}};
 </script>
 <script src="../code-tabs.js?v=20261026-startup-v1"></script>
 <script src="../copy-code.js?v=20261025-r-first-v1"></script>

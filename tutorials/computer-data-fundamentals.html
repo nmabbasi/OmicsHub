@@ -290,6 +290,30 @@ zcat data/raw/sample_R1.fastq.gz | head -n 8
 )
 </code></pre>
 <div class="lesson-result"><strong>Expected result:</strong> The two-entry synthetic manifest should print <code>sample_R1.fastq.gz: OK</code> and <code>sample_R2.fastq.gz: OK</code>; gzip exit status should be <code>0</code>. An edited/truncated file, missing manifest filename, or nonzero gzip status is a stop condition: do not proceed as though validation succeeded. A manifest match verifies bytes against that manifest; it does not establish sample identity, biological suitability, consent, or provenance.</div>
+<h3>Self-check: interpret a deliberate checksum failure</h3>
+<p>Use only the synthetic fixture. A new temporary directory receives a copy and a test checksum file that retains the original expected hash; the altered copy is compared with that hash. A cleanup trap removes only this temporary directory when the block ends. The original data and <code>SHA256SUMS</code> manifest are left unchanged.</p>
+<pre><code class="language-bash">(
+  set -e
+  cd ~/projects/my-study/data/raw
+  tmpdir=$(mktemp -d)
+  trap 'rm -rf "$tmpdir"' EXIT
+
+  cp sample_R1.fastq.gz "$tmpdir/sample_R1.check-demo.fastq.gz"
+  printf 'x' &gt;&gt; "$tmpdir/sample_R1.check-demo.fastq.gz"
+  expected=$(awk '$2 == "sample_R1.fastq.gz" {print $1}' SHA256SUMS)
+  test -n "$expected"
+  printf '%s  sample_R1.check-demo.fastq.gz\n' "$expected" &gt; "$tmpdir/CHECK-DEMO.SHA256SUMS"
+
+  (
+    cd "$tmpdir"
+    if sha256sum -c CHECK-DEMO.SHA256SUMS; then
+      echo "Unexpected match; inspect the demonstration."
+    else
+      echo "Expected checksum failure: the altered copy differs from the original hash."
+    fi
+  )
+)</code></pre>
+<p><strong>Expected diagnostic:</strong> the check should report <code>sample_R1.check-demo.fastq.gz: FAILED</code>, then print the expected-failure message; the temporary directory is removed when the block ends. On macOS, replace <code>sha256sum -c</code> with <code>shasum -a 256 -c</code>. Do not apply this exercise to provider data.</p>
 <h2>Interpret the checks and count records</h2>
 <ul>
 <li>sha256sum -c reads the manifest and checks each listed file. For each entry you should see "OK" or "FAILED". Save the output to logs/checksum_validation_YYYY-MM-DD.log for provenance.</li>
@@ -524,7 +548,7 @@ count_fastq_records data/raw/sample_R1.fastq.gz
 </script>
 <script src="../assets/vendor/prism/prism-1.29.0.js"></script>
 <script id="tutorial-code-data">
-window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"computer-data-fundamentals":{"blocks":[{"language":"bash","sha256":"f54ceb9357e8be480252edd57e19acb7992e4f77d5b96837da42234a6614d49a"},{"language":"bash","sha256":"45b06d95c3a1234d36951ce3e70a3f46cfd74ee37bc170450f4b2cde248c88c3"},{"language":"bash","sha256":"cd5480a18b07b8ae0fc0b443a97d57b78c0e2993e9509c4c3d9caba5a9d14739"},{"language":"bash","sha256":"90e8c393f58f2ee4c7ff72f2b4090ae724c7462f992f88ab1456ce641d9e2ff6"},{"language":"bash","sha256":"c782e5daafd10c9d5a632e6f3fb2223cd560ea9bc03933e759eb798839f8720c"},{"language":"bash","sha256":"28580fa6cc3cafcda126385f9ca815f37f9d27e98eb49a17ba29d44d88b9bf3e"},{"language":"bash","sha256":"a1278460aa99620c0adef15d72399a6481d1859e15144bf080173411c0bc89d2"},{"language":"bash","sha256":"4ef3a3a8bc8ec2581d555fcaa6c4882df9bf0c6cac1967c03f210c0409732919"}],"groups":[]}}};
+window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"computer-data-fundamentals":{"blocks":[{"language":"bash","sha256":"f54ceb9357e8be480252edd57e19acb7992e4f77d5b96837da42234a6614d49a"},{"language":"bash","sha256":"45b06d95c3a1234d36951ce3e70a3f46cfd74ee37bc170450f4b2cde248c88c3"},{"language":"bash","sha256":"cd5480a18b07b8ae0fc0b443a97d57b78c0e2993e9509c4c3d9caba5a9d14739"},{"language":"bash","sha256":"90e8c393f58f2ee4c7ff72f2b4090ae724c7462f992f88ab1456ce641d9e2ff6"},{"language":"bash","sha256":"c782e5daafd10c9d5a632e6f3fb2223cd560ea9bc03933e759eb798839f8720c"},{"language":"bash","sha256":"28580fa6cc3cafcda126385f9ca815f37f9d27e98eb49a17ba29d44d88b9bf3e"},{"language":"bash","sha256":"66c1bcf74376d18289fff65350ba28b0e47199ec771c61983aa0a8d00f7b9d7c"},{"language":"bash","sha256":"a1278460aa99620c0adef15d72399a6481d1859e15144bf080173411c0bc89d2"},{"language":"bash","sha256":"4ef3a3a8bc8ec2581d555fcaa6c4882df9bf0c6cac1967c03f210c0409732919"}],"groups":[]}}};
 </script>
 <script src="../code-tabs.js?v=20261026-startup-v1"></script>
 <script src="../copy-code.js?v=20261025-r-first-v1"></script>

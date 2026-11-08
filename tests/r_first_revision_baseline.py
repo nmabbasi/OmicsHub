@@ -19,7 +19,7 @@ ROOT = Path(__file__).resolve().parents[1]
 PRE_R_FIRST_COMMIT = "2ad77315c9fbc48ac5b941df9998bbad4b76fb2f"
 FIXTURE_PATH = ROOT / "tests/fixtures/r-first-revision-edits.json"
 # Provisional snapshot pin; refresh after metadata/source-group assets are final.
-FIXTURE_SHA256 = "b762ad95ae28d504e5a79ffc89d0602027a34645a029d026a7ed6b7f1602306e"
+FIXTURE_SHA256 = "34dd3bc36cdf01eaf1e477704e510af868c310549b0adbc5379dc0e71bbdcc2e"
 EXPECTED_NAVIGATION_PAGE_COUNT = 58
 EXPECTED_CONTENT_PAGE_COUNT = 27
 START_HERE_PATH = "start-here.html"

@@ -254,6 +254,36 @@ write_csv(coldata %&gt;% rownames_to_column("sample"),
           "output/pseudobulk/sample_metadata.csv")</code></pre>
 <p class="lesson-checkpoint"><strong>Check before modeling:</strong> each count-matrix column must be one biological sample, and its condition in <code>coldata</code> must be the matching sample-level label. Confirm the assay really contains raw counts. If the conditions are confounded with batch or another covariate, the condition effect cannot be separated from it by adding a formula term alone.</p>
 <p>Seurat can rewrite grouping labels containing underscores or beginning with numbers. The temporary codes above avoid changing or merging those original sample IDs; the code restores the real IDs before sample-metadata alignment. Never use renamed groups as an excuse to split one donor into artificial replicates.</p>
+<h3>Smoke-test the saved files</h3>
+<p>After running the aggregation block, this checks the documented output files for a gene column, non-negative integer counts, and sample columns aligned to the sample sheet. It does not fit a model or report differential-expression results.</p>
+<pre><code class="language-r">counts_file &lt;- readr::read_csv(
+  "output/pseudobulk/cd4_counts.csv",
+  show_col_types = FALSE
+)
+samples_file &lt;- readr::read_csv(
+  "output/pseudobulk/sample_metadata.csv",
+  col_types = readr::cols(
+    sample_id = readr::col_character(),
+    .default = readr::col_guess()
+  ),
+  show_col_types = FALSE
+)
+
+stopifnot(
+  "gene" %in% names(counts_file),
+  all(c("sample", "sample_id", "condition") %in% names(samples_file))
+)
+
+count_samples &lt;- names(counts_file)[names(counts_file) != "gene"]
+stopifnot(identical(count_samples, samples_file$sample_id))
+
+count_values &lt;- as.matrix(counts_file[count_samples])
+stopifnot(
+  all(is.finite(count_values)),
+  all(count_values &gt;= 0),
+  all(abs(count_values - round(count_values)) &lt; 1e-8)
+)</code></pre>
+<p>If a check fails, inspect the saved files and sample order before modeling. Passing checks establish file structure only; they do not verify the source assay, study design, or biological validity.</p>
 <h2>Fit DESeq2 and make the contrast explicit</h2>
 <p>The code below is for two independent conditions and unpaired samples. It uses a simple count prefilter as an example (not a universal cutoff) and leaves DESeq2's result filtering in place. Choose design terms from the study design before looking at outcomes. Do not put both condition and a perfectly confounded batch term into a model and expect it to identify their separate effects.</p>
 <pre><code class="language-r"># Illustrative low-count prefilter; review for your cohort and design.
@@ -467,7 +497,7 @@ ggsave("output/plots/volcano.png", volcano, width = 6, height = 4, bg = "white")
 </script>
 <script src="../assets/vendor/prism/prism-1.29.0.js"></script>
 <script id="tutorial-code-data">
-window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"transcriptomics-differential-expression":{"blocks":[{"language":"r","sha256":"9f988a7bffae7726904cf6861f7acf84d56ec95d58acc200694f45b671557891"},{"language":"r","sha256":"513ca46c3cb7bdf5aaad36b606db14883ee69027a817273e2d3d032813e4b3ca"},{"language":"r","sha256":"044dd05906d805d604583f4484d633b46ea09c6d84263518bd318c7c5edae1ff"}],"groups":[]}}};
+window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"transcriptomics-differential-expression":{"blocks":[{"language":"r","sha256":"9f988a7bffae7726904cf6861f7acf84d56ec95d58acc200694f45b671557891"},{"language":"r","sha256":"bc0f0c0b622b059394e86f11fe2e4c34022ca7aef6a8c5ecb916228660974889"},{"language":"r","sha256":"513ca46c3cb7bdf5aaad36b606db14883ee69027a817273e2d3d032813e4b3ca"},{"language":"r","sha256":"044dd05906d805d604583f4484d633b46ea09c6d84263518bd318c7c5edae1ff"}],"groups":[]}}};
 </script>
 <script src="../code-tabs.js?v=20261026-startup-v1"></script>
 <script src="../copy-code.js?v=20261025-r-first-v1"></script>
