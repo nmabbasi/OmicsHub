@@ -35,6 +35,45 @@ def _sha(data):
     return hashlib.sha256(data).hexdigest()
 
 
+_APPROVED_SITEMAP_LASTMODS = {
+    "https://theomicshub.com/tutorials/git-github-bioinformatics.html": ("2026-10-25", "2026-11-09"),
+    "https://theomicshub.com/tutorials/metagenomics-kraken2-bracken.html": ("2026-10-21", "2026-11-09"),
+    "https://theomicshub.com/tutorials/tcr-bcr-repertoire-analysis.html": ("2026-10-24", "2026-11-09"),
+}
+_SITEMAP_URL_ROW = re.compile(rb"<url>\s*<loc>([^<]+)</loc>.*?</url>", re.S)
+_SITEMAP_LASTMOD = re.compile(rb"<lastmod>([^<]+)</lastmod>")
+
+
+def _rewrite_approved_sitemap_lastmods(data, *, reverse=False, strict=False):
+    """Apply or reverse only the three owner-approved sitemap dates."""
+    if not isinstance(data, bytes):
+        raise TypeError("sitemap date normalization requires bytes")
+    source_slot, target_slot = (1, 0) if reverse else (0, 1)
+    replacements = []
+    for url, dates in _APPROVED_SITEMAP_LASTMODS.items():
+        rows = [match for match in _SITEMAP_URL_ROW.finditer(data)
+                if match.group(1) == url.encode("ascii")]
+        if len(rows) != 1:
+            if strict:
+                raise AssertionError(f"expected one sitemap row for approved date: {url}")
+            return data
+        row = rows[0]
+        lastmods = list(_SITEMAP_LASTMOD.finditer(row.group(0)))
+        if len(lastmods) != 1 or lastmods[0].group(1) != dates[source_slot].encode("ascii"):
+            if strict:
+                raise AssertionError(f"unexpected sitemap lastmod for approved date: {url}")
+            return data
+        lastmod = lastmods[0]
+        replacements.append((
+            row.start() + lastmod.start(1),
+            row.start() + lastmod.end(1),
+            dates[target_slot].encode("ascii"),
+        ))
+    for start, end, value in reversed(replacements):
+        data = data[:start] + value + data[end:]
+    return data
+
+
 def _css_rules(data):
     lines = data.splitlines(keepends=True)
     if len(lines) != 2 or not lines[0].startswith(
@@ -119,11 +158,14 @@ def publication_layers():
 
 
 def current_published_bytes(relative_path):
-    """Return the newest exactly pinned published bytes for one changed path."""
+    """Return newest pinned bytes, with only the approved sitemap date delta."""
     for layer in publication_layers():
         entry = layer["files"].get(relative_path)
         if entry is not None:
-            return entry["head"]
+            data = entry["head"]
+            if relative_path == "sitemap.xml":
+                data = _rewrite_approved_sitemap_lastmods(data, strict=True)
+            return data
     raise AssertionError(f"path is not pinned by current-publication fixture: {relative_path}")
 
 
@@ -134,6 +176,8 @@ def normalize_latest_publication(relative_path, data):
     entry = publication_layers()[0]["files"].get(relative_path)
     if entry is None:
         return data
+    if relative_path == "sitemap.xml":
+        data = _rewrite_approved_sitemap_lastmods(data, reverse=True)
     digest = _sha(data)
     accepted = {entry["head_sha256"]}
     if entry["generated_head_sha256"]:

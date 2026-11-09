@@ -121,8 +121,17 @@ class PbmcWorkedExampleTests(unittest.TestCase):
         self.assertEqual(len(raw_entries), 67)
         self.assertEqual(len(raw_dates), 67)
         self.assertEqual(set(raw_dates.values()), {
-            '2026-10-21', '2026-10-22', '2026-10-23', '2026-10-24', '2026-10-25'
+            '2026-10-21', '2026-10-22', '2026-10-23', '2026-10-24', '2026-10-25',
+            '2026-11-09',
         })
+        self.assertEqual(
+            {url for url, date in raw_dates.items() if date == '2026-11-09'},
+            {
+                'https://theomicshub.com/tutorials/git-github-bioinformatics.html',
+                'https://theomicshub.com/tutorials/metagenomics-kraken2-bracken.html',
+                'https://theomicshub.com/tutorials/tcr-bcr-repertoire-analysis.html',
+            },
+        )
         self.assertEqual(raw_dates['https://theomicshub.com/about.html'], '2026-10-23')
         self.assertEqual(
             raw_dates['https://theomicshub.com/tutorials/wes-variant-calling-pipeline.html'],
