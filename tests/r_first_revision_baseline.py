@@ -210,6 +210,8 @@ def normalize_r_first_revision(relative_path, text):
     """Reverse matching literal chunks; every unmatched edit remains visible."""
     if not isinstance(text, str):
         raise TypeError("R-first normalization requires decoded text")
+    from approved_tutorial_fixes_baseline import normalize_approved_tutorial_fix
+    text = normalize_approved_tutorial_fix(relative_path, text)
     text = normalize_latest_review(relative_path, text)
     text = normalize_start_here_desktop_html(relative_path, text)
     # The execution-review layer is a separate exact-digest/context adapter.
@@ -238,6 +240,8 @@ def verify_r_first_asset(relative_path, data):
     if relative_path not in R_FIRST_ASSET_SHA256:
         raise AssertionError(f"not an authorized R-first asset: {relative_path}")
     original_data = data
+    from approved_tutorial_fixes_baseline import restore_approved_tutorial_fix_asset
+    data = restore_approved_tutorial_fix_asset(relative_path, data)
     from startup_performance_baseline import restore_startup_performance_asset
     data = restore_startup_performance_asset(relative_path, data)
     data = restore_latest_review_asset(relative_path, data)
@@ -250,6 +254,8 @@ def verify_r_first_asset(relative_path, data):
 
 def restore_r_first_asset(relative_path, data):
     """Verify a changed asset, then restore exact 2ad7731 bytes when tracked."""
+    from approved_tutorial_fixes_baseline import restore_approved_tutorial_fix_asset
+    data = restore_approved_tutorial_fix_asset(relative_path, data)
     from startup_performance_baseline import restore_startup_performance_asset
     data = restore_startup_performance_asset(relative_path, data)
     data = restore_latest_review_asset(relative_path, data)

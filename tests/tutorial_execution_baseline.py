@@ -130,6 +130,8 @@ def normalize_execution_delta(relative_path, text):
     """Reverse one exact current page to 122bd bytes; leave mutations untouched."""
     if not isinstance(text, str):
         raise TypeError("execution-delta normalization requires decoded text")
+    from approved_tutorial_fixes_baseline import normalize_approved_tutorial_fix
+    text = normalize_approved_tutorial_fix(relative_path, text)
     text = normalize_current_publication(relative_path, text.encode("utf-8")).decode("utf-8")
     from navigation_performance_baseline import normalize_navigation_performance
     text = normalize_navigation_performance(relative_path, text)
@@ -171,6 +173,8 @@ def verify_new_execution_asset(relative_path, data):
 
 def restore_overlapping_execution_asset(relative_path, data):
     """Return exact 122bd bytes for an overlapping asset only at its pinned digest."""
+    from approved_tutorial_fixes_baseline import restore_approved_tutorial_fix_asset
+    data = restore_approved_tutorial_fix_asset(relative_path, data)
     data = normalize_current_publication(relative_path, data)
     from startup_performance_baseline import restore_startup_performance_asset
     data = restore_startup_performance_asset(relative_path, data)
@@ -200,6 +204,8 @@ def verify_execution_asset_or_overlapping(relative_path, data):
     """Verify either one exact new asset or one exact overlapping asset revision."""
     from latest_review_baseline import restore_latest_review_asset
     original_data = data
+    from approved_tutorial_fixes_baseline import restore_approved_tutorial_fix_asset
+    data = restore_approved_tutorial_fix_asset(relative_path, data)
     data = restore_latest_review_asset(relative_path, data)
     fixture = _fixture()
     new = fixture["new_asset_map"].get(relative_path)

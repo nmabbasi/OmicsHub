@@ -172,7 +172,7 @@ function toggleMobileMenu() {
 </div>
 <nav aria-label="Learning path navigation" class="reader-toolbar"><span class="reader-toolbar__heading">Learning path</span><a href="cell-type-annotation-methods.html" rel="prev" class="reader-toolbar__previous"><span class="reader-toolbar__direction"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5m0 0 7 7m-7-7 7-7"/></svg></span><span class="reader-toolbar__copy"><small>Previous prerequisite</small><strong>Choosing and Checking Cell-Type Annotation Methods</strong></span></a><a data-catalogue-return="" href="../tutorials.html" class="reader-toolbar__library"><span class="reader-toolbar__library-mark" aria-hidden="true"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="6" height="6" rx="1.3"/><rect x="14" y="4" width="6" height="6" rx="1.3"/><rect x="4" y="14" width="6" height="6" rx="1.3"/><rect x="14" y="14" width="6" height="6" rx="1.3"/></svg></span><span><small>Browse</small><strong>All tutorials</strong></span></a><a href="../start-here.html#sh-single-cell" rel="next" class="reader-toolbar__next"><span class="reader-toolbar__copy"><small>Suggested next</small><strong>Back to single-cell choices</strong></span><span class="reader-toolbar__direction"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14m0 0-7-7m7 7-7 7"/></svg></span></a></nav>
 <article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--walkthrough">
-<p class="lesson-lead">This walkthrough follows filtered single-cell V(D)J contigs from Cell Ranger into scRepertoire, summarizes clone-size structure, and attaches receptor labels to a Seurat object. The result is a descriptive repertoire analysis. Clone expansion alone does not establish antigen specificity, malignancy, or cell function.</p>
+<p class="lesson-lead">The worked walkthrough is TCR-focused: it follows filtered single-cell V(D)J contigs from Cell Ranger into scRepertoire, summarizes clone-size structure, and attaches receptor labels to a Seurat object. A separate, explicitly synthetic BCR example below demonstrates productive-chain filtering, a heavy/light-chain presence check, and a heavy-chain-only summary. Both are descriptive; neither establishes antigen specificity, malignancy, or cell function.</p>
 <section class="lesson-summary tutorial-learning-contract" data-tutorial-format="advanced-template" aria-label="Learning format">
 <p><strong>Format: Advanced template.</strong> For analysts with matched, preprocessed single-cell V(D)J and RNA data: adapt and audit a TCR clone-summary and metadata-attachment workflow. Bring one Cell Ranger filtered-contig CSV per sample and the corresponding Seurat object; no biological inputs are supplied.</p>
 </section>
@@ -246,7 +246,52 @@ DimPlot(seurat_obj, group.by = "cloneSize")</code></pre>
 <p>If cells are unexpectedly unannotated, compare the barcode strings on both sides, including any sample prefixes, and verify that the sample metadata column has the intended values. Also check whether filtering removed receptor-negative cells. The plot describes where labeled cells lie in the embedding; it does not demonstrate that a clone caused a transcriptional state or that the cells are malignant.</p>
 <h2>Interpreting clone-associated expression</h2>
 <p>A clone-size category is an abundance grouping, not a malignancy label. In a lymphoma study, determining whether a clone is malignant requires disease-specific evidence and study design beyond this repertoire workflow. A cell-level contrast such as <code>FindMarkers()</code> can be exploratory, but cells from the same donor are not independent biological replicates. For condition-level claims, account for between-sample variation, for example with an appropriate pseudobulk design, and validate findings independently.</p>
-<p>TCRs and BCRs share V(D)J-based diversity but differ in chain organization and biology. This code is TCR-focused, not a worked BCR analysis. For BCR data, substitute <code>combineBCR()</code> on filtered contig annotations and verify productive IGH plus IGK and/or IGL chains and CDR3 fields. For <code>combineExpression()</code>, choose a BCR-appropriate <code>clone.call</code> and <code>chain</code> (documented choices include <code>IGH</code>, <code>IGL</code>, and <code>both</code>); a heavy-chain-only call does not represent paired receptors. Check barcode overlap and resulting metadata before plotting. Interpret pairing and somatic hypermutation with BCR-specific methods; this is a planning checklist, not a validated BCR recipe.</p>
+<p>TCRs and BCRs share V(D)J-based diversity but differ in chain organization and biology. The main code above is TCR-focused. For a real BCR analysis, use BCR-specific handling such as <code>combineBCR()</code> on filtered contig annotations and verify productive IGH plus IGK and/or IGL chains and CDR3 fields. For <code>combineExpression()</code>, choose a BCR-appropriate <code>clone.call</code> and <code>chain</code> (documented choices include <code>IGH</code>, <code>IGL</code>, and <code>both</code>); the scRepertoire documentation describes its heavy/light-chain handling and related-clone options. A heavy-chain-only call does not represent paired receptors. Check barcode overlap and resulting metadata before plotting. Interpret pairing and somatic hypermutation with BCR-specific methods. The small synthetic example below is a teaching summary, not a validated BCR pipeline.</p>
+<h2>BCR: reproducible synthetic example</h2>
+<p>This base R exercise starts from invented, normalized contig rows with one row per chain call. It needs no external data or packages. It checks whether each barcode has a productive heavy chain and at least one productive light chain, then counts distinct cells by an explicitly simplified exact heavy-chain key: sample, V gene, J gene, and CDR3 amino-acid sequence. This key is not a scRepertoire clone call and may split related sequences that differ through somatic hypermutation.</p>
+<pre id="bcr-synthetic-workflow"><code class="language-r">bcr &lt;- data.frame(
+  sample_id = rep("toy_A", 8),
+  cell_barcode = c("cell_01", "cell_01", "cell_02", "cell_02",
+                   "cell_03", "cell_03", "cell_04", "cell_04"),
+  chain = c("IGH", "IGK", "IGH", "IGK", "IGH", "IGL", "IGH", "IGK"),
+  productive = c(TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, FALSE, TRUE),
+  v_gene = c("IGHV1-2", NA_character_, "IGHV1-2", NA_character_,
+             "IGHV3-7", NA_character_, "IGHV1-2", NA_character_),
+  j_gene = c("IGHJ4", NA_character_, "IGHJ4", NA_character_,
+             "IGHJ6", NA_character_, "IGHJ4", NA_character_),
+  junction_aa = c("CARGGYYGMDV", NA_character_, "CARGGYYGMDV", NA_character_,
+                  "CARRDYGMDV", NA_character_, "CARGGYYGMDV", NA_character_),
+  stringsAsFactors = FALSE
+)
+
+productive_bcr &lt;- subset(bcr, productive)
+chains_by_cell &lt;- split(
+  productive_bcr$chain,
+  paste(productive_bcr$sample_id, productive_bcr$cell_barcode, sep = ":")
+)
+has_paired_chains &lt;- vapply(chains_by_cell, function(chains) {
+  "IGH" %in% chains &amp;&amp; any(chains %in% c("IGK", "IGL"))
+}, logical(1))
+stopifnot(sum(has_paired_chains) == 3L, sum(!has_paired_chains) == 1L)
+cat("cells_with_IGH_and_light=", sum(has_paired_chains),
+    "; without_productive_pair=", sum(!has_paired_chains), "\n", sep = "")
+
+productive_igh &lt;- subset(productive_bcr, chain == "IGH")
+bcr_clones &lt;- aggregate(
+  cell_barcode ~ sample_id + v_gene + j_gene + junction_aa,
+  data = productive_igh,
+  FUN = function(x) length(unique(x))
+)
+names(bcr_clones)[names(bcr_clones) == "cell_barcode"] &lt;- "cells"
+bcr_clones &lt;- bcr_clones[order(-bcr_clones$cells, bcr_clones$junction_aa), ]
+stopifnot(identical(as.integer(bcr_clones$cells), c(2L, 1L)))
+write.table(bcr_clones, row.names = FALSE, quote = FALSE, sep = "\t")</code></pre>
+<p>Expected output (tab-separated after the first line):</p>
+<pre><code class="language-text">cells_with_IGH_and_light=3; without_productive_pair=1
+sample_id	v_gene	j_gene	junction_aa	cells
+toy_A	IGHV1-2	IGHJ4	CARGGYYGMDV	2
+toy_A	IGHV3-7	IGHJ6	CARRDYGMDV	1</code></pre>
+<p>In this toy table, three cells have a productive IGH and at least one productive IGK or IGL; one has only productive IGK after its nonproductive IGH row is excluded. The summary counts invented cell barcodes only. Real data can contain multiple productive contigs, doublets, or barcode mismatches, so inspect chain multiplicity and sample-aware barcode handling before calling paired receptors or interpreting counts. This exact amino-acid grouping does not infer lineage, affinity, antigen specificity, or biological function. For BCR clone calling and somatic-hypermutation analysis, use a version-appropriate BCR method and report its parameters.</p>
 <h2>Decisions to report with your analysis</h2>
 <ul>
 <li><strong>Input and denominator:</strong> assay/software output, included samples, and whether abundance counts cells or another unit.</li>
@@ -258,6 +303,7 @@ DimPlot(seurat_obj, group.by = "cloneSize")</code></pre>
 <section aria-labelledby="exercise-title" class="lesson-exercise"><h2 id="exercise-title">Exercise: audit a two-sample comparison</h2><p>Run the workflow on two of your own samples. Save the two plots and write a short caption containing the four decisions above. Then inspect barcode overlap, receptor-call recovery, chain pairing, and sample-level replication before making a biological comparison.</p><p><strong>Check your work:</strong> another analyst should be able to tell exactly how you defined a clone and what cells formed each denominator. A visually dominant category without that information is not an interpretable comparison.</p></section>
 <section aria-label="References and further reading" class="lesson-reference"><h2>Official documentation</h2><ul>
 <li><a href="https://www.borch.dev/uploads/screpertoire/reference/loadcontigs" rel="noopener" target="_blank">scRepertoire: loadContigs</a></li>
+<li><a href="https://www.borch.dev/uploads/screpertoire/reference/combinebcr" rel="noopener" target="_blank">scRepertoire: combineBCR and B-cell receptor contigs</a></li>
 <li><a href="https://www.borch.dev/uploads/screpertoire/articles/attaching_sc" rel="noopener" target="_blank">scRepertoire: attaching clonal information to single-cell objects</a></li>
 <li><a href="https://www.borch.dev/uploads/screpertoire/reference/clonalhomeostasis" rel="noopener" target="_blank">scRepertoire: clonalHomeostasis</a></li>
 <li><a href="https://www.10xgenomics.com/support/software/cell-ranger/latest/analysis/outputs/cr-5p-outputs-annotations-vdj" rel="noopener" target="_blank">10x Genomics: Cell Ranger V(D)J annotation outputs</a></li>
@@ -402,7 +448,7 @@ DimPlot(seurat_obj, group.by = "cloneSize")</code></pre>
 </script>
 <script src="../assets/vendor/prism/prism-1.29.0.js"></script>
 <script id="tutorial-code-data">
-window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"tcr-bcr-repertoire-analysis":{"blocks":[{"language":"r","sha256":"af2c7cf84ca586ce05dedace8a87a30af8fac35410065ccd3af3c8a091cd7fc8"},{"language":"r","sha256":"5f4e38c29b78357f60e670228890091529c4a9573b1236388a0d852d9b517166"},{"language":"r","sha256":"672851f154d0d0d6742f90caf2cb524662245175dfbef7bfa272fb59381158b2"}],"groups":[]}}};
+window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"tcr-bcr-repertoire-analysis":{"blocks":[{"language":"r","sha256":"af2c7cf84ca586ce05dedace8a87a30af8fac35410065ccd3af3c8a091cd7fc8"},{"language":"r","sha256":"5f4e38c29b78357f60e670228890091529c4a9573b1236388a0d852d9b517166"},{"language":"r","sha256":"672851f154d0d0d6742f90caf2cb524662245175dfbef7bfa272fb59381158b2"},{"language":"r","sha256":"ce016036629d967b231cd22fbc403ec0ef0707e187891aa70b95e2ced05fe537"},{"language":"text","sha256":"dd82970b9f4b1b973dab3f87a6a050ddf620d79557949fa919e82c0961d6fb45"}],"groups":[]}}};
 </script>
 <script src="../code-tabs.js?v=20261026-startup-v1"></script>
 <script src="../copy-code.js?v=20261025-r-first-v1"></script>

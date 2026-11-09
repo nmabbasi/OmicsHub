@@ -21,7 +21,7 @@ class TutorialReaderUITests(unittest.TestCase):
         cls.metadata = generator.load_metadata(ROOT)
         cls.pages = sorted((ROOT / 'tutorials').glob('*.html'))
 
-    def test_every_lesson_body_is_byte_identical_outside_generated_navigation(self):
+    def test_unmodified_lesson_bodies_are_byte_identical_outside_generated_navigation(self):
         for page in self.pages:
             relative = page.relative_to(ROOT).as_posix()
             baseline = pre_r_first_bytes(relative)
@@ -34,7 +34,7 @@ class TutorialReaderUITests(unittest.TestCase):
 
     def test_inventory_is_complete_and_every_code_hash_is_checked(self):
         self.assertEqual(len(self.metadata['tutorials']), 58)
-        self.assertEqual(sum(len(s['blocks']) for s in self.metadata['tutorials'].values()), 384)
+        self.assertEqual(sum(len(s['blocks']) for s in self.metadata['tutorials'].values()), 388)
         self.assertEqual(sum(len(s['groups']) for s in self.metadata['tutorials'].values()), 29)
         self.assertEqual({slug for slug, s in self.metadata['tutorials'].items() if s['groups']}, {
             'scrna-seq-basics', 'statistics-for-bioinformatics', 'experimental-design-batch-effects', 'spatial-transcriptomics-r-python',

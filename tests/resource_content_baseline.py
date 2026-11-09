@@ -369,6 +369,10 @@ def restore_page_to_pr15(relative_path, data, entry, original):
 
 def normalize_resource_content(relative_path, data):
     """Return non-allowlisted bytes unchanged; restore a listed page to exact PR15."""
+    from approved_tutorial_fixes_baseline import normalize_approved_tutorial_fix
+    data = normalize_approved_tutorial_fix(
+        relative_path, data.decode("utf-8")
+    ).encode("utf-8")
     if relative_path.startswith("tutorials/") and relative_path.endswith(".html"):
         data = normalize_tutorial_ui(relative_path, data.decode("utf-8")).encode("utf-8")
     manifest = load_manifest()
