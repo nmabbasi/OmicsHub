@@ -35,22 +35,33 @@ def _sha(data):
     return hashlib.sha256(data).hexdigest()
 
 
-_APPROVED_SITEMAP_LASTMODS = {
+_NEWEST_APPROVED_SITEMAP_LASTMODS = {
+    "https://theomicshub.com/tutorials/advanced-ai-orchestration-bioinformatics.html": ("2026-10-21", "2026-11-08"),
+    "https://theomicshub.com/tutorials/computer-data-fundamentals.html": ("2026-10-25", "2026-11-08"),
+    "https://theomicshub.com/tutorials/scrna-seq-basics.html": ("2026-10-25", "2026-11-08"),
+    "https://theomicshub.com/tutorials/transcriptomics-differential-expression.html": ("2026-10-24", "2026-11-08"),
+}
+_PREVIOUS_APPROVED_SITEMAP_LASTMODS = {
     "https://theomicshub.com/tutorials/git-github-bioinformatics.html": ("2026-10-25", "2026-11-09"),
     "https://theomicshub.com/tutorials/metagenomics-kraken2-bracken.html": ("2026-10-21", "2026-11-09"),
     "https://theomicshub.com/tutorials/tcr-bcr-repertoire-analysis.html": ("2026-10-24", "2026-11-09"),
+}
+_APPROVED_SITEMAP_LASTMODS = {
+    **_NEWEST_APPROVED_SITEMAP_LASTMODS,
+    **_PREVIOUS_APPROVED_SITEMAP_LASTMODS,
 }
 _SITEMAP_URL_ROW = re.compile(rb"<url>\s*<loc>([^<]+)</loc>.*?</url>", re.S)
 _SITEMAP_LASTMOD = re.compile(rb"<lastmod>([^<]+)</lastmod>")
 
 
-def _rewrite_approved_sitemap_lastmods(data, *, reverse=False, strict=False):
-    """Apply or reverse only the three owner-approved sitemap dates."""
+def _rewrite_approved_sitemap_lastmods(data, *, reverse=False, strict=False, date_pairs=None):
+    """Apply or reverse only the specified owner-approved sitemap dates."""
     if not isinstance(data, bytes):
         raise TypeError("sitemap date normalization requires bytes")
+    date_pairs = _APPROVED_SITEMAP_LASTMODS if date_pairs is None else date_pairs
     source_slot, target_slot = (1, 0) if reverse else (0, 1)
     replacements = []
-    for url, dates in _APPROVED_SITEMAP_LASTMODS.items():
+    for url, dates in date_pairs.items():
         rows = [match for match in _SITEMAP_URL_ROW.finditer(data)
                 if match.group(1) == url.encode("ascii")]
         if len(rows) != 1:
@@ -193,6 +204,12 @@ def normalize_current_publication(relative_path, data):
     """Restore exact known mainline snapshots; preserve every other byte sequence."""
     if not isinstance(data, bytes):
         raise TypeError("current-publication normalization requires bytes")
+    if relative_path == "sitemap.xml" and data == current_published_bytes(relative_path):
+        # Reverse only this exact revision's four dates. The earlier three are
+        # a separate parent layer handled by latest-review baselines.
+        data = _rewrite_approved_sitemap_lastmods(
+            data, reverse=True, date_pairs=_NEWEST_APPROVED_SITEMAP_LASTMODS
+        )
     for layer in publication_layers():
         entry = layer["files"].get(relative_path)
         if entry is None:
