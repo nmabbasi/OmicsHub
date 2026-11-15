@@ -134,6 +134,8 @@ def normalize_approved_tutorial_fix(relative_path, text):
     """Reverse one exact approved page revision; preserve unknown mutations."""
     if not isinstance(text, str):
         raise TypeError("approved tutorial-fix normalization requires decoded text")
+    from header_date_fixes_baseline import normalize_header_date_fix
+    text = normalize_header_date_fix(relative_path, text)
     entry = _fixture()["page_map"].get(relative_path)
     if entry is None:
         return text

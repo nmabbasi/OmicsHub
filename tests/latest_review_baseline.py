@@ -181,6 +181,8 @@ def normalize_latest_review(relative_path, text):
     """Reverse only fixture-listed literal changes; leave unknown edits visible."""
     if not isinstance(text, str):
         raise TypeError("latest-review text normalization requires decoded text")
+    from approved_tutorial_fixes_baseline import normalize_approved_tutorial_fix
+    text = normalize_approved_tutorial_fix(relative_path, text)
     text = normalize_current_publication(relative_path, text.encode("utf-8")).decode("utf-8")
     text = normalize_editorial_review(relative_path, text)
     # First remove the exact, whole-file-pinned 2026-10-25 compatibility edit
