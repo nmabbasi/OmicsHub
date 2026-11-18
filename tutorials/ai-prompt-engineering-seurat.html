@@ -232,9 +232,9 @@ infile &lt;- "./data/seurat_obj.rds"
 outdir &lt;- "./results"
 dir.create(outdir, showWarnings = FALSE, recursive = TRUE)
 
-# Load object and report
+# Load object and report (note: dim(seurat_obj) returns features x cells, NOT cells x features!)
 seurat_obj &lt;- readRDS(infile)
-cat("Seurat object dimensions (cells x genes):", dim(seurat_obj), "\n")
+cat("Seurat object dimensions (features x cells):", dim(seurat_obj), "\n")
 cat("Available metadata columns:", paste(colnames(seurat_obj@meta.data), collapse=", "), "\n")
 
 # Validate metadata before plotting or using the cluster identities.
@@ -450,21 +450,31 @@ print("Wrote results to", outdir)
 <strong>Fix:</strong> Inspect var/feature names and adjust the pattern detection (toupper/lower) or provide a list of mitochondrial gene symbols.
   </li>
 <li>
-<strong>Symptom:</strong> Very few or no variable genes selected.<br/>
-<strong>Cause:</strong> Raw counts not provided or log-normalized values present; params for highly variable gene selection may be inappropriate.<br/>
-<strong>Fix:</strong> Ensure you run appropriate normalization steps before HVG selection or set selection.method/nfeatures to reasonable values.
+<strong>Symptom:</strong> Very few variable genes selected, or <code>highly_variable_genes</code> raises a count/NaN error in Scanpy.<br/>
+<strong>Cause:</strong> Mixing raw-count and log-normalized HVG flavors: in Scanpy, <code>flavor="seurat"</code> and <code>flavor="cell_ranger"</code> expect <strong>log-normalized</strong> values (<code>sc.pp.log1p</code>), whereas <code>flavor="seurat_v3"</code> expects <strong>raw integer counts</strong> (or <code>layer="counts"</code>). Similarly, running <code>NormalizeData()</code> a second time in Seurat overwrites an existing normalized <code>data</code> layer or targets <code>SCT</code> by mistake.<br/>
+<strong>Fix:</strong> Inspect <code>Layers(seurat_obj)</code> / <code>adata.layers</code> before preprocessing and match <code>flavor</code> or <code>assay</code> to the exact data scale.
+  </li>
+<li>
+<strong>Symptom:</strong> AI-generated Seurat or Scanpy script fails with deprecated argument errors or silently tests the wrong expression matrix.<br/>
+<strong>Cause:</strong> Coding models mix Seurat v3, v4, and v5 APIs from training data: passing <code>GetAssayData(obj, slot = "counts")</code> instead of Seurat v5 <code>LayerData(obj, layer = "counts")</code>, filtering on <code>avg_logFC</code> (Seurat v3) instead of <code>avg_log2FC</code> (Seurat v4/v5), calling <code>FindClusters()</code> inside a visualization helper (overwriting <code>Idents(obj)</code>), or letting <code>sc.tl.rank_genes_groups()</code> default to <code>use_raw=True</code> on a stale <code>.raw</code> snapshot.<br/>
+<strong>Fix:</strong> Pin the target major API in your prompt (for example <code>"Seurat v5 using LayerData(layer=...) and avg_log2FC; do not call FindClusters"</code> or <code>"Scanpy with explicit layer='log1p_norm', use_raw=False"</code>), and verify <code>colnames(markers)</code> in R before filtering.
   </li>
 <li>
 <strong>Symptom:</strong> DE test fails with NA p-values or warnings about zeros.<br/>
-<strong>Cause:</strong> Low-expression genes or small cluster sizes make statistical tests unstable; some tests require non-zero variance.<br/>
-<strong>Fix:</strong> Filter genes (min.pct, min.cells), or switch to a test more appropriate for small groups (e.g., Wilcoxon, or aggregate pseudo-bulk approaches).
+<strong>Cause:</strong> Low-expression genes or tiny cluster sizes make statistical tests unstable; cell-level <code>FindMarkers</code> also treats cells from the same donor as independent replicates.<br/>
+<strong>Fix:</strong> Filter genes (<code>min.pct</code>, <code>min.cells</code>), and for multi-donor condition comparisons aggregate raw counts to sample-level pseudobulks (<code>DESeq2</code> / <code>edgeR</code>; Squair et al., 2021).
   </li>
 <li>
 <strong>Symptom:</strong> UMAP layout looks collapsed or clusters overlap completely.<br/>
-<strong>Cause:</strong> PCA not computed or insufficient PCs used; scaling issues.<br/>
-<strong>Fix:</strong> Recompute PCA, increase n_pcs, or re-run neighbor graph construction; check for batch effects that may need correction.
+<strong>Cause:</strong> PCA not computed or insufficient PCs used; unintegrated multi-donor batch effects.<br/>
+<strong>Fix:</strong> Inspect PCA elbow/variance explained, verify neighbor graph settings, and check sample/batch mixing.
   </li>
 </ul>
+<h2>Weak vs specification-backed prompts: what changes in generated code</h2>
+<div aria-label="Scrollable table: Weak vs strong single-cell prompts" class="lesson-table-wrap" role="region" tabindex="0"><table><caption>Weak vs strong single-cell prompts</caption><thead><tr><th scope="col">Prompt style</th><th scope="col">Typical assistant output hazard</th><th scope="col">How the specification prompt prevents it</th></tr></thead><tbody>
+<tr><th scope="row">Weak: <em>"Find markers for cluster 2 in my Seurat object and plot UMAP."</em></th><td>Calls <code>RunUMAP()</code> + <code>FindClusters()</code> (overwriting cluster 2!), uses deprecated <code>slot = "data"</code> or <code>avg_logFC</code>, and drops zero-row outputs without checking <code>Idents()</code>.</td><td>Declares incoming <code>seurat_clusters</code> immutable, names <code>assay</code>, <code>test.use = "MAST"</code>, <code>avg_log2FC</code> / <code>p_val_adj</code>, and asserts label identity before and after UMAP.</td></tr>
+<tr><th scope="row">Weak: <em>"Run Scanpy QC, clustering, and rank marker genes on adata.h5ad."</em></th><td>Subsets <code>adata</code> to 2,000 HVGs in-place, scales <code>.X</code> to unit variance (producing negative values), and then runs <code>rank_genes_groups</code> on scaled HVGs or stale <code>.raw</code>.</td><td>Saves unscaled <code>adata.layers["log1p_norm"]</code> across all retained genes before HVG scaling and passes <code>layer="log1p_norm", use_raw=False</code>.</td></tr>
+</tbody></table></div>
 <h2>Limitations, version and reference-data caveats, and responsible use</h2>
 <p>Limitations and practical caveats:</p>
 <ul>
@@ -489,10 +499,11 @@ print("Wrote results to", outdir)
 </ol>
 <h2>References</h2>
 <ul>
-<li><a href="https://satijalab.org/seurat/">Seurat official documentation (Satija Lab)</a></li>
-<li><a href="https://scanpy.readthedocs.io/en/stable/">Scanpy documentation</a></li>
-<li><a href="https://bioconductor.org/packages/release/bioc/html/MAST.html">MAST package (Bioconductor)</a></li>
-<li><a href="https://doi.org/10.1016/j.cell.2019.05.031">Stuart et al., Comprehensive integration of single-cell data (Seurat v3 paper)</a></li>
+<li>Hao, Y., Stuart, T., Kowalski, M. H., et al. (2024). Dictionary learning for integrative, multimodal and scalable single-cell analysis (Seurat v5). <em>Nature Biotechnology</em>, 42, 293-304. <a href="https://doi.org/10.1038/s41587-023-01767-y" rel="noopener" target="_blank">doi:10.1038/s41587-023-01767-y</a></li>
+<li>Wolf, F. A., Angerer, P., &amp; Theis, F. J. (2018). SCANPY: large-scale single-cell gene expression data analysis. <em>Genome Biology</em>, 19, 15. <a href="https://doi.org/10.1186/s13059-017-1382-0" rel="noopener" target="_blank">doi:10.1186/s13059-017-1382-0</a></li>
+<li>Finak, G., McDavid, A., Yajima, M., et al. (2015). MAST: a flexible statistical framework for assessing transcriptional changes and characterizing heterogeneity in single-cell RNA sequencing data. <em>Genome Biology</em>, 16, 278. <a href="https://doi.org/10.1186/s13059-015-0844-5" rel="noopener" target="_blank">doi:10.1186/s13059-015-0844-5</a></li>
+<li>Squair, J. W., Gautier, M., Kathe, C., et al. (2021). Confronting false discoveries in single-cell differential expression. <em>Nature Communications</em>, 12, 5692. <a href="https://doi.org/10.1038/s41467-021-25960-2" rel="noopener" target="_blank">doi:10.1038/s41467-021-25960-2</a></li>
+<li><a href="https://satijalab.org/seurat/" rel="noopener" target="_blank">Seurat official documentation</a> and <a href="https://scanpy.readthedocs.io/en/stable/" rel="noopener" target="_blank">Scanpy documentation</a></li>
 </ul>
 <aside aria-labelledby="tutorial-feedback-title" class="lesson-feedback" id="tutorial-feedback"><h2 id="tutorial-feedback-title">Help improve this tutorial</h2><p>Found an error, a broken link, or a step that needs a clearer explanation? Please <a href="../contact.html">contact me</a>. Your feedback helps me keep this resource accurate and useful.</p></aside></article>
 <section class="mt-12 mb-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-100">
@@ -583,7 +594,7 @@ print("Wrote results to", outdir)
 <script defer="" src="../mobile-navigation.js?v=20261026-startup-v1"></script>
 <script src="../assets/vendor/prism/prism-1.29.0.js"></script>
 <script id="tutorial-code-data">
-window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"ai-prompt-engineering-seurat":{"blocks":[{"language":"text","sha256":"2d7aaf229f4c5b9d70345930ec293718c2a1aebf846761dc9ecd9858543fdcfe"},{"language":"bash","sha256":"7c0aba9043305899ab71c569554bd2d8269f79808ae0ab6329bfc2b6a706f5d0"},{"language":"r","sha256":"cd491c2ec64c9ce86087ac38aecfd6f1aa950fcb84275ecda36fb019fbda2d46"},{"language":"bash","sha256":"6b1bbe1baa25dc9295fe636fca9c54d80b7b9c8de4da1627eeb73efb63d0a3e5"},{"language":"python","sha256":"27cdea466b95efaa6cc24137ca66a6e6d4afb50bd316af5908afbdbf18803d14"}],"groups":[]}}};
+window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"ai-prompt-engineering-seurat":{"blocks":[{"language":"text","sha256":"2d7aaf229f4c5b9d70345930ec293718c2a1aebf846761dc9ecd9858543fdcfe"},{"language":"bash","sha256":"7c0aba9043305899ab71c569554bd2d8269f79808ae0ab6329bfc2b6a706f5d0"},{"language":"r","sha256":"506e42513404ddd31e4ddb23a3bc7d893731cc9aa7c9e1b5898ba90a17736321"},{"language":"bash","sha256":"6b1bbe1baa25dc9295fe636fca9c54d80b7b9c8de4da1627eeb73efb63d0a3e5"},{"language":"python","sha256":"27cdea466b95efaa6cc24137ca66a6e6d4afb50bd316af5908afbdbf18803d14"}],"groups":[]}}};
 </script>
 <script src="../code-tabs.js?v=20261026-startup-v1"></script>
 <script src="../copy-code.js?v=20261025-r-first-v1"></script>

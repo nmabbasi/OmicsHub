@@ -186,7 +186,7 @@ function toggleMobileMenu() {
 <li><strong>Trim when the QC evidence supports it.</strong> fastp accepts paired inputs using <code>-i/-I</code> and paired outputs using <code>-o/-O</code>. Its HTML and JSON reports document the filtering performed.</li>
 <li><strong>Classify rRNA.</strong> SortMeRNA accepts the two mates as two <code>--reads</code> arguments. With <code>--paired_in</code>, if either mate aligns as rRNA, both mates are assigned to the aligned output; this preserves pairs for filtering but can place a non-rRNA mate with its rRNA partner. Inspect outputs and logs, and verify exact options against the installed release.</li>
 <li><strong>Remove host reads if needed.</strong> Bowtie2 can map paired reads to a host reference index. The paired-unmapped output holds pairs that did not align concordantly; mapping summaries describe alignment categories, so do not equate one percentage with all host-derived material. Additional references and alignment settings are study-specific.</li>
-<li><strong>Choose functional profiling.</strong> HUMAnN expects one input file per invocation; its standard workflow reports gene-family and pathway tables and may also produce a taxonomic profile. The original comma-separated paired-file example is not a valid single-input contract. Consult current HUMAnN guidance for preparing paired-end reads; this page does not prescribe a universal conversion. For a custom DIAMOND translated search, use the documented query syntax for the installed release and record the database and parameters. A raw alignment table is not itself a vetted pathway-abundance estimate.</li>
+<li><strong>Choose functional profiling and concatenate non-host mates for HUMAnN.</strong> HUMAnN models each read independently and expects a single FASTQ input file per sample rather than separate <code>-1</code>/<code>-2</code> mate arguments. Following the official BioBakery paired-end protocol, concatenate your QC-passed, rRNA-depleted, host-depleted <code>R1</code> and <code>R2</code> files into one per-sample FASTQ (<code>cat nonhost/nonhost_R1.fastq.gz nonhost/nonhost_R2.fastq.gz &gt; nonhost/sample_mRNA_merged.fastq.gz</code>) before running <code>humann</code> (Franzosa et al., 2018).</li>
 </ol>
 <h2>Command patterns and file contracts</h2>
 <h3>QC and paired trimming</h3>
@@ -209,7 +209,7 @@ sortmerna --ref /path/to/rRNA_reference.fasta \
   --fastx --out2 --paired_in --threads 8</code></pre>
 <p>Replace the reference path with a supported rRNA reference FASTA. Including <code>--out2</code> instructs SortMeRNA 4 to write forward and reverse mates to separate paired FASTQ files (such as <code>sortmerna_work/non_rRNA_reads_fwd.fq.gz</code> and <code>sortmerna_work/non_rRNA_reads_rev.fq.gz</code>) rather than a single interleaved file. SortMeRNA also refuses to overwrite an existing key-value database directory, so clear <code>sortmerna_work/kvdb</code> before re-running on the same workdir. Its documented paired-read behavior matters: <code>--paired_in</code> puts both reads into the aligned output if either read aligns, keeping the non-aligned output free of rRNA matches while discarding the non-rRNA mate of chimeric or read-through pairs.</p>
 <div class="lesson-warning"><p><strong>Verify exact output suffixes.</strong> SortMeRNA release and compression settings determine whether outputs end in <code>_fwd.fq.gz</code>/<code>_rev.fq.gz</code> or <code>_paired_fwd.fq.gz</code>/<code>_paired_rev.fq.gz</code>. Inspect <code>sortmerna_work/</code> and the run log, confirm forward and reverse read counts match, and pass those observed paths to the next step.</p></div>
-<h3>Host depletion with paired reads</h3>
+<h3>Host depletion and paired-read concatenation for HUMAnN</h3>
 <pre><code>mkdir -p indices nonhost
 bowtie2-build host_reference.fasta indices/host
 bowtie2 -x indices/host \
@@ -217,8 +217,11 @@ bowtie2 -x indices/host \
   -2 sortmerna_work/non_rRNA_reads_rev.fq.gz \
   --very-sensitive --threads 8 \
   --un-conc-gz nonhost/nonhost_R%.fastq.gz \
-  -S host_mapped.sam 2&gt; bowtie2_host.log</code></pre>
-<p>Bowtie2's <code>--un-conc-gz</code> writes pairs that fail to align concordantly, substituting <code>1</code> and <code>2</code> for the percent sign (<code>nonhost/nonhost_R1.fastq.gz</code> and <code>nonhost/nonhost_R2.fastq.gz</code>). Because host mRNA reads in metatranscriptomes frequently span exon-exon splice junctions, unspliced genome alignment with Bowtie2 can miss spliced host reads; for host-rich clinical or tissue samples, align against a combined host genome plus transcriptome index or use a splice-aware mapper such as STAR. Review the SAM summary and retain the log with the sample record.</p>
+  -S /dev/null 2&gt; bowtie2_host.log
+
+# Concatenate host-depleted R1 and R2 into one single-input FASTQ for HUMAnN:
+cat nonhost/nonhost_R1.fastq.gz nonhost/nonhost_R2.fastq.gz &gt; nonhost/sample_mRNA_merged.fastq.gz</code></pre>
+<p>Sending Bowtie2's SAM stream to <code>-S /dev/null</code> avoids writing tens of gigabytes of discarded host alignments to scratch storage while still capturing the full alignment summary in <code>bowtie2_host.log</code> and writing unmapped microbial mate pairs via <code>--un-conc-gz</code> (<code>nonhost/nonhost_R1.fastq.gz</code> and <code>nonhost/nonhost_R2.fastq.gz</code>; valid gzip streams can be concatenated directly with <code>cat</code> for HUMAnN). Because host mRNA reads frequently span exon-exon splice junctions, unspliced genome alignment with Bowtie2 can miss spliced host transcripts; for host-rich biopsy or mucosal RNA-seq, align against a combined host genome + cDNA transcriptome index or run splice-aware <code>STAR</code>.</p>
 <div class="lesson-summary"><p><strong>Planning exercise.</strong> On paper or in a sample manifest, write one row per stage (raw, trimmed, rRNA-filtered, host-depleted, profiled) with input path, output path, read or pair count, tool/database version, and the criterion for continuing. As a synthetic arithmetic check, if 1,000 read pairs enter a filter and 120 pairs are classified as rRNA, 880 pairs remain only if the filter reports pair-level counts and no pairs are lost for another reason; state the units and reconcile observed counts before interpreting the difference. Stop when mate counts disagree, a stage's output is absent, or the log cannot explain a count change.</p></div>
 <h2>Read functional outputs cautiously</h2>
 <p>HUMAnN's gene-family and pathway tables are computational estimates whose meaning depends on input preparation, reference databases, and normalization. Functional assignments can be missed or misassigned when reference coverage is limited. A raw change in table values across samples is not automatically a comparable change in transcription; choose a normalization and statistical analysis appropriate to the experimental design, then report both.</p>
@@ -238,12 +241,11 @@ bowtie2 -x indices/host \
 <h2>References and version capture</h2>
 <p>Record the output of each installed tool's version command alongside the analysis, together with the exact reference/database release and command line; version strings alone do not make databases or parameters reproducible.</p>
 <ul>
-<li><a href="https://github.com/biobakery/humann">HUMAnN documentation and usage</a></li>
-<li><a href="https://forum.biobakery.org/t/humann3-paired-end-reads/862">HUMAnN paired-end reads guidance</a></li>
-<li><a href="https://sortmerna.readthedocs.io/en/latest/manual4.0.html">SortMeRNA 4.0 manual</a></li>
-<li><a href="https://bowtie-bio.sourceforge.net/bowtie2/manual.shtml">Bowtie2 manual</a></li>
-<li><a href="https://github.com/OpenGene/fastp">fastp documentation</a></li>
-<li><a href="https://github.com/bbuchfink/diamond/wiki/3.-Command-line-options">DIAMOND command-line options</a></li>
+<li>Kopylova, E., Noe, L., &amp; Touzet, H. (2012). SortMeRNA: fast and accurate filtering of ribosomal RNAs in metatranscriptomic data. <em>Bioinformatics</em>, 28(24), 3211-3217. <a href="https://doi.org/10.1093/bioinformatics/bts611" rel="noopener" target="_blank">doi:10.1093/bioinformatics/bts611</a></li>
+<li>Langmead, B., &amp; Salzberg, S. L. (2012). Fast gapped-read alignment with Bowtie 2. <em>Nature Methods</em>, 9, 357-359. <a href="https://doi.org/10.1038/nmeth.1923" rel="noopener" target="_blank">doi:10.1038/nmeth.1923</a></li>
+<li>Chen, S., Zhou, Y., Chen, Y., &amp; Gu, J. (2018). fastp: an ultra-fast all-in-one FASTQ preprocessor. <em>Bioinformatics</em>, 34(17), i884-i890. <a href="https://doi.org/10.1093/bioinformatics/bty560" rel="noopener" target="_blank">doi:10.1093/bioinformatics/bty560</a></li>
+<li>Franzosa, E. A., McIver, L. J., Rahnavard, G., et al. (2018). Species-level functional profiling of metagenomes and metatranscriptomes (HUMAnN). <em>Nature Methods</em>, 15, 962-968. <a href="https://doi.org/10.1038/s41592-018-0176-y" rel="noopener" target="_blank">doi:10.1038/s41592-018-0176-y</a></li>
+<li><a href="https://github.com/biobakery/humann" rel="noopener" target="_blank">HUMAnN documentation</a>, <a href="https://sortmerna.readthedocs.io/en/latest/manual4.0.html" rel="noopener" target="_blank">SortMeRNA 4.0 manual</a>, and <a href="https://bowtie-bio.sourceforge.net/bowtie2/manual.shtml" rel="noopener" target="_blank">Bowtie2 manual</a></li>
 </ul>
 <aside aria-labelledby="tutorial-feedback-title" class="lesson-feedback" id="tutorial-feedback"><h2 id="tutorial-feedback-title">Help improve this tutorial</h2><p>Found an error, a broken link, or a step that needs a clearer explanation? Please <a href="../contact.html">contact me</a>. Your feedback helps me keep this resource accurate and useful.</p></aside></article>
 <section class="mt-12 mb-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-100">
@@ -383,7 +385,7 @@ bowtie2 -x indices/host \
 </script>
 <script src="../assets/vendor/prism/prism-1.29.0.js"></script>
 <script id="tutorial-code-data">
-window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"metatranscriptomics-guide":{"blocks":[{"language":"bash","sha256":"248741334a38dc9082d1857feed4bab7c3ca42058eee1fd0c05b4c52ef548ec0"},{"language":"bash","sha256":"48ca0b46132148b51741fe4a3cec95202659c79c0dd74c7e53d46b5961176813"},{"language":"bash","sha256":"a1ebe76f9d05cb621ea06ee6162bbf468405123ac537fbde4823549550509d80"}],"groups":[]}}};
+window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"metatranscriptomics-guide":{"blocks":[{"language":"bash","sha256":"248741334a38dc9082d1857feed4bab7c3ca42058eee1fd0c05b4c52ef548ec0"},{"language":"bash","sha256":"48ca0b46132148b51741fe4a3cec95202659c79c0dd74c7e53d46b5961176813"},{"language":"bash","sha256":"6a5f33ff75ca4c48c411707a22bcd7c40d82fecacd64d57be3fb33014351e0bc"}],"groups":[]}}};
 </script>
 <script src="../code-tabs.js?v=20261026-startup-v1"></script>
 <script src="../copy-code.js?v=20261025-r-first-v1"></script>

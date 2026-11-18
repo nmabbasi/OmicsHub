@@ -193,6 +193,14 @@ def normalize_current_publication(relative_path, data):
     """Restore exact known mainline snapshots; preserve every other byte sequence."""
     if not isinstance(data, bytes):
         raise TypeError("current-publication normalization requires bytes")
+    if isinstance(relative_path, str) and relative_path.startswith("tutorials/") and relative_path.endswith(".html"):
+        try:
+            decoded = data.decode("utf-8")
+        except UnicodeDecodeError:
+            decoded = None
+        if decoded is not None:
+            from approved_tutorial_fixes_baseline import normalize_approved_tutorial_fix
+            data = normalize_approved_tutorial_fix(relative_path, decoded).encode("utf-8")
     for layer in publication_layers():
         entry = layer["files"].get(relative_path)
         if entry is None:

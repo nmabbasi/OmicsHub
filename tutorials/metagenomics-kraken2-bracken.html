@@ -182,26 +182,32 @@ function toggleMobileMenu() {
 <p>Replace the example paths and thread count. Kraken2 accepts compressed FASTQ input. With <code>--paired</code>, give the read-1 file followed by the corresponding read-2 file. Keep mates synchronized after preprocessing.</p>
 <pre><code class="language-bash">kraken2 --db /path/to/kraken2_database \
   --threads 16 \
+  --confidence 0.05 \
   --paired sample_R1.fastq.gz sample_R2.fastq.gz \
   --report sample.kreport \
   --output sample.kraken</code></pre>
-<p><code>sample.kraken</code> records each classified fragment, while <code>sample.kreport</code> aggregates counts by taxon. The report includes the percentage and fragment count for each taxon's subtree, direct-assignment count, rank code, taxid, and indented scientific name. A genus-level or higher assignment is an unresolved classification at that rank, not evidence that a specific species was detected. Check the command's exit status and logs before interpreting either file.</p>
+<p><code>sample.kraken</code> records each classified fragment, while <code>sample.kreport</code> aggregates counts by taxon. Notice <code>--confidence 0.05</code>: Kraken2's default is <code>--confidence 0.0</code>, under which a single diagnostic k-mer match on an otherwise uninformative or host-derived read can trigger a species call and generate long tails of 1- to 3-read false-positive taxa (a frequent pitfall in low-biomass clinical or intratumoural microbiome studies). Setting <code>--confidence 0.05</code> or <code>0.10</code> requires that fraction of scored k-mers in the read pair to support the called clade, trading slightly lower species sensitivity for substantially fewer spurious hits (Wood et al., 2019).</p>
 <h2>2. Estimate abundance with Bracken</h2>
-<p>Use the same Kraken database and its matching Bracken distribution files. Set <code>-r</code> to the read length represented by the distribution files and appropriate for your processed reads, not automatically the sequencer's nominal length. If trimming leaves variable or shorter reads, consult Bracken guidance and choose a defensible representative length; record that choice. Choose the target rank deliberately.</p>
+<p>Use the same Kraken database and its matching Bracken k-mer distribution files (<code>database150mers.kmer_distrib</code>, etc.). Set <code>-r</code> to match your post-trimming read length and <code>-t</code> to the minimum read count required before Bracken re-estimates a taxon (<code>-t 10</code> by default, preventing noisy redistribution onto single-read artifacts; Lu et al., 2017):</p>
 <pre><code class="language-bash">bracken -d /path/to/kraken2_database \
   -i sample.kreport \
   -o sample.bracken.S.tsv \
+  -w sample.bracken.kreport \
   -r 150 \
-  -l S</code></pre>
+  -l S \
+  -t 10</code></pre>
 <p>Here <code>-l S</code> requests species-level estimates and <code>-r 150</code> is only an example. Bracken redistributes some reads assigned higher in the taxonomy using a model derived from the database's expected read-length k-mer classifications. Its output distinguishes Kraken-assigned reads, added reads after re-estimation, total reads after re-estimation, and fraction of total. Those adjusted counts are model-based estimates, not newly observed species-specific reads.</p>
 <aside class="lesson-warning"><p><strong>Before trusting this run:</strong> confirm the Bracken distribution file exists for the selected read length and database, and inspect the output for errors. A missing or mismatched distribution file is a setup failure, not a reason to interpret raw Kraken counts as Bracken estimates.</p></aside>
 <h2>3. Read the reports before making a biological claim</h2>
 <p>Start with the Kraken report's unclassified fraction and high-level assignments. Compare the Kraken direct and clade counts with the Bracken estimates at the chosen rank. Large unresolved fractions can reflect database coverage, sequence quality, or other pipeline factors; they do not identify a single cause. Unexpected taxa warrant checks of negative controls, database contents, host-read handling, and read quality before interpretation.</p>
 <p>Database composition defines which sequences can be recognized and can also affect ambiguous assignments. Do not assume a standard database is adequate for every environment or that adding more references always improves a particular analysis. Document the database build and assess likely contaminants, especially when custom references are used.</p>
 <p>Relative abundance describes the sequenced library after extraction, library preparation, sequencing, and classification. Biases in those steps can make it differ from the underlying community, and compositional proportions do not provide absolute abundance. Cross-sample comparisons require consistent processing and a clear rationale for normalization; cross-study comparisons add further differences in protocols and databases.</p>
-<h2>4. Visualize only after choosing a compatible input</h2>
-<p>KronaTools has importers for supported input formats. Do not pass a Kraken report to the generic <code>ktImportText</code> command as though it were a two-column taxon/weight file: the Kraken report is a six-column hierarchical format. Select the importer and input format documented for your installed KronaTools version, or convert data explicitly to its documented text format. Bracken output is also not automatically interchangeable with every importer.</p>
-<p>Visualization is out of scope here: no plot is produced because importer compatibility depends on KronaTools version and input representation. Consult the linked import guide, then validate any conversion on a small input and compare its totals with the source table before interpreting a plot.</p>
+<h2>4. Convert reports safely for Krona hierarchical visualization</h2>
+<p>Do not pass a 6-column Kraken2 <code>.kreport</code> directly to generic <code>ktImportText</code>: convert either the Kraken2 report (<code>sample.kreport</code>) or Bracken's Kraken-style report (<code>-w sample.bracken.kreport</code>) into Krona's hierarchical tab-delimited format first using <code>kreport2krona.py</code> from <strong>KrakenTools</strong> (Lu et al., 2022):</p>
+<pre><code class="language-bash"># Convert Bracken's updated Kraken-style report (-w) to Krona text, then render HTML
+kreport2krona.py -r sample.bracken.kreport -o sample.krona.txt --no-intermediate-ranks
+ktImportText sample.krona.txt -o sample.krona.html</code></pre>
+<p>Inspect whether unclassified reads are included or omitted (<code>--no-unclassified-reads</code> changes every visible wedge percentage from fraction-of-library to fraction-of-classified-reads), and verify totals against <code>sample.bracken.S.tsv</code> before publishing charts.</p>
 <h2>Run record and interpretation checklist</h2>
 <ul>
 <li>Save Kraken2 and Bracken versions, database identity/build date, and relevant database files.</li>
@@ -219,10 +225,11 @@ function toggleMobileMenu() {
  35.00   350   50  S  789  Another species</code></pre>
 <p>In a standard Kraken2 report (6-column format across 1,000 total sequenced fragments), <code>unclassified</code> appears first with rank code <code>U</code> (100 fragments, 10.00% of total reads), while <code>root</code> counts only the 900 classified fragments (90.00% of total reads). Within <em>Examplegenus</em>, 20 fragments assigned directly at genus rank plus 250 + 350 child species clade fragments equal 620 genus clade fragments (62.00% of the 1,000 total fragments). Note that the 250 clade fragments for <em>Example species</em> (taxid <code>456</code>) comprise 80 reads assigned directly at species rank plus 170 assigned to child strain taxa below it. When Bracken re-estimates species abundance, its <code>kraken_assigned_reads</code> column starts from the full species clade count (250, not the 80 direct reads) and only adds reads redistributed from higher taxonomic ranks: for example, if 8 of the 20 genus-level reads are reassigned to <em>Example species</em> and 12 to <em>Another species</em> (assuming the remaining 280 bacterial reads also resolve to species), Bracken reports 250 + 8 = 258 estimated reads for <em>Example species</em> (fraction 258 / 900 = 0.287 of classified species-estimated reads) and 350 + 12 = 362 estimated reads for <em>Another species</em> (fraction 362 / 900 = 0.402). A Bracken species estimate is therefore always greater than or equal to Kraken2's species clade count, and its <code>fraction_total_reads</code> is normalized over total species-estimated reads rather than including unclassified reads. Database representation and extraction bias still govern biological interpretation.</p>
 <p class="lesson-exercise"><strong>Practice:</strong> For a real report from your own prepared run, record unclassified percentage, one taxon's direct Kraken count, and its Bracken estimate if present. Explain why that estimate is model-based and name one database or laboratory factor that could affect interpretation. Without real inputs, use the synthetic exercise above; do not infer a biological finding from synthetic values.</p>
-<section aria-label="References and further reading"><h2>Official documentation</h2><ul>
-<li><a href="https://github.com/DerrickWood/kraken2/wiki/Manual" rel="noopener" target="_blank">Kraken2 manual: options and report formats</a></li>
-<li><a href="https://ccb.jhu.edu/software/bracken/index.shtml?t=manual" rel="noopener" target="_blank">Bracken manual: database preparation, parameters, and file formats</a></li>
-<li><a href="https://github.com/marbl/Krona/wiki/Importing-from-supported-tools" rel="noopener" target="_blank">KronaTools: importing supported tools and formats</a></li>
+<section aria-label="References and further reading"><h2>References and official documentation</h2><ul>
+<li>Wood, D. E., Lu, J., &amp; Langmead, B. (2019). Improved metagenomic analysis with Kraken 2. <em>Genome Biology</em>, 20, 257. <a href="https://doi.org/10.1186/s13059-019-1891-0" rel="noopener" target="_blank">doi:10.1186/s13059-019-1891-0</a></li>
+<li>Lu, J., Breitwieser, F. P., Thielen, P., &amp; Salzberg, S. L. (2017). Bracken: estimating species abundance in metagenomics data. <em>PeerJ Computer Science</em>, 3, e104. <a href="https://doi.org/10.7717/peerj-cs.104" rel="noopener" target="_blank">doi:10.7717/peerj-cs.104</a></li>
+<li>Lu, J., Rincon, N., Wood, D. E., et al. (2022). Metagenome analysis using the Kraken software suite (including KrakenTools). <em>Nature Protocols</em>, 17, 2815-2839. <a href="https://doi.org/10.1038/s41596-022-00738-y" rel="noopener" target="_blank">doi:10.1038/s41596-022-00738-y</a></li>
+<li><a href="https://github.com/DerrickWood/kraken2/wiki/Manual" rel="noopener" target="_blank">Kraken2 manual</a>, <a href="https://ccb.jhu.edu/software/bracken/index.shtml?t=manual" rel="noopener" target="_blank">Bracken manual</a>, and <a href="https://github.com/jenniferlu717/KrakenTools" rel="noopener" target="_blank">KrakenTools repository</a></li>
 </ul></section>
 <aside aria-labelledby="tutorial-feedback-title" class="lesson-feedback" id="tutorial-feedback"><h2 id="tutorial-feedback-title">Help improve this tutorial</h2><p>Found an error, a broken link, or a step that needs a clearer explanation? Please <a href="../contact.html">contact me</a>. Your feedback helps me keep this resource accurate and useful.</p></aside></article>
 <section class="mt-12 mb-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-100">
@@ -363,7 +370,7 @@ function toggleMobileMenu() {
 </script>
 <script src="../assets/vendor/prism/prism-1.29.0.js"></script>
 <script id="tutorial-code-data">
-window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"metagenomics-kraken2-bracken":{"blocks":[{"language":"bash","sha256":"40f6b3dfcbe70eda6318bd912f54c257c1a3ade21818bdb0489518424a84e32c"},{"language":"bash","sha256":"0158e93e68d07f1bec36cbbff283a428b5d685abd6a195778ee8e1e811704be7"},{"language":"text","sha256":"2b556dcf4947961e1d3dd9eee5bea90e49764f9d607e25fff96caa1df806660b"}],"groups":[]}}};
+window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"metagenomics-kraken2-bracken":{"blocks":[{"language":"bash","sha256":"acdc900f9701cbd7f49e7d354ac7a7cd4c3455ac67e410179449b8b11c914045"},{"language":"bash","sha256":"fdeab37a10b2564e3492270b3f16115d7731f0feb1e062d42d7dfe4cedbe6676"},{"language":"bash","sha256":"bc71b3f865d2d2be9be4172af90f934c2fa478e2f76a027028711884c1ef012a"},{"language":"text","sha256":"2b556dcf4947961e1d3dd9eee5bea90e49764f9d607e25fff96caa1df806660b"}],"groups":[]}}};
 </script>
 <script src="../code-tabs.js?v=20261026-startup-v1"></script>
 <script src="../copy-code.js?v=20261025-r-first-v1"></script>

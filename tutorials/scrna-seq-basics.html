@@ -419,8 +419,9 @@ if (length(features)) {
 </ul>
 <p>How to read the result without over-interpreting it:</p>
 <ul>
-<li>Finding discrete clusters that correspond to known immune cell types (e.g., T cells, B cells, monocytes) is consistent with expected biology in PBMC samples. This supports the claim that clusters are distinct cell types, but does not prove it; validation with marker genes and orthogonal assays (flow cytometry, CITE-seq surface markers) strengthens conclusions.</li>
-<li>Detecting a small cluster with high n_genes and n_counts might indicate doublets but could also be a biologically large or activated cell type. Do not automatically remove such clusters without checking marker expression.</li>
+<li>Finding discrete clusters that correspond to known immune cell types (e.g., T cells, B cells, monocytes) is consistent with expected biology in PBMC samples. In the public PBMC 3k benchmark, canonical marker panels typically separate naive and memory CD4+ T cells (<code>IL7R</code>, <code>CCR7</code>, <code>S100A4</code>), CD8+ T cells (<code>CD8A</code>), NK cells (<code>GNLY</code>, <code>NKG7</code>, <code>CD3D</code>-low), B cells (<code>MS4A1</code>, <code>CD79A</code>), classical CD14+ monocytes (<code>CD14</code>, <code>LYZ</code>), non-classical FCGR3A+ monocytes (<code>FCGR3A</code>, <code>MS4A7</code>), dendritic cells (<code>FCER1A</code>, <code>CST3</code>), and platelets/megakaryocyte fragments (<code>PPBP</code>). Even clear marker enrichment remains expression-derived; orthogonal assays (flow cytometry, CITE-seq surface antibodies) strengthen cell-type claims.</li>
+<li>Beyond fixed teaching cutoffs (<code>200-2,500</code> genes and <code>&lt;5%</code> mitochondrial counts), multi-sample production pipelines combine sample-specific median-absolute-deviation (MAD) outlier rules (for example <code>scuttle::isOutlier</code>), explicit heterotypic doublet callers (<code>scDblFinder</code> in R or <code>Scrublet</code> in Python), and ambient cell-free RNA decontamination (<code>SoupX</code> or <code>CellBender</code>) when droplet background is high.</li>
+<li>Detecting a small cluster with high n_genes and n_counts might indicate doublets but could also be a biologically large or activated cell type (such as proliferating plasmablasts). Do not automatically remove such clusters without checking marker co-expression (for example simultaneous <code>CD3D</code> and <code>MS4A1</code>).</li>
 <li>A visually separated UMAP is neither necessary nor sufficient evidence of biological validity: batch effects, normalization artifacts, or inappropriate gene selection can create misleading visual separation. Validate the analysis with markers, technical-covariate checks, and relevant biological evidence.</li>
 </ul>
 <h2>Troubleshooting</h2>
@@ -434,13 +435,13 @@ if (length(features)) {
 <strong>Fixes:</strong> Re-examine experimental protocol; increase mito cutoff if cells are known to be mitochondrial-rich (e.g., muscle), but document the rationale. Consider removing cells with extreme percent.mt values and check downstream impact.</li>
 <li><strong>Symptom:</strong> Clusters correlate with n_counts or percent.mt rather than biological markers.<br/>
 <strong>Likely causes:</strong> Technical variation dominating the signal (batch effects, library size differences).<br/>
-<strong>Fixes:</strong> Regress out technical covariates during scaling (e.g., scale.data with vars.to.regress in Seurat) or apply batch-correction tools (Harmony, Seurat IntegrateData, Scanpy’s combat/regress) when appropriate.</li>
+<strong>Fixes:</strong> Regress out technical covariates during scaling (for example <code>ScaleData(..., vars.to.regress = c("nCount_RNA", "percent.mt"))</code> in Seurat) or apply multi-sample integration (Harmony, Seurat v5 <code>IntegrateLayers</code>, or scVI) when combining distinct batches.</li>
 <li><strong>Symptom:</strong> Too many small clusters or over-clustering.<br/>
 <strong>Likely causes:</strong> High clustering resolution or too many PCs with noise.<br/>
 <strong>Fixes:</strong> Lower clustering resolution (e.g., from 1.0 to 0.4), reduce number of PCs, or merge clusters based on marker gene expression.</li>
 <li><strong>Symptom:</strong> No clear elbow in PCA variance plot.<br/>
 <strong>Likely causes:</strong> Gradual decay of variance due to continuous biological gradients or high noise.<br/>
-<strong>Fixes:</strong> Use alternative criteria (JackStraw in Seurat, permutation tests, or look at PC loadings and marker genes) and combine with biological knowledge.</li>
+<strong>Fixes:</strong> Inspect top PC gene loadings (<code>VizDimLoadings</code> / <code>DimHeatmap</code>) and evaluate whether cluster identities and biological markers remain stable across a sensible PC range (for example 15, 25, and 35 PCs). Note that Seurat's older <code>JackStraw</code> permutation test is computationally slow, legacy, and incompatible with <code>SCTransform</code> workflows.</li>
 </ul>
 <h2>Limitations, version and reference-data caveats, and responsible-use notes</h2>
 <p>Limitations and caveats to remember:</p>
@@ -462,12 +463,12 @@ if (length(features)) {
 </ol>
 <h2>References</h2>
 <ul>
-<li><a href="https://satijalab.org/seurat/">Seurat official documentation (Satija Lab)</a></li>
-<li><a href="https://scanpy.readthedocs.io/">Scanpy documentation</a></li>
-<li><a href="https://www.10xgenomics.com/support/single-cell-gene-expression">10x Universal 3′ Gene Expression support and dataset links</a></li>
-<li><a href="https://umap-learn.readthedocs.io/en/latest/">UMAP documentation</a></li>
-<li><a href="https://www.nature.com/articles/nbt.4096">Butler et al., 2018. Integrating single-cell transcriptomic data across different conditions, technologies, and species (Seurat integration)</a>
-</li>
+<li>Hao Y, Stuart T, Kowalski MH, et al. (2024). Dictionary learning for integrative, multimodal and scalable single-cell analysis. <em>Nature Biotechnology</em>, 42, 293-304 (Seurat v5). <a href="https://doi.org/10.1038/s41587-023-01767-y" rel="noopener" target="_blank">doi:10.1038/s41587-023-01767-y</a></li>
+<li>Wolf FA, Angerer P, Theis FJ (2018). SCANPY: large-scale single-cell gene expression data analysis. <em>Genome Biology</em>, 19, 15. <a href="https://doi.org/10.1186/s13059-017-1382-0" rel="noopener" target="_blank">doi:10.1186/s13059-017-1382-0</a></li>
+<li>Traag VA, Waltman L, van Eck NJ (2019). From Louvain to Leiden: guaranteeing well-connected communities. <em>Scientific Reports</em>, 9, 5233. <a href="https://doi.org/10.1038/s41598-019-41695-z" rel="noopener" target="_blank">doi:10.1038/s41598-019-41695-z</a></li>
+<li>Luecken MD, Theis FJ (2019). Current best practices in single-cell RNA-seq analysis: a tutorial. <em>Molecular Systems Biology</em>, 15(6), e8746. <a href="https://doi.org/10.15252/msb.20188746" rel="noopener" target="_blank">doi:10.15252/msb.20188746</a></li>
+<li>Butler A, Hoffman P, Smibert P, Papalexi E, Satija R (2018). Integrating single-cell transcriptomic data across different conditions, technologies, and species. <em>Nature Biotechnology</em>, 36, 411-420. <a href="https://www.nature.com/articles/nbt.4096" rel="noopener" target="_blank">doi:10.1038/nbt.4096</a></li>
+<li><a href="https://satijalab.org/seurat/">Seurat official documentation</a>, <a href="https://scanpy.readthedocs.io/">Scanpy documentation</a>, and <a href="https://www.10xgenomics.com/support/single-cell-gene-expression">10x Genomics Gene Expression support</a></li>
 </ul>
 <aside aria-labelledby="tutorial-feedback-title" class="lesson-feedback" id="tutorial-feedback"><h2 id="tutorial-feedback-title">Help improve this tutorial</h2><p>Found an error, a broken link, or a step that needs a clearer explanation? Please <a href="../contact.html">contact me</a>. Your feedback helps me keep this resource accurate and useful.</p></aside></article>
 <section class="mt-12 mb-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-100">

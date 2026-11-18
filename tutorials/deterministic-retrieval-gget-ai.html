@@ -179,11 +179,17 @@ function toggleMobileMenu() {
 <p>The example uses the human ACE2 Ensembl gene ID shown in gget's documented quick start, <code>ENSG00000130234</code>. Commands assume a Unix-like shell and internet access. Gene symbols can be ambiguous; resolve a symbol to an intended Ensembl ID before using this pattern. Responses from external services may change over time.</p>
 <h3>1) Check the CLI and prepare output files</h3>
 <p>Start with gget already installed according to its current official documentation. The project does not pin or reinstall Python dependencies for the R inspection route. From a new working directory, create a results folder, check the CLI help and executable path, and record a UTC timestamp:</p>
-<pre><code>mkdir -p retrieval-results
-if ! command -v gget; then echo "gget CLI is not available; follow its official installation instructions." &gt;&amp;2; exit 127; fi
-gget --help &gt; retrieval-results/gget-help.txt 2&gt;&amp;1
-printf 'query_start_utc=%s\n' "$(date -u '+%Y-%m-%dT%H:%M:%SZ')" &gt; retrieval-results/commands.log</code></pre>
-<p>The commands create <code>retrieval-results/gget-help.txt</code> and <code>retrieval-results/commands.log</code>. Record the exact gget version using the installation method's documented version/package-inspection command; no version flag is assumed to be portable across releases. If the CLI is missing, follow gget's official installation documentation and check the version and platform compatibility before continuing.</p>
+<pre><code>(
+  mkdir -p retrieval-results
+  if ! command -v gget &gt;/dev/null 2&gt;&amp;1; then
+    echo "gget CLI is not available; follow its official installation instructions." &gt;&amp;2
+    exit 127
+  fi
+  python3 -m pip show gget &gt; retrieval-results/gget-package-info.txt 2&gt;&amp;1 || true
+  gget --help &gt; retrieval-results/gget-help.txt 2&gt;&amp;1
+  printf 'query_start_utc=%s\n' "$(date -u '+%Y-%m-%dT%H:%M:%SZ')" &gt; retrieval-results/commands.log
+)</code></pre>
+<p>Running the check inside a <code>( ... )</code> subshell ensures a missing CLI returns nonzero without closing your interactive terminal. The commands record <code>python3 -m pip show gget</code>, <code>retrieval-results/gget-help.txt</code>, and the UTC start timestamp in <code>retrieval-results/commands.log</code>. Save Step 2 below as a script (for example <code>retrieve_ace2.sh</code>) and run it with <code>bash retrieve_ace2.sh</code> so its <code>exit</code> guards terminate only the child script on failure.</p>
 <h3>2) Retrieve the gene record and protein FASTA with native gget CLI</h3>
 <p>Keep the commands explicit and save standard output as raw response files. gget failures should be diagnosed from the command's exit status and standard error before interpreting any partial file.</p>
 <pre><code># Log start/end, exact command label, and exit status around each CLI query
@@ -215,7 +221,7 @@ else
   exit &quot;$status&quot;
 fi
 printf &#x27;query_end_utc=%s\n&#x27; &quot;$(date -u &#x27;+%Y-%m-%dT%H:%M:%SZ&#x27;)&quot; &gt;&gt; retrieval-results/commands.log</code></pre>
-<p><code>retrieval-results/ACE2_info.json</code> holds the raw CLI JSON and <code>retrieval-results/ACE2_protein.fasta</code> holds translated sequence output. The gget manual identifies <code>--translate</code> amino-acid retrieval as coming from UniProt, while nucleotide sequences are fetched from Ensembl. The command itself does not establish a canonical-selection rule: inspect the returned header and source record rather than assuming which isoform was selected. The helper logs UTC start/end times and exit status for each command. This provenance does not freeze upstream database state or identify a database release.</p>
+<p><code>retrieval-results/ACE2_info.json</code> holds the raw CLI JSON and <code>retrieval-results/ACE2_protein.fasta</code> holds translated amino-acid output. According to the <code>gget seq</code> documentation, passing an Ensembl gene ID (<code>ENSG...</code>) returns the canonical transcript sequence by default (fetching nucleotide sequence from Ensembl or canonical protein sequence from UniProt when <code>--translate</code> is set), whereas adding <code>--isoforms</code> (<code>gget seq --translate --isoforms ENSG00000130234</code>) retrieves sequences for all annotated transcript isoforms of that gene. Because the JSON response does not always embed the live Ensembl release number, record the active Ensembl REST data release alongside your query with <code>curl -fsSL "https://rest.ensembl.org/info/data/?content-type=application/json" &gt; retrieval-results/ensembl_release.json</code>.</p>
 <h3 id="gget-saved-output-r">3) Inspect saved CLI JSON and FASTA with R</h3>
 <p>This primary R utility reads local outputs only; it makes no network request and does not recreate gget. It requires R and <code>jsonlite</code>. Save as <code>inspect_retrieval.R</code> in the same working directory after the CLI files exist, then run <code>Rscript inspect_retrieval.R</code>. The script prints the R and jsonlite versions used for this inspection.</p>
 <pre><code>if (!requireNamespace("jsonlite", quietly = TRUE)) {
@@ -317,20 +323,18 @@ print("Rows:", len(records), "Columns:", list(records.columns))</code></pre>
 </li>
 <li>Fixes:
     <ol>
-<li>Resolve the symbol with <code>gget search -s homo_sapiens FOXP3</code>; confirm the intended match before querying its Ensembl ID.</li>
-<li>Try a stable identifier (Ensembl ENSG...) if available.</li>
-<li>Use <code>gget search -s homo_sapiens FOXP3</code> to see candidate matches and their species context.</li>
+<li>Resolve the symbol with <code>gget search -s homo_sapiens FOXP3</code> to inspect candidate matches and species context before querying a stable <code>ENSG...</code> identifier.</li>
+<li>Verify whether an older alias was renamed in HGNC/Ensembl if no current symbol match appears.</li>
 </ol>
 </li>
 </ul>
 <h3>Symptom: FASTA file is truncated or contains HTML/redirect text</h3>
 <ul>
-<li>Likely causes: network interruption, API rate limiting, or gget following an HTTP redirect to a page.</li>
+<li>Likely causes: network interruption, API rate limiting, or an upstream HTTP error page written to stdout.</li>
 <li>Fixes:
     <ol>
-<li>Check network connectivity and retry.</li>
-<li>Inspect the file start with <code>head -n5</code> to see if it contains an error HTML page; if so, retry later or check the gget error and upstream service status before retrying. Do not switch endpoints unless gget documentation identifies a supported option.</li>
-<li>Inspect the command error and saved file header; check the service status and CLI documentation before retrying. The optional Python API is a different query route, not an R fallback.</li>
+<li>Inspect the first lines with <code>head -n 5</code> to confirm whether an HTML error response was captured instead of a <code>&gt;</code> FASTA header.</li>
+<li>Check network connectivity, stderr messages, and Ensembl/UniProt service status before retrying after a brief backoff.</li>
 </ol>
 </li>
 </ul>
@@ -374,10 +378,10 @@ print("Rows:", len(records), "Columns:", list(records.columns))</code></pre>
 </ol>
 <h2>References</h2>
 <ul>
-<li><a href="https://www.ensembl.org/index.html">Ensembl official website</a>: primary resource for gene models and annotations.</li>
-<li><a href="https://www.uniprot.org/help/uniprotkb">UniProtKB documentation</a>: authoritative protein sequence and functional annotation resource.</li>
-<li><a href="https://github.com/pachterlab/gget">gget on GitHub</a>: source code, issues, and README with subcommand details.</li>
-<li><a href="https://github.com/scverse/gget/blob/main/docs/src/en/alphafold.md">gget alphafold documentation</a>: legacy command for predicting structures; upstream notes it is no longer actively maintained.</li>
+<li>Luebbert L, Pachter L (2023). Efficient querying of genomic reference databases with gget. <em>Bioinformatics</em>, 39(1), btac836. <a href="https://doi.org/10.1093/bioinformatics/btac836" rel="noopener" target="_blank">doi:10.1093/bioinformatics/btac836</a></li>
+<li><a href="https://github.com/pachterlab/gget">Official pachterlab/gget GitHub repository</a> and <a href="https://pachterlab.github.io/gget/">gget command-line &amp; Python documentation</a></li>
+<li><a href="https://www.ensembl.org/index.html">Ensembl genome browser</a> and <a href="https://rest.ensembl.org/">Ensembl REST API endpoints</a></li>
+<li><a href="https://www.uniprot.org/help/uniprotkb">UniProtKB documentation</a>: curated protein sequence and isoform records</li>
 </ul>
 <aside aria-labelledby="tutorial-feedback-title" class="lesson-feedback" id="tutorial-feedback"><h2 id="tutorial-feedback-title">Help improve this tutorial</h2><p>Found an error, a broken link, or a step that needs a clearer explanation? Please <a href="../contact.html">contact me</a>. Your feedback helps me keep this resource accurate and useful.</p></aside></article>
 <section class="mt-12 mb-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-100">
@@ -468,7 +472,7 @@ print("Rows:", len(records), "Columns:", list(records.columns))</code></pre>
 <script defer="" src="../mobile-navigation.js?v=20261026-startup-v1"></script>
 <script src="../assets/vendor/prism/prism-1.29.0.js"></script>
 <script id="tutorial-code-data">
-window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"deterministic-retrieval-gget-ai":{"blocks":[{"language":"bash","sha256":"f680e64b924dd0c96b16308d0001d49ad6eb7cb7c5038425cbc2e43ce0bb5555"},{"language":"bash","sha256":"a5105419c739fc9cfcc025f0c7bc5edd65389fc2bdcbd5dffc5fcf5d1b2a322d"},{"language":"r","sha256":"1a70965a9cb2eff5d4722f31664430cda387dd82e26b99079c541d91da48ecf4"},{"language":"bash","sha256":"0b056f96449f6606c280fa5bc7e5b6072c41aca635d843e641371a979e20ef99"},{"language":"python","sha256":"004b7205850171e6cc3ae2b5b1e00a7511f27e98bf687912be278ec5d28f1cab"}],"groups":[]}}};
+window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"deterministic-retrieval-gget-ai":{"blocks":[{"language":"bash","sha256":"2873c60093c0442f953281e96a7c5dbc1a2d96b1e0251046f503ec0b23cde570"},{"language":"bash","sha256":"a5105419c739fc9cfcc025f0c7bc5edd65389fc2bdcbd5dffc5fcf5d1b2a322d"},{"language":"r","sha256":"1a70965a9cb2eff5d4722f31664430cda387dd82e26b99079c541d91da48ecf4"},{"language":"bash","sha256":"0b056f96449f6606c280fa5bc7e5b6072c41aca635d843e641371a979e20ef99"},{"language":"python","sha256":"004b7205850171e6cc3ae2b5b1e00a7511f27e98bf687912be278ec5d28f1cab"}],"groups":[]}}};
 </script>
 <script src="../code-tabs.js?v=20261026-startup-v1"></script>
 <script src="../copy-code.js?v=20261025-r-first-v1"></script>

@@ -227,12 +227,11 @@ date
 <ul>
 <li>
 <p>The directives request resources: <code>--ntasks</code> is the number of processes/tasks and <code>--cpus-per-task</code> is CPUs per task. In the smoke test, one task times one CPU per task requests one CPU total; that script does not specify a memory amount. These are requests subject to site limits and scheduler configuration.</p>
-<p><strong>Note:</strong> Allocating a lot of resources doesn't mean that all of them will be used. If a program is not configured for parallel execution, it will use one CPU even when more are allocated. Start with a documented estimate, run a small test, then inspect actual resource use with the scheduler rather than logging directly into a compute node. For example:</p>
-<p><code>bash
-squeue -j &lt;job_id&gt;                 # queue state
-sstat -j &lt;job_id&gt;.batch --format=JobID,MaxRSS,AveCPU
-sacct -j &lt;job_id&gt; --format=JobID,State,Elapsed,MaxRSS,AllocCPUS</code></p>
-<p>If you need an interactive diagnostic session, request one through the scheduler, for example <code>srun --pty --cpus-per-task=2 --mem=8G --time=01:00:00 bash</code> Only SSH to a compute node when your own cluster documentation explicitly permits it.</p>
+<p><strong>Note:</strong> Allocating a lot of resources does not mean that all of them will be used. If a program is not configured for parallel execution, it will use one CPU even when more are allocated. Start with a documented estimate, run a small test, then inspect actual resource use with the scheduler rather than logging directly into a compute node:</p>
+<pre><code class="language-bash">squeue -j JOB_ID                 # queue state while pending or running
+sstat -j JOB_ID.batch --format=JobID,MaxRSS,AveCPU
+sacct -j JOB_ID --format=JobID,State,Elapsed,MaxRSS,AllocCPUS</code></pre>
+<p>If you need an interactive diagnostic session, request one through the scheduler, for example <code>srun --pty --cpus-per-task=2 --mem=8G --time=01:00:00 bash</code>. Only SSH to a compute node when your own cluster documentation explicitly permits it.</p>
 <p>Actual CPU allocation and binding can differ with the cluster's select and task plugins, core/thread topology, and request options. Check the local documentation and the allocation reported for your job rather than assuming a fixed multiplier.</p>
 </li>
 <li>
@@ -255,44 +254,36 @@ sacct -j &lt;job_id&gt; --format=JobID,State,Elapsed,MaxRSS,AllocCPUS</code></p>
 <h3>Calling the same program multiple times in parallel</h3>
 <pre><code class="language-bash">#!/bin/sh
 #SBATCH --job-name example_script
-
 #SBATCH --ntasks 3
 #SBATCH --cpus-per-task 1
 #SBATCH --mem 6G
-
-#SBATCH --partition ibrain
+#SBATCH --partition YOUR_ALLOWED_PARTITION
 #SBATCH --output %x-%j.out
-#SBATCH --hint=nomultithread
-
 
 module purge
-module load gcc/7.3.1
+# module load REPLACE_WITH_SITE_MODULE
 
-srun program
+srun --ntasks=3 program
 </code></pre>
-<p>Here the allocation requests three one-CPU tasks. A step that launches three tasks can start the executable three times, so use this pattern only when the program is designed for independent task launches (or is an MPI program configured for them). A single ordinary serial program may not use these resources as intended. Specify the step's task count explicitly, for example <code>srun --ntasks=3 program</code>, then follow the program's own parallelization instructions.</p>
-<h3>Several steps in parallel</h3>
-<p>Here is the full script.</p>
+<p>Here the allocation requests three one-CPU tasks. A step that launches three tasks starts the executable three times simultaneously, so use this pattern only when the program is designed for independent task launches or MPI ranks.</p>
+<h3>Several independent steps in parallel (<code>srun --exact</code>)</h3>
+<p>In Slurm 20.11+, a background <code>srun</code> step without <code>--exact</code> can claim all CPUs or memory of the parent allocation and block subsequent background steps until the first step finishes. Pass <code>--exact</code> with explicit per-step <code>--ntasks</code>, <code>--cpus-per-task</code>, and <code>--mem</code> so all three 1-CPU / 2-GiB steps run concurrently inside the 3-CPU / 6-GiB job:</p>
 <pre><code class="language-bash">#!/bin/sh
 #SBATCH --job-name example_script
-
 #SBATCH --ntasks 3
 #SBATCH --cpus-per-task 1
 #SBATCH --mem 6G
-
-#SBATCH --partition ibrain
+#SBATCH --partition YOUR_ALLOWED_PARTITION
 #SBATCH --output %x-%j.out
-#SBATCH --hint=nomultithread
-
 
 module purge
-module load gcc/7.3.1
+# module load REPLACE_WITH_SITE_MODULE
 
-srun --ntasks=1 program0 &amp;
+srun --exact --ntasks=1 --cpus-per-task=1 --mem=2G program0 &amp;
 step0_pid=$!
-srun --ntasks=1 program1 &amp;
+srun --exact --ntasks=1 --cpus-per-task=1 --mem=2G program1 &amp;
 step1_pid=$!
-srun --ntasks=1 program2
+srun --exact --ntasks=1 --cpus-per-task=1 --mem=2G program2
 step2_status=$?
 wait "$step0_pid"
 step0_status=$?
@@ -303,50 +294,42 @@ if [ "$step0_status" -ne 0 ] || [ "$step1_status" -ne 0 ] || [ "$step2_status" -
   exit 1
 fi
 </code></pre>
-<p>This is an optional advanced pattern, not a first-job script. Each step requests one task so each command runs once; the shell records and waits for both background process IDs and checks the foreground command too. Any failed step makes the script exit nonzero instead of silently treating the final command's status as proof that all steps succeeded. Scheduling, site configuration, and program resource needs still matter. Use this only for independent work designed to run this way, and consult site and application guidance.</p>
-<h3>Arrays</h3>
-<p>A job array is useful for independent repetitions of the same script with an index-specific input or argument. The index values need not be consecutive; make sure your script maps every requested index to a valid input and that tasks do not overwrite one another's files.</p>
+<p>The shell records and waits for both background PIDs and checks the foreground step so any failed sub-step makes the batch job exit nonzero instead of silently masking an earlier crash.</p>
+<h3>Job arrays for multi-sample bioinformatics cohorts</h3>
+<p>For processing 10 or 100 independent FASTQ samples through the same aligner or variant caller, a <strong>Slurm job array</strong> is cleaner and safer than background subshells because each sample gets its own independent <code>State</code>, <code>MaxRSS</code>, and retryable array task ID (<code>SLURM_ARRAY_TASK_ID</code>):</p>
 <pre><code class="language-bash">#!/bin/sh
-#SBATCH --job-name example_script
-
-#SBATCH --array=0-2
-
+#SBATCH --job-name example_array
+#SBATCH --array=0-2%2
 #SBATCH --ntasks 1
 #SBATCH --cpus-per-task 1
 #SBATCH --mem 2G
-
-#SBATCH --partition ibrain
+#SBATCH --partition YOUR_ALLOWED_PARTITION
 #SBATCH --output %x-%A-%a.out
-#SBATCH --hint=nomultithread
-
 
 module purge
-module load gcc/7.3.1
+# module load REPLACE_WITH_SITE_MODULE
 
 srun program --arg=$SLURM_ARRAY_TASK_ID
 </code></pre>
-<p>This array has task indices 0, 1, and 2. Slurm sets <code>SLURM_ARRAY_TASK_ID</code> to each task's index; <code>%A</code> and <code>%a</code> make the log name unique per array and task. Before scaling up, test the index-to-input mapping for the first, last, and an invalid index, and consider a concurrency cap such as <code>--array=0-2%2</code> if the site permits it. Array scheduling order is not guaranteed.</p>
+<p>This array launches task indices <code>0</code>, <code>1</code>, and <code>2</code> with at most <code>2</code> running concurrently (<code>%2</code>, useful for avoiding filesystem I/O saturation), and <code>%A</code> / <code>%a</code> write separate logs per array master ID and task index. In real cohorts, map <code>SLURM_ARRAY_TASK_ID</code> (1-based <code>--array=1-N</code>) to row <code>N</code> of a tab-separated <code>samples.tsv</code> manifest via <code>awk -v idx="$SLURM_ARRAY_TASK_ID" 'NR == idx {print $1}'</code>.</p>
 <h2>Optional: running an interactive session</h2>
-<pre><code class="language-bash">srun --pty --job-name interactive --partition ibrain --mem 2G --cpus-per-task 1 bash
+<pre><code class="language-bash">srun --pty --job-name interactive --partition YOUR_ALLOWED_PARTITION --mem 2G --cpus-per-task 1 bash
 </code></pre>
-<p><code>srun --pty</code> requests an interactive pseudo-terminal through Slurm; it may wait until requested resources become available. The final <code>bash</code> is the command started in that allocation. Use only resources and partitions allowed by local policy. A graphical session requires additional site support; do not assume replacing Bash with an application is sufficient.</p>
+<p><code>srun --pty</code> requests an interactive shell on a compute node through Slurm rather than running heavy jobs on shared login nodes.</p>
 <h2 id="optional-x11">Optional advanced topic: running a GUI with X11</h2>
-<pre><code class="language-bash">srun --pty --job-name gui --partition ibrain --mem 2G --cpus-per-task 1 --x11 bash
+<pre><code class="language-bash">srun --pty --job-name gui --partition YOUR_ALLOWED_PARTITION --mem 2G --cpus-per-task 1 --x11 bash
 </code></pre>
-<p><code>--x11</code> requests X11 forwarding, which requires Slurm and the cluster's configuration to support it as well as a working local display setup. This command is not portable to every cluster. Follow site instructions for graphical applications, or use a supported remote visualization service.</p>
-<h2 id="optional-custom-modules">Optional advanced topic: custom modules</h2>
-<h3>Creating a custom module</h3>
-<p>If you have a program you want to make available to others, you can create a custom module for it. This involves creating a module file that defines the environment variables and paths needed to run your program.</p>
-<p><strong>Example module file (<code>myprogram/1.0.lua</code>):</strong></p>
-<pre><code class="language-lua">help([[This module loads MyProgram version 1.0]])
+<p><code>--x11</code> requests X11 forwarding where cluster policy supports it; many modern centres provide Open OnDemand web desktops instead.</p>
+<h2 id="optional-custom-modules">Optional advanced topic: custom Lmod modulefiles</h2>
+<h3>Creating and registering a personal Lmod Lua modulefile</h3>
+<p>On clusters running <strong>Lmod</strong> (Lua-based environment modules), you can expose a locally compiled tool in <code>$HOME/modulefiles/myprogram/1.0.lua</code> and prepend <code>$HOME/modulefiles</code> to <code>MODULEPATH</code> with <code>module use</code>:</p>
+<pre><code class="language-lua">help([[This Lmod modulefile loads MyProgram version 1.0]])
 
 prepend_path("PATH", "/path/to/myprogram/bin")
 prepend_path("LD_LIBRARY_PATH", "/path/to/myprogram/lib")
 </code></pre>
-<p>This is a site-administered environment-modules example, not a complete user setup. Module systems differ; ask the cluster administrator how user modulefiles are enabled. The <code>module use</code> command adds a directory to the module search path; it does not simply print <code>MODULEPATH</code>.</p>
-<h3>Using a custom module</h3>
-<p>Once your custom module is created and placed in the correct location, you can load it like any other module:</p>
-<pre><code class="language-bash">module load myprogram/1.0
+<pre><code class="language-bash">module use "$HOME/modulefiles"
+module load myprogram/1.0
 </code></pre>
 <h2 id="optional-conda">Optional advanced topic: Conda on a cluster</h2>
 <h3>Installing Miniforge (Conda-forge default)</h3>
@@ -377,7 +360,7 @@ bash Miniforge3-Linux-x86_64.sh
 #SBATCH --ntasks 1
 #SBATCH --cpus-per-task 1
 #SBATCH --mem 4G
-#SBATCH --partition ibrain
+#SBATCH --partition YOUR_ALLOWED_PARTITION
 #SBATCH --output %x-%j.out
 
 # Load site Conda module if applicable, or source conda.sh from your Miniforge prefix
@@ -440,13 +423,14 @@ conda deactivate
 <p><strong>Decompress a file:</strong></p>
 <pre><code class="language-bash">unxz my_file.txt.xz
 </code></pre>
-<p>Choose a format supported by the downstream tools and balance CPU time against storage savings. Do not assume <code>xz</code> is accepted by a bioinformatics workflow simply because it compresses a file; confirm the tool's input contract. Preserve original sequencing data according to project policy.</p>
+<p>Choose a format supported by the downstream tools and balance CPU time against storage savings. In genomics, distinguish standard single-stream <code>gzip</code> from <strong><code>bgzip</code></strong> (blocked GNU zip from <code>htslib</code> / <code>samtools</code>): standard <code>gzip</code> works for sequentially streamed FASTQ files, whereas indexed coordinate-sorted VCF (<code>.vcf.gz</code> + <code>.tbi</code>/<code>.csi</code>), BED, and FASTA files <strong>must</strong> be compressed with <code>bgzip</code> (<code>bgzip variants.vcf &amp;&amp; tabix -p vcf variants.vcf.gz</code>) because <code>tabix</code> and <code>bcftools index</code> reject plain <code>gzip</code> streams.</p>
 <div class="mt-10 p-8 bg-gray-50 border border-gray-200 rounded-xl">
 <h3 class="text-xl font-bold text-gray-900 mb-4">Knowledge Check &amp; Assessment</h3>
 <div class="space-y-4">
 <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
 <h4 class="font-bold text-gray-800 mb-2">1. Concept Verification</h4>
 <p class="text-gray-600 text-sm">Which Slurm directives control resources, output logging, job naming, and the executable command?</p>
+<details class="mt-2 text-sm text-gray-700"><summary class="font-medium cursor-pointer text-blue-700">Check model answer</summary><p class="mt-1"><code>--ntasks</code>, <code>--cpus-per-task</code>, <code>--mem</code> (or <code>--mem-per-cpu</code>), <code>--time</code>, and <code>--partition</code> control the resource allocation; <code>--output</code> and <code>--error</code> control log paths; <code>--job-name</code> labels the job in queue/accounting output; and ordinary shell/<code>srun</code> lines below the <code>#SBATCH</code> header run the actual executable commands.</p></details>
 </div>
 <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
 <h4 class="font-bold text-gray-800 mb-2" id="submit-job">2. Practical Execution</h4>
@@ -469,6 +453,7 @@ cat "hpc-smoke-${JOB_ID}.out"
 <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
 <h4 class="font-bold text-gray-800 mb-2">3. Troubleshooting</h4>
 <p class="text-gray-600 text-sm">If a job is pending, cancelled, or out of memory, which Slurm fields and site documentation should you inspect first?</p>
+<details class="mt-2 text-sm text-gray-700"><summary class="font-medium cursor-pointer text-blue-700">Check model answer</summary><p class="mt-1">Check <code>NODELIST(REASON)</code> in <code>squeue -j JOB_ID</code> while pending; once finished, inspect <code>State</code>, <code>ExitCode</code>, <code>Elapsed</code>, <code>ReqMem</code>, and <code>MaxRSS</code> in <code>sacct -j JOB_ID</code> (plus the <code>.batch</code> step), check <code>slurm-JOB_ID.out</code> for cgroup OOM or application errors, and verify partition walltime/memory limits in your facility's documentation.</p></details>
 </div>
 </div>
 </div>
@@ -477,8 +462,10 @@ cat "hpc-smoke-${JOB_ID}.out"
 <h2 class="text-xl font-bold text-gray-900 mb-3">References and further reading</h2>
 <p class="text-sm text-gray-600 mb-3">Use these official resources to check current software behaviour, terminology, and production guidance. Tool versions and defaults change, so verify commands against the documentation before applying them to a research dataset.</p>
 <ul class="list-disc list-inside space-y-2 text-sm text-gray-700">
-<li><a class="text-blue-700 hover:underline" href="https://slurm.schedmd.com/documentation.html" rel="noopener" target="_blank">Slurm documentation</a></li>
-<li><a class="text-blue-700 hover:underline" href="https://man.openbsd.org/ssh" rel="noopener" target="_blank">OpenSSH manual pages</a></li>
+<li><a class="text-blue-700 hover:underline" href="https://slurm.schedmd.com/sbatch.html" rel="noopener" target="_blank">Slurm sbatch(1) manual</a>: directives, environment variables, and batch submission options.</li>
+<li><a class="text-blue-700 hover:underline" href="https://slurm.schedmd.com/srun.html" rel="noopener" target="_blank">Slurm srun(1) manual</a>: parallel job steps, <code>--exact</code> resource partitioning, <code>--pty</code> interactive shells, and <code>--x11</code>.</li>
+<li><a class="text-blue-700 hover:underline" href="https://slurm.schedmd.com/job_array.html" rel="noopener" target="_blank">Slurm Job Array support</a>: <code>--array</code> index syntax, concurrency throttling (<code>%N</code>), and <code>%A</code>/<code>%a</code> log tokens.</li>
+<li><a class="text-blue-700 hover:underline" href="https://lmod.readthedocs.io/en/latest/015_writing_modules.html" rel="noopener" target="_blank">Lmod documentation: Writing Modulefiles</a>: Lua modulefile functions and personal <code>MODULEPATH</code> management.</li>
 </ul>
 </section>
 <aside aria-labelledby="tutorial-feedback-title" class="lesson-feedback" id="tutorial-feedback"><h2 id="tutorial-feedback-title">Help improve this tutorial</h2><p>Found an error, a broken link, or a step that needs a clearer explanation? Please <a href="../contact.html">contact me</a>. Your feedback helps me keep this resource accurate and useful.</p></aside></article>
@@ -609,7 +596,7 @@ cat "hpc-smoke-${JOB_ID}.out"
 </script>
 <script src="../assets/vendor/prism/prism-1.29.0.js"></script>
 <script id="tutorial-code-data">
-window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"hpc-submission-part1":{"blocks":[{"language":"bash","sha256":"0cbef55a4e021ecf986ab9a059032e8ebaec3c2a65d72b82a7a1dbb99cd2319e"},{"language":"bash","sha256":"a8076d3d28d21e02012b20eaf7dbf75409a6277134439025f282e368e3305abf"},{"language":"bash","sha256":"27e9e09f02c96a529d846e682179b633d2e8a100874de1cd5a0155589928cbc7"},{"language":"bash","sha256":"62e2c42ece647a4533d734f3a2e37932547c3b53ebca05108707f9270ecf6957"},{"language":"bash","sha256":"b11b2d5ef4433dfe3a5c8f454a4cd4dba18b3e73fcb34d11fa833292966f71e2"},{"language":"bash","sha256":"33d5ad9aa278fd2c1f24653e2b1959a59e864b44c49a8b6576ad391568dd9fc5"},{"language":"bash","sha256":"61fed1bb86651d54a3ad2d8b15faa615fe2847196769ebe937da8ce4f61ffb1a"},{"language":"bash","sha256":"0e1f611a63077fb55d2541a88b2bfd43c29f60b15d79d874fc2ba90ddd16efef"},{"language":"bash","sha256":"2032f1cdbe7a230ac2dc18fe05d0cd96d3898fc357b9da44c118ca0652c8054b"},{"language":"bash","sha256":"f8c6712bbc4138fe26f45f2dddd40b61c6f5489c639a1f0bf4cd2e6f81c5a7d3"},{"language":"lua","sha256":"4fc539f63ec85ff5835db3799d8920cdcea97ff0d661d60832b7ce169b784f76"},{"language":"bash","sha256":"03de8c5b2b85f1120e9892b9f4291122a2222b673b2f4e16430dad35a76231e0"},{"language":"bash","sha256":"177eac120068dc3645f54c32947b3710bb10609dc0e3d795e940bd6887a3ab11"},{"language":"bash","sha256":"8a3fa98d79dd639c3cdab5d86ab54c70397fc457ee79d0021af931514c2a7a69"},{"language":"bash","sha256":"28243580898e8605713c4a15a2eb084e914a9b1fbaaf72860af49461a732726b"},{"language":"bash","sha256":"afde6ad39f18891bf9ae8c29cb4e401833c8d01396e27050b742c7dfeb4f6755"},{"language":"bash","sha256":"45bb4ccfd5e33e54af0a102acf422e4d26dc9c69437f26721f16f219ec77c6de"},{"language":"bash","sha256":"4708184603d10f04b43bdf833eb55dce7080905087f32b79e80e44c2ed063ff8"},{"language":"bash","sha256":"b5a11f546e70468e0412971a514d9d7e35a691b859046179c94264fa1bef688b"},{"language":"bash","sha256":"f870dac97ab25456c916d7a69d9c021a09caed3a11f6c923dbaca7cda637eaf1"},{"language":"bash","sha256":"7e694f328d698996072396a87c6ae8662ccc182b57cc33779221a37b37ed811d"},{"language":"bash","sha256":"341ecf59478ca646bb7a86b67e9a6ebe7be19317b580d124b6d3e04999c321b7"},{"language":"bash","sha256":"315197df03727c2330b6ce33579c0ee569f3bcb7c52827727e5b492781fc8872"},{"language":"bash","sha256":"cba8736da769fdeebfb7cdebe72d9166b694f3163032f6288fd775105f4d7bb4"},{"language":"bash","sha256":"60f8deccd24c9bcaf011554461a05e1f7475296cd51686e8ff99909c6bb74df5"},{"language":"bash","sha256":"6a36448a668868088e416af0df31e65d3b5cda056038abfbf24ef70a6134cf97"},{"language":"bash","sha256":"5bb203580a30f89bf0d30c956170c803b6fd4f26d68210d7f3195f4a79ea0b1d"},{"language":"bash","sha256":"9a4e5852ac4f87988cd38ab2784f2766968f1051566e3e146ece255d5f7a8229"}],"groups":[]}}};
+window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"hpc-submission-part1":{"blocks":[{"language":"bash","sha256":"0cbef55a4e021ecf986ab9a059032e8ebaec3c2a65d72b82a7a1dbb99cd2319e"},{"language":"bash","sha256":"a8076d3d28d21e02012b20eaf7dbf75409a6277134439025f282e368e3305abf"},{"language":"bash","sha256":"27e9e09f02c96a529d846e682179b633d2e8a100874de1cd5a0155589928cbc7"},{"language":"bash","sha256":"368240e53d57809de596317fd7dc7d087a72fad8eb3646456a24afe3f662221f"},{"language":"bash","sha256":"62e2c42ece647a4533d734f3a2e37932547c3b53ebca05108707f9270ecf6957"},{"language":"bash","sha256":"b11b2d5ef4433dfe3a5c8f454a4cd4dba18b3e73fcb34d11fa833292966f71e2"},{"language":"bash","sha256":"ebc145bb3b418bbe712fad68828fa14d7c7099e4b568701ed05b6d7d28885767"},{"language":"bash","sha256":"6021929acb22b988e6c67bfdc82c6bf211d5290a1969fffd9dcba03c72d66ff8"},{"language":"bash","sha256":"2d11c3132a1dfbfeeffb1a943fd03a378dbcc5274d32456940cebdc478ed8a5b"},{"language":"bash","sha256":"5e547d3bf9fe4a57bafcd088de5b39d2a5d05297396df24d925b64b968d09377"},{"language":"bash","sha256":"b1919a4b1e0476faec1057c936963f75a9cb873f2e77059474157303d15abd76"},{"language":"lua","sha256":"b757e8301ec9d2878f10463b06e413855ec9acd987e78b22a3407d94751db2b3"},{"language":"bash","sha256":"531fdb80f81ee2ab893dcff2b395b6f3c154c3f5877e715edbe0967e0d0955a2"},{"language":"bash","sha256":"177eac120068dc3645f54c32947b3710bb10609dc0e3d795e940bd6887a3ab11"},{"language":"bash","sha256":"8a3fa98d79dd639c3cdab5d86ab54c70397fc457ee79d0021af931514c2a7a69"},{"language":"bash","sha256":"28243580898e8605713c4a15a2eb084e914a9b1fbaaf72860af49461a732726b"},{"language":"bash","sha256":"afde6ad39f18891bf9ae8c29cb4e401833c8d01396e27050b742c7dfeb4f6755"},{"language":"bash","sha256":"45bb4ccfd5e33e54af0a102acf422e4d26dc9c69437f26721f16f219ec77c6de"},{"language":"bash","sha256":"4f9aec9c92cbc4207ab3c3c3cd22f341ec36a81d0995942b4de2fd1770a69bd4"},{"language":"bash","sha256":"b5a11f546e70468e0412971a514d9d7e35a691b859046179c94264fa1bef688b"},{"language":"bash","sha256":"f870dac97ab25456c916d7a69d9c021a09caed3a11f6c923dbaca7cda637eaf1"},{"language":"bash","sha256":"7e694f328d698996072396a87c6ae8662ccc182b57cc33779221a37b37ed811d"},{"language":"bash","sha256":"341ecf59478ca646bb7a86b67e9a6ebe7be19317b580d124b6d3e04999c321b7"},{"language":"bash","sha256":"315197df03727c2330b6ce33579c0ee569f3bcb7c52827727e5b492781fc8872"},{"language":"bash","sha256":"cba8736da769fdeebfb7cdebe72d9166b694f3163032f6288fd775105f4d7bb4"},{"language":"bash","sha256":"60f8deccd24c9bcaf011554461a05e1f7475296cd51686e8ff99909c6bb74df5"},{"language":"bash","sha256":"6a36448a668868088e416af0df31e65d3b5cda056038abfbf24ef70a6134cf97"},{"language":"bash","sha256":"5bb203580a30f89bf0d30c956170c803b6fd4f26d68210d7f3195f4a79ea0b1d"},{"language":"bash","sha256":"9a4e5852ac4f87988cd38ab2784f2766968f1051566e3e146ece255d5f7a8229"}],"groups":[]}}};
 </script>
 <script src="../code-tabs.js?v=20261026-startup-v1"></script>
 <script src="../copy-code.js?v=20261025-r-first-v1"></script>

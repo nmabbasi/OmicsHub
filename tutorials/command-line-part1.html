@@ -191,7 +191,7 @@ function toggleMobileMenu() {
 <h2>Reproducible, sequential workflow</h2>
 <p>We'll create a small project directory, add example files (empty placeholders for practice), and run commands that show the file system state at each step. Replace the example paths with ones appropriate for your machine. Commands assume a Bourne-like shell (bash, zsh).</p>
 <h3 class="lesson-step">1. Start from your home directory and create a project structure</h3>
-<p>Open a terminal and run the following in Bash. They create directories and three empty files under <code>~/projects/basic-nav</code>; they do not create sequencing data. The brace expansion in <code>mkdir</code> is a Bash feature, so on another shell either switch to Bash or spell out the four directory names.</p>
+<p>Open a terminal and run the following. They create directories and three empty files under <code>~/projects/basic-nav</code>; they do not create sequencing data. Note that brace expansion (<code>{data,results,scripts,logs}</code>) works in <code>bash</code>, <code>zsh</code> (macOS's default login shell), and <code>ksh</code>, whereas strict POSIX <code>/bin/sh</code> (such as <code>dash</code> on Debian/Ubuntu) treats braces literally.</p>
 <pre><code># Move to your home directory to start from a predictable location
 cd ~
 
@@ -260,7 +260,7 @@ less projects/basic-nav/scripts/README.md
 <p>What these commands check:</p>
 <ul>
 <li><code>file</code> identifies a zero-byte placeholder here. A filename ending in <code>.fastq.gz</code> is only a name; <code>touch</code> did not compress or populate it.</li>
-<li><code>zcat</code> decompresses to standard output, and <code>head</code> limits the displayed lines. Replace the example path with a real compressed file. Running it on the zero-byte placeholder will produce no FASTQ records; malformed or truncated gzip input can report an error. A short preview can help inspect structure, but does not establish FASTQ validity or read pairing.</li>
+<li><code>zcat</code> decompresses to standard output, and <code>head</code> limits the displayed lines. Replace the example path with a real compressed file. Running GNU <code>zcat</code> on the zero-byte placeholder created above prints an error (<code>gzip: ...: unexpected end of file</code>), demonstrating directly that a <code>.fastq.gz</code> filename extension does not make an empty file valid gzip data.</li>
 <li><code>less</code> is a pager that lets you view large files page by page.</li>
 </ul>
 <h3 class="lesson-step">5. Copy, move, and rename files with examples</h3>
@@ -280,8 +280,18 @@ mv -i projects/basic-nav/data/sample_R2.fastq.gz projects/basic-nav/data/raw/
 <ul>
 <li>The <code>cp</code> command duplicates only <code>sample_R1.fastq.gz</code> into <code>results/</code>; its original remains in <code>data/</code>. The later moves place both original mate placeholders in <code>data/raw/</code>, so <code>results/</code> contains only the copied R1 placeholder.</li>
 <li><code>mv</code> renames or relocates files; when used to rename it is generally fast because it alters metadata rather than copying contents (on the same filesystem).</li>
-<li>Without an interactive or no-clobber option, a command may replace an existing destination. Here <code>-i</code> prompts before replacement; read the prompt and answer carefully. A prompt reduces accidental overwrites but is not a backup.</li>
+<li>Without an interactive or no-clobber option, a command may replace an existing destination. Here <code>-i</code> prompts before replacement; read the prompt and answer carefully.</li>
 </ul>
+<h3 class="lesson-step">6. Bioinformatics file-naming rules and shell globbing (<code>*</code>, <code>?</code>)</h3>
+<p>Consistent file naming makes cohorts scriptable and prevents silent sample mix-ups:</p>
+<ul>
+<li><strong>Never use spaces, parentheses, or slashes in filenames:</strong> an unquoted path such as <code>Patient 1 (Tumour)_R1.fastq.gz</code> splits on spaces into multiple shell arguments and breaks loops. Restrict names to ASCII letters, digits, underscores, hyphens, and dots, use zero-padded IDs (<code>P01</code>, <code>P02</code>, ..., <code>P10</code>) and ISO dates (<code>2026-11-18</code>) so alphabetical order matches numerical and chronological order, and never rename raw core-facility FASTQs without recording their original names and SHA-256 checksums in a sample sheet (see <a href="reproducible-project-structure.html">Reproducible Project Structure</a>).</li>
+<li><strong>Preview shell globs with <code>ls</code> or <code>echo</code> before running a command that modifies files:</strong> in Bash and Zsh, <code>*</code> matches zero or more characters and <code>?</code> matches exactly one character:</li>
+</ul>
+<pre><code># Preview read-1 files only across a cohort directory before looping or moving
+ls -lh projects/basic-nav/data/raw/*_R1.fastq.gz
+echo projects/basic-nav/data/raw/sample_R?.fastq.gz</code></pre>
+<p><strong>Four shell traps that destroy bioinformatics data:</strong> (1) typing <code>&gt;</code> instead of <code>&gt;&gt;</code> immediately truncates an existing output file to 0 bytes before the command even starts; (2) spaces around a wildcard in <code>rm * .tmp</code> delete every file in the current directory instead of <code>*.tmp</code>; (3) on default case-insensitive macOS filesystems (APFS), writing <code>tp53.tsv</code> overwrites <code>TP53.tsv</code> whereas Linux ext4/XFS treats them as two distinct files; (4) copying a directory recursively into a subdirectory of itself creates nested copies.</p>
 <h2>Output inspection and interpretation</h2>
 <p>After each command, inspect the file system state. Here are concrete checks and how to interpret them safely.</p>
 <ul>
@@ -481,7 +491,7 @@ sha256sum -c sample_R1.sha256
 </script>
 <script src="../assets/vendor/prism/prism-1.29.0.js"></script>
 <script id="tutorial-code-data">
-window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"command-line-part1":{"blocks":[{"language":"bash","sha256":"b97f062ffdd77ec91abb2abae8600011edc05acdfaee565b50d91e7d26d7d8f6"},{"language":"bash","sha256":"b55909b70d538bfcc6788fc78dc8475e69419818a19f86357028bd8289471fb2"},{"language":"bash","sha256":"b367bec733660b34328f10eb4653bea542f1cdec2d7155198b2e8346ba08025e"},{"language":"bash","sha256":"24f029d9cdca8f22179bbe7e5abcf8d427caec1e66227c28bd07cccd51e6bb40"},{"language":"bash","sha256":"df5c59d450316241b8f2ddea3187271be17f2e34361b15d1637675717d7d55ee"},{"language":"bash","sha256":"ed8377f05425232ef6f7b089d750cc2a354dd4643f346f40d7f8ed7c7cf7fa58"}],"groups":[]}}};
+window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"command-line-part1":{"blocks":[{"language":"bash","sha256":"b97f062ffdd77ec91abb2abae8600011edc05acdfaee565b50d91e7d26d7d8f6"},{"language":"bash","sha256":"b55909b70d538bfcc6788fc78dc8475e69419818a19f86357028bd8289471fb2"},{"language":"bash","sha256":"b367bec733660b34328f10eb4653bea542f1cdec2d7155198b2e8346ba08025e"},{"language":"bash","sha256":"24f029d9cdca8f22179bbe7e5abcf8d427caec1e66227c28bd07cccd51e6bb40"},{"language":"bash","sha256":"df5c59d450316241b8f2ddea3187271be17f2e34361b15d1637675717d7d55ee"},{"language":"bash","sha256":"e1d2c85f20c2cfc9862991958156edc3d78ea2c3507c8add21a28d2c4ef74eae"},{"language":"bash","sha256":"ed8377f05425232ef6f7b089d750cc2a354dd4643f346f40d7f8ed7c7cf7fa58"}],"groups":[]}}};
 </script>
 <script src="../code-tabs.js?v=20261026-startup-v1"></script>
 <script src="../copy-code.js?v=20261025-r-first-v1"></script>

@@ -192,7 +192,7 @@ S01	control
 S02	treated
 S03	treated</code></pre>
 <h3 id="tidyverse-ubuntu-setup">Ubuntu 24.04: install R and system prerequisites first</h3>
-<p>This Bash block is for Ubuntu 24.04 with administrator access. It installs R, standard build tools, development headers and a basic font before any R package compilation. It changes system packages, not just this project. On a shared server, ask its administrator to provide these prerequisites; do not assume you can use sudo. If R and the packages already load in a managed environment, keep that environment and skip this system-installation step.</p>
+<p>This Bash block is for Ubuntu 24.04 with administrator access. It installs R, standard build tools, development headers and a basic font before any R package compilation. It changes system packages, not just this project. On a shared server, ask its administrator to provide these prerequisites; do not assume you can use sudo. If R and the packages already load in a managed environment, keep that environment and skip this system-installation step. (Tip for faster Ubuntu setups: configuring <a href="https://packagemanager.posit.co/client/" rel="noopener" target="_blank">Posit Public Package Manager</a> Linux precompiled binaries or <a href="https://eddelbuettel.github.io/r2u/" rel="noopener" target="_blank">r2u</a> avoids compiling dozens of C++ Tidyverse dependencies from source.)</p>
 <pre id="tidyverse-ubuntu-prerequisites"><code>sudo apt-get update &amp;&amp;
 sudo apt-get install -y --no-install-recommends \
   r-base r-base-dev build-essential pkg-config ca-certificates \
@@ -331,6 +331,33 @@ ggsave(out_plot, plot = p, width = 6, height = 4, dpi = 150, bg = "white")</code
 <h2>What this QC can and cannot tell you</h2>
 <p>A per-sample sum can flag a possible library-size or data-import discrepancy. It does not establish why a sample differs, and total counts alone do not establish differential expression or other biological effects. Raw counts can be compared as a basic descriptive QC measure, but differential-expression workflows need appropriate normalization and statistical models that reflect the experiment and its variability. Do not use these totals as normalized expression values.</p>
 <p>Note why the column is named <code>total_counts_millions</code> rather than RPM (reads per million) or CPM (counts per million): dividing a sample's sum of counts by <code>1e6</code> merely rescales the sample total into millions of counts, whereas RPM/CPM divides each individual gene's count by the sample library size and multiplies by one million so every sample sums to <code>1e6</code>.</p>
+<h2>Core dplyr verbs on the joined gene-by-sample table</h2>
+<p>Once <code>joined</code> passes key and integer-count checks in <code>scripts/01-tidy-qc.R</code>, five core <code>dplyr</code> verbs handle most exploratory tabular transformations in bioinformatics: <code>select()</code> chooses columns, <code>filter()</code> subsets rows by logical predicates, <code>group_by()</code> + <code>mutate()</code> computes within-sample quantities such as counts-per-million (CPM), <code>summarise()</code> collapses groups to one summary row, and <code>arrange()</code> sorts results:</p>
+<pre><code class="language-r"># Run interactively in R after sourcing scripts/01-tidy-qc.R (uses the 9-row `joined` tibble):
+gene_summary &lt;- joined %&gt;%
+  select(gene, sample_id, condition, raw_count) %&gt;%
+  group_by(sample_id) %&gt;%
+  mutate(sample_cpm = (raw_count / sum(raw_count)) * 1e6) %&gt;%
+  ungroup() %&gt;%
+  filter(raw_count &gt;= 150) %&gt;%
+  group_by(gene, condition) %&gt;%
+  summarise(
+    n_samples = n(),
+    mean_raw_count = mean(raw_count),
+    mean_sample_cpm = round(mean(sample_cpm), 1),
+    .groups = "drop"
+  ) %&gt;%
+  arrange(desc(mean_raw_count), gene)
+
+print(gene_summary)</code></pre>
+<p>Expected summary on the 3-gene x 3-sample fixture (notice that within every sample, the three <code>sample_cpm</code> values sum to <code>1,000,000</code>, unlike <code>total_counts_millions</code> which rescales the library total):</p>
+<pre><code class="language-text">gene   condition  n_samples  mean_raw_count  mean_sample_cpm
+MYC    treated            2           910.0         664215.8
+MYC    control            1           890.0         654411.8
+BRCA1  control            1           320.0         235294.1
+BRCA1  treated            2           292.5         213539.8
+TP53   treated            2           167.5         122244.4
+TP53   control            1           150.0         110294.1</code></pre>
 <h2>Diagnose common failures</h2>
 <ul><li><strong>Missing or extra sample columns:</strong> the <code>setequal()</code> check stops unless the count-column names and metadata IDs match exactly. Inspect <code>setdiff(count_samples, samples$sample_id)</code> and the reverse comparison. Standardize whitespace or case only when the identifier source confirms that transformation is appropriate.</li><li><strong>Duplicate metadata IDs:</strong> the uniqueness assertion stops before the join. A duplicated key can multiply gene-sample rows; correct or explain the metadata records rather than accepting inflated totals.</li><li><strong>Missing metadata after join:</strong> <code>stopifnot(!anyNA(joined$condition))</code> catches unmatched or missing condition values. Check keys and missing condition values separately; <code>left_join()</code> preserves count rows while unmatched metadata fields become missing.</li><li><strong>Counts fail validation:</strong> investigate blank values, text, non-finite values, or negative entries in the source file. A missing count is not interchangeable with zero, so do not replace missing values without a documented data-specific reason.</li><li><strong>Root or input path is wrong:</strong> check <code>getwd()</code>, the local <code>.here</code> file and the script location. Rerun the complete script from <code>tidy-qc</code>; <code>here::i_am()</code> should resolve this lab even inside an ancestor Git repository. If you move or rename the script, update that declaration to match.</li><li><strong>Output write fails:</strong> this script creates <code>results/</code>, but permissions or an incorrect project root can still prevent writing. Inspect <code>here()</code> and the exact output path.</li></ul>
 <h2>R objects and data choices behind the script</h2>
@@ -483,7 +510,7 @@ ggsave(out_plot, plot = p, width = 6, height = 4, dpi = 150, bg = "white")</code
 </script>
 <script src="../assets/vendor/prism/prism-1.29.0.js"></script>
 <script id="tutorial-code-data">
-window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"r-tidyverse-fundamentals":{"blocks":[{"language":"text","sha256":"b3d2639c18b0af49cfa982a99b7aeefec2bfe9d3bf2ae1bcf633cfe616079e47"},{"language":"bash","sha256":"7780b3d7bb4b1e72bb3b99016e70a46fc7238556a0dbd0d24770d287f4692322"},{"language":"bash","sha256":"50e2224ffe2f207f3ff17f80330756fd84512635e9c1917a0f533f9a9708bd4e"},{"language":"bash","sha256":"afc606ff5162f55a40390f53d251a45c97f3eed169212eb22524a258e6dff55b"},{"language":"bash","sha256":"6a54bf90be78eaf7ea800d50896e14335cfe5a93eb5311f3399f4b7a802bfcbe"},{"language":"bash","sha256":"960f2b2cd8b1cf5bdc7b34e748526eb7c3cbc0638669deaf03e5fbe6045e95a7"},{"language":"r","sha256":"b2314ec7da026b83d17f0924ea164fea6d0d12e544239b9ca4437590b522a1d1"}],"groups":[]}}};
+window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"r-tidyverse-fundamentals":{"blocks":[{"language":"text","sha256":"b3d2639c18b0af49cfa982a99b7aeefec2bfe9d3bf2ae1bcf633cfe616079e47"},{"language":"bash","sha256":"7780b3d7bb4b1e72bb3b99016e70a46fc7238556a0dbd0d24770d287f4692322"},{"language":"bash","sha256":"50e2224ffe2f207f3ff17f80330756fd84512635e9c1917a0f533f9a9708bd4e"},{"language":"bash","sha256":"afc606ff5162f55a40390f53d251a45c97f3eed169212eb22524a258e6dff55b"},{"language":"bash","sha256":"6a54bf90be78eaf7ea800d50896e14335cfe5a93eb5311f3399f4b7a802bfcbe"},{"language":"bash","sha256":"960f2b2cd8b1cf5bdc7b34e748526eb7c3cbc0638669deaf03e5fbe6045e95a7"},{"language":"r","sha256":"b2314ec7da026b83d17f0924ea164fea6d0d12e544239b9ca4437590b522a1d1"},{"language":"r","sha256":"722bc1c6eb03e6e517473c29aa31a98dce75c68744d8ff199d7f7665a8d80983"},{"language":"text","sha256":"95509b709469334b72a352c6b04e2c9ca4e371b1cbd63997b65fd34f06089491"}],"groups":[]}}};
 </script>
 <script src="../code-tabs.js?v=20261026-startup-v1"></script>
 <script src="../copy-code.js?v=20261025-r-first-v1"></script>

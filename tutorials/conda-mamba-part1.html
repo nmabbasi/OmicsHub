@@ -232,20 +232,20 @@ micromamba --version</code></pre>
 <p>Use the same explicit channel policy when creating or recreating an environment, and preserve channel intent in the authored specification and resolved export. For Bioconda packages, the documented order and strict priority matter; avoid mixing in additional channels casually.</p>
 <p>A channel is a repository of package metadata and package archives. For many bioinformatics workflows, <strong>conda-forge</strong> provides general dependencies and <strong>bioconda</strong> provides many domain-specific tools. Channel configuration affects the solver, so keep it explicit and avoid mixing unrelated defaults without understanding the consequences.</p>
 <p>For this lesson, keep channel choices on each command instead of changing a shared <code>.condarc</code>/<code>.mambarc</code>. Bioconda recommends <code>conda-forge</code> before <code>bioconda</code> on the command line (higher priority first) and strict priority. Each create command below therefore uses both <code>--override-channels</code> and <code>--channel-priority strict</code>: the first prevents configured default channels from silently joining the solve, while the second enforces the declared order. In particular, do not add Anaconda <code>defaults</code> implicitly.</p>
-<pre><code class="language-bash">micromamba create -n qc-tools \
+<pre><code class="language-bash">micromamba create -n qc-demo-channels \
   --override-channels -c conda-forge -c bioconda --channel-priority strict \
   fastqc multiqc</code></pre>
 <p>Include these options on every create command to make its channel selection independent of machine-level channel configuration. <code>micromamba config list</code> and <code>micromamba info</code> are useful for inspecting configured values, but <code>--override-channels</code> governs these invocations. Strict priority constrains solver choices; it cannot make unavailable packages or unsupported platforms work.</p>
 <p>When a package cannot be solved, first check its availability, platform support, channel choice, and version constraints. Do not immediately add many channels or remove all version pins; that can create a solution that is difficult to reproduce.</p>
 <h2>Create, activate, and remove environments</h2>
-<p>Use one environment for one coherent workflow. Keep the base or root prefix small. The example below creates a Python environment for inspecting sequencing quality and reporting results.</p>
+<p>Use one environment for one coherent workflow. Keep the base or root prefix small. The reference example below creates an illustrative environment named <code>qc-demo-basic</code> (skip running it if you want to jump straight to <code>qc-tools</code> in the <a href="#qc-environment-lab">required lab</a>).</p>
 <pre><code class="language-bash"># Create an environment with all initial requirements together
-micromamba create -n qc-tools \
+micromamba create -n qc-demo-basic \
   --override-channels -c conda-forge -c bioconda --channel-priority strict \
   python=3.11 fastqc multiqc
 
 # Activate it in the current shell
-micromamba activate qc-tools
+micromamba activate qc-demo-basic
 
 # Confirm which executable and Python are active
 which python
@@ -283,7 +283,7 @@ micromamba deactivate</code></pre>
 
 micromamba activate single-cell
 python -c "import scanpy, anndata; print(scanpy.__version__, anndata.__version__)"
-R --slave -e "cat(R.version.string, '\n')"
+R --no-echo -e "cat(R.version.string, '\n')"
 samtools --version | head -n 1</code></pre>
 <p>Do not assume that a package name is identical across ecosystems. For example, an R package may be named with an <code>r-</code> prefix and a Bioconductor package may use a <code>bioconductor-</code> prefix. Search the relevant channel and read the package recipe before adding it to a production environment.</p>
 <h2 id="qc-environment-lab">Required lab: make a small QC environment reproducible</h2>
@@ -334,18 +334,18 @@ micromamba env list</code></pre>
 The final list should show both names, and all three version checks must succeed. If <code>qc-tools-copy</code> already exists, choose another unused name consistently. The copied environment is a fresh solve on this platform, not a byte-identical lock. If it fails, retain the error and investigate pins and channel order rather than automatically switching to flexible priority.</li>
 <li>Compare your observation with the prediction: Python should report a 3.11 release, and FastQC and MultiQC should each print a version and exit successfully. The environment list should contain both names. This is evidence only that these tools were installed and callable for this platform; no FASTQ was supplied and no biological quality assessment was performed. If any step fails, stop at that step, retain its full error and the output of <code>micromamba info</code>, and report the OS/architecture, executable version, channels, and exact command. Do not label the YAML tested just because it was saved.</li>
 <li>Small variation: make a copy of the authored file, change only <code>python=3.11</code> to <code>python=3.12</code>, and solve into a distinct new name using the same strict channel flags. Predict what version the Python check should show. If solving succeeds, verify that plus both tool versions; if not, the solve may reflect platform/package compatibility or current metadata, not a syntax error by itself. Restore the known-good file rather than loosening channels indiscriminately.</li>
-<li>Optionally retain an intent-oriented export of explicitly requested packages:
-<pre><code class="language-bash">micromamba env export -n qc-tools --from-history &gt; environment-history.yml</code></pre></li>
+<li>Optionally retain an intent-oriented export of explicitly requested packages, or an exact same-platform tarball lockfile:
+<pre><code class="language-bash">micromamba env export -n qc-tools --from-history &gt; environment-history.yml
+micromamba env export -n qc-tools --explicit &gt; spec-explicit.txt</code></pre></li>
 </ol>
-<p>Keep the authored specification and, when useful, a resolved export. A history export records explicitly requested packages, but still requires a fresh solve and does not guarantee identical results. A full resolved YAML can include build and platform-specific details; a successful recreation is still not necessarily byte-identical. Test recreation rather than assuming portability, and verify the CLI options available in your installed Micromamba version. Neither file captures input data, references, analysis parameters, workflow code, or all external software: reproducibility requires those records too.</p>
+<p>Keep the authored specification (<code>environment.yml</code>) alongside a resolved or locked record depending on your goal: <code>--from-history</code> captures only top-level human intent; <code>environment-resolved-reviewed.yml</code> pins package versions and build strings for readable auditing; <code>--explicit</code> writes exact package archive URLs and MD5 hashes for deterministic same-OS/same-CPU reinstallation without running the SAT solver; and multi-platform teams (for example macOS <code>osx-arm64</code> laptops plus Linux <code>linux-64</code> HPC nodes) use <a href="https://conda.github.io/conda-lock/" rel="noopener" target="_blank"><code>conda-lock</code></a> to generate a single multi-architecture <code>conda-lock.yml</code>. Neither file captures input data, reference builds, or analysis parameters: full workflow reproducibility requires recording those too.</p>
 <h2>Use the environment in a workflow</h2>
-<p>Activation is a shell feature, so batch systems and scripts should initialize the shell before calling <code>micromamba activate</code>. A safer alternative for one command is <code>micromamba run</code>, which does not depend on the caller's interactive prompt.</p>
+<p>Activation is a shell feature, so batch systems and scripts should initialize the shell in memory before calling <code>micromamba activate</code> (never write shell hooks to fixed shared paths in <code>/tmp</code> on multi-user clusters). A simpler alternative for single commands is <code>micromamba run</code>, which does not depend on shell initialization.</p>
 <pre><code class="language-bash"># Run one command without activating an interactive shell
 micromamba run -n qc-tools fastqc --help
 
-# A minimal Bash job-script pattern
-micromamba shell hook -s bash &gt; /tmp/micromamba-hook.sh
-source /tmp/micromamba-hook.sh
+# Safe in-memory Bash job-script hook (no /tmp file collisions)
+eval "$(micromamba shell hook -s bash)"
 micromamba activate qc-tools
 multiqc --version</code></pre>
 <p>For real HPC jobs, adapt the initialization to the cluster's module system and scheduler. Never hard-code a personal home directory into a shared workflow. Print the environment and tool versions into the job log so a later reader can distinguish software changes from biological or parameter changes.</p>
@@ -587,7 +587,7 @@ echo "Environment verification completed: $(date -Iseconds)"</code></pre>
 </script>
 <script src="../assets/vendor/prism/prism-1.29.0.js"></script>
 <script id="tutorial-code-data">
-window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"conda-mamba-part1":{"blocks":[{"language":"bash","sha256":"1c0961616d7a607f4535aff5ecd54a7704cbab02bf248465ed430a01bd7da011"},{"language":"powershell","sha256":"6d4c99dffaef238f83a471721051a4ba8434dc8025d5fe6911ed51f97c877686"},{"language":"bash","sha256":"46ae3f01b99d678ca08925a6dc48d6154f982670e7fcbabb25eb561a20de8b34"},{"language":"bash","sha256":"6ca857def2128ad7dc9eacfcaf3ce4c042b8bd7a22427aca34db0b6b78f76269"},{"language":"bash","sha256":"0e010697b7e8cb5173ffa4b442e642e31ec850daf47823006aa49337a6e887a7"},{"language":"bash","sha256":"5f74f694d6840e964833e1fa79515613c32412dceb287e6b5ede6981c3af0763"},{"language":"bash","sha256":"9f75791af1dbf4144774e6a25c81aa5d2d6b080aca6f695bd95fa8a524e1e8d9"},{"language":"bash","sha256":"ed07d15d5a6c5363d05ac1860bb27a1e05e4af7e146a782798e578b8ca43034e"},{"language":"bash","sha256":"0bc965278edd130ce92e67eee6f4710e8739262f97ba72ed85fb35a35e9ffc48"},{"language":"bash","sha256":"83fbfabadd12411e823402294aaa7ec08e3a008326bc70d70e550a0a9a3d6977"},{"language":"bash","sha256":"905e75066b4c0ab38b4c676a63235e9a6aea179f424541781042cbb6c24a50d1"},{"language":"bash","sha256":"116871028eba5b502eaec303d7bdd284af894f96d1889eeb7348553a2ae9853e"},{"language":"bash","sha256":"86167f1fbb16dc271a1cc7fc7bacf65d54c5023f193c8de44ce399ae8405bd27"},{"language":"yaml","sha256":"ee0ee6fdc5fa1e89a1fa01e62e006335c3f06af59f4c9d9a1339eefe5217478d"},{"language":"bash","sha256":"49e55f782d3986068791581b27416a43aabe99b180aaea6ad2fed2264ee47d92"},{"language":"bash","sha256":"a0d0f21a0c0fde1a2bb1a7b8ca08315bcaf6e3d58904e65760bd548ab9883eb8"},{"language":"bash","sha256":"6336e388fd7f3ce304209bff1ffe7808570df19ce4dd4e4cf72abd9182f08708"},{"language":"bash","sha256":"e9db83994efc6d7f1f25018583ef011f1ed60262fb726ea4cdbd14c1d9abd1f2"},{"language":"bash","sha256":"0f241d33e199c45d4c3eee3fce86903208439335b63e51d3aebf8d720cccabb4"},{"language":"bash","sha256":"27e7f67dd3dc78e35e5cb355d4e149af96f754f55ad2694c92e3d96710fb4832"},{"language":"bash","sha256":"ba7f7f7f76022a02e688d6e56eaa4f2d4d1268e5ab3389365e8c38500b7bbfc2"}],"groups":[]}}};
+window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"conda-mamba-part1":{"blocks":[{"language":"bash","sha256":"1c0961616d7a607f4535aff5ecd54a7704cbab02bf248465ed430a01bd7da011"},{"language":"powershell","sha256":"6d4c99dffaef238f83a471721051a4ba8434dc8025d5fe6911ed51f97c877686"},{"language":"bash","sha256":"46ae3f01b99d678ca08925a6dc48d6154f982670e7fcbabb25eb561a20de8b34"},{"language":"bash","sha256":"4438e1e8cde19f7c98a762a30d4e6f716d08a4e440c72e29312378ebff8ba06c"},{"language":"bash","sha256":"ffca64e9442cbfb39e0d018866749da072e2efeb18153af5e5757dbd8b2daca3"},{"language":"bash","sha256":"5f74f694d6840e964833e1fa79515613c32412dceb287e6b5ede6981c3af0763"},{"language":"bash","sha256":"9f75791af1dbf4144774e6a25c81aa5d2d6b080aca6f695bd95fa8a524e1e8d9"},{"language":"bash","sha256":"749ce977f161a9e3d43b3f99864b00693521ad96be56c980caa77ceb0189439c"},{"language":"bash","sha256":"0bc965278edd130ce92e67eee6f4710e8739262f97ba72ed85fb35a35e9ffc48"},{"language":"bash","sha256":"83fbfabadd12411e823402294aaa7ec08e3a008326bc70d70e550a0a9a3d6977"},{"language":"bash","sha256":"905e75066b4c0ab38b4c676a63235e9a6aea179f424541781042cbb6c24a50d1"},{"language":"bash","sha256":"116871028eba5b502eaec303d7bdd284af894f96d1889eeb7348553a2ae9853e"},{"language":"bash","sha256":"86167f1fbb16dc271a1cc7fc7bacf65d54c5023f193c8de44ce399ae8405bd27"},{"language":"yaml","sha256":"ee0ee6fdc5fa1e89a1fa01e62e006335c3f06af59f4c9d9a1339eefe5217478d"},{"language":"bash","sha256":"49e55f782d3986068791581b27416a43aabe99b180aaea6ad2fed2264ee47d92"},{"language":"bash","sha256":"f39974cf91005f284521448d069b3c11d686a30a2c64b0391754ef5cc86b9a55"},{"language":"bash","sha256":"58909245333c715a7ecd2cc59465e97b3c8a945ad89f28ba7370ad0f525eea5a"},{"language":"bash","sha256":"e9db83994efc6d7f1f25018583ef011f1ed60262fb726ea4cdbd14c1d9abd1f2"},{"language":"bash","sha256":"0f241d33e199c45d4c3eee3fce86903208439335b63e51d3aebf8d720cccabb4"},{"language":"bash","sha256":"27e7f67dd3dc78e35e5cb355d4e149af96f754f55ad2694c92e3d96710fb4832"},{"language":"bash","sha256":"ba7f7f7f76022a02e688d6e56eaa4f2d4d1268e5ab3389365e8c38500b7bbfc2"}],"groups":[]}}};
 </script>
 <script src="../code-tabs.js?v=20261026-startup-v1"></script>
 <script src="../copy-code.js?v=20261025-r-first-v1"></script>

@@ -322,9 +322,11 @@ saveRDS(seurat_obj, file = "results/seurat_adt_pca.rds")
 Produces:
 </p>
 <ul>
-<li>ADT PCA stored in seurat_obj[["apca"]].</li>
-<li>Checkpoint results/seurat_adt_pca.rds.</li>
+<li>ADT PCA stored in <code>seurat_obj[["apca"]]</code> (note that <code>NormalizeData(..., normalization.method = "CLR", margin = 2)</code> follows Seurat's CITE-seq vignette convention of normalizing across the protein panel within each cell, whereas <code>NormalizeData</code>'s function default is <code>margin = 1</code>, normalizing each protein across cells).</li>
+<li>Checkpoint <code>results/seurat_adt_pca.rds</code>.</li>
 </ul>
+<h4>Ambient antibody background, isotype controls, and <code>dsb</code> normalization</h4>
+<p>Unlike mRNA transcripts, unbound antibody-oligo conjugates in droplet CITE-seq create substantial non-specific ambient background and cell-to-cell technical staining variation ("sticky" cells and Fc-receptor binding). When raw unfiltered 10x droplet matrices (<code>raw_feature_bc_matrix/</code>) and spiked-in non-targeting isotype control antibodies (for example mouse <code>IgG1</code>, <code>IgG2a</code>, <code>IgG2b</code>) are available, consider <strong><code>dsb</code></strong> (Denoised and Scaled by Background; Mulè et al., 2022) as an alternative to CLR before running <code>apca</code> and <code>FindMultiModalNeighbors</code>: <code>dsb::DSBNormalizeProtein(cell_protein_matrix = adt_cells, empty_drop_matrix = adt_empty, denoise.counts = TRUE, use.isotype.control = TRUE, isotype.control.name.vec = isotypes)</code> subtracts ambient protein levels estimated from RNA-empty droplets (<code>1.5 &lt; log10(ADT_UMIs) &lt; 3</code> with <code>&lt; 80</code> RNA UMIs) and regresses out per-cell technical background covariance.</p>
 <h3>Run WNN integration, embedding, and clustering</h3>
 <p>Use only PCs that actually exist in each reduction. The named CBMC panel has 13 ADT features, not enough for 18 protein PCs. The caps below are software limits, not a biological selection rule: inspect the reductions and choose fewer informative PCs when appropriate.</p>
 <pre id="cite-wnn-stage"><code># Ensure RNA is default for the function that requires "pca" as an entry
@@ -444,7 +446,7 @@ Below are common issues and concrete steps to diagnose/fix them.
 <li>Fixes:
     <ul>
 <li>Re-evaluate dims.list to ensure ADT dims capture useful signal (try fewer RNA PCs or more ADT PCs if justified).</li>
-<li>The call below names the two metadata columns `RNA.weight` and `ADT.weight`. Inspect both distributions and verify the selected reduction dimensions. Do not infer a defective assay from extreme weights alone.</li>
+<li>The <code>FindMultiModalNeighbors</code> call above names the two metadata columns <code>RNA.weight</code> and <code>ADT.weight</code>. Inspect both distributions (for example, T-cell subsets separated by surface CD4/CD45RA vs CD45RO protein often show higher <code>ADT.weight</code> than <code>RNA.weight</code> because <code>PTPRC</code> isoform cleavage is poorly resolved by standard 3' short-read RNA-seq) and verify the selected reduction dimensions.</li>
 </ul>
 </li>
 </ul>
@@ -487,10 +489,10 @@ Responsible-use notes:
 </ol>
 <h2>References</h2>
 <ul>
-<li><a href="https://satijalab.org/seurat/articles/weighted_nearest_neighbor_analysis">Seurat Weighted Nearest Neighbor analysis vignette</a>: official Seurat documentation and examples.</li>
-<li><a href="https://www.nature.com/articles/nmeth.4380">Stoeckius et al., 2017: Simultaneous epitope and transcriptome measurement in single cells</a> (Nature Biotechnology)</li>
-<li><a href="https://satijalab.org/seurat/">Seurat project site</a>: package documentation and release notes.</li>
-<li><a href="https://satijalab.org/seurat/reference/normalizedata">Seurat NormalizeData reference</a>: CLR margin argument and normalization methods.</li>
+<li>Hao Y, Hao S, Andersen-Nissen E, et al. (2021). Integrated analysis of multimodal single-cell data. <em>Cell</em>, 184(13), 3573-3587 (primary Weighted Nearest Neighbor method paper). <a href="https://doi.org/10.1016/j.cell.2021.04.048" rel="noopener" target="_blank">doi:10.1016/j.cell.2021.04.048</a></li>
+<li>Stoeckius M, Hafemeister C, Stephenson W, et al. (2017). Simultaneous epitope and transcriptome measurement in single cells. <em>Nature Methods</em>, 14(9), 865-868 (CITE-seq). <a href="https://www.nature.com/articles/nmeth.4380" rel="noopener" target="_blank">doi:10.1038/nmeth.4380</a></li>
+<li>Mulè MP, Martins AJ, Tsang JS (2022). Normalizing and denoising protein expression data from droplet-based single cell profiling. <em>Nature Communications</em>, 13, 2099 (<code>dsb</code>). <a href="https://doi.org/10.1038/s41467-022-29356-8" rel="noopener" target="_blank">doi:10.1038/s41467-022-29356-8</a></li>
+<li><a href="https://satijalab.org/seurat/articles/weighted_nearest_neighbor_analysis">Seurat Weighted Nearest Neighbor analysis vignette</a> and <a href="https://satijalab.org/seurat/reference/normalizedata">Seurat NormalizeData CLR reference</a>.</li>
 </ul>
 <aside aria-labelledby="tutorial-feedback-title" class="lesson-feedback" id="tutorial-feedback"><h2 id="tutorial-feedback-title">Help improve this tutorial</h2><p>Found an error, a broken link, or a step that needs a clearer explanation? Please <a href="../contact.html">contact me</a>. Your feedback helps me keep this resource accurate and useful.</p></aside></article>
 <nav aria-label="Learning path continuation" class="reader-sequence" id="reader-course-navigation">

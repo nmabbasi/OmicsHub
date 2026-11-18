@@ -188,37 +188,59 @@ cell_counts &lt;- table(seurat_obj$cell_type, useNA = "ifany")
 print(cell_counts)
 stopifnot(!anyNA(seurat_obj$cell_type))
 
-# Inspect the assay and available layers before selecting expression input.
+# Inspect the assay and join split per-sample layers in Seurat v5 before running LIANA.
 Assays(seurat_obj)
-Layers(seurat_obj[[DefaultAssay(seurat_obj)]])</code></pre>
-<p>The file path is an input you supply; this is not a self-contained dataset. In R, save your processed Seurat object as <code>seurat_obj.rds</code> in the working directory from which you run the code, or replace the path with its actual location. Check that the selected assay contains normalized values and that group labels match your intended annotations. Seurat v5 stores expression in layers; do not assume a layer called <code>data</code> exists or that the default assay is the one you intend. The check above stops on missing group labels; investigate any very small groups before proceeding.</p>
+Layers(seurat_obj[[DefaultAssay(seurat_obj)]])
+if (length(Layers(seurat_obj, search = "data")) &gt; 1L) {
+  seurat_obj &lt;- JoinLayers(seurat_obj)
+}</code></pre>
+<p>The file path is an input you supply; this is not a self-contained dataset. Save your processed Seurat object as <code>seurat_obj.rds</code> in the working directory or replace the path with its location. Confirm that the active assay holds log-normalized expression and that Seurat v5 per-sample layers (such as <code>data.sample1</code>, <code>data.sample2</code>) have been merged with <code>JoinLayers()</code> so LIANA reads one unified expression matrix. Stop if any group labels are <code>NA</code>, and inspect clusters with fewer than 20 to 30 cells, where single-cell dropout makes cluster-mean ligand or receptor estimates noisy.</p>
 <aside class="lesson-checkpoint"><strong>Stop if:</strong> the cell-type table includes missing labels, unexpected tiny groups, or annotation names that do not match your analysis plan. Investigate first rather than treating a tool's minimum-cell setting as biological quality control.</aside>
-<h2>2. Run LIANA and inspect its consensus ranking</h2>
-<p>The R LIANA tutorial documents <code>liana_wrap()</code> followed by <code>liana_aggregate()</code>. The aggregation step returns consensus rank columns, including <code>aggregate_rank</code>; this is not the <code>consensus_score</code> used in some older examples. The code below follows the documented default workflow and leaves assay selection to the input object's active assay. Verify that this is appropriate for your installed LIANA/Seurat versions before running.</p>
+<h2>2. Run LIANA, understand its component scores, and plot top candidates</h2>
+<p>By default, R LIANA's <code>liana_wrap()</code> executes five distinct scoring frameworks against the OmniPath consensus ligand-receptor resource (<code>natmi</code>, <code>connectome</code>, <code>logfc</code>, SingleCellSignalR <code>sca</code>, and permutation-based <code>cellphonedb</code>) and combines their ranks with Robust Rank Aggregation in <code>liana_aggregate()</code> (Dimitrov et al., 2022). Understanding the two score families inside <code>liana_ranked</code> prevents the most common misinterpretations:</p>
+<ul>
+<li><strong>Specificity scores</strong> (such as <code>natmi.edge_specificity</code>, <code>logfc.logfc_comb</code>, and <code>cellphonedb.pvalue</code>) ask whether a ligand-receptor pair is enriched in a given sender-receiver pair relative to all other cell clusters in the dataset.</li>
+<li><strong>Expression magnitude scores</strong> (such as <code>sca.LRscore</code> and <code>connectome.weight_sc</code>) measure how strongly the ligand and receptor are expressed in the sender and receiver clusters, even when many other clusters express the same genes.</li>
+</ul>
 <pre><code class="language-r">library(liana)
+library(ggplot2)
+
 liana_raw &lt;- liana_wrap(seurat_obj, idents_col = "cell_type")
 liana_ranked &lt;- liana_aggregate(liana_raw)
 
-# Confirm actual output fields and cell-type group alignment, then rank smallest aggregate_rank first.
+# Confirm output fields and group alignment, then sort smallest aggregate_rank first.
 print(names(liana_ranked))
 stopifnot(
   all(c("source", "target", "aggregate_rank") %in% names(liana_ranked)),
-  all(unique(liana_ranked$source) %in% as.character(seurat_obj$cell_type))
+  all(sort(unique(liana_ranked$source)) %in% sort(unique(as.character(seurat_obj$cell_type))))
 )
 liana_ranked &lt;- dplyr::arrange(liana_ranked, aggregate_rank)
 utils::write.csv(liana_ranked, "liana_aggregate_results.csv", row.names = FALSE)
-saveRDS(liana_raw, "liana_raw_results.rds")</code></pre>
-<p>LIANA's <code>aggregate_rank</code> is a robust rank-aggregation statistic across method results: smaller values appear earlier in the ranking. It is not a calibrated probability that signaling occurs. Inspect per-method columns and rank agreement as well as ligand/receptor complex labels; a single consensus column can hide method disagreement. The exact output fields depend on selected methods, resources, and package version, which is why the example checks fields before using them.</p>
-<aside class="lesson-result"><strong>Deliverable:</strong> <code>liana_aggregate_results.csv</code>, a ranked table for review, and <code>liana_raw_results.rds</code> for method-level inspection. Neither file is produced until the code runs successfully in your configured R environment.</aside>
-<h2>3. Decide whether CellChat adds a distinct analysis</h2>
-<p>CellChat can model and visualize group-level communication using its curated database and analysis workflow. It is complementary, not a validation stage for LIANA: shared expression inputs and curated resources do not turn inferred edges into observed signaling. This section is an optional conceptual map, not a second runnable route. The CellChat maintainers' full single-dataset tutorial and Nature Protocols workflow specify input conversion, expression representation, version-specific functions, and analysis checks; follow them rather than passing a Seurat object directly to <code>createCellChat()</code> as a generic recipe.</p>
-<ol class="lesson-steps">
-<li>Before opening the official tutorial, write down the question and confirm that its input contract matches your assay, normalized expression, cell labels, organism, and gene identifiers.</li>
-<li>As you review its preprocessing, over-expression, communication probability, pathway aggregation, and network steps, note the expected intermediate tables/objects and which checks show that each step completed.</li>
-<li>Decide whether pathway/network summaries answer something beyond the LIANA ranking; record database/software versions and inspect underlying tables alongside visualizations. Do not treat agreement between tools as independent validation.</li>
-</ol>
-<p>For the standard single-dataset route, use the <a href="https://github.com/jinworks/CellChat">official CellChat repository</a>, which links its <a href="https://htmlpreview.github.io/?https://github.com/jinworks/CellChat/blob/master/tutorial/CellChat-vignette.html">full single-dataset tutorial</a> and <a href="https://www.nature.com/articles/s41596-024-01045-4">Nature Protocols</a>. Match the database to the organism and verify gene identifiers and complex coverage. Do not compare raw LIANA and CellChat scores as though they shared a scale; consult the CellChat protocol for multi-condition analysis rather than interpreting separate pooled runs as replicate-aware tests.</p>
-<p>CellChat's probability and pathway summaries depend on its model, database and parameters. Consult the current protocol for code and for multi-condition workflows rather than interpreting separate pooled runs as a replicate-aware test.</p>
+saveRDS(liana_raw, "liana_raw_results.rds")
+
+# Template visualization: inspect specificity vs magnitude for selected sender/receiver groups.
+# Replace source_groups and target_groups with labels present in seurat_obj$cell_type.
+p_dot &lt;- liana_dotplot(
+  liana_ranked,
+  source_groups = c("Macrophage", "Fibroblast"),
+  target_groups = c("CD8_T", "Epithelial"),
+  ntop = 20
+) + theme(axis.text.x = element_text(angle = 35, hjust = 1))
+ggsave("liana_top20_dotplot.pdf", plot = p_dot, width = 9, height = 6)</code></pre>
+<p>LIANA's <code>aggregate_rank</code> is a consensus rank-aggregation statistic across the selected methods: smaller values indicate stronger cross-method rank agreement, not a calibrated probability that physical receptor activation occurs in vivo. Always inspect per-method columns alongside the consensus rank:</p>
+<ul>
+<li><strong>Red flag 1 (ubiquitous housekeeping pairs):</strong> interactions involving MHC class I heavy chains and beta-2-microglobulin (<code>B2M -&gt; HLA-A/B/C</code>), calmodulin (<code>CALM1</code>), or ribosomal contaminants often rank near the top on magnitude (<code>sca.LRscore</code>) while showing poor specificity (<code>natmi.edge_specificity</code>). Treat them as baseline antigen presentation or technical background unless supported by a specific biological hypothesis.</li>
+<li><strong>Red flag 2 (incomplete heteromeric complexes):</strong> receptors such as integrins (<code>ITGA4_ITGB1</code>), TGF-beta receptors (<code>TGFBR1_TGFBR2</code>), and interleukin complexes require every obligate subunit in the target population. LIANA and CellPhoneDB evaluate multi-subunit complexes using the minimum subunit expression; verify in <code>DotPlot(seurat_obj, features = c("ITGA4", "ITGB1"))</code> that no subunit sits near zero percent expressed.</li>
+<li><strong>Red flag 3 (tiny-cluster or single-donor drivers):</strong> check <code>table(seurat_obj$sample_id, seurat_obj$cell_type)</code> so a top-ranked interaction is not driven by 8 cells from a single biopsy.</li>
+</ul>
+<aside class="lesson-result"><strong>Deliverable:</strong> <code>liana_aggregate_results.csv</code>, <code>liana_raw_results.rds</code>, and <code>liana_top20_dotplot.pdf</code> (template outputs produced only when executed on your Seurat object).</aside>
+<h2>3. Multi-sample cohorts and when CellChat adds distinct value</h2>
+<p>Pooling cells across treatment arms or responders vs non-responders into two separate <code>liana_wrap()</code> calls treats cells as replicates and confounds shifts in donor composition with altered signaling. For multi-patient cohorts (for example pre- vs on-therapy tumour biopsies), keep biological replicates intact using one of two sample-aware strategies:</p>
+<ul>
+<li><strong>Sample-level LIANA + tensor decomposition:</strong> run <code>liana_bysample()</code> across donor IDs and decompose the four-way tensor (samples x senders x receivers x ligand-receptor pairs) with <code>Tensor-cell2cell</code> in the LIANA+ framework (Dimitrov et al., 2024) to identify communication programs that covary with patient condition.</li>
+<li><strong>Pseudobulk differential ligand-receptor and target modeling:</strong> use <code>MultiNicheNet</code> (Browaeys et al., 2023), which combines sample-level pseudobulk differential expression (<code>edgeR</code>) of ligands and receptors with downstream target-gene enrichment in receiver cells.</li>
+</ul>
+<p>CellChat (Jin et al., 2021) models group-level communication probabilities using mass-action kinetics, agonist/antagonist cofactors, and curated pathway-level aggregation. It is complementary to LIANA rather than an independent validation step: because both read the same RNA expression matrix and overlapping literature databases, agreement between LIANA and CellChat prioritizes a transcriptomic hypothesis without proving physical protein contact. Follow the <a href="https://github.com/jinworks/CellChat" rel="noopener" target="_blank">official CellChat repository</a> and its <a href="https://www.nature.com/articles/s41596-024-01045-4" rel="noopener" target="_blank">Nature Protocols workflow</a> when pathway-level network summaries are needed.</p>
 <h2>Interpret candidates, not causal messages</h2>
 <ul>
 <li>Ask whether a candidate is supported by multiple LIANA methods and whether source/target populations have adequate cells and plausible expression of the relevant ligand/receptor complex.</li>
@@ -239,10 +261,13 @@ saveRDS(liana_raw, "liana_raw_results.rds")</code></pre>
 <p>Save the exact R session information, package versions, database/resource versions, assay/layer, cell grouping, filters, and any random seeds used by stochastic steps. For a lightweight record after loading your packages, run <code>sessionInfo()</code> and save its output with the analysis; this captures the versions in your own environment, not a version combination tested by this page. Keep sample and condition metadata with intermediate outputs. The example does not implement differential communication testing; use a documented sample-aware comparison design for condition claims.</p>
 <h2>Further reading</h2>
 <ul>
-<li><a href="https://saezlab.github.io/liana/articles/liana_tutorial.html">LIANA R tutorial</a>: documented wrapper and aggregation workflow.</li>
-<li><a href="https://github.com/jinworks/CellChat">CellChat official repository and tutorials</a>: current analysis protocol, versions, and database updates.</li>
-<li><a href="https://satijalab.org/seurat/">Seurat documentation</a>: object, assay, and layer behavior.</li>
-<li><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC11139546/">Armingol et al., review of cell–cell interaction inference</a>.</li>
+<li>Dimitrov, D., Turei, D., Garrido-Rodriguez, M., et al. (2022). Comparison of methods and resources for cell-cell communication inference from single-cell RNA-Seq data. <em>Nature Communications</em>, 13, 3224. <a href="https://doi.org/10.1038/s41467-022-30755-0" rel="noopener" target="_blank">doi:10.1038/s41467-022-30755-0</a></li>
+<li>Dimitrov, D., Schafer, P. S. L., Farr, E., et al. (2024). LIANA+ provides an all-in-one framework for cell-cell communication inference. <em>Nature Cell Biology</em>, 26, 1613-1622. <a href="https://doi.org/10.1038/s41556-024-01449-w" rel="noopener" target="_blank">doi:10.1038/s41556-024-01449-w</a></li>
+<li>Jin, S., Guerrero-Juarez, C. F., Zhang, L., et al. (2021). Inference and analysis of cell-cell communication using CellChat. <em>Nature Communications</em>, 12, 1088. <a href="https://doi.org/10.1038/s41467-021-21246-9" rel="noopener" target="_blank">doi:10.1038/s41467-021-21246-9</a></li>
+<li>Efremova, M., Vento-Tormo, M., Teichmann, S. A., &amp; Vento-Tormo, R. (2020). CellPhoneDB: inferring cell-cell communication from combined expression of multi-subunit ligand-receptor complexes. <em>Nature Protocols</em>, 15, 1484-1506. <a href="https://doi.org/10.1038/s41596-020-0292-x" rel="noopener" target="_blank">doi:10.1038/s41596-020-0292-x</a></li>
+<li>Browaeys, R., Gilis, J., Sang-Aram, C., et al. (2023). MultiNicheNet: a flexible framework for differential cell-cell communication analysis from multi-sample multi-condition single-cell transcriptomics data. <em>bioRxiv</em> / official vignette.</li>
+<li><a href="https://saezlab.github.io/liana/articles/liana_tutorial.html">LIANA R tutorial</a> and <a href="https://github.com/jinworks/CellChat">CellChat official repository</a>.</li>
+<li><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC11139546/">Armingol et al., review of cell-cell interaction inference</a>.</li>
 </ul>
 <aside aria-labelledby="tutorial-feedback-title" class="lesson-feedback" id="tutorial-feedback"><h2 id="tutorial-feedback-title">Help improve this tutorial</h2><p>Found an error, a broken link, or a step that needs a clearer explanation? Please <a href="../contact.html">contact me</a>. Your feedback helps me keep this resource accurate and useful.</p></aside></article>
 <section class="mt-12 mb-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-100">
@@ -383,7 +408,7 @@ saveRDS(liana_raw, "liana_raw_results.rds")</code></pre>
 </script>
 <script src="../assets/vendor/prism/prism-1.29.0.js"></script>
 <script id="tutorial-code-data">
-window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"cell-cell-communication":{"blocks":[{"language":"r","sha256":"23b0555eb2cc475e2c346f3bc380d96572325faf5a0d3d6d2d82b825698f670a"},{"language":"r","sha256":"85195fbbdff7d29a361d476c530a20e9d2edef83e9980f648f7065ffc1325d92"}],"groups":[]}}};
+window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"cell-cell-communication":{"blocks":[{"language":"r","sha256":"7bfe4c403995da31815513b80c0844686be626f36762b9de64a6634767fd2d0b"},{"language":"r","sha256":"2301f28b7a80d53aa2bcc5cce7b40aefcf76c17b047002b12f92636a5452d27d"}],"groups":[]}}};
 </script>
 <script src="../code-tabs.js?v=20261026-startup-v1"></script>
 <script src="../copy-code.js?v=20261025-r-first-v1"></script>

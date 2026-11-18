@@ -208,7 +208,7 @@ test -s microbial_R1.fastq && test -s microbial_R2.fastq
 # Count FASTQ records as lines / 4 (counts reads, not pairs).
 gzip -cd sample_R1.fastq.gz | awk 'END {print NR/4}'
 awk 'END {print NR/4}' microbial_R1.fastq</code></pre>
-<p><code>samtools fastq</code> requires reads grouped by name; the name-sort step supplies that ordering. The <code>-1</code> and <code>-2</code> outputs contain paired reads, while <code>-0</code> and <code>-s</code> send singletons and other reads to <code>/dev/null</code>. Since the filter asks for both mates unmapped, such discarded reads should not ordinarily be produced, but explicit destinations avoid mixing them into the paired outputs. Confirm the two output files have equal FASTQ record counts and that the starting pair names correspond before proceeding.</p>
+<p><code>samtools fastq</code> requires reads grouped by name; the name-sort step supplies that ordering (on very large BAMs, streaming <code>bwa mem ... | samtools collate -u -O - | samtools fastq -f 12 -F 2304 -1 microbial_R1.fastq -2 microbial_R2.fastq -0 /dev/null -s /dev/null -</code> avoids writing an intermediate sorted BAM; for human clinical metagenomes, use a decoy-inclusive human analysis-set reference or a dedicated two-stage host-depletion wrapper such as <code>Hostile</code>). Confirm the two output files have equal FASTQ record counts and matching mate names before proceeding.</p>
 <aside class="lesson-warning"><strong>Host reference and privacy:</strong> GRCh38 is only an example for human host DNA; substitute the correct, documented host reference for another host. A reference can be incomplete or divergent, leaving host-derived reads behind. Screening is not a guarantee of de-identification. Handle human-derived reads and contigs under the applicable approvals, consent, and data-sharing rules.</aside>
 <h2>Assemble the paired reads</h2>
 <p>metaSPAdes is SPAdes's metagenomic mode. Its documented short-read input contract supports one paired-end short-read library; this example therefore assumes one sample/library represented by the R1/R2 pair. The command does not combine independent libraries. The official manual warns that adapter read-throughs can affect metaSPAdes, so upstream QC remains important.</p>
@@ -217,7 +217,10 @@ awk 'END {print NR/4}' microbial_R1.fastq</code></pre>
   -2 microbial_R2.fastq \
   -o spades_output \
   -t 16 -m 64</code></pre>
-<p>On successful completion, inspect the run log and the output directory. Use <code>spades_output/contigs.fasta</code> as the contig reference for the mapping step; retain <code>params.txt</code> and the logs with the analysis record. Do not assume that scaffolds were produced or that the assembly succeeded simply because a command was submitted. If SPAdes reports an input, memory, or output-directory error, resolve that before continuing.</p>
+<p>On successful completion, summarize contiguity and length distributions immediately before read mapping (for example with <code>seqkit stats -a spades_output/contigs.fasta</code> or <code>metaquast.py spades_output/contigs.fasta</code>):</p>
+<pre><code>seqkit stats -a spades_output/contigs.fasta &gt; spades_output/contig_stats.txt
+cat spades_output/contig_stats.txt</code></pre>
+<p>Inspect <code>num_seqs</code> (contig count), <code>sum_len</code> (total assembled bp), <code>max_len</code>, and <code>N50</code> (the contig length at which 50% of total assembled bases reside in contigs of that length or longer). In complex metagenomes, interpret <code>N50</code> alongside length-filtered subsets (for example contigs &gt;= 1,000 bp used by genome binners such as MetaBAT2/SemiBin2), because thousands of 250-500 bp low-abundance fragments depress raw <code>N50</code> even when dominant genomes assembled into 100 kb contigs.</p>
 <h2>Map reads back to contigs</h2>
 <p>Build the BWA index from the same contig FASTA that you will later load as the reference. Align the same paired reads used for assembly (screened reads here), sort the resulting alignments by genomic coordinate, then index the BAM. Coordinate order is required for efficient regional access and IGV viewing.</p>
 <pre><code>set -euo pipefail
@@ -233,7 +236,7 @@ samtools depth -a reads_to_contigs.bam &gt; contig_depth.tsv</code></pre>
 <p>Calculate a simple mean of the emitted per-position depth for each contig:</p>
 <pre><code>awk '{sum[$1] += $3; n[$1]++} END {for (c in sum) print c, sum[c]/n[c]}' \
   contig_depth.tsv &gt; contig_mean_coverage.tsv</code></pre>
-<p>Because <code>depth -a</code> includes zero-depth positions, this mean includes uncovered positions in the reported reference contigs. It is a descriptive average, not a genome abundance estimate or a measure of assembly correctness. Keep the per-position file if you need to examine variation along a contig.</p>
+<p>Because <code>depth -a</code> includes zero-depth positions, this mean includes uncovered positions in the reported reference contigs. In SAMtools 1.10+, run <code>samtools coverage reads_to_contigs.bam &gt; contig_coverage.tsv</code> as well: it tabulates both <code>meandepth</code> and horizontal <strong>breadth of coverage</strong> (<code>coverage</code>, % of contig bases with &gt;=1 read) per contig without emitting a multi-gigabyte per-base file. Breadth separates genuine taxon presence (for example 94% breadth at 8x depth across a 50 kb contig) from cross-mapping artifacts stacked onto a short conserved rRNA or insertion-sequence repeat (for example 3% breadth at 350x depth).</p>
 <h2>Inspect the evidence before interpreting contigs</h2>
 <ol class="lesson-steps">
 <li class="lesson-step"><strong>Check the run and read accounting.</strong> Confirm SPAdes completed, compare starting and post-screening FASTQ record counts, and check that the two retained mate files remain paired. Unexpected count changes can indicate filtering or file-handling problems.</li>
@@ -255,11 +258,10 @@ samtools depth -a reads_to_contigs.bam &gt; contig_depth.tsv</code></pre>
 <p>For human-derived material, follow institutional approvals, consent, and data-sharing requirements. Do not treat host-read removal alone as proof that a dataset is safe to release.</p>
 <h2>References and software documentation</h2>
 <ul>
-<li><a href="https://ablab.github.io/spades/running.html">SPAdes command-line manual</a> and <a href="https://ablab.github.io/spades/output.html">SPAdes output files</a></li>
-<li><a href="https://github.com/lh3/bwa">BWA source and usage examples</a></li>
-<li><a href="https://www.htslib.org/doc/samtools.html">SAMtools manual</a></li>
-<li><a href="https://igv.org/doc/desktop/">IGV desktop documentation</a></li>
-<li><a href="https://doi.org/10.1038/nbt.3935">Quince et al., shotgun metagenomics and assembly review</a></li>
+<li>Nurk S, Meleshko D, Korobeynikov A, Pevzner PA (2017). metaSPAdes: a new versatile metagenomic assembler. <em>Genome Research</em>, 27(5), 824-834. <a href="https://doi.org/10.1101/gr.213959.116" rel="noopener" target="_blank">doi:10.1101/gr.213959.116</a></li>
+<li>Li H, Durbin R (2009). Fast and accurate short read alignment with Burrows-Wheeler transform. <em>Bioinformatics</em>, 25(14), 1754-1760 (BWA). <a href="https://doi.org/10.1093/bioinformatics/btp324" rel="noopener" target="_blank">doi:10.1093/bioinformatics/btp324</a></li>
+<li>Quince C, Walker AW, Simpson JT, Loman NJ, Segata N (2017). Shotgun metagenomics, from sampling to analysis. <em>Nature Biotechnology</em>, 35(9), 833-844. <a href="https://doi.org/10.1038/nbt.3935" rel="noopener" target="_blank">doi:10.1038/nbt.3935</a></li>
+<li><a href="https://ablab.github.io/spades/running.html">SPAdes command-line manual</a>, <a href="https://www.htslib.org/doc/samtools.html">SAMtools manual</a>, and <a href="https://igv.org/doc/desktop/">IGV desktop documentation</a></li>
 </ul>
 <aside aria-labelledby="tutorial-feedback-title" class="lesson-feedback" id="tutorial-feedback"><h2 id="tutorial-feedback-title">Help improve this tutorial</h2><p>Found an error, a broken link, or a step that needs a clearer explanation? Please <a href="../contact.html">contact me</a>. Your feedback helps me keep this resource accurate and useful.</p></aside></article>
 <nav aria-label="Learning path continuation" class="reader-sequence" id="reader-course-navigation">
@@ -389,7 +391,7 @@ samtools depth -a reads_to_contigs.bam &gt; contig_depth.tsv</code></pre>
 </script>
 <script src="../assets/vendor/prism/prism-1.29.0.js"></script>
 <script id="tutorial-code-data">
-window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"metagenomics-assembly-mapping":{"blocks":[{"language":"bash","sha256":"60cfcc320076a7a5c24700f39cc46c0005fc92dc2bf038b197f52bc614126759"},{"language":"bash","sha256":"6349aa4fff9000cc420808eff608e03bb16fb6921b83877b5482ae7daf658c54"},{"language":"bash","sha256":"c088564589eb68a2b3467e2b422ccd4b263a304a9012d22976ba7212bf684199"},{"language":"bash","sha256":"a83b13035a2596b3f1ff94e6546509e54a4b81aa60af0166365859a9ea0b6cce"}],"groups":[]}}};
+window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"metagenomics-assembly-mapping":{"blocks":[{"language":"bash","sha256":"60cfcc320076a7a5c24700f39cc46c0005fc92dc2bf038b197f52bc614126759"},{"language":"bash","sha256":"6349aa4fff9000cc420808eff608e03bb16fb6921b83877b5482ae7daf658c54"},{"language":"bash","sha256":"87abcfe21a58d18b3e7594b1e8d0cd16520bb5b8503d64174e6d40da7c9413b8"},{"language":"bash","sha256":"c088564589eb68a2b3467e2b422ccd4b263a304a9012d22976ba7212bf684199"},{"language":"bash","sha256":"a83b13035a2596b3f1ff94e6546509e54a4b81aa60af0166365859a9ea0b6cce"}],"groups":[]}}};
 </script>
 <script src="../code-tabs.js?v=20261026-startup-v1"></script>
 <script src="../copy-code.js?v=20261025-r-first-v1"></script>

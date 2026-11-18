@@ -356,6 +356,7 @@ print(list.files(out_dir, recursive = TRUE))
 <li>cutoff: filters genes by mean counts across cells. The Broad workflow documentation suggests 0.1 for sparse droplet counts and 1 for Smart-seq-like data; treat these as starting points, not universal thresholds.</li>
 <li>denoise: enables inferCNV denoising procedures. Inspect the preliminary and processed views; whether denoising helps depends on the data and chosen filters.</li>
 <li>HMM: runs an optional Hidden Markov Model to assign discrete copy-number states. Treat HMM outputs as smoothed calls, not definitive DNA copy numbers.</li>
+<li>Runtime and sparse-matrix tips: on large <code>dgCMatrix</code> objects (&gt;20,000 cells), validate stored non-zero entries directly (<code>counts@x</code>) rather than evaluating dense matrix comparisons across zeroes, set <code>num_threads</code> in <code>infercnv::run()</code> to match your allocated CPU cores, and consider subsampling oversized normal reference clusters (for example 500-1,000 high-quality T/B/endothelial cells per patient) to bound JAGS HMM runtime.</li>
 </ul>
 <h3>Alternative: infercnvpy in Python</h3>
 <pre><code># infercnvpy is a distinct Python implementation. Unlike the R workflow above,
@@ -395,6 +396,24 @@ cnv_matrix = adata.obsm["X_cnv"]
 <li>Ask whether a broad pattern recurs across cells and is compatible with the reference and sample design. Shared expression patterns can still arise from cell state or other confounding, so they do not establish clonality.</li>
 <li>Compare HMM states with continuous heatmap patterns where both are present. Agreement is a consistency check within related model outputs, not independent validation; disagreement warrants review of assumptions and parameters.</li>
 </ul>
+<h3>Quantifying a per-cell CNV burden score against the diploid reference</h3>
+<p>In addition to visual inspection of <code>infercnv.png</code> (where, for example, IDH-wildtype glioblastoma cohorts such as Darmanis et al. <code>GSE84465</code> classically exhibit coordinated chromosome 7 gain paired with chromosome 10 loss in neoplastic cells while immune/vascular reference rows stay neutral), summarize each cell's genome-wide deviation from the neutral baseline in <code>final_check@expr.data</code> and compare observation groups against the reference distribution:</p>
+<pre><code class="language-r"># Compute per-cell mean-squared CNV deviation from the neutral baseline (typically 1.0)
+expr_mat &lt;- final_check@expr.data
+neutral_center &lt;- stats::median(expr_mat[, unlist(final_check@reference_grouped_cell_indices), drop = FALSE])
+cnv_score &lt;- colMeans((expr_mat - neutral_center)^2)
+
+score_df &lt;- data.frame(
+  cell_id = names(cnv_score),
+  cnv_msq = as.numeric(cnv_score),
+  cell_type = annotations$cell_type[match(names(cnv_score), annotations$cell_id)],
+  is_reference = annotations$cell_type[match(names(cnv_score), annotations$cell_id)] %in% reference_groups
+)
+# Compare candidate malignant clusters against the 95th/99th percentile of diploid reference cells
+ref_q99 &lt;- stats::quantile(score_df$cnv_msq[score_df$is_reference], probs = 0.99, na.rm = TRUE)
+print(aggregate(cnv_msq ~ cell_type + is_reference, data = score_df, FUN = stats::median))
+message("99th percentile of diploid reference CNV score: ", round(ref_q99, 5))</code></pre>
+<p>A global CNV burden score flags high-aneuploidy clusters relative to internal normal cells, though diploid or near-diploid tumors (such as many acute leukemias or pediatric cancers driven by balanced translocations) will score near the reference distribution and require fusion, mutation, or allele-specific BAF callers (such as <code>Numbat</code> when BAMs are available).</p>
 <p>What a plausible positive result means:</p>
 <ul>
 <li>Coordinated amplification or deletion across many genes in a contiguous genomic region is consistent with a copy-number lesion and can be used to prioritise cells/clusters for DNA validation.</li>
@@ -430,8 +449,8 @@ cnv_matrix = adata.obsm["X_cnv"]
 <ul>
 <li>Possible causes:
     <ul>
-<li>Batch effects or strong cell-type-specific transcriptional programs dominate the signal.</li>
-<li>Over-smoothing window size or inappropriate denoising parameters producing spurious local excursions.</li>
+<li>Batch effects or strong cell-type-specific transcriptional programs (such as the MHC locus on chr6p or immunoglobulin loci) dominate the local signal.</li>
+<li>A smoothing window (<code>window_length</code>, default 101 genes) that is too narrow, or insufficient denoising (for example <code>sd_amplifier</code> set too low), producing short spurious local excursions.</li>
 <li>Counts were normalized prior to inferCNV (inferCNV expects raw counts).</li>
 </ul>
 </li>
@@ -476,10 +495,11 @@ cnv_matrix = adata.obsm["X_cnv"]
 </ol>
 <h2>References</h2>
 <ul>
-<li><a href="https://github.com/broadinstitute/inferCNV">inferCNV GitHub repository (Broad Institute)</a></li>
-<li><a href="https://github.com/broadinstitute/inferCNV/wiki/Running-InferCNV">Broad Institute inferCNV: running the analysis</a> and <a href="https://github.com/broadinstitute/inferCNV/wiki/Output-Files">documented outputs</a></li>
-<li><a href="https://bioconductor.org/packages/release/bioc/html/infercnv.html">Bioconductor: infercnv package and current release documentation</a></li>
-<li><a href="https://infercnvpy.readthedocs.io/en/latest/generated/infercnvpy.tl.infercnv.html">infercnvpy API reference</a> and <a href="https://infercnvpy.readthedocs.io/en/latest/infercnv.html">input preparation and method notes</a></li>
+<li>Patel AP, Tirosh I, Trombetta JJ, et al. (2014). Single-cell RNA-seq highlights intratumoral heterogeneity in primary glioblastoma. <em>Science</em>, 344(6190), 1396-1401 (origin of moving-window scRNA-seq CNV inference). <a href="https://doi.org/10.1126/science.1254257" rel="noopener" target="_blank">doi:10.1126/science.1254257</a></li>
+<li>Tirosh I, Izar B, Prakadan SM, et al. (2016). Dissecting the multicellular ecosystem of metastatic melanoma by single-cell RNA-seq. <em>Science</em>, 352(6282), 189-196. <a href="https://doi.org/10.1126/science.aad0501" rel="noopener" target="_blank">doi:10.1126/science.aad0501</a></li>
+<li>Gao T, Soldatov R, Sarkar H, et al. (2023). Haplotype-aware analysis of somatic copy number variations from single-cell transcriptomes. <em>Nature Biotechnology</em>, 41, 417-426 (<code>Numbat</code>, an allele-plus-expression alternative when aligned BAM reads are available). <a href="https://doi.org/10.1038/s41587-022-01468-y" rel="noopener" target="_blank">doi:10.1038/s41587-022-01468-y</a></li>
+<li><a href="https://github.com/broadinstitute/inferCNV">inferCNV GitHub repository (Broad Institute)</a>, <a href="https://github.com/broadinstitute/inferCNV/wiki/Running-InferCNV">Running inferCNV wiki</a>, and <a href="https://github.com/broadinstitute/inferCNV/wiki/Output-Files">documented outputs</a></li>
+<li><a href="https://bioconductor.org/packages/release/bioc/html/infercnv.html">Bioconductor infercnv package</a> and <a href="https://infercnvpy.readthedocs.io/en/latest/infercnv.html">infercnvpy documentation</a></li>
 </ul>
 <p>Record the R and inferCNV versions, genome assembly, gene identifier mapping, reference groups, and parameter values with each run.</p>
 <aside aria-labelledby="tutorial-feedback-title" class="lesson-feedback" id="tutorial-feedback"><h2 id="tutorial-feedback-title">Help improve this tutorial</h2><p>Found an error, a broken link, or a step that needs a clearer explanation? Please <a href="../contact.html">contact me</a>. Your feedback helps me keep this resource accurate and useful.</p></aside></article>
@@ -621,7 +641,7 @@ cnv_matrix = adata.obsm["X_cnv"]
 </script>
 <script src="../assets/vendor/prism/prism-1.29.0.js"></script>
 <script id="tutorial-code-data">
-window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"infercnv-copy-number-variation":{"blocks":[{"language":"bash","sha256":"e4b13125b60bf61914758683b9cce33c0aee28adb551cdbc2d46a0befb995648"},{"language":"r","sha256":"85b92e1efcf970701b8f0b9cbd1ba4093cb65c0d91862797430f29264858bc5b"},{"language":"r","sha256":"58344d02a15cb48f66ce4b685e45c359bcf97945007098a24c5e8a79a0f296e1"},{"language":"python","sha256":"03f6e1035fb2aabc2001d2b0956bc92ac49097a3515ea12db004afba8abad06b"}],"groups":[]}}};
+window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"infercnv-copy-number-variation":{"blocks":[{"language":"bash","sha256":"e4b13125b60bf61914758683b9cce33c0aee28adb551cdbc2d46a0befb995648"},{"language":"r","sha256":"85b92e1efcf970701b8f0b9cbd1ba4093cb65c0d91862797430f29264858bc5b"},{"language":"r","sha256":"58344d02a15cb48f66ce4b685e45c359bcf97945007098a24c5e8a79a0f296e1"},{"language":"python","sha256":"03f6e1035fb2aabc2001d2b0956bc92ac49097a3515ea12db004afba8abad06b"},{"language":"r","sha256":"ffa543945764053d605b0dd4729747f89c3f39255c6fef2fbe4b4c207865997f"}],"groups":[]}}};
 </script>
 <script src="../code-tabs.js?v=20261026-startup-v1"></script>
 <script src="../copy-code.js?v=20261025-r-first-v1"></script>

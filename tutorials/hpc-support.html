@@ -231,7 +231,13 @@ scontrol show job 1234567
 <li><code>seff</code>, when installed: a site-provided summary of resource use. Treat it as a convenience, not a substitute for site documentation.</li>
 <li><code>scontrol show job</code>: job details while retained and available. Historical records may no longer be available there; use <code>sacct</code> for accounting history where configured.</li>
 </ul>
-<p>For a job that is still pending or running, inspect the live queue with <code>squeue -j 1234567</code> (replace the example ID). Its state and, for a pending job, the displayed reason can guide the next check; queue visibility is transient and does not replace <code>sacct</code> for retained accounting history. Output and access can vary by site.</p>
+<p>For a job that is still pending or running, inspect the live queue with <code>squeue -j 1234567</code> (replace the example ID). Common <code>NODELIST(REASON)</code> values for <code>PENDING</code> jobs distinguish normal waiting from policy blocks:</p>
+<div aria-label="Scrollable table: Common Slurm squeue pending reasons" class="lesson-table-wrap" role="region" tabindex="0"><table><caption class="lesson-caption">Common Slurm <code>squeue</code> pending reasons</caption><thead><tr><th scope="col"><code>REASON</code></th><th scope="col">Meaning</th><th scope="col">Appropriate action</th></tr></thead><tbody>
+<tr><th scope="row"><code>Priority</code></th><td>Higher-priority jobs are ahead in the fair-share queue.</td><td>Wait normally; do not cancel and resubmit (which resets queue age).</td></tr>
+<tr><th scope="row"><code>Resources</code></th><td>Your job has high priority and is waiting for enough free CPUs/RAM/GPUs to drain on a node.</td><td>Wait normally, or check whether an oversized <code>--mem</code>/<code>--time</code> request prevents backfilling.</td></tr>
+<tr><th scope="row"><code>QOSMaxJobsPerUserLimit</code> / <code>AssocGrp*Limit</code></th><td>Your account or user has hit a concurrent-job, CPU, or memory cap.</td><td>Wait for your running jobs to finish; use job arrays with <code>%N</code> throttling for large cohorts.</td></tr>
+<tr><th scope="row"><code>ReqNodeNotAvail</code></th><td>Requested nodes are down, draining, or reserved for scheduled maintenance before your <code>--time</code> would finish.</td><td>Check cluster maintenance notices; shorten <code>--time</code> if your job genuinely finishes before the reservation window.</td></tr>
+</tbody></table></div>
 <h3>2) Inspect the job log(s)</h3>
 <p>
   Purpose: locate application errors and shell tracebacks. Slurm commonly combines output in <code>slurm-&lt;jobid&gt;.out</code> unless the script sets <code>--output</code> or <code>--error</code>. Confirm paths in the batch script; separate files are not guaranteed.
@@ -239,16 +245,15 @@ scontrol show job 1234567
 <pre><code># Show the last 200 lines of the default log file (adjust path as needed)
 tail -n 200 slurm-1234567.out
 
-# If stderr was split, check both
+# If stderr was written to a separate --error file, inspect it too
 tail -n 200 slurm-1234567.err
-tail -n 200 slurm-1234567.out
 </code></pre>
 <p>
   What to look for:
 </p>
 <ul>
 <li>Stack traces, Python/R exceptions, or explicit error messages from the tool (e.g., "FileNotFoundError" or "Segmentation fault").</li>
-<li>Messages from the job scheduler injected into the file (e.g., "Killed" or "Memory killed").</li>
+<li>Scheduler cgroup messages injected near the end of stderr, such as <code>slurmstepd: error: Detected 1 oom-kill event(s) in StepId=1234567.batch. Some of your processes may have been killed by the cgroup out-of-memory handler.</code></li>
 <li>Missing module/command messages like "command not found" or "ModuleNotFoundError".</li>
 </ul>
 <h3>3) Confirm the execution environment</h3>
@@ -266,7 +271,7 @@ module list           # lists modules currently loaded in an interactive session
 
 # In an interactive node (if permitted), check tool versions
 command -v bwa
-bwa 2&gt;&amp;1 | head -n 1  # consult your cluster/tool documentation for version syntax
+bwa 2&gt;&amp;1 | grep -m1 '^Version'  # BWA prints its usage banner and Version line to stderr
 </code></pre>
 <p>
   No files are produced; these are checks you perform interactively. If a tool is missing or the wrong version is found, adjust the batch script to load the correct module or activate the correct environment.
@@ -304,12 +309,13 @@ cat &gt; tiny_test.sbatch &lt;&lt;'SBATCH'
 #SBATCH --cpus-per-task=4
 #SBATCH --mem=4G
 #SBATCH --output=tinytest-%j.out
+set -euo pipefail
 
 module load bwa
 # This site-specific module name and the paths below must be checked before submission.
 REF="/approved/path/ref/genome.fa"
 test -r "$REF" || { echo "STOP: set REF to a readable reference"; exit 1; }
-bwa mem -t 4 "$REF" test_reads.fastq.gz &gt; tinytest.sam
+bwa mem -t "${SLURM_CPUS_PER_TASK:-1}" "$REF" test_reads.fastq.gz &gt; tinytest.sam
 SBATCH
 
 sbatch tiny_test.sbatch
@@ -323,12 +329,12 @@ sbatch tiny_test.sbatch
 <h3>sacct and seff output</h3>
 <ul>
 <li><code>OUT_OF_MEMORY</code> is direct scheduler evidence that Slurm recorded an out-of-memory event. A large <code>MaxRSS</code> relative to <code>ReqMem</code> can support a memory-limit hypothesis, but values may be missing or reported per step and do not alone prove which process exceeded a limit.</li>
-<li><code>COMPLETED</code> with <code>ExitCode 0:0</code> means the recorded job script exited successfully. If expected files are absent, check output redirection, relative paths, conditional steps, and working directory; successful status does not verify scientific correctness or output completeness.</li>
-<li>An exit code of <code>137</code> is often produced when a process is terminated by signal 9 in shell conventions, but it does not identify who sent the signal or why. Do not diagnose an out-of-memory kill from 137 alone. Check Slurm state, step records, site logs, and application output.</li>
+<li><code>COMPLETED</code> with <code>ExitCode 0:0</code> means the recorded job script exited successfully. In Slurm's <code>X:Y</code> exit-code notation, <code>X</code> is the exit status returned by the script or step and <code>Y</code> is the terminating signal number (for example <code>0:9</code> indicates kill by <code>SIGKILL</code>). If expected files are absent despite <code>0:0</code>, check output redirection, relative paths, conditional steps, and working directory; successful status does not verify scientific correctness or output completeness.</li>
+<li>An exit code of <code>137</code> (<code>128 + 9</code>) in shell output is often produced when a child process is terminated by signal 9, but it does not identify who sent the signal or why. Do not diagnose an out-of-memory kill from 137 alone. Check Slurm state, step records, cgroup log lines, and application output.</li>
 </ul>
 <h3>Log file contents</h3>
 <ul>
-<li>Tool-specific error messages (e.g., "FileNotFoundError: data/reads.fastq"): this implicates files or paths; check SLURM_SUBMIT_DIR and that all input files existed at submission time. This proves a missing-file condition if the path is absolute or the file's absence can be verified.</li>
+<li>Tool-specific error messages (e.g., <code>FileNotFoundError: data/reads.fastq</code>): this implicates files, working directory, or mount visibility; check <code>SLURM_SUBMIT_DIR</code> and confirm that all input files existed and were readable from the compute node when the job ran (not merely on a local laptop or unmounted login-only filesystem).</li>
 <li>"command not found" points to command resolution in that execution context. Check module and environment setup, executable paths, and whether the command exists on compute nodes. The message alone does not establish why it was absent.</li>
 <li>Segmentation faults or "Bus error": could be corrupted input, a software bug, or exceeding memory/stack limits. These messages require more investigation (e.g., trying a small test or a different software version).</li>
 </ul>
@@ -579,7 +585,7 @@ Steps attempted:
 </script>
 <script src="../assets/vendor/prism/prism-1.29.0.js"></script>
 <script id="tutorial-code-data">
-window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"hpc-support":{"blocks":[{"language":"bash","sha256":"689bfcd830450d97a4f8311ca3bf39d9e43ec6d476ec6e4eb1270f98ec3d1fcf"},{"language":"bash","sha256":"e9eafa6cb5574851987667f4ee0d1781cea2f57469e54c37a30a3383f4e448fe"},{"language":"bash","sha256":"35a793404fa956161b0b4e3cce142ce461f0c57e7656f95514b0ed08a206ca5f"},{"language":"bash","sha256":"cb1e3ec90fcaccb23c25d7a9d90e1d2d6d9b43281de8a02ecd8260fb2f9c5cd2"},{"language":"bash","sha256":"4405d425ca58b8c360a8b70e6df4a98ebe3b16e92e7a1b2869bf79c6aa03f2e9"},{"language":"bash","sha256":"1e52162a78703cf932cc90152a3562b422ea72d6531cdf982cdfd18cc2ccc2df"},{"language":"text","sha256":"f99b50e96e63feab6bd163634d8a1f67d944c9825bc7ef7339a002f99ad6ea7c"}],"groups":[]}}};
+window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"hpc-support":{"blocks":[{"language":"bash","sha256":"689bfcd830450d97a4f8311ca3bf39d9e43ec6d476ec6e4eb1270f98ec3d1fcf"},{"language":"bash","sha256":"04a1186c8c0e2045dc52a739fa137af3d84985d07e7e0de489f6b3b8940e5972"},{"language":"bash","sha256":"3f89ae6f7048256c59e321fb6469369474d3aa719ed2a793145c3994713a8ff9"},{"language":"bash","sha256":"1da99efb463052fae17086074025324ec3cfb9d58d0368b1ed488dc559a93cbc"},{"language":"bash","sha256":"4405d425ca58b8c360a8b70e6df4a98ebe3b16e92e7a1b2869bf79c6aa03f2e9"},{"language":"bash","sha256":"1e52162a78703cf932cc90152a3562b422ea72d6531cdf982cdfd18cc2ccc2df"},{"language":"text","sha256":"f99b50e96e63feab6bd163634d8a1f67d944c9825bc7ef7339a002f99ad6ea7c"}],"groups":[]}}};
 </script>
 <script src="../code-tabs.js?v=20261026-startup-v1"></script>
 <script src="../copy-code.js?v=20261025-r-first-v1"></script>

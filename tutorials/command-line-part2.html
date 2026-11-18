@@ -285,6 +285,13 @@ seqkit seq -n -i matching_records.fasta
 </code></pre>
 <p><strong>Worked result:</strong> the line search finds only <code>ATGCGTAA</code> on line 2; its extra context line is the next record's header, not the matching record's header. SeqKit returns <code>gene_A_unwrapped</code> and <code>gene_B_wrapped</code>. The second motif crosses <code>CCA</code> and <code>TGCGTT</code>, so it cannot appear in a single-line match.</p>
 <p><code>-s</code> searches sequence content; <code>-P</code> restricts this exercise to the forward strand. Without <code>-P</code>, SeqKit also searches the reverse complement by default. Neither a motif match nor a matching record count establishes function or experimental validity.</p>
+<h3>Quick AWK primer before steps 5 to 7</h3>
+<p>Steps 5, 6, and 7 use <code>awk</code>, a streaming field-oriented processor that reads input one line (record) at a time and runs rules of the form <code>pattern { action }</code>:</p>
+<ul>
+<li><strong>Fields and delimiters:</strong> <code>-F'\t'</code> splits each line strictly on tabs rather than arbitrary whitespace; <code>$0</code> is the whole line, <code>$1</code> is column 1, <code>$3</code> is column 3, and <code>$NF</code> is the last column on the line.</li>
+<li><strong>Line counters:</strong> <code>NR</code> is the cumulative line number across inputs (<code>NR &gt; 1</code> skips a single-line header; <code>NR % 4 == 1</code> matches lines 1, 5, 9, ...).</li>
+<li><strong>Associative arrays for exact joins:</strong> in <code>awk -F'\t' 'FILENAME == ARGV[1] {a[$1]=1; next} ($1 in a)' ids.txt data.tsv</code>, the first pass stores every ID from <code>ids.txt</code> as a hash key in <code>a</code>, and the second pass prints rows of <code>data.tsv</code> whose column 1 matches an exact key in <code>a</code> in linear time.</li>
+</ul>
 <h3>5) Convert the toy FASTQ, then challenge the assumption</h3>
 <p>The supplied valid FASTQ has exactly four lines per record. The following AWK example is a demonstration for that fixture only, not a validator or a general FASTQ parser. It copies the header and sequence while discarding quality information.</p>
 <pre id="cli-part2-fastq-toy"><code># Demonstration ONLY for the supplied valid four-line teaching fixture
@@ -360,7 +367,7 @@ awk -F'\t' 'FILENAME == ARGV[1] {a[$1]=1; next} ($1 in a)' genes_of_interest.txt
 <ul>
 <li>A list of sequence IDs matching 'ATGCG' indicates those sequences contain that motif. It does NOT imply functional significance or experimental validity; further validation and context are required.</li>
 <li>A high read count or many matching records may indicate biological signal or contamination; text processing alone cannot distinguish these possibilities.</li>
-<li>Counting headers gives the number of records in the file, but not the uniqueness of IDs. Use uniq or additional checks to test for duplicated IDs.</li>
+<li>Counting headers gives the number of records in the file, but not the uniqueness of IDs. Because <code>uniq</code> only compares adjacent lines, sort the extracted accession tokens first when checking for duplicate FASTA IDs: <code>grep '^&gt;' sequences.fasta | cut -d' ' -f1 | sort | uniq -d</code> (empty output means no exact duplicate IDs).</li>
 </ul>
 <h2>Try a variation and explain the result</h2>
 <ol><li>Change the forward-strand motif from <code>ATGCG</code> to <code>TTTT</code>. Predict the matching ID before running the record-aware command.</li><li>Repeat the checked-conversion block in a fresh practice directory with <code>input=malformed.fastq</code> and <code>output=must-not-publish.fasta</code>. Predict the exit status and whether that final file should exist.</li></ol>
@@ -378,7 +385,7 @@ awk -F'\t' 'FILENAME == ARGV[1] {a[$1]=1; next} ($1 in a)' genes_of_interest.txt
 <h3>Symptom: cut results include empty columns or wrong fields</h3>
 <ul>
 <li>Cause: different delimiter than tab. Fix: identify delimiter (use head | sed or less) and supply -d option to cut, or use awk -F to specify delimiter.</li>
-<li>Cause: header contains extra whitespace. Fix: clean headers with sed to trim whitespace: sed 's/^[ \t]*//; s/[ \t]*$//' file.</li>
+<li>Cause: header line contains leading or trailing whitespace. Fix: trim only line 1 with POSIX character classes (portable across GNU and macOS/BSD <code>sed</code>, unlike GNU-only <code>\t</code> inside brackets): <code>sed '1s/^[[:space:]]*//; 1s/[[:space:]]*$//' file</code>.</li>
 </ul>
 <h3>Symptom: awk numeric comparison fails</h3>
 <ul>

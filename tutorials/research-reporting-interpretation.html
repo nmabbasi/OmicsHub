@@ -207,8 +207,8 @@ function toggleMobileMenu() {
 <p>This is a reporting and command-pattern example, not a complete, executed RNA-seq pipeline. The sample names, accession, thresholds, and example observations below are illustrative placeholders, not measured results. Replace them with values from your analysis and verify each command against the versions installed. Paths are relative to a project directory tracked with Git.</p>
 <p>Files you should have before starting:</p>
 <ul>
-<li><code>data/raw/GSE123456_sample_sheet.csv</code>: sample metadata (sample ID, condition, file paths or accessions)</li>
-<li><code>data/raw/FASTQ/*_R1.fastq.gz</code> and <code>*_R2.fastq.gz</code> or note that FASTQ are in a public archive (GEO/SRA)</li>
+<li><code>data/raw/GSE000000_sample_sheet.csv</code>: sample metadata (sample ID, donor, condition, file paths or SRA run accessions; <code>GSE000000</code> is a synthetic placeholder)</li>
+<li><code>data/raw/FASTQ/*_R1.fastq.gz</code> and <code>*_R2.fastq.gz</code>, noting that GEO accessions host study metadata and processed matrices whereas raw FASTQ reads live in SRA/ENA (or controlled-access dbGaP/EGA for identifiable human cohorts)</li>
 <li><code>results/counts/gene_counts.tsv</code>: gene-level counts (or a script that generates it)</li>
 <li><code>results/figures/qc_plot.png</code>: example QC plot to describe</li>
 <li><code>scripts/</code>: analysis scripts (R, Python, shell)</li>
@@ -250,10 +250,10 @@ conda env export --no-builds &gt; provenance/environment.yaml
 </ul>
 <p><strong>Check before continuing:</strong> inspect <code>provenance/environment.yaml</code> and confirm it names the intended environment and packages; compare the recorded package versions with those used for the analysis. A successful export documents an environment specification, not that it can be recreated or that the analysis is validated. Stop if you cannot identify the environment that generated the result, and resolve that provenance gap before claiming reproducibility. For R projects, record the actual output of <code>sessionInfo()</code> or the lockfile used rather than assuming these conda commands capture R dependencies.</p>
 <h3>3. Reproducible data-access statement</h3>
-<p>Record where the raw data were obtained, the exact accession identifiers, and the download date. If the data are public (recommended), include the accession and a checksum for the downloaded files. Example text you can paste into a methods paragraph:</p>
-<pre><code>Data: Raw sequencing files for the 12 tumor/normal pairs were downloaded from GEO (GSE123456) on 2026-06-01. Local copies are stored in data/raw/; checksums recorded in provenance/checksums.txt.</code></pre>
+<p>Record where both processed metadata and raw reads were obtained, the exact series and run accessions, and the retrieval date (use a synthetic placeholder like <code>GSE000000</code> / <code>PRJNA000000</code> only while drafting):</p>
+<pre><code>Data availability: Study metadata were retrieved from NCBI GEO (placeholder series GSE000000) and paired-end raw FASTQ reads for the 12 tumor/normal pairs from NCBI SRA (placeholder BioProject PRJNA000000; controlled human clinical cohorts instead cite dbGaP phs000000 or EGA EGAS00000000000) on 2026-06-01. SHA-256 checksums are recorded in provenance/checksums.txt.</code></pre>
 <h3>4. Example pipeline steps (alignment and counts): reproducible commands</h3>
-<p>This example uses STAR for alignment and featureCounts for gene counting, counting paired-end fragments rather than individual mates. It assumes paired FASTQ files and a STAR index already built from the same GRCh38 FASTA and GTF used for counting. The commands below only record reference filenames; they do not build or validate that index. STAR alignment and featureCounts options depend on data design and software version, so treat this as a command sketch and inspect each tool's logs and output before analysis.</p>
+<p>This example uses STAR for alignment and featureCounts for gene counting, counting paired-end fragments (<code>-p --countReadPairs</code>) with an explicit library strandedness setting (<code>-s 2</code> for standard Illumina dUTP reverse-stranded RNA-seq; use <code>-s 0</code> for unstranded or <code>-s 1</code> for forward-stranded after confirming with <code>RSeQC infer_experiment.py</code> or STAR <code>ReadsPerGene.out.tab</code>):</p>
 <pre><code># index directory (performed once; record version of genome FASTA and GTF)
 # do NOT overwrite an existing index used previously unless you update the methods
 mkdir -p reference/GRCh38/index provenance results/alignment results/counts
@@ -273,27 +273,29 @@ STAR \
   --outFileNamePrefix results/alignment/SampleA. \
   --outSAMtype BAM SortedByCoordinate
 
-# Produce gene counts with featureCounts
-featureCounts -T 8 -p --countReadPairs \
+# Produce gene counts with featureCounts (-s 2 = reverse-stranded; verify for your kit)
+featureCounts -T 8 -p --countReadPairs -s 2 \
   -a reference/GRCh38/gencode.v46.annotation.gtf \
   -o results/counts/gene_counts.tsv \
   results/alignment/*.bam
 </code></pre>
 <p>What these commands produce:</p>
 <ul>
-<li>With this prefix, STAR writes <code>results/alignment/SampleA.Aligned.sortedByCoord.out.bam</code> for this sample, alongside log and other output files. Check the STAR log and confirm the BAM exists before counting.</li>
-<li><code>results/counts/gene_counts.tsv</code>: featureCounts table with annotation columns and one count column per input BAM; the summary is written separately as <code>gene_counts.tsv.summary</code>. A single BAM gives a single sample column, not a multi-sample matrix.</li>
+<li>With this prefix, STAR writes <code>results/alignment/SampleA.Aligned.sortedByCoord.out.bam</code> for this sample, alongside <code>SampleA.Log.final.out</code>. Check uniquely mapped % and confirm the BAM exists before counting.</li>
+<li><code>results/counts/gene_counts.tsv</code>: featureCounts table with 6 annotation columns and one count column per input BAM; assignment totals are written separately in <code>gene_counts.tsv.summary</code>.</li>
 </ul>
-<h3>5. Differential expression (DE) with explicit parameters</h3>
-<p>Use an analysis script and record its exact revision, inputs, design formula, contrasts, filtering, and R/package versions. This invocation assumes the named script exists and accepts these options; it is a project-specific interface, not a built-in DESeq2 command. `tee` captures the pipeline text; add `set -o pipefail` in a bash script if you need the shell to propagate an upstream non-zero exit status.</p>
+<h3>5. Differential expression (DE) with explicit parameters and manuscript Methods translation</h3>
+<p>Use an analysis script and record its exact revision, inputs, design formula, contrasts, filtering, and R/package versions. Note the statistical distinction between filtering on unshrunken fold change after testing (<code>padj &lt; 0.05</code> and <code>|log2FC| &gt; 1</code> against the point null <code>H0: log2FC = 0</code>) versus formally testing against a non-zero effect threshold with <code>DESeq2::results(dds, lfcThreshold = 1)</code>, and prefer empirical-Bayes shrunken fold changes (<code>lfcShrink(dds, coef = ..., type = "apeglm")</code>) when ranking genes or drawing volcano/MA plots:</p>
 <pre><code># run differential expression (DE) script and capture session info
 set -o pipefail
 Rscript scripts/de_analysis/run_de_pipeline.R \
   --counts results/counts/gene_counts.tsv \
-  --meta data/raw/GSE123456_sample_sheet.csv \
+  --meta data/raw/GSE000000_sample_sheet.csv \
   --outdir results/de \
   2&gt;&amp;1 | tee provenance/run_de_pipeline.log
 </code></pre>
+<p><strong>Filled-in manuscript Methods paragraph translated from Steps 4 and 5 (illustrative template):</strong></p>
+<blockquote><p>Paired-end RNA-seq reads (<em>n</em> = 12 paired tumor and adjacent-normal samples from 6 donors; placeholder BioProject PRJNA000000) were aligned to the human GRCh38 primary assembly (GENCODE release 46 comprehensive annotation) using STAR (v2.7.11b; default parameters, coordinate-sorted BAM output). Gene-level fragment counts were quantified with Subread featureCounts (v2.0.6; <code>-p --countReadPairs -s 2</code> after verifying reverse-stranded library orientation with RSeQC <code>infer_experiment.py</code>). Differential expression between tumor and matched normal tissue was tested in R (v4.3.3) with DESeq2 (v1.42.0) using the paired additive negative-binomial GLM <code>~ donor + condition</code> after retaining genes with &gt;= 10 total counts across at least 6 samples. P-values from the Wald test against <code>log2FC = 0</code> were adjusted via the Benjamini-Hochberg procedure (<code>FDR &lt; 0.05</code>), and effect sizes for visualization and gene ranking were shrunken with <code>apeglm</code> (v1.24.0). Exact scripts and environment manifests are archived at commit <code>&lt;7-char-git-sha&gt;</code>.</p></blockquote>
 <p>Inside <code>scripts/de_analysis/run_de_pipeline.R</code> the script should:</p>
 <ul>
 <li>explicitly set the R package versions used (print <code>sessionInfo()</code>)</li>
@@ -378,11 +380,11 @@ Rscript scripts/de_analysis/run_de_pipeline.R \
 <!-- /Verified analysis outputs -->
 <h2>References</h2>
 <ul>
-<li><a href="https://www.ncbi.nlm.nih.gov/geo/">GEO: Gene Expression Omnibus</a>, a public repository for high-throughput functional genomics data.</li>
-<li><a href="https://bioconductor.org/packages/release/bioc/html/DESeq2.html">DESeq2 (Bioconductor)</a>: commonly used R package for differential expression analysis and guidance on model specification.</li>
-<li><a href="https://www.encodeproject.org/">ENCODE Project</a>: functional-genomics experiments, data standards, and assay-specific guidelines; this is distinct from the MINSEQE reporting standard.</li>
-<li><a href="https://gatk.broadinstitute.org/">GATK (Broad Institute)</a>: best-practice workflows and documentation relevant to variant calling reproducibility.</li>
-<li><a href="https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1003285">Sandve et al., “Ten Simple Rules for Reproducible Computational Research” (PLOS Computational Biology)</a>, with practical principles that apply across omics analyses.</li>
+<li>Wilkinson MD, Dumontier M, Aalbersberg IJJ, et al. (2016). The FAIR Guiding Principles for scientific data management and stewardship. <em>Scientific Data</em>, 3, 160018. <a href="https://doi.org/10.1038/sdata.2016.18" rel="noopener" target="_blank">doi:10.1038/sdata.2016.18</a></li>
+<li>Sandve GK, Nekrutenko A, Taylor J, Hovig E (2013). Ten Simple Rules for Reproducible Computational Research. <em>PLOS Computational Biology</em>, 9(10), e1003285. <a href="https://doi.org/10.1371/journal.pcbi.1003285" rel="noopener" target="_blank">doi:10.1371/journal.pcbi.1003285</a></li>
+<li><a href="https://fged.org/projects/minseqe/" rel="noopener" target="_blank">MINSEQE (Minimum Information about a high-throughput Nucleotide SEQuencing Experiment, FGED Society)</a>: community standard for metadata required alongside public sequencing submissions.</li>
+<li><a href="https://www.ncbi.nlm.nih.gov/geo/">GEO: Gene Expression Omnibus</a> and <a href="https://www.ncbi.nlm.nih.gov/sra">NCBI Sequence Read Archive (SRA)</a> for processed matrices, sample metadata, and raw sequencing reads.</li>
+<li><a href="https://bioconductor.org/packages/release/bioc/html/DESeq2.html">DESeq2 (Bioconductor)</a>: differential expression modeling, thresholded hypothesis tests (<code>lfcThreshold</code>), and empirical-Bayes fold-change shrinkage (<code>lfcShrink</code>).</li>
 </ul>
 <aside aria-labelledby="tutorial-feedback-title" class="lesson-feedback" id="tutorial-feedback"><h2 id="tutorial-feedback-title">Help improve this tutorial</h2><p>Found an error, a broken link, or a step that needs a clearer explanation? Please <a href="../contact.html">contact me</a>. Your feedback helps me keep this resource accurate and useful.</p></aside></article>
 <section class="mt-12 mb-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-100">
@@ -522,7 +524,7 @@ Rscript scripts/de_analysis/run_de_pipeline.R \
 </script>
 <script src="../assets/vendor/prism/prism-1.29.0.js"></script>
 <script id="tutorial-code-data">
-window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"research-reporting-interpretation":{"blocks":[{"language":"bash","sha256":"bbda533585b8b68cc05ef66724745bc1471cc61e5da3c0d5e5bfda5f7e3f2992"},{"language":"bash","sha256":"3766dcd4fd9cc9753fadfbdbfb0854fea80a1443b17491e5889e4916e6f1e7d8"},{"language":"text","sha256":"e72f6fb594e2d6efb34880eb2206a5cc4b389584d27cadb59f09cb24e903c8db"},{"language":"bash","sha256":"c8860868fe5e09b30a311c3f6b46ebf0dd3f982e0135f61362d571b1de891bcc"},{"language":"bash","sha256":"4be044ed90b770e07ac1795fdfb7edfebf136846ff22913ed63538e39f003679"},{"language":"text","sha256":"c00c949d67b7e7e94c0e36853932cbced1fad40fd44efd38677f5340012e3bfe"}],"groups":[]}}};
+window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"research-reporting-interpretation":{"blocks":[{"language":"bash","sha256":"bbda533585b8b68cc05ef66724745bc1471cc61e5da3c0d5e5bfda5f7e3f2992"},{"language":"bash","sha256":"3766dcd4fd9cc9753fadfbdbfb0854fea80a1443b17491e5889e4916e6f1e7d8"},{"language":"text","sha256":"01d78fc26f48df5e7cbf422931b4c4cfb701f8cb10f6ebbecf6127d09e460b39"},{"language":"bash","sha256":"7b43365f52cd01ac64ba59abeeae74a37fe7bff36578e3d0bbf830854644d8e2"},{"language":"bash","sha256":"8f22267898dd34ae6565f7ed829294920ffe4615cb56797a3919bfa106fec728"},{"language":"text","sha256":"c00c949d67b7e7e94c0e36853932cbced1fad40fd44efd38677f5340012e3bfe"}],"groups":[]}}};
 </script>
 <script src="../code-tabs.js?v=20261026-startup-v1"></script>
 <script src="../copy-code.js?v=20261025-r-first-v1"></script>

@@ -252,26 +252,27 @@ cd ..
 </code></pre>
 <p>FastQC writes a report for each input file. MultiQC searches the supplied directory for recognized report files and compiles a combined report; review sample names and modules to ensure it found the intended inputs.</p>
 <h3>3. Trim only when a report supports it</h3>
-<p>Fastp can trim adapters and apply other filters, so this example is not a neutral “adapter-only” operation. Inspect the reports and defaults for your version, justify each change, and retain the original FASTQ. This command writes a new paired output and reports; it does not overwrite raw files.</p>
+<p>By default, <code>fastp</code> enables quality filtering (Phred &lt; 15 in &gt;40% of bases), N-base filtering (&gt;5 Ns), and minimum-length filtering (15 bp) in addition to adapter trimming; pass <code>--disable_quality_filtering</code> if you strictly want adapter-only removal. Retain the original FASTQ in <code>raw/</code> and write trimmed reads and reports to separate paths:</p>
 <pre><code>set -euo pipefail
 # Input: raw/*.fastq.gz
 # Output: trimmed/sample_R1.trim.fastq.gz, trimmed/sample_R2.trim.fastq.gz
 mkdir -p trimmed qc
 fastp -i raw/sample_R1.fastq.gz -I raw/sample_R2.fastq.gz \
       -o trimmed/sample_R1.trim.fastq.gz -O trimmed/sample_R2.trim.fastq.gz \
-      --detect_adapter_for_pe --trim_front1 0 --trim_tail1 0 \
+      --detect_adapter_for_pe \
       --thread 4 --html qc/fastp_report.html --json qc/fastp_report.json
 </code></pre>
-<p>Note: adapt parameters to your platform and chemistry. The HTML and JSON reports are written to <code>qc/fastp_report.html</code> and <code>qc/fastp_report.json</code>, respectively; keep these alongside the other QC reports.</p>
+<p>Note: adapt parameters to your platform and chemistry (for NovaSeq/NextSeq two-color instruments, consider <code>--trim_poly_g</code>). Keep <code>qc/fastp_report.html</code> and <code>qc/fastp_report.json</code> alongside MultiQC.</p>
 <h3>4. Align, sort, and inspect the BAM</h3>
-<p>Align reads with your chosen aligner (bwa-mem2 for short-read DNA, STAR for RNA-seq, minimap2 for long reads). Here is a short-read DNA example using bwa-mem2 followed by samtools flagstat and Picard MarkDuplicates.</p>
+<p>Align reads with your chosen aligner (<code>bwa-mem2</code> for short-read DNA, <code>STAR</code> for RNA-seq, <code>minimap2</code> for long reads). Include an explicit <code>@RG</code> read-group header with <code>ID</code>, <code>SM</code> (biological sample identifier), <code>LB</code> (library), and <code>PL</code> so Picard MarkDuplicates, GATK, and sample-swap tools track provenance accurately:</p>
 <p>The indexing line writes companion files beside the FASTA and is needed only once for that exact reference and aligner version. Use a writable reference copy, or skip that line when matching bwa-mem2 indexes have already been prepared. A FASTA <code>.fai</code> alone is not a bwa-mem2 index.</p>
 <pre><code>set -euo pipefail
 # Inputs: reference/genome.fa and trimmed/*.fastq.gz
 # Outputs: indexed BAMs, flagstat/idxstats logs, duplicate metrics
 mkdir -p aligned qc
 bwa-mem2 index reference/genome.fa
-bwa-mem2 mem -t 8 reference/genome.fa \
+bwa-mem2 mem -t 8 -R '@RG\tID:sample_L1\tSM:sample\tPL:ILLUMINA\tLB:lib1' \
+    reference/genome.fa \
     trimmed/sample_R1.trim.fastq.gz trimmed/sample_R2.trim.fastq.gz \
     | samtools view -b -o aligned/sample.unsorted.bam -
 
@@ -286,7 +287,15 @@ samtools idxstats aligned/sample.bam 2&gt;&amp;1 | tee qc/alignment_idxstats.txt
 picard MarkDuplicates I=aligned/sample.bam O=aligned/sample.dedup.bam \
       M=qc/picard_markdup_metrics.txt CREATE_INDEX=true
 </code></pre>
-<p>flagstat summarizes alignment flag categories, including mapped reads, proper pairs, and records marked duplicate; interpret categories in light of the tool and input. idxstats reports counts by reference sequence after indexing. Picard MarkDuplicates writes metrics and marks duplicates in a new BAM. These outputs can flag questions for follow-up, but unusual contig counts alone do not prove contamination.</p>
+<p><code>flagstat</code> summarizes alignment flag categories, including mapped reads, proper pairs, and records marked duplicate; <code>idxstats</code> reports counts per contig after indexing. Unusual mitochondrial or unplaced-contig fractions warrant follow-up, though contig counts alone do not prove cross-species contamination.</p>
+<h3>4b. Bulk RNA-seq alignment and strandedness QC</h3>
+<p>For bulk RNA-seq aligned with <code>STAR</code> and quantified with <code>featureCounts</code> or <code>Salmon</code>, check four RNA-specific diagnostics aggregated by MultiQC before running differential expression:</p>
+<ul>
+<li><strong><code>STAR Log.final.out</code>:</strong> inspect <code>Uniquely mapped reads %</code> (typically &gt;75-85% for intact mammalian poly(A) libraries), <code>% of reads mapped to multiple loci</code> (elevated by rRNA carry-over), and <code>% of reads unmapped: too short</code> (often adapter dimers or degraded FFPE fragments).</li>
+<li><strong><code>featureCounts .summary</code>:</strong> check the <code>Assigned</code> fraction versus <code>Unassigned_NoFeatures</code>. If <code>Assigned</code> drops near 5-10% while genomic mapping is &gt;85% (or drops to ~50% in stranded mode), verify library strandedness or intronic pre-mRNA enrichment.</li>
+<li><strong>Library strandedness (<code>RSeQC infer_experiment.py</code>):</strong> run <code>infer_experiment.py -r genes.bed -i aligned/sample.bam</code> to confirm whether reads come from an unstranded (<code>~0.5 / 0.5</code>), forward-stranded, or standard Illumina dUTP reverse-stranded (<code>1+-,1-+,2++,2--</code> &gt; 0.90 -&gt; <code>featureCounts -s 2</code>) protocol.</li>
+<li><strong>3' transcript coverage bias and rRNA fraction (<code>Qualimap rnaseq</code> / <code>RSeQC geneBody_coverage.py</code>):</strong> strong 3' skew signals RNA degradation (low RIN) and can confound comparisons when degradation differs systematically between study groups.</li>
+</ul>
 <h3>5. Check depth where the assay needs it</h3>
 <pre id="qc-depth-stage"><code>set -euo pipefail
 # Input: aligned/sample.dedup.bam
@@ -309,6 +318,7 @@ bedtools coverage -a targets/regions.bed -b aligned/sample.dedup.bam &gt; qc/tar
 # Output: qc/kraken2_report.txt
 mkdir -p qc
 kraken2 --db /path/to/kraken2_db --threads 4 --report qc/kraken2_report.txt \
+        --output - \
         --paired trimmed/sample_R1.trim.fastq.gz trimmed/sample_R2.trim.fastq.gz
 
 # VerifyBamID2: human BAM, matching reference FASTA and SVD resource panel.
@@ -325,7 +335,7 @@ mkdir -p qc/verifybamid2
 )
 # Outputs: qc/verifybamid2/result.selfSM and result.Ancestry, plus the log.
 </code></pre>
-<p>VerifyBamID2 is not the legacy <code>verifyBamID --bam --vcf</code> interface. Obtain a compatible SVD resource panel and check assembly and contig naming against the BAM and FASTA before running it. Its default result files are written in the working directory, so use a separate output folder for every sample. Inspect <code>FREEMIX</code> in <code>result.selfSM</code>; a contamination estimate alone does not identify a swapped sample or establish sample identity. This is a documented command template, not an executed contamination analysis.</p>
+<p>Passing <code>--output -</code> (or <code>/dev/null</code> depending on your Kraken2 build) suppresses multi-gigabyte per-read classification lines on stdout while preserving the taxon summary in <code>--report qc/kraken2_report.txt</code>. VerifyBamID2 is distinct from the legacy <code>verifyBamID --bam --vcf</code> CLI: obtain a genome-build-matched SVD panel and run each sample in its own subdirectory. In <code>result.selfSM</code>, <code>FREEMIX</code> estimates the cross-sample DNA contamination fraction: compare it against the cohort distribution and a pre-specified study limit (small non-zero estimates such as 0.001-0.005 can reflect reference-panel mismatch, whereas values &gt;0.02-0.03 typically warrant contamination review; pair with genotype concordance such as <code>somalier</code> or <code>peddy</code> to catch clean 100% sample swaps, which leave <code>FREEMIX</code> near zero). This is a documented command template, not an executed contamination analysis.</p>
 <h3>7) Single-cell specific QC</h3>
 <p>Start from a count matrix produced by your pipeline (for example, Cell Ranger or STARsolo). The R route below is the primary example; it reads a 10x Matrix Market directory, calculates per-cell features, counts and mitochondrial fraction, and draws distributions. The input is not included. Confirm feature naming and organism before using the mitochondrial pattern.</p>
 <h3>R workflow: Seurat QC metrics</h3>
@@ -449,21 +459,17 @@ SYNTH_A	fastp 0.23.2; samtools 1.17	reads=1,000,000; mapped=62%; proper_pairs=58
 <details class="lesson-results__details"><summary>Run details and limits</summary><p>The exact R block ran with R 4.3.3, Seurat 5.0.1, SeuratObject 5.0.1, Matrix 1.6.5, and ggplot2 3.4.4 on Linux. It read 32,738 features and all 2,700 supplied cells without additional sampling or filtering.</p><p>The documented human <code>^MT-</code> feature pattern was found, the three metric summaries printed, and the PNG was saved. This checks only the prepared-input R component. Raw-read QC, bulk assays, other species, and the Python alternative were not executed by this run. <a href="../files/tutorial-examples/execution-evidence/2026-10-25.json">Inspect the execution evidence</a>.</p></details>
 </section>
 <!-- /Verified analysis outputs -->
-<h2>Official tool documentation</h2>
+<h2>References and official tool documentation</h2>
 <ul>
-<li><a href="https://www.bioinformatics.babraham.ac.uk/projects/fastqc/">FastQC: Babraham Bioinformatics</a></li>
-<li><a href="https://docs.seqera.io/multiqc">MultiQC documentation</a></li>
-<li><a href="https://github.com/OpenGene/fastp">fastp documentation</a></li>
-<li><a href="https://www.htslib.org/doc/samtools.html">SAMtools documentation</a></li>
-<li><a href="https://www.htslib.org/doc/samtools-depth.html">SAMtools depth: denominator and filtering options</a></li>
-<li><a href="https://github.com/Griffan/VerifyBamID">VerifyBamID2: reference-panel prerequisites and command interface</a></li>
-<li><a href="https://github.com/snakemake/snakemake-wrappers/blob/master/bio/verifybamid/verifybamid2/wrapper.py">VerifyBamID2 wrapper: executable name and default result files</a></li>
-<li><a href="https://www.gnu.org/software/coreutils/manual/html_node/sha2-utilities.html">GNU SHA checksum documentation</a></li>
-<li><a href="https://scanpy.readthedocs.io/en/stable/api/scanpy.pp.calculate_qc_metrics.html">Scanpy QC metrics API</a></li>
-<li><a href="https://satijalab.org/seurat/reference/percentagefeatureset">Seurat PercentageFeatureSet reference</a></li>
-<li><a href="https://broadinstitute.github.io/picard/">Picard tools documentation</a></li>
-<li><a href="https://ccb.jhu.edu/software/kraken2/">Kraken2: ultrafast metagenomic sequence classification</a></li>
-<li><a href="https://scanpy.readthedocs.io/">Scanpy documentation (single-cell analysis in Python)</a></li>
+<li>Chen S, Zhou Y, Chen Y, Gu J (2018). fastp: an ultra-fast all-in-one FASTQ preprocessor. <em>Bioinformatics</em>, 34(17), i884-i890. <a href="https://doi.org/10.1093/bioinformatics/bty560" rel="noopener" target="_blank">doi:10.1093/bioinformatics/bty560</a></li>
+<li>Ewels P, Magnusson M, Lundin S, Käller M (2016). MultiQC: summarize analysis results for multiple tools and samples in a single report. <em>Bioinformatics</em>, 32(19), 3047-3048. <a href="https://doi.org/10.1093/bioinformatics/btw354" rel="noopener" target="_blank">doi:10.1093/bioinformatics/btw354</a></li>
+<li>Wood DE, Lu J, Langmead B (2019). Improved metagenomic analysis with Kraken 2. <em>Genome Biology</em>, 20, 257. <a href="https://doi.org/10.1186/s13059-019-1891-0" rel="noopener" target="_blank">doi:10.1186/s13059-019-1891-0</a></li>
+<li>Zhang F, Flickinger M, Taliun SAG, et al. (2020). Ancestry-agnostic estimation of DNA sample contamination from sequence reads. <em>Genome Research</em>, 30(2), 185-194 (VerifyBamID2). <a href="https://doi.org/10.1101/gr.246934.118" rel="noopener" target="_blank">doi:10.1101/gr.246934.118</a></li>
+<li><a href="https://www.bioinformatics.babraham.ac.uk/projects/fastqc/">FastQC: Babraham Bioinformatics</a>, <a href="https://docs.seqera.io/multiqc">MultiQC documentation</a>, and <a href="https://github.com/OpenGene/fastp">fastp documentation</a></li>
+<li><a href="https://www.htslib.org/doc/samtools.html">SAMtools documentation</a> and <a href="https://www.htslib.org/doc/samtools-depth.html">SAMtools depth denominator and filtering options</a></li>
+<li><a href="https://github.com/Griffan/VerifyBamID">VerifyBamID2 repository</a> and <a href="https://github.com/snakemake/snakemake-wrappers/blob/master/bio/verifybamid/verifybamid2/wrapper.py">Snakemake VerifyBamID2 wrapper</a></li>
+<li><a href="https://www.gnu.org/software/coreutils/manual/html_node/sha2-utilities.html">GNU SHA checksum documentation</a> and <a href="https://broadinstitute.github.io/picard/">Picard tools documentation</a></li>
+<li><a href="https://satijalab.org/seurat/reference/percentagefeatureset">Seurat PercentageFeatureSet reference</a> and <a href="https://scanpy.readthedocs.io/en/stable/api/scanpy.pp.calculate_qc_metrics.html">Scanpy QC metrics API</a></li>
 </ul>
 <aside aria-labelledby="tutorial-feedback-title" class="lesson-feedback" id="tutorial-feedback"><h2 id="tutorial-feedback-title">Help improve this tutorial</h2><p>Found an error, a broken link, or a step that needs a clearer explanation? Please <a href="../contact.html">contact me</a>. Your feedback helps me keep this resource accurate and useful.</p></aside></article>
 <section class="mt-12 mb-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-100">
@@ -605,7 +611,7 @@ SYNTH_A	fastp 0.23.2; samtools 1.17	reads=1,000,000; mapped=62%; proper_pairs=58
 </script>
 <script src="../assets/vendor/prism/prism-1.29.0.js"></script>
 <script id="tutorial-code-data">
-window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"quality-control-fundamentals":{"blocks":[{"language":"bash","sha256":"b55ceb4d04bd154ce16974feb9a851488c0f1b104afd1b54993bc77ae6c00a60"},{"language":"bash","sha256":"6bc47fd4bca2fabad158da97a1d9357e8e2d7aadaa57e146ece6acae928ad893"},{"language":"bash","sha256":"d9108f1af521c30aeceadff9c184e2c06768af7502ccd65682af9e36b8b3ccf1"},{"language":"bash","sha256":"f873ce22e03a060527ab660fa488d3161f02814c97e78acef923e43284bc0079"},{"language":"bash","sha256":"5c63be6088ecfbd2ae6f73d535ec5ffa74adb2eefcb6bc4f8e7e326ff6e0bd8d"},{"language":"bash","sha256":"a5a47a3949819e20a7a78e66ed67aaef6f65dc570d046f046b60794d86eca419"},{"language":"r","sha256":"93aa0bee173e2cc0806565ca5fa975786bf62e53421df5c81f3a8024c310847a"},{"language":"python","sha256":"3dd0245816610f9000b1e2cebda15f05492da693e98ba094956a1c430d97af63"},{"language":"text","sha256":"ab6fa40dc8b97c3958bcb0e75d467a64ff84cfa2c2c3ee4d85b43ab7ce688e86"}],"groups":[{"title":"Single-cell QC metrics","panels":[{"start":44,"end":45,"language":"r","label":"R \u00b7 Seurat"},{"start":46,"end":47,"language":"python","label":"Python \u00b7 Scanpy"}],"members":[{"index":44,"tag":"h3","sha256":"c73f9ab0b47487aaa027aaa29f3ec56ac5248ec6a477a2d723955f9ec3c49239"},{"index":45,"tag":"pre","sha256":"93aa0bee173e2cc0806565ca5fa975786bf62e53421df5c81f3a8024c310847a"},{"index":46,"tag":"h3","sha256":"17db763575e495fa10ec732556db7dfbf2318d3fe6c439f5a2292aaa8f5c090e"},{"index":47,"tag":"pre","sha256":"3dd0245816610f9000b1e2cebda15f05492da693e98ba094956a1c430d97af63"}],"tabOrder":["r","python"]}]}}};
+window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"quality-control-fundamentals":{"blocks":[{"language":"bash","sha256":"b55ceb4d04bd154ce16974feb9a851488c0f1b104afd1b54993bc77ae6c00a60"},{"language":"bash","sha256":"6bc47fd4bca2fabad158da97a1d9357e8e2d7aadaa57e146ece6acae928ad893"},{"language":"bash","sha256":"d249b5c39a1d2bc020c1189aaaed3c31e6cba037fdada2f291c193d5a5f77697"},{"language":"bash","sha256":"e8897a3277d1e071f947cce0ecb0218010e9f4c333b54d4c8949c2565413af92"},{"language":"bash","sha256":"5c63be6088ecfbd2ae6f73d535ec5ffa74adb2eefcb6bc4f8e7e326ff6e0bd8d"},{"language":"bash","sha256":"b9a74dafc973c0e1b69cbfc8ccd6361ee8ec41a4e29ea669d6357f34c8c2756b"},{"language":"r","sha256":"93aa0bee173e2cc0806565ca5fa975786bf62e53421df5c81f3a8024c310847a"},{"language":"python","sha256":"3dd0245816610f9000b1e2cebda15f05492da693e98ba094956a1c430d97af63"},{"language":"text","sha256":"ab6fa40dc8b97c3958bcb0e75d467a64ff84cfa2c2c3ee4d85b43ab7ce688e86"}],"groups":[{"title":"Single-cell QC metrics","panels":[{"start":47,"end":48,"language":"r","label":"R \u00b7 Seurat"},{"start":49,"end":50,"language":"python","label":"Python \u00b7 Scanpy"}],"members":[{"index":47,"tag":"h3","sha256":"c73f9ab0b47487aaa027aaa29f3ec56ac5248ec6a477a2d723955f9ec3c49239"},{"index":48,"tag":"pre","sha256":"93aa0bee173e2cc0806565ca5fa975786bf62e53421df5c81f3a8024c310847a"},{"index":49,"tag":"h3","sha256":"17db763575e495fa10ec732556db7dfbf2318d3fe6c439f5a2292aaa8f5c090e"},{"index":50,"tag":"pre","sha256":"3dd0245816610f9000b1e2cebda15f05492da693e98ba094956a1c430d97af63"}],"tabOrder":["r","python"]}]}}};
 </script>
 <script src="../code-tabs.js?v=20261026-startup-v1"></script>
 <script src="../copy-code.js?v=20261025-r-first-v1"></script>

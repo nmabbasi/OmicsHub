@@ -206,12 +206,12 @@ Phylogenetic analysis reconstructs relationships among genes, proteins, or organ
 Overview: work in a project directory containing raw sequences, intermediate files, configuration files, and results. These examples use paths relative to the project directory. Supply homologous, unaligned sequences in a single FASTA file; records should represent the same locus or a defensible set of orthologous characters, not merely sequences with similar names. Create the results directory before analysis. Validate program flags against installed versions.
 </p>
 <h3>1) Prepare a project folder and raw input</h3>
-<pre><code># Create a project directory (safe operation)
+<pre><code># Create a project directory (safe operation; subshell avoids closing an interactive SSH session)
 mkdir -p ~/phylogeny-project/results
 cd ~/phylogeny-project
 
 # Place your own unaligned FASTA file here; no example biological data are supplied.
-test -s sequences.fasta &amp;&amp; echo "Input file present" || { echo "STOP: add a non-empty sequences.fasta" &gt;&amp;2; exit 1; }</code></pre>
+( test -s sequences.fasta &amp;&amp; echo "Input file present" || { echo "STOP: add a non-empty sequences.fasta" &gt;&amp;2; exit 1; } )</code></pre>
 <p>Use one of the equivalent structural preflight routes below on <code>sequences.fasta</code>. Both require at least three records, unique first-token IDs, and non-empty sequences. They do not determine whether records are homologous, the right orthologs, or the right biological sequence type. The input is your unaligned FASTA file; no R package is required for the primary check.</p>
 <h3 id="phylo-raw-fasta-r">R · base R (primary route)</h3>
 <pre><code>read_fasta &lt;- function(path) {
@@ -219,7 +219,7 @@ test -s sequences.fasta &amp;&amp; echo "Input file present" || { echo "STOP: ad
   records &lt;- list()
   for (line in trimws(lines)) {
     if (!nzchar(line)) next
-    if (startsWith(line, ">")) {
+    if (startsWith(line, "&gt;")) {
       header &lt;- trimws(sub("^&gt;", "", line))
       tokens &lt;- strsplit(header, "\\s+")[[1]]
       id &lt;- if (length(tokens)) tokens[[1]] else ""
@@ -251,10 +251,11 @@ for line in Path("sequences.fasta").read_text().splitlines():
     line = line.strip()
     if not line:
         continue
-    if line.startswith(">"):
-        records.append([line[1:].split()[0], ""])
-        if not records[-1][0]:
+    if line.startswith("&gt;"):
+        parts = line[1:].split()
+        if not parts:
             raise SystemExit("STOP: empty FASTA identifier")
+        records.append([parts[0], ""])
     elif not records:
         raise SystemExit("STOP: sequence text before first FASTA header")
     else:
@@ -332,46 +333,29 @@ print(f"Alignment structure OK: {len(seqs)} records x {next(iter(lengths))} colu
 <li>Are there long stretches of gaps or sequences with excessive missing data?</li>
 <li>Has the alignment preserved expected conserved motifs (if known)?</li>
 </ul>
-<h3>5) Build a tree with MEGA-CC (command-line MEGA)</h3>
-<p>
-MEGA-CC analyses use a MEGA analysis-options (.mao) file. Create and validate the settings with the matching MEGA version and consult its current command-line documentation before running: the example below is a template, not a version-independent contract.
-</p>
-<pre><code># Example file locations:
-# results/aligned_sequences.fasta  (input alignment)
-# ML_Tree_Settings.mao             (MEGA options file you prepared)
+<h3>4b) Optional alignment trimming (<code>ClipKIT</code> or <code>trimAl</code>) and when trimming hurts</h3>
+<p>Divergent untranslated flanks or hypervariable loops can introduce non-homologous gap columns into a multiple sequence alignment, particularly in deep phylogenomic datasets. Modern alignment trimmers such as <strong>ClipKIT</strong> (Steenwyk et al., 2020, retaining parsimony-informative sites while excising gappy columns) or <strong>trimAl</strong> (<code>-automated1</code> / <code>-gt 0.8</code>) provide reproducible column filtering:</p>
+<pre><code># Optional column trimming (check retained alignment length before and after!)
+clipkit results/aligned_sequences.fasta -m smart-gap -o results/aligned_trimmed.fasta</code></pre>
+<p><strong>Do not trim reflexively on short single-locus alignments:</strong> Tan et al. (2015) demonstrated across large empirical benchmarks that aggressive automated trimming often removes genuine phylogenetic signal and degrades single-gene tree accuracy relative to untrimmed alignments. Always compare alignment column count before and after trimming, and compare tree topologies if more than 20 to 30% of sites are removed.</p>
+<h3>5) Build a maximum-likelihood tree with IQ-TREE 2 (recommended CLI route)</h3>
+<p>IQ-TREE 2 (Minh et al., 2020) integrates substitution-model selection (<strong>ModelFinder</strong>, Kalyaanamoorthy et al., 2017), tree search, ultrafast bootstrap approximation (<strong>UFBoot2</strong>, Hoang et al., 2018), and Shimodaira-Hasegawa approximate likelihood-ratio testing (<strong>SH-aLRT</strong>) in one reproducible command. Note the executable and option names across releases: IQ-TREE v1 used <code>iqtree -bb 1000 -pre ...</code>, whereas IQ-TREE v2/v3 uses <code>iqtree2</code> (or <code>iqtree3</code>) with <code>-B 1000 --prefix ...</code>:</p>
+<pre><code># Select best-fit substitution model (-m MFP), compute 1,000 UFBoot2 (-B) and 1,000 SH-aLRT (-alrt) replicates.
+# Optional: pass `-o OUTGROUP_TAXON_ID` matching an exact header ID in aligned_sequences.fasta to root the output display.
+iqtree2 -s results/aligned_sequences.fasta -m MFP -B 1000 -alrt 1000 --prefix results/iqtree_run -T AUTO
 
-# Run MEGA-CC (adjust path to megacc binary if not on PATH)
-megacc -a ML_Tree_Settings.mao -d results/aligned_sequences.fasta -o results/megacc_output
-</code></pre>
-<p>
-Expected MEGA outputs (look in <code>results/megacc_output/</code>):
-</p>
+# Record exact executable version for provenance
+iqtree2 --version</code></pre>
+<p>Key IQ-TREE outputs and how to read dual branch supports (<code>SH-aLRT / UFBoot</code> written at internal nodes in <code>results/iqtree_run.treefile</code>):</p>
 <ul>
-<li><code>*.nwk</code>: Newick-format tree files (may be rooted/unrooted depending on settings).</li>
-<li>Log files and result summaries that include substitution model, likelihood, and support values (if bootstraps were requested).</li>
+<li><code>results/iqtree_run.iqtree</code>: human-readable analysis report listing alignment sites, constant vs parsimony-informative sites, BIC-selected substitution model (for example <code>GTR+F+I+G4</code> or <code>LG+G4</code>), log-likelihood, and an ASCII preview of the tree.</li>
+<li><strong>Interpreting UFBoot2 vs classic bootstrap:</strong> UFBoot2 (<code>-B 1000</code>) is not calibrated identically to Felsenstein's standard nonparametric bootstrap (<code>-b 100</code>). Whereas 70% is often treated as moderate support in standard bootstrapping, the IQ-TREE authors recommend requiring <strong>UFBoot &gt;= 95% together with SH-aLRT &gt;= 80%</strong> before calling a clade well supported under the fitted model (Minh et al., 2020).</li>
 </ul>
-<p>
-Record the exact <code>.mao</code> file, the version reported by the installed MEGA-CC executable using its documented version option, and the full command line in your project notes. Do not assume <code>megacc --version</code> is accepted across releases; check local help/documentation.
-</p>
-<h3>6) Alternative: build with IQ-TREE (explicit model selection &amp; bootstraps)</h3>
-<p>
-IQ-TREE can select a substitution model with ModelFinder and infer a maximum-likelihood tree. The example requests 1,000 ultrafast bootstrap replicates; this is a resampling-based support procedure, not a guarantee that the model or alignment is adequate.
-</p>
-<pre><code># Run model selection plus tree inference, with 1,000 ultrafast bootstrap replicates.
-# -pre sets the output prefix; -wbt asks IQ-TREE to write bootstrap trees.
-iqtree -s results/aligned_sequences.fasta -m MFP -bb 1000 -wbt -pre results/iqtree_run
-
-# To show the version for provenance
-iqtree --version
-</code></pre>
-<p>
-IQ-TREE will produce:
-</p>
-<ul>
-<li><code>results/iqtree_run.treefile</code>: ML tree with branch lengths.</li>
-<li><code>results/iqtree_run.ufboot</code>: bootstrap trees, because this command includes <code>-wbt</code>.</li>
-<li><code>results/iqtree_run.log</code> and <code>results/iqtree_run.iqtree</code>: model selection output, log-likelihoods, and parameter estimates.</li>
-</ul>
+<h3>6) Alternative CLI option: MEGA-CC with a <code>.mao</code> configuration file</h3>
+<p>If your course or laboratory standardizes on MEGA, command-line <code>megacc</code> requires a version-matched MEGA Analysis Options (<code>.mao</code>) file generated interactively in <strong>MEGA-Proto</strong> (the Prototyper utility shipped with MEGA GUI):</p>
+<pre><code># Run MEGA-CC with a version-matched .mao file exported from MEGA-Proto
+megacc -a ML_Tree_Settings.mao -d results/aligned_sequences.fasta -o results/megacc_output</code></pre>
+<p>Archive the exact <code>.mao</code> file alongside <code>results/megacc_output/*.nwk</code> and record the MEGA build number, because <code>.mao</code> keys change across major MEGA releases.</p>
 <h3>7) FastTree for very large datasets (approximate ML)</h3>
 <pre><code># For nucleotide data, request the GTR model explicitly with -gtr and set nucleotide mode with -nt
 FastTree -gtr -nt results/aligned_sequences.fasta &gt; results/fasttree.nwk
@@ -465,11 +449,13 @@ Responsible use:
 </ol>
 <h2>References</h2>
 <ul>
-<li><a href="https://mafft.cbrc.jp/alignment/software/">MAFFT: Multiple sequence alignment program</a>, a general reference for MSA alternatives.</li>
-<li><a href="https://megasoftware.net/web_help_12/Running_in_Command-Line_Mode.htm">MEGA-CC command-line guide</a>: official invocation and .mao options-file instructions.</li>
-<li><a href="https://iqtree.github.io/doc/">IQ-TREE documentation</a>: ModelFinder, ultrafast bootstraps, and command-line examples.</li>
-<li><a href="https://github.com/morgannprice/fasttree">FastTree documentation</a>: approximate ML for very large alignments.</li>
-<li><a href="https://mafft.cbrc.jp/alignment/software/">MAFFT official documentation</a>: installation and command-line usage.</li>
+<li>Katoh, K., &amp; Standley, D. M. (2013). MAFFT multiple sequence alignment software version 7: improvements in performance and usability. <em>Molecular Biology and Evolution</em>, 30(4), 772-780. <a href="https://doi.org/10.1093/molbev/mst010" rel="noopener" target="_blank">doi:10.1093/molbev/mst010</a></li>
+<li>Minh, B. Q., Schmidt, H. A., Chernomor, O., et al. (2020). IQ-TREE 2: new models and efficient methods for phylogenetic inference in the genomic era. <em>Molecular Biology and Evolution</em>, 37(5), 1530-1534. <a href="https://doi.org/10.1093/molbev/msaa015" rel="noopener" target="_blank">doi:10.1093/molbev/msaa015</a></li>
+<li>Kalyaanamoorthy, S., Minh, B. Q., Wong, T. K. F., von Haeseler, A., &amp; Jermiin, L. S. (2017). ModelFinder: fast model selection for accurate phylogenetic estimates. <em>Nature Methods</em>, 14, 587-589. <a href="https://doi.org/10.1038/nmeth.4285" rel="noopener" target="_blank">doi:10.1038/nmeth.4285</a></li>
+<li>Hoang, D. T., Chernomor, O., von Haeseler, A., Minh, B. Q., &amp; Vinh, L. S. (2018). UFBoot2: improving the ultrafast bootstrap approximation. <em>Molecular Biology and Evolution</em>, 35(2), 518-522. <a href="https://doi.org/10.1093/molbev/msx281" rel="noopener" target="_blank">doi:10.1093/molbev/msx281</a></li>
+<li>Steenwyk, J. L., Buida, T. J., Li, Y., Shen, X. X., &amp; Rokas, A. (2020). ClipKIT: a multiple sequence alignment trimming software for accurate phylogenomic inference. <em>PLOS Biology</em>, 18(12), e3001007; and Tan, G., et al. (2015), <em>Systematic Biology</em>, 64(5), 778-791 (caution on over-trimming single-locus alignments).</li>
+<li>Price, M. N., Dehal, P. S., &amp; Arkin, A. P. (2010). FastTree 2: approximately maximum-likelihood trees for large alignments. <em>PLOS ONE</em>, 5(3), e9490.</li>
+<li><a href="https://mafft.cbrc.jp/alignment/software/" rel="noopener" target="_blank">MAFFT official documentation</a>, <a href="https://iqtree.github.io/doc/" rel="noopener" target="_blank">IQ-TREE documentation</a>, and <a href="https://megasoftware.net/web_help_12/Running_in_Command-Line_Mode.htm" rel="noopener" target="_blank">MEGA-CC command-line guide</a>.</li>
 </ul>
 <aside aria-labelledby="tutorial-feedback-title" class="lesson-feedback" id="tutorial-feedback"><h2 id="tutorial-feedback-title">Help improve this tutorial</h2><p>Found an error, a broken link, or a step that needs a clearer explanation? Please <a href="../contact.html">contact me</a>. Your feedback helps me keep this resource accurate and useful.</p></aside></article>
 <section class="mt-12 mb-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-100">
@@ -610,7 +596,7 @@ Responsible use:
 </script>
 <script src="../assets/vendor/prism/prism-1.29.0.js"></script>
 <script id="tutorial-code-data">
-window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"evolutionary-phylogeny-analysis":{"blocks":[{"language":"bash","sha256":"44ed2818acdc9ba469e27baa630c45f0940bd6df555ffa66f64e3b6559dcdea4"},{"language":"r","sha256":"a0a67051d2f4c108995e309a7c1dbcbc73ba5d43286c8584da7ae4c1ac7b4add"},{"language":"python","sha256":"af3f7c5f792cbd1d1b2e1cca9634d20fba10d03dd3bef44778d2ad26cd0ca5da"},{"language":"bash","sha256":"38831cb18fcd1158cb74888e0f76c5ebbb71423122917c8596ba3323a03ce253"},{"language":"bash","sha256":"9c0f974bbb2e10ea3af18570ae9bc994e36c4a0674a69cf0b3fba92b38ab04b3"},{"language":"r","sha256":"a0aa0594c37f397d7e54ca67a625a5ae25a3762188c965f516be631db62c86c5"},{"language":"python","sha256":"3995eaeaee25a9c83d7d0be3449ceaf3cebcf55e7e6447499cc86f00d41e0be0"},{"language":"bash","sha256":"3e3c1d13527575e93f90e4367709a11b715cc7ebedc1da5aa2558aa83f2a3a0c"},{"language":"bash","sha256":"5dd4c1f5543b99d20d0ee3f4bcea97f9930d8be5887d6a21625b57eb5c849e17"},{"language":"bash","sha256":"58194b01a811615bf3897a0802c40f4174cbc6cd93920b50ef2f77b1e1131de7"}],"groups":[{"title":"Validate raw FASTA structure","panels":[{"start":16,"end":18,"language":"r","label":"R"},{"start":19,"end":21,"language":"python","label":"Python"}],"members":[{"index":16,"tag":"h3","sha256":"414a242e4551f508a0580294bbdbff7e2d81e838c4f98e1da1f3a7b47d1f9028"},{"index":17,"tag":"pre","sha256":"a0a67051d2f4c108995e309a7c1dbcbc73ba5d43286c8584da7ae4c1ac7b4add"},{"index":18,"tag":"p","sha256":"5b5b68481d16a9bddf11948500f404e29eef50e496aa6e28ef9a36d560d77717"},{"index":19,"tag":"h3","sha256":"353343bd9cc89dc63d83ee0a08d97a79df5823741b517ffe602352621ee0ec7b"},{"index":20,"tag":"pre","sha256":"af3f7c5f792cbd1d1b2e1cca9634d20fba10d03dd3bef44778d2ad26cd0ca5da"},{"index":21,"tag":"p","sha256":"a89affdad19e8bce5a6661ed0d1b0a9b2bf8559bc2a1412f6811a0f2d1fea9ab"}],"tabOrder":["r","python"]},{"title":"Validate aligned FASTA structure","panels":[{"start":35,"end":37,"language":"r","label":"R"},{"start":38,"end":40,"language":"python","label":"Python"}],"members":[{"index":35,"tag":"h3","sha256":"414a242e4551f508a0580294bbdbff7e2d81e838c4f98e1da1f3a7b47d1f9028"},{"index":36,"tag":"pre","sha256":"a0aa0594c37f397d7e54ca67a625a5ae25a3762188c965f516be631db62c86c5"},{"index":37,"tag":"p","sha256":"c1f64ae1161bd8511ab424ebaacbdafe51f8805c4577958bf6273d176f804472"},{"index":38,"tag":"h3","sha256":"353343bd9cc89dc63d83ee0a08d97a79df5823741b517ffe602352621ee0ec7b"},{"index":39,"tag":"pre","sha256":"3995eaeaee25a9c83d7d0be3449ceaf3cebcf55e7e6447499cc86f00d41e0be0"},{"index":40,"tag":"p","sha256":"60a682a45121cda8ef6c552c33ef8650240dea522e203ba3f62ee7a8bd77bb04"}],"tabOrder":["r","python"]}]}}};
+window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"evolutionary-phylogeny-analysis":{"blocks":[{"language":"bash","sha256":"75378bfb8a195ffbcc0b4a82e6cfe046e93ade79ae7c20ef8cd323158ff2db3a"},{"language":"r","sha256":"a0a67051d2f4c108995e309a7c1dbcbc73ba5d43286c8584da7ae4c1ac7b4add"},{"language":"python","sha256":"fba3906e85bb939d04a52814185bcdf3afb78cbce9000b0404431dc39b443070"},{"language":"bash","sha256":"38831cb18fcd1158cb74888e0f76c5ebbb71423122917c8596ba3323a03ce253"},{"language":"bash","sha256":"9c0f974bbb2e10ea3af18570ae9bc994e36c4a0674a69cf0b3fba92b38ab04b3"},{"language":"r","sha256":"a0aa0594c37f397d7e54ca67a625a5ae25a3762188c965f516be631db62c86c5"},{"language":"python","sha256":"3995eaeaee25a9c83d7d0be3449ceaf3cebcf55e7e6447499cc86f00d41e0be0"},{"language":"bash","sha256":"3e65c67ca3fdf8e400a40b6c36272b29fd29c2497d2e1408a1afcf2a6a21532e"},{"language":"bash","sha256":"15e1b4d9d60cbd6613da13a635987def7edae630d3dbab04632ea1debc4667b4"},{"language":"bash","sha256":"b39442dea82bfa77e94b60b3775749c5becbd03650f1b179d7c5810151e2e21d"},{"language":"bash","sha256":"58194b01a811615bf3897a0802c40f4174cbc6cd93920b50ef2f77b1e1131de7"}],"groups":[{"title":"Validate raw FASTA structure","panels":[{"start":16,"end":18,"language":"r","label":"R"},{"start":19,"end":21,"language":"python","label":"Python"}],"members":[{"index":16,"tag":"h3","sha256":"414a242e4551f508a0580294bbdbff7e2d81e838c4f98e1da1f3a7b47d1f9028"},{"index":17,"tag":"pre","sha256":"a0a67051d2f4c108995e309a7c1dbcbc73ba5d43286c8584da7ae4c1ac7b4add"},{"index":18,"tag":"p","sha256":"5b5b68481d16a9bddf11948500f404e29eef50e496aa6e28ef9a36d560d77717"},{"index":19,"tag":"h3","sha256":"353343bd9cc89dc63d83ee0a08d97a79df5823741b517ffe602352621ee0ec7b"},{"index":20,"tag":"pre","sha256":"fba3906e85bb939d04a52814185bcdf3afb78cbce9000b0404431dc39b443070"},{"index":21,"tag":"p","sha256":"a89affdad19e8bce5a6661ed0d1b0a9b2bf8559bc2a1412f6811a0f2d1fea9ab"}],"tabOrder":["r","python"]},{"title":"Validate aligned FASTA structure","panels":[{"start":35,"end":37,"language":"r","label":"R"},{"start":38,"end":40,"language":"python","label":"Python"}],"members":[{"index":35,"tag":"h3","sha256":"414a242e4551f508a0580294bbdbff7e2d81e838c4f98e1da1f3a7b47d1f9028"},{"index":36,"tag":"pre","sha256":"a0aa0594c37f397d7e54ca67a625a5ae25a3762188c965f516be631db62c86c5"},{"index":37,"tag":"p","sha256":"c1f64ae1161bd8511ab424ebaacbdafe51f8805c4577958bf6273d176f804472"},{"index":38,"tag":"h3","sha256":"353343bd9cc89dc63d83ee0a08d97a79df5823741b517ffe602352621ee0ec7b"},{"index":39,"tag":"pre","sha256":"3995eaeaee25a9c83d7d0be3449ceaf3cebcf55e7e6447499cc86f00d41e0be0"},{"index":40,"tag":"p","sha256":"60a682a45121cda8ef6c552c33ef8650240dea522e203ba3f62ee7a8bd77bb04"}],"tabOrder":["r","python"]}]}}};
 </script>
 <script src="../code-tabs.js?v=20261026-startup-v1"></script>
 <script src="../copy-code.js?v=20261025-r-first-v1"></script>

@@ -184,29 +184,59 @@ function toggleMobileMenu() {
 <h2 id="amplicon">16S rRNA amplicon profiling</h2>
 <p>Primers amplify a selected region of the 16S rRNA gene from sample DNA. Conserved stretches support primer binding; sequence variation within the amplified region helps distinguish some taxa. Results depend on primers, read quality, denoising, and reference database. Different taxa can share a marker sequence, so species-level labels are not always resolvable.</p>
 <p>DADA2 models sequencing errors to infer amplicon sequence variants (ASVs). An ASV is an inferred sequence variant after denoising, not proof that each sequence represents a distinct organism or species. Historical OTU workflows cluster reads by a chosen similarity threshold; 97% is not a universal species boundary. Record method and parameters when comparing studies.</p>
-<h3 id="qiime-workflow">A QIIME 2 paired-read example</h3>
-<p>This command expects an existing QIIME 2 artifact of type <code>SampleData[PairedEndSequencesWithQuality]</code>, already demultiplexed by sample; it does not import FASTQ files or create sample metadata. Inspect the artifact with <code>qiime tools peek demux.qza</code> and view per-cycle quality with <code>qiime demux summarize --i-data demux.qza --o-visualization demux-summary.qzv</code>, then open it with <code>qiime tools view demux-summary.qzv</code>. Choose truncation lengths from those plots and the target region, retaining sufficient paired-read overlap. The example produces a frequency table, representative sequences, and denoising statistics; compare input and retained read counts rather than treating file creation as success.</p>
-<pre><code class="language-bash">qiime dada2 denoise-paired \
+<h3 id="qiime-workflow">A complete QIIME 2 paired-end 16S workflow</h3>
+<p>In a full QIIME 2 amplicon workflow (Bolyen et al., 2019), demultiplexed paired-end FASTQ files are imported via a tab-separated manifest, inspected for per-cycle quality decay, trimmed of 5' PCR primers (<code>qiime cutadapt trim-paired</code>) if primers are still present in the reads, denoised into exact ASVs with DADA2 (Callahan et al., 2016), and then taxonomically classified against a region-matched reference database (<code>SILVA 138</code> or <code>Greengenes2</code>):</p>
+<pre><code class="language-bash"># 1. Import demultiplexed paired-end FASTQs from a manifest TSV and summarize read quality
+qiime tools import \
+  --type 'SampleData[PairedEndSequencesWithQuality]' \
+  --input-path pe-33-manifest.tsv \
+  --output-path demux.qza \
+  --input-format PairedEndFastqManifestPhred33V2
+
+qiime demux summarize \
+  --i-data demux.qza \
+  --o-visualization demux-summary.qzv
+
+# 2. Denoise, merge mates, and remove chimeras (adjust trunc-len from demux-summary.qzv!)
+qiime dada2 denoise-paired \
   --i-demultiplexed-seqs demux.qza \
-  --p-trunc-len-f 250 \
-  --p-trunc-len-r 250 \
+  --p-trunc-len-f 240 \
+  --p-trunc-len-r 200 \
   --o-table table.qza \
   --o-representative-sequences rep-seqs.qza \
-  --o-denoising-stats denoising-stats.qza</code></pre>
-<aside class="lesson-warning"><p>Do not copy 250 as a universal setting. Truncation removes 3′ bases and discards reads shorter than the selected length. Paired reads must retain sufficient overlap to merge; the documented default minimum is 12 nt. Poor choices can discard reads or prevent merging. Review quality plots and denoising statistics. Taxonomy assignment is separate and needs a reference compatible with the amplified region and classifier.</p></aside>
-<p>Match the QIIME 2 installation and DADA2 plugin to the documentation for the installed release. The 2024.10 reference below is archived; current QIIME 2 documentation points users to the amplicon distribution documentation.</p>
-<h2 id="prokka">Annotating an assembled genome with Prokka</h2>
-<p>Prokka predicts genomic features on supplied contigs and assigns annotations using its software and databases. Start with an assembled genome in FASTA format, not raw reads, a feature table, or a 16S-only amplicon. Assembly contamination, fragmentation, and incorrect taxonomic or genetic-code assumptions can affect predictions and labels.</p>
-<p>Prokka's maintainer now recommends considering Bakta for new pipelines because Prokka is no longer maintained. These commands explain the existing Prokka workflow; check maintenance and database status before choosing it for new production work.</p>
-<h3 id="install">Installation and a basic run</h3>
-<p>Upstream documentation gives a Conda installation example through Bioconda. These commands assume Conda is installed and the environment can access the required packages and databases; record <code>prokka --version</code> with your results. Confirm the executable and configured databases before running. <code>--listdb</code> lists configured databases; if database files are missing or a run fails during setup, follow the upstream database setup instructions (including indexing where applicable) before proceeding.</p>
-<pre><code class="language-bash">conda create -n prokka bioconda::prokka
-conda activate prokka
+  --o-denoising-stats denoising-stats.qza
+
+qiime metadata tabulate \
+  --m-input-file denoising-stats.qza \
+  --o-visualization denoising-stats.qzv
+
+# 3. Assign taxonomy and filter host/organelle 16S contaminants (mitochondria, chloroplast)
+qiime feature-classifier classify-sklearn \
+  --i-classifier silva-138-99-nb-classifier.qza \
+  --i-reads rep-seqs.qza \
+  --o-classification taxonomy.qza
+
+qiime taxa filter-table \
+  --i-table table.qza \
+  --i-taxonomy taxonomy.qza \
+  --p-exclude mitochondria,chloroplast \
+  --o-filtered-table table-no-organelle.qza</code></pre>
+<aside class="lesson-warning"><h3>How to diagnose read loss in <code>denoising-stats.qzv</code></h3><p>Never treat <code>table.qza</code> creation as success without reading <code>denoising-stats.qzv</code> column by column: (1) a steep drop from <code>input</code> to <code>filtered</code> means <code>--p-trunc-len-f/r</code> extended into low-quality 3' bases so expected errors (<code>maxEE</code>) exceeded threshold; (2) a steep drop from <code>denoised</code> to <code>merged</code> means <code>trunc_len_f + trunc_len_r &lt; amplicon_length + 12 nt</code> (for example, a ~460 bp V3-V4 amplicon requires <code>&gt;= 472</code> total retained bases to overlap by DADA2's 12 nt minimum); (3) losing <code>&gt; 25%</code> of reads between <code>merged</code> and <code>non-chimeric</code> usually indicates unremoved 5' degenerate PCR primers, so run <code>qiime cutadapt trim-paired</code> before <code>denoise-paired</code>.</p></aside>
+<h2 id="prokka">Annotating an assembled bacterial genome with Prokka and Bakta</h2>
+<p>Prokka (Seemann, 2014) predicts coding sequences (<code>Prodigal</code>), rRNAs (<code>Barrnap</code>), tRNAs (<code>ARAGORN</code>), and non-coding RNAs on assembled bacterial or archaeal contigs. Start with a quality-checked genome assembly (<code>CheckM2</code> completeness/contamination and <code>QUAST</code> contiguity), never raw reads or 16S ASVs. Because Prokka is no longer actively updated upstream, its author recommends <strong>Bakta</strong> (Schwengers et al., 2021) for new bacterial annotation pipelines, particularly when standardized NCBI AMR/plasmid gene nomenclature (<code>amrfinderplus</code>, UniRef/RefSeq non-redundant protein clusters, and small-ORF detection) is needed.</p>
+<h3 id="install">Installation, contig-header preflight, and annotation runs</h3>
+<p>Always include <code>conda-forge</code> alongside <code>bioconda</code> so Perl/BLAST/HMMER dependencies resolve cleanly, and record exact software and database versions:</p>
+<pre><code class="language-bash">conda create -n genome-annot -c conda-forge -c bioconda prokka bakta
+conda activate genome-annot
 prokka --version
 prokka --listdb</code></pre>
-<p>For an assembled FASTA called <code>assembled_contigs.fasta</code>, first check that it is non-empty, has one or more FASTA records, and each header has a non-empty identifier. This lightweight check catches malformed input, not contamination, completeness, or assembly quality:</p>
-<pre><code class="language-bash">test -s assembled_contigs.fasta &amp;&amp; grep -q '^&gt;[^[:space:]]' assembled_contigs.fasta &amp;&amp; grep -qv '^&gt;' assembled_contigs.fasta &amp;&amp; echo "FASTA structure looks plausible"</code></pre>
-<pre><code class="language-bash">prokka --outdir my_annotation --prefix isolate_01 assembled_contigs.fasta</code></pre>
+<p>Before running Prokka on a <code>SPAdes</code> or <code>Unicycler</code> assembly (<code>assembled_contigs.fasta</code>), check two structural rules: first, no FASTA header may be empty; second, <strong>Prokka halts with <code>[Error] Contig ID must be &lt;= 37 chars long</code></strong> whenever assembler headers such as <code>NODE_1_length_418920_cov_42.318541</code> exceed NCBI GenBank's 37-character locus limit. Pass <code>--centre X --compliant</code> so Prokka renames contigs cleanly during GenBank/GFF3 generation:</p>
+<pre><code class="language-bash">test -s assembled_contigs.fasta &amp;&amp; grep -q '^&gt;' assembled_contigs.fasta &amp;&amp; ! grep -q '^&gt;[[:space:]]*$' assembled_contigs.fasta &amp;&amp; echo "FASTA headers non-empty"</code></pre>
+<pre><code class="language-bash"># Prokka run (--compliant --centre X resolves long SPAdes contig headers)
+prokka --outdir my_annotation --prefix isolate_01 --centre X --compliant --cpus 4 assembled_contigs.fasta
+
+# Modern alternative: Bakta standardized bacterial genome annotation (requires downloaded bakta-db)
+bakta --db /path/to/bakta-db --output bakta_isolate_01 --prefix isolate_01 --threads 4 assembled_contigs.fasta</code></pre>
 <p>On a completed run, confirm that <code>my_annotation/isolate_01.gff</code>, <code>my_annotation/isolate_01.txt</code>, and <code>my_annotation/isolate_01.log</code> exist, then inspect the log for a completion summary and the text summary for feature counts. Missing files, a non-zero exit status, or database/setup errors mean stop and resolve the failure before interpreting annotations. Counts are run-specific; there is no universal expected feature count. Output files do not validate the assembly or biological interpretation.</p>
 <h3 id="outputs">Select output for the next step</h3>
 <div aria-label="Scrollable table: Common Prokka outputs and their roles" class="lesson-table-wrap" role="region" tabindex="0"><table><caption>Common Prokka outputs and their roles</caption><thead><tr><th scope="col">File</th><th scope="col">Contents</th><th scope="col">Use or check</th></tr></thead><tbody>
@@ -224,11 +254,12 @@ prokka --listdb</code></pre>
 <h2 id="interpretation">Interpretation and quality checks</h2>
 <ul><li>For 16S, record primer/target region, read-processing choices, denoising statistics, and taxonomy database/version. Check read loss during filtering or paired-read merging.</li><li>For Prokka, retain assembly provenance and software/database versions. Inspect contig quality, feature counts, logs, and selected annotations against independent evidence where available.</li><li>Marker-based labels and automated genome annotations alone do not establish phenotype, pathogenicity, or clinical significance. Treat weak or database-dependent assignments as hypotheses for review.</li></ul>
 <section class="lesson-exercise"><h2 id="exercise">Check your workflow choice</h2><p>You receive (A) demultiplexed paired-end 16S reads from a community and (B) a FASTA assembly for one isolate. For each, name the workflow, one output to inspect, and one limitation.</p><details><summary>Check your answer</summary><p>(A) Use an amplicon workflow such as QIIME 2 with DADA2; inspect the feature table, representative sequences, and denoising statistics. Marker resolution, primer bias, and taxonomy-reference limits remain. (B) Annotate assembled contigs with Prokka; inspect GFF3/GenBank annotations plus logs and summary. Predictions depend on assembly quality and reference/database evidence.</p></details></section>
-<section aria-label="References and further reading" class="lesson-reference"><h2 id="references">Documentation and further reading</h2><ul>
-<li><a href="https://amplicon-docs.qiime2.org/" rel="noopener noreferrer" target="_blank">Current QIIME 2 amplicon documentation</a></li>
-<li><a href="https://docs.qiime2.org/2024.10/plugins/available/dada2/denoise-paired/" rel="noopener noreferrer" target="_blank">QIIME 2 2024.10 DADA2 paired-read reference (archived)</a></li>
-<li><a href="https://github.com/tseemann/prokka" rel="noopener noreferrer" target="_blank">Prokka upstream documentation and maintenance notice</a></li>
-<li><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC4927377/" rel="noopener noreferrer" target="_blank">Callahan et al., DADA2 method paper</a></li></ul></section>
+<section aria-label="References and further reading" class="lesson-reference"><h2 id="references">References and official documentation</h2><ul>
+<li>Bolyen, E., Rideout, J. R., Dillon, M. R., et al. (2019). Reproducible, interactive, scalable and extensible microbiome data science using QIIME 2. <em>Nature Biotechnology</em>, 37, 852-857. <a href="https://doi.org/10.1038/s41587-019-0209-9" rel="noopener noreferrer" target="_blank">doi:10.1038/s41587-019-0209-9</a></li>
+<li>Callahan, B. J., McMurdie, P. J., Rosen, M. J., et al. (2016). DADA2: High-resolution sample inference from Illumina amplicon data. <em>Nature Methods</em>, 13, 581-583. <a href="https://doi.org/10.1038/nmeth.3869" rel="noopener noreferrer" target="_blank">doi:10.1038/nmeth.3869</a></li>
+<li>Seemann, T. (2014). Prokka: rapid prokaryotic genome annotation. <em>Bioinformatics</em>, 30(14), 2068-2069. <a href="https://doi.org/10.1093/bioinformatics/btu153" rel="noopener noreferrer" target="_blank">doi:10.1093/bioinformatics/btu153</a></li>
+<li>Schwengers, O., Jelonek, L., Dieckmann, M. A., et al. (2021). Bakta: rapid and standardized annotation of bacterial genomes via alignment-free sequence identification. <em>Microbial Genomics</em>, 7(11), 000685. <a href="https://doi.org/10.1099/mgen.0.000685" rel="noopener noreferrer" target="_blank">doi:10.1099/mgen.0.000685</a></li>
+<li><a href="https://amplicon-docs.qiime2.org/" rel="noopener noreferrer" target="_blank">Current QIIME 2 amplicon documentation</a>, <a href="https://github.com/tseemann/prokka" rel="noopener noreferrer" target="_blank">Prokka repository</a>, and <a href="https://github.com/oschwengers/bakta" rel="noopener noreferrer" target="_blank">Bakta repository</a></li></ul></section>
 <aside aria-labelledby="tutorial-feedback-title" class="lesson-feedback" id="tutorial-feedback"><h2 id="tutorial-feedback-title">Help improve this tutorial</h2><p>Found an error, a broken link, or a step that needs a clearer explanation? Please <a href="../contact.html">contact me</a>. Your feedback helps me keep this resource accurate and useful.</p></aside></article>
 <nav aria-label="Learning path continuation" class="reader-sequence" id="reader-course-navigation">
 <div class="reader-sequence-heading"><p class="reader-sequence-kicker">Continue learning</p><h2>Keep exploring</h2>
@@ -357,7 +388,7 @@ prokka --listdb</code></pre>
 </script>
 <script src="../assets/vendor/prism/prism-1.29.0.js"></script>
 <script id="tutorial-code-data">
-window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"16s-rrna-prokka-annotation":{"blocks":[{"language":"bash","sha256":"40ed140eeb1dfb90e24aa7274c76897391733c450613b24c0bd8a467fa1861c1"},{"language":"bash","sha256":"da3e630988ec5576287685a912ca8a459a537f23c803f4b5e5d27703676827d2"},{"language":"bash","sha256":"52c95c786975a60c3787a371967acca292ece494685031243f8ed422ebc31118"},{"language":"bash","sha256":"db1553b62b970d3e3b3b1ddb5fdd077902822f47fa2e2a9d14988d2694d656a6"},{"language":"bash","sha256":"f46f1c3e3d1b11ca3708961fd9d32169f434141ddbff395ae82e78c4d8cf8f4a"}],"groups":[]}}};
+window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"16s-rrna-prokka-annotation":{"blocks":[{"language":"bash","sha256":"910717ddc82e17cdecac22fe501fcbe1afe1c974c11926fedb9154b98a75e030"},{"language":"bash","sha256":"e01f43495139cb0ed5b55b6e264c69837041e353e990c3d3bab53cda452ae448"},{"language":"bash","sha256":"f588a357883948956d514c41a44b7d44f23e04e8c6e112c8293c07ee7f0a3029"},{"language":"bash","sha256":"f6b5bf7b43ba3c6ac3ef59669e6bcb59285f835d8de032d0d5a497979b71500a"},{"language":"bash","sha256":"f46f1c3e3d1b11ca3708961fd9d32169f434141ddbff395ae82e78c4d8cf8f4a"}],"groups":[]}}};
 </script>
 <script src="../code-tabs.js?v=20261026-startup-v1"></script>
 <script src="../copy-code.js?v=20261025-r-first-v1"></script>

@@ -182,8 +182,9 @@ function toggleMobileMenu() {
 <tr><th scope="row">FASTQ</th><td>Sequence reads with per-base quality strings</td><td>Do records have the expected four-line layout and paired files?</td></tr>
 <tr><th scope="row">SAM/BAM/CRAM</th><td>Read alignments, sequence dictionary, and metadata</td><td>Does the header name the expected contigs and read groups?</td></tr>
 <tr><th scope="row">VCF/BCF</th><td>Variant sites, annotations, and optional sample genotypes</td><td>Are reference/build, sample names, and field definitions documented?</td></tr>
-<tr><th scope="row">GTF/GFF</th><td>Genome features and their attributes</td><td>Do contig names and coordinate conventions match the analysis?</td></tr>
-<tr><th scope="row">Count matrix</th><td>Feature-by-sample measurements</td><td>Are rows/columns identified, and are values raw counts or transformed?</td></tr>
+<tr><th scope="row">BED</th><td>0-based, half-open genomic intervals <code>[start, end)</code></td><td>Are coordinates 0-based (not 1-based VCF/GTF) and contig names matched?</td></tr>
+<tr><th scope="row">GTF/GFF</th><td>Genome features and their attributes (1-based, closed)</td><td>Do contig names, version suffixes, and feature types match the aligner/counter?</td></tr>
+<tr><th scope="row">Count / 10x MTX / h5ad</th><td>Feature-by-sample or sparse gene-by-cell matrices</td><td>Are values integer UMIs/reads, fractional <code>tximport</code> estimates, or log-normalized?</td></tr>
 </tbody></table></div>
 <p class="lesson-caption">Extensions are clues, not proof of format or provenance. A file named <code>.vcf.gz</code>, for example, should be BGZF-compressed for indexed access with the usual tabix/BCFtools tools.</p>
 <h2>Prepare a safe inspection session</h2>
@@ -276,53 +277,72 @@ for n, (a, b) in enumerate(itertools.zip_longest(records(sys.argv[1]), records(s
 print(f"PASS: {n} paired records; normalized identifiers match in order" if n else "PASS: both files are empty")
 PY</code></pre>
 <p>A <code>PASS</code> establishes only that the parsed records have matching normalized identifiers in order under the stated convention; it does not establish sample identity or biological validity. Any malformed record, count difference, or identifier mismatch stops the check with the first location to investigate. Both small checks assume readable gzip inputs and ordinary first-token identifiers; adapt the opener for uncompressed FASTQ. They are not full FASTQ specification or compression-integrity validators. Do not treat quality scores as comparable across files until the encoding and instrument/pipeline provenance are known.</p>
-<h2>Check alignments and variants against their references</h2>
-<h3>SAM/BAM/CRAM: headers and file integrity</h3>
+<h2>Check alignments, variants, and coordinate conventions</h2>
+<h3>SAM/BAM/CRAM: headers, bitwise FLAGs, CIGAR strings, and reference lookup</h3>
 <pre><code># Header metadata, including @SQ sequence dictionary and @RG read groups
 samtools view -H aligned.bam | sed -n '1,40p'
 
 # Lightweight truncation check, followed by alignment-flag summaries
 samtools quickcheck aligned.bam &amp;&amp; echo "quickcheck passed" || echo "quickcheck failed"
-samtools flagstat aligned.bam | sed -n '1,10p'</code></pre>
-<p>Compare each <code>@SQ</code> sequence name and length with the intended reference, and check that read-group/sample identifiers agree with your sample sheet. <code>quickcheck</code> examines the header and file ending; it does not read the whole alignment body, so it can miss internal corruption. <code>flagstat</code> reads all records and reports flag-based categories. A mapping percentage is a diagnostic to investigate, not a universal pass/fail threshold or proof of alignment quality.</p>
-<h3>VCF/BCF: definitions, samples, and indexing</h3>
-<pre><code># Print metadata header and a small record sample
-bcftools view -h variants.vcf.gz | sed -n '1,80p'
-bcftools view variants.vcf.gz | sed -n '1,10p'
+samtools flagstat aligned.bam | sed -n '1,10p'
 
-# Summarize records; index statistics require a usable index
+# For reference-compressed CRAM files, supply the exact reference FASTA via -T (or REF_PATH):
+samtools view -T reference.fa -H sample.cram | head -n 20</code></pre>
+<p>Compare every <code>@SQ</code> contig name and length (<code>LN:</code>) with your reference <code>.fai</code> index, and verify <code>@RG</code> read-group <code>SM:</code> sample tags before variant calling. Below is one annotated SAM record illustrating the 11 mandatory tab-separated fields (Li et al., 2009):</p>
+<pre><code class="language-text">read_042	99	chr17	7674220	60	10S140M	=	7674410	330	ACGT...	IIII...	NM:i:1	RG:Z:S01</code></pre>
+<ul>
+<li><strong><code>FLAG = 99</code></strong> (<code>1 + 2 + 32 + 64</code>): read is paired (<code>1</code>), mapped in a proper pair (<code>2</code>), mate is on the reverse strand (<code>32</code>), and this is read 1 (<code>64</code>; its reverse-strand mate carries <code>FLAG = 147</code>). Run <code>samtools flags 99</code> anytime to decode bitwise flags without memorizing sums.</li>
+<li><strong><code>POS = 7674220</code> and <code>MAPQ = 60</code>:</strong> 1-based leftmost aligned reference base on <code>chr17</code>, with Phred-scaled mapping-uniqueness score <code>60</code> (note: in STAR RNA-seq BAMs, <code>255</code> denotes a unique mapper rather than unavailable MAPQ).</li>
+<li><strong><code>CIGAR = 10S140M</code>:</strong> the first 10 bases at the 5' end were soft-clipped (<code>10S</code>, retained in <code>SEQ</code> because of unaligned adapter or overhang) followed by 140 aligned bases (<code>140M</code>, which include both sequence matches and single-base mismatches; inspect <code>NM:i:1</code> or <code>MD</code> for exact mismatches).</li>
+</ul>
+<h3>VCF/BCF: header definitions, <code>-H</code> body records, and genotype fields</h3>
+<pre><code># Print ## meta-information header lines, then inspect the first 10 variant records (-H skips header!)
+bcftools view -h variants.vcf.gz | sed -n '1,80p'
+bcftools view -H variants.vcf.gz | head -n 10
+
+# Summarize records; index statistics require a BGZF (.vcf.gz) + .tbi/.csi index
 bcftools stats variants.vcf.gz | sed -n '1,40p'
 bcftools index --stats variants.vcf.gz</code></pre>
-<p>Read the <code>##</code> metadata and final <code>#CHROM</code> header line. Check sample names, declared INFO/FORMAT fields such as <code>DP</code> or <code>AD</code>, and any reference/build information. Confirm REF alleles against the exact reference used by the calling workflow. A syntactically accepted VCF does not prove a variant is real; provenance, caller-specific filters, and appropriate validation still matter.</p>
-<p><code>bcftools index --stats</code> reads an existing index and reports per-contig record counts; it is not itself an integrity test. If no index is available, create one only when you intend to write a sidecar, for example <code>bcftools index variants.vcf.gz</code> for a BGZF-compressed VCF.</p>
-<h2>Read annotations and count tables</h2>
+<p>Notice <code>bcftools view -H</code> (<code>--no-header</code>): running <code>bcftools view variants.vcf.gz | sed -n '1,10p'</code> without <code>-H</code> prints only the first ten <code>##contig</code> or <code>##INFO</code> header lines rather than variant rows. Each VCF body row is 1-based and carries sample-level allele evidence in <code>FORMAT</code> + sample columns:</p>
+<pre><code class="language-text">chr17	7674220	.	C	T	1420.4	PASS	DP=82;AF=0.5	GT:AD:DP:GQ	0/1:44,38:82:99</code></pre>
+<p>Here <code>0/1</code> is an unphased heterozygous genotype (<code>0|1</code> when phased), <code>AD = 44,38</code> records <code>44</code> reference (<code>C</code>) reads and <code>38</code> alternate (<code>T</code>) reads (<code>VAF = 38 / 82 = 0.463</code>), <code>DP = 82</code> is sample filtered read depth, and <code>GQ = 99</code> is genotype Phred confidence.</p>
+<h3>Coordinate trap: 0-based half-open BED vs 1-based closed VCF and GTF</h3>
+<p>Off-by-one errors happen whenever BED intervals are mixed carelessly with VCF or GTF coordinates. For the single nucleotide at <code>chr17</code> position <code>7,674,220</code> (*TP53* coding SNV):</p>
+<ul>
+<li><strong>1-based closed (<code>VCF</code>, <code>GTF/GFF3</code>, <code>SAM POS</code>, IGV locus box):</strong> start = <code>7674220</code>, end = <code>7674220</code> (<code>length = end - start + 1 = 1</code>).</li>
+<li><strong>0-based half-open (<code>BED</code>, <code>BAM</code> binary <code>pos</code>, Python slicing):</strong> <code>chromStart = 7674219</code>, <code>chromEnd = 7674220</code> (<code>length = chromEnd - chromStart = 1</code>). Convert with <code>bedtools</code> or <code>bcftools -R targets.bed</code> (which already knows <code>.bed</code> is 0-based!) rather than subtracting 1 ad hoc in spreadsheets.</li>
+</ul>
+<h2>Read annotations and count matrices (bulk and single-cell 10x MTX)</h2>
 <h3>GTF/GFF: feature columns and coordinates</h3>
 <pre><code>head -n 20 annotation.gtf
-cut -f3 annotation.gtf | sort | uniq -c | sort -nr | sed -n '1,20p'</code></pre>
-<p>GTF/GFF feature lines have nine tab-separated fields; column 3 is the feature type and column 9 carries attributes. GTF and GFF3 have distinct attribute conventions, so inspect the file's declared version and use a parser that matches it. Their feature coordinates are generally 1-based and inclusive; convert carefully when passing intervals to software using zero-based, half-open coordinates. Confirm sequence names against the reference. The <code>cut</code> example assumes records are tab-delimited and that comment/directive lines do not need special handling.</p>
-<h3>Count matrix: dimensions, identifiers, and value scale</h3>
-<pre><code># Inspect the header and a few rows
+awk -F'\t' '$0 !~ /^#/ {print $3}' annotation.gtf | sort | uniq -c | sort -nr | head -n 15</code></pre>
+<p>GTF/GFF feature lines have nine tab-separated fields; skipping <code>#</code> directive headers in <code>awk</code> ensures feature-type counts reflect real annotations (<code>exon</code>, <code>CDS</code>, <code>transcript</code>, <code>gene</code>). Confirm whether contig names use <code>chr1</code> (GENCODE/UCSC) or <code>1</code> (Ensembl) before running <code>STAR</code> or <code>featureCounts</code>.</p>
+<h3>Count matrices and 10x sparse directories (<code>matrix.mtx.gz</code> / <code>h5ad</code>)</h3>
+<pre><code># Inspect a bulk TSV count matrix header and column count
 head -n 6 counts.tsv
+awk -F '\t' 'NR==1 {print; print "Columns:", NF}' counts.tsv
 
-# Show the first row and number of tab-delimited fields
-awk -F '\t' 'NR==1 {print; print "Columns:", NF}' counts.tsv</code></pre>
-<p>Establish whether rows are genes, transcripts, or other features, and whether columns map to samples in a separate sample sheet. Find out whether values are raw counts, normalized abundance, or transformed measurements from the quantification method and its documentation. Integer-looking values alone do not establish that a matrix contains raw counts. Methods that model raw counts, including common differential-expression workflows, should not be given normalized or log-transformed values as if they were raw counts.</p>
+# Inspect a 10x Genomics sparse Matrix Market directory (barcodes = columns, features = rows)
+zcat filtered_feature_bc_matrix/matrix.mtx.gz | head -n 5
+zcat filtered_feature_bc_matrix/features.tsv.gz | head -n 3
+zcat filtered_feature_bc_matrix/barcodes.tsv.gz | head -n 3</code></pre>
+<p>In a 10x Genomics Market Exchange directory, line 3 of <code>matrix.mtx.gz</code> prints <code>n_features n_barcodes n_nonzero_entries</code>; verify that <code>n_features</code> equals the line count of <code>features.tsv.gz</code> and <code>n_barcodes</code> equals <code>barcodes.tsv.gz</code> (note that Python <code>AnnData</code> / <code>.h5ad</code> transposes this convention to <code>cells x genes</code>, i.e., <code>n_obs x n_vars</code>). For bulk RNA-seq tables, fractional numbers are not always normalized expression: probabilistic transcript quantifiers (<code>Salmon</code>, <code>kallisto</code>, <code>RSEM</code>) output legitimate fractional <strong>estimated counts</strong> from multi-mapping expectation-maximization. Import them into <code>DESeq2</code> or <code>edgeR</code> via <strong><code>tximport</code> / <code>tximeta</code></strong> (Soneson et al., 2015) with transcript-length offsets rather than rounding them manually or treating them as TPM.</p>
 <h2>Use failures to narrow the diagnosis</h2>
 <ul>
-<li><strong>FASTQ line remainder or decompression error:</strong> test the gzip stream with <code>gzip -t reads_R1.fastq.gz</code>, verify transfer checksums, and use a FASTQ-aware validator. Recover an intact source where possible; do not silently repair records based only on line counts.</li>
-<li><strong>Contigs missing during region extraction:</strong> compare BAM <code>@SQ</code> names and lengths with the FASTA index. A <code>chr</code> prefix difference can be a naming mismatch, while different lengths can signal a different assembly. Resolve provenance before renaming or realigning.</li>
-<li><strong>VCF fields rejected or samples absent:</strong> inspect the header and sample columns, then compare with the producing caller's documentation and logs. Reconstructing or editing a header without provenance can mislabel data.</li>
-<li><strong>Decimal values in a count table:</strong> determine whether the values are normalized or transformed and retrieve raw quantifier output if a count-based method requires it. Do not round normalized measurements to manufacture counts.</li>
+<li><strong>FASTQ line remainder, decompression error, or <code>exit 141</code> under <code>pipefail</code>:</strong> test stream integrity with <code>gzip -t reads_R1.fastq.gz</code>. Note that under <code>set -o pipefail</code>, piping <code>zcat large.fastq.gz | head -n 12</code> causes <code>head</code> to close the pipe early so <code>zcat</code> receives <code>SIGPIPE</code> (exit status <code>141</code>); run full-stream checks with <code>gzip -t</code> rather than mistaking <code>SIGPIPE</code> on a preview for corruption.</li>
+<li><strong>Contigs missing during region extraction or CRAM decode failure:</strong> compare BAM <code>@SQ</code> names and lengths with the FASTA <code>.fai</code> index, and pass <code>-T reference.fa</code> when decoding CRAM files whose MD5 reference cache is offline.</li>
+<li><strong>VCF fields rejected or samples absent:</strong> inspect <code>bcftools view -h</code> and sample columns (<code>bcftools query -l variants.vcf.gz</code>) before filtering.</li>
+<li><strong>Decimal values in a count table:</strong> distinguish normalized values (TPM/FPKM/log-CPM, which must not be fed to count GLMs) from <code>Salmon</code>/<code>kallisto</code> expected counts (which belong in <code>tximport</code>).</li>
 </ul>
 <h2>What a successful check does not establish</h2>
-<p>File parsers and summary commands detect selected structural problems. They do not establish that files belong to the same sample, reference build, assay, or experimental design. Keep a sample sheet with explicit sample IDs and file paths; record reference and annotation releases, tool versions, checksums, and the commands used. These checks do not replace statistical QC, assessment of biological replication, or independent validation of findings.</p>
+<p>File parsers and summary commands detect selected structural problems. They do not establish that files belong to the same sample, reference build, assay, or experimental design. Keep a sample sheet with explicit sample IDs and file paths; record reference and annotation releases, tool versions, checksums, and the commands used.</p>
 <h2>References</h2>
 <ul>
-<li><a href="https://samtools.github.io/hts-specs/SAMv1.pdf">SAM format specification</a> and <a href="https://samtools.github.io/hts-specs/">HTS specifications, including VCF</a></li>
-<li><a href="https://www.htslib.org/doc/samtools.html">Official samtools manual</a></li>
-<li><a href="https://samtools.github.io/bcftools/bcftools.html">Official BCFtools manual</a></li>
-<li><a href="https://github.com/The-Sequence-Ontology/Specifications/blob/master/gff3.md">Sequence Ontology GFF3 specification</a>; <a href="https://www.ensembl.org/info/website/upload/gff.html">Ensembl GTF/GFF field guidance</a></li>
-<li><a href="https://doi.org/10.1093/nar/gkp1137">Cock et al. (2009), FASTQ format description</a>; <a href="https://github.com/shenwei356/seqkit">SeqKit documentation</a></li>
+<li>Li, H., Handsaker, B., Wysoker, A., et al. (2009). The Sequence Alignment/Map format and SAMtools. <em>Bioinformatics</em>, 25(16), 2078-2079. <a href="https://doi.org/10.1093/bioinformatics/btp352" rel="noopener" target="_blank">doi:10.1093/bioinformatics/btp352</a></li>
+<li>Danecek, P., Bonfield, J. K., Liddle, J., et al. (2021). Twelve years of SAMtools and BCFtools. <em>GigaScience</em>, 10(2), giab008. <a href="https://doi.org/10.1093/gigascience/giab008" rel="noopener" target="_blank">doi:10.1093/gigascience/giab008</a></li>
+<li>Soneson, C., Love, M. I., &amp; Robinson, M. D. (2015). Differential analyses for RNA-seq: transcript-level estimates improve gene-level inferences (<code>tximport</code>). <em>F1000Research</em>, 4, 1521. <a href="https://doi.org/10.12688/f1000research.7563.2" rel="noopener" target="_blank">doi:10.12688/f1000research.7563.2</a></li>
+<li>Cock, P. J. A., Fields, C. J., Goto, N., Heuer, M. L., &amp; Rice, P. M. (2010). The Sanger FASTQ file format for sequences with quality scores. <em>Nucleic Acids Research</em>, 38(6), 1767-1771. <a href="https://doi.org/10.1093/nar/gkp1137" rel="noopener" target="_blank">doi:10.1093/nar/gkp1137</a></li>
+<li><a href="https://samtools.github.io/hts-specs/" rel="noopener" target="_blank">HTS format specifications (SAM/BAM/CRAM, VCF/BCF)</a> and <a href="https://github.com/The-Sequence-Ontology/Specifications/blob/master/gff3.md" rel="noopener" target="_blank">GFF3 specification</a></li>
 </ul>
 <nav aria-label="Learning path continuation" class="reader-sequence" id="reader-course-navigation">
 <div class="reader-sequence-heading"><p class="reader-sequence-kicker">Continue learning</p><h2>Keep exploring</h2>
@@ -451,7 +471,7 @@ awk -F '\t' 'NR==1 {print; print "Columns:", NF}' counts.tsv</code></pre>
 </script>
 <script src="../assets/vendor/prism/prism-1.29.0.js"></script>
 <script id="tutorial-code-data">
-window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"biological-data-formats":{"blocks":[{"language":"bash","sha256":"3a20e71185452cc42c8e80da223668d0dcd7405e906fcad63f42459d22530fef"},{"language":"bash","sha256":"6484af771a99469f9bfb1d562db7e360c1da9d50444413fcd5c05f1123faf67e"},{"language":"bash","sha256":"20fbe3e1f0d8ae625cf29f22cb004125ce0df5911f786a67fb91f8e882a7c641"},{"language":"r","sha256":"72eaed9472a0e72744a8df88da4152aad8f6cfdec066c618ea56d5cbe3951724"},{"language":"bash","sha256":"a73ee65aafd156d9b594747e4e5273279428dcaf124a0e363bb70f0660f44bc3"},{"language":"bash","sha256":"43b69b26196a848c10bedcec7b5eb8b7b6678d3b086a066f5fce7f77b1446a66"},{"language":"bash","sha256":"1ecd1c398d9574f766f10096cc04e483f8cf8d660d72248e4414b16719dd7db8"},{"language":"bash","sha256":"edef0f29da68992561f724b7fa40007e4d48300db0f3a015c9ce4eb06b6c0e68"},{"language":"bash","sha256":"ada2127ee46150a2ab4024667ed935050f00aabb4bdfea62e56c9fdac70027c2"}],"groups":[{"title":"Compare paired FASTQ read identifiers","panels":[{"start":18,"end":20,"language":"r","label":"R"},{"start":21,"end":23,"language":"python","label":"Python"}],"members":[{"index":18,"tag":"h3","sha256":"ea31511976e19347c7f978ffe4b13e158f7d3b431af2aee4c8ba86718e3616a4"},{"index":19,"tag":"p","sha256":"135ff381fb1c75e2ff2606542bcad75deee4864a83de5ea7a1114818f6a060e8"},{"index":20,"tag":"pre","sha256":"72eaed9472a0e72744a8df88da4152aad8f6cfdec066c618ea56d5cbe3951724"},{"index":21,"tag":"h3","sha256":"dcbbcafa09cd502a468317f75582ce88a9fdbb019545b2074400d0a1c1b7c278"},{"index":22,"tag":"p","sha256":"6693362a74d9ea5e106203aa2da21e2d853adc7d471de3d68ea2a80fff330859"},{"index":23,"tag":"pre","sha256":"a73ee65aafd156d9b594747e4e5273279428dcaf124a0e363bb70f0660f44bc3"}],"tabOrder":["r","python"]}]}}};
+window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"biological-data-formats":{"blocks":[{"language":"bash","sha256":"3a20e71185452cc42c8e80da223668d0dcd7405e906fcad63f42459d22530fef"},{"language":"bash","sha256":"6484af771a99469f9bfb1d562db7e360c1da9d50444413fcd5c05f1123faf67e"},{"language":"bash","sha256":"20fbe3e1f0d8ae625cf29f22cb004125ce0df5911f786a67fb91f8e882a7c641"},{"language":"r","sha256":"72eaed9472a0e72744a8df88da4152aad8f6cfdec066c618ea56d5cbe3951724"},{"language":"bash","sha256":"a73ee65aafd156d9b594747e4e5273279428dcaf124a0e363bb70f0660f44bc3"},{"language":"bash","sha256":"64ba8f4d4ec7e70c3cf3a12cc53e3dfa0bc9373bbae295ea4d7483a50e617bfa"},{"language":"text","sha256":"1f6de193793113ea778a65864e67c9860aafd4f5f0c1903814d1915b48d27747"},{"language":"bash","sha256":"f2ea283ff14209b68ed832c9dfe17e7f4e273ac6cb8cb02a9d3add775fe69420"},{"language":"text","sha256":"1daae7d24670b8f3b33c4267d52fed7e5a1dc8f1002d4c409b683704b7dd34f7"},{"language":"bash","sha256":"97a578efef3b1257a1537c8d433cb6992a7e887985b51787d7d6bc3e9596064b"},{"language":"bash","sha256":"7ef726ac1d586a6babd97a10614bfd0c8d2f582935d0c05665f5f8ccc278e887"}],"groups":[{"title":"Compare paired FASTQ read identifiers","panels":[{"start":18,"end":20,"language":"r","label":"R"},{"start":21,"end":23,"language":"python","label":"Python"}],"members":[{"index":18,"tag":"h3","sha256":"ea31511976e19347c7f978ffe4b13e158f7d3b431af2aee4c8ba86718e3616a4"},{"index":19,"tag":"p","sha256":"135ff381fb1c75e2ff2606542bcad75deee4864a83de5ea7a1114818f6a060e8"},{"index":20,"tag":"pre","sha256":"72eaed9472a0e72744a8df88da4152aad8f6cfdec066c618ea56d5cbe3951724"},{"index":21,"tag":"h3","sha256":"dcbbcafa09cd502a468317f75582ce88a9fdbb019545b2074400d0a1c1b7c278"},{"index":22,"tag":"p","sha256":"6693362a74d9ea5e106203aa2da21e2d853adc7d471de3d68ea2a80fff330859"},{"index":23,"tag":"pre","sha256":"a73ee65aafd156d9b594747e4e5273279428dcaf124a0e363bb70f0660f44bc3"}],"tabOrder":["r","python"]}]}}};
 </script>
 <script src="../code-tabs.js?v=20261026-startup-v1"></script>
 <script src="../copy-code.js?v=20261025-r-first-v1"></script>

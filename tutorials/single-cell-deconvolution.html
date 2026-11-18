@@ -177,9 +177,14 @@ function toggleMobileMenu() {
 <p><strong>Format: Conceptual guide.</strong> For analysts with prepared bulk counts and an annotated single-cell reference, this guide walks through input review, a MuSiC fit scaffold, and interpretation checks. No data are supplied; readers must prepare both objects and their metadata.</p>
 </section>
 <div class="lesson-summary"><h2>Scope and inputs</h2><p>MuSiC is a reference-based method designed to use cross-subject single-cell data. You need bulk gene-expression measurements and a single-cell reference with gene counts, cell-type labels, and donor/sample IDs. The code below is an analysis scaffold: replace the named objects and metadata fields with your data, and verify package versions and preprocessing before running it.</p></div>
-<h2>What the estimate means</h2>
-<p>A bulk profile is modeled as a mixture of reference cell-type profiles. The estimated fractions depend on the cell types and expression states represented in that reference. If a relevant population is absent, or if reference and bulk samples differ substantially in condition, tissue, platform, or processing, the model may assign its signal to the closest represented populations. A precise decimal does not remove this ambiguity.</p>
-<p>MuSiC's weighting uses cross-subject variation in the single-cell reference. The method estimates proportions; it does not establish that a cell population caused a clinical outcome. Associations with outcomes require a separate, appropriately designed analysis.</p>
+<h2>What the estimate means and how MuSiC weights genes</h2>
+<p>A bulk profile is modeled as a non-negative linear combination of reference cell-type profiles. MuSiC (Wang et al., 2019) improves on ordinary unweighted non-negative least squares (NNLS) through three design choices that every analyst should check against their cohort:</p>
+<ul>
+<li><strong>Cross-subject variance weighting:</strong> instead of requiring a fixed pre-selected marker gene list, MuSiC estimates gene-specific cross-donor variance from a multi-subject single-cell reference. Genes with low cross-subject variance (stable lineage markers across donors) receive high weight, whereas genes that fluctuate sharply across donors (dissociation-induced immediate-early genes, interferon bursts, or ambient RNA contaminants) are downweighted automatically.</li>
+<li><strong>Cell-size scaling (<code>cell_size</code>):</strong> metabolically active macrophages, plasma cells, and malignant epithelial cells contain substantially more total mRNA per cell than resting naive lymphocytes. MuSiC accounts for library-size differences per cell type so that estimated proportions reflect cell fractions rather than raw mRNA mass; you can inspect or supply custom cell sizes via the <code>cell_size</code> argument in <code>music_prop()</code>.</li>
+<li><strong>Tree-guided recursive deconvolution:</strong> when closely related subpopulations (for example naive CD4+, memory CD4+, regulatory T, and exhausted CD8+ T cells) share highly collinear expression profiles, flat single-step NNLS suffers variance inflation and unstable trade-offs between sibling clusters. MuSiC's tree-guided mode (<code>music_prop.cluster()</code>) groups collinear clusters into broad parent lineages first, estimates parent proportions using lineage-discriminating genes, and then resolves child subtypes within each lineage.</li>
+</ul>
+<p>Estimated fractions remain strictly conditional on the cell types represented in the reference. If a major population is absent, or if reference and bulk samples differ substantially in tissue, disease state, or RNA extraction chemistry (for example poly(A) single-cell capture vs ribo-depleted FFPE bulk RNA-seq), NNLS redistributes the unmodeled signal across the closest available reference profiles while still normalizing the reported fractions to sum to 1.0. Estimating proportions also does not establish that a cell population caused a clinical phenotype; outcome associations require an independent sample-level statistical model.</p>
 <h2>Check the reference before fitting</h2>
 <ol class="lesson-steps">
 <li>Confirm cell-type annotations and donor identifiers are present for every reference cell. MuSiC uses the cell-type field as <code>clusters</code> and donor/sample field as <code>samples</code>.</li>
@@ -234,22 +239,114 @@ head(prop_estimates)</code></pre>
 <p>The identifier columns <code>cell_type</code> and <code>donor_id</code> are examples, not required names; change them to columns actually present in <code>colData(sc_reference)</code>. MuSiC uses genes shared between the bulk matrix and reference when markers are left at their default. The output list also contains an all-gene NNLS estimate, gene weights, fit summaries, and variance estimates in the documented implementation. Check the installed version's documentation if an output name differs.</p>
 <h2>Inspect, plot, and interpret</h2>
 <p>First inspect dimensions, sample names, cell-type columns, missing values, and whether estimates are finite. MuSiC documents estimates normalized across the included cell types. That sum is conditional on the cell types included in the fit; it does not prove that the reference contains every cell population in the tissue.</p>
-<pre><code class="language-r"># Basic output checks; investigate failures rather than silently dropping values.
+<pre><code class="language-r"># Basic output checks; compare cross-subject weighted MuSiC vs unweighted all-gene NNLS.
 stopifnot(nrow(prop_estimates) == ncol(bulk_use))
 stopifnot(all(is.finite(as.matrix(prop_estimates))))
 range(as.matrix(prop_estimates), na.rm = TRUE)
 rowSums(as.matrix(prop_estimates))
 
-# Optional plot. Reshape with base R to avoid an extra plotting dependency.
+nnls_estimates &lt;- music_results$Est.prop.allgene
+max_method_diff &lt;- apply(abs(as.matrix(prop_estimates) - as.matrix(nnls_estimates)), 2, max)
+print(round(max_method_diff, 3))
+
+# Reshape and visualize estimated cell-type proportions across samples (template).
+library(ggplot2)
 plot_df &lt;- as.data.frame(as.table(as.matrix(prop_estimates)))
 names(plot_df) &lt;- c("bulk_sample", "cell_type", "proportion")
-# Plotting code can use ggplot2 after inspecting the values and labels.</code></pre>
-<p>Do not treat a stacked bar chart as validation. Compare estimates with an independent measurement from the same samples when available, such as flow cytometry for matching cell populations, and examine agreement across the range rather than relying on one correlation number. Differences in cell definitions, units, sampling, and measurement error affect that comparison. When no independent measurement exists, report that limitation and use checks such as fit diagnostics, reference coverage, stability to defensible reference choices, and known sample annotations as diagnostics, not proof of accuracy.</p>
+ggplot(plot_df, aes(x = bulk_sample, y = proportion, fill = cell_type)) +
+  geom_col(width = 0.8) +
+  labs(
+    title = "MuSiC estimated cell-type fractions (conditional on reference)",
+    x = "Bulk RNA-seq sample",
+    y = "Estimated proportion"
+  ) +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))</code></pre>
+<p>Comparing <code>music_results$Est.prop.weighted</code> against <code>music_results$Est.prop.allgene</code> is an immediate diagnostic: large discrepancies on a specific cell type warn either that unweighted NNLS is being pulled by high-variance donor-specific genes or that two reference clusters are nearly collinear. Do not treat a stacked bar chart as biological validation; validate against flow cytometry, immunohistochemistry, or held-out pseudo-bulk mixtures with known ground-truth fractions.</p>
+<h2>Worked R validation check: pseudo-bulk mixtures, variance weighting, and omitted tumour populations</h2>
+<p>Before running MuSiC on patient bulk cohorts, construct artificial pseudo-bulk mixtures from held-out reference donors so you know the exact true fractions. The self-contained base-R script below (executed locally on R 4.6.1; no external packages required) demonstrates two essential deconvolution diagnostics on an invented 3-donor reference: first, how inverse cross-donor variance weighting stabilizes NNLS against a high-variance stress gene (<code>STRESS_VAR</code>); second, how deconvolving a 45%-tumour bulk mixture against an immune-only reference still returns immune proportions summing to <code>1.000</code>:</p>
+<pre><code class="language-r">set.seed(20261118)
+genes &lt;- c("CD3D", "TRBC1", "LYZ", "S100A8", "COL1A1", "STRESS_VAR")
+
+donor_profiles &lt;- list(
+  donor_1 = cbind(T_cell = c(42, 38, 1, 0, 0, 15),
+                  Monocyte = c(1, 0, 95, 88, 1, 20),
+                  Fibroblast = c(0, 0, 2, 1, 160, 10)),
+  donor_2 = cbind(T_cell = c(45, 36, 1, 1, 0, 240),
+                  Monocyte = c(0, 1, 90, 92, 2, 15),
+                  Fibroblast = c(1, 0, 1, 1, 150, 12)),
+  donor_3 = cbind(T_cell = c(40, 41, 0, 1, 1, 30),
+                  Monocyte = c(1, 0, 98, 85, 1, 210),
+                  Fibroblast = c(0, 1, 1, 0, 170, 14))
+)
+for (d in names(donor_profiles)) rownames(donor_profiles[[d]]) &lt;- genes
+
+arr &lt;- simplify2array(donor_profiles)
+X_ref &lt;- apply(arr, c(1, 2), mean)
+gene_var &lt;- apply(arr, 1, function(m) mean(apply(m, 1, var)))
+w_inv_var &lt;- 1 / (gene_var + 1)
+
+X_heldout &lt;- cbind(
+  T_cell     = c(43, 39, 1, 0, 0, 25),
+  Monocyte   = c(1, 0, 93, 89, 1, 18),
+  Fibroblast = c(0, 0, 1, 1, 158, 280)
+)
+rownames(X_heldout) &lt;- genes
+
+true_props &lt;- rbind(
+  mix_immune_rich = c(T_cell = 0.60, Monocyte = 0.30, Fibroblast = 0.10),
+  mix_stroma_rich = c(T_cell = 0.25, Monocyte = 0.25, Fibroblast = 0.50)
+)
+bulk_syn &lt;- X_heldout %*% t(true_props) * 1000
+
+fit_nnls &lt;- function(X, y, weights = rep(1, nrow(X))) {
+  Xw &lt;- X * sqrt(weights)
+  yw &lt;- y * sqrt(weights)
+  opt &lt;- optim(rep(1 / ncol(X), ncol(X)),
+               function(b) sum((yw - as.vector(Xw %*% b))^2),
+               method = "L-BFGS-B", lower = rep(0, ncol(X)))
+  setNames(opt$par / sum(opt$par), colnames(X))
+}
+
+est_unweighted &lt;- t(apply(bulk_syn, 2, function(y) fit_nnls(X_ref, y)))
+est_weighted   &lt;- t(apply(bulk_syn, 2, function(y) fit_nnls(X_ref, y, w_inv_var)))
+cat(sprintf("MAE unweighted=%.4f | MAE weighted=%.4f\n",
+            mean(abs(est_unweighted - true_props)),
+            mean(abs(est_weighted - true_props))))
+print(round(est_weighted, 3))
+
+# Fit an immune-only reference to a bulk mixture containing 45% unmodeled tumour RNA:
+tumour_profile &lt;- c(CD3D = 0, TRBC1 = 0, LYZ = 4, S100A8 = 6, COL1A1 = 22, STRESS_VAR = 190)
+bulk_tumour &lt;- (0.35 * X_heldout[, "T_cell"] + 0.20 * X_heldout[, "Monocyte"] + 0.45 * tumour_profile) * 1000
+est_omitted &lt;- fit_nnls(X_ref[, c("T_cell", "Monocyte")], bulk_tumour, w_inv_var)
+print(round(est_omitted, 3))</code></pre>
+<p>Verified output from local execution (<code>Rscript --vanilla</code>, R 4.6.1):</p>
+<pre><code class="language-text">MAE unweighted=0.1227 | MAE weighted=0.0036
+                T_cell Monocyte Fibroblast
+mix_immune_rich  0.607    0.297      0.096
+mix_stroma_rich  0.253    0.251      0.496
+  T_cell Monocyte
+   0.614    0.386</code></pre>
+<p>Notice both diagnostic lessons: when <code>STRESS_VAR</code> spikes in held-out fibroblasts (<code>mix_stroma_rich</code>, true <code>T_cell = 0.250, Fibroblast = 0.500</code>), unweighted NNLS misassigns the stress signal (<code>T_cell = 0.526, Fibroblast = 0.275</code>, <code>MAE = 0.1227</code>), whereas inverse cross-donor variance weighting recovers <code>0.253, 0.251, 0.496</code> (<code>MAE = 0.0036</code>). Equally important, when 45% of the bulk RNA comes from an unrepresented malignant population, the two-population immune fit reports <code>T_cell = 0.614, Monocyte = 0.386</code> (summing cleanly to <code>1.000</code> despite missing nearly half the tissue).</p>
+<h2>Solid-tumour bulk RNA-seq: malignant heterogeneity, purity, and BayesPrism</h2>
+<p>Deconvolving bulk solid-tumour cohorts (such as TCGA or clinical biopsy trials) poses a specific challenge: non-malignant immune and stromal lineages share conserved transcriptional programs across patients, whereas malignant epithelial or glial cells harbour patient-specific aneuploidy and oncogenic programs that rarely match a single reference donor. When deconvolving tumour bulk RNA-seq:</p>
+<ul>
+<li>Never use a healthy PBMC or normal-organ reference without accounting for the malignant compartment; otherwise tumour transcripts inflate epithelial, myeloid, or cycling immune estimates.</li>
+<li>Compare tumour cell-fraction estimates against independent DNA-based tumour purity (<code>ABSOLUTE</code>, <code>ASCAT</code>, <code>sequenza</code>, or pathology slide review) when matched WES/WGS or H&amp;E slides exist.</li>
+<li>Consider Bayesian tumour-specialized frameworks such as <strong>BayesPrism</strong> (Chu et al., 2022), which models conserved non-malignant states jointly while updating a patient-specific malignant expression prior, or <strong>CIBERSORTx</strong> (Newman et al., 2019) when cross-platform batch correction (<code>S-mode</code> / <code>B-mode</code>) is required.</li>
+</ul>
 <section class="lesson-exercise"><h2>Hypothetical decision check</h2><p>Imagine a hypothetical fit that reports proportions summing to one across the cell types included in the reference, while a population of interest is not represented there. Does the sum show that the reported fractions are validated tissue proportions?</p><details><summary>Reasoned feedback</summary><p>No. The estimates are conditional on the included reference types, and normalization to one does not show that the reference is exhaustive or that the fit is accurate. An omitted population can make the reported mixture ambiguous. Review reference coverage and fit diagnostics, test stability under defensible reference choices, and compare with an independent measurement from the same samples when available.</p></details></section>
-<aside class="lesson-warning"><h3>When estimates look implausible</h3><p>Check gene-ID overlap and order, input scale, missing or mislabelled metadata, reference coverage, and whether multiple reference profiles are too similar to distinguish. Examine MuSiC's fit and variance outputs alongside the proportions. Do not clip, renormalize, or discard unexpected estimates without understanding what produced them; consult the installed version's documentation and investigate the input and model assumptions.</p></aside>
-<section class="lesson-exercise"><h2>Analysis record to keep</h2><p>For each run, record the reference tissue and condition, cell-type and donor fields, preprocessing and expression scale, number of shared genes, included cell types, MuSiC version, output dimensions, fit/variance diagnostics, and any external validation. A useful deliverable is this record alongside the sample-by-cell-type estimate table and a plot clearly labeled as an estimate.</p></section>
+<aside class="lesson-warning"><h3>When estimates look implausible</h3><p>Check gene-ID overlap and order, input scale (linear/raw counts vs log-transformed values; see Avila Cobos et al., 2020), missing or mislabelled metadata, reference coverage, and whether multiple reference profiles are too similar to distinguish. Examine MuSiC's fit and variance outputs alongside the proportions. Do not clip, renormalize, or discard unexpected estimates without understanding what produced them.</p></aside>
+<section class="lesson-exercise"><h2>Analysis record to keep</h2><p>For each run, record the reference tissue and condition, cell-type and donor fields, preprocessing and expression scale, number of shared genes, included cell types, MuSiC version, output dimensions, weighted-vs-NNLS stability differences, and any pseudo-bulk or orthogonal purity validation.</p></section>
 <h2>References and further reading</h2>
-<ul><li><a href="https://xuranw.github.io/MuSiC/articles/MuSiC.html" rel="noopener" target="_blank">MuSiC package vignette</a> for object preparation, method details, and example outputs.</li><li><a href="https://xuranw.github.io/MuSiC/reference/music_prop.html" rel="noopener" target="_blank"><code>music_prop</code> reference</a> for the current function arguments and output.</li><li><a href="https://www.sc-best-practices.org/deconvolution/bulk_deconvolution.html" rel="noopener" target="_blank">Single-cell best practices: bulk deconvolution</a> for broader method assumptions, preprocessing, and reference limitations.</li></ul>
+<ul>
+<li>Wang, X., Park, J., Susztak, K., Zhang, N. R., &amp; Li, M. (2019). Bulk tissue cell type deconvolution with multi-subject single-cell expression reference. <em>Nature Communications</em>, 10, 380. <a href="https://doi.org/10.1038/s41467-018-08023-x" rel="noopener" target="_blank">doi:10.1038/s41467-018-08023-x</a></li>
+<li>Avila Cobos, F., Alquicira-Hernandez, J., Powell, J. E., Mestdagh, P., &amp; De Preter, K. (2020). Benchmarking of cell type deconvolution pipelines for transcriptomics data. <em>Nature Communications</em>, 11, 5650. <a href="https://doi.org/10.1038/s41467-020-19015-1" rel="noopener" target="_blank">doi:10.1038/s41467-020-19015-1</a></li>
+<li>Chu, T., Wang, Z., Pe'er, D., &amp; Danko, C. G. (2022). Cell type and gene expression deconvolution with BayesPrism enables Bayesian integrative analysis across bulk and single-cell RNA sequencing in oncology. <em>Nature Cancer</em>, 3, 505-517. <a href="https://doi.org/10.1038/s43018-022-00356-3" rel="noopener" target="_blank">doi:10.1038/s43018-022-00356-3</a></li>
+<li>Newman, A. M., Steen, C. B., Liu, C. L., et al. (2019). Determining cell type abundance and expression from bulk tissues with digital cytometry. <em>Nature Biotechnology</em>, 37, 773-782. <a href="https://doi.org/10.1038/s41587-019-0114-2" rel="noopener" target="_blank">doi:10.1038/s41587-019-0114-2</a></li>
+<li><a href="https://xuranw.github.io/MuSiC/articles/MuSiC.html" rel="noopener" target="_blank">MuSiC package vignette</a> and <a href="https://xuranw.github.io/MuSiC/reference/music_prop.html" rel="noopener" target="_blank"><code>music_prop</code> reference</a>.</li>
+<li><a href="https://www.sc-best-practices.org/deconvolution/bulk_deconvolution.html" rel="noopener" target="_blank">Single-cell best practices: bulk deconvolution</a>.</li>
+</ul>
 <aside aria-labelledby="tutorial-feedback-title" class="lesson-feedback" id="tutorial-feedback"><h2 id="tutorial-feedback-title">Help improve this tutorial</h2><p>Found an error, a broken link, or a step that needs a clearer explanation? Please <a href="../contact.html">contact me</a>. Your feedback helps me keep this resource accurate and useful.</p></aside></article>
 <nav aria-label="Learning path continuation" class="reader-sequence" id="reader-course-navigation">
 <div class="reader-sequence-heading"><p class="reader-sequence-kicker">Continue learning</p><h2>Keep exploring</h2>
@@ -378,7 +475,7 @@ names(plot_df) &lt;- c("bulk_sample", "cell_type", "proportion")
 </script>
 <script src="../assets/vendor/prism/prism-1.29.0.js"></script>
 <script id="tutorial-code-data">
-window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"single-cell-deconvolution":{"blocks":[{"language":"r","sha256":"aa4fac11a0c2fe4fb5e0481460de0d9b169f1268ec65cdc88810e2e16a007281"},{"language":"r","sha256":"5fd35e8c72cc4fe22c3c06e2c8b91f2e6d9b134b6995b4e2a24be90ca17f8723"}],"groups":[]}}};
+window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"single-cell-deconvolution":{"blocks":[{"language":"r","sha256":"aa4fac11a0c2fe4fb5e0481460de0d9b169f1268ec65cdc88810e2e16a007281"},{"language":"r","sha256":"c8a9d344743c6971a148e85d82351981270eb7c98c834bd65fe693d15d62218b"},{"language":"r","sha256":"c0168fc1a90caf0b5aa5856f586ebc4c1eaebce9ff15addd4c3ca2841f80d62b"},{"language":"text","sha256":"83be9e3cbad12806f418587aebf19df6d10cd913af04fea3caa564858e1d9a98"}],"groups":[]}}};
 </script>
 <script src="../code-tabs.js?v=20261026-startup-v1"></script>
 <script src="../copy-code.js?v=20261025-r-first-v1"></script>

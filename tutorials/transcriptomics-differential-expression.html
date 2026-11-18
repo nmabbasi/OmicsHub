@@ -309,7 +309,29 @@ res &lt;- results(dds, contrast = c("condition", "CTCL", "Healthy"), alpha = 0.0
 res_ordered &lt;- res[order(res$padj, na.last = TRUE), ]
 dir.create("output/deseq2", recursive = TRUE, showWarnings = FALSE)
 write.csv(as.data.frame(res_ordered), "output/deseq2/cd4_DE_results.csv")</code></pre>
-<p>Before running, confirm the labels are exactly <code>Healthy</code> and <code>CTCL</code>; edit both the reference and contrast for your data. <code>results()</code> reports the specified comparison; <code>padj</code> may be <code>NA</code> for genes filtered by DESeq2 or flagged for outliers. A p-value threshold is not a biological-effect threshold, and significance does not establish causality.</p>
+<p>Before running, confirm the labels are exactly <code>Healthy</code> and <code>CTCL</code>; edit both the reference and contrast for your data. <code>results()</code> reports the specified comparison; <code>padj</code> may be <code>NA</code> for genes filtered by DESeq2 or flagged for outliers. Note that bulk RNA-seq differential expression enters at this exact <code>DESeqDataSetFromMatrix</code> step once a gene-by-sample raw count matrix (from <code>featureCounts</code> or <code>tximport</code>) and aligned <code>coldata</code> are prepared.</p>
+<h3>Minimum cells per pseudobulk, paired donor designs, and <code>apeglm</code> shrinkage</h3>
+<p>Three practical extensions make sample-level pseudobulk workflows markedly more reliable on clinical and perturbation scRNA-seq cohorts (such as the public Kang et al., 2018 IFN-beta-stimulated vs control PBMC cohort from 8 matched lupus donors, <code>GSE96583</code> / <code>ifnb</code> in SeuratData):</p>
+<pre><code class="language-r"># 1) Audit and exclude ultra-sparse pseudobulks (e.g., &lt; 20 cells of that lineage in a sample)
+cells_per_pb &lt;- table(as.character(meta_ct$sample_id))
+keep_samples &lt;- names(cells_per_pb)[cells_per_pb &gt;= 20L]
+pb_dense &lt;- as.matrix(pb[, intersect(colnames(pb), keep_samples), drop = FALSE])
+storage.mode(pb_dense) &lt;- "integer"
+coldata_sub &lt;- coldata[colnames(pb_dense), , drop = FALSE]
+
+# 2) Paired donor design (e.g., Kang et al. GSE96583: 8 donors measured in both ctrl and stim)
+# Requires a 'donor' column in coldata_sub alongside 'condition' (ref = "ctrl"):
+dds_paired &lt;- DESeqDataSetFromMatrix(
+  countData = pb_dense[rowSums(pb_dense &gt;= 10L) &gt;= 4L, , drop = FALSE],
+  colData   = transform(coldata_sub, donor = factor(donor), condition = relevel(factor(condition), "ctrl")),
+  design    = ~ donor + condition
+)
+dds_paired &lt;- DESeq(dds_paired)
+
+# 3) Empirical-Bayes log2FC shrinkage (Zhu et al., 2019) for ranking, GSEA, and volcano/MA plots
+# (keeps Wald p-values/padj while shrinking noisy low-count fold changes toward zero)
+res_shrunk &lt;- lfcShrink(dds_paired, coef = "condition_stim_vs_ctrl", type = "apeglm")</code></pre>
+<p>In Kang et al. (<code>GSE96583</code>) CD4+ T cells or CD14+ monocytes, accounting for inter-donor baseline differences via <code>~ donor + condition</code> substantially sharpens precision over an unpaired <code>~ condition</code> fit, surfacing canonical type-I interferon-stimulated genes (<code>ISG15</code>, <code>IFI6</code>, <code>IFIT1</code>, <code>IFIT3</code>, <code>MX1</code>, <code>OAS1</code>) at the top of <code>res_shrunk</code> while attenuating noisy single-UMI transcripts.</p>
 <p class="lesson-checkpoint"><strong>Successful structural check:</strong> <code>output/pseudobulk/cd4_counts.csv</code> has a gene column plus one column per retained sample, and <code>sample_metadata.csv</code> has one row per same sample with its condition. The DE results file has gene-level estimates; the plot files are written under <code>output/plots/</code>. Check that the count-column names and metadata sample IDs match exactly and that there is more than one independent sample per modeled condition. These checks establish file alignment and execution, not biological validity or a required direction/significance of effects. Stop if the sample mapping, count assay, or group labels fail; return to metadata and assay provenance rather than interpreting output.</p>
 <h2>Inspect sample variation and effect estimates</h2>
 <p>Use the variance-stabilized values to visualize sample relationships, not for DE testing. This PCA helps reveal dominant structure and possible outliers; separation by condition is not guaranteed or required, and overlap does not by itself invalidate the analysis.</p>
@@ -352,11 +374,12 @@ ggsave("output/plots/volcano.png", volcano, width = 6, height = 4, bg = "white")
 <p>For paired or repeated-measures studies, adapt the design to the sample structure (for example, include a subject term where estimable); do not reuse the unpaired formula blindly. If condition is perfectly confounded with batch, no model term can disentangle them from these data.</p>
 <h2>References</h2>
 <ul>
-<li><a href="https://satijalab.org/seurat/reference/aggregateexpression">Seurat AggregateExpression reference</a>: grouping and summed-count return contract.</li>
-<li><a href="https://satijalab.org/seurat/articles/de_vignette">Seurat differential-expression vignette</a>: sample-level pseudobulk rationale and workflow.</li>
-<li><a href="https://bioconductor.org/packages/release/bioc/vignettes/DESeq2/inst/doc/DESeq2.html">DESeq2 vignette</a>: count input, designs, contrasts, and diagnostics.</li>
-<li><a href="https://www.nature.com/articles/s41467-021-25960-2">Squair et al. (2021), “Confronting false discoveries in single-cell differential expression”</a>: evidence on replicate-aware analysis.</li>
-<li><a href="https://bioconductor.org/packages/release/bioc/html/edgeR.html">edgeR Bioconductor page</a>: an alternative count-based differential-expression package.</li>
+<li>Squair JW, Gautier M, Kathe C, et al. (2021). Confronting false discoveries in single-cell differential expression. <em>Nature Communications</em>, 12, 5692. <a href="https://doi.org/10.1038/s41467-021-25960-2" rel="noopener" target="_blank">doi:10.1038/s41467-021-25960-2</a></li>
+<li>Crowell HL, Soneson C, Germain PL, et al. (2020). muscat detects subpopulation-specific state transitions from multi-sample multi-condition single-cell transcriptomics data. <em>Nature Communications</em>, 11, 6077. <a href="https://doi.org/10.1038/s41467-020-19894-4" rel="noopener" target="_blank">doi:10.1038/s41467-020-19894-4</a></li>
+<li>Love MI, Huber W, Anders S (2014). Moderated estimation of fold change and dispersion for RNA-seq data with DESeq2. <em>Genome Biology</em>, 15(12), 550. <a href="https://doi.org/10.1186/s13059-014-0550-8" rel="noopener" target="_blank">doi:10.1186/s13059-014-0550-8</a></li>
+<li>Zhu A, Ibrahim JG, Love MI (2019). Heavy-tailed prior distributions for sequence count data: removing the noise and preserving large differences. <em>Bioinformatics</em>, 35(12), 2084-2092 (<code>apeglm</code>). <a href="https://doi.org/10.1093/bioinformatics/bty895" rel="noopener" target="_blank">doi:10.1093/bioinformatics/bty895</a></li>
+<li>Kang HM, Subramaniam M, Targ S, et al. (2018). Multiplexed droplet single-cell RNA-sequencing using natural genetic variation. <em>Nature Biotechnology</em>, 36, 89-94 (<code>GSE96583</code>). <a href="https://doi.org/10.1038/nbt.4042" rel="noopener" target="_blank">doi:10.1038/nbt.4042</a></li>
+<li><a href="https://satijalab.org/seurat/reference/aggregateexpression">Seurat AggregateExpression reference</a>, <a href="https://satijalab.org/seurat/articles/de_vignette">Seurat DE vignette</a>, and <a href="https://bioconductor.org/packages/release/bioc/vignettes/DESeq2/inst/doc/DESeq2.html">DESeq2 Bioconductor vignette</a>.</li>
 </ul>
 <aside aria-labelledby="tutorial-feedback-title" class="lesson-feedback" id="tutorial-feedback"><h2 id="tutorial-feedback-title">Help improve this tutorial</h2><p>Found an error, a broken link, or a step that needs a clearer explanation? Please <a href="../contact.html">contact me</a>. Your feedback helps me keep this resource accurate and useful.</p></aside></article>
 <section class="mt-12 mb-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-100">
@@ -497,7 +520,7 @@ ggsave("output/plots/volcano.png", volcano, width = 6, height = 4, bg = "white")
 </script>
 <script src="../assets/vendor/prism/prism-1.29.0.js"></script>
 <script id="tutorial-code-data">
-window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"transcriptomics-differential-expression":{"blocks":[{"language":"r","sha256":"9f988a7bffae7726904cf6861f7acf84d56ec95d58acc200694f45b671557891"},{"language":"r","sha256":"bc0f0c0b622b059394e86f11fe2e4c34022ca7aef6a8c5ecb916228660974889"},{"language":"r","sha256":"513ca46c3cb7bdf5aaad36b606db14883ee69027a817273e2d3d032813e4b3ca"},{"language":"r","sha256":"044dd05906d805d604583f4484d633b46ea09c6d84263518bd318c7c5edae1ff"}],"groups":[]}}};
+window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"transcriptomics-differential-expression":{"blocks":[{"language":"r","sha256":"9f988a7bffae7726904cf6861f7acf84d56ec95d58acc200694f45b671557891"},{"language":"r","sha256":"bc0f0c0b622b059394e86f11fe2e4c34022ca7aef6a8c5ecb916228660974889"},{"language":"r","sha256":"513ca46c3cb7bdf5aaad36b606db14883ee69027a817273e2d3d032813e4b3ca"},{"language":"r","sha256":"3a100e1b77700242931094ed75d7d80f56eb50ae3440d06615f25c9bbdc34195"},{"language":"r","sha256":"044dd05906d805d604583f4484d633b46ea09c6d84263518bd318c7c5edae1ff"}],"groups":[]}}};
 </script>
 <script src="../code-tabs.js?v=20261026-startup-v1"></script>
 <script src="../copy-code.js?v=20261025-r-first-v1"></script>

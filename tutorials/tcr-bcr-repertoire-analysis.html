@@ -187,44 +187,64 @@ function toggleMobileMenu() {
 library(Seurat)
 library(ggplot2)
 
-# Replace these directories with one directory per V(D)J sample.
-sample_dirs &lt;- c("data/sample_A", "data/sample_B")
-sample_ids &lt;- c("sample_A", "sample_B")
+# Replace these directories with one directory per V(D)J sample (e.g. matched tumour and blood).
+sample_dirs &lt;- c("data/patient1_tumour", "data/patient1_blood")
+sample_ids &lt;- c("P1_tumour", "P1_blood")
 stopifnot(length(sample_dirs) == length(sample_ids))
 
 contig_list &lt;- lapply(sample_dirs, function(path) {
   loadContigs(input = path, format = "10X")[[1]]
 })
+
+# Pass `samples` alone unless you need a separate secondary `ID` grouping.
+# Passing identical `samples` and `ID` vectors creates doubled prefixes (e.g. P1_tumour_P1_tumour_BARCODE).
 combined_tcr &lt;- combineTCR(
   contig_list,
   samples = sample_ids,
-  ID = sample_ids
+  removeNA = FALSE,
+  removeMulti = FALSE
 )</code></pre>
-<p>The directories must contain Cell Ranger's named filtered-contig CSV. Check that each list element loaded the intended sample, that barcode prefixes distinguish samples, and that productive chains and missing/extra chains are handled as intended. The defaults for removing or retaining incomplete and multi-chain cells are analysis choices, not neutral cleanup; inspect the package documentation before changing them.</p>
-<p><strong>Barcode check before attachment:</strong> <code>samples</code> and <code>ID</code> add sample strings as prefixes in <code>combineTCR()</code>; with both set to <code>sample_A</code>, do not assume the result remains the raw 10x barcode. Inspect <code>head(combined_tcr[[1]]$barcode)</code> against <code>head(colnames(seurat_obj))</code>. If RNA barcodes are not sample-qualified, apply one documented convention consistently to both assays before combining; do not strip suffixes blindly, which can merge cells across samples. Require exact overlap and inspect unmatched counts; stop if overlap is unexpectedly low.</p>
+<p>Each directory must contain Cell Ranger's <code>filtered_contig_annotations.csv</code>. Notice that <code>combineTCR(..., samples = sample_ids)</code> prepends <code>P1_tumour_</code> or <code>P1_blood_</code> to every 10x barcode; reserve the optional <code>ID</code> argument only when you want a two-part prefix such as <code>samples = c("P1", "P1"), ID = c("tumour", "blood")</code>. Before attaching contigs to RNA, compare <code>head(combined_tcr[[1]]$barcode)</code> against <code>head(colnames(seurat_obj))</code>; when merging separate per-sample Seurat objects, pass <code>merge(s1, y = s2, add.cell.ids = sample_ids)</code> so RNA and V(D)J barcodes follow the exact same prefix rule. Also document <code>removeNA</code> (single-chain cells missing alpha or beta, common due to TCR-alpha dropout) and <code>removeMulti</code> (cells with dual TCR-alpha rearrangements vs T-cell doublets).</p>
 <aside class="lesson-checkpoint"><h3>Before comparing samples</h3><p>Confirm that your RNA object's cell barcodes use the same sample-prefix convention as the combined contigs. Check which cells lack receptor calls, how many have multiple or incomplete chains, and whether the sample labels refer to the same biological units in both assays. A barcode mismatch can prevent annotation transfer.</p></aside>
-<h2>2. Compare clone-size structure</h2>
-<p>Choose a clonotype definition before interpreting an expansion plot. The example uses <code>aa</code>, amino-acid CDR3 calls. Amino-acid matching can group distinct nucleotide rearrangements that encode the same sequence; nucleotide-based definitions are more stringent for sequence identity. The package's available definitions and chain rules depend on current version and receptor type.</p>
-<pre><code class="language-r"># Summarize the fraction of each repertoire in clone-size bins.
+<h2>2. Quantify clone-size bins, diversity, repertoire overlap, and V/J usage</h2>
+<p>Choose a clonotype definition before interpreting expansion. In current scRepertoire releases, <code>cloneCall = "aa"</code> groups paired CDR3 amino-acid sequences (which can merge convergent nucleotide rearrangements encoding the same peptide), whereas <code>cloneCall = "strict"</code> requires matching V/D/J/C gene segments plus CDR3 nucleotide sequence (preferable for tracking exact clonal ancestry between tumour and peripheral blood).</p>
+<pre><code class="language-r"># 1. Relative clone-space homeostasis vs absolute cell-count bins.
+# Note: scRepertoire v1 used `clone.call`; v2 uses `cloneCall`. Check `args(clonalHomeostasis)`.
 clonalHomeostasis(
   combined_tcr,
-  clone.call = "aa",
-  group.by = "sample"
+  cloneCall = "strict",
+  cloneSize = c(Rare = 1e-04, Small = 0.001, Medium = 0.01, Large = 0.1, Hyperexpanded = 1)
 )
 
-# Show clone contribution by rank; this is a different view of abundance.
-clonalProportion(
+# 2. Clonal diversity across samples (Shannon weights richness + evenness; inv.simpson emphasizes dominant clones).
+clonalDiversity(
   combined_tcr,
-  clone.call = "aa",
-  group.by = "sample"
+  cloneCall = "strict",
+  group.by = "sample",
+  n.boots = 100
+)
+
+# 3. Clonal sharing between compartments (e.g. tumour vs matched blood; Morisita-Horn accounts for abundance).
+clonalOverlap(
+  combined_tcr,
+  cloneCall = "strict",
+  method = "morisita"
+)
+
+# 4. Inspect TRBV / TRBJ gene usage skew before attributing expansion to one clone.
+vizGenes(
+  combined_tcr,
+  x.axis = "TRBV",
+  y.axis = "TRBJ",
+  plot = "heatmap",
+  scale = TRUE
 )</code></pre>
-<p>Homeostasis groups clones by their proportion of the selected repertoire; proportion plots rank clones into abundance groups. Neither is a diversity estimate by itself. Read the plot with its denominator and grouping in mind: the same clone may be assigned differently when the compared group changes. Record the clone-call definition, chain selection, grouping variable, and whether cells or reads underpin the input data.</p>
+<p>By default, <code>clonalHomeostasis()</code> bins clones by their <em>relative proportion</em> of the sample repertoire. When one biopsy yields 250 T cells and another yields 4,000 T cells, a 3-cell clone represents <code>0.012</code> (<code>Large</code>) in the shallow biopsy but <code>0.00075</code> (<code>Small</code>) in the deep library. Whenever T-cell recovery varies substantially across samples, also inspect absolute cell-count bins in <code>combineExpression(..., proportion = FALSE, cloneSize = c(Single = 1, Small = 5, Medium = 20, Large = 100, Hyperexpanded = 500))</code>, and use downsampled bootstrap diversity (<code>clonalDiversity(..., n.boots = 100)</code>) alongside Morisita-Horn overlap (which is far less sensitive to under-sampled singletons than unweighted Jaccard overlap).</p>
 <aside class="lesson-warning"><h3>Depth and sampling affect the picture</h3><p>Observed richness and rare-clone detection depend on sampling depth and cell recovery. Equalizing depth can be useful for a chosen comparison, but rarefaction is not a universal prerequisite or a cure for differences in tissue, capture, or library quality. Report the normalization or subsampling method and assess whether conclusions hold under reasonable alternatives. Do not label a large clone as antigen-specific from abundance alone.</p></aside>
-<h2>3. Attach clone labels to Seurat metadata</h2>
-<p>Make the RNA object's sample metadata agree with the sample names used above. The attachment relies on matching cell barcodes. The example groups frequencies within each sample and requests amino-acid clonotypes; inspect the resulting metadata columns rather than assuming a particular label or bin exists.</p>
-<pre><code class="language-r"># Load your matched Seurat object, e.g.:
+<h2>3. Attach clone labels to Seurat metadata and map intratumoural phenotypes</h2>
+<p>Make the RNA object's barcodes and sample metadata agree with <code>combined_tcr</code>, attach clonal frequency bins, and inspect how expanded clones distribute across transcriptional T-cell states (for example <code>CXCL13+ PDCD1+ HAVCR2+</code> exhausted vs <code>TCF7+ IL7R+</code> progenitor/memory CD8+ T cells):</p>
+<pre><code class="language-r"># Load your matched Seurat object with sample-prefixed barcodes:
 # seurat_obj &lt;- readRDS("data/combined_seurat.rds")
-# Metadata column "sample" must contain values in sample_ids.
 stopifnot(exists("seurat_obj"), "sample" %in% colnames(seurat_obj[[]]))
 stopifnot(all(unique(as.character(seurat_obj$sample)) %in% sample_ids))
 contig_barcodes &lt;- unique(unlist(lapply(combined_tcr, `[[`, "barcode")))
@@ -233,17 +253,21 @@ barcode_overlap &lt;- intersect(contig_barcodes, rna_barcodes)
 message(length(barcode_overlap), " exact barcode matches; ",
         length(setdiff(contig_barcodes, rna_barcodes)), " contig barcodes unmatched")
 if (length(barcode_overlap) == 0L) stop("No exact barcode overlap; resolve prefixes before attachment")
+
 seurat_obj &lt;- combineExpression(
   combined_tcr,
   seurat_obj,
-  clone.call = "aa",
-  group.by = "sample"
+  cloneCall = "strict",
+  group.by = "sample",
+  proportion = FALSE,
+  cloneSize = c(Single = 1, Small = 5, Medium = 20, Large = 100, Hyperexpanded = 500)
 )
 
-# Inspect the values actually added before plotting.
+# Inspect added columns, UMAP overlay, and clone-size distribution per transcriptional cluster.
 colnames(seurat_obj[[]])
-DimPlot(seurat_obj, group.by = "cloneSize")</code></pre>
-<p>If cells are unexpectedly unannotated, compare the barcode strings on both sides, including any sample prefixes, and verify that the sample metadata column has the intended values. Also check whether filtering removed receptor-negative cells. The plot describes where labeled cells lie in the embedding; it does not demonstrate that a clone caused a transcriptional state or that the cells are malignant.</p>
+DimPlot(seurat_obj, group.by = "cloneSize")
+clonalOccupy(seurat_obj, x.axis = "ident", proportion = TRUE)</code></pre>
+<p>In tumour-infiltrating lymphocyte (TIL) cohorts, large clones frequently concentrate in cytotoxic effector-memory (<code>GZMK+</code>) and terminally exhausted (<code>CXCL13+ PDCD1+</code>) CD8+ clusters, yet viral bystander clones specific for EBV, CMV, or influenza can also expand inside human tumours without recognizing tumour neoantigens. Public specificity databases such as <strong>VDJdb</strong> (Goncharov et al., 2022) and <strong>McPAS-TCR</strong> are useful hypothesis screens, but CDR3-beta-only string matching without paired TCR-alpha sequence and patient HLA class I/II allele restriction carries substantial false-positive risk.</p>
 <h2>Interpreting clone-associated expression</h2>
 <p>A clone-size category is an abundance grouping, not a malignancy label. In a lymphoma study, determining whether a clone is malignant requires disease-specific evidence and study design beyond this repertoire workflow. A cell-level contrast such as <code>FindMarkers()</code> can be exploratory, but cells from the same donor are not independent biological replicates. For condition-level claims, account for between-sample variation, for example with an appropriate pseudobulk design, and validate findings independently.</p>
 <p>TCRs and BCRs share V(D)J-based diversity but differ in chain organization and biology. The main code above is TCR-focused. For a real BCR analysis, use BCR-specific handling such as <code>combineBCR()</code> on filtered contig annotations and verify productive IGH plus IGK and/or IGL chains and CDR3 fields. For <code>combineExpression()</code>, choose a BCR-appropriate <code>clone.call</code> and <code>chain</code> (documented choices include <code>IGH</code>, <code>IGL</code>, and <code>both</code>); the scRepertoire documentation describes its heavy/light-chain handling and related-clone options. A heavy-chain-only call does not represent paired receptors. Check barcode overlap and resulting metadata before plotting. Interpret pairing and somatic hypermutation with BCR-specific methods. The small synthetic example below is a teaching summary, not a validated BCR pipeline.</p>
@@ -301,11 +325,11 @@ toy_A	IGHV3-7	IGHJ6	CARRDYGMDV	1</code></pre>
 </ul>
 <section class="lesson-exercise"><h2>Hypothetical decision check</h2><p>Suppose an amino-acid CDR3 clone appears more prominent in a pooled treatment group than in a pooled comparison group. Before calling this condition-associated expansion, what definitions and units must you check?</p><details><summary>Reasoned feedback</summary><p>First state the clonotype rule, including chain handling and whether the display uses clone proportions or raw frequencies. Identify the denominator, for example receptor-bearing cells within each declared sample group, and check barcode/cell recovery. Then compare independent biological samples rather than treating pooled cells as replicates. Amino-acid matches can combine distinct nucleotide rearrangements, and abundance alone does not establish antigen specificity or function.</p></details></section>
 <section aria-labelledby="exercise-title" class="lesson-exercise"><h2 id="exercise-title">Exercise: audit a two-sample comparison</h2><p>Run the workflow on two of your own samples. Save the two plots and write a short caption containing the four decisions above. Then inspect barcode overlap, receptor-call recovery, chain pairing, and sample-level replication before making a biological comparison.</p><p><strong>Check your work:</strong> another analyst should be able to tell exactly how you defined a clone and what cells formed each denominator. A visually dominant category without that information is not an interpretable comparison.</p></section>
-<section aria-label="References and further reading" class="lesson-reference"><h2>Official documentation</h2><ul>
-<li><a href="https://www.borch.dev/uploads/screpertoire/reference/loadcontigs" rel="noopener" target="_blank">scRepertoire: loadContigs</a></li>
-<li><a href="https://www.borch.dev/uploads/screpertoire/reference/combinebcr" rel="noopener" target="_blank">scRepertoire: combineBCR and B-cell receptor contigs</a></li>
-<li><a href="https://www.borch.dev/uploads/screpertoire/articles/attaching_sc" rel="noopener" target="_blank">scRepertoire: attaching clonal information to single-cell objects</a></li>
-<li><a href="https://www.borch.dev/uploads/screpertoire/reference/clonalhomeostasis" rel="noopener" target="_blank">scRepertoire: clonalHomeostasis</a></li>
+<section aria-label="References and further reading" class="lesson-reference"><h2>References and official documentation</h2><ul>
+<li>Borcherding, N., Bormann, N. L., &amp; Kraus, G. (2020). scRepertoire: An R-based toolkit for single-cell immune receptor analysis. <em>F1000Research</em>, 9, 47. <a href="https://doi.org/10.12688/f1000research.22139.2" rel="noopener" target="_blank">doi:10.12688/f1000research.22139.2</a></li>
+<li>Gupta, N. T., Vander Heiden, J. A., Uduman, M., et al. (2015). Change-O: a toolkit for analyzing large-scale B cell immunoglobulin repertoire sequencing data (Immcantation framework). <em>Bioinformatics</em>, 31(20), 3356-3358. <a href="https://doi.org/10.1093/bioinformatics/btv359" rel="noopener" target="_blank">doi:10.1093/bioinformatics/btv359</a></li>
+<li>Goncharov, M., Bagaev, D., Shcherbinin, D., et al. (2022). VDJdb in the pandemic era: a compendium of T cell receptors specific for SARS-CoV-2 and other antigens. <em>Nucleic Acids Research</em>, 50(D1), D1053-D1059. <a href="https://doi.org/10.1093/nar/gkab809" rel="noopener" target="_blank">doi:10.1093/nar/gkab809</a></li>
+<li><a href="https://www.borch.dev/uploads/screpertoire/reference/loadcontigs" rel="noopener" target="_blank">scRepertoire: loadContigs</a>, <a href="https://www.borch.dev/uploads/screpertoire/reference/combinebcr" rel="noopener" target="_blank">combineBCR</a>, <a href="https://www.borch.dev/uploads/screpertoire/articles/attaching_sc" rel="noopener" target="_blank">attaching clonal information</a>, and <a href="https://www.borch.dev/uploads/screpertoire/reference/clonalhomeostasis" rel="noopener" target="_blank">clonalHomeostasis</a></li>
 <li><a href="https://www.10xgenomics.com/support/software/cell-ranger/latest/analysis/outputs/cr-5p-outputs-annotations-vdj" rel="noopener" target="_blank">10x Genomics: Cell Ranger V(D)J annotation outputs</a></li>
 <li><a href="https://satijalab.org/seurat/reference/findmarkers" rel="noopener" target="_blank">Seurat: FindMarkers and sample-level differential-expression caveat</a></li>
 </ul></section>
@@ -448,7 +472,7 @@ toy_A	IGHV3-7	IGHJ6	CARRDYGMDV	1</code></pre>
 </script>
 <script src="../assets/vendor/prism/prism-1.29.0.js"></script>
 <script id="tutorial-code-data">
-window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"tcr-bcr-repertoire-analysis":{"blocks":[{"language":"r","sha256":"af2c7cf84ca586ce05dedace8a87a30af8fac35410065ccd3af3c8a091cd7fc8"},{"language":"r","sha256":"5f4e38c29b78357f60e670228890091529c4a9573b1236388a0d852d9b517166"},{"language":"r","sha256":"672851f154d0d0d6742f90caf2cb524662245175dfbef7bfa272fb59381158b2"},{"language":"r","sha256":"ce016036629d967b231cd22fbc403ec0ef0707e187891aa70b95e2ced05fe537"},{"language":"text","sha256":"dd82970b9f4b1b973dab3f87a6a050ddf620d79557949fa919e82c0961d6fb45"}],"groups":[]}}};
+window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"tcr-bcr-repertoire-analysis":{"blocks":[{"language":"r","sha256":"b31c831bfd4c0790fc6fe00664f496411999fb748a95b2525a32407386b26775"},{"language":"r","sha256":"1488329286fc5ab395a660f0ba2c90382b64f636a09702ae0e44cafa8221da57"},{"language":"r","sha256":"56fa6d5a73d2f6723a5fa8c7ef6f302f573450c92d49b2cafeb6cb2a32f47bad"},{"language":"r","sha256":"ce016036629d967b231cd22fbc403ec0ef0707e187891aa70b95e2ced05fe537"},{"language":"text","sha256":"dd82970b9f4b1b973dab3f87a6a050ddf620d79557949fa919e82c0961d6fb45"}],"groups":[]}}};
 </script>
 <script src="../code-tabs.js?v=20261026-startup-v1"></script>
 <script src="../copy-code.js?v=20261025-r-first-v1"></script>

@@ -291,7 +291,7 @@ p_dot &lt;- Seurat::DotPlot(
 
 ggsave("results/dotplot_top_markers.pdf", p_dot, width = 9, height = 4)
 </code></pre>
-<p class="lesson-checkpoint">Confirm every feature is present in the assay you intend to plot. Seurat's <code>DotPlot()</code> reports missing features and omits them from the plot, so inspect warnings and the returned plot before saving. Its dot size represents the fraction of cells expressing a feature and its color summarizes average expression; these summaries are not cell-level measurements.</p>
+<p class="lesson-checkpoint">Confirm every feature is present in the assay you intend to plot, and order both <code>top_markers</code> and the <code>cell_type</code> factor levels biologically (for example lymphoid, myeloid, stromal, then epithelial lineages) rather than alphabetically so marker enrichment forms a clean diagonal block across the dot plot. Seurat's <code>DotPlot()</code> encodes detection prevalence in dot size and scaled mean expression in color; always pair continuous colorbars with colour-vision-deficiency-safe sequential scales such as <code>viridis</code> or <code>scico</code> rather than rainbow or red-green gradients (Crameri et al., 2020).</p>
 <h3>5) Optional dittoSeq template: composition barplot</h3>
 <pre><code># Purpose: show relative cell type composition across samples or patients.
 # Input: seurat_obj with 'cell_type' and 'patient_id' metadata columns
@@ -307,9 +307,9 @@ p_comp &lt;- dittoSeq::dittoBarPlot(
 
 ggsave("results/composition_by_patient.png", p_comp, width = 9, height = 4, dpi = 300)
 </code></pre>
-<p>When preparing figure panels, ensure sample ordering is intentional (ascending/descending or experimental order); modify factor levels of <code>patient_id</code> in metadata if needed.</p>
+<p><code>dittoSeq</code> uses an Okabe-Ito-inspired colour-vision-safe categorical palette by default (Bunis et al., 2020). When preparing figure panels, order <code>patient_id</code> factor levels intentionally (for example grouped by treatment arm or clinical response rather than string sort order) so between-donor variability within each condition is immediately visible.</p>
 <h3>6) Optional dittoSeq template: heatmap of marker genes</h3>
-<pre><code># Purpose: multi-annotation heatmap with consistent scaling across genes.
+<pre><code># Purpose: multi-annotation heatmap with explicit z-score vs unscaled choice.
 # Input: seurat_obj and vector top_markers
 # Output: results/heatmap_top_markers.pdf
 
@@ -317,13 +317,15 @@ p_heat &lt;- dittoSeq::dittoHeatmap(
   seurat_obj,
   genes = top_markers,
   annot.by = c("cell_type", "condition"),
+  scale = "row",          # default in pheatmap/dittoHeatmap: row z-score; use "none" for log-normalized values
   scaled.to.max = FALSE,
   show_colnames = FALSE
 )
 
-ggsave("results/heatmap_top_markers.pdf", p_heat, width = 8, height = 6)
+# dittoHeatmap returns a pheatmap object; pass p_heat$gtable to ggsave (or use filename= inside dittoHeatmap).
+ggsave("results/heatmap_top_markers.pdf", plot = p_heat$gtable, width = 8, height = 6)
 </code></pre>
-<p>This call leaves <code>scaled.to.max</code> off, so it does not request dittoSeq's per-gene [0,1] max scaling. The function's default assay, slot, and heatmap behavior depend on the object and package version; inspect the installed help and state the actual assay and transformation in the caption. If you deliberately scale values, explain what the scale means because it changes comparisons of absolute expression.</p>
+<p>Note two critical details in <code>dittoHeatmap()</code>: first, even when <code>scaled.to.max = FALSE</code>, the underlying <code>pheatmap</code> call defaults to <code>scale = "row"</code> (per-gene z-scoring across cells or pseudobulk columns), which highlights relative cluster specificity while hiding whether a transcript is abundant or barely expressed; pass <code>scale = "none"</code> explicitly when you want unscaled log-normalized expression. Second, because <code>dittoHeatmap()</code> returns a <code>pheatmap</code> list rather than a <code>ggplot</code> object, pass <code>plot = p_heat$gtable</code> to <code>ggsave()</code> (or supply <code>filename = "results/heatmap_top_markers.pdf"</code> directly to <code>dittoHeatmap</code>) and verify the rendered PDF.</p>
 <h3>7) Optional template: assemble compatible ggplot panels; export the heatmap separately</h3>
 <pre><code># Purpose: combine ggplot panels; keep the dittoSeq heatmap as a separate file
 # Input: p_umap, p_feat, p_dot (ggplot panels); p_heat exported in step 6
@@ -382,8 +384,8 @@ saveRDS(seurat_obj, file = "data/seurat_obj_with_umap.rds")
 <h2>Limitations, version &amp; reference-data caveats, and responsible use</h2>
 <ul>
 <li>Package versions matter: plotting functions and defaults can change between versions. Save the package versions used with <code>sessionInfo()</code> inside a <code>results/session_info.txt</code> file to aid reproducibility.</li>
-<li>Visualization does not substitute for statistical testing. For differential abundance or expression claims, use appropriate models (e.g., MAST, edgeR, DESeq2 adapted to single-cell, or compositional methods) and report statistical parameters.</li>
-<li>Color choices: Even colorblind-friendly palettes can fail for readers with other visual impairments. Provide clear legends, shape encodings, and high contrast. Include figure captions that explicitly describe color meaning and any transformation (for example, per-feature max scaling).</li>
+<li>Visualization does not substitute for statistical testing. For multi-donor condition differential expression, aggregate raw counts to sample-by-cell-type pseudobulks and test with <code>DESeq2</code>, <code>edgeR</code>, or <code>limma-voom</code> rather than treating pooled cells as independent replicates (Squair et al., 2021; see <a href="transcriptomics-differential-expression.html">Differential Expression</a>). For differential cell-type proportions across patients, use compositional models such as <code>propeller</code> (<code>speckle</code>), <code>scCODA</code>, or neighborhood-level <code>miloR</code>.</li>
+<li>Color choices: Even colorblind-friendly palettes can fail for readers with other visual impairments. Provide clear legends, shape encodings, and high contrast. Include figure captions that explicitly describe color meaning and any transformation (for example, row z-score vs unscaled log-normalized values, or per-feature max scaling).</li>
 <li>Data provenance: For multi-sample comparisons, ensure the object accounts for batch correction where needed. Visual patterns dominated by a single batch may reflect technical artifact rather than biology.</li>
 </ul>
 <p>Responsible-use notes:</p>
@@ -401,9 +403,10 @@ saveRDS(seurat_obj, file = "data/seurat_obj_with_umap.rds")
 </ul>
 <h2>References</h2>
 <ul>
-<li><a href="https://satijalab.org/seurat/">Seurat documentation (Satija Lab)</a>: core object model and workflows.</li>
-<li><a href="https://enblacar.github.io/SCpubr-book-v1/">SCpubr book</a>: examples and function guidance for SCpubr plotting wrappers.</li>
-<li><a href="https://bioconductor.org/packages/release/bioc/html/dittoSeq.html">dittoSeq (Bioconductor)</a>: composition plots and heatmaps tuned for single-cell data; includes release-specific R requirements and installation instructions.</li>
+<li>Bunis, D. G., Andrews, J., Fragiadakis, G. K., Burt, T. D., &amp; Sirota, M. (2020). dittoSeq: universal user-friendly single-cell and bulk RNA sequencing visualization toolkit. <em>Bioinformatics</em>, 36(22-23), 5535-5536. <a href="https://doi.org/10.1093/bioinformatics/btaa1011" rel="noopener" target="_blank">doi:10.1093/bioinformatics/btaa1011</a></li>
+<li>Crameri, F., Shephard, G. E., &amp; Heron, P. J. (2020). The misuse of colour in science communication. <em>Nature Communications</em>, 11, 5444. <a href="https://doi.org/10.1038/s41467-020-19160-7" rel="noopener" target="_blank">doi:10.1038/s41467-020-19160-7</a></li>
+<li>Blanco-Carmona, E. (2022). Generating publication ready visualizations for Single Cell transcriptomics using SCpubr. <em>bioRxiv</em> / <a href="https://enblacar.github.io/SCpubr-book-v1/" rel="noopener" target="_blank">SCpubr book</a>.</li>
+<li><a href="https://satijalab.org/seurat/" rel="noopener" target="_blank">Seurat documentation (Satija Lab)</a> and <a href="https://bioconductor.org/packages/release/bioc/html/dittoSeq.html" rel="noopener" target="_blank">dittoSeq Bioconductor landing page</a>.</li>
 </ul>
 <div class="lesson-result"><p><strong>Deliverable:</strong> a set of exported exploratory plots plus a short figure caption recording the input object, assay/transformation, grouping metadata, scale or clipping, and sample counts. Before interpreting a pattern, check that plot legends and panel scales support the comparison you intend to make.</p></div>
 <aside aria-labelledby="tutorial-feedback-title" class="lesson-feedback" id="tutorial-feedback"><h2 id="tutorial-feedback-title">Help improve this tutorial</h2><p>Found an error, a broken link, or a step that needs a clearer explanation? Please <a href="../contact.html">contact me</a>. Your feedback helps me keep this resource accurate and useful.</p></aside></article>
@@ -534,7 +537,7 @@ saveRDS(seurat_obj, file = "data/seurat_obj_with_umap.rds")
 </script>
 <script src="../assets/vendor/prism/prism-1.29.0.js"></script>
 <script id="tutorial-code-data">
-window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"advanced-visualization-packages":{"blocks":[{"language":"r","sha256":"c793f29075659cf24fb5f7676ea6669dc7fbab7e2d3ae902a40b7fe81c5d4370"},{"language":"bash","sha256":"3a4f5ce854600d98e926ecfb1a9e5feaa573e73685c26b851ce47539564536e5"},{"language":"r","sha256":"dcc5647a2a6de66ab0bb58ba6fbf85b4a191d8b4259e81f891bf8cb9807c3e07"},{"language":"r","sha256":"ea1e12b5f967c149bd1fa602465414e2701de846c0840275d52f7a3653c5d68e"},{"language":"r","sha256":"e6604a6d2405cb1100f5e2ed9dea2f39bf39c0dca2d9fee30f11068ca9c3a008"},{"language":"r","sha256":"704553f3a642d607c34c5eb5640f36198489f5757415508fd4bb78236fd23030"},{"language":"r","sha256":"5c642e8bbdfb5f8c234206e962dec44f7aa78f6830ca12337320009398ad1bab"},{"language":"r","sha256":"9c7be96f2704db082e77cbe739e8973286699f3c70fe2f0af37eef11788bd07d"},{"language":"r","sha256":"cab50077e421c316227894b4eecbe2e49d5201caa74096ddeb7f48b472db4d03"}],"groups":[]}}};
+window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"advanced-visualization-packages":{"blocks":[{"language":"r","sha256":"c793f29075659cf24fb5f7676ea6669dc7fbab7e2d3ae902a40b7fe81c5d4370"},{"language":"bash","sha256":"3a4f5ce854600d98e926ecfb1a9e5feaa573e73685c26b851ce47539564536e5"},{"language":"r","sha256":"dcc5647a2a6de66ab0bb58ba6fbf85b4a191d8b4259e81f891bf8cb9807c3e07"},{"language":"r","sha256":"ea1e12b5f967c149bd1fa602465414e2701de846c0840275d52f7a3653c5d68e"},{"language":"r","sha256":"e6604a6d2405cb1100f5e2ed9dea2f39bf39c0dca2d9fee30f11068ca9c3a008"},{"language":"r","sha256":"704553f3a642d607c34c5eb5640f36198489f5757415508fd4bb78236fd23030"},{"language":"r","sha256":"8bf1a1ceeb4073b509d7cb76fde5581d9026ed52a28725b272cbba9b39d87083"},{"language":"r","sha256":"9c7be96f2704db082e77cbe739e8973286699f3c70fe2f0af37eef11788bd07d"},{"language":"r","sha256":"cab50077e421c316227894b4eecbe2e49d5201caa74096ddeb7f48b472db4d03"}],"groups":[]}}};
 </script>
 <script src="../code-tabs.js?v=20261026-startup-v1"></script>
 <script src="../copy-code.js?v=20261025-r-first-v1"></script>

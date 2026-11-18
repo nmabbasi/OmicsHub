@@ -324,7 +324,7 @@ Rscript --version &gt; ENV_INFO.txt 2&gt;&amp;1
 Rscript --vanilla -e 'sessionInfo()' &gt;&gt; ENV_INFO.txt 2&gt;&amp;1
 git add COMMIT_HASH.txt ENV_INFO.txt
 git commit -m "Record analysis code revision and R session"</code></pre>
-<p><code>sessionInfo()</code> records the R session and loaded packages, not every dependency, reference genome, annotation release, or external database. Use a reviewed project lockfile such as <code>renv.lock</code> for the R package environment and record external inputs separately. If you choose the Python alternative, record its interpreter and package inventory as additional provenance; Python is not required for the R route.</p>
+<p><code>sessionInfo()</code> records the R session and loaded packages, not every dependency, reference genome, annotation release, or external database. Notice also that committing <code>COMMIT_HASH.txt</code> creates a new commit whose own hash differs from the parent hash stored inside <code>COMMIT_HASH.txt</code>; in real analysis pipelines, avoid committing a self-referential hash file and instead write <code>git describe --always --dirty</code> directly into each run's output provenance log (for example <code>results/run_metadata.txt</code>) when the script executes. Use a reviewed project lockfile such as <code>renv.lock</code> for R package versions and record external inputs separately.</p>
 <h2>Choose how to handle larger files</h2>
 <p>Keep raw reads and restricted inputs in approved institutional storage. A <code>.gitignore</code> rule only affects untracked paths and does not provide storage, access control, or backup.</p>
 <ul>
@@ -367,6 +367,8 @@ git push -u origin docs/input-notes</code></pre>
 </ul>
 <p>A successful script run checks that the script accepted that input. It does not validate the reads, the analysis design, or the biological interpretation. Reproducibility also depends on the input data and versions of dependencies outside Git.</p>
 <h2>Troubleshoot common problems</h2>
+<h3><code>git commit</code> fails with <code>Author identity unknown</code></h3>
+<p>On a fresh workstation or container, Git refuses to commit until a name and email are configured. Run <code>git config --global user.name "Your Name"</code> and <code>git config --global user.email "you@example.org"</code> (if you prefer not to expose a personal or institutional email in public Git history, enable email privacy in GitHub settings and use your assigned <code>ID+username@users.noreply.github.com</code> address).</p>
 <h3>Push fails with an authentication error</h3>
 <p>Check that the remote URL is correct with <code>git remote -v</code>. For SSH, confirm that a key is configured with GitHub and that the SSH agent can access it. For HTTPS, use the credential prompt or your platform's credential manager. Never paste a token into a remote URL to bypass an authentication error.</p>
 <h3>A supposedly ignored file still appears in Git</h3>
