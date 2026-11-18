@@ -201,6 +201,9 @@ def normalize_current_publication(relative_path, data):
         if decoded is not None:
             from approved_tutorial_fixes_baseline import normalize_approved_tutorial_fix
             data = normalize_approved_tutorial_fix(relative_path, decoded).encode("utf-8")
+    elif relative_path == "tutorial-library.css":
+        from approved_tutorial_fixes_baseline import restore_approved_tutorial_fix_asset
+        data = restore_approved_tutorial_fix_asset(relative_path, data)
     for layer in publication_layers():
         entry = layer["files"].get(relative_path)
         if entry is None:

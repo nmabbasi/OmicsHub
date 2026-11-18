@@ -1226,6 +1226,8 @@ function toggleMobileMenu() {
     const toggle = document.querySelector('button[aria-controls="mobile-menu"]');
     if (!mobileMenu) return;
     const isOpen = mobileMenu.classList.toggle("hidden") === false;
+    mobileMenu.hidden = !isOpen;
+    mobileMenu.setAttribute("aria-hidden", String(!isOpen));
     if (toggle) {
         toggle.setAttribute("aria-expanded", String(isOpen));
         toggle.setAttribute("aria-label", isOpen ? "Close navigation menu" : "Open navigation menu");
@@ -1235,7 +1237,11 @@ function toggleMobileMenu() {
 function closeMobileMenu() {
     const mobileMenu = document.getElementById("mobile-menu");
     const toggle = document.querySelector('button[aria-controls="mobile-menu"]');
-    if (mobileMenu) mobileMenu.classList.add("hidden");
+    if (mobileMenu) {
+        mobileMenu.classList.add("hidden");
+        mobileMenu.hidden = true;
+        mobileMenu.setAttribute("aria-hidden", "true");
+    }
     if (toggle) {
         toggle.setAttribute("aria-expanded", "false");
         toggle.setAttribute("aria-label", "Open navigation menu");

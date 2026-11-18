@@ -14,7 +14,7 @@ import subprocess
 ROOT = Path(__file__).resolve().parents[1]
 BASE_COMMIT = "35ebb97cc8e23a185438a964e4530985afb15a94"
 FIXTURE_PATH = ROOT / "tests/fixtures/phase-cd-fixes-2026-11.json"
-FIXTURE_SHA256 = "71cacbe0afa81aa4685ff01c68b708953ea6826540fdd7c544516ce9b95aeb0a"
+FIXTURE_SHA256 = "bdad4fd418856bcf37d19323eff86feaa563fbd24dffcc9217d9903cba1cc3e5"
 PAGE_PATHS = (
     "tutorials/16s-rrna-prokka-annotation.html",
     "tutorials/advanced-ai-single-cell.html",
@@ -61,9 +61,15 @@ PAGE_PATHS = (
     "tutorials/wes-variant-calling-pipeline.html",
 )
 ASSET_PATHS = (
+    "home-page.min.css",
+    "index.html",
+    "mobile-navigation.js",
+    "script.js",
+    "tools/catalogue-learning.json",
     "tools/tutorial-code-groups.json",
     "tools/tutorial-code-languages.json",
     "tutorial-code-data.js",
+    "tutorial-library.css",
 )
 
 

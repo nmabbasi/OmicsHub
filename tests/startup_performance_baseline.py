@@ -220,6 +220,8 @@ def restore_startup_performance_asset(relative_path, data):
     """Restore a listed asset only when its entire current SHA-256 matches."""
     if not isinstance(data, bytes):
         raise TypeError("startup-performance asset restoration requires bytes")
+    from approved_tutorial_fixes_baseline import restore_approved_tutorial_fix_asset
+    data = restore_approved_tutorial_fix_asset(relative_path, data)
     data = normalize_editorial_review_bytes(relative_path, data)
     entry = startup_performance_fixture().get(relative_path)
     if entry is None or entry["kind"] != "asset":

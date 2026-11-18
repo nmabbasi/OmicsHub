@@ -5,8 +5,23 @@
   if (!menu || !trigger) return;
 
   const isOpen = () => !menu.classList.contains('hidden');
+  const update = () => {
+    const state = isOpen();
+    menu.hidden = !state;
+    menu.setAttribute('aria-hidden', String(!state));
+  };
+  if (typeof window.toggleMobileMenu === 'function') {
+    const original = window.toggleMobileMenu;
+    window.toggleMobileMenu = () => {
+      original();
+      update();
+    };
+  }
+  update();
+
   const close = () => {
     menu.classList.add('hidden');
+    update();
     trigger.setAttribute('aria-expanded', 'false');
     trigger.setAttribute('aria-label', 'Open navigation menu');
   };
