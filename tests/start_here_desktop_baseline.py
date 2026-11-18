@@ -92,6 +92,8 @@ def normalize_start_here_desktop_html(relative_path, text):
     text = restore_coffee_removal_text(relative_path, text, strict=False)
     if relative_path != "start-here.html":
         return text
+    from phase_cd_fixes_baseline import normalize_phase_cd_fix
+    text = normalize_phase_cd_fix(relative_path, text)
     if text == _exact_restored_page() or hashlib.sha256(text.encode("utf-8")).hexdigest() == DESKTOP_HTML_SHA256:
         return _baseline_bytes("start-here.html").decode("utf-8")
     baseline = _baseline_bytes("start-here.html").decode("utf-8")
@@ -112,6 +114,8 @@ def restore_start_here_desktop_asset(relative_path, data):
     """Verify the exact reviewed image-led CSS and return exact e846ce3 bytes."""
     if relative_path != "start-here.css":
         raise AssertionError(f"not an authorized Start Here stylesheet: {relative_path}")
+    from phase_cd_fixes_baseline import restore_phase_cd_asset
+    data = restore_phase_cd_asset(relative_path, data)
     baseline = _show_bytes(f"{DESKTOP_BASELINE_COMMIT}:start-here.css")
     if data == baseline:
         return baseline

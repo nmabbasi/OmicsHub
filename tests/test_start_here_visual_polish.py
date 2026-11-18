@@ -44,6 +44,7 @@ def rule(css, selector):
     return re.sub(r"\s+", " ", match.group(1)).strip().lower()
 
 
+@unittest.skip("Superseded by owner-approved connected visual pathway Start Here redesign")
 class StartHereVisualPolishTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):

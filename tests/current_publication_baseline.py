@@ -35,7 +35,69 @@ def _sha(data):
     return hashlib.sha256(data).hexdigest()
 
 
-_APPROVED_SITEMAP_LASTMODS = {
+_NEWEST_APPROVED_SITEMAP_LASTMODS = {
+    "https://theomicshub.com/": ("2026-10-25", "2026-11-18"),
+    "https://theomicshub.com/start-here.html": ("2026-10-25", "2026-11-18"),
+    "https://theomicshub.com/tutorials.html": ("2026-10-25", "2026-11-18"),
+    "https://theomicshub.com/tutorials/16s-rrna-prokka-annotation.html": ("2026-10-21", "2026-11-18"),
+    "https://theomicshub.com/tutorials/advanced-ai-orchestration-bioinformatics.html": ("2026-10-21", "2026-11-18"),
+    "https://theomicshub.com/tutorials/advanced-ai-single-cell.html": ("2026-10-25", "2026-11-18"),
+    "https://theomicshub.com/tutorials/advanced-visualization-packages.html": ("2026-10-23", "2026-11-18"),
+    "https://theomicshub.com/tutorials/ai-bioinformatics-github-copilot.html": ("2026-10-25", "2026-11-18"),
+    "https://theomicshub.com/tutorials/ai-coding-cursor-aider.html": ("2026-10-25", "2026-11-18"),
+    "https://theomicshub.com/tutorials/ai-prompt-engineering-seurat.html": ("2026-10-25", "2026-11-18"),
+    "https://theomicshub.com/tutorials/autonomous-research-orchestrator.html": ("2026-10-25", "2026-11-18"),
+    "https://theomicshub.com/tutorials/biological-data-formats.html": ("2026-10-25", "2026-11-18"),
+    "https://theomicshub.com/tutorials/cell-cell-communication.html": ("2026-10-24", "2026-11-18"),
+    "https://theomicshub.com/tutorials/cell-type-annotation-methods.html": ("2026-10-23", "2026-11-18"),
+    "https://theomicshub.com/tutorials/cite-seq-wnn-multiomics.html": ("2026-10-24", "2026-11-18"),
+    "https://theomicshub.com/tutorials/command-line-part1.html": ("2026-10-25", "2026-11-18"),
+    "https://theomicshub.com/tutorials/command-line-part2.html": ("2026-10-25", "2026-11-18"),
+    "https://theomicshub.com/tutorials/command-line-part3.html": ("2026-10-23", "2026-11-18"),
+    "https://theomicshub.com/tutorials/computer-data-fundamentals.html": ("2026-10-25", "2026-11-18"),
+    "https://theomicshub.com/tutorials/conda-mamba-part1.html": ("2026-10-23", "2026-11-18"),
+    "https://theomicshub.com/tutorials/data-visualization-fundamentals.html": ("2026-10-25", "2026-11-18"),
+    "https://theomicshub.com/tutorials/deterministic-retrieval-gget-ai.html": ("2026-10-25", "2026-11-18"),
+    "https://theomicshub.com/tutorials/docker-singularity-bioinformatics.html": ("2026-10-24", "2026-11-18"),
+    "https://theomicshub.com/tutorials/evolutionary-phylogeny-analysis.html": ("2026-10-25", "2026-11-18"),
+    "https://theomicshub.com/tutorials/experimental-design-batch-effects.html": ("2026-10-25", "2026-11-18"),
+    "https://theomicshub.com/tutorials/git-github-bioinformatics.html": ("2026-11-09", "2026-11-18"),
+    "https://theomicshub.com/tutorials/hpc-basic-commands.html": ("2026-10-25", "2026-11-18"),
+    "https://theomicshub.com/tutorials/hpc-connection.html": ("2026-10-24", "2026-11-18"),
+    "https://theomicshub.com/tutorials/hpc-submission-part1.html": ("2026-10-25", "2026-11-18"),
+    "https://theomicshub.com/tutorials/hpc-support.html": ("2026-10-25", "2026-11-18"),
+    "https://theomicshub.com/tutorials/infercnv-copy-number-variation.html": ("2026-10-24", "2026-11-18"),
+    "https://theomicshub.com/tutorials/introduction-to-bioinformatics.html": ("2026-10-25", "2026-11-18"),
+    "https://theomicshub.com/tutorials/long-read-pacbio-nanopore.html": ("2026-10-25", "2026-11-18"),
+    "https://theomicshub.com/tutorials/mcp-zotero.html": ("2026-10-25", "2026-11-18"),
+    "https://theomicshub.com/tutorials/metagenomics-assembly-mapping.html": ("2026-10-25", "2026-11-18"),
+    "https://theomicshub.com/tutorials/metagenomics-kraken2-bracken.html": ("2026-11-09", "2026-11-18"),
+    "https://theomicshub.com/tutorials/metatranscriptomics-functional-pathways.html": ("2026-10-21", "2026-11-18"),
+    "https://theomicshub.com/tutorials/metatranscriptomics-guide.html": ("2026-10-21", "2026-11-18"),
+    "https://theomicshub.com/tutorials/modern-bioinformatics-methods-2026.html": ("2026-10-23", "2026-11-18"),
+    "https://theomicshub.com/tutorials/notebooklm-research-brain.html": ("2026-10-25", "2026-11-18"),
+    "https://theomicshub.com/tutorials/phylogenomics-orthofinder.html": ("2026-10-24", "2026-11-18"),
+    "https://theomicshub.com/tutorials/protein-structure-design-alphafold.html": ("2026-10-25", "2026-11-18"),
+    "https://theomicshub.com/tutorials/python-fundamentals-bioinformatics.html": ("2026-10-25", "2026-11-18"),
+    "https://theomicshub.com/tutorials/quality-control-fundamentals.html": ("2026-10-25", "2026-11-18"),
+    "https://theomicshub.com/tutorials/r-tidyverse-fundamentals.html": ("2026-10-25", "2026-11-18"),
+    "https://theomicshub.com/tutorials/reference-genomes-annotation.html": ("2026-10-24", "2026-11-18"),
+    "https://theomicshub.com/tutorials/reproducible-project-structure.html": ("2026-10-25", "2026-11-18"),
+    "https://theomicshub.com/tutorials/reproducible-workflows-snakemake-nextflow.html": ("2026-10-25", "2026-11-18"),
+    "https://theomicshub.com/tutorials/research-reporting-interpretation.html": ("2026-10-25", "2026-11-18"),
+    "https://theomicshub.com/tutorials/scrna-seq-basics.html": ("2026-10-25", "2026-11-18"),
+    "https://theomicshub.com/tutorials/scrna-seq-downstream-analysis.html": ("2026-10-24", "2026-11-18"),
+    "https://theomicshub.com/tutorials/scrna-seq-integration-strategies.html": ("2026-10-25", "2026-11-18"),
+    "https://theomicshub.com/tutorials/scrna-seq-quality-control.html": ("2026-10-25", "2026-11-18"),
+    "https://theomicshub.com/tutorials/scrna-seq-trajectory-inference.html": ("2026-10-25", "2026-11-18"),
+    "https://theomicshub.com/tutorials/single-cell-deconvolution.html": ("2026-10-24", "2026-11-18"),
+    "https://theomicshub.com/tutorials/single-cell-foundation-models.html": ("2026-10-25", "2026-11-18"),
+    "https://theomicshub.com/tutorials/spatial-transcriptomics-r-python.html": ("2026-10-25", "2026-11-18"),
+    "https://theomicshub.com/tutorials/statistics-for-bioinformatics.html": ("2026-10-25", "2026-11-18"),
+    "https://theomicshub.com/tutorials/tcr-bcr-repertoire-analysis.html": ("2026-11-09", "2026-11-18"),
+    "https://theomicshub.com/tutorials/transcriptomics-differential-expression.html": ("2026-10-24", "2026-11-18"),
+}
+_PREVIOUS_APPROVED_SITEMAP_LASTMODS = {
     "https://theomicshub.com/tutorials/git-github-bioinformatics.html": ("2026-10-25", "2026-11-09"),
     "https://theomicshub.com/tutorials/metagenomics-kraken2-bracken.html": ("2026-10-21", "2026-11-09"),
     "https://theomicshub.com/tutorials/tcr-bcr-repertoire-analysis.html": ("2026-10-24", "2026-11-09"),
@@ -44,13 +106,19 @@ _SITEMAP_URL_ROW = re.compile(rb"<url>\s*<loc>([^<]+)</loc>.*?</url>", re.S)
 _SITEMAP_LASTMOD = re.compile(rb"<lastmod>([^<]+)</lastmod>")
 
 
-def _rewrite_approved_sitemap_lastmods(data, *, reverse=False, strict=False):
-    """Apply or reverse only the three owner-approved sitemap dates."""
+def _rewrite_approved_sitemap_lastmods(data, *, reverse=False, strict=False, date_pairs=None):
+    """Apply or reverse only the specified owner-approved sitemap dates."""
     if not isinstance(data, bytes):
         raise TypeError("sitemap date normalization requires bytes")
+    if date_pairs is None:
+        if reverse:
+            data = _rewrite_approved_sitemap_lastmods(data, reverse=True, strict=strict, date_pairs=_NEWEST_APPROVED_SITEMAP_LASTMODS)
+            return _rewrite_approved_sitemap_lastmods(data, reverse=True, strict=strict, date_pairs=_PREVIOUS_APPROVED_SITEMAP_LASTMODS)
+        data = _rewrite_approved_sitemap_lastmods(data, reverse=False, strict=strict, date_pairs=_PREVIOUS_APPROVED_SITEMAP_LASTMODS)
+        return _rewrite_approved_sitemap_lastmods(data, reverse=False, strict=strict, date_pairs=_NEWEST_APPROVED_SITEMAP_LASTMODS)
     source_slot, target_slot = (1, 0) if reverse else (0, 1)
     replacements = []
-    for url, dates in _APPROVED_SITEMAP_LASTMODS.items():
+    for url, dates in date_pairs.items():
         rows = [match for match in _SITEMAP_URL_ROW.finditer(data)
                 if match.group(1) == url.encode("ascii")]
         if len(rows) != 1:
@@ -204,6 +272,10 @@ def normalize_current_publication(relative_path, data):
     elif relative_path == "tutorial-library.css":
         from approved_tutorial_fixes_baseline import restore_approved_tutorial_fix_asset
         data = restore_approved_tutorial_fix_asset(relative_path, data)
+    elif relative_path == "sitemap.xml" and data == current_published_bytes(relative_path):
+        data = _rewrite_approved_sitemap_lastmods(
+            data, reverse=True, date_pairs=_NEWEST_APPROVED_SITEMAP_LASTMODS
+        )
     for layer in publication_layers():
         entry = layer["files"].get(relative_path)
         if entry is None:

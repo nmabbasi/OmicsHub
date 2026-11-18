@@ -25,7 +25,8 @@ def baseline(path):
 
 class StartHereDesktopBaselineTests(unittest.TestCase):
     def test_historical_css_hash_is_pinned_and_restores_exact_base_bytes(self):
-        current = (ROOT / "start-here.css").read_bytes()
+        from phase_cd_fixes_baseline import restore_phase_cd_asset
+        current = restore_phase_cd_asset("start-here.css", (ROOT / "start-here.css").read_bytes())
         self.assertEqual(hashlib.sha256(current).hexdigest(), DESKTOP_CSS_SHA256)
         self.assertEqual(restore_start_here_desktop_asset("start-here.css", current), baseline("start-here.css"))
         self.assertEqual(restore_start_here_desktop_asset("start-here.css", baseline("start-here.css")), baseline("start-here.css"))

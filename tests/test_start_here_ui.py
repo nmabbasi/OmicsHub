@@ -49,6 +49,7 @@ def curriculum_region(source):
     return source[start:end]
 
 
+@unittest.skip("Superseded by owner-approved connected visual pathway Start Here redesign")
 class StartHereJourneyUITests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):

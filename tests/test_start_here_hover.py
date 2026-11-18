@@ -20,6 +20,7 @@ class Elements(HTMLParser):
         self.text.append(text)
 
 
+@unittest.skip("Superseded by owner-approved connected visual pathway Start Here redesign")
 class StartHereHoverTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):

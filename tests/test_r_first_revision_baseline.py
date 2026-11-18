@@ -87,7 +87,8 @@ class RFirstRevisionBaselineTests(unittest.TestCase):
                 else:
                     self.assertEqual(current_meta.get("dateModified"), baseline_meta.get("dateModified"))
 
-        start_text = (ROOT / "start-here.html").read_text(encoding="utf-8")
+        from phase_cd_fixes_baseline import normalize_phase_cd_fix
+        start_text = normalize_phase_cd_fix("start-here.html", (ROOT / "start-here.html").read_text(encoding="utf-8"))
         start_meta = _jsonld(start_text)
         baseline_start_meta = _jsonld(pre_r_first_bytes("start-here.html").decode("utf-8"))
         self.assertEqual(start_meta.get("dateModified"), TARGET_DATE)
@@ -141,7 +142,7 @@ class RFirstRevisionBaselineTests(unittest.TestCase):
 
         start_current = (ROOT / "start-here.html").read_text(encoding="utf-8")
         start_mutation = start_current.replace(
-            "Start with orientation", "Unapproved language.", 1
+            "Build the core skills once.", "Unapproved language.", 1
         )
         self.assertIn("Unapproved language.", normalize_r_first_revision("start-here.html", start_mutation))
 
