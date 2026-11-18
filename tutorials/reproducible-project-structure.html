@@ -182,17 +182,23 @@ function toggleMobileMenu() {
 <h2>1. Create the project skeleton</h2>
 <p>From the parent directory, create a project directory. Replace <code>project</code> with your own name. The brace expansion below is Bash syntax.</p>
 <pre><code>mkdir -p project/{config,data/{raw,processed},envs,scripts,results/{figures,tables},logs}
-touch project/README.md project/config/.keep project/data/raw/.keep
+touch project/README.md project/config/.keep project/data/raw/.keep project/envs/.keep
 cat &gt; project/.gitignore &lt;&lt;'EOF'
-# Keep raw data out of Git; store it in an approved, backed-up location.
+# Keep raw data and local environment prefixes out of Git; track text manifests in envs/.
 data/raw/
 data/processed/
 results/
+.conda/
+envs/*/
+!envs/*.yml
+!envs/*.yaml
+!envs/*.lock
+!envs/requirements.txt
 *.pyc
 __pycache__/
 .env
 EOF</code></pre>
-<p>Use <code>data/raw/</code> for source inputs, <code>data/processed/</code> for regenerable intermediates, <code>scripts/</code> for code, <code>results/</code> for selected outputs, <code>logs/</code> for run records, <code>config/</code> for parameters and provenance, and <code>envs/</code> for dependency manifests. Treat raw inputs as immutable by project policy, and retain a separate backup. A <code>.gitignore</code> rule prevents ordinary unforced Git additions; it is not access control or a backup.</p>
+<p>Use <code>data/raw/</code> for source inputs, <code>data/processed/</code> for regenerable intermediates, <code>scripts/</code> for code, <code>results/</code> for selected outputs, <code>logs/</code> for run records, <code>config/</code> for parameters and provenance, and <code>envs/</code> for small text dependency manifests (while ignoring any local Conda or Micromamba prefix directories such as <code>.conda/</code> or <code>envs/*/</code>, matching the <a href="git-github-bioinformatics.html">Git and GitHub tutorial</a>). Treat raw inputs as immutable by project policy, and retain a separate backup. A <code>.gitignore</code> rule prevents ordinary unforced Git additions; it is not access control or a backup.</p>
 <h2>2. Keep analysis settings explicit</h2>
 <p>This YAML fragment illustrates the kinds of values a particular analysis might configure. It is not a complete configuration contract: the example QC program mentioned below does not exist in this scaffold, and no code here reads or validates these keys. Define the schema and units in the README and implement matching parsing and validation in your analysis.</p>
 <pre><code># config/analysis.yml (illustrative only)
@@ -211,8 +217,9 @@ sha256sum -c config/raw_checksums.sha256</code></pre>
 <pre id="project-r-provenance"><code class="language-bash">Rscript --version &gt; config/versions.txt 2&gt;&amp;1
 Rscript --vanilla -e &#x27;sessionInfo()&#x27; &gt;&gt; config/versions.txt 2&gt;&amp;1
 git --version &gt;&gt; config/versions.txt 2&gt;&amp;1
-# Optional, only if this project uses a Conda environment:
-# conda env export --no-builds &gt; envs/environment.yml
+# Optional, only if this project uses a Micromamba or Conda environment (conda-forge / bioconda):
+# micromamba env export --from-history &gt; envs/environment.yml
+# micromamba env export --explicit &gt; envs/conda-linux-64.lock
 # Optional Python distributions, only when a Python tool is used:
 # python -m pip freeze &gt; envs/requirements.txt</code></pre>
 <p>For an R project, initialize <code>renv</code> deliberately from its project root, review the packages found, and keep the lockfile with the code. These R-console commands require the <code>renv</code> package; initialization changes the project environment, so use a fresh teaching project first.</p>
@@ -220,7 +227,7 @@ git --version &gt;&gt; config/versions.txt 2&gt;&amp;1
 renv::init(bare = TRUE)
 renv::snapshot(lockfile = &quot;renv.lock&quot;)</code></pre>
 <p>Keep report sources such as <code>reports/analysis.Rmd</code> under version control. Write rendered reports and derived figures under <code>results/</code>; record the command used to render them. A lockfile records selected packages, not the source data, system libraries, or scientific validity.</p>
-<p><code>--no-builds</code> removes Conda package build specifications; it does not guarantee cross-platform recreation. <code>pip freeze</code> records installed distributions but does not itself capture Python, operating-system, or system-library details. Choose the manifest that matches the environment manager actually used, and record the platform separately when relevant.</p>
+<p>In Micromamba or Conda projects, keep a concise human-readable <code>envs/environment.yml</code> with explicit <code>conda-forge</code> and <code>bioconda</code> channel priority alongside an architecture-specific lockfile (such as <code>envs/conda-linux-64.lock</code> or <code>conda env export --no-builds</code>); neither replaces recording the host OS and CPU architecture. <code>pip freeze</code> records installed Python distributions without system-library details. Choose the manifest that matches the environment manager actually used.</p>
 <h2>4. Add a run wrapper</h2>
 <p>The following wrapper records the project path, current Git revision when available, configuration path, and command output. It assumes a project with <code>scripts/</code>, <code>config/</code>, and <code>logs/</code>. Save as <code>scripts/run_qc.sh</code>; adapt the final command to a real analysis implementation.</p>
 <pre><code>#!/usr/bin/env bash
@@ -251,7 +258,7 @@ COMMIT="$(git -C "$PROJECT_ROOT" rev-parse --short HEAD 2&gt;/dev/null || echo '
 <p>Review your ignore rules and ensure no restricted data, credentials, or large generated files are staged. The following commands change Git metadata and create a commit in the project; inspect the staged file list before committing.</p>
 <pre><code>cd project
 git init
-git add README.md config scripts .gitignore
+git add README.md config envs scripts .gitignore
 git status --short
 git commit -m "Initial project structure and documentation"
 git rev-parse --short HEAD &gt; config/git_commit.txt</code></pre>
@@ -414,7 +421,7 @@ git rev-parse --short HEAD &gt; config/git_commit.txt</code></pre>
 </script>
 <script src="../assets/vendor/prism/prism-1.29.0.js"></script>
 <script id="tutorial-code-data">
-window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"reproducible-project-structure":{"blocks":[{"language":"bash","sha256":"470f20fc643a5f0911850856e947a8bc49ad17f19dc4f785a3c5f64fd203d026"},{"language":"yaml","sha256":"b34a58af8dd13c2590006f1a38f48565883d7ff0bef2b883d9444769fbd72df8"},{"language":"bash","sha256":"b471a6790ac2b8fa837b07197a56c5a642de70253cbc3dc3c3a2a6926bc09dcd"},{"language":"bash","sha256":"ca5b5e36e02abc4d8098baea5b99b5ec422c395d9d75e70adf347b73b7f7ca1a"},{"language":"r","sha256":"9c5ae7234a3c724873c5ad2357850d0a1860b968bab678db7932224720c49dae"},{"language":"bash","sha256":"d6c0e7b5b649a2a12d0e9beb73baa29e1ec9afb81e426ff698cc48ddb033ab2d"},{"language":"bash","sha256":"2e45703448c56c838637b26949301bb04d489f6883d42ec03d75a602ddd1e921"}],"groups":[]}}};
+window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"reproducible-project-structure":{"blocks":[{"language":"bash","sha256":"2219002ae4501f759209da4ace52c37b4c3d28d705fc91ec2b9619eea1b3b512"},{"language":"yaml","sha256":"b34a58af8dd13c2590006f1a38f48565883d7ff0bef2b883d9444769fbd72df8"},{"language":"bash","sha256":"b471a6790ac2b8fa837b07197a56c5a642de70253cbc3dc3c3a2a6926bc09dcd"},{"language":"bash","sha256":"8215169d61518e80c1486c3de1cba799fea04740d7d2f205a285cec01735f401"},{"language":"r","sha256":"9c5ae7234a3c724873c5ad2357850d0a1860b968bab678db7932224720c49dae"},{"language":"bash","sha256":"d6c0e7b5b649a2a12d0e9beb73baa29e1ec9afb81e426ff698cc48ddb033ab2d"},{"language":"bash","sha256":"6ccf12669a83d1adb1cdb08d2039df4c4943bfb7a5395efcf9b43b07646753bd"}],"groups":[]}}};
 </script>
 <script src="../code-tabs.js?v=20261026-startup-v1"></script>
 <script src="../copy-code.js?v=20261025-r-first-v1"></script>

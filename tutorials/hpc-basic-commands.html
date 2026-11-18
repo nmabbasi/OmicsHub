@@ -273,58 +273,86 @@ hostname
 python3 hello.py</code></pre>
 <p>The optional Python script has the same site-specific partition, account, resource, and batch-shell caveats. A local R or Python smoke test verifies only that local interpreter and arithmetic. Even a successful submitted job confirms only that this tiny synthetic command ran in the observed cluster context; it does not validate a scientific workflow or make a local test evidence of HPC compatibility.</p>
 <h2>Submit once and keep the returned identifier</h2>
-<p>Run the primary R submission from the directory containing <code>smoke.sbatch</code> and <code>hello.R</code>. Keep the following commands in the same Bash shell. To submit the optional Python alternative instead, substitute <code>python-smoke.sbatch</code> and its <code>hello.py</code> input. <code>sbatch --parsable</code> returns the identifier assigned by Slurm; a federated or cluster-qualified response may be <code>JOB_ID;CLUSTER</code>. The validation accepts a numeric identifier and optional non-empty cluster suffix, and rejects unexpected output instead of building a log filename from it.</p>
-<pre><code>if ! submission=$(sbatch --parsable smoke.sbatch); then
+<p>Run the primary R submission from the directory containing <code>smoke.sbatch</code> and <code>hello.R</code>. Keep the following commands in the same Bash shell. To submit the optional Python alternative instead, substitute <code>python-smoke.sbatch</code> and its <code>hello.py</code> input. <code>sbatch --parsable</code> returns the identifier assigned by Slurm; a federated or cluster-qualified response may be <code>JOB_ID;CLUSTER</code>. The validation accepts a numeric identifier and optional non-empty cluster suffix, and uses <code>(exit 1)</code> on errors so a failed check sets a non-zero exit status without closing an interactive SSH login shell.</p>
+<pre><code>JOB_ID=""
+CLUSTER=""
+if ! submission=$(sbatch --parsable smoke.sbatch); then
   echo "Submission failed; check the site policy and error above. No job ID was captured." &gt;&amp;2
-  exit 1
-fi
-if [[ "$submission" =~ ^([0-9]+)(;([^;[:space:]]+))?$ ]]; then
+  (exit 1)
+elif [[ "$submission" =~ ^([0-9]+)(;([^;[:space:]]+))?$ ]]; then
   JOB_ID=${BASH_REMATCH[1]}
   CLUSTER=${BASH_REMATCH[3]:-}
+  printf 'Slurm accepted job %s' "$JOB_ID"
+  if [[ -n "$CLUSTER" ]]; then printf ' on cluster %s' "$CLUSTER"; fi
+  printf '\n'
 else
   printf 'Unexpected sbatch --parsable response: %s\n' "$submission" &gt;&amp;2
-  exit 1
-fi
-printf 'Slurm accepted job %s' "$JOB_ID"
-if [[ -n "$CLUSTER" ]]; then printf ' on cluster %s' "$CLUSTER"; fi
-printf '\n'</code></pre>
-<p>An assigned ID means the controller accepted the submission, not that the job started or succeeded. A pending state means it is waiting; it is not a failed run. Use the same captured ID to check the queue and accounting. A federated response includes a cluster suffix, which the commands below pass to Slurm's <code>-M</code> option.</p>
-<pre><code>if [[ -n "$CLUSTER" ]]; then
-  squeue -M "$CLUSTER" -j "$JOB_ID"
-  if ! accounting=$(sacct -M "$CLUSTER" --noheader --parsable2 --jobs="$JOB_ID" --format=JobID,State,ExitCode); then
-    echo "Accounting query unavailable; check site documentation and try later." &gt;&amp;2
-    exit 1
-  fi
-else
-  squeue -j "$JOB_ID"
-  if ! accounting=$(sacct --noheader --parsable2 --jobs="$JOB_ID" --format=JobID,State,ExitCode); then
-    echo "Accounting query unavailable; check site documentation and try later." &gt;&amp;2
-    exit 1
-  fi
-fi
-printf 'Accounting rows (job and possibly step records):\n%s\n' "$accounting"
-allocation=$(printf '%s\n' "$accounting" | awk -F'|' -v id="$JOB_ID" '$1 == id { print $2 "|" $3; exit }')
-if [[ -z "$allocation" ]]; then
-  echo "No allocation accounting row yet. This is not evidence of failure; wait or ask the site about accounting." &gt;&amp;2
-  exit 1
-fi
-if [[ "$allocation" != "COMPLETED|0:0" ]]; then
-  printf 'Success is not confirmed (allocation record: %s). Pending or unavailable records do not prove failure.\n' "$allocation" &gt;&amp;2
-  echo "Do not resubmit automatically. Check the state and site guidance first." &gt;&amp;2
-  exit 1
-fi
-if grep -Fq 'Sum 1..100: 5050' "slurm-${JOB_ID}.out"; then
-  echo "Confirmed COMPLETED/0:0 and expected synthetic output."
-else
-  echo "Job reports COMPLETED/0:0 but the expected output line is absent; inspect the job output and working directory." &gt;&amp;2
-  exit 1
+  (exit 1)
 fi</code></pre>
+<p>An assigned ID means the controller accepted the submission, not that the job started or succeeded. A pending state means it is waiting; it is not a failed run. Use the same captured ID to check the queue and accounting inside a subshell <code>( ... )</code> so an early <code>exit 1</code> never logs you out of your SSH session. A federated response includes a cluster suffix, which the commands below pass to Slurm's <code>-M</code> option.</p>
+<pre><code>(
+  if [[ -n "$CLUSTER" ]]; then
+    squeue -M "$CLUSTER" -j "$JOB_ID"
+    if ! accounting=$(sacct -M "$CLUSTER" --noheader --parsable2 --jobs="$JOB_ID" --format=JobID,State,ExitCode); then
+      echo "Accounting query unavailable; check site documentation and try later." &gt;&amp;2
+      exit 1
+    fi
+  else
+    squeue -j "$JOB_ID"
+    if ! accounting=$(sacct --noheader --parsable2 --jobs="$JOB_ID" --format=JobID,State,ExitCode); then
+      echo "Accounting query unavailable; check site documentation and try later." &gt;&amp;2
+      exit 1
+    fi
+  fi
+  printf 'Accounting rows (job and possibly step records):\n%s\n' "$accounting"
+  allocation=$(printf '%s\n' "$accounting" | awk -F'|' -v id="$JOB_ID" '$1 == id { print $2 "|" $3; exit }')
+  if [[ -z "$allocation" ]]; then
+    echo "No allocation accounting row yet. This is not evidence of failure; wait or ask the site about accounting." &gt;&amp;2
+    exit 1
+  fi
+  if [[ "$allocation" != "COMPLETED|0:0" ]]; then
+    printf 'Success is not confirmed (allocation record: %s). Pending or unavailable records do not prove failure.\n' "$allocation" &gt;&amp;2
+    echo "Do not resubmit automatically. Check the state and site guidance first." &gt;&amp;2
+    exit 1
+  fi
+  if grep -Fq 'Sum 1..100: 5050' "slurm-${JOB_ID}.out"; then
+    echo "Confirmed COMPLETED/0:0 and expected synthetic output."
+  else
+    echo "Job reports COMPLETED/0:0 but the expected output line is absent; inspect the job output and working directory." &gt;&amp;2
+    exit 1
+  fi
+)</code></pre>
 <p>Use the allocation row whose <code>JobID</code> exactly matches <code>$JOB_ID</code>, not a step row such as <code>.batch</code>. The success check above requires both <code>COMPLETED</code> and exit code <code>0:0</code> before checking the expected output in <code>slurm-$JOB_ID.out</code>. A zero exit code alone does not validate a scientific workflow.</p>
 <p><strong>Worked reading:</strong> if the row for your captured ID reads <code>ID|PENDING|0:0</code>, the state is still pending, so the success check correctly refuses to inspect success output. Wait and check again according to site guidance. If a terminal row instead reads <code>ID|FAILED|1:0</code>, the job failed with a non-zero exit status; after recording that final state, inspect <code>slurm-$JOB_ID.err</code> and the job's output to diagnose it. These rows are illustrative, not results from a real job.</p>
 <p>If the job is pending, it may not have created logs yet. If the queue no longer shows it or <code>sacct</code> has no row, accounting may be delayed or unavailable. Neither case means failure: wait, check the site status guidance, or contact support. Do not resubmit in a loop. First inspect the recorded state. For a terminal failure, use the same validated ID to inspect its error log, if the site stores logs in this shared working directory:</p>
 <pre><code>cat "slurm-${JOB_ID}.err"
 cat "slurm-${JOB_ID}.out"</code></pre>
 <p>For a module error, confirm that the documented module system is initialized inside the batch shell and that the exact module is available there. For a submission rejection, inspect the site-required partition, account, resource limits, and directive syntax. For an out-of-memory or time-limit state, consult accounting and site policy before changing resource requests. If accounting is disabled or delayed, use the site's documented status route rather than inferring failure from absent records or files.</p>
+<h2>Cancel jobs, inspect live details, and request interactive sessions</h2>
+<p>Day-to-day Slurm work relies on four additional commands for stopping mistaken submissions, inspecting scheduler state, measuring memory usage, and working interactively on a compute node rather than on the shared login node:</p>
+<pre><code># Cancel one specific job ID (always prefer an explicit ID over user-wide flags):
+scancel "$JOB_ID"
+
+# Inspect full live scheduler metadata while a job is queued, running, or recently completed:
+scontrol show job "$JOB_ID"
+
+# Inspect elapsed walltime, requested memory, and peak resident memory (MaxRSS) after completion:
+sacct --jobs="$JOB_ID" --format=JobID,JobName%16,State,ExitCode,Elapsed,ReqMem,MaxRSS
+
+# Request an interactive compute shell (replace partition/account flags per site policy):
+srun --nodes=1 --ntasks=1 --cpus-per-task=2 --mem=4G --time=01:00:00 --pty bash</code></pre>
+<p>Illustrative <code>sacct</code> output for a completed single-node batch job (values are synthetic examples, not live cluster output):</p>
+<pre><code>JobID                 JobName      State ExitCode    Elapsed     ReqMem     MaxRSS
+------------ ---------------- ---------- -------- ---------- ---------- ----------
+4829                  r-smoke  COMPLETED      0:0   00:00:04         1G
+4829.batch              batch  COMPLETED      0:0   00:00:04                 68420K
+4829.extern            extern  COMPLETED      0:0   00:00:04                  1320K</code></pre>
+<ul>
+<li><strong><code>scancel</code>:</strong> stops a pending or running job immediately without confirmation. Check <code>JOB_ID</code> before running it; user-wide forms such as <code>scancel -u "$USER" -t PENDING</code> cancel every pending job under your account.</li>
+<li><strong><code>scontrol show job</code>:</strong> prints detailed live fields including <code>Reason=</code> (such as <code>Resources</code>, <code>Priority</code>, or <code>AssocGrpMemLimit</code>), <code>WorkDir=</code>, <code>StdOut=</code>, and <code>TimeLimit=</code>. Slurm purges completed jobs from controller memory after a short site-configured window (often minutes), after which <code>sacct</code> replaces <code>scontrol</code>.</li>
+<li><strong><code>MaxRSS</code> and <code>seff</code>:</strong> peak memory (<code>MaxRSS</code>) is recorded on step rows such as <code>.batch</code> or <code>.0</code> rather than on the top-level allocation row, and reaches accounting only after the step finishes (or is polled). Many clusters also install <code>seff "$JOB_ID"</code>, which summarizes CPU efficiency and peak memory against requested limits; an <code>OUT_OF_MEMORY</code> state (often exit code <code>0:125</code> or <code>137</code> from SIGKILL) indicates that peak RSS exceeded the cgroup memory limit.</li>
+<li><strong><code>srun --pty bash</code> and <code>salloc</code>:</strong> move interactive R, Python, or debugging sessions onto an allocated compute node. When finished, type <code>exit</code> once to release the compute allocation back to the queue.</li>
+</ul>
 <h2>What this lesson did and did not test</h2>
 <p>The R script and arithmetic are synthetic and runnable locally; the optional Python route uses the same arithmetic. Local execution does not test Slurm. The batch-script syntax and failure/success paths are tested with local command mocks only; mocks do not schedule a job, load a real site module, exercise a compute node, or verify a cluster's accounting and filesystem behavior. No real cluster, scheduler, paid service, private research material, account, or email is used by these local checks. Site setup, permissions, resource policy, and actual job execution remain for your administrator-approved environment.</p>
 <p>After this reference, continue to <a href="hpc-submission-part1.html">Writing Slurm Job Scripts</a> to learn how to adapt directives and script structure for a real workload. If you do not have HPC access or need a different prerequisite, return to <a href="../start-here.html">Start Here</a>; HPC is optional.</p>
@@ -334,6 +362,9 @@ cat "slurm-${JOB_ID}.out"</code></pre>
 <li><a href="https://slurm.schedmd.com/squeue.html">Slurm <code>squeue</code> manual</a>, output formats and job state codes.</li>
 <li><a href="https://slurm.schedmd.com/sbatch.html">Slurm <code>sbatch</code> manual</a>, batch submission, directives, and output files.</li>
 <li><a href="https://slurm.schedmd.com/sacct.html">Slurm <code>sacct</code> manual</a>, job accounting.</li>
+<li><a href="https://slurm.schedmd.com/scancel.html">Slurm <code>scancel</code> manual</a>, cancelling queued or running jobs and steps.</li>
+<li><a href="https://slurm.schedmd.com/scontrol.html">Slurm <code>scontrol</code> manual</a>, live job and node inspection.</li>
+<li><a href="https://slurm.schedmd.com/srun.html">Slurm <code>srun</code> manual</a>, job steps and interactive compute allocations.</li>
 <li><a href="https://modules.readthedocs.io/en/latest/module.html">Environment Modules <code>module</code> manual</a>, including shell initialization.</li>
 <li><a href="https://lmod.readthedocs.io/en/latest/">Lmod documentation</a>. The installed module system and commands may differ by site.</li>
 </ul>
@@ -476,7 +507,7 @@ cat "slurm-${JOB_ID}.out"</code></pre>
 </script>
 <script src="../assets/vendor/prism/prism-1.29.0.js"></script>
 <script id="tutorial-code-data">
-window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"hpc-basic-commands":{"blocks":[{"language":"bash","sha256":"31f7e36bc3c9fc7d702dbce9f4f3ac948487e82f69fe48b670b14cac7ced350f"},{"language":"bash","sha256":"40590facaf73dbfda37295a8c5e810720e6b7d7981c79df04cc8f7593946fb70"},{"language":"bash","sha256":"987405eba43879f2f73d5b02fcaa043540c0f668a24214eb1dd6d12babb6096e"},{"language":"r","sha256":"fa58ba5c3c128bd18a8bc69401b5ef25a7c5074c497c359d21623cf8353c99f0"},{"language":"python","sha256":"3135166dd402b9d82741fd71f7c66b73ceb03e38f0e444a052355b919acda3d9"},{"language":"bash","sha256":"4a4665e70dcaec98b4a6c13c6685416cde03e2231837109c05ae813771065a18"},{"language":"bash","sha256":"b105cde6885fe8b7e590dc70b4ddd063da94e4033c04bfdefa6e604d6d4a9943"},{"language":"bash","sha256":"d66ffe7853b8a00218256344e7bcfd03c9d2221113208c6545536ef3acb9bdbf"},{"language":"bash","sha256":"62fc16ff22a5eb86dfa159b4930d23572bf89c3260aeb815a5edf25b98bc730b"},{"language":"bash","sha256":"05330376cd7c56ff06178f0bdb1b0bbcede12ccb15b1eaeeed8e8be7df7a2ad5"}],"groups":[{"title":"Inspect the local runtime","panels":[{"start":16,"end":18,"language":"r","label":"R \u00b7 base R"},{"start":19,"end":20,"language":"python","label":"Python"}],"members":[{"index":16,"tag":"h3","sha256":"414a242e4551f508a0580294bbdbff7e2d81e838c4f98e1da1f3a7b47d1f9028"},{"index":17,"tag":"pre","sha256":"fa58ba5c3c128bd18a8bc69401b5ef25a7c5074c497c359d21623cf8353c99f0"},{"index":18,"tag":"p","sha256":"81a92fef9e188e383a812ffcb5a285ceef379988f537b550a518099f550bfaf9"},{"index":19,"tag":"h3","sha256":"353343bd9cc89dc63d83ee0a08d97a79df5823741b517ffe602352621ee0ec7b"},{"index":20,"tag":"pre","sha256":"3135166dd402b9d82741fd71f7c66b73ceb03e38f0e444a052355b919acda3d9"}],"tabOrder":["r","python"]},{"title":"Prepare equivalent batch smoke tests","panels":[{"start":23,"end":26,"language":"r","label":"R \u00b7 batch"},{"start":27,"end":30,"language":"python","label":"Python \u00b7 batch"}],"members":[{"index":23,"tag":"h3","sha256":"414a242e4551f508a0580294bbdbff7e2d81e838c4f98e1da1f3a7b47d1f9028"},{"index":24,"tag":"p","sha256":"aa37679aeeadda2ea23c836669c6c038b9a620967ecb1bd9bd43ff3ebf5dacbc"},{"index":25,"tag":"pre","sha256":"4a4665e70dcaec98b4a6c13c6685416cde03e2231837109c05ae813771065a18"},{"index":26,"tag":"p","sha256":"53ba3af29a8a35f5422c4af1b4b6fe7a19c581c66ff4c74cdb2d610e9d778c29"},{"index":27,"tag":"h3","sha256":"b325fb4281c1be8b218b3d2b536825fc763691107344a6a3539d77ce7c7ca52f"},{"index":28,"tag":"p","sha256":"e0f2fbb26d912226fd1e66abe249f80773cfc75c8e3304524d1e19c911529586"},{"index":29,"tag":"pre","sha256":"b105cde6885fe8b7e590dc70b4ddd063da94e4033c04bfdefa6e604d6d4a9943"},{"index":30,"tag":"p","sha256":"a2129ffaa20453343c65bdbbef92e085536415e7927db342c85fc8590ff68d96"}],"tabOrder":["r","python"]}]}}};
+window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"hpc-basic-commands":{"blocks":[{"language":"bash","sha256":"31f7e36bc3c9fc7d702dbce9f4f3ac948487e82f69fe48b670b14cac7ced350f"},{"language":"bash","sha256":"40590facaf73dbfda37295a8c5e810720e6b7d7981c79df04cc8f7593946fb70"},{"language":"bash","sha256":"987405eba43879f2f73d5b02fcaa043540c0f668a24214eb1dd6d12babb6096e"},{"language":"r","sha256":"fa58ba5c3c128bd18a8bc69401b5ef25a7c5074c497c359d21623cf8353c99f0"},{"language":"python","sha256":"3135166dd402b9d82741fd71f7c66b73ceb03e38f0e444a052355b919acda3d9"},{"language":"bash","sha256":"4a4665e70dcaec98b4a6c13c6685416cde03e2231837109c05ae813771065a18"},{"language":"bash","sha256":"b105cde6885fe8b7e590dc70b4ddd063da94e4033c04bfdefa6e604d6d4a9943"},{"language":"bash","sha256":"59df3dd0090691425f550a1409a34ac3976749747b97525e204ee374ad86ba11"},{"language":"bash","sha256":"7339e6dcfbe46eebb88b55cf2415f9476e63afa063fa05febd6a1340a6d1673a"},{"language":"bash","sha256":"05330376cd7c56ff06178f0bdb1b0bbcede12ccb15b1eaeeed8e8be7df7a2ad5"},{"language":"bash","sha256":"83b87491e68d1723e5b38e08aefd3e361e12b3ed421e57a51f88a831312683d6"},{"language":"text","sha256":"c03bd71ca7b60dcdd2afcfa7b943fc9373328b5678b5e834cf2d276569427de9"}],"groups":[{"title":"Inspect the local runtime","panels":[{"start":16,"end":18,"language":"r","label":"R \u00b7 base R"},{"start":19,"end":20,"language":"python","label":"Python"}],"members":[{"index":16,"tag":"h3","sha256":"414a242e4551f508a0580294bbdbff7e2d81e838c4f98e1da1f3a7b47d1f9028"},{"index":17,"tag":"pre","sha256":"fa58ba5c3c128bd18a8bc69401b5ef25a7c5074c497c359d21623cf8353c99f0"},{"index":18,"tag":"p","sha256":"81a92fef9e188e383a812ffcb5a285ceef379988f537b550a518099f550bfaf9"},{"index":19,"tag":"h3","sha256":"353343bd9cc89dc63d83ee0a08d97a79df5823741b517ffe602352621ee0ec7b"},{"index":20,"tag":"pre","sha256":"3135166dd402b9d82741fd71f7c66b73ceb03e38f0e444a052355b919acda3d9"}],"tabOrder":["r","python"]},{"title":"Prepare equivalent batch smoke tests","panels":[{"start":23,"end":26,"language":"r","label":"R \u00b7 batch"},{"start":27,"end":30,"language":"python","label":"Python \u00b7 batch"}],"members":[{"index":23,"tag":"h3","sha256":"414a242e4551f508a0580294bbdbff7e2d81e838c4f98e1da1f3a7b47d1f9028"},{"index":24,"tag":"p","sha256":"aa37679aeeadda2ea23c836669c6c038b9a620967ecb1bd9bd43ff3ebf5dacbc"},{"index":25,"tag":"pre","sha256":"4a4665e70dcaec98b4a6c13c6685416cde03e2231837109c05ae813771065a18"},{"index":26,"tag":"p","sha256":"53ba3af29a8a35f5422c4af1b4b6fe7a19c581c66ff4c74cdb2d610e9d778c29"},{"index":27,"tag":"h3","sha256":"b325fb4281c1be8b218b3d2b536825fc763691107344a6a3539d77ce7c7ca52f"},{"index":28,"tag":"p","sha256":"e0f2fbb26d912226fd1e66abe249f80773cfc75c8e3304524d1e19c911529586"},{"index":29,"tag":"pre","sha256":"b105cde6885fe8b7e590dc70b4ddd063da94e4033c04bfdefa6e604d6d4a9943"},{"index":30,"tag":"p","sha256":"a2129ffaa20453343c65bdbbef92e085536415e7927db342c85fc8590ff68d96"}],"tabOrder":["r","python"]}]}}};
 </script>
 <script src="../code-tabs.js?v=20261026-startup-v1"></script>
 <script src="../copy-code.js?v=20261025-r-first-v1"></script>

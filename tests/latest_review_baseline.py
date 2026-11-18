@@ -206,6 +206,8 @@ def restore_latest_review_asset(relative_path, data):
     """Restore any reviewed file only for its exact complete current SHA-256."""
     if not isinstance(data, bytes):
         raise TypeError("latest-review asset restoration requires bytes")
+    from approved_tutorial_fixes_baseline import restore_approved_tutorial_fix_asset
+    data = restore_approved_tutorial_fix_asset(relative_path, data)
     data = normalize_current_publication(relative_path, data)
     data = normalize_editorial_review_bytes(relative_path, data)
     data = restore_startup_generated_asset(relative_path, data, "main")

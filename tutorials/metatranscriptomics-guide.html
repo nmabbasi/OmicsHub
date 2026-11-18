@@ -198,23 +198,27 @@ fastp -i sample_R1.fastq.gz -I sample_R2.fastq.gz \
   -h trimmed/fastp.html -j trimmed/fastp.json --thread 8</code></pre>
 <p>Expected deliverables are per-input FastQC reports, a MultiQC summary, paired trimmed FASTQ files, and fastp HTML/JSON reports. These commands require FastQC, MultiQC, and fastp already installed; they do not establish that trimming improved a particular dataset. Review pre- and post-trimming evidence. For gzip FASTQs, a cheap structural check is <code>gzip -t sample_R1.fastq.gz sample_R2.fastq.gz</code> followed by counting records with <code>zcat sample_R1.fastq.gz | awk 'END {print NR/4}'</code> and the equivalent R2 command; counts should agree, be positive whole numbers, and each four-line record should have valid FASTQ structure. After trimming, repeat the checks on both output mates and stop if counts differ or outputs are empty; investigate reports/logs rather than proceeding with desynchronized files.</p>
 <h3>rRNA filtering with paired input</h3>
-<pre><code>mkdir -p sortmerna_work
+<pre><code>rm -rf sortmerna_work/kvdb
+mkdir -p sortmerna_work
 sortmerna --ref /path/to/rRNA_reference.fasta \
   --reads trimmed/sample_R1.fastq.gz \
   --reads trimmed/sample_R2.fastq.gz \
   --workdir sortmerna_work \
-  --fastx --other --paired_in</code></pre>
-<p>Replace the reference path with a supported reference FASTA. SortMeRNA 4 writes its outputs under the work directory, so inspect the generated files and use their actual names downstream. Its documented paired-read behavior matters: <code>--paired_in</code> puts both reads into the aligned output if either read aligns, while the non-aligned output is intended to contain pairs with no rRNA alignment. This choice favors retaining intact pairs among the non-rRNA reads; it can also discard the mate that did not itself match rRNA.</p>
-<div class="lesson-warning"><p><strong>Do not assume output suffixes.</strong> SortMeRNA release and output-format settings determine actual file names. Inspect the work directory and run log, confirm both mates remain synchronized, and use the observed paths in later steps.</p></div>
+  --aligned sortmerna_work/rRNA_reads \
+  --other sortmerna_work/non_rRNA_reads \
+  --fastx --out2 --paired_in --threads 8</code></pre>
+<p>Replace the reference path with a supported rRNA reference FASTA. Including <code>--out2</code> instructs SortMeRNA 4 to write forward and reverse mates to separate paired FASTQ files (such as <code>sortmerna_work/non_rRNA_reads_fwd.fq.gz</code> and <code>sortmerna_work/non_rRNA_reads_rev.fq.gz</code>) rather than a single interleaved file. SortMeRNA also refuses to overwrite an existing key-value database directory, so clear <code>sortmerna_work/kvdb</code> before re-running on the same workdir. Its documented paired-read behavior matters: <code>--paired_in</code> puts both reads into the aligned output if either read aligns, keeping the non-aligned output free of rRNA matches while discarding the non-rRNA mate of chimeric or read-through pairs.</p>
+<div class="lesson-warning"><p><strong>Verify exact output suffixes.</strong> SortMeRNA release and compression settings determine whether outputs end in <code>_fwd.fq.gz</code>/<code>_rev.fq.gz</code> or <code>_paired_fwd.fq.gz</code>/<code>_paired_rev.fq.gz</code>. Inspect <code>sortmerna_work/</code> and the run log, confirm forward and reverse read counts match, and pass those observed paths to the next step.</p></div>
 <h3>Host depletion with paired reads</h3>
 <pre><code>mkdir -p indices nonhost
 bowtie2-build host_reference.fasta indices/host
 bowtie2 -x indices/host \
-  -1 path/to/nonrRNA_R1.fastq.gz -2 path/to/nonrRNA_R2.fastq.gz \
+  -1 sortmerna_work/non_rRNA_reads_fwd.fq.gz \
+  -2 sortmerna_work/non_rRNA_reads_rev.fq.gz \
   --very-sensitive --threads 8 \
-  --un-conc-gz nonhost/nonhost_%.fastq.gz \
+  --un-conc-gz nonhost/nonhost_R%.fastq.gz \
   -S host_mapped.sam 2&gt; bowtie2_host.log</code></pre>
-<p>Bowtie2's <code>--un-conc-gz</code> writes pairs that fail to align concordantly, using the percent sign in the filename for mate-specific outputs. The example does not guarantee that every host-derived read is removed: discordant mapping behavior, reference completeness, and alignment policy matter. Review the SAM summary and retain the log with the sample record.</p>
+<p>Bowtie2's <code>--un-conc-gz</code> writes pairs that fail to align concordantly, substituting <code>1</code> and <code>2</code> for the percent sign (<code>nonhost/nonhost_R1.fastq.gz</code> and <code>nonhost/nonhost_R2.fastq.gz</code>). Because host mRNA reads in metatranscriptomes frequently span exon-exon splice junctions, unspliced genome alignment with Bowtie2 can miss spliced host reads; for host-rich clinical or tissue samples, align against a combined host genome plus transcriptome index or use a splice-aware mapper such as STAR. Review the SAM summary and retain the log with the sample record.</p>
 <div class="lesson-summary"><p><strong>Planning exercise.</strong> On paper or in a sample manifest, write one row per stage (raw, trimmed, rRNA-filtered, host-depleted, profiled) with input path, output path, read or pair count, tool/database version, and the criterion for continuing. As a synthetic arithmetic check, if 1,000 read pairs enter a filter and 120 pairs are classified as rRNA, 880 pairs remain only if the filter reports pair-level counts and no pairs are lost for another reason; state the units and reconcile observed counts before interpreting the difference. Stop when mate counts disagree, a stage's output is absent, or the log cannot explain a count change.</p></div>
 <h2>Read functional outputs cautiously</h2>
 <p>HUMAnN's gene-family and pathway tables are computational estimates whose meaning depends on input preparation, reference databases, and normalization. Functional assignments can be missed or misassigned when reference coverage is limited. A raw change in table values across samples is not automatically a comparable change in transcription; choose a normalization and statistical analysis appropriate to the experimental design, then report both.</p>
@@ -379,7 +383,7 @@ bowtie2 -x indices/host \
 </script>
 <script src="../assets/vendor/prism/prism-1.29.0.js"></script>
 <script id="tutorial-code-data">
-window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"metatranscriptomics-guide":{"blocks":[{"language":"bash","sha256":"248741334a38dc9082d1857feed4bab7c3ca42058eee1fd0c05b4c52ef548ec0"},{"language":"bash","sha256":"8f860f43b959703173911c0588511d660169bc9fca7f738982ef72008d7bb77b"},{"language":"bash","sha256":"fcb19f4daddfa59db8e89b25a754502c67e28957d337c89fa3e8a66c7c532467"}],"groups":[]}}};
+window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"metatranscriptomics-guide":{"blocks":[{"language":"bash","sha256":"248741334a38dc9082d1857feed4bab7c3ca42058eee1fd0c05b4c52ef548ec0"},{"language":"bash","sha256":"48ca0b46132148b51741fe4a3cec95202659c79c0dd74c7e53d46b5961176813"},{"language":"bash","sha256":"a1ebe76f9d05cb621ea06ee6162bbf468405123ac537fbde4823549550509d80"}],"groups":[]}}};
 </script>
 <script src="../code-tabs.js?v=20261026-startup-v1"></script>
 <script src="../copy-code.js?v=20261025-r-first-v1"></script>

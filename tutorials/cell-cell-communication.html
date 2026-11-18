@@ -196,12 +196,15 @@ Layers(seurat_obj[[DefaultAssay(seurat_obj)]])</code></pre>
 <h2>2. Run LIANA and inspect its consensus ranking</h2>
 <p>The R LIANA tutorial documents <code>liana_wrap()</code> followed by <code>liana_aggregate()</code>. The aggregation step returns consensus rank columns, including <code>aggregate_rank</code>; this is not the <code>consensus_score</code> used in some older examples. The code below follows the documented default workflow and leaves assay selection to the input object's active assay. Verify that this is appropriate for your installed LIANA/Seurat versions before running.</p>
 <pre><code class="language-r">library(liana)
-liana_raw &lt;- liana_wrap(seurat_obj, groupby = "cell_type")
+liana_raw &lt;- liana_wrap(seurat_obj, idents_col = "cell_type")
 liana_ranked &lt;- liana_aggregate(liana_raw)
 
-# Confirm actual output fields, then rank smallest aggregate_rank first.
+# Confirm actual output fields and cell-type group alignment, then rank smallest aggregate_rank first.
 print(names(liana_ranked))
-stopifnot(all(c("source", "target", "aggregate_rank") %in% names(liana_ranked)))
+stopifnot(
+  all(c("source", "target", "aggregate_rank") %in% names(liana_ranked)),
+  all(unique(liana_ranked$source) %in% as.character(seurat_obj$cell_type))
+)
 liana_ranked &lt;- dplyr::arrange(liana_ranked, aggregate_rank)
 utils::write.csv(liana_ranked, "liana_aggregate_results.csv", row.names = FALSE)
 saveRDS(liana_raw, "liana_raw_results.rds")</code></pre>
@@ -380,7 +383,7 @@ saveRDS(liana_raw, "liana_raw_results.rds")</code></pre>
 </script>
 <script src="../assets/vendor/prism/prism-1.29.0.js"></script>
 <script id="tutorial-code-data">
-window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"cell-cell-communication":{"blocks":[{"language":"r","sha256":"23b0555eb2cc475e2c346f3bc380d96572325faf5a0d3d6d2d82b825698f670a"},{"language":"r","sha256":"6535e2d07022642d5e0cc99ad8e3b416681edec896071c04de1d4a5ce33b1a14"}],"groups":[]}}};
+window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"cell-cell-communication":{"blocks":[{"language":"r","sha256":"23b0555eb2cc475e2c346f3bc380d96572325faf5a0d3d6d2d82b825698f670a"},{"language":"r","sha256":"85195fbbdff7d29a361d476c530a20e9d2edef83e9980f648f7065ffc1325d92"}],"groups":[]}}};
 </script>
 <script src="../code-tabs.js?v=20261026-startup-v1"></script>
 <script src="../copy-code.js?v=20261025-r-first-v1"></script>

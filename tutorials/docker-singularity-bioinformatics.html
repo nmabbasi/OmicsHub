@@ -180,38 +180,44 @@ function toggleMobileMenu() {
 <p>An image bundles an application and its userspace dependencies. That is useful when tools require conflicting libraries or when you need to preserve an environment, but it does not guarantee identical results across all hosts: kernel and hardware behavior, environment variables, mounted files, command-line parameters, and external services can still matter. Record the exact image reference (prefer a digest for durable identification), input checksums, tool arguments, and relevant host/runtime details. A tag can be moved, and a container is not a substitute for workflow provenance or biological validation.</p>
 <p>Docker commonly runs through a privileged daemon, which is why shared clusters often restrict Docker. Apptainer (formerly Singularity) is designed for unprivileged HPC use, but installation, configuration, allowed registries, and bind paths remain site-specific. Follow your cluster's documentation rather than assuming Docker is universally unavailable or that Apptainer is installed.</p>
 <h2>Prepare a small, explicit project layout</h2>
-<p>For a reproducible smoke test, create the fixture below in a new project directory. It is invented sequence data for checking file flow only, not a biological sample or a test of BWA's suitability for any assay. The commands require Bash, Docker with permission to access its daemon, and host BWA for indexing. Check availability before starting:</p>
+<p>For a reproducible smoke test, create the fixture below in a new project directory. It is invented sequence data for checking file flow only, not a biological sample or a test of BWA's suitability for any assay. Both indexing and mapping run inside the same container image so no host BWA installation is needed, preventing index/mapper version drift. Check that Bash and Docker are available before starting:</p>
 <pre><code class="language-bash">command -v docker &amp;&amp; docker --version
-command -v bwa &amp;&amp; bwa 2&gt;&amp;1 | head -n 3
+docker info &gt;/dev/null
 </code></pre>
-<p>If either executable is missing, stop here and install it using the official instructions for your operating system or ask your administrator; do not proceed with an incomplete project. Record the version output in your notes. Then create the two small inputs (the reads are exact substrings of the synthetic reference):</p>
+<p>If Docker is missing or its daemon is unreachable, stop here and resolve installation or daemon permissions using the official instructions for your operating system; do not proceed with an incomplete setup. Record the version output in your notes. Next, create the two small inputs. Because BWA-MEM suppresses alignments scoring below <code>-T 30</code> by default (at +1 per matching base), each synthetic read is 60 bp long inside a 180 bp synthetic reference so both reads exceed the default score threshold and map cleanly:</p>
 <pre><code class="language-bash">mkdir -p bwa-container-lab/results
 cd bwa-container-lab
 cat &gt; reference.fa &lt;&lt;'EOF'
 &gt;synthetic_reference
-ACGTTGCAAGTCCTAGGATCCGATGCTAACGTAGCTTAGGCTAACCGT
+ACGTTGCAAGTCCTAGGATCCGATGCTAACGTAGCTTAGGCTAACCGTTGCATGACCTGATCGATCGTAGCTGATCGATGCTAGCTAGCTGATCGATGCTAGCTGATCGATGCTAGCTAGCTGATCGATGCTAGCTGATCGATGCTAGCTAGCTGATCGATGCTAGCTGATCGATGCTAG
 EOF
 cat &gt; reads.fq &lt;&lt;'EOF'
 @synthetic_read_1
-ACGTTGCAAGTCCTAGGATC
+ACGTTGCAAGTCCTAGGATCCGATGCTAACGTAGCTTAGGCTAACCGTTGCATGACCTGA
 +
-IIIIIIIIIIIIIIIIIIII
+IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII
 @synthetic_read_2
-GATGCTAACGTAGCTTAGGCT
+TCGATCGTAGCTGATCGATGCTAGCTAGCTGATCGATGCTAGCTGATCGATGCTAGCTAG
 +
-IIIIIIIIIIIIIIIIIIIII
+IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII
 EOF
 wc -l reference.fa reads.fq
 </code></pre>
-<p>The final command should report 2 lines for the FASTA and 8 for FASTQ. If it does not, check that the quoted heredoc terminators were copied on their own lines. Now build the BWA index in this directory; the index files must remain beside the FASTA:</p>
-<pre><code class="language-bash">bwa index reference.fa
-</code></pre>
-<p>BWA writes index sidecar files beside the reference. Keep them with the FASTA and make the directory available inside the container. BWA-MEM accepts a reference and one or two FASTQ read files; this single-read example is illustrative, not an assessment of paired-end data, read quality, or mapping suitability.</p>
-<h2>Run the tool locally with Docker</h2>
-<p>Confirm the Docker daemon is reachable with <code>docker info</code>; if this fails, stop and resolve host permissions or daemon availability before attempting a pull. Verify the image tag with its registry documentation, then run from the project directory. The example mounts that directory read-write at <code>/work</code>, so input and generated files are visible across the boundary:</p>
+<p>The final command should report 2 lines for the FASTA and 8 for FASTQ. If it does not, check that the quoted heredoc terminators were copied on their own lines. Now build the BWA index inside the same Biocontainers image using your host UID and GID (<code>--user "$(id -u):$(id -g)"</code>) so the index sidecar files written to the bind-mounted directory remain owned by your user rather than <code>root</code>:</p>
 <pre><code class="language-bash">IMAGE='quay.io/biocontainers/bwa:0.7.17--hed695b0_7'  # verify this tag in the registry
+docker run --rm \
+  --user "$(id -u):$(id -g)" \
+  --mount "type=bind,src=$PWD,dst=/work" \
+  --workdir /work \
+  "$IMAGE" bwa index reference.fa
+</code></pre>
+<p>BWA writes five index sidecar files (<code>.amb</code>, <code>.ann</code>, <code>.bwt</code>, <code>.pac</code>, <code>.sa</code>) beside <code>reference.fa</code>. Keep them in the mounted directory for mapping. BWA-MEM accepts a reference and one or two FASTQ read files; this single-end fixture checks container file flow and read mapping mechanics, not paired-end insert statistics or biological mapping quality.</p>
+<h2>Run the tool locally with Docker</h2>
+<p>Run BWA-MEM from the same image and mounted directory. Because <code>$PWD</code> is mounted at <code>/work</code>, both the reference index and FASTQ input are visible inside the container:</p>
+<pre><code class="language-bash">IMAGE='quay.io/biocontainers/bwa:0.7.17--hed695b0_7'
 mkdir -p results
 docker run --rm \
+  --user "$(id -u):$(id -g)" \
   --mount "type=bind,src=$PWD,dst=/work" \
   --workdir /work \
   "$IMAGE" bwa mem -t 4 reference.fa reads.fq \
@@ -393,7 +399,7 @@ apptainer exec --bind "$PWD:/work" --pwd /work bwa.sif \
 </script>
 <script src="../assets/vendor/prism/prism-1.29.0.js"></script>
 <script id="tutorial-code-data">
-window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"docker-singularity-bioinformatics":{"blocks":[{"language":"bash","sha256":"4be097acf574819284c71505d7ab2c479aa4e77e3a9c38e891a998a56ad1eb55"},{"language":"bash","sha256":"af3e2be760f9502d999ada21f5c665f3805ed839256b789af9e3ba2ffb65e4e0"},{"language":"bash","sha256":"38ca216a0485af2832e50b44e74469355bc3c4108dcffda1608fd6925fd68552"},{"language":"bash","sha256":"c4854f2a886c33c1d9a49840dba288f7fae808c2be48ae2849bb3fbf853a8c10"},{"language":"bash","sha256":"1fc1a360c6f91be9758a7670d239f49c5a8bd558a06a37f44267be3e6209390c"},{"language":"bash","sha256":"9b4df5d56d521835d62b8784fa67efad513920dde7a98f6f5374809cd18a83bb"}],"groups":[]}}};
+window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"docker-singularity-bioinformatics":{"blocks":[{"language":"bash","sha256":"2e56a829bc7db4bfca6c25fb352c1a1630bebcb27ee3eb9688166abfaf69ad60"},{"language":"bash","sha256":"7f8660a50ca7af7e2d467a1f49a39d8a119f7722f8e894d421c1f0d5453a58ee"},{"language":"bash","sha256":"0ed5f2fbbc4243ace06939d90c0a90dda15dbc8e28cb3ebe151d6c71b91f0c43"},{"language":"bash","sha256":"531c5f94dc9bd7308a85cbd953af451cd3fecb9fff76d60e9ec8280b0c8f0408"},{"language":"bash","sha256":"1fc1a360c6f91be9758a7670d239f49c5a8bd558a06a37f44267be3e6209390c"},{"language":"bash","sha256":"9b4df5d56d521835d62b8784fa67efad513920dde7a98f6f5374809cd18a83bb"}],"groups":[]}}};
 </script>
 <script src="../code-tabs.js?v=20261026-startup-v1"></script>
 <script src="../copy-code.js?v=20261025-r-first-v1"></script>

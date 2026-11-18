@@ -90,9 +90,13 @@ def _fixture():
         if original is None or _sha(original) != entry["base_sha256"]:
             raise AssertionError(f"approved-fix base page unavailable or changed: {path}")
         current_path = ROOT / path
-        if not current_path.is_file() or _sha(current_path.read_bytes()) != entry["current_sha256"]:
+        if not current_path.is_file():
             raise AssertionError(f"approved-fix current page fingerprint mismatch: {path}")
-        text = current_path.read_text(encoding="utf-8")
+        from phase_a_fixes_baseline import normalize_phase_a_fix
+        from header_date_fixes_baseline import normalize_header_date_fix
+        text = normalize_header_date_fix(path, normalize_phase_a_fix(path, current_path.read_text(encoding="utf-8")))
+        if _sha(text.encode("utf-8")) != entry["current_sha256"]:
+            raise AssertionError(f"approved-fix current page fingerprint mismatch: {path}")
         for index, patch in enumerate(entry["patches"]):
             if (not isinstance(patch, dict) or set(patch) != {"before", "after"}
                     or not isinstance(patch["before"], str)
@@ -121,7 +125,10 @@ def _fixture():
         if original is None or _sha(original) != entry["base_sha256"]:
             raise AssertionError(f"approved-fix base asset unavailable or changed: {path}")
         current_path = ROOT / path
-        if not current_path.is_file() or _sha(current_path.read_bytes()) != entry["current_sha256"]:
+        if not current_path.is_file():
+            raise AssertionError(f"approved-fix current asset fingerprint mismatch: {path}")
+        from phase_a_fixes_baseline import restore_phase_a_asset
+        if _sha(restore_phase_a_asset(path, current_path.read_bytes())) != entry["current_sha256"]:
             raise AssertionError(f"approved-fix current asset fingerprint mismatch: {path}")
         asset_map[path] = entry
 
@@ -134,8 +141,9 @@ def normalize_approved_tutorial_fix(relative_path, text):
     """Reverse one exact approved page revision; preserve unknown mutations."""
     if not isinstance(text, str):
         raise TypeError("approved tutorial-fix normalization requires decoded text")
+    from phase_a_fixes_baseline import normalize_phase_a_fix
     from header_date_fixes_baseline import normalize_header_date_fix
-    text = normalize_header_date_fix(relative_path, text)
+    text = normalize_header_date_fix(relative_path, normalize_phase_a_fix(relative_path, text))
     entry = _fixture()["page_map"].get(relative_path)
     if entry is None:
         return text
@@ -157,6 +165,8 @@ def normalize_approved_tutorial_fix(relative_path, text):
 
 def restore_approved_tutorial_fix_asset(relative_path, data):
     """Restore only an exact approved code-inventory asset to its main bytes."""
+    from phase_a_fixes_baseline import restore_phase_a_asset
+    data = restore_phase_a_asset(relative_path, data)
     entry = _fixture()["asset_map"].get(relative_path)
     if entry is None:
         return data

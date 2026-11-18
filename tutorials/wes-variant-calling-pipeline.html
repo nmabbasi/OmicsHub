@@ -291,19 +291,40 @@ gatk HaplotypeCaller \
   -O vcf/NA12878_raw.vcf.gz
 </code></pre>
 <p>This command produces a single-sample VCF. For cohort joint genotyping, emit one intermediate GVCF per sample with <code>-ERC GVCF</code> (also accepted as <code>--emit-ref-confidence GVCF</code>), then combine/genotype according to the GATK cohort workflow. A GVCF is not the final cohort VCF.</p>
-<h3>5. Hard-filtering (example filters; consider VQSR for larger sample sets)</h3>
+<h3>5. Hard-filtering by variant type (example filters; consider VQSR or CNNScoreVariants where appropriate)</h3>
 <pre><code># Input: vcf/NA12878_raw.vcf.gz
-# Output: vcf/NA12878_filtered.vcf.gz
-gatk VariantFiltration \
-  -R refs/GRCh38.fa \
-  -V vcf/NA12878_raw.vcf.gz \
-  -O vcf/NA12878_filtered.vcf.gz \
+# Output: vcf/NA12878_filtered.vcf.gz (SNPs and INDELs filtered with type-specific thresholds, then merged)
+set -euo pipefail
+
+gatk SelectVariants -R refs/GRCh38.fa -V vcf/NA12878_raw.vcf.gz \
+  --select-type-to-include SNP -O vcf/NA12878_raw_snps.vcf.gz
+
+gatk VariantFiltration -R refs/GRCh38.fa -V vcf/NA12878_raw_snps.vcf.gz \
+  -O vcf/NA12878_filtered_snps.vcf.gz \
   --filter-name "QD_lt_2" --filter-expression "QD &lt; 2.0" \
   --filter-name "QUAL_lt_30" --filter-expression "QUAL &lt; 30.0" \
+  --filter-name "SOR_gt_3" --filter-expression "SOR &gt; 3.0" \
   --filter-name "FS_gt_60" --filter-expression "FS &gt; 60.0" \
-  --filter-name "MQ_lt_40" --filter-expression "MQ &lt; 40.0"
+  --filter-name "MQ_lt_40" --filter-expression "MQ &lt; 40.0" \
+  --filter-name "MQRankSum_lt_-12.5" --filter-expression "MQRankSum &lt; -12.5" \
+  --filter-name "ReadPosRankSum_lt_-8" --filter-expression "ReadPosRankSum &lt; -8.0"
+
+gatk SelectVariants -R refs/GRCh38.fa -V vcf/NA12878_raw.vcf.gz \
+  --select-type-to-include INDEL -O vcf/NA12878_raw_indels.vcf.gz
+
+gatk VariantFiltration -R refs/GRCh38.fa -V vcf/NA12878_raw_indels.vcf.gz \
+  -O vcf/NA12878_filtered_indels.vcf.gz \
+  --filter-name "QD_lt_2" --filter-expression "QD &lt; 2.0" \
+  --filter-name "QUAL_lt_30" --filter-expression "QUAL &lt; 30.0" \
+  --filter-name "FS_gt_200" --filter-expression "FS &gt; 200.0" \
+  --filter-name "ReadPosRankSum_lt_-20" --filter-expression "ReadPosRankSum &lt; -20.0"
+
+gatk MergeVcfs \
+  -I vcf/NA12878_filtered_snps.vcf.gz \
+  -I vcf/NA12878_filtered_indels.vcf.gz \
+  -O vcf/NA12878_filtered.vcf.gz
 </code></pre>
-<p>VariantFiltration annotates records; it does not remove failing records. A record with <code>FILTER=.</code> has not been evaluated by a filter and is not equivalent to PASS. Preserve the annotated file for review, then use the explicit PASS-only handoff below before describing downstream records as filtered. The expressions here are illustrative only: confirm annotations exist in the VCF header and tune against truth data or project-specific evidence. Hard filters act on sites and can discard true calls; VQSR also has data/resource requirements and is not automatically appropriate for every exome cohort.</p>
+<p>GATK recommends splitting SNPs and INDELs before hard-filtering because annotation distributions differ by variant class (for example, INDELs tolerate higher FisherStrand values and lack meaningful RMSMappingQuality comparisons on many reads). Note that mixed multiallelic sites containing both a SNP and an INDEL are excluded by strict <code>--select-type-to-include SNP</code>/<code>INDEL</code> unless split beforehand with <code>bcftools norm -m -both</code> or handled with <code>--select-type-to-include MIXED</code>. VariantFiltration annotates records rather than deleting them, and <code>FILTER=.</code> is not equivalent to <code>PASS</code>. Preserve the merged annotated VCF for audit, then run the explicit PASS-only handoff below.</p>
 <h3>5a. Create an explicit PASS-only VCF for downstream VAF</h3>
 <p>This handoff retains only records whose FILTER field is PASS; failing labels and unreviewed <code>.</code> records are excluded. The original annotated VCF remains the audit trail.</p>
 <pre><code># Input: vcf/NA12878_filtered.vcf.gz (FILTER annotations retained)
@@ -545,7 +566,7 @@ gatk CollectHsMetrics \
 </script>
 <script src="../assets/vendor/prism/prism-1.29.0.js"></script>
 <script id="tutorial-code-data">
-window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"wes-variant-calling-pipeline":{"blocks":[{"language":"bash","sha256":"4bc8b238cf508163c2b54d3e803f016bedfeef30712ac5e5901346dcd361383f"},{"language":"bash","sha256":"c93b5a79df13af7d513e45b99244c46a53ed79bfe1c75e77fa8e321da13caa58"},{"language":"bash","sha256":"b3bd84f00211a304de6d27100c68c8f8aa621d2d755c5c9b39a8d7921cc22f35"},{"language":"bash","sha256":"f07a68872539d3dc04054a6f4d6c7c3887bd3e122305597f2bb00bcefeaebdc6"},{"language":"bash","sha256":"df313d8b22f2f32770b0da4864bd82459b40e3243e258f251adb23c507b43d0d"},{"language":"bash","sha256":"802d245948ac0fccd5348c9bb3ab0379a02cc64db20abd58e15c5e2ce4204a62"},{"language":"bash","sha256":"c52b17785c406a0e604c03608b1a630e7580bc30f501cd1abca162722ef0464c"},{"language":"bash","sha256":"556b9beac21d3c4181da4d3f76e8a287d5d9a280b3f930987fade6f4aaf517cc"},{"language":"bash","sha256":"611229aba12c34a83196d6d4cfd975a053f16e9a9d666f0fd0f0fee523ebdda6"},{"language":"bash","sha256":"25af8212f78cd9710ee6e8f9177e5e3da73254f7f0d05d76d155467c52e65fd7"},{"language":"text","sha256":"33544105220607bb541ef9875d1c778e8aeb326cdf6a8a06a72b73745b425a5c"},{"language":"r","sha256":"1bc262741583f607a8cfb74b603cd5c00a6a28a663e4528431f117f0646854c7"},{"language":"bash","sha256":"841653095b6570197a4fbd99ff3400952c359424f8706938e733b9f4b6dfc182"}],"groups":[]}}};
+window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"wes-variant-calling-pipeline":{"blocks":[{"language":"bash","sha256":"4bc8b238cf508163c2b54d3e803f016bedfeef30712ac5e5901346dcd361383f"},{"language":"bash","sha256":"c93b5a79df13af7d513e45b99244c46a53ed79bfe1c75e77fa8e321da13caa58"},{"language":"bash","sha256":"b3bd84f00211a304de6d27100c68c8f8aa621d2d755c5c9b39a8d7921cc22f35"},{"language":"bash","sha256":"f07a68872539d3dc04054a6f4d6c7c3887bd3e122305597f2bb00bcefeaebdc6"},{"language":"bash","sha256":"df313d8b22f2f32770b0da4864bd82459b40e3243e258f251adb23c507b43d0d"},{"language":"bash","sha256":"802d245948ac0fccd5348c9bb3ab0379a02cc64db20abd58e15c5e2ce4204a62"},{"language":"bash","sha256":"91ef1bed0a4370f5722021b7f500c8ec951dfc8f4ebae52cc8d728b30f748b1f"},{"language":"bash","sha256":"556b9beac21d3c4181da4d3f76e8a287d5d9a280b3f930987fade6f4aaf517cc"},{"language":"bash","sha256":"611229aba12c34a83196d6d4cfd975a053f16e9a9d666f0fd0f0fee523ebdda6"},{"language":"bash","sha256":"25af8212f78cd9710ee6e8f9177e5e3da73254f7f0d05d76d155467c52e65fd7"},{"language":"text","sha256":"33544105220607bb541ef9875d1c778e8aeb326cdf6a8a06a72b73745b425a5c"},{"language":"r","sha256":"1bc262741583f607a8cfb74b603cd5c00a6a28a663e4528431f117f0646854c7"},{"language":"bash","sha256":"841653095b6570197a4fbd99ff3400952c359424f8706938e733b9f4b6dfc182"}],"groups":[]}}};
 </script>
 <script src="../code-tabs.js?v=20261026-startup-v1"></script>
 <script src="../copy-code.js?v=20261025-r-first-v1"></script>

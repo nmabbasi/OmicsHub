@@ -277,17 +277,19 @@ bwa 2&gt;&amp;1 | head -n 1  # consult your cluster/tool documentation for versi
 <pre><code># Replace these examples with paths approved for your cluster and project.
 READS="/approved/path/reads.fastq.gz"
 REF="/approved/path/ref/genome.fa"
-test -r "$READS" &amp;&amp; test -r "$REF" || { echo "STOP: input or reference is not readable"; exit 1; }
-gzip -t "$READS" || { echo "STOP: compressed input is damaged or not gzip"; exit 1; }
-for suffix in amb ann bwt pac sa; do
-  test -r "${REF}.${suffix}" || { echo "STOP: missing BWA index ${REF}.${suffix}"; exit 1; }
-done
+(
+  test -r "$READS" &amp;&amp; test -r "$REF" || { echo "STOP: input or reference is not readable"; exit 1; }
+  gzip -t "$READS" || { echo "STOP: compressed input is damaged or not gzip"; exit 1; }
+  for suffix in amb ann bwt pac sa; do
+    test -r "${REF}.${suffix}" || { echo "STOP: missing BWA index ${REF}.${suffix}"; exit 1; }
+  done
 
-# A FASTQ record has four lines. Take 2500 records (10,000 lines), preserving record boundaries.
-zcat "$READS" | head -n 10000 | gzip -c &gt; test_reads.fastq.gz
-gzip -t test_reads.fastq.gz || { echo "STOP: subset gzip check failed"; exit 1; }
-lines=$(zcat test_reads.fastq.gz | wc -l)
-test "$lines" -gt 0 &amp;&amp; test "$((lines % 4))" -eq 0 || { echo "STOP: empty or incomplete four-line FASTQ records"; exit 1; }
+  # A FASTQ record has four lines. Take 2500 records (10,000 lines), preserving record boundaries.
+  zcat "$READS" | head -n 10000 | gzip -c &gt; test_reads.fastq.gz
+  gzip -t test_reads.fastq.gz || { echo "STOP: subset gzip check failed"; exit 1; }
+  lines=$(zcat test_reads.fastq.gz | wc -l)
+  test "$lines" -gt 0 &amp;&amp; test "$((lines % 4))" -eq 0 || { echo "STOP: empty or incomplete four-line FASTQ records"; exit 1; }
+)
 printf 'Subset contains %s complete FASTQ records\n' "$((lines / 4))"
 
 # Run only on an allowed interactive/compute node, using site-approved resources.
@@ -577,7 +579,7 @@ Steps attempted:
 </script>
 <script src="../assets/vendor/prism/prism-1.29.0.js"></script>
 <script id="tutorial-code-data">
-window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"hpc-support":{"blocks":[{"language":"bash","sha256":"689bfcd830450d97a4f8311ca3bf39d9e43ec6d476ec6e4eb1270f98ec3d1fcf"},{"language":"bash","sha256":"e9eafa6cb5574851987667f4ee0d1781cea2f57469e54c37a30a3383f4e448fe"},{"language":"bash","sha256":"35a793404fa956161b0b4e3cce142ce461f0c57e7656f95514b0ed08a206ca5f"},{"language":"bash","sha256":"5f0cc575fa98976823bb3728441a35008b82a4ce6e8603109096000351e485bd"},{"language":"bash","sha256":"4405d425ca58b8c360a8b70e6df4a98ebe3b16e92e7a1b2869bf79c6aa03f2e9"},{"language":"bash","sha256":"1e52162a78703cf932cc90152a3562b422ea72d6531cdf982cdfd18cc2ccc2df"},{"language":"text","sha256":"f99b50e96e63feab6bd163634d8a1f67d944c9825bc7ef7339a002f99ad6ea7c"}],"groups":[]}}};
+window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"hpc-support":{"blocks":[{"language":"bash","sha256":"689bfcd830450d97a4f8311ca3bf39d9e43ec6d476ec6e4eb1270f98ec3d1fcf"},{"language":"bash","sha256":"e9eafa6cb5574851987667f4ee0d1781cea2f57469e54c37a30a3383f4e448fe"},{"language":"bash","sha256":"35a793404fa956161b0b4e3cce142ce461f0c57e7656f95514b0ed08a206ca5f"},{"language":"bash","sha256":"cb1e3ec90fcaccb23c25d7a9d90e1d2d6d9b43281de8a02ecd8260fb2f9c5cd2"},{"language":"bash","sha256":"4405d425ca58b8c360a8b70e6df4a98ebe3b16e92e7a1b2869bf79c6aa03f2e9"},{"language":"bash","sha256":"1e52162a78703cf932cc90152a3562b422ea72d6531cdf982cdfd18cc2ccc2df"},{"language":"text","sha256":"f99b50e96e63feab6bd163634d8a1f67d944c9825bc7ef7339a002f99ad6ea7c"}],"groups":[]}}};
 </script>
 <script src="../code-tabs.js?v=20261026-startup-v1"></script>
 <script src="../copy-code.js?v=20261025-r-first-v1"></script>

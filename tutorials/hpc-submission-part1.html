@@ -349,29 +349,29 @@ prepend_path("LD_LIBRARY_PATH", "/path/to/myprogram/lib")
 <pre><code class="language-bash">module load myprogram/1.0
 </code></pre>
 <h2 id="optional-conda">Optional advanced topic: Conda on a cluster</h2>
-<h3>Installing Conda</h3>
-<p>Before installing software on a shared cluster, check whether the site permits user-managed Conda installations, where they may be stored, and whether downloads from external sites are allowed. Prefer the site's documented module or environment setup when provided. If local policy permits a personal installation, download the Miniconda installer and choose an approved location with sufficient space.</p>
-<pre><code class="language-bash">wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
-bash Miniconda3-latest-Linux-x86_64.sh
+<h3>Installing Miniforge (Conda-forge default)</h3>
+<p>Before installing software on a shared cluster, check whether the site permits user-managed Conda or Micromamba installations, where environment thousands-of-files trees should live (often project storage rather than small <code>$HOME</code> inode quotas), and whether outbound downloads are allowed. Prefer the cluster's documented module when provided. When installing your own manager, use <strong>Miniforge</strong> (or Micromamba, as taught in the dedicated package-management lesson) rather than Anaconda/Miniconda so <code>conda-forge</code> is configured by default without implicit <code>defaults</code> channel licensing or solver conflicts:</p>
+<pre><code class="language-bash">curl -fsSLO https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-x86_64.sh
+bash Miniforge3-Linux-x86_64.sh
 </code></pre>
-<p>Follow the prompts during installation. When asked about initializing Conda, you can choose <code>no</code> if you prefer to activate it manually.</p>
+<p>Follow the prompts and choose an approved prefix directory. On shared clusters, decline automatic shell initialization in <code>~/.bashrc</code> (choose <code>no</code>) so login shells stay clean and batch scripts activate environments explicitly.</p>
 <h3>Using Conda Environments</h3>
-<p>After installation, you can create and manage Conda environments. This allows you to isolate different projects and their dependencies.</p>
-<p><strong>Create an environment:</strong></p>
-<pre><code class="language-bash">conda create --name omics-r r-base
+<p>Create isolated per-project environments with explicit <code>conda-forge</code> and <code>bioconda</code> channel priority rather than installing tools into <code>base</code>.</p>
+<p><strong>Create an environment with explicit channels:</strong></p>
+<pre><code class="language-bash">conda create --name omics-r --override-channels -c conda-forge -c bioconda r-base r-ggplot2
 </code></pre>
 <p><strong>Activate an environment:</strong></p>
 <pre><code class="language-bash">conda activate omics-r
 </code></pre>
-<p><strong>Install packages:</strong></p>
-<pre><code class="language-bash">conda install r-ggplot2
+<p><strong>Add a package from the same channel hierarchy:</strong></p>
+<pre><code class="language-bash">conda install --override-channels -c conda-forge -c bioconda bioconductor-deseq2
 </code></pre>
 <p><strong>Deactivate an environment:</strong></p>
 <pre><code class="language-bash">conda deactivate
 </code></pre>
 <p>The primary analysis example uses R. Python-based command-line tools can still require a Python runtime inside their own environment; that does not make Python a prerequisite for the R analysis. Inspect the solve plan before installing and record the actual package versions.</p>
 <h3>Conda in Submission Scripts</h3>
-<p>This example assumes Bash and a Conda installation at the placeholder path. Replace it with your actual installation and environment name. Some clusters provide Conda through a module or document another activation method; follow that site's instructions. Activation in a non-interactive batch shell must initialize the shell function before calling <code>conda activate</code>.</p>
+<p>This example assumes Bash and a Miniforge/Conda installation at the placeholder path. Replace it with your actual installation prefix and environment name. Activation in a non-interactive batch shell must source <code>conda.sh</code> (or evaluate the Micromamba shell hook) before calling <code>conda activate</code>.</p>
 <pre><code class="language-bash">#!/bin/bash
 #SBATCH --job-name conda_job
 #SBATCH --ntasks 1
@@ -380,11 +380,8 @@ bash Miniconda3-latest-Linux-x86_64.sh
 #SBATCH --partition ibrain
 #SBATCH --output %x-%j.out
 
-# Load Conda if not in PATH
-# module load conda
-
-# Activate your Conda environment
-source /path/to/your/miniconda3/etc/profile.d/conda.sh
+# Load site Conda module if applicable, or source conda.sh from your Miniforge prefix
+source /path/to/your/miniforge3/etc/profile.d/conda.sh
 conda activate omics-r
 
 # Run your reviewed R analysis script; this file is a placeholder, not supplied here.
@@ -454,10 +451,13 @@ conda deactivate
 <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
 <h4 class="font-bold text-gray-800 mb-2" id="submit-job">2. Practical Execution</h4>
 <p class="text-gray-600 text-sm">Save the smoke-test script above as <code>smoke-test.sbatch</code> in a suitable working directory. Replace the placeholder partition before submitting. This command captures the actual numeric ID; <code>--parsable</code> can include an optional cluster suffix, which the parameter expansion removes:</p>
-<pre><code class="language-bash">SUBMISSION=$(sbatch --parsable smoke-test.sbatch) || exit 1
-JOB_ID=${SUBMISSION%%;*}
-printf 'Submitted job ID: %s\n' "$JOB_ID"
-squeue -j "$JOB_ID"
+<pre><code class="language-bash">if SUBMISSION=$(sbatch --parsable smoke-test.sbatch); then
+  JOB_ID=${SUBMISSION%%;*}
+  printf 'Submitted job ID: %s\n' "$JOB_ID"
+  squeue -j "$JOB_ID"
+else
+  echo "sbatch submission failed; inspect the partition and account error above." &gt;&amp;2
+fi
 </code></pre>
 <h5 id="job-state">Check the final state and log</h5>
 <p class="text-gray-600 text-sm">A returned ID means submission was accepted, not that the job has started or finished. Use <code>squeue</code> while it is pending or running. Once it leaves the queue, inspect the accounting record (it can take time to appear) and the job log:</p>
@@ -609,7 +609,7 @@ cat "hpc-smoke-${JOB_ID}.out"
 </script>
 <script src="../assets/vendor/prism/prism-1.29.0.js"></script>
 <script id="tutorial-code-data">
-window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"hpc-submission-part1":{"blocks":[{"language":"bash","sha256":"0cbef55a4e021ecf986ab9a059032e8ebaec3c2a65d72b82a7a1dbb99cd2319e"},{"language":"bash","sha256":"a8076d3d28d21e02012b20eaf7dbf75409a6277134439025f282e368e3305abf"},{"language":"bash","sha256":"27e9e09f02c96a529d846e682179b633d2e8a100874de1cd5a0155589928cbc7"},{"language":"bash","sha256":"62e2c42ece647a4533d734f3a2e37932547c3b53ebca05108707f9270ecf6957"},{"language":"bash","sha256":"b11b2d5ef4433dfe3a5c8f454a4cd4dba18b3e73fcb34d11fa833292966f71e2"},{"language":"bash","sha256":"33d5ad9aa278fd2c1f24653e2b1959a59e864b44c49a8b6576ad391568dd9fc5"},{"language":"bash","sha256":"61fed1bb86651d54a3ad2d8b15faa615fe2847196769ebe937da8ce4f61ffb1a"},{"language":"bash","sha256":"0e1f611a63077fb55d2541a88b2bfd43c29f60b15d79d874fc2ba90ddd16efef"},{"language":"bash","sha256":"2032f1cdbe7a230ac2dc18fe05d0cd96d3898fc357b9da44c118ca0652c8054b"},{"language":"bash","sha256":"f8c6712bbc4138fe26f45f2dddd40b61c6f5489c639a1f0bf4cd2e6f81c5a7d3"},{"language":"lua","sha256":"4fc539f63ec85ff5835db3799d8920cdcea97ff0d661d60832b7ce169b784f76"},{"language":"bash","sha256":"03de8c5b2b85f1120e9892b9f4291122a2222b673b2f4e16430dad35a76231e0"},{"language":"bash","sha256":"def49194df13794458f70f01fa0b9dd3e8b8dd8caf2108ae56aab6ae3648876b"},{"language":"bash","sha256":"b75ef72d5a81efc31c5816f8bbbc2a1713306d0c64de5744c11bd9effd7665ba"},{"language":"bash","sha256":"28243580898e8605713c4a15a2eb084e914a9b1fbaaf72860af49461a732726b"},{"language":"bash","sha256":"104d395fcd061a8bb4b68c575b156efdc8ead210a1b18f2e1f437e0310db2da5"},{"language":"bash","sha256":"45bb4ccfd5e33e54af0a102acf422e4d26dc9c69437f26721f16f219ec77c6de"},{"language":"bash","sha256":"4195c79d6d22755ee90c05d5a3f1f56c9a7871dda5a5a51d595c978411b90e4a"},{"language":"bash","sha256":"b5a11f546e70468e0412971a514d9d7e35a691b859046179c94264fa1bef688b"},{"language":"bash","sha256":"f870dac97ab25456c916d7a69d9c021a09caed3a11f6c923dbaca7cda637eaf1"},{"language":"bash","sha256":"7e694f328d698996072396a87c6ae8662ccc182b57cc33779221a37b37ed811d"},{"language":"bash","sha256":"341ecf59478ca646bb7a86b67e9a6ebe7be19317b580d124b6d3e04999c321b7"},{"language":"bash","sha256":"315197df03727c2330b6ce33579c0ee569f3bcb7c52827727e5b492781fc8872"},{"language":"bash","sha256":"cba8736da769fdeebfb7cdebe72d9166b694f3163032f6288fd775105f4d7bb4"},{"language":"bash","sha256":"60f8deccd24c9bcaf011554461a05e1f7475296cd51686e8ff99909c6bb74df5"},{"language":"bash","sha256":"6a36448a668868088e416af0df31e65d3b5cda056038abfbf24ef70a6134cf97"},{"language":"bash","sha256":"236234a9251db529c3b1e63e70024fa5c151be43148a3203dd93099066817f44"},{"language":"bash","sha256":"9a4e5852ac4f87988cd38ab2784f2766968f1051566e3e146ece255d5f7a8229"}],"groups":[]}}};
+window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"hpc-submission-part1":{"blocks":[{"language":"bash","sha256":"0cbef55a4e021ecf986ab9a059032e8ebaec3c2a65d72b82a7a1dbb99cd2319e"},{"language":"bash","sha256":"a8076d3d28d21e02012b20eaf7dbf75409a6277134439025f282e368e3305abf"},{"language":"bash","sha256":"27e9e09f02c96a529d846e682179b633d2e8a100874de1cd5a0155589928cbc7"},{"language":"bash","sha256":"62e2c42ece647a4533d734f3a2e37932547c3b53ebca05108707f9270ecf6957"},{"language":"bash","sha256":"b11b2d5ef4433dfe3a5c8f454a4cd4dba18b3e73fcb34d11fa833292966f71e2"},{"language":"bash","sha256":"33d5ad9aa278fd2c1f24653e2b1959a59e864b44c49a8b6576ad391568dd9fc5"},{"language":"bash","sha256":"61fed1bb86651d54a3ad2d8b15faa615fe2847196769ebe937da8ce4f61ffb1a"},{"language":"bash","sha256":"0e1f611a63077fb55d2541a88b2bfd43c29f60b15d79d874fc2ba90ddd16efef"},{"language":"bash","sha256":"2032f1cdbe7a230ac2dc18fe05d0cd96d3898fc357b9da44c118ca0652c8054b"},{"language":"bash","sha256":"f8c6712bbc4138fe26f45f2dddd40b61c6f5489c639a1f0bf4cd2e6f81c5a7d3"},{"language":"lua","sha256":"4fc539f63ec85ff5835db3799d8920cdcea97ff0d661d60832b7ce169b784f76"},{"language":"bash","sha256":"03de8c5b2b85f1120e9892b9f4291122a2222b673b2f4e16430dad35a76231e0"},{"language":"bash","sha256":"177eac120068dc3645f54c32947b3710bb10609dc0e3d795e940bd6887a3ab11"},{"language":"bash","sha256":"8a3fa98d79dd639c3cdab5d86ab54c70397fc457ee79d0021af931514c2a7a69"},{"language":"bash","sha256":"28243580898e8605713c4a15a2eb084e914a9b1fbaaf72860af49461a732726b"},{"language":"bash","sha256":"afde6ad39f18891bf9ae8c29cb4e401833c8d01396e27050b742c7dfeb4f6755"},{"language":"bash","sha256":"45bb4ccfd5e33e54af0a102acf422e4d26dc9c69437f26721f16f219ec77c6de"},{"language":"bash","sha256":"4708184603d10f04b43bdf833eb55dce7080905087f32b79e80e44c2ed063ff8"},{"language":"bash","sha256":"b5a11f546e70468e0412971a514d9d7e35a691b859046179c94264fa1bef688b"},{"language":"bash","sha256":"f870dac97ab25456c916d7a69d9c021a09caed3a11f6c923dbaca7cda637eaf1"},{"language":"bash","sha256":"7e694f328d698996072396a87c6ae8662ccc182b57cc33779221a37b37ed811d"},{"language":"bash","sha256":"341ecf59478ca646bb7a86b67e9a6ebe7be19317b580d124b6d3e04999c321b7"},{"language":"bash","sha256":"315197df03727c2330b6ce33579c0ee569f3bcb7c52827727e5b492781fc8872"},{"language":"bash","sha256":"cba8736da769fdeebfb7cdebe72d9166b694f3163032f6288fd775105f4d7bb4"},{"language":"bash","sha256":"60f8deccd24c9bcaf011554461a05e1f7475296cd51686e8ff99909c6bb74df5"},{"language":"bash","sha256":"6a36448a668868088e416af0df31e65d3b5cda056038abfbf24ef70a6134cf97"},{"language":"bash","sha256":"5bb203580a30f89bf0d30c956170c803b6fd4f26d68210d7f3195f4a79ea0b1d"},{"language":"bash","sha256":"9a4e5852ac4f87988cd38ab2784f2766968f1051566e3e146ece255d5f7a8229"}],"groups":[]}}};
 </script>
 <script src="../code-tabs.js?v=20261026-startup-v1"></script>
 <script src="../copy-code.js?v=20261025-r-first-v1"></script>

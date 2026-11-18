@@ -24,25 +24,33 @@ class KrakenSyntheticHierarchyTests(unittest.TestCase):
             if "Examplegenus" in block
         )
         rows = [line.split(maxsplit=5) for line in report.splitlines() if line.strip()]
+        self.assertEqual(rows[0][3:], ["U", "0", "unclassified"])
+        unclassified = rows[0]
         root = next(row for row in rows if row[5] == "root")
         genus = next(row for row in rows if row[5] == "Examplegenus")
         children = [row for row in rows if row[5] in {"Example species", "Another species"}]
+        unclassified_clade = int(unclassified[1])
         root_clade = int(root[1])
+        total_fragments = unclassified_clade + root_clade
         genus_clade = int(genus[1])
         genus_direct = int(genus[2])
         child_clades = sum(int(row[1]) for row in children)
 
-        self.assertEqual(root_clade, 1000)
+        self.assertEqual(unclassified_clade, 100)
+        self.assertEqual(root_clade, 900)
+        self.assertEqual(total_fragments, 1000)
         self.assertEqual(genus_direct, 20)
         self.assertEqual(child_clades, 600)
         self.assertEqual(genus_clade, genus_direct + child_clades)
-        self.assertEqual(float(genus[0]), round(100 * genus_clade / root_clade, 2))
+        self.assertEqual(float(genus[0]), round(100 * genus_clade / total_fragments, 2))
 
     def test_bracken_practice_calculations_remain_explicit(self):
         text = page_text("tutorials/metagenomics-kraken2-bracken.html")
-        self.assertIn("80 + 20 = 100 estimated reads, fraction 0.100", text)
-        self.assertIn("50 + 10 = 60 estimated reads, fraction 0.060", text)
-        self.assertIn("The unclassified fraction is 10%", text)
+        self.assertIn("250 + 8 = 258 estimated reads", text)
+        self.assertIn("258 / 900 = 0.287", text)
+        self.assertIn("350 + 12 = 362 estimated reads", text)
+        self.assertIn("362 / 900 = 0.402", text)
+        self.assertIn("10.00% of total reads", text)
 
 
 class GitHubCollaborationExampleTests(unittest.TestCase):

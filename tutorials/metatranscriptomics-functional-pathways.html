@@ -196,16 +196,20 @@ function toggleMobileMenu() {
 <p>HUMAnN's join utility selects files by a filename substring. Use a suffix common to all samples, not one sample's full filename, or the command may join only one table. From the project directory:</p>
 <pre><code>humann_join_tables \
   --input humann_out \
+  --search-subdirectories \
   --file_name _pathabundance.tsv \
   --output merged_pathabundance.tsv
 
 humann_join_tables \
   --input humann_out \
+  --search-subdirectories \
   --file_name _pathcoverage.tsv \
   --output merged_pathcoverage.tsv
 </code></pre>
-<p>The input directory is searched for matching HUMAnN tables; the output is a multi-sample table with features and sample columns. Review the joined header and confirm every intended sample appears once. For gene families, use the corresponding <code>_genefamilies.tsv</code> suffix. Do not include a previous merged output in the input directory if its filename also matches the selected substring.</p>
-<div class="lesson-checkpoint"><p><strong>Checkpoint:</strong> If only one sample appears, inspect the input directory and the <code>--file_name</code> substring. If the join reports no files, check the table suffix, directory, and whether HUMAnN completed successfully.</p></div>
+<p>Because each sample run wrote its outputs into a per-sample subdirectory (such as <code>humann_out/sampleA/</code>), <code>--search-subdirectories</code> is required; without it, <code>humann_join_tables</code> scans only the top level of <code>humann_out/</code> and finds zero tables. Review the joined header and confirm every intended sample appears once. For gene families, use the corresponding <code>_genefamilies.tsv</code> suffix. Do not write merged outputs inside <code>humann_out/</code> where a later join would re-ingest them.</p>
+<div class="lesson-checkpoint"><p><strong>Checkpoint:</strong> If only one sample appears, inspect the input directory and the <code>--file_name</code> substring. If the join reports zero tables, confirm <code>--search-subdirectories</code> was passed and check that per-sample HUMAnN runs finished cleanly.</p></div>
+<h2>Account for DNA copy number in metatranscriptomics</h2>
+<p>Unlike single-organism bulk RNA-seq, a community transcript change between samples can reflect either altered per-cell transcription or a shift in taxon abundance (gene copy number). Whenever paired shotgun metagenomic (DNA) sequencing is available for the same samples, pass the DNA-derived MetaPhlAn taxonomic profile to HUMAnN via <code>--taxonomic-profile</code> and normalize RNA functional profiles against paired DNA gene/pathway abundance (for example, RNA/DNA ratios or DNA-covariate models such as MTXmodel; Zhang et al., 2021, <em>Bioinformatics</em>). Without paired DNA data, state explicitly that observed differences combine organismal abundance and transcriptional regulation.</p>
 <h2>Normalize for descriptive plots</h2>
 <p>HUMAnN reports gene-family and pathway abundance in RPK units. CPM in HUMAnN means copies per million, a total-sum-scaled abundance, not raw sequencing counts per million. Convert the joined pathway table when CPM is useful for visualization:</p>
 <pre><code>humann_renorm_table \
@@ -374,7 +378,7 @@ humann_join_tables \
 </script>
 <script src="../assets/vendor/prism/prism-1.29.0.js"></script>
 <script id="tutorial-code-data">
-window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"metatranscriptomics-functional-pathways":{"blocks":[{"language":"bash","sha256":"b7e15e694078c30625b999ef305322bbd4ce0eb6071f011ba2651942caac3f97"},{"language":"bash","sha256":"99aec9138a94cd50cbd983dc217a5a8ea43465c5ed117be7d162e24ae9a297dc"},{"language":"bash","sha256":"0c98baff435cd15ef23e8b5adb635ba508df7d29d316d387d23e5cb79b2b669c"},{"language":"bash","sha256":"f17bf92a51af5fd634f2d645e82eb853267eac9494736036db2d980e8241a5f6"}],"groups":[]}}};
+window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"metatranscriptomics-functional-pathways":{"blocks":[{"language":"bash","sha256":"b7e15e694078c30625b999ef305322bbd4ce0eb6071f011ba2651942caac3f97"},{"language":"bash","sha256":"23801bdbb55b45be0673abe4254af920d8ddd1d18c01c49407b3d21669715431"},{"language":"bash","sha256":"0c98baff435cd15ef23e8b5adb635ba508df7d29d316d387d23e5cb79b2b669c"},{"language":"bash","sha256":"f17bf92a51af5fd634f2d645e82eb853267eac9494736036db2d980e8241a5f6"}],"groups":[]}}};
 </script>
 <script src="../code-tabs.js?v=20261026-startup-v1"></script>
 <script src="../copy-code.js?v=20261025-r-first-v1"></script>

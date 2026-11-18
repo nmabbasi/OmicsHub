@@ -211,13 +211,13 @@ function toggleMobileMenu() {
 </ul>
 <h2>Practice with a synthetic report</h2>
 <p>These invented values support arithmetic practice only; they are not biological observations. Each row gives clade percentage, clade fragments, direct fragments, rank, taxid, and name.</p>
-<pre><code class="language-text">100.00  1000  0  R  1  root
-10.00   100  0  -  0  unclassified
-90.00   900  0  D  2  Bacteria
-62.00   620  20  G  123  Examplegenus
-25.00   250  80  S  456  Example species
-35.00   350  50  S  789  Another species</code></pre>
-<p>The synthetic <em>Examplegenus</em> row now reconciles: 20 directly assigned fragments + 250 + 350 child-clade fragments = 620 genus clade fragments, or 62.00% of the 1,000-fragment root total. For the synthetic <em>Example species</em> row (taxid <code>456</code>), Kraken reports 250 clade fragments, including 80 direct fragments. A hypothetical matching Bracken entry reports 80 Kraken-assigned reads plus 20 added by re-estimation: 80 + 20 = 100 estimated reads, fraction 0.100. This 100 is a model-based species-rank estimate, not the Kraken clade count or 100 newly observed species-specific reads; the added 20 are model-redistributed. For <em>Another species</em>, 50 + 10 = 60 estimated reads, fraction 0.060. The unclassified fraction is 10%. Database representation or extraction/library bias can affect interpretation. The simplified root total is not an expected result from a real sample.</p>
+<pre><code class="language-text"> 10.00   100  100  U  0  unclassified
+ 90.00   900    0  R  1  root
+ 90.00   900    0  D  2  Bacteria
+ 62.00   620   20  G  123  Examplegenus
+ 25.00   250   80  S  456  Example species
+ 35.00   350   50  S  789  Another species</code></pre>
+<p>In a standard Kraken2 report (6-column format across 1,000 total sequenced fragments), <code>unclassified</code> appears first with rank code <code>U</code> (100 fragments, 10.00% of total reads), while <code>root</code> counts only the 900 classified fragments (90.00% of total reads). Within <em>Examplegenus</em>, 20 fragments assigned directly at genus rank plus 250 + 350 child species clade fragments equal 620 genus clade fragments (62.00% of the 1,000 total fragments). Note that the 250 clade fragments for <em>Example species</em> (taxid <code>456</code>) comprise 80 reads assigned directly at species rank plus 170 assigned to child strain taxa below it. When Bracken re-estimates species abundance, its <code>kraken_assigned_reads</code> column starts from the full species clade count (250, not the 80 direct reads) and only adds reads redistributed from higher taxonomic ranks: for example, if 8 of the 20 genus-level reads are reassigned to <em>Example species</em> and 12 to <em>Another species</em> (assuming the remaining 280 bacterial reads also resolve to species), Bracken reports 250 + 8 = 258 estimated reads for <em>Example species</em> (fraction 258 / 900 = 0.287 of classified species-estimated reads) and 350 + 12 = 362 estimated reads for <em>Another species</em> (fraction 362 / 900 = 0.402). A Bracken species estimate is therefore always greater than or equal to Kraken2's species clade count, and its <code>fraction_total_reads</code> is normalized over total species-estimated reads rather than including unclassified reads. Database representation and extraction bias still govern biological interpretation.</p>
 <p class="lesson-exercise"><strong>Practice:</strong> For a real report from your own prepared run, record unclassified percentage, one taxon's direct Kraken count, and its Bracken estimate if present. Explain why that estimate is model-based and name one database or laboratory factor that could affect interpretation. Without real inputs, use the synthetic exercise above; do not infer a biological finding from synthetic values.</p>
 <section aria-label="References and further reading"><h2>Official documentation</h2><ul>
 <li><a href="https://github.com/DerrickWood/kraken2/wiki/Manual" rel="noopener" target="_blank">Kraken2 manual: options and report formats</a></li>
@@ -363,7 +363,7 @@ function toggleMobileMenu() {
 </script>
 <script src="../assets/vendor/prism/prism-1.29.0.js"></script>
 <script id="tutorial-code-data">
-window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"metagenomics-kraken2-bracken":{"blocks":[{"language":"bash","sha256":"40f6b3dfcbe70eda6318bd912f54c257c1a3ade21818bdb0489518424a84e32c"},{"language":"bash","sha256":"0158e93e68d07f1bec36cbbff283a428b5d685abd6a195778ee8e1e811704be7"},{"language":"text","sha256":"e19e00357035a3b1e43123635e30656a5cdc3e76bec9561ba2bcf6747a64722a"}],"groups":[]}}};
+window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"metagenomics-kraken2-bracken":{"blocks":[{"language":"bash","sha256":"40f6b3dfcbe70eda6318bd912f54c257c1a3ade21818bdb0489518424a84e32c"},{"language":"bash","sha256":"0158e93e68d07f1bec36cbbff283a428b5d685abd6a195778ee8e1e811704be7"},{"language":"text","sha256":"2b556dcf4947961e1d3dd9eee5bea90e49764f9d607e25fff96caa1df806660b"}],"groups":[]}}};
 </script>
 <script src="../code-tabs.js?v=20261026-startup-v1"></script>
 <script src="../copy-code.js?v=20261025-r-first-v1"></script>
