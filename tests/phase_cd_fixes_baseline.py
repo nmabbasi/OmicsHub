@@ -133,9 +133,12 @@ def _fixture():
         if original is None or _sha(original) != entry["base_sha256"]:
             raise AssertionError(f"phase-cd base page unavailable or changed: {path}")
         current_path = ROOT / path
-        if not current_path.is_file() or _sha(current_path.read_bytes()) != entry["current_sha256"]:
+        if not current_path.is_file():
             raise AssertionError(f"phase-cd current page fingerprint mismatch: {path}")
-        text = current_path.read_text(encoding="utf-8")
+        from final_polish_baseline import normalize_final_polish
+        text = normalize_final_polish(path, current_path.read_text(encoding="utf-8"))
+        if _sha(text.encode("utf-8")) != entry["current_sha256"]:
+            raise AssertionError(f"phase-cd current page fingerprint mismatch: {path}")
         full_current = text
         for index, patch in enumerate(entry["patches"]):
             pos = full_current.find(patch["before"])
@@ -177,6 +180,8 @@ def normalize_phase_cd_fix(relative_path, text):
     """Reverse one exact Phase C/D page revision; preserve unknown mutations."""
     if not isinstance(text, str):
         raise TypeError("phase-cd normalization requires decoded text")
+    from final_polish_baseline import normalize_final_polish
+    text = normalize_final_polish(relative_path, text)
     entry = _fixture()["page_map"].get(relative_path)
     if entry is None:
         return text

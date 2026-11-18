@@ -56,12 +56,13 @@ gtag('consent', 'default', {
   "image": "https://theomicshub.com/images/python-bioinformatics-workstation.webp",
   "author": {
     "@type": "Person",
-    "name": "Dr. Nasir Mahmood Abbasi, PhD",
+    "name": "Nasir Mahmood Abbasi, PhD",
     "jobTitle": "Computational Biologist & Bioinformatics Researcher",
     "url": "https://theomicshub.com/about.html",
     "sameAs": [
       "https://github.com/nmabbasi",
-      "https://orcid.org/0009-0005-0083-1984"
+      "https://orcid.org/0009-0005-0083-1984",
+      "https://www.linkedin.com/in/nmabbasi"
     ]
   },
   "publisher": {
@@ -74,7 +75,7 @@ gtag('consent', 'default', {
     }
   },
   "datePublished": "2026-09-22",
-  "dateModified": "2026-10-25",
+  "dateModified": "2026-11-18",
   "url": "https://theomicshub.com/tutorials/python-fundamentals-bioinformatics.html",
   "name": "Python Fundamentals for Bioinformatics",
   "isPartOf": {
@@ -192,7 +193,7 @@ print(f"Reverse complement: {rev_comp}")</code></pre>
 Reverse complement: ACGTNNACGTACGT</code></pre>
 <p><strong>Mini-exercise:</strong> Why use <code>"".join(raw_seq.split())</code> instead of <code>raw_seq.strip()</code>? Because multi-line FASTA sequences or GenBank pastes can contain internal spaces or newlines; <code>.split()</code> removes all whitespace characters anywhere in the string, whereas <code>.strip()</code> trims only the ends.</p>
 <h2>Step 2: Functions, sets, and the GC denominator trap</h2>
-<p>Membership checks against a <code>set</code> (<code>ch in VALID_BASES</code>) run in $O(1)$ average time. When writing a GC-content function, decide explicitly whether ambiguous <code>N</code> bases belong in the denominator: dividing <code>G + C</code> by full sequence length (<code>6 / 14 = 0.42857</code>) differs from Biopython's <code>Bio.SeqUtils.gc_fraction(seq, ambiguous="remove")</code> default, which drops <code>N</code> from the denominator (<code>6 / 12 = 0.50000</code>):</p>
+<p>Membership checks against a <code>set</code> (<code>ch in VALID_BASES</code>) run in <i>O</i>(1) average time. When writing a GC-content function, decide explicitly whether ambiguous <code>N</code> bases belong in the denominator: dividing <code>G + C</code> by full sequence length (<code>6 / 14 = 0.42857</code>) differs from Biopython's <code>Bio.SeqUtils.gc_fraction(seq, ambiguous="remove")</code> default, which drops <code>N</code> from the denominator (<code>6 / 12 = 0.50000</code>):</p>
 <pre><code class="language-python">VALID_BASES = set("ACGTN")
 
 def is_valid_dna(seq: str) -&gt; bool:
@@ -209,7 +210,7 @@ print(f"Valid: {is_valid_dna(seq)} | GC (with N): {gc_fraction(seq, True):.5f} |
 <p>Observed output:</p>
 <pre><code class="language-text">Valid: True | GC (with N): 0.42857 | GC (A/C/G/T only): 0.50000</code></pre>
 <h2>Step 3: Lists, loops, and dictionaries for k-mer counting</h2>
-<p>Dictionaries (<code>dict</code>) map unique keys (such as record IDs or short oligonucleotide $k$-mers) to values in constant average lookup time. Sliding a window of length $k = 4$ across <code>seq</code> while skipping windows containing <code>N</code> illustrates loops, conditionals, and <code>dict.get(key, 0)</code>:</p>
+<p>Dictionaries (<code>dict</code>) map unique keys (such as record IDs or short oligonucleotide <i>k</i>-mers) to values in constant average lookup time. Sliding a window of length <i>k</i> = 4 across <code>seq</code> while skipping windows containing <code>N</code> illustrates loops, conditionals, and <code>dict.get(key, 0)</code>:</p>
 <pre><code class="language-python">seq = "ACGTACGTNNACGT"
 kmers: dict[str, int] = {}
 for i in range(len(seq) - 4 + 1):
@@ -335,7 +336,7 @@ for rec in SeqIO.parse("data/raw/example.fasta", "fasta"):
 <ul>
 <li>All expected record IDs are present. Missing IDs may indicate a parsing error or that the input FASTA lines were malformed.</li>
 <li>Length values reflect the number of characters after normalization (spaces and tabs removed). Very short sequences (length 0–3) should be inspected manually because they may be fragments, adapter sequences, or corrupted lines.</li>
-<li>gc_fraction is the proportion of G or C bases (0.0–1.0). This script divides the count of G and C characters by the full normalized sequence length, including `N` in the denominator. Compare values only when the denominator rule and sequence scope match; GC content alone is not a quality verdict.</li>
+<li>gc_fraction is the proportion of G or C bases (0.0–1.0). This script divides the count of G and C characters by the full normalized sequence length, including <code>N</code> in the denominator. Compare values only when the denominator rule and sequence scope match; GC content alone is not a quality verdict.</li>
 <li>The valid column flags records where non-standard characters were found (for this lesson that means characters outside A,C,G,T,N). If valid is "no", the gc_fraction field is left blank and you should inspect the corresponding sequence in the FASTA file.</li>
 </ul>
 <p>What a plausible result means and what it does NOT prove:</p>
@@ -357,7 +358,7 @@ for rec in SeqIO.parse("data/raw/example.fasta", "fasta"):
 </ul>
 <p>Symptom: Output CSV is missing records or header only.</p>
 <ul>
-<li>Cause: The file may be empty, contain no header beginning with `&gt;`, or use malformed record structure. The parser now rejects sequence text before the first header, but an empty file still produces a header-only CSV.</li>
+<li>Cause: The file may be empty, contain no header beginning with <code>&gt;</code>, or use malformed record structure. The parser now rejects sequence text before the first header, but an empty file still produces a header-only CSV.</li>
 <li>Fix: Confirm the FASTA file contains at least one header line (beginning with '&gt;') and sequence lines. Use wc -l and grep '^&gt;' to count headers: grep -c '^&gt;' data/raw/example.fasta.</li>
 </ul>
 <p>Symptom: Incorrect GC values compared to external tools.</p>

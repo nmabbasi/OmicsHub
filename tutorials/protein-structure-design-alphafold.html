@@ -46,12 +46,13 @@ gtag('consent', 'default', {
   },
   "author": {
     "@type": "Person",
-    "name": "Dr. Nasir Mahmood Abbasi, PhD",
+    "name": "Nasir Mahmood Abbasi, PhD",
     "jobTitle": "Computational Biologist & Bioinformatics Researcher",
     "url": "https://theomicshub.com/about.html",
     "sameAs": [
       "https://github.com/nmabbasi",
-      "https://orcid.org/0009-0005-0083-1984"
+      "https://orcid.org/0009-0005-0083-1984",
+      "https://www.linkedin.com/in/nmabbasi"
     ]
   },
   "publisher": {
@@ -64,7 +65,7 @@ gtag('consent', 'default', {
     }
   },
   "datePublished": "2026-08-24",
-  "dateModified": "2026-10-25",
+  "dateModified": "2026-11-18",
   "url": "https://theomicshub.com/tutorials/protein-structure-design-alphafold.html",
   "name": "Retrieve an AlphaFold DB model and assess pLDDT",
   "isPartOf": {
@@ -163,7 +164,7 @@ function toggleMobileMenu() {
 <nav aria-label="On this page"><strong>On this page</strong><ul><li><a href="#objectives">Goal and prerequisites</a></li><li><a href="#concept">How PDB C&alpha; pLDDT parsing works</a></li><li><a href="#workflow">R and Python retrieval workflows</a></li><li><a href="#fixture">Offline software check and verified output</a></li><li><a href="#python-option">Optional Python route</a></li><li><a href="#interpret">Interpret pLDDT, PAE, and monomer limits (P69905)</a></li><li><a href="#limits">Visualizing in ChimeraX/PyMOL and sources</a></li></ul></nav>
 <h2 id="objectives">Goal and prerequisites</h2><p>Produce a residue-level CSV and a summary CSV for a local PDB, or retrieve an AlphaFold DB entry (for example UniProt <code>P69905</code>, human hemoglobin subunit alpha, 142 amino acids in initiator-methionine numbering) together with its API metadata and SHA-256 provenance. Offline analysis requires only R 4.0+ (base R); the network fetch requires <code>jsonlite</code> and internet access without any API key or GPU.</p>
 <h2 id="concept">How fixed-column PDB C&alpha; and pLDDT extraction works</h2>
-<p>Legacy PDB <code>ATOM</code> lines are fixed-width 80-column ASCII records rather than whitespace-delimited tables: atom name sits in columns 13 to 16 (<code>CA</code> for the alpha carbon), alternate-location indicator in column 17, chain ID in column 22, residue sequence number in columns 23 to 26, insertion code in column 27, and temperature factor (B-factor) in columns 61 to 66. In AlphaFold DB models, columns 61 to 66 store per-residue <strong>pLDDT</strong> on a 0 to 100 scale, whereas in X-ray crystallographic PDB entries the same columns store atomic displacement ($B = 8\pi^2 \langle u^2 \rangle$, where *lower* values indicate sharper atomic localization). Here is the core fixed-column reader inside <a download="" href="../files/tutorial-examples/protein-structure-review/inspect_alphafold.R"><code>inspect_alphafold.R</code></a>:</p>
+<p>Legacy PDB <code>ATOM</code> lines are fixed-width 80-column ASCII records rather than whitespace-delimited tables: atom name sits in columns 13 to 16 (<code>CA</code> for the alpha carbon), alternate-location indicator in column 17, chain ID in column 22, residue sequence number in columns 23 to 26, insertion code in column 27, and temperature factor (B-factor) in columns 61 to 66. In AlphaFold DB models, columns 61 to 66 store per-residue <strong>pLDDT</strong> on a 0 to 100 scale, whereas in X-ray crystallographic PDB entries the same columns store atomic displacement (<i>B</i> = 8&pi;<sup>2</sup>&lang;<i>u</i><sup>2</sup>&rang;, where <em>lower</em> values indicate sharper atomic localization). Here is the core fixed-column reader inside <a download="" href="../files/tutorial-examples/protein-structure-review/inspect_alphafold.R"><code>inspect_alphafold.R</code></a>:</p>
 <pre><code class="language-r"># Extract single-model C-alpha records and fixed-column B-factors (cols 61..66)
 extract_ca_bfactors &lt;- function(lines) {
   is_ca &lt;- grepl("^ATOM  ", lines) &amp; nchar(lines) &gt;= 66L &amp;
@@ -201,7 +202,7 @@ extract_ca_bfactors &lt;- function(lines) {
 <h2 id="interpret">Interpret pLDDT, PAE, and monomer limits on Hemoglobin Alpha (P69905)</h2>
 <ul>
 <li><strong>Local pLDDT bands versus global fold:</strong> AlphaFold DB defines four local confidence intervals on the lDDT-C&alpha; scale (Jumper et al., 2021; Varadi et al., 2024): <strong>&gt; 90</strong> (very high confidence, side-chain rotamers often informative), <strong>70 to 90</strong> (confident backbone fold), <strong>50 to 70</strong> (low confidence, inspect caution), and <strong>&lt; 50</strong> (very low confidence, typically unstructured N/C-termini or intrinsically disordered regions that appear as ribbon-like spaghetti and must not be interpreted as static loops).</li>
-<li><strong>Predicted Aligned Error (PAE) for relative domain orientation:</strong> high pLDDT inside two separate domains does <em>not</em> mean their relative 3D orientation is known. AlphaFold DB's API also advertises <code>paeDocUrl</code> (an $N \times N$ residue matrix in &Aring;ngstr&ouml;ms giving expected position error at residue $y$ when aligning on residue $x$). You can summarize intra-domain versus inter-domain PAE blocks in base R:</li>
+<li><strong>Predicted Aligned Error (PAE) for relative domain orientation:</strong> high pLDDT inside two separate domains does <em>not</em> mean their relative 3D orientation is known. AlphaFold DB's API also advertises <code>paeDocUrl</code> (an <i>N</i> &times; <i>N</i> residue matrix in &Aring;ngstr&ouml;ms giving expected position error at residue <i>y</i> when aligning on residue <i>x</i>). You can summarize intra-domain versus inter-domain PAE blocks in base R:</li>
 </ul>
 <pre><code class="language-r"># Toy 4-residue PAE matrix (2 residues in Domain 1, 2 in Domain 2; values in Angstroms)
 pae &lt;- matrix(c(1.2, 2.4, 23.5, 25.1,
@@ -214,7 +215,7 @@ cat(sprintf("Intra-domain 1: %.2f A | Intra-domain 2: %.2f A | Inter-domain: %.2
             mean(c(pae[dom1, dom2], pae[dom2, dom1]))))
 # Output: Intra-domain 1: 1.90 A | Intra-domain 2: 1.70 A | Inter-domain: 24.84 A</code></pre>
 <ul>
-<li><strong>What the P69905 monomer entry omits biologically:</strong> functional human adult hemoglobin is an $\alpha_2\beta_2$ heterotetramer (two <em>HBA1/HBA2</em> $\alpha$-globin chains paired with two <em>HBB</em> $\beta$-globin chains), and each globin pocket coordinates an iron-porphyrin <strong>heme b</strong> cofactor via the proximal histidine (His88 in 142-aa UniProt <code>P69905</code> numbering; His87 in mature cleaved numbering). AlphaFold DB's <code>AF-P69905-F1</code> entry folds the 7-helix globin core with high pLDDT because evolutionary couplings preserve the pocket geometry, yet the coordinate file contains <strong>zero heme atoms, zero $\text{O}_2$, and no $\alpha/\beta$ subunit interfaces</strong>. Likewise, in cancer structural genomics, AlphaFold backbone coordinates are insensitive to single destabilizing missense mutations ($\Delta\Delta G$; Pak et al., 2023): do not conclude a somatic missense variant is benign because a predicted monomer backbone still shows pLDDT &gt; 85.</li>
+<li><strong>What the P69905 monomer entry omits biologically:</strong> functional human adult hemoglobin is an &alpha;<sub>2</sub>&beta;<sub>2</sub> heterotetramer (two <em>HBA1/HBA2</em> &alpha;-globin chains paired with two <em>HBB</em> &beta;-globin chains), and each globin pocket coordinates an iron-porphyrin <strong>heme b</strong> cofactor via the proximal histidine (His88 in 142-aa UniProt <code>P69905</code> numbering; His87 in mature cleaved numbering). AlphaFold DB's <code>AF-P69905-F1</code> entry folds the 7-helix globin core with high pLDDT because evolutionary couplings preserve the pocket geometry, yet the coordinate file contains <strong>zero heme atoms, zero O<sub>2</sub>, and no &alpha;/&beta; subunit interfaces</strong>. Likewise, in cancer structural genomics, AlphaFold backbone coordinates are insensitive to single destabilizing missense mutations (&Delta;&Delta;<i>G</i>; Pak et al., 2023): do not conclude a somatic missense variant is benign because a predicted monomer backbone still shows pLDDT &gt; 85.</li>
 </ul>
 <h2 id="limits">Coloring by pLDDT in ChimeraX/PyMOL, limitations, and sources</h2>
 <p>To inspect confidence visually in desktop molecular viewers before running downstream pocket or variant checks:</p>

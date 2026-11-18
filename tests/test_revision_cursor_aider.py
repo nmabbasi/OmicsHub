@@ -56,7 +56,9 @@ class LessonContentTests(unittest.TestCase):
         self.assertTrue(INSPECT_COUNTS.is_file())
 
     def test_offline_and_provider_execution_boundaries_are_explicit(self):
-        for phrase in ("not installed or run", "No model request", "optional", "charges"):
+        # Nov 18, 2026 polish: the boundary is stated once, as a plain fact,
+        # instead of a defensive "not installed or run" disclaimer.
+        for phrase in ("never calls Cursor, Aider, or a hosted model", "costs nothing", "optional", "charges"):
             self.assertIn(phrase.lower(), self.html.lower())
 
 

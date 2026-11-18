@@ -56,12 +56,13 @@ gtag('consent', 'default', {
   "image": "https://theomicshub.com/images/shell-commands-part1-workstation.webp",
   "author": {
     "@type": "Person",
-    "name": "Dr. Nasir Mahmood Abbasi, PhD",
+    "name": "Nasir Mahmood Abbasi, PhD",
     "jobTitle": "Computational Biologist & Bioinformatics Researcher",
     "url": "https://theomicshub.com/about.html",
     "sameAs": [
       "https://github.com/nmabbasi",
-      "https://orcid.org/0009-0005-0083-1984"
+      "https://orcid.org/0009-0005-0083-1984",
+      "https://www.linkedin.com/in/nmabbasi"
     ]
   },
   "publisher": {
@@ -74,7 +75,7 @@ gtag('consent', 'default', {
     }
   },
   "datePublished": "2026-09-20",
-  "dateModified": "2026-10-25",
+  "dateModified": "2026-11-18",
   "url": "https://theomicshub.com/tutorials/command-line-part1.html",
   "name": "Command-Line Navigation for Bioinformatics Projects",
   "isPartOf": {
@@ -222,7 +223,7 @@ ls -la projects/basic-nav
 <ul>
 <li><code>pwd</code> prints a full path such as <code>/home/yourusername</code> or <code>/Users/yourname</code>.</li>
 <li><code>ls projects/basic-nav</code> shows the subdirectories created (<code>data</code>, <code>results</code>, <code>scripts</code>, <code>logs</code>).</li>
-<li><code>ls -l projects/basic-nav</code> lists the four subdirectories and their directory metadata; it does not show files nested inside them. To see the zero-byte placeholders and their sizes, run <code>ls -l projects/basic-nav/data projects/basic-nav/scripts</code>. Hidden entries (those starting with a dot) appear with <code>-a</code>.</li>
+<li><code>ls -l projects/basic-nav</code> lists the four subdirectories and their directory metadata; it does not show files nested inside them. To see the empty practice files and their sizes, run <code>ls -l projects/basic-nav/data projects/basic-nav/scripts</code>. Hidden entries (those starting with a dot) appear with <code>-a</code>.</li>
 </ul>
 <h3 class="lesson-step">3. Change directory into the project and use relative navigation</h3>
 <pre><code># Change into the project directory using a relative path
@@ -264,7 +265,7 @@ less projects/basic-nav/scripts/README.md
 <li><code>less</code> is a pager that lets you view large files page by page.</li>
 </ul>
 <h3 class="lesson-step">5. Copy, move, and rename files with examples</h3>
-<p>Check the source and destination before changing files. The <code>-i</code> option asks before replacing an existing destination. These examples copy and move only the practice placeholders; they are not a backup strategy for irreplaceable data.</p>
+<p>Check the source and destination before changing files. The <code>-i</code> option asks before replacing an existing destination. These examples copy and move only the practice files; they are not a backup strategy for irreplaceable data.</p>
 <pre><code># Copy only the R1 placeholder into results; the original remains in data
 cp -i projects/basic-nav/data/sample_R1.fastq.gz projects/basic-nav/results/
 
@@ -278,7 +279,7 @@ mv -i projects/basic-nav/data/sample_R2.fastq.gz projects/basic-nav/data/raw/
 </code></pre>
 <p>What to expect:</p>
 <ul>
-<li>The <code>cp</code> command duplicates only <code>sample_R1.fastq.gz</code> into <code>results/</code>; its original remains in <code>data/</code>. The later moves place both original mate placeholders in <code>data/raw/</code>, so <code>results/</code> contains only the copied R1 placeholder.</li>
+<li>The <code>cp</code> command duplicates only <code>sample_R1.fastq.gz</code> into <code>results/</code>; its original remains in <code>data/</code>. The later moves place both original mate files in <code>data/raw/</code>, so <code>results/</code> contains only the copied R1 file.</li>
 <li><code>mv</code> renames or relocates files; when used to rename it is generally fast because it alters metadata rather than copying contents (on the same filesystem).</li>
 <li>Without an interactive or no-clobber option, a command may replace an existing destination. Here <code>-i</code> prompts before replacement; read the prompt and answer carefully.</li>
 </ul>
@@ -296,7 +297,7 @@ echo projects/basic-nav/data/raw/sample_R?.fastq.gz</code></pre>
 <p>After each command, inspect the file system state. Here are concrete checks and how to interpret them safely.</p>
 <ul>
 <li>After creating directories with <code>mkdir -p</code>, run <code>ls -la projects/basic-nav</code>. You should see the subdirectories; if one is missing, check for typos in the path.</li>
-<li>Use <code>ls -lh</code> on files. These <code>touch</code>-created placeholders are 0 bytes and cannot serve as reads for downstream tools. File size alone cannot establish whether a nonempty FASTQ is valid.</li>
+<li>Use <code>ls -lh</code> on files. Files created with <code>touch</code> are 0 bytes and cannot serve as reads for downstream tools. File size alone cannot establish whether a nonempty FASTQ is valid.</li>
 <li>If <code>file</code> identifies gzip data, <code>zcat</code> or <code>gunzip -c</code> can write decompressed text to standard output. If the file is plain text, inspect it with text tools instead. Neither file type nor a short preview checks FASTQ record structure, sequence/quality lengths, read pairing, or biological suitability.</li>
 </ul>
 <p>What a plausible result means and what it does not prove:</p>
@@ -336,7 +337,7 @@ sha256sum -c sample_R1.sha256
 <p>Limitations:</p>
 <ul>
 <li><code>cd</code> and <code>pwd</code> are shell built-ins; <code>ls</code>, <code>cp</code>, <code>mv</code>, and other file commands have platform-specific variants. Bash brace expansion is not portable to every shell, and GNU-only options such as <code>--backup=numbered</code> may not exist on macOS or other systems. Check your shell and local manual pages before using options from a different platform.</li>
-<li>These examples create placeholder files with <code>touch</code>. Placeholder files are not representative of real biological data; downstream tools will fail or produce meaningless results if supplied with zero-byte files.</li>
+<li>The <code>touch</code> files in this lesson are empty stand-ins, not biological data; downstream tools will fail or produce meaningless results if given zero-byte files.</li>
 </ul>
 <p>Version and reference-data caveats:</p>
 <ul>
@@ -364,6 +365,17 @@ sha256sum -c sample_R1.sha256
 <li><a href="https://swcarpentry.github.io/shell-novice/">Software Carpentry: The Unix Shell lesson, with practical, beginner-friendly shell tutorials</a></li>
 </ul>
 <aside aria-labelledby="tutorial-feedback-title" class="lesson-feedback" id="tutorial-feedback"><h2 id="tutorial-feedback-title">Help improve this tutorial</h2><p>Found an error, a broken link, or a step that needs a clearer explanation? Please <a href="../contact.html">contact me</a>. Your feedback helps me keep this resource accurate and useful.</p></aside></article>
+<section class="mt-12 mb-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-100">
+<div class="flex items-start gap-4">
+<div class="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+<svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+</div>
+<div>
+<p class="text-sm text-gray-600 mb-2">Software and package behaviour can change. Please re-check commands against the official documentation. If a command does not work, you find an error, or the tutorial is no longer reproducible, please report it through the <a class="text-blue-600 hover:underline" href="../contact.html">Contact page</a>.</p>
+<p class="text-sm text-gray-500">Author: <a class="text-blue-600 hover:underline font-medium" href="../about.html">Nasir Mahmood Abbasi, PhD</a> - Category: Shell Command Basics</p>
+</div>
+</div>
+</section>
 <nav aria-label="Learning path continuation" class="reader-sequence" id="reader-course-navigation">
 <div class="reader-sequence-heading"><p class="reader-sequence-kicker">Continue learning</p><h2>Keep exploring</h2>
 <p class="reader-sequence-position"><span class="reader-sequence-route-label">Learning route</span><strong>Foundations · command line</strong></p></div>

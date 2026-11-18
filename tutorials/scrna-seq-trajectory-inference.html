@@ -56,12 +56,13 @@ gtag('consent', 'default', {
   "image": "https://theomicshub.com/images/trajectory-inference-workstation.webp",
   "author": {
     "@type": "Person",
-    "name": "Dr. Nasir Mahmood Abbasi, PhD",
+    "name": "Nasir Mahmood Abbasi, PhD",
     "jobTitle": "Computational Biologist & Bioinformatics Researcher",
     "url": "https://theomicshub.com/about.html",
     "sameAs": [
       "https://github.com/nmabbasi",
-      "https://orcid.org/0009-0005-0083-1984"
+      "https://orcid.org/0009-0005-0083-1984",
+      "https://www.linkedin.com/in/nmabbasi"
     ]
   },
   "publisher": {
@@ -74,7 +75,7 @@ gtag('consent', 'default', {
     }
   },
   "datePublished": "2026-09-17",
-  "dateModified": "2026-10-25",
+  "dateModified": "2026-11-18",
   "url": "https://theomicshub.com/tutorials/scrna-seq-trajectory-inference.html",
   "name": "Single-cell trajectory inference: PAGA, DPT, Slingshot and Monocle3",
   "isPartOf": {
@@ -238,7 +239,7 @@ text(median(xy[root_idx, 1]), median(xy[root_idx, 2]), labels=paste('start clust
 <p class="font-bold text-gray-900 mb-2">⚠️ Pitfalls to Avoid</p>
 <p>The explicitly selected start cluster sets orientation; it does not validate that a lineage exists. Replace the placeholder only after stating why that cluster is a plausible start, confirm it is present, and compare defensible alternatives. PCA distances and UMAP distances are not interchangeable, so inspect fitted curves in their fitted PCA representation if curve geometry is needed.</p>
 </div>
-<div class="mt-8 p-6 bg-purple-50 border-l-4 border-purple-500 rounded-r-xl shadow-sm mb-8"> <h4 class="text-lg font-bold text-purple-900 mb-2 flex items-center gap-2"> <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24"> <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path> <path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path> </svg> Exploring expression along inferred lineages </h4> <p class="text-purple-900 text-sm"> The <strong>tradeSeq</strong> package fits negative-binomial generalized additive models to count data using pseudotime and lineage weights. Its tests identify expression patterns associated with the fitted ordering; they do not establish causal driver genes. <br /><br /> The inputs must be aligned by cell: rows of the count matrix are genes and columns are cells; pseudotime and cell-weight matrices have cells by lineages. Select the knot count with the package guidance, inspect per-gene convergence, and account for multiple testing when interpreting results. `associationTest` tests association with pseudotime; `startVsEndTest` compares fitted expression at lineage endpoints. </p>
+<div class="mt-8 p-6 bg-purple-50 border-l-4 border-purple-500 rounded-r-xl shadow-sm mb-8"> <h4 class="text-lg font-bold text-purple-900 mb-2 flex items-center gap-2"> <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24"> <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path> <path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path> </svg> Exploring expression along inferred lineages </h4> <p class="text-purple-900 text-sm"> The <strong>tradeSeq</strong> package fits negative-binomial generalized additive models to count data using pseudotime and lineage weights. Its tests identify expression patterns associated with the fitted ordering; they do not establish causal driver genes. <br /><br /> The inputs must be aligned by cell: rows of the count matrix are genes and columns are cells; pseudotime and cell-weight matrices have cells by lineages. Select the knot count with the package guidance, inspect per-gene convergence, and account for multiple testing when interpreting results. <code>associationTest</code> tests association with pseudotime; <code>startVsEndTest</code> compares fitted expression at lineage endpoints. </p>
 </div>
 <h2>R (primary): Monocle3 principal graph and root</h2>
 <p>Monocle3 uses its own <code>cell_data_set</code> representation and learns a principal graph directly on the low-dimensional <code>UMAP</code> embedding by default (<code>learn_graph(cds)</code> uses <code>reduction_method = "UMAP"</code>; Cao et al., 2019). Because 2D UMAP layouts can compress or tear global manifold distances, inspect whether apparent branches or bridges persist across reasonable UMAP neighbor settings and independent PAGA/PCA checks before interpreting them biologically. Conversion from Seurat requires <code>SeuratWrappers::as.cell_data_set()</code> (installed from GitHub), and root selection must be supplied explicitly from known early-state cells. </p>
@@ -442,6 +443,17 @@ ax.set_title("DPT from named root | UMAP display only; grey = disconnected")
 <p>Found an error, a broken link, or a step that needs a clearer explanation? Please <a href="../contact.html">contact me</a>. Your feedback helps me keep this resource accurate and useful.</p>
 </aside>
 </article>
+<section class="mt-12 mb-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-100">
+<div class="flex items-start gap-4">
+<div class="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+<svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+</div>
+<div>
+<p class="text-sm text-gray-600 mb-2">Software and package behaviour can change. Please re-check commands against the official documentation. If a command does not work, you find an error, or the tutorial is no longer reproducible, please report it through the <a class="text-blue-600 hover:underline" href="../contact.html">Contact page</a>.</p>
+<p class="text-sm text-gray-500">Author: <a class="text-blue-600 hover:underline font-medium" href="../about.html">Nasir Mahmood Abbasi, PhD</a> - Category: Single-Cell RNA-seq</p>
+</div>
+</div>
+</section>
 <nav aria-label="Learning path continuation" class="reader-sequence" id="reader-course-navigation">
 <div class="reader-sequence-heading"><p class="reader-sequence-kicker">Continue learning</p><h2>Keep exploring</h2>
 <p class="reader-sequence-position"><span class="reader-sequence-route-label">Learning route</span><strong>Single-cell · optional trajectory methods</strong></p></div>
