@@ -103,9 +103,12 @@ def _fixture():
         if original is None or _sha(original) != entry["base_sha256"]:
             raise AssertionError(f"phase-a base page unavailable or changed: {path}")
         current_path = ROOT / path
-        if not current_path.is_file() or _sha(current_path.read_bytes()) != entry["current_sha256"]:
+        if not current_path.is_file():
             raise AssertionError(f"phase-a current page fingerprint mismatch: {path}")
-        text = current_path.read_text(encoding="utf-8")
+        from phase_b_fixes_baseline import normalize_phase_b_fix
+        text = normalize_phase_b_fix(path, current_path.read_text(encoding="utf-8"))
+        if _sha(text.encode("utf-8")) != entry["current_sha256"]:
+            raise AssertionError(f"phase-a current page fingerprint mismatch: {path}")
         full_current = text
         for index, patch in enumerate(entry["patches"]):
             pos = full_current.find(patch["before"])
@@ -134,7 +137,10 @@ def _fixture():
         if original is None or _sha(original) != entry["base_sha256"]:
             raise AssertionError(f"phase-a base asset unavailable or changed: {path}")
         current_path = ROOT / path
-        if not current_path.is_file() or _sha(current_path.read_bytes()) != entry["current_sha256"]:
+        if not current_path.is_file():
+            raise AssertionError(f"phase-a current asset fingerprint mismatch: {path}")
+        from phase_b_fixes_baseline import restore_phase_b_asset
+        if _sha(restore_phase_b_asset(path, current_path.read_bytes())) != entry["current_sha256"]:
             raise AssertionError(f"phase-a current asset fingerprint mismatch: {path}")
         asset_map[path] = entry
 
@@ -147,6 +153,8 @@ def normalize_phase_a_fix(relative_path, text):
     """Reverse one exact Phase A page revision; preserve unknown mutations."""
     if not isinstance(text, str):
         raise TypeError("phase-a normalization requires decoded text")
+    from phase_b_fixes_baseline import normalize_phase_b_fix
+    text = normalize_phase_b_fix(relative_path, text)
     entry = _fixture()["page_map"].get(relative_path)
     if entry is None:
         return text
@@ -167,6 +175,8 @@ def normalize_phase_a_fix(relative_path, text):
 
 def restore_phase_a_asset(relative_path, data):
     """Restore only an exact Phase A UI metadata asset to its a31314d0 bytes."""
+    from phase_b_fixes_baseline import restore_phase_b_asset
+    data = restore_phase_b_asset(relative_path, data)
     entry = _fixture()["asset_map"].get(relative_path)
     if entry is None:
         return data

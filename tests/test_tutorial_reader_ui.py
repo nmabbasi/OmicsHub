@@ -34,13 +34,13 @@ class TutorialReaderUITests(unittest.TestCase):
 
     def test_inventory_is_complete_and_every_code_hash_is_checked(self):
         self.assertEqual(len(self.metadata['tutorials']), 58)
-        self.assertEqual(sum(len(s['blocks']) for s in self.metadata['tutorials'].values()), 390)
-        self.assertEqual(sum(len(s['groups']) for s in self.metadata['tutorials'].values()), 29)
+        self.assertEqual(sum(len(s['blocks']) for s in self.metadata['tutorials'].values()), 415)
+        self.assertEqual(sum(len(s['groups']) for s in self.metadata['tutorials'].values()), 28)
         self.assertEqual({slug for slug, s in self.metadata['tutorials'].items() if s['groups']}, {
             'scrna-seq-basics', 'statistics-for-bioinformatics', 'experimental-design-batch-effects', 'spatial-transcriptomics-r-python',
             'quality-control-fundamentals', 'scrna-seq-quality-control', 'git-github-bioinformatics', 'biological-data-formats',
             'single-cell-foundation-models', 'protein-structure-design-alphafold', 'ai-bioinformatics-github-copilot',
-            'ai-coding-cursor-aider', 'autonomous-research-orchestrator', 'python-fundamentals-bioinformatics',
+            'ai-coding-cursor-aider', 'autonomous-research-orchestrator',
             'hpc-basic-commands', 'mcp-zotero', 'evolutionary-phylogeny-analysis', 'data-visualization-fundamentals'
         })
         for slug in ['ai-prompt-engineering-seurat', 'scrna-seq-trajectory-inference', 'infercnv-copy-number-variation']:

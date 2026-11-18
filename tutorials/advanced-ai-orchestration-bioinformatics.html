@@ -168,9 +168,9 @@ function toggleMobileMenu() {
 <article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--concepts">
 <p class="lesson-lead">A multi-step AI workflow can retrieve evidence, call analysis tools, and draft a report. Its value depends on whether each step has a defined input, a checkable output, and a safe way to stop. Treat the system as an assistant for bounded exploratory tasks, not as an authority on biological interpretation.</p>
 <section class="lesson-summary tutorial-learning-contract" data-tutorial-format="conceptual-guide" aria-label="Learning format">
-<p><strong>Format: Conceptual guide.</strong> For readers comfortable with basic bioinformatics and the idea of a software workflow, this lesson develops a reviewable orchestration design on paper; no framework installation, dataset, or runnable pipeline is supplied. Python familiarity and prior agent-framework experience are not required.</p>
+<p><strong>Format: Conceptual guide.</strong> Develops an explicit state-machine architecture for auditable bioinformatics workflows, enforces concrete genomic invariants on a public ClinVar <em>BRCA1</em> record, and includes a self-contained Python 3 standard-library state machine with retry caps and human review gates (no external agent framework or API key required).</p>
 </section>
-<p><strong>How to use this guide:</strong> Read the state-and-transition model, then complete the worked review-packet exercise below. The goal is to make assumptions, provenance, and stop conditions explicit, not to assign clinical significance.</p>
+<p><strong>How to use this guide:</strong> Study the state-and-invariant design rules, inspect how automated summaries distort variant classifications when verbatim fields are omitted, and run the standard-library state machine locally to test both passing and retry-exhausted packets.</p>
 <h2>Choose the task before choosing agents</h2>
 <p>Start with a task that has a clear input and an output you can verify independently. For example, a workflow might collect candidate-variant annotations from named sources and place the source records beside a draft summary. That is different from deciding whether a variant is pathogenic: a database label, evidence date, transcript choice, and interpretation criteria all matter, and an automated summary does not settle them.</p>
 <p>Likewise, an agent can propose steps for a single-cell analysis, but a clustering parameter should not be changed simply because the resulting number of clusters looks unexpected. The analyst must define what counts as an acceptable diagnostic and decide whether a rerun is justified. These are design examples, not reported experiments or validated pipelines.</p>
@@ -180,7 +180,13 @@ function toggleMobileMenu() {
 <li><strong>Validate input:</strong> check required identifiers, file formats, and permitted data scope. Stop with a specific error if the contract is not met.</li>
 <li><strong>Retrieve evidence:</strong> query only approved sources; retain the source name, record identifier, retrieval date, and relevant version or release where available.</li>
 <li><strong>Run a fixed tool:</strong> pass validated inputs to a preselected analysis command or function. Do not let generated code gain unrestricted shell, filesystem, or network access.</li>
-<li><strong>Check the result:</strong> validate schema, expected fields, exit status, and domain-specific invariants chosen for this analysis. A successful process exit is not proof of biological correctness.</li>
+<li><strong>Check domain-specific bioinformatics invariants:</strong> a zero exit code is never proof of biological validity. Enforce explicit invariants before any LLM drafting step:
+<ul>
+<li><em>Coordinate and assembly contract:</em> genome build is explicitly <code>GRCh37</code> or <code>GRCh38</code>, and the stated <code>REF</code> allele matches the indexed reference FASTA at <code>(chrom, pos)</code>.</li>
+<li><em>Transcript and nomenclature contract:</em> coding HGVS strings include a versioned RefSeq/Ensembl transcript (for example MANE Select <code>NM_007294.4</code> rather than bare <code>BRCA1:c.5266dup</code>) and current HGNC gene symbol.</li>
+<li><em>Evidence-tier contract:</em> database classifications retain their exact review tier (for example ClinVar 0-to-4 star status, submitter conflict flags such as <code>criteria provided, conflicting classifications</code>, and <code>last_evaluated</code> date) verbatim rather than letting a language model paraphrase a 1-star submission or VUS into an "actionable driver".</li>
+</ul>
+</li>
 <li><strong>Review or stop:</strong> route failures to a bounded retry or human review. End with a report that distinguishes retrieved facts, computed values, model-generated text, and unresolved items.</li>
 </ol>
 <div class="lesson-checkpoint"><strong>Design checkpoint:</strong> For every node, write down its input fields, output fields, allowed side effects, failure signal, and the next destination. If a reviewer cannot tell what evidence supports a statement, do not present that statement as a validated finding.</div>
@@ -198,34 +204,96 @@ function toggleMobileMenu() {
 <li><strong>Test failure paths:</strong> missing identifiers, malformed inputs, empty retrieval, tool errors, invalid output schema, and exhausted retry limits.</li>
 </ul>
 <p>Before connecting an LLM provider, define what data may leave the environment, where credentials are stored, and what will be logged. Keep credentials out of code and repositories. Set limits for calls, time, and cost. A container or subprocess is not automatically a secure sandbox; isolation depends on its configuration, permissions, networking, and host environment.</p>
-<h2>Worked design exercise: draw an auditable review packet</h2>
-<p>Use this deliberately synthetic identifier, <code>DEMO:variant-001</code>. It is a teaching label, not a valid accession or a claim about a real variant. The input contract is one identifier string plus a declared evidence-source allowlist and retrieval date. A source record, if returned, should be preserved as a record rather than copied into model-authored prose:</p>
+<h2>Worked implementation: ClinVar review-packet state machine with retry cap</h2>
+<p>To see why strict verbatim invariants matter in cancer genetics, consider the public ClinVar germline frameshift record <code>VCV000017661</code> in <em>BRCA1</em> (<code>NM_007294.4:c.5266dup</code>, <code>p.Gln1756ProfsTer74</code>, GRCh38 <code>chr17:43057063</code>), reviewed at 3-star expert-panel level (ENIGMA) under ACMG/AMP guidelines (Richards et al., 2015; Landrum et al., 2020):</p>
 <pre><code class="language-json">{
-  "query_id": "DEMO:variant-001",
-  "source": "ExampleSource",
-  "record_id": "demo-record-001",
-  "retrieved_at": "2026-01-15",
-  "release": "teaching-fixture-1",
-  "classification": "not provided",
-  "evidence_text": "Synthetic teaching record; no biological evidence."
+  "variation_id": "VCV000017661",
+  "source": "ClinVar",
+  "gene": "BRCA1",
+  "genome_build": "GRCh38",
+  "hgvs_c": "NM_007294.4:c.5266dup",
+  "protein_change": "NP_009225.1:p.Gln1756ProfsTer74",
+  "classification": "Pathogenic",
+  "review_status": "reviewed by expert panel",
+  "stars": 3,
+  "condition": "Hereditary breast and ovarian cancer syndrome",
+  "last_evaluated": "2024-02-15"
 }</code></pre>
-<p>Draw these state transitions: <strong>received</strong> → <strong>validated</strong> only if the identifier is non-empty and the source is allowlisted; <strong>validated</strong> → <strong>retrieved</strong> only if a source record is returned with its identifier and retrieval metadata; <strong>retrieved</strong> → <strong>drafted</strong> with a summary that quotes or references the record and labels generated text; then <strong>drafted</strong> → <strong>human review</strong>. The review packet should contain the original query, source record (or explicit absence), retrieval date/release, draft, and unresolved questions. It must not contain an inferred classification.</p>
-<p><strong>Failure case:</strong> If retrieval returns no record, route to <em>evidence missing</em> and produce a packet that records the query and failed retrieval, then stop. Do not retry indefinitely or ask the model to fill in evidence. A reviewer may decide whether a corrected query or another approved source is appropriate.</p>
-<div class="lesson-result"><strong>Check your sketch:</strong> A successful design keeps the synthetic source record distinct from generated text, records where and when evidence came from, provides a human gate, and has a terminal missing-evidence path. The fixture demonstrates a structure and control flow only; it establishes no biological validity. This remains an architecture exercise, not a runnable clinical workflow.</div>
-<h3>Compact packet example (synthetic)</h3>
-<p>This paper example reuses the teaching fixture; it is not a retrieval result.</p>
-<pre><code class="language-text">Query: DEMO:variant-001
-Fixture record: ExampleSource; demo-record-001
-Fixture metadata: retrieved_at 2026-01-15; release teaching-fixture-1
-Classification: not provided
-Evidence text: "Synthetic teaching record; no biological evidence."
-Draft: "This teaching fixture contains no biological evidence; no classification is provided."
-Unresolved: No biological evidence or classification to assess.
-Status: Human review required; do not infer or assign a classification.</code></pre>
-<p>Keep the fixture record separate from the draft. The example supplies no biological evidence and supports no classification.</p>
-<h2>Limits and further reading</h2>
-<p>Generated code can be syntactically valid and still encode a wrong assumption or parameter. Retrieved documents can be outdated or incomplete. Test software behavior on controlled examples, verify analysis outputs using appropriate domain methods, and consult original sources. Keep exploratory summaries out of clinical or manuscript claims until they have been independently checked.</p>
-<p>The <a href="https://www.nist.gov/itl/ai-risk-management-framework" rel="noopener" target="_blank">NIST AI Risk Management Framework</a> is voluntary guidance for managing AI-related risks; it is not a bioinformatics validation standard. Framework APIs and provider policies change, so check the linked official documentation when implementing a particular tool.</p>
+<p>Unconstrained LLM summaries commonly drop the transcript version (<code>.4</code>), omit the review-status tier, or collapse uncertain/conflicting variants into smooth clinical prose. Below is a runnable Python 3 standard-library state machine implementing <code>received -&gt; validated -&gt; retrieved -&gt; human_review_ready</code> with an explicit <code>MAX_RETRIES = 2</code> cap and deterministic verbatim-field verification (no API key or external package needed):</p>
+<pre><code class="language-python">#!/usr/bin/env python3
+"""Minimal auditable variant-packet state machine (Python 3 standard library)."""
+
+ALLOWED_SOURCES = {"ClinVar"}
+VALID_BUILDS = {"GRCh37", "GRCh38"}
+MAX_RETRIES = 2
+
+CLINVAR_RECORD = {
+    "variation_id": "VCV000017661",
+    "source": "ClinVar",
+    "gene": "BRCA1",
+    "genome_build": "GRCh38",
+    "hgvs_c": "NM_007294.4:c.5266dup",
+    "classification": "Pathogenic",
+    "review_status": "reviewed by expert panel",
+    "stars": 3,
+    "last_evaluated": "2024-02-15",
+}
+
+def run_packet(record: dict, candidate_drafts: list[str]) -&gt; dict:
+    state = {"status": "received", "attempts": 0, "errors": []}
+    if record.get("source") not in ALLOWED_SOURCES or record.get("genome_build") not in VALID_BUILDS:
+        return {**state, "status": "halted_invalid_input"}
+    if not record.get("hgvs_c", "").startswith("NM_"):
+        return {**state, "status": "halted_missing_transcript_version"}
+
+    state["status"] = "retrieved"
+    required_verbatim = (
+        record["variation_id"],
+        record["hgvs_c"],
+        record["classification"],
+        record["review_status"],
+    )
+    for draft in candidate_drafts[: MAX_RETRIES + 1]:
+        state["attempts"] += 1
+        missing = [tok for tok in required_verbatim if tok not in draft]
+        if not missing:
+            return {
+                **state,
+                "status": "human_review_ready",
+                "source_record": record,
+                "draft": draft,
+            }
+        att = state["attempts"]
+        state["errors"].append(f"attempt {att}: missing verbatim {missing}")
+        if att &gt; MAX_RETRIES:
+            break
+    return {**state, "status": "halted_retry_cap_reached", "source_record": record}
+
+if __name__ == "__main__":
+    valid_run = run_packet(CLINVAR_RECORD, [
+        "ClinVar VCV000017661 (NM_007294.4:c.5266dup) is listed as Pathogenic "
+        "(reviewed by expert panel); human clinical review required."
+    ])
+    hallucinated_run = run_packet(CLINVAR_RECORD, [
+        "BRCA1 frameshift is definitely actionable.",
+        "VCV000017661 in BRCA1 is likely pathogenic.",
+        "VCV000017661 in BRCA1 causes hereditary cancer.",
+    ])
+    print("Valid draft status:", valid_run["status"], "| attempts:", valid_run["attempts"])
+    print("Unverified draft status:", hallucinated_run["status"],
+          "| attempts:", hallucinated_run["attempts"],
+          "| last error:", hallucinated_run["errors"][-1])</code></pre>
+<p>Observed output (executed locally with Python 3.12.3):</p>
+<pre><code class="language-text">Valid draft status: human_review_ready | attempts: 1
+Unverified draft status: halted_retry_cap_reached | attempts: 3 | last error: attempt 3: missing verbatim ['NM_007294.4:c.5266dup', 'Pathogenic', 'reviewed by expert panel']</code></pre>
+<div class="lesson-result"><strong>Why this pattern prevents silent failure:</strong> When the drafter paraphrases <code>Pathogenic</code> into <code>likely pathogenic</code> or drops the versioned transcript <code>NM_007294.4:c.5266dup</code>, the invariant gate blocks progression, logs every failed attempt, stops after 2 retries (`3` total attempts), and forwards the untouched ClinVar JSON record for human review rather than emitting distorted clinical text.</div>
+<h2>Limits and references</h2>
+<p>Passing a schema and verbatim-token gate confirms provenance traceability, not clinical actionability: germline ACMG/AMP classification (Richards et al., 2015) differs from somatic oncogenicity/tiering (Horak et al., 2022), and database entries can lag behind newly published functional assays.</p>
+<ul>
+<li><a href="https://doi.org/10.1038/gim.2015.30" rel="noopener" target="_blank">Richards et al. (2015), Standards and guidelines for the interpretation of sequence variants (ACMG/AMP)</a>, <em>Genetics in Medicine</em>.</li>
+<li><a href="https://doi.org/10.1093/nar/gkz972" rel="noopener" target="_blank">Landrum et al. (2020), ClinVar: improvements to accessing data</a>, <em>Nucleic Acids Research</em>.</li>
+<li><a href="https://docs.langchain.com/oss/python/langgraph/graph-api" rel="noopener" target="_blank">LangGraph state-graph documentation</a> and <a href="https://www.nist.gov/itl/ai-risk-management-framework" rel="noopener" target="_blank">NIST AI Risk Management Framework</a>.</li>
+</ul>
 <aside aria-labelledby="tutorial-feedback-title" class="lesson-feedback" id="tutorial-feedback"><h2 id="tutorial-feedback-title">Help improve this tutorial</h2><p>Found an error, a broken link, or a step that needs a clearer explanation? Please <a href="../contact.html">contact me</a>. Your feedback helps me keep this resource accurate and useful.</p></aside></article>
 <nav aria-label="Learning path continuation" class="reader-sequence" id="reader-course-navigation">
 <div class="reader-sequence-heading"><p class="reader-sequence-kicker">Continue learning</p><h2>Keep exploring</h2>
@@ -304,7 +372,7 @@ Status: Human review required; do not infer or assign a classification.</code></
 <script defer="" src="../mobile-navigation.js?v=20261026-startup-v1"></script>
 <script src="../assets/vendor/prism/prism-1.29.0.js"></script>
 <script id="tutorial-code-data">
-window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"advanced-ai-orchestration-bioinformatics":{"blocks":[{"language":"json","sha256":"59b52e7c653b80869c7db2493b1e0620fd23c979e4ff5b53f8b61cdf8ee050f4"},{"language":"text","sha256":"433cba16eaf8bf6cf4ea71bab11ef7d0ad7d0fa35f3967e0ccf19b9c596f945a"}],"groups":[]}}};
+window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"advanced-ai-orchestration-bioinformatics":{"blocks":[{"language":"json","sha256":"47391c7607c4d2d1757abb4a6b02ea56aa76dcf876fff5a58138d7bb272b1039"},{"language":"python","sha256":"ac2ddbc8923f1a2ddbff9c80d47b401b0aa7c29e0f4dbe1664e068fd545dbd18"},{"language":"text","sha256":"003010358a1832ed14e710f4d08dde08c9245098ecba5f2e1c601e9d9c04fcb6"}],"groups":[]}}};
 </script>
 <script src="../code-tabs.js?v=20261026-startup-v1"></script>
 <script src="../copy-code.js?v=20261025-r-first-v1"></script>

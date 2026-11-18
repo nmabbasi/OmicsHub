@@ -181,13 +181,15 @@ function toggleMobileMenu() {
 <p><strong>Prerequisites:</strong> basic Bash and Git; a Unix-like shell with <code>mkdir</code>, <code>sha256sum</code>, <code>find</code>, and <code>git</code>. The main wrapper expects Rscript. Conda, renv, and the optional Python inventory require their respective tools. Run the commands from the project root unless a step says otherwise.</p>
 <h2>1. Create the project skeleton</h2>
 <p>From the parent directory, create a project directory. Replace <code>project</code> with your own name. The brace expansion below is Bash syntax.</p>
-<pre><code>mkdir -p project/{config,data/{raw,processed},envs,scripts,results/{figures,tables},logs}
-touch project/README.md project/config/.keep project/data/raw/.keep project/envs/.keep
+<pre><code>mkdir -p project/{config,data/{raw,processed},envs,reports,scripts,results/{figures,tables},logs}
+touch project/README.md project/config/.keep project/data/raw/.keep project/envs/.keep project/reports/.keep
 cat &gt; project/.gitignore &lt;&lt;'EOF'
-# Keep raw data and local environment prefixes out of Git; track text manifests in envs/.
+# Keep raw data, large intermediates, and local environment prefixes out of Git.
 data/raw/
 data/processed/
-results/
+results/figures/
+results/tables/*
+!results/tables/*.tsv
 .conda/
 envs/*/
 !envs/*.yml
@@ -198,16 +200,32 @@ envs/*/
 __pycache__/
 .env
 EOF</code></pre>
-<p>Use <code>data/raw/</code> for source inputs, <code>data/processed/</code> for regenerable intermediates, <code>scripts/</code> for code, <code>results/</code> for selected outputs, <code>logs/</code> for run records, <code>config/</code> for parameters and provenance, and <code>envs/</code> for small text dependency manifests (while ignoring any local Conda or Micromamba prefix directories such as <code>.conda/</code> or <code>envs/*/</code>, matching the <a href="git-github-bioinformatics.html">Git and GitHub tutorial</a>). Treat raw inputs as immutable by project policy, and retain a separate backup. A <code>.gitignore</code> rule prevents ordinary unforced Git additions; it is not access control or a backup.</p>
-<h2>2. Keep analysis settings explicit</h2>
-<p>This YAML fragment illustrates the kinds of values a particular analysis might configure. It is not a complete configuration contract: the example QC program mentioned below does not exist in this scaffold, and no code here reads or validates these keys. Define the schema and units in the README and implement matching parsing and validation in your analysis.</p>
-<pre><code># config/analysis.yml (illustrative only)
+<p>This page serves as the canonical project-layout reference across the site (linked from <a href="computer-data-fundamentals.html">Computer and Data Fundamentals</a> and <a href="git-github-bioinformatics.html">Git and GitHub for Bioinformatics</a>). Use <code>data/raw/</code> for immutable source inputs, <code>data/processed/</code> for regenerable intermediates, <code>scripts/</code> for modular analysis code, <code>reports/</code> for literate report sources such as <code>reports/analysis.Rmd</code>, <code>results/</code> for figures and curated summary tables (here small <code>results/tables/*.tsv</code> summaries are permitted while binary figures stay ignored unless your team tracks release artifacts), <code>logs/</code> for timestamped run records, <code>config/</code> for sample sheets and provenance, and <code>envs/</code> for small text dependency manifests. Treat raw inputs as read-only (`chmod a-w` where appropriate) and retain an independent backup.</p>
+<h2>2. Define a sample sheet, data dictionary, and explicit config</h2>
+<p>Most irreproducible bioinformatics handoffs fail not on folder names, but on undocumented sample metadata: ambiguous IDs where technical library replicates look like independent patients, unstated units, or missing genome accessions. Pair <code>config/analysis.yml</code> with a tab-separated sample manifest (<code>config/samples.tsv</code>) and column dictionary (<code>config/data_dictionary.tsv</code>):</p>
+<pre><code># config/samples.tsv: distinguish donor_id (biological replicate) from sample_id (library)
+sample_id	donor_id	condition	batch	sex	age_years	fastq_r1
+T01_R1	PT_001	Tumour	B1	F	62	data/raw/T01_R1.fastq.gz
+T02_R1	PT_002	Tumour	B2	M	58	data/raw/T02_R1.fastq.gz
+N01_R1	PT_001	MatchedNormal	B1	F	62	data/raw/N01_R1.fastq.gz
+
+# config/data_dictionary.tsv: state exact types, allowed levels, and units
+column_name	type	allowed_or_units	description
+sample_id	string	unique_id	Sequencing library identifier (one row per library)
+donor_id	string	PT_[0-9]{3}	Patient identifier; statistical unit for paired/group models
+condition	factor	Tumour|MatchedNormal	Tissue pathology class reviewed at biopsy
+batch	factor	B1|B2	Library-preparation batch date group
+age_years	integer	years (18..100)	Patient age at biopsy in whole years</code></pre>
+<p>Keep pipeline thresholds and exact reference bundle identifiers in <code>config/analysis.yml</code> rather than hard-coding constants inside scripts:</p>
+<pre><code># config/analysis.yml
 threads: 4
-reference: GRCh38
+reference_build: GRCh38.p14
+gencode_release: 46
 min_counts: 10
 input_counts: data/raw/counts.tsv
-output_dir: data/processed/qc</code></pre>
-<p>For a real run, document whether paths are relative to the project root, what file format and delimiter are accepted, which columns are required, and what each parameter means. A reference label alone does not identify an exact reference bundle: record its source, release/accession, checksum, and any index used.</p>
+sample_sheet: config/samples.tsv
+output_table: results/tables/qc_summary.tsv</code></pre>
+<p>A bare string like <code>GRCh38</code> does not distinguish Ensembl, UCSC, or GENCODE primary versus ALT assemblies; always record the exact provider, release, and FASTA/GTF checksums.</p>
 <h2>3. Record input and software provenance</h2>
 <p>From the project root, generate one checksum record per file directly inside <code>data/raw/</code>. The output stores relative names, making verification from the same root straightforward.</p>
 <pre><code>find data/raw -maxdepth 1 -type f -print0 | sort -z | xargs -0 -r sha256sum &gt; config/raw_checksums.sha256
@@ -222,10 +240,11 @@ git --version &gt;&gt; config/versions.txt 2&gt;&amp;1
 # micromamba env export --explicit &gt; envs/conda-linux-64.lock
 # Optional Python distributions, only when a Python tool is used:
 # python -m pip freeze &gt; envs/requirements.txt</code></pre>
-<p>For an R project, initialize <code>renv</code> deliberately from its project root, review the packages found, and keep the lockfile with the code. These R-console commands require the <code>renv</code> package; initialization changes the project environment, so use a fresh teaching project first.</p>
+<p>For an R project, initialize <code>renv</code> from the project root. Note that <code>renv::init(bare = TRUE)</code> creates an empty project library, so calling <code>renv::snapshot()</code> immediately after a bare init writes an almost empty <code>renv.lock</code>; install the packages your scripts actually load first (or run standard <code>renv::init()</code> after writing your scripts) before snapshotting:</p>
 <pre id="project-renv-console"><code class="language-r"># Run in the R console from the project root after installing renv.
 renv::init(bare = TRUE)
-renv::snapshot(lockfile = &quot;renv.lock&quot;)</code></pre>
+renv::install(c("yaml", "ggplot2"))  # install packages used in scripts/ and reports/
+renv::snapshot(lockfile = &quot;renv.lock&quot;, prompt = FALSE)</code></pre>
 <p>Keep report sources such as <code>reports/analysis.Rmd</code> under version control. Write rendered reports and derived figures under <code>results/</code>; record the command used to render them. A lockfile records selected packages, not the source data, system libraries, or scientific validity.</p>
 <p>In Micromamba or Conda projects, keep a concise human-readable <code>envs/environment.yml</code> with explicit <code>conda-forge</code> and <code>bioconda</code> channel priority alongside an architecture-specific lockfile (such as <code>envs/conda-linux-64.lock</code> or <code>conda env export --no-builds</code>); neither replaces recording the host OS and CPU architecture. <code>pip freeze</code> records installed Python distributions without system-library details. Choose the manifest that matches the environment manager actually used.</p>
 <h2>4. Add a run wrapper</h2>
@@ -253,12 +272,34 @@ COMMIT="$(git -C "$PROJECT_ROOT" rev-parse --short HEAD 2&gt;/dev/null || echo '
   echo "Run finished: $(date --iso-8601=seconds)"
 } &gt;&amp; "$LOG"</code></pre>
 <p>The root calculation uses <code>scripts/..</code>, because the script resides one directory below the project root. The braces send both standard output and standard error to the log. The wrapper records the configuration path, its SHA-256 digest, and a copy of its contents in that run's log: the path alone would not identify parameter values if the file later changed. The digest helps detect a changed copy when compared with a retained file; the logged snapshot records the values used. With <code>set -e</code>, a failing analysis command normally stops the script before the finish line; Bash has documented exceptions to <code>-e</code>, so use explicit status handling if the wrapper grows more complex. The example uses GNU/Linux <code>date --iso-8601</code>; other systems may need a portable timestamp command.</p>
-<p><code>qc_counts.R</code> is an expected user-supplied R implementation, not included here. It must accept the shown <code>--config</code> argument, parse the documented configuration, read the specified count table, and write the documented output. Until that program and its input contract exist, the wrapper is a template and will fail at the analysis step. Do not treat a created log or output filename as evidence of valid metrics.</p>
+<p>To make the wrapper immediately testable with base R alone, save this minimal companion script as <code>scripts/qc_counts.R</code>. It parses the key-value lines in <code>config/analysis.yml</code>, validates nonnegative integer counts, and writes <code>results/tables/qc_summary.tsv</code>:</p>
+<pre><code class="language-r">args &lt;- commandArgs(trailingOnly = TRUE)
+cfg_idx &lt;- match("--config", args)
+if (is.na(cfg_idx) || cfg_idx == length(args)) stop("Usage: qc_counts.R --config config/analysis.yml")
+cfg_lines &lt;- readLines(args[cfg_idx + 1L], warn = FALSE)
+cfg_lines &lt;- cfg_lines[!grepl("^\\s*(#|$)", cfg_lines)]
+kv &lt;- strsplit(cfg_lines, ":\\s*")
+cfg &lt;- setNames(trimws(vapply(kv, `[`, "", 2L)), trimws(vapply(kv, `[`, "", 1L)))
+
+counts &lt;- read.delim(cfg[["input_counts"]], check.names = FALSE, stringsAsFactors = FALSE)
+mat &lt;- as.matrix(counts[, -1, drop = FALSE])
+storage.mode(mat) &lt;- "numeric"
+if (anyNA(mat) || any(mat &lt; 0) || any(mat != floor(mat))) stop("Expected nonnegative integer counts")
+min_c &lt;- as.integer(cfg[["min_counts"]])
+summary_df &lt;- data.frame(
+  sample_id = colnames(mat),
+  total_counts = as.integer(colSums(mat)),
+  genes_ge_min = as.integer(colSums(mat &gt;= min_c))
+)
+dir.create(dirname(cfg[["output_table"]]), recursive = TRUE, showWarnings = FALSE)
+write.table(summary_df, file = cfg[["output_table"]], sep = "\t", quote = FALSE, row.names = FALSE)
+print(summary_df, row.names = FALSE)</code></pre>
+<p>On a three-gene synthetic table (<code>T01_R1 = 420, 85, 0</code>; <code>T02_R1 = 390, 92, 4</code>; <code>N01_R1 = 410, 110, 2</code> with <code>min_counts: 10</code>), running <code>scripts/run_qc.sh</code> logs the exact config SHA-256 and writes <code>total_counts = 505, 486, 522</code> and <code>genes_ge_min = 2, 2, 2</code> (verified locally with R 4.6.1). Replace this minimal key-value reader with <code>yaml::read_yaml()</code> when nested YAML structures are used.</p>
 <h2>5. Initialize version control deliberately</h2>
 <p>Review your ignore rules and ensure no restricted data, credentials, or large generated files are staged. The following commands change Git metadata and create a commit in the project; inspect the staged file list before committing.</p>
 <pre><code>cd project
 git init
-git add README.md config envs scripts .gitignore
+git add README.md config envs reports scripts .gitignore
 git status --short
 git commit -m "Initial project structure and documentation"
 git rev-parse --short HEAD &gt; config/git_commit.txt</code></pre>
@@ -421,7 +462,7 @@ git rev-parse --short HEAD &gt; config/git_commit.txt</code></pre>
 </script>
 <script src="../assets/vendor/prism/prism-1.29.0.js"></script>
 <script id="tutorial-code-data">
-window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"reproducible-project-structure":{"blocks":[{"language":"bash","sha256":"2219002ae4501f759209da4ace52c37b4c3d28d705fc91ec2b9619eea1b3b512"},{"language":"yaml","sha256":"b34a58af8dd13c2590006f1a38f48565883d7ff0bef2b883d9444769fbd72df8"},{"language":"bash","sha256":"b471a6790ac2b8fa837b07197a56c5a642de70253cbc3dc3c3a2a6926bc09dcd"},{"language":"bash","sha256":"8215169d61518e80c1486c3de1cba799fea04740d7d2f205a285cec01735f401"},{"language":"r","sha256":"9c5ae7234a3c724873c5ad2357850d0a1860b968bab678db7932224720c49dae"},{"language":"bash","sha256":"d6c0e7b5b649a2a12d0e9beb73baa29e1ec9afb81e426ff698cc48ddb033ab2d"},{"language":"bash","sha256":"6ccf12669a83d1adb1cdb08d2039df4c4943bfb7a5395efcf9b43b07646753bd"}],"groups":[]}}};
+window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"reproducible-project-structure":{"blocks":[{"language":"bash","sha256":"8eb6b9325a35713b718570afe863a07ecd46766999c633f4c630471663276749"},{"language":"text","sha256":"80f0a9b01f036931d16ae6e3593b3bdb808ed19aa919bee3c9b1a7039e1725ec"},{"language":"yaml","sha256":"19c558516ba63520c8e8ffe278a80ab1bccd7a3693f39f6abfb271b9f968ea80"},{"language":"bash","sha256":"b471a6790ac2b8fa837b07197a56c5a642de70253cbc3dc3c3a2a6926bc09dcd"},{"language":"bash","sha256":"8215169d61518e80c1486c3de1cba799fea04740d7d2f205a285cec01735f401"},{"language":"r","sha256":"e2bacc670c680997791e64686ed10495f2632eb3163b60cf5543afd96ab89367"},{"language":"bash","sha256":"d6c0e7b5b649a2a12d0e9beb73baa29e1ec9afb81e426ff698cc48ddb033ab2d"},{"language":"r","sha256":"89111940be22121aa76c0544f954790a882d24d62d915b0c646bc7fd26e4894e"},{"language":"bash","sha256":"af977b56042d773779bef1034b7890d0d3d11c8159c9a7539ac2aa264ed5c7ce"}],"groups":[]}}};
 </script>
 <script src="../code-tabs.js?v=20261026-startup-v1"></script>
 <script src="../copy-code.js?v=20261025-r-first-v1"></script>

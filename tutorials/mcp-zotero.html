@@ -217,6 +217,43 @@ for key in keys:
     print(f"  @{key}")</code></pre>
 <p>Save as <code>find_keys.py</code> and run <code>python3 find_keys.py</code> in the same directory. Dependencies: Python 3 standard library only. Given the same <code>sample.md</code>, it should print the same candidate list as the R script. The implementations inventory matching text; neither one confirms that a key is valid or that a reference exists.</p>
 <div class="lesson-exercise"><h2>Account-free server review</h2><p>Consider this hypothetical README summary: a Zotero server offers record search plus create and delete tools, uses a Web API credential that cannot be limited to one collection, and does not explain whether requests or attachment text leave the computer. A colleague says a prompt asking for read-only retrieval in a collection named “MCP-test” is enough to protect the working library. Should you connect it to that library?</p><p><strong>Reasoned answer:</strong> No. A collection name in a prompt is not an access-control boundary, the credential and tools permit changes, and the data flow is undocumented. Do not connect it to an irreplaceable library; obtain clear permission and data-flow documentation and use a disposable account or library with no sensitive records if the server can be safely evaluated.</p></div>
+<h2>Locally verified audit: inspect MCP tool permissions and read-only SQLite queries</h2>
+<p>Under the Model Context Protocol (JSON-RPC 2.0), a client discovers what an MCP server can do via <code>tools/list</code> and invokes tools via <code>tools/call</code>. Local Zotero MCP servers typically read Zotero Desktop's SQLite database (<code>zotero.sqlite</code>, whose core tables include <code>items</code>, <code>collections</code>, <code>collectionItems</code>, <code>itemData</code>, and <code>itemDataValues</code>) or Zotero's local HTTP connector API (port <code>23119</code>). Never let an unverified script open a live <code>zotero.sqlite</code> in read-write mode while Zotero is running: work on a disposable copy or open SQLite via a read-only URI (<code>file:copy.sqlite?mode=ro</code>).</p>
+<p>Run this self-contained Python 3 standard-library check (<code>sqlite3</code> and <code>json</code>, no third-party server or Zotero account needed) to practice two concrete safety gates: (1) flagging destructive or non-read-only tools in an MCP <code>tools/list</code> payload, and (2) enforcing parameterized collection-scoped SQL so records outside <code>MCP-test-20261118</code> are never returned:</p>
+<pre><code class="language-python">import json
+import sqlite3
+
+# 1. Audit an MCP server's advertised tools/list metadata before enabling it
+tools_manifest = [
+    {"name": "zotero_search_items", "readOnlyHint": True, "destructiveHint": False},
+    {"name": "zotero_delete_item",  "readOnlyHint": False, "destructiveHint": True},
+]
+unsafe_tools = [
+    t["name"] for t in tools_manifest
+    if t.get("destructiveHint") or not t.get("readOnlyHint")
+]
+print("Flagged write/destructive MCP tools:", unsafe_tools)
+
+# 2. Simulate a collection-scoped read-only lookup on a disposable SQLite schema
+conn = sqlite3.connect(":memory:")
+conn.executescript("""
+CREATE TABLE collections (collectionID INT PRIMARY KEY, collectionName TEXT);
+CREATE TABLE items (itemID INT PRIMARY KEY, key TEXT, title TEXT, year INT, collectionID INT);
+INSERT INTO collections VALUES (1, 'MCP-test-20261118'), (2, 'Patient-Cohort-Notes');
+INSERT INTO items VALUES (101, 'K9X2ABCD', 'Confronting false discoveries in single-cell DE', 2021, 1);
+INSERT INTO items VALUES (102, 'P7M4ZZZZ', 'Unpublished clinical biopsy protocol', 2026, 2);
+""")
+cur = conn.execute(
+    "SELECT i.key, i.title, i.year, c.collectionName FROM items i "
+    "JOIN collections c ON i.collectionID = c.collectionID WHERE c.collectionName = ?",
+    ("MCP-test-20261118",),
+)
+rows = [{"zotero_key": k, "title": t, "year": y, "collection": c} for k, t, y, c in cur.fetchall()]
+print(json.dumps({"jsonrpc": "2.0", "id": 1, "result": rows}))</code></pre>
+<p>Observed output (executed locally with Python 3.12.3):</p>
+<pre><code class="language-text">Flagged write/destructive MCP tools: ['zotero_delete_item']
+{"jsonrpc": "2.0", "id": 1, "result": [{"zotero_key": "K9X2ABCD", "title": "Confronting false discoveries in single-cell DE", "year": 2021, "collection": "MCP-test-20261118"}]}</code></pre>
+<p>Notice the architectural difference between a prompt instruction and a code boundary: MCP <code>readOnlyHint</code> annotations are advisory metadata unless you verify the server's source code and disable write/delete tools at the client or API-key level, and collection isolation holds only when enforced in the server's query or separate Zotero library rather than requested in chat text.</p>
 <h2>Troubleshoot by observing the failure</h2>
 <ul>
 <li><strong>The client does not show the server:</strong> validate the JSON syntax, command path, and arguments against the current client and server documentation. Check the client's MCP logs for its startup error.</li>
@@ -239,7 +276,7 @@ for key in keys:
 <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
 </div>
 <div>
-<p class="text-sm text-gray-600 mb-2">No server, client, Zotero, or Python version was tested or recorded for this guide. Before applying a server project's instructions, note the versions of your client and Zotero, check its documented compatibility and the current client configuration reference, and validate the server's own startup procedure. If a command does not work, you find an error, or the documentation has changed, please report it through the <a class="text-blue-600 hover:underline" href="../contact.html">Contact page</a>.</p>
+<p class="text-sm text-gray-600 mb-2">The base-R (R 4.6.1) and Python 3.12 standard-library citation-key and SQLite/JSON-RPC audit examples above were executed locally; third-party Zotero MCP servers and live Zotero Desktop installations were not run here and must be verified against your own client and Zotero release. Report errors or documentation updates through the <a class="text-blue-600 hover:underline" href="../contact.html">Contact page</a>.</p>
 <p class="text-sm text-gray-500">Author: <a class="text-blue-600 hover:underline font-medium" href="../about.html">Nasir Mahmood Abbasi, PhD</a> - Category: AI-Driven Research &amp; Agentic Bioinformatics</p>
 </div>
 </div>
@@ -321,7 +358,7 @@ for key in keys:
 <script defer="" src="../mobile-navigation.js?v=20261026-startup-v1"></script>
 <script src="../assets/vendor/prism/prism-1.29.0.js"></script>
 <script id="tutorial-code-data">
-window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"mcp-zotero":{"blocks":[{"language":"text","sha256":"6ae75f337a693dbf35b2b1b5bcad04dfdd4c64be62f5eab2e3982b41aeabef42"},{"language":"bash","sha256":"609ca2c53fbb36f1f353ce62ec0dc0caa2934a8632f1be873cfb911506cbbb7e"},{"language":"r","sha256":"ae009ca3902e1d24808a688e7def3977ba66946fbd6cca803b251c1d41a389c7"},{"language":"python","sha256":"51b0b33e7b55ae5c93aaf3cdb1b23e96833fbeb2bbc38e1ee6eb2e88aebb0aa5"}],"groups":[{"title":"Extract candidate citation keys from a local Markdown file","panels":[{"start":20,"end":22,"language":"r","label":"R"},{"start":23,"end":25,"language":"python","label":"Python"}],"members":[{"index":20,"tag":"h3","sha256":"414a242e4551f508a0580294bbdbff7e2d81e838c4f98e1da1f3a7b47d1f9028"},{"index":21,"tag":"pre","sha256":"ae009ca3902e1d24808a688e7def3977ba66946fbd6cca803b251c1d41a389c7"},{"index":22,"tag":"p","sha256":"39b9e13c6a0cfa46b14e5c737a9553b2dbbab68b288a2bc836469e3e9cf7b4d5"},{"index":23,"tag":"h3","sha256":"353343bd9cc89dc63d83ee0a08d97a79df5823741b517ffe602352621ee0ec7b"},{"index":24,"tag":"pre","sha256":"51b0b33e7b55ae5c93aaf3cdb1b23e96833fbeb2bbc38e1ee6eb2e88aebb0aa5"},{"index":25,"tag":"p","sha256":"082caedd5c791e3cf2dc5cfa774283a5d7da36593df3d47d71ec61981cf0fbcf"}],"tabOrder":["r","python"]}]}}};
+window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"mcp-zotero":{"blocks":[{"language":"text","sha256":"6ae75f337a693dbf35b2b1b5bcad04dfdd4c64be62f5eab2e3982b41aeabef42"},{"language":"bash","sha256":"609ca2c53fbb36f1f353ce62ec0dc0caa2934a8632f1be873cfb911506cbbb7e"},{"language":"r","sha256":"ae009ca3902e1d24808a688e7def3977ba66946fbd6cca803b251c1d41a389c7"},{"language":"python","sha256":"51b0b33e7b55ae5c93aaf3cdb1b23e96833fbeb2bbc38e1ee6eb2e88aebb0aa5"},{"language":"python","sha256":"938aa6acbce49c725e98f524ed891eb5605d933fa088490adcd2c1db7e485d4f"},{"language":"text","sha256":"d3cb12c98c4e077ff7c17b6a67d0d871d0fcd7c78ab89b3eb8590242fcc52496"}],"groups":[{"title":"Extract candidate citation keys from a local Markdown file","panels":[{"start":20,"end":22,"language":"r","label":"R"},{"start":23,"end":25,"language":"python","label":"Python"}],"members":[{"index":20,"tag":"h3","sha256":"414a242e4551f508a0580294bbdbff7e2d81e838c4f98e1da1f3a7b47d1f9028"},{"index":21,"tag":"pre","sha256":"ae009ca3902e1d24808a688e7def3977ba66946fbd6cca803b251c1d41a389c7"},{"index":22,"tag":"p","sha256":"39b9e13c6a0cfa46b14e5c737a9553b2dbbab68b288a2bc836469e3e9cf7b4d5"},{"index":23,"tag":"h3","sha256":"353343bd9cc89dc63d83ee0a08d97a79df5823741b517ffe602352621ee0ec7b"},{"index":24,"tag":"pre","sha256":"51b0b33e7b55ae5c93aaf3cdb1b23e96833fbeb2bbc38e1ee6eb2e88aebb0aa5"},{"index":25,"tag":"p","sha256":"082caedd5c791e3cf2dc5cfa774283a5d7da36593df3d47d71ec61981cf0fbcf"}],"tabOrder":["r","python"]}]}}};
 </script>
 <script src="../code-tabs.js?v=20261026-startup-v1"></script>
 <script src="../copy-code.js?v=20261025-r-first-v1"></script>

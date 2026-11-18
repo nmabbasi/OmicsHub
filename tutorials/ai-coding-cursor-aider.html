@@ -181,10 +181,11 @@ Legal
 <section class="lesson-summary tutorial-learning-contract" data-tutorial-format="hands-on-lab" aria-label="Learning format"><p><strong>Format: Hands-on lab.</strong> The offline Git fixture works without installing either editor or contacting a model provider. R is the primary language for the count-table exercise. The existing Python standard-library diff validator and optional Aider installation remain Python-native and are not presented as R tools.</p></section>
 <div class="lesson-summary"><p><strong>Before you start:</strong> have Git available, plus R 4.0 or later for the main count-table exercise. Python 3 is needed only for the existing Python diff validator and optional Aider installation steps. For the optional live comparison, install Cursor or Aider from its official documentation. Cursor account and feature availability depend on its current terms and plan. Aider needs a model provider you choose; hosted model use may cost money. Prompts, selected files, and related repository context can be sent to a provider. Review current privacy, retention, analytics, and pricing terms first. You can skip both accounts and both model calls and still complete the offline validation.</p></div>
 <h2>Keep the assistant inside a reviewable project</h2>
-<p>Use only this disposable, documentation-only project, which contains invented arithmetic and no biological data. Download <a href="../files/coding-assistant-lesson/check_diff.py">the offline Git diff validator</a> and save it as <code>check_diff.py</code> in the project folder before committing the baseline. Then create the known README and commit both files:</p>
+<p>Use this disposable repository first to verify Git diff hygiene before letting any coding assistant touch bioinformatics code. The setup fetches <a href="../files/coding-assistant-lesson/check_diff.py">the offline Git diff validator</a> directly into the new folder and configures a repo-local Git identity so pasting the block works cleanly on a fresh machine:</p>
 <pre><code class="language-bash">git --version
 mkdir cursor-aider-practice
 cd cursor-aider-practice
+curl -fsSLO https://theomicshub.com/files/coding-assistant-lesson/check_diff.py
 cat &gt; README.md &lt;&lt;'EOF'
 # Sample-count helper
 
@@ -194,11 +195,13 @@ Input: 12 reads in sample A and 8 reads in sample B.
 Expected total: 20 reads.
 EOF
 git init
+git config user.name "Bioinformatics Learner"
+git config user.email "learner@localhost"
 git add README.md check_diff.py
 git commit -m "Add project baseline"
 git status --short
 </code></pre>
-<p>Run this in a new, writable directory. Git must be configured to make a local commit; if it is not, use Git's local repository identity instructions and a placeholder identity for this disposable fixture rather than changing global settings. The final status should be empty. Stop if it shows unexpected files or changes.</p>
+<p>If working completely offline from a local clone of the site, replace the <code>curl</code> line with <code>cp /path/to/files/coding-assistant-lesson/check_diff.py .</code> before <code>git add</code>. The final <code>git status --short</code> output must be empty.</p>
 <p>Create two independent copies from that committed baseline so the comparison starts from the same text. From inside <code>cursor-aider-practice</code>, run:</p>
 <pre><code class="language-bash">git clone . ../cursor-practice
 git clone . ../aider-practice
@@ -257,6 +260,25 @@ Rscript test_inspect_counts.R inspect_counts.R counts.tsv</code></pre>
 <p><strong>Answer rubric:</strong> identify genes as rows and samples as columns; report 16 and 12 by summing columns; reject negative values, decimals, NaN, and infinity as not nonnegative integer counts; and state that shape, integer, and sum checks do not prove that values are truly raw counts, have correct provenance, preserve sample identity, represent independent samples, or support any biological conclusion. The example is synthetic arithmetic only. Do not infer biology from it.</p>
 <p><strong>Python tool boundary:</strong> the optional Python checker uses the Python standard library. Cursor, Aider, hosted providers, and model responses were not installed or run; no model request or paid call was made. Hosted model use is optional and may incur charges.</p>
 
+<h2>Auditing AI edits on real bioinformatics code: Cursor rules, Aider test gates, and rejected diffs</h2>
+<p>In day-to-day bioinformatics, you use Cursor or Aider to extend scripts such as <code>inspect_counts.R</code> rather than editing prose. The two tools enforce boundaries differently:</p>
+<ul>
+<li><strong>Cursor project rules (<code>.cursor/rules/bioinformatics.mdc</code>):</strong> store repository-committed rules specifying matrix orientation (genes in rows, samples in columns), raw integer count invariants, forbidden silent row filtering, and required <code>Rscript test_inspect_counts.R</code> verification before accepting Composer/Agent multi-file edits.</li>
+<li><strong>Aider chat modes and automated test gates:</strong> start read-only design discussion with <code>/ask</code> (or two-model planning with <code>/architect</code>), inspect pending working-tree hunks with <code>/diff</code>, revert bad edits instantly with <code>/undo</code>, and bind your unit-test suite via <code>aider --no-auto-commits --test-cmd "Rscript test_inspect_counts.R inspect_counts.R counts.tsv" inspect_counts.R</code> so failing invariants trigger immediate feedback.</li>
+</ul>
+<p>Suppose you ask an assistant to warn when any library column sum falls below <code>min_total = 15</code> without altering input rows or return values. Compare these two unified diffs against <code>inspect_counts.R</code>:</p>
+<pre><code class="language-diff"># ACCEPTABLE BOUNDED DIFF (preserves zero-count genes, orientation, and test contract):
+ totals &lt;- colSums(mat)
++low_depth &lt;- names(totals)[totals &lt; 15L]
++if (length(low_depth) &gt; 0L) {
++  warning("Low library depth (&lt;15): ", paste(low_depth, collapse = ", "), call. = FALSE)
++}
+
+# REJECTED OUT-OF-SCOPE DIFF (silently drops zero-count genes and swaps colSums -&gt; rowSums):
+-totals &lt;- colSums(mat)
++mat &lt;- mat[rowSums(mat) &gt; 0, , drop = FALSE]
++totals &lt;- rowSums(mat)</code></pre>
+<p>Running <code>Rscript test_inspect_counts.R inspect_counts.R counts.tsv</code> immediately catches the second diff because sample names and column totals (<code>sample_A: 16</code>, <code>sample_B: 12</code>) no longer match, and <code>git diff</code> exposes the unrequested <code>rowSums(mat) &gt; 0</code> filter that would distort downstream library-size denominators.</p>
 <h2>Choosing between the two tools</h2>
 <p>Use Cursor when an interactive editor and visual diff review fit your work. Use Aider when a terminal workflow in a Git repository fits better. They can complement each other, but using both does not provide independent scientific validation: both may produce plausible, incorrect changes. Keep analysis design and biological interpretation with the researcher.</p>
 <section aria-label="References and further reading"><h2>Official documentation</h2><ul>
@@ -379,7 +401,7 @@ Rscript test_inspect_counts.R inspect_counts.R counts.tsv</code></pre>
 </script>
 <script src="../assets/vendor/prism/prism-1.29.0.js"></script>
 <script id="tutorial-code-data">
-window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"ai-coding-cursor-aider":{"blocks":[{"language":"bash","sha256":"8e1cb3e4097bcccd813a4de1d2596d94bbbc0f7c8796830007e6c72841b86454"},{"language":"bash","sha256":"d28f02f7cbe2190d5e96581fae8ef9d219bdd8f2545c7e504d0d8a2e7f4d6fe0"},{"language":"bash","sha256":"1e094656601aa4fe9d90d80e7da9e7c8cfc9ade13f3a0c4d7b29410dab6f926f"},{"language":"bash","sha256":"0b83964ba862c05436045fe8b717dd0bad0c473ced341c934914a80cbe8191d5"},{"language":"diff","sha256":"1d30c1fc1b307512251903b0a83b60ba6ab48a34dbf15c2ba82858b539cb4e0e"},{"language":"bash","sha256":"b0f4f80bb71b54849c138db20f216945b9429277a2a40cf4dc835c2314f238aa"},{"language":"bash","sha256":"fc4e4d8487ceb23249781181648b77a5404cdf87f48bab3b33a26cf2128e71d0"},{"language":"bash","sha256":"4db8273557835cfc6db24251162b7f4bcfdb3aefc7acbe24f5a38274b481bece"}],"groups":[{"title":"Inspect the synthetic count table","panels":[{"start":34,"end":38,"language":"r","label":"R \u00b7 exercise"},{"start":39,"end":40,"language":"python","label":"Python"}],"members":[{"index":34,"tag":"h2","sha256":"8508589ffa9a0c96c728eb6112bb76f4c96c661f3bf216df06e90209ad9e9093"},{"index":35,"tag":"p","sha256":"99fd794d8b8d99d378fd18b4b5ef90262dc029bb56a7b01c26f523d982457688"},{"index":36,"tag":"pre","sha256":"fc4e4d8487ceb23249781181648b77a5404cdf87f48bab3b33a26cf2128e71d0"},{"index":37,"tag":"p","sha256":"ade536240baf23b016a8310b053058026fd9d9aa3d42eedd1a375b6227c67f76"},{"index":38,"tag":"p","sha256":"ac26708a9caca1f9700ef75777f4e9d51c4035bcb0d92c3ff0a65091a510979f"},{"index":39,"tag":"p","sha256":"93d88e9fb3911278a971dfc9685d1fd905c102f540b7cb49e4c28a0a9c8aec6a"},{"index":40,"tag":"p","sha256":"75a3bab6a201b4dbf6f2f403a36ebfd01375f851dea607d10bd06bb71bd183a9"}],"tabOrder":["r","python"]}]}}};
+window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"ai-coding-cursor-aider":{"blocks":[{"language":"bash","sha256":"63f9aaaebc94c47bb197cfcac4932aee4c766148b73694195ec0d0656d182cfd"},{"language":"bash","sha256":"d28f02f7cbe2190d5e96581fae8ef9d219bdd8f2545c7e504d0d8a2e7f4d6fe0"},{"language":"bash","sha256":"1e094656601aa4fe9d90d80e7da9e7c8cfc9ade13f3a0c4d7b29410dab6f926f"},{"language":"bash","sha256":"0b83964ba862c05436045fe8b717dd0bad0c473ced341c934914a80cbe8191d5"},{"language":"diff","sha256":"1d30c1fc1b307512251903b0a83b60ba6ab48a34dbf15c2ba82858b539cb4e0e"},{"language":"bash","sha256":"b0f4f80bb71b54849c138db20f216945b9429277a2a40cf4dc835c2314f238aa"},{"language":"bash","sha256":"fc4e4d8487ceb23249781181648b77a5404cdf87f48bab3b33a26cf2128e71d0"},{"language":"bash","sha256":"4db8273557835cfc6db24251162b7f4bcfdb3aefc7acbe24f5a38274b481bece"},{"language":"diff","sha256":"73bb070b33aaa6ceb2a120299373d025ff334c1c821edeff05127919eae58f2a"}],"groups":[{"title":"Inspect the synthetic count table","panels":[{"start":34,"end":38,"language":"r","label":"R \u00b7 exercise"},{"start":39,"end":40,"language":"python","label":"Python"}],"members":[{"index":34,"tag":"h2","sha256":"8508589ffa9a0c96c728eb6112bb76f4c96c661f3bf216df06e90209ad9e9093"},{"index":35,"tag":"p","sha256":"99fd794d8b8d99d378fd18b4b5ef90262dc029bb56a7b01c26f523d982457688"},{"index":36,"tag":"pre","sha256":"fc4e4d8487ceb23249781181648b77a5404cdf87f48bab3b33a26cf2128e71d0"},{"index":37,"tag":"p","sha256":"ade536240baf23b016a8310b053058026fd9d9aa3d42eedd1a375b6227c67f76"},{"index":38,"tag":"p","sha256":"ac26708a9caca1f9700ef75777f4e9d51c4035bcb0d92c3ff0a65091a510979f"},{"index":39,"tag":"p","sha256":"93d88e9fb3911278a971dfc9685d1fd905c102f540b7cb49e4c28a0a9c8aec6a"},{"index":40,"tag":"p","sha256":"75a3bab6a201b4dbf6f2f403a36ebfd01375f851dea607d10bd06bb71bd183a9"}],"tabOrder":["r","python"]}]}}};
 </script>
 <script src="../code-tabs.js?v=20261026-startup-v1"></script>
 <script src="../copy-code.js?v=20261025-r-first-v1"></script>

@@ -172,221 +172,101 @@ function toggleMobileMenu() {
 </div>
 <nav aria-label="Learning path navigation" class="reader-toolbar"><span class="reader-toolbar__heading">Learning path</span><a href="conda-mamba-part1.html" rel="prev" class="reader-toolbar__previous"><span class="reader-toolbar__direction"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5m0 0 7 7m-7-7 7-7"/></svg></span><span class="reader-toolbar__copy"><small>Previous prerequisite</small><strong>Micromamba Environments for Bioinformatics</strong></span></a><a data-catalogue-return="" href="../tutorials.html" class="reader-toolbar__library"><span class="reader-toolbar__library-mark" aria-hidden="true"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="6" height="6" rx="1.3"/><rect x="14" y="4" width="6" height="6" rx="1.3"/><rect x="4" y="14" width="6" height="6" rx="1.3"/><rect x="14" y="14" width="6" height="6" rx="1.3"/></svg></span><span><small>Browse</small><strong>All tutorials</strong></span></a><a href="statistics-for-bioinformatics.html" rel="next" class="reader-toolbar__next"><span class="reader-toolbar__copy"><small>Suggested next</small><strong>Statistics for Bioinformatics</strong></span><span class="reader-toolbar__direction"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14m0 0-7-7m7 7-7 7"/></svg></span></a></nav>
 <article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--lab">
-<p class="lesson-lead">Start with a base-R route that turns a small FASTA file into a checked CSV. If your goal is to learn Python, expand the optional track to solve the same task and then study Python strings, functions, file paths, and validation. Neither route establishes biological meaning from a GC fraction.</p>
+<p class="lesson-lead">Learn core Python 3 constructs for bioinformatics step by step: string normalization and reverse complements, reusable functions with explicit ambiguous-base rules, k-mer dictionaries, constant-memory FASTA generators (<code>yield</code>), and validated CSV output. Readers following the R-first track can jump directly to <a href="r-tidyverse-fundamentals.html">R and Tidyverse Fundamentals</a> or open the collapsible base-R comparison at the bottom of this page.</p>
 <section class="lesson-summary tutorial-learning-contract" data-tutorial-format="hands-on-lab" aria-label="Learning format">
-<p><strong>Format: Hands-on lab.</strong> Beginners with basic command-line familiarity can complete the primary base-R FASTA summary using only R base functions. Learners whose goal is Python can optionally expand the Python track, which uses the same synthetic input, alphabet rule, CSV columns, and expected values while teaching Python-specific fundamentals.</p>
+<p><strong>Format: Hands-on lab.</strong> Builds a complete Python 3 standard-library FASTA validator and summary CLI from individual language building blocks, with locally executed Python 3.12 outputs at every step and no external package requirement.</p>
 </section>
-<h2>Primary route: FASTA statistics in base R</h2>
-<p>This route is the main analysis path and does not require Python, Biopython, or a package installation. It applies the same explicit rule as the optional Python example: uppercase after whitespace removal, accept only A, C, G, T, and N, report normalized sequence length, calculate GC as G+C divided by the full length (including N), leave GC blank for invalid records, and write the columns <code>id</code>, <code>length</code>, <code>gc_fraction</code>, and <code>valid</code> to CSV. The downloadable <a href="../files/tutorial-examples/python-fundamentals-bioinformatics/compute_fasta_stats.R">R script source</a> is shown below.</p>
-<p>Create a project, save the supplied fixture, and put the downloaded R script at <code>scripts/compute_fasta_stats.R</code>. The input is synthetic teaching text, not a biological observation.</p>
-<pre><code>mkdir -p ~/projects/fasta-stats/data/raw ~/projects/fasta-stats/scripts ~/projects/fasta-stats/outputs
-cd ~/projects/fasta-stats
-cat &gt; data/raw/example.fasta &lt;&lt;'EOF'
-&gt;seq1
-ACGTACGTNNACGT
-&gt;seq2
-acgtacgtacgtacgtacgt
-&gt;seq3
-AGCTTAGC--NNNN
-EOF
-Rscript --version
-</code></pre>
-<h3>Read, validate, summarize, and write the same CSV</h3>
-<pre><code>#!/usr/bin/env Rscript
-# Read FASTA records, validate A/C/G/T/N after normalization, and write CSV.
-# Usage: Rscript compute_fasta_stats.R INPUT.fasta OUTPUT.csv
-args &lt;- commandArgs(trailingOnly = TRUE)
-if (length(args) != 2L) {
-  stop("Usage: Rscript compute_fasta_stats.R INPUT.fasta OUTPUT.csv", call. = FALSE)
-}
-input_path &lt;- normalizePath(args[[1]], mustWork = TRUE)
-output_path &lt;- normalizePath(args[[2]], mustWork = FALSE)
-if (identical(input_path, output_path)) {
-  stop("Input and output paths must be different", call. = FALSE)
-}
+<h2>What you will build and prerequisites</h2>
+<p>You will progress from interactive Python expressions on a single DNA sequence to a modular command-line script (<code>scripts/compute_fasta_stats.py</code>) that streams multi-record FASTA files in constant memory and writes a checked CSV (<code>id</code>, <code>length</code>, <code>gc_fraction</code>, <code>valid</code>). All core steps require only Python 3.10+ and a POSIX terminal.</p>
+<h2>Step 1: Strings, slicing, and reverse complements</h2>
+<p>Raw sequence strings from text files or primers often arrive with leading/trailing whitespace, newline characters, mixed case, or ambiguous <code>N</code> bases. Python strings are immutable sequences supporting zero-based slicing (<code>seq[start:stop]</code>), reversal (<code>seq[::-1]</code>), and fast character translation tables via <code>str.maketrans()</code>:</p>
+<pre><code class="language-python">raw_seq = "  acgtacgtnnacgt \n"
+seq = "".join(raw_seq.split()).upper()
+complement_table = str.maketrans("ACGTN", "TGCAN")
+rev_comp = seq.translate(complement_table)[::-1]
 
-fasta_records &lt;- function(path) {
-  lines &lt;- readLines(path, warn = FALSE, encoding = "UTF-8")
-  records &lt;- list()
-  current_id &lt;- NULL
-  sequence_parts &lt;- character()
+print(f"Normalized: {seq} (length = {len(seq)}, first_codon = {seq[:3]})")
+print(f"Reverse complement: {rev_comp}")</code></pre>
+<p>Observed output (Python 3.12.3):</p>
+<pre><code class="language-text">Normalized: ACGTACGTNNACGT (length = 14, first_codon = ACG)
+Reverse complement: ACGTNNACGTACGT</code></pre>
+<p><strong>Mini-exercise:</strong> Why use <code>"".join(raw_seq.split())</code> instead of <code>raw_seq.strip()</code>? Because multi-line FASTA sequences or GenBank pastes can contain internal spaces or newlines; <code>.split()</code> removes all whitespace characters anywhere in the string, whereas <code>.strip()</code> trims only the ends.</p>
+<h2>Step 2: Functions, sets, and the GC denominator trap</h2>
+<p>Membership checks against a <code>set</code> (<code>ch in VALID_BASES</code>) run in $O(1)$ average time. When writing a GC-content function, decide explicitly whether ambiguous <code>N</code> bases belong in the denominator: dividing <code>G + C</code> by full sequence length (<code>6 / 14 = 0.42857</code>) differs from Biopython's <code>Bio.SeqUtils.gc_fraction(seq, ambiguous="remove")</code> default, which drops <code>N</code> from the denominator (<code>6 / 12 = 0.50000</code>):</p>
+<pre><code class="language-python">VALID_BASES = set("ACGTN")
 
-  save_record &lt;- function() {
-    if (!is.null(current_id)) {
-      records[[length(records) + 1L]] &lt;&lt;- list(
-        id = current_id,
-        sequence = paste(sequence_parts, collapse = "")
-      )
-    }
-  }
-
-  for (raw_line in lines) {
-    line &lt;- trimws(raw_line)
-    if (!nzchar(line)) next
-    if (startsWith(line, "&gt;")) {
-      save_record()
-      current_id &lt;- trimws(substring(line, 2L))
-      if (!nzchar(current_id)) stop("FASTA header is empty", call. = FALSE)
-      sequence_parts &lt;- character()
-    } else {
-      if (is.null(current_id)) {
-        stop("Sequence text found before the first FASTA header", call. = FALSE)
-      }
-      sequence_parts &lt;- c(sequence_parts, line)
-    }
-  }
-  save_record()
-  records
-}
-
-normalize_sequence &lt;- function(sequence) {
-  toupper(gsub("[[:space:]]+", "", sequence, perl = TRUE))
-}
-valid_bases &lt;- c("A", "C", "G", "T", "N")
-records &lt;- fasta_records(input_path)
-rows &lt;- lapply(records, function(record) {
-  sequence &lt;- normalize_sequence(record$sequence)
-  valid &lt;- nzchar(sequence) &amp;&amp; all(strsplit(sequence, "", fixed = TRUE)[[1L]] %in% valid_bases)
-  gc_text &lt;- ""
-  if (valid) {
-    bases &lt;- strsplit(sequence, "", fixed = TRUE)[[1L]]
-    gc_text &lt;- sprintf("%.5f", sum(bases %in% c("G", "C")) / length(bases))
-  }
-  data.frame(
-    id = record$id,
-    length = nchar(sequence, type = "chars"),
-    gc_fraction = gc_text,
-    valid = if (valid) "yes" else "no",
-    stringsAsFactors = FALSE,
-    check.names = FALSE
-  )
-})
-result &lt;- if (length(rows)) {
-  do.call(rbind, rows)
-} else {
-  data.frame(id = character(), length = integer(), gc_fraction = character(),
-             valid = character(), stringsAsFactors = FALSE)
-}
-output_dir &lt;- dirname(output_path)
-if (!dir.exists(output_dir) &amp;&amp; !dir.create(output_dir, recursive = TRUE)) {
-  stop("Could not create output directory: ", output_dir, call. = FALSE)
-}
-write.csv(result, output_path, row.names = FALSE, na = "", fileEncoding = "UTF-8")
-</code></pre>
-<p>Run the script and inspect the CSV:</p>
-<pre><code>Rscript scripts/compute_fasta_stats.R data/raw/example.fasta outputs/sequence_stats.csv
-cat outputs/sequence_stats.csv
-</code></pre>
-<p>For the fixture, <code>seq1</code> has length 14 and GC fraction <code>0.42857</code>; <code>seq2</code> has length 20 and GC fraction <code>0.50000</code>; <code>seq3</code> has length 14, is invalid because it contains a gap, and has a blank GC field. Compare parsed CSV values rather than relying on quoting style, which can differ between CSV writers. N remains in the denominator for valid sequences, exactly as in the Python route.</p>
-<p><strong>Check one failure:</strong> pass the same path as both input and output. The script should stop with an error rather than overwrite the FASTA. Then try a lowercase or wrapped sequence line; normalization should preserve the same result. These checks exercise file and alphabet rules, not biological validity. The parser is intentionally small and should not replace a maintained parser for production or unusual FASTA dialects.</p>
-<h2>Optional Python track: learn Python with the same FASTA task</h2>
-<p class="lesson-optional-route-summary"><strong>Expand the optional Python fundamentals lab</strong> if Python is the language you want to learn. The R route above remains the primary analysis path.</p><div>
-<div class="flex flex-wrap items-center gap-4 text-xs font-mono text-gray-500 bg-gray-50 p-3 rounded-lg border border-gray-200 mb-6">
-<div class="flex items-center gap-1">
-<svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
-<span><strong>Optional Python environment:</strong> Python 3.10 or newer; local file operations only. The R route needs no Python environment.</span>
-</div>
-<div class="flex items-center gap-1">
-<svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
-<span>Updated 25 October 2026</span></div>
-</div><h2>What you will build</h2>
-<p>The lab ends with a CSV row for each FASTA record, containing its identifier, normalized length, GC fraction when the sequence passes the chosen alphabet check, and a validity flag. You will also be able to explain the denominator used for that fraction.</p>
-<ul>
-<li>Use Python variables, strings, lists, dictionaries, loops, conditions, and functions for small bioinformatics tasks.</li>
-<li>Read and validate plain-text biological sequence files (FASTA) safely and compute basic statistics: sequence length and GC content.</li>
-<li>Create a reproducible, modular script with a clear input and output path, and run it inside an isolated virtual environment.</li>
-<li>Inspect results and understand what the computed statistics imply and what they do not.</li>
-</ul>
-<p>Prerequisites:</p>
-<ul>
-<li>Basic familiarity with the command line (cd, ls) and an editor (vim, nano, VS Code).</li>
-<li>Python 3.10 or newer installed. This lesson uses explicit commands for Python 3; adjust to your system's python executable if needed.</li>
-<li>Approximately 30–60 minutes of hands-on time.</li>
-</ul>
-<h2>Why validate the input before summarizing it?</h2>
-<p>A FASTA file is plain text organized as records: a header line begins with `&gt;`, followed by one or more sequence lines. A small parser lets you inspect the mechanics, but its assumptions must be visible. Here the script accepts only A, C, G, T, and N after uppercasing; it flags other symbols rather than silently removing them. That is a teaching rule, not a universal definition of valid biology.</p>
-<h2>Lab: turn FASTA records into a checked summary</h2>
-<p>Work in a project directory so the input, script, and output have distinct paths. The inline FASTA fixture is synthetic teaching data, not a biological result. Commands below target a POSIX shell.</p>
-<p>Files you should have before starting (create these or replace with your own):</p>
-<ul>
-<li>data/raw/example.fasta: the synthetic fixture created in step 1, or a FASTA file you have permission to use.</li>
-<li>scripts/compute_fasta_stats.py: the script created in step 3.</li>
-</ul>
-<h3>1. Set up the project and inspect the fixture</h3>
-<pre><code># Make a project folder and create input directories
-mkdir -p ~/projects/python-bioinfo/data/raw ~/projects/python-bioinfo/scripts
-cd ~/projects/python-bioinfo
-
-# Create a small example FASTA if you do not already have one
-cat &gt; data/raw/example.fasta &lt;&lt;'EOF'
-&gt;seq1
-ACGTACGTNNACGT
-&gt;seq2
-acgtacgtacgtacgtacgt
-&gt;seq3
-AGCTTAGC--NNNN
-EOF
-
-# Confirm the file exists and show contents
-ls -l data/raw/example.fasta
-cat data/raw/example.fasta
-</code></pre>
-<p>What this produces: a FASTA file at data/raw/example.fasta containing three sequence records. The fixture has three synthetic records. The third contains `-`, so it should be marked invalid by this script. This makes the validation rule observable without presenting fabricated biological data.</p>
-<h3>2. Create and activate a virtual environment</h3>
-<pre><code># Create an isolated environment (will create ~/projects/python-bioinfo/.venv)
-python3 -m venv .venv
-
-# Activate the environment (POSIX shells)
-source .venv/bin/activate
-
-# Upgrade pip and install recommended packages (optional)
-python -m pip install biopython
-
-# Record exact versions for reproducibility
-python -m pip freeze &gt; envs-requirements.txt
-</code></pre>
-<p>What this produces: a virtual environment in .venv, and envs-requirements.txt listing installed package versions. The optional Biopython comparison in step 5 requires an internet connection to install; skip it if you only want to run the standard-library script. To recreate the recorded package environment later, use `python -m pip install -r envs-requirements.txt`.</p>
-<h3>3. Write a small script with explicit checks</h3>
-<p>Create scripts/compute_fasta_stats.py. The script uses only Python’s standard library. It reads records one at a time, rejects sequence text before the first header and empty headers, and refuses to overwrite the input file accidentally. Its alphabet rule is explicit; adjust it only when your downstream task supports the added symbols.</p>
-<pre><code>#!/usr/bin/env python3
-"""
-scripts/compute_fasta_stats.py
-
-Read a FASTA file, validate sequences, compute length and GC fraction for each record,
-and write a CSV file with summary statistics.
-
-Usage:
-  python scripts/compute_fasta_stats.py data/raw/example.fasta outputs/sequence_stats.csv
-"""
-import sys
-import csv
-from pathlib import Path
-
-VALID_BASES = set("ACGTN")  # Accept uppercase only after normalization
-
-def normalize(seq):
-    "Strip whitespace and convert to uppercase."
-    return "".join(seq.split()).upper()
-
-def is_valid_dna(seq):
-    "Return True if sequence contains only expected bases A,C,G,T,N."
+def is_valid_dna(seq: str) -&gt; bool:
     return bool(seq) and all(ch in VALID_BASES for ch in seq)
 
-def gc_fraction(seq):
-    "Compute GC fraction safely; assumes seq is normalized uppercase."
-    if len(seq) == 0:
+def gc_fraction(seq: str, include_n: bool = True) -&gt; float:
+    denom = len(seq) if include_n else sum(1 for ch in seq if ch in "ACGT")
+    if denom == 0:
         return 0.0
-    gc = sum(1 for ch in seq if ch in ("G", "C"))
-    return gc / len(seq)
+    return sum(1 for ch in seq if ch in "GC") / denom
 
-def fasta_records(path):
-    """Simple record-by-record FASTA parser.
-    Yields tuples: (header, sequence_string).
-    This parser treats any line starting with '&gt;' as header.
-    """
+seq = "ACGTACGTNNACGT"
+print(f"Valid: {is_valid_dna(seq)} | GC (with N): {gc_fraction(seq, True):.5f} | GC (A/C/G/T only): {gc_fraction(seq, False):.5f}")</code></pre>
+<p>Observed output:</p>
+<pre><code class="language-text">Valid: True | GC (with N): 0.42857 | GC (A/C/G/T only): 0.50000</code></pre>
+<h2>Step 3: Lists, loops, and dictionaries for k-mer counting</h2>
+<p>Dictionaries (<code>dict</code>) map unique keys (such as record IDs or short oligonucleotide $k$-mers) to values in constant average lookup time. Sliding a window of length $k = 4$ across <code>seq</code> while skipping windows containing <code>N</code> illustrates loops, conditionals, and <code>dict.get(key, 0)</code>:</p>
+<pre><code class="language-python">seq = "ACGTACGTNNACGT"
+kmers: dict[str, int] = {}
+for i in range(len(seq) - 4 + 1):
+    kmer = seq[i : i + 4]
+    if "N" not in kmer:
+        kmers[kmer] = kmers.get(kmer, 0) + 1
+
+print("Unambiguous 4-mers:", kmers)</code></pre>
+<p>Observed output:</p>
+<pre><code class="language-text">Unambiguous 4-mers: {'ACGT': 3, 'CGTA': 1, 'GTAC': 1, 'TACG': 1}</code></pre>
+<h2>Step 4: Why generators (<code>yield</code>) matter for genome-scale FASTA files</h2>
+<p>Reading an entire FASTA file into a list or dictionary works for three toy sequences, but human GRCh38 occupies ~3.1 GB uncompressed. A generator function using <code>yield</code> pauses after each complete record, holding only one sequence in RAM at a time while still allowing clean <code>for header, seq in fasta_records(path):</code> iteration.</p>
+<h2>Step 5: Complete FASTA-to-CSV command-line workflow</h2>
+<h3>1. Set up the project and create the synthetic FASTA fixture</h3>
+<pre><code class="language-bash">mkdir -p ~/projects/python-bioinfo/data/raw ~/projects/python-bioinfo/scripts ~/projects/python-bioinfo/outputs
+cd ~/projects/python-bioinfo
+
+cat &gt; data/raw/example.fasta &lt;&lt;'EOF'
+&gt;seq1
+ACGTACGTNNACGT
+&gt;seq2
+acgtacgtacgtacgtacgt
+&gt;seq3
+AGCTTAGC--NNNN
+EOF
+
+cat data/raw/example.fasta</code></pre>
+<p><code>seq3</code> intentionally contains alignment gap characters (<code>--</code>) so you can verify that invalid records are flagged (<code>valid=no</code>, blank <code>gc_fraction</code>) rather than silently stripped.</p>
+<h3>2. Optional virtual environment for third-party packages</h3>
+<pre><code class="language-bash">python3 -m venv .venv
+source .venv/bin/activate
+# Optional only if you want Step 6's Biopython comparison:
+# python -m pip install biopython &amp;&amp; python -m pip freeze &gt; envs-requirements.txt</code></pre>
+<h3>3. Save <code>scripts/compute_fasta_stats.py</code></h3>
+<pre><code class="language-python">#!/usr/bin/env python3
+"""Read FASTA records, validate A/C/G/T/N after normalization, and write CSV."""
+import csv
+from pathlib import Path
+import sys
+
+VALID_BASES = set("ACGTN")
+
+def normalize(seq: str) -&gt; str:
+    return "".join(seq.split()).upper()
+
+def is_valid_dna(seq: str) -&gt; bool:
+    return bool(seq) and all(ch in VALID_BASES for ch in seq)
+
+def gc_fraction(seq: str) -&gt; float:
+    if not seq:
+        return 0.0
+    return sum(1 for ch in seq if ch in ("G", "C")) / len(seq)
+
+def fasta_records(path: Path):
     with open(path, "r", encoding="utf-8") as fh:
         name = None
-        parts = []
+        parts: list[str] = []
         for raw in fh:
             line = raw.strip()
             if not line:
@@ -405,62 +285,51 @@ def fasta_records(path):
         if name is not None:
             yield name, "".join(parts)
 
-def main():
+def main() -&gt; None:
     if len(sys.argv) != 3:
-        print("Usage: python scripts/compute_fasta_stats.py INPUT.fasta OUTPUT.csv", file=sys.stderr)
+        print("Usage: python3 scripts/compute_fasta_stats.py INPUT.fasta OUTPUT.csv", file=sys.stderr)
         sys.exit(2)
-
     in_path = Path(sys.argv[1])
     out_path = Path(sys.argv[2])
     if in_path.resolve() == out_path.resolve():
         print("Input and output paths must be different", file=sys.stderr)
         sys.exit(2)
     out_path.parent.mkdir(parents=True, exist_ok=True)
-
     with open(out_path, "w", newline="", encoding="utf-8") as out_fh:
         writer = csv.DictWriter(out_fh, fieldnames=["id", "length", "gc_fraction", "valid"])
         writer.writeheader()
         for header, seq in fasta_records(in_path):
             seq_norm = normalize(seq)
             valid = is_valid_dna(seq_norm)
-            length = len(seq_norm)
-            gc = gc_fraction(seq_norm) if valid else ""
             writer.writerow({
                 "id": header,
-                "length": length,
-                "gc_fraction": f"{gc:.5f}" if gc != "" else "",
-                "valid": "yes" if valid else "no"
+                "length": len(seq_norm),
+                "gc_fraction": f"{gc_fraction(seq_norm):.5f}" if valid else "",
+                "valid": "yes" if valid else "no",
             })
 
 if __name__ == "__main__":
-    main()
-</code></pre>
-<p>What this produces: a script that reads a FASTA file, validates sequences against a simple DNA alphabet (A,C,G,T,N), computes length and GC fraction for each record, and writes data to the output CSV path you provide.</p>
-<h3>4. Run the script</h3>
-<pre><code># Run the script with the example FASTA and write results to outputs/
-python scripts/compute_fasta_stats.py data/raw/example.fasta outputs/sequence_stats.csv
-
-# Show the resulting CSV
-cat outputs/sequence_stats.csv
-</code></pre>
-<p>Expected file: outputs/sequence_stats.csv with columns: id, length, gc_fraction, valid. The exact values depend on the input. For the fixture, the first record has length 14 and GC fraction 0.42857; the second has length 20 and fraction 0.50000; the third is invalid because it contains `-`, so its GC field is blank. These are arithmetic checks on synthetic strings, not empirical findings. You can load the CSV into pandas if that package is installed. Treat files from untrusted sources cautiously when opening them in spreadsheet software.</p>
-<h3>5. Optional: parse with Biopython for comparison</h3>
-<p>If you installed Biopython in the virtual environment, use SeqIO to parse records, then apply the same normalization and alphabet rule as the main script. `SeqIO.parse` yields records from an iterator and supports multiple sequence formats; parsing does not replace validating that symbols and metadata fit your analysis.</p>
-<pre><code># Run an interactive comparison (while env is activated)
-python - &lt;&lt;'PY'
-from Bio import SeqIO
-from pathlib import Path
+    main()</code></pre>
+<h3>4. Run the script and verify the CSV output</h3>
+<pre><code class="language-bash">python3 scripts/compute_fasta_stats.py data/raw/example.fasta outputs/sequence_stats.csv
+cat outputs/sequence_stats.csv</code></pre>
+<p>Observed CSV output (executed locally with Python 3.12.3):</p>
+<pre><code class="language-text">id,length,gc_fraction,valid
+seq1,14,0.42857,yes
+seq2,20,0.50000,yes
+seq3,14,,no</code></pre>
+<h3>5. Optional Biopython comparison and base-R counterpart</h3>
+<p>When Biopython is installed, <code>Bio.SeqIO.parse(path, "fasta")</code> replaces custom header/line splitting while leaving alphabet and denominator choices to your analysis:</p>
+<pre><code class="language-python">from Bio import SeqIO
 
 valid_bases = set("ACGTN")
-for rec in SeqIO.parse(str(Path("data/raw/example.fasta")), "fasta"):
+for rec in SeqIO.parse("data/raw/example.fasta", "fasta"):
     seq = "".join(str(rec.seq).split()).upper()
     valid = bool(seq) and all(base in valid_bases for base in seq)
-    gc = sum(1 for base in seq if base in "GC") / len(seq) if valid else ""
-    gc_text = f"{gc:.5f}" if valid else ""
-    print(rec.id, len(seq), gc_text, "yes" if valid else "no")
-PY
-</code></pre>
-<p>What this produces: console output listing record id, normalized length, GC fraction (blank for invalid records), and validity. For the supplied fixture, seq3 is reported invalid with no GC value, matching the standard-library script. Biopython provides a maintained parser; the validity rule remains the workflow's explicit responsibility.</p>
+    gc_text = f"{sum(1 for b in seq if b in 'GC') / len(seq):.5f}" if valid else ""
+    print(rec.id, len(seq), gc_text, "yes" if valid else "no")</code></pre>
+<details class="mt-4 mb-6 rounded-xl border border-gray-200 bg-gray-50 p-4"><summary class="font-semibold cursor-pointer">Optional R comparison: equivalent base-R FASTA script</summary><p class="mt-2">For learners comparing Python with R, the repository also provides <a href="../files/tutorial-examples/python-fundamentals-bioinformatics/compute_fasta_stats.R"><code>compute_fasta_stats.R</code></a>, which applies the identical <code>A/C/G/T/N</code> rule and <code>N</code>-inclusive GC denominator via <code>Rscript compute_fasta_stats.R data/raw/example.fasta outputs/sequence_stats_r.csv</code>. For full R data-frame workflows, continue to <a href="r-tidyverse-fundamentals.html">R and Tidyverse Fundamentals</a>.</p></details>
+<div>
 <h2>Output inspection and interpretation</h2>
 <p>When you open outputs/sequence_stats.csv, check the following:</p>
 <ul>
@@ -670,7 +539,7 @@ PY
 </script>
 <script src="../assets/vendor/prism/prism-1.29.0.js"></script>
 <script id="tutorial-code-data">
-window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"python-fundamentals-bioinformatics":{"blocks":[{"language":"bash","sha256":"b3a7e6f59e2080b0a770917d22de86394cd05ff94d75abd476c43d233bbfb52e"},{"language":"r","sha256":"476dad9a7179ae395bb18143285b4fc7ceefc09009a16ec4e5f1eb44d3c70398"},{"language":"bash","sha256":"d2d649d5f1ce2166d2f83685e6e4e08f507f50bd047908cc42805288ad4463f9"},{"language":"bash","sha256":"4cdf475d44b83bdfd015747bcf227a495db90a11814f32c430f256892e16b5f8"},{"language":"bash","sha256":"52c797f50def64386a4b490c2a351532c3114f94946c75a1d1157745ad91fce2"},{"language":"python","sha256":"2ed105ff5983b85eeafdd8c849946fdbf9696cf8f1c8e17487c861d2487fcc73"},{"language":"bash","sha256":"d987955920a3be07bcb2cc38172f57c85044d35addca5292a018d47ab9525316"},{"language":"python","sha256":"5f9318e3c2b220ffcee4a2af922f12710482386947ca66fcdd7ad3e595d46c21"}],"groups":[{"title":"Compute FASTA statistics to the same CSV contract","panels":[{"start":2,"end":11,"language":"r","label":"R \u00b7 main route"},{"start":12,"end":14,"language":"python","label":"Python \u00b7 optional"}],"members":[{"index":2,"tag":"h2","sha256":"7585e1feb9622ecb1cb83ebde8944ff6615a431ce680f588cfa5142babe04c85"},{"index":3,"tag":"p","sha256":"ede77fdd70659a3449e839080df03dfe53642ad6b4a9ce746e3c5dc268a826a2"},{"index":4,"tag":"p","sha256":"0177d2e902ed6df2a9a1bb9fb3f0fca8369c909c67735d6e88b0827d73d3cf03"},{"index":5,"tag":"pre","sha256":"b3a7e6f59e2080b0a770917d22de86394cd05ff94d75abd476c43d233bbfb52e"},{"index":6,"tag":"h3","sha256":"d136936e975aa957fa2843e91340b9b307a5b2d859a3ac888bd8ff03082cccce"},{"index":7,"tag":"pre","sha256":"476dad9a7179ae395bb18143285b4fc7ceefc09009a16ec4e5f1eb44d3c70398"},{"index":8,"tag":"p","sha256":"71fca51e5fa8730de222ea11baad7f15f5266bbf9f033c7ff42b21c9773893f1"},{"index":9,"tag":"pre","sha256":"d2d649d5f1ce2166d2f83685e6e4e08f507f50bd047908cc42805288ad4463f9"},{"index":10,"tag":"p","sha256":"abcc7090b07986393de0e3b27c3bb6ae47e424557e0da539c972dde5313c224c"},{"index":11,"tag":"p","sha256":"7a0200378a265da4dc37010f98ce6045425eb7cfe10b115722dfcdc87f59d538"},{"index":12,"tag":"h2","sha256":"1ed47dad34327cc73418caf65d29aa5544f7969bc64f89464231b0b0c1ba012f"},{"index":13,"tag":"p","sha256":"4cf387ad98e8baf5eee6c9b1d298cee2779030f2e0749ca10ff790341b49ef45"},{"index":14,"tag":"div","sha256":"16ad8c112b5fc065dc18f99e5a8490aba71df27222151d53920328cae9f3d7a0"}],"tabOrder":["r","python"]}]}}};
+window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"python-fundamentals-bioinformatics":{"blocks":[{"language":"python","sha256":"d685bf7635ac8c91d30405c4c340a015333cf022d4e6ab4f475bfc6dee76f974"},{"language":"text","sha256":"47343fcc98ecbe0d53fcb7b210686e3616a4f316085378c8b298101b6a93f322"},{"language":"python","sha256":"8f449dcb18ef91e48bfad783fcec3825b4f67bdf52fdfcfbc79a28fe4902f303"},{"language":"text","sha256":"f2a6752811225e24f14b3e4ca199f3361bb8401cd1b227845a1d6736fc58fcd8"},{"language":"python","sha256":"337eff5e8fc5904aa9cff391bc93f05d9b0f36d85e18980b38f6a413e4b5ce42"},{"language":"text","sha256":"db438aa2086192c6bec5d3ad905879a84f2e6e213105d43227f6a876944ea0e2"},{"language":"bash","sha256":"c54209576c12fd546a24418f7e809c298d4eb6947ed2170147f645d39f637417"},{"language":"bash","sha256":"a5b4ddc24a556002fd5bf9281c3e24d2b6dab455b6f907fa5599a79ca04378de"},{"language":"python","sha256":"1d3b5501d07f4ab789b0c3bd6f8af97fa3151ac7dc81f3e899cc8d5f9ae3f5b8"},{"language":"bash","sha256":"24edff48e37c4b5f3df5f9b9d9e9cfc366e1ba82249a339a60e9c64d463b9893"},{"language":"text","sha256":"b75a266cfcd7616cc04629d7ce1dfb499f0d98065b78c6ca7f03b4711eb803bd"},{"language":"python","sha256":"a8bb05c718758020b1a33fd0d9f2bf587676372460eb452fab1c27879bd3cf23"}],"groups":[]}}};
 </script>
 <script src="../code-tabs.js?v=20261026-startup-v1"></script>
 <script src="../copy-code.js?v=20261025-r-first-v1"></script>
