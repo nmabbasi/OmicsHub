@@ -80,6 +80,8 @@ def normalize_final_polish(relative_path, text):
     """Reverse the exact final-polish page revision; preserve unknown mutations."""
     if not isinstance(text, str):
         raise TypeError("final-polish normalization requires decoded text")
+    from homepage_redesign_baseline import normalize_homepage_redesign
+    text = normalize_homepage_redesign(relative_path, text)
     entry = _fixture().get(relative_path)
     if entry is None:
         return text

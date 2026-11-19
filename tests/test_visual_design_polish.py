@@ -130,6 +130,24 @@ class VisualDesignPolishTests(unittest.TestCase):
             text = page.read_text(encoding="utf-8")
             self.assertNotIn("\u2014", unescape(text), f"em-dash found in {rel}")
 
+    def test_removed_thesis_pdf_figures_and_examples_are_absent(self):
+        removed_paths = (
+            "images/figures/trajectory-1.webp",
+            "images/figures/dataviz-2.webp",
+            "tutorials/examples/Combined_LIANA_Analysis_Conserved_Specific_Signaling.html",
+            "tutorials/examples/Benchmark_cell_Prediction_Methods_5_012_2025_on_Clusters_v2.html",
+            "tutorials/examples/TCR_Analysis_v2.html",
+        )
+        for rel in removed_paths:
+            self.assertFalse((ROOT / rel).exists(), f"Thesis PDF figure asset must stay removed: {rel}")
+        downstream = (ROOT / "tutorials/scrna-seq-downstream-analysis.html").read_text(encoding="utf-8")
+        self.assertNotIn("Combined_LIANA_Analysis_Conserved_Specific_Signaling.html", downstream)
+        self.assertNotIn("TCR_Analysis_v2.html", downstream)
+        self.assertIn('href="cell-cell-communication.html"', downstream)
+        self.assertIn('href="tcr-bcr-repertoire-analysis.html"', downstream)
+        self.assertIn('href="examples/WNN_analysis_of_CITE_seq_RNA_ADT.html"', downstream)
+        self.assertIn('href="examples/inferCNV_analysis.html"', downstream)
+
 
 if __name__ == "__main__":
     unittest.main()

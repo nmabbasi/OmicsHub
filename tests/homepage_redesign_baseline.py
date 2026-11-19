@@ -67,6 +67,10 @@ PINNED_FILES = {
         "base_sha256": "95e06b81bfae634962e6078874ab0ba0de1e926ac472def734804102f29e1382",
         "current_sha256": "6ead96eea726b8b0eaec9e5d9929fc3badbbf7319ec62c4aea1cbfc71e47e3ad",
     },
+    "tutorials/scrna-seq-downstream-analysis.html": {
+        "base_sha256": "57d617aa03790df1589f8cd589f2d64f6660289a1e9b256d4e53be607ec68b38",
+        "current_sha256": "8ff30c3a27098a0d0262b129744daf651023be520de99719ef45711bfd12b0cf",
+    },
 }
 
 
