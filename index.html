@@ -156,8 +156,20 @@ function toggleMobileMenu() {
   .oh-pipe { opacity: 0.45; margin: 0 0.4rem; font-weight: 400; }
 
   /* Signature White-Screen Laptop with MacBook Pro Silver Unibody Keyboard */
-  .oh-laptop-hero { background: #FFFFFF; padding: 16px 0 28px; }
-  .oh-laptop-unit { width: 100%; max-width: 1180px; margin: 0 auto; }
+  .oh-laptop-hero {
+    background: #FFFFFF;
+    min-height: calc(100vh - 73px);
+    min-height: calc(100svh - 73px);
+    display: flex;
+    align-items: center;
+    padding: clamp(14px, 2.2svh, 28px) 0 clamp(18px, 3svh, 36px);
+  }
+  .oh-laptop-hero > .oh-wrap { max-width: 1400px; }
+  .oh-laptop-unit {
+    width: 100%;
+    max-width: min(1320px, max(960px, calc((100svh - 235px) * 1.78)));
+    margin: 0 auto;
+  }
   /* Lid width 91.6667% aligns pixel-for-pixel with SVG top edge 50..1150 of 1200 */
   .oh-laptop-lid {
     width: 91.6667%;
@@ -453,6 +465,18 @@ function toggleMobileMenu() {
   }
   .oh-social-pill:hover { border-color: #2563EB; background: #EFF6FF; color: #1D4ED8; }
 
+  @media (min-width: 961px) and (max-height: 780px) {
+    .oh-laptop-hero { padding: 10px 0 14px; }
+    .oh-laptop-lid { padding: 11px 11px 10px; }
+    .oh-term-bar { height: 30px; }
+    .oh-laptop-screen { padding: 14px 28px 16px; }
+    .oh-search-box { margin: 0 auto 14px; }
+    #home-page #search-input.oh-search-input { height: 42px; }
+    .oh-laptop-grid { gap: 28px; }
+    .oh-hero-h1 { font-size: clamp(26px, 2.85vw, 38px); margin-bottom: 10px; }
+    .oh-hero-sub { font-size: 14.5px; line-height: 1.5; margin-bottom: 16px; }
+    .oh-btn-dark, .oh-btn-outline { padding: 10px 18px; font-size: 14.5px; }
+  }
   @media (max-width: 1024px) {
     .v1-topics-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .v1-feat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -469,27 +493,33 @@ function toggleMobileMenu() {
   }
   @media (max-width: 640px) {
     .oh-wrap { padding-left: 1rem; padding-right: 1rem; }
-    .oh-laptop-hero { padding: 14px 0 24px; }
+    .oh-laptop-hero { padding: 10px 0 14px; }
     .oh-laptop-lid {
-      padding: 8px 8px 7px;
-      border-radius: 16px 16px 5px 5px;
+      padding: 7px 7px 6px;
+      border-radius: 15px 15px 5px 5px;
       box-shadow: 0 0 0 1.5px #D5DEE8, 0 0 0 2.5px #9AA8B9, 0 12px 28px rgba(11, 39, 65, 0.12);
     }
     .oh-laptop-cam { top: 2px; width: 4px; height: 4px; }
-    .oh-term-bar { height: 28px; padding: 0 12px; border-radius: 10px 10px 0 0; }
+    .oh-term-bar { height: 26px; padding: 0 12px; border-radius: 9px 9px 0 0; }
     .oh-term-prompt { font-size: 10.5px; }
     .oh-term-dots { display: none; }
-    .oh-laptop-screen { padding: 16px 16px 18px; border-radius: 0 0 9px 9px; }
-    .oh-search-box { margin: 0 auto 18px; }
-    #home-page #search-input.oh-search-input { height: 44px; font-size: 16px; padding: 0 36px 0 40px; }
-    .oh-search-icon { left: 13px; width: 17px; height: 17px; }
+    .oh-laptop-screen { padding: 12px 14px 14px; border-radius: 0 0 9px 9px; }
+    .oh-search-box { margin: 0 auto 12px; }
+    #home-page #search-input.oh-search-input { height: 42px; font-size: 16px; padding: 0 34px 0 38px; }
+    .oh-search-icon { left: 12px; width: 16px; height: 16px; }
     .oh-key-legend { opacity: 0 !important; }
-    .oh-hero-h1 { font-size: 27px; line-height: 1.15; margin-bottom: 12px; }
-    .oh-hero-sub { font-size: 15px; margin-bottom: 18px; }
-    .oh-hero-actions { flex-direction: column; align-items: stretch; }
-    .oh-btn-dark, .oh-btn-outline { width: 100%; }
+    .oh-laptop-grid { gap: 14px; }
+    .oh-hero-h1 { font-size: 23px; line-height: 1.15; margin-bottom: 8px; }
+    .oh-hero-sub { font-size: 13.5px; line-height: 1.48; margin-bottom: 14px; }
+    .oh-hero-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+    .oh-btn-dark, .oh-btn-outline { width: 100%; min-height: 44px; padding: 10px 6px; font-size: 13px; gap: 4px; white-space: nowrap; }
+    .oh-hero-art { border-radius: 11px; }
+    .oh-hero-art img.oh-hero-img { aspect-ratio: 1.45 / 1; object-position: center 46%; }
     .oh-author-card { flex-direction: column; align-items: flex-start; gap: 18px; padding: 24px 20px; }
     .oh-author-monogram { flex: 0 0 64px; width: 64px; height: 64px; border-radius: 16px; font-size: 22px; }
+  }
+  @media (max-width: 349px) {
+    .oh-hero-actions { grid-template-columns: 1fr; }
   }
 </style>
 

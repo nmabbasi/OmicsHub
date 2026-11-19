@@ -82,6 +82,15 @@ class VisualDesignPolishTests(unittest.TestCase):
         css = (ROOT / "start-here.css").read_text(encoding="utf-8")
         self.assertRegex(css, r"\.o3-fcard\s+a\s*\{[^}]*margin-top:\s*auto;")
         self.assertIn(".o3-hpc-btns { width: 100%; flex-direction: column; }", css)
+        self.assertIn(".o3-spine { padding: 3.3rem 0 0; scroll-margin-top: 5rem; }", css)
+        self.assertIn(".o3-pillars-sec { padding: 0.25rem 0 4rem; scroll-margin-top: 5rem; }", css)
+        self.assertIn("line-height: 1.15;", css)
+
+    def test_homepage_laptop_hero_fills_initial_viewport_cleanly(self):
+        html = (ROOT / "index.html").read_text(encoding="utf-8")
+        self.assertIn("min-height: calc(100svh - 73px);", html)
+        self.assertIn("align-items: center;", html)
+        self.assertIn("@media (min-width: 961px) and (max-height: 780px)", html)
 
     def test_item6_amber_callout_border_and_code_header_mobile_dot_gap(self):
         style_css = (ROOT / "style.css").read_text(encoding="utf-8")
