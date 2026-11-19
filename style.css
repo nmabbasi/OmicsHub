@@ -1831,15 +1831,23 @@ header nav a[aria-current="page"] .nav-network-mark {
 .cookie-preferences-dialog { box-sizing: border-box; width: calc(100% - 2rem); max-width: 34rem; max-height: calc(100dvh - 2rem); overflow-y: auto; margin: auto; padding: 1.5rem; border: 1px solid #d1d5db; border-radius: 1rem; color: #111827; background: #fff; box-shadow: 0 24px 60px #0f172a40; font: 1rem/1.6 Inter, system-ui, sans-serif; }
 .cookie-preferences-dialog::backdrop { background: #0f172a80; }
 .cookie-preferences-dialog h2 { margin: 0 0 .75rem; font-size: 1.35rem; font-weight: 700; }
+.cookie-preferences-dialog h2:focus { outline: none; }
 .cookie-preferences-dialog p { margin: .75rem 0; }
 .cookie-preferences-dialog a { color: #1d4ed8; text-decoration: underline; }
+.cookie-preferences-dialog a:focus:not(:focus-visible) { outline: none; }
+.cookie-preferences-dialog a:focus-visible { outline: 3px solid #60a5fa; outline-offset: 3px; border-radius: 3px; }
 .cookie-preferences-actions { display: flex; flex-wrap: wrap; gap: .65rem; margin-top: 1rem; }
 .cookie-preferences-actions button { min-height: 44px; padding: .55rem .85rem; border: 1px solid #9ca3af; border-radius: .5rem; background: #fff; color: #111827; cursor: pointer; font: inherit; }
 .cookie-preferences-actions [data-cookie-choice="accepted"] { border-color: #1d4ed8; background: #1d4ed8; color: #fff; }
+@media (max-width: 520px) {
+  .cookie-preferences-actions [data-cookie-choice="accepted"] { order: -1; flex: 1 1 100%; }
+  .cookie-preferences-actions button:not([data-cookie-choice="accepted"]) { flex: 1 1 0; text-align: center; }
+}
 @media (max-width: 767px) {
   header button[aria-controls="mobile-menu"] { min-width: 44px; min-height: 44px; flex-shrink: 0; }
   #mobile-menu { width: 100%; }
-  #mobile-menu a { display: flex; align-items: center; min-height: 44px; }
+  #mobile-menu a { display: flex; align-items: center; gap: .45rem; min-height: 44px; }
+  #mobile-menu a[aria-current="page"] { font-weight: 600; }
 }
 
 /* Keep the existing hero design while making its title and action easier to reach on phones. */
@@ -2060,4 +2068,9 @@ footer a[aria-label="GitHub Profile"]:hover {
   background: #FFFFFF;
   border-color: #FFFFFF;
   transform: translateY(-1px);
+}
+.border-amber-300 { border-color: #fcd34d !important; }
+.oh-search-head { gap: 0.5rem; }
+@media (max-width: 479px) {
+  .oh-search-head .oh-search-sublabel { display: none; }
 }

@@ -42,4 +42,20 @@
     if (target.closest('#mobile-menu a') ||
         (!menu.contains(target) && !trigger.contains(target))) close();
   });
+
+  // Move initial Cookie Preferences modal focus to its heading instead of the inline link.
+  document.addEventListener('click', (event) => {
+    const target = event.target instanceof Element ? event.target : event.target?.parentElement;
+    if (!target || !target.closest('[data-cookie-preferences]')) return;
+    const focusHeading = () => {
+      const panel = document.getElementById('cookie-preferences-panel');
+      const heading = document.getElementById('cookie-preferences-heading');
+      if (panel && panel.open && heading) {
+        if (!heading.hasAttribute('tabindex')) heading.setAttribute('tabindex', '-1');
+        heading.focus({ preventScroll: true });
+      }
+    };
+    if (typeof window.requestAnimationFrame === 'function') window.requestAnimationFrame(focusHeading);
+    else window.setTimeout(focusHeading, 0);
+  });
 })();

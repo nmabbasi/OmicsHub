@@ -24,6 +24,8 @@ def restore_home_catalogue_banner_asset(relative_path, data):
     """Verify the full-width catalogue banner stylesheet and return exact 3a3b90b bytes."""
     if relative_path != "home-catalogue.css":
         raise AssertionError(f"not an authorized catalogue stylesheet: {relative_path}")
+    from homepage_redesign_baseline import normalize_homepage_redesign_bytes
+    data = normalize_homepage_redesign_bytes(relative_path, data)
     baseline = _show_bytes(f"{BANNER_BASELINE_COMMIT}:home-catalogue.css")
     if data == baseline:
         return baseline

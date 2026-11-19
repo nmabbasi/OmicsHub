@@ -1087,6 +1087,7 @@ function renderSearchSuggestions(matches, rawQuery, queryTerms, showEmpty = fals
     const leftLabel = document.createElement('span');
     leftLabel.textContent = `${matches.length} matching ${matches.length === 1 ? 'tutorial' : 'tutorials'}`;
     const rightLabel = document.createElement('span');
+    rightLabel.className = 'oh-search-sublabel';
     rightLabel.textContent = matches.length ? 'Top matches' : 'Try another term';
     heading.replaceChildren(leftLabel, rightLabel);
     panel.appendChild(heading);
@@ -1406,5 +1407,24 @@ function updateNavActiveState() {
                 el.removeAttribute('aria-current');
             }
         }
+    });
+}
+
+// Place initial focus on the Cookie Preferences heading when opening the modal so
+// the inline policy link does not show a stray auto-focus ring before keyboard tabbing.
+if (typeof document !== 'undefined') {
+    document.addEventListener('click', (event) => {
+        const target = event.target instanceof Element ? event.target : event.target?.parentElement;
+        if (!target || !target.closest('[data-cookie-preferences]')) return;
+        const focusHeading = () => {
+            const panel = document.getElementById('cookie-preferences-panel');
+            const heading = document.getElementById('cookie-preferences-heading');
+            if (panel && panel.open && heading) {
+                if (!heading.hasAttribute('tabindex')) heading.setAttribute('tabindex', '-1');
+                heading.focus({ preventScroll: true });
+            }
+        };
+        if (typeof window.requestAnimationFrame === 'function') window.requestAnimationFrame(focusHeading);
+        else window.setTimeout(focusHeading, 0);
     });
 }
