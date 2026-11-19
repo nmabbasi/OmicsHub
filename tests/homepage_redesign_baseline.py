@@ -29,7 +29,7 @@ PINNED_FILES = {
     },
     "tutorials.html": {
         "base_sha256": "169a31770f4ff89568c7088ad97c7b61bdb576abed561e50067dae4f6c1bf887",
-        "current_sha256": "549120377a12103606d87e0d01d6a0972a08249438097e0b6f4e565eb1811380",
+        "current_sha256": "4130e72325216a2d7e62d02ccd817cd87dc597bfb9d8acdc3448ef34378658fc",
     },
     "style.css": {
         "base_sha256": "8f79a8a4ab7980d7fd04f2f135b9d8d559fb7c7e8f9cdf70f384dceab06289b6",
@@ -61,7 +61,7 @@ PINNED_FILES = {
     },
     "home-catalogue.css": {
         "base_sha256": "bb5d49b07212f011917b4fa7498c8b8e1fdf05a3081dded7b07e0e142cfb1c4e",
-        "current_sha256": "911def5351a015ed126d4c7e039905a476e37af8cc026638c275a9a84aecfae4",
+        "current_sha256": "4b97651d0ee63e9414f55264f82b5e08876ef88a6bc7ec7fa6cb972dbb30e57f",
     },
     "start-here.css": {
         "base_sha256": "95e06b81bfae634962e6078874ab0ba0de1e926ac472def734804102f29e1382",

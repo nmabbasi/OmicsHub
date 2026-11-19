@@ -173,27 +173,256 @@
 #home-page .hc-catalogue-cta h2 { color: #fff; font-size: 1.7rem; margin-bottom: .5rem; }
 #home-page .hc-catalogue-cta p:not(.hc-kicker) { margin: 0; font-size: .9rem; }
 .hc-catalogue-cta .hc-primary-link { flex: 0 0 auto; }
-/* Catalogue: compact branded banner, simple browsing, and image-first lesson cards. */
-#tutorials-page #all-tutorials { width: min(100% - 3rem, 72rem); max-width: none; margin-inline: auto; padding: 1.25rem 0 0; }
-.hc-catalogue-hero { position: relative; isolation: isolate; overflow: hidden; width: 100%; margin: 0; padding: clamp(2.5rem, 5vw, 4rem) 0; border: 0; border-bottom: 1px solid rgba(103, 232, 249, 0.25); border-radius: 0; background: radial-gradient(ellipse at 85% 10%, #1b5263 0, transparent 60%), radial-gradient(circle at 15% 85%, rgba(37, 99, 235, 0.12) 0%, transparent 50%), linear-gradient(110deg, #0a263e, #102e49); box-shadow: inset 0 -1px 0 rgba(103, 232, 249, .25), 0 10px 28px rgb(16 45 67 / 9%); }
-.hc-catalogue-hero > .hc-container { display: grid; grid-template-columns: minmax(0, 1fr) 21rem; align-items: center; gap: 2rem; width: min(100% - 3rem, 74rem); margin: 0 auto; padding-left: clamp(0.5rem, 2vw, 1.5rem); padding-right: clamp(0.5rem, 2vw, 1.5rem); }
-.hc-catalogue-intro { position: relative; z-index: 1; }
-#tutorials-page .hc-catalogue-hero .hc-eyebrow { margin-bottom: .85rem; font-size: .64rem; letter-spacing: .14em; }
-#tutorials-page .hc-catalogue-hero h1 { color: #fff; font-size: clamp(2.1rem, 4vw, 3.15rem); font-weight: 760; line-height: 1.06; letter-spacing: -.045em; margin: 0 0 .85rem; }
-#tutorials-page .hc-catalogue-hero h1 span { display: block; color: #d8eeff; }
-#tutorials-page .hc-catalogue-hero p:not(.hc-eyebrow) { max-width: 43rem; color: #e1edf1; margin: 0; font-size: .96rem; line-height: 1.6; }
-#tutorials-page .hc-catalogue-start { display: inline-flex; align-items: center; gap: .7rem; min-height: 2.75rem; margin-top: 1rem; padding: .55rem .8rem; border: 1px solid #5a8b91; border-radius: .55rem; background: #173e51; color: #d8eeff; font-size: .8rem; line-height: 1.5; font-weight: 650; text-decoration: none; }
-#tutorials-page .hc-catalogue-start:hover { background: #23596a; border-color: #9be4d8; }
-.hc-catalogue-art { display: block; width: 100%; height: 14rem; mask-image: radial-gradient(ellipse, #000 42%, transparent 75%); pointer-events: none; }
-.hc-catalogue-art img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: center 48%; }
-.hc-filter-panel { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1rem; margin: 1.5rem 0 1rem; padding: 1.1rem; border: 1px solid var(--hc-line); border-radius: .85rem; background: #f6f9fa; }
+/* Catalogue: Floating Command Deck hero, elevated filter dock, quick-topic pills, and image-first lesson cards. */
+.hc-sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+#tutorials-page #all-tutorials { width: min(100% - 3rem, 72rem); max-width: none; margin-inline: auto; padding: 0; }
+#tutorials-page .hc-catalogue-hero {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  width: 100%;
+  margin: 0;
+  padding: 2.35rem 0 4.15rem;
+  border: 0;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 0;
+  background: radial-gradient(circle at 20% 15%, rgba(56, 189, 248, 0.16), transparent 45%), radial-gradient(circle at 82% 85%, rgba(99, 102, 241, 0.16), transparent 48%), linear-gradient(125deg, #255482 0%, #123B5D 55%, #0B2741 100%);
+  box-shadow: inset 0 -1px 0 rgba(103, 232, 249, 0.2);
+}
+#tutorials-page .hc-catalogue-hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px);
+  background-size: 24px 24px;
+  pointer-events: none;
+}
+#tutorials-page .hc-catalogue-hero > .hc-container {
+  position: relative;
+  z-index: 1;
+  display: block;
+  width: min(100% - 3rem, 54rem);
+  margin: 0 auto;
+  padding: 0;
+}
+#tutorials-page .hc-catalogue-intro { position: relative; z-index: 1; text-align: center; }
+#tutorials-page .hc-catalogue-hero .hc-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.85rem;
+  margin: 0 auto 0.85rem;
+  color: #BAE6FD;
+  font-size: 0.72rem;
+  font-weight: 800;
+  line-height: 1.4;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+#tutorials-page .hc-catalogue-hero .hc-eyebrow::before,
+#tutorials-page .hc-catalogue-hero .hc-eyebrow::after {
+  content: "";
+  width: 2.25rem;
+  height: 1.5px;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+#tutorials-page .hc-catalogue-hero .hc-eyebrow::before {
+  background: linear-gradient(90deg, rgba(125, 211, 252, 0), rgba(125, 211, 252, 0.78));
+}
+#tutorials-page .hc-catalogue-hero .hc-eyebrow::after {
+  background: linear-gradient(90deg, rgba(125, 211, 252, 0.78), rgba(125, 211, 252, 0));
+}
+#tutorials-page .hc-catalogue-hero h1 {
+  color: #FFFFFF;
+  font-size: clamp(2.1rem, 4.1vw, 3.05rem);
+  font-weight: 850;
+  line-height: 1.08;
+  letter-spacing: -0.035em;
+  margin: 0 0 0.75rem;
+  text-align: center;
+}
+#tutorials-page .hc-catalogue-hero h1 span {
+  display: inline;
+  color: #93C5FD;
+  background: linear-gradient(90deg, #93C5FD, #67E8F9);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+#tutorials-page .hc-catalogue-hero .hc-catalogue-lead {
+  max-width: 40rem;
+  color: #DBEAFE;
+  margin: 0 auto 1.1rem;
+  font-size: 1rem;
+  line-height: 1.6;
+  text-align: center;
+}
+#tutorials-page .hc-catalogue-meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 0.6rem 0.9rem;
+  font-size: 0.84rem;
+  color: #CBD5E1;
+}
+#tutorials-page .hc-catalogue-stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.34rem;
+  font-weight: 600;
+  color: #E2E8F0;
+  white-space: nowrap;
+}
+#tutorials-page .hc-catalogue-stat strong { color: #FFFFFF; font-weight: 800; }
+#tutorials-page .hc-catalogue-sep { color: rgba(186, 230, 253, 0.45); font-weight: 700; }
+#tutorials-page .hc-catalogue-start {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-height: 2.4rem;
+  margin: 0 0 0 0.35rem;
+  padding: 0.42rem 0.95rem;
+  border: 1px solid rgba(255, 255, 255, 0.32);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.14);
+  color: #FFFFFF;
+  font-size: 0.82rem;
+  line-height: 1.4;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background-color 150ms ease, border-color 150ms ease;
+}
+#tutorials-page .hc-catalogue-start:hover { background: rgba(255, 255, 255, 0.24); border-color: rgba(255, 255, 255, 0.52); }
+#tutorials-page .hc-filter-panel {
+  position: relative;
+  z-index: 10;
+  display: block;
+  margin: -2.35rem 0 1.25rem;
+  padding: 1rem 1.15rem;
+  border: 1px solid #DBE5EE;
+  border-radius: 1rem;
+  background: #FFFFFF;
+  box-shadow: 0 14px 36px rgba(11, 39, 65, 0.11);
+}
+#tutorials-page .hc-dock-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr);
+  gap: 0.7rem;
+  align-items: center;
+}
 #tutorials-page .catalogue-search { width: 100%; max-width: none; margin: 0; padding: 0; border: 0; background: transparent; }
-#tutorials-page .catalogue-search input { width: 100%; min-height: 3.1rem; margin: 0; padding: .75rem .9rem; border: 1px solid #adbec8; border-radius: .55rem; background: #fff; color: var(--hc-ink); font-size: .94rem; box-shadow: none; }
-.hc-filter-controls { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: .8rem; align-items: end; }
-.hc-filter-field { min-width: 0; }
-#tutorials-page select { display: block; width: 100%; min-width: 0; min-height: 3rem; padding: .7rem 2rem .7rem .8rem; border: 1px solid #adbec8; border-radius: .5rem; background-color: #fff; color: var(--hc-ink); font-size: .87rem; line-height: 1.4; cursor: pointer; }
-#tutorials-page #catalogue-reset, #tutorials-page #catalogue-clear-empty { display: inline-flex; align-items: center; justify-content: center; min-height: 3rem; padding: .7rem 1rem; border: 1px solid #96b2bc; border-radius: .5rem; background: #fff; color: var(--hc-navy); font-size: .85rem; font-weight: 700; cursor: pointer; }
-#tutorials-page #catalogue-reset:hover, #tutorials-page #catalogue-clear-empty:hover { background: #edf6f4; }
+#tutorials-page .hc-dock-input-wrap { position: relative; display: flex; align-items: center; }
+#tutorials-page .hc-dock-input-wrap > svg {
+  position: absolute;
+  left: 0.9rem;
+  width: 1.08rem;
+  height: 1.08rem;
+  color: #64748B;
+  pointer-events: none;
+}
+#tutorials-page .catalogue-search input {
+  width: 100%;
+  min-height: 3rem;
+  margin: 0;
+  padding: 0.65rem 0.9rem 0.65rem 2.5rem;
+  border: 1.5px solid #CBD5E1;
+  border-radius: 0.65rem;
+  background: #F8FAFC;
+  color: var(--hc-ink);
+  font-size: 0.92rem;
+  box-shadow: none;
+  transition: border-color 150ms ease, background-color 150ms ease;
+}
+#tutorials-page .catalogue-search input:focus {
+  border-color: #123B5D;
+  background: #FFFFFF;
+}
+#tutorials-page .hc-filter-controls { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0.7rem; align-items: center; }
+#tutorials-page .hc-filter-field { min-width: 0; width: 100%; }
+#tutorials-page select {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  min-height: 3rem;
+  padding: 0.65rem 2rem 0.65rem 0.85rem;
+  border: 1.5px solid #CBD5E1;
+  border-radius: 0.65rem;
+  background-color: #F8FAFC;
+  color: var(--hc-ink);
+  font-size: 0.9rem;
+  line-height: 1.4;
+  cursor: pointer;
+}
+#tutorials-page #catalogue-reset, #tutorials-page #catalogue-clear-empty {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 3rem;
+  padding: 0.65rem 1.05rem;
+  border: 1.5px solid #CBD5E1;
+  border-radius: 0.65rem;
+  background: #FFFFFF;
+  color: var(--hc-navy);
+  font-size: 0.88rem;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 150ms ease, border-color 150ms ease;
+}
+#tutorials-page #catalogue-reset:hover, #tutorials-page #catalogue-clear-empty:hover { background: #F1F5F9; border-color: #94A3B8; }
+#tutorials-page .hc-quick-row {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin-top: 0.82rem;
+  padding-top: 0.78rem;
+  border-top: 1px solid #EFF4F9;
+}
+#tutorials-page .hc-quick-label {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #64748B;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+#tutorials-page .hc-quick-pills {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.42rem;
+  min-width: 0;
+}
+#tutorials-page .hc-quick-pill {
+  padding: 0.34rem 0.78rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 650;
+  line-height: 1.3;
+  border: 1px solid #E2E8F0;
+  background: #F8FAFC;
+  color: #334155;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: background-color 140ms ease, border-color 140ms ease, color 140ms ease;
+}
+#tutorials-page .hc-quick-pill:hover {
+  background: #EFF6FF;
+  border-color: #BFDBFE;
+  color: #0B2741;
+}
+#tutorials-page .hc-quick-pill.is-active,
+#tutorials-page .hc-quick-pill[aria-pressed="true"] {
+  background: #0B2741;
+  color: #FFFFFF;
+  border-color: #0B2741;
+}
 #tutorials-page .hc-results-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .5rem 1rem; margin: 1.1rem 0; }
 #tutorials-page #search-results-status { margin: 0; color: var(--hc-ink); font-size: .88rem; font-weight: 700; }
 #tutorials-page .hc-results-bar > p:not(#search-results-status), #tutorials-page .hc-level-note, #tutorials-page .hc-filter-note { grid-column: 1 / -1; margin: 0; color: var(--hc-muted); font-size: .76rem; }
@@ -227,14 +456,8 @@
 .hc-empty-state { padding: 2.5rem 1.5rem; margin: 1.5rem 0 3rem; border: 1px dashed #adbec8; border-radius: .8rem; background: #f6f9fa; }
 #tutorials-page .hc-empty-state p { max-width: 38rem; margin: .7rem 0 1rem; font-size: .92rem; }
 #tutorials-page [hidden], #home-page [hidden] { display: none !important; }
-@media (min-width: 1100px) {
-  .hc-filter-panel { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 1.3rem; align-items: end; }
-  .hc-filter-controls { gap: .7rem; }
-}
 @media (max-width: 1023px) {
   .hc-hero-layout { grid-template-columns: minmax(0, 1fr) minmax(0, .8fr); gap: 2rem; }
-  .hc-catalogue-hero > .hc-container { grid-template-columns: minmax(0, 1fr) 15rem; gap: 1rem; }
-  .hc-catalogue-art { height: 12rem; }
   #home-page .hc-hero h1 { font-size: 2.6rem; }
   .hc-hero-actions { display: grid; justify-items: start; gap: .2rem; }
   .hc-topic-grid, .hc-featured-grid, #tutorials-page #all-tutorials-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -266,15 +489,35 @@
   .hc-author-layout > img { width: 5rem; height: 5rem; align-self: start; }
   #home-page .hc-author-layout h2 { font-size: 1.3rem; }
   .hc-catalogue-cta > .hc-container { flex-direction: column; align-items: flex-start; }
-  .hc-catalogue-hero { width: 100%; margin-top: 0; padding: 2rem 0; border-radius: 0; }
-  .hc-catalogue-hero > .hc-container { width: min(100% - 2rem, 74rem); margin: 0 auto; padding-left: 1rem; padding-right: 1rem; grid-template-columns: minmax(0, 1fr); gap: 0; }
-  .hc-catalogue-art { display: none; }
-  .hc-filter-panel { margin-top: 1rem; padding: 1rem; gap: .8rem; }
-  .hc-filter-controls { grid-template-columns: minmax(0, 1fr) auto; gap: .65rem; }
-  #catalogue-reset { justify-self: start; }
-  #tutorials-page .hc-catalogue-hero h1 { font-size: 2rem; }
-  #tutorials-page .hc-catalogue-hero p:not(.hc-eyebrow) { font-size: .88rem; }
-  #tutorials-page .hc-catalogue-start { font-size: .76rem; margin-top: .8rem; }
+  #tutorials-page .hc-catalogue-hero { width: 100%; margin-top: 0; padding: 1.45rem 0 2.95rem; border-radius: 0; }
+  #tutorials-page .hc-catalogue-hero > .hc-container { width: min(100% - 2rem, 54rem); }
+  #tutorials-page .hc-catalogue-intro { text-align: left; }
+  #tutorials-page .hc-catalogue-hero .hc-eyebrow { justify-content: flex-start; margin: 0 0 0.6rem; gap: 0.55rem; font-size: 0.66rem; letter-spacing: 0.14em; }
+  #tutorials-page .hc-catalogue-hero .hc-eyebrow::before { width: 1.5rem; background: linear-gradient(90deg, #38BDF8, #7DD3FC); }
+  #tutorials-page .hc-catalogue-hero .hc-eyebrow::after { display: none; }
+  #tutorials-page .hc-catalogue-hero h1 { font-size: 1.95rem; text-align: left; margin-bottom: 0.5rem; }
+  #tutorials-page .hc-catalogue-hero .hc-catalogue-lead { font-size: 0.9rem; line-height: 1.5; text-align: left; margin: 0 0 0.85rem; }
+  #tutorials-page .hc-catalogue-meta-row { justify-content: flex-start; gap: 0.45rem 0.72rem; font-size: 0.77rem; }
+  #tutorials-page .hc-catalogue-sep { display: none; }
+  #tutorials-page .hc-catalogue-start { margin: 0.2rem 0 0; min-height: 2.3rem; padding: 0.38rem 0.82rem; font-size: 0.78rem; }
+  #tutorials-page .hc-filter-panel { margin: -2rem 0 1rem; padding: 0.85rem; }
+  #tutorials-page .hc-dock-row { grid-template-columns: minmax(0, 1fr); gap: 0.55rem; }
+  #tutorials-page .catalogue-search input { min-height: 2.75rem; font-size: 0.87rem; }
+  #tutorials-page .hc-filter-controls { grid-template-columns: minmax(0, 1fr) auto; gap: 0.55rem; }
+  #tutorials-page select { min-height: 2.75rem; font-size: 0.86rem; }
+  #tutorials-page #catalogue-reset { min-height: 2.75rem; padding: 0 0.9rem; font-size: 0.84rem; justify-self: stretch; }
+  #tutorials-page .hc-quick-row { margin-top: 0.7rem; padding-top: 0.65rem; gap: 0.4rem; }
+  #tutorials-page .hc-quick-label { display: none; }
+  #tutorials-page .hc-quick-pills {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    padding-right: 1.2rem;
+    -webkit-mask-image: linear-gradient(to right, #000 88%, transparent 100%);
+    mask-image: linear-gradient(to right, #000 88%, transparent 100%);
+  }
+  #tutorials-page .hc-quick-pills::-webkit-scrollbar { display: none; }
   #tutorials-page .hc-results-bar { align-items: start; }
 }
 @media (max-width: 520px) {
@@ -287,7 +530,7 @@
   .hc-author-layout > img { width: 5rem; }
 }
 @media (max-width: 360px) {
-  .hc-filter-controls { grid-template-columns: minmax(0, 1fr) auto; }
+  #tutorials-page .hc-filter-controls { grid-template-columns: minmax(0, 1fr) auto; }
 }
 @media (prefers-reduced-motion: reduce) {
   #home-page *, #tutorials-page * { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
@@ -295,7 +538,7 @@
 @media print {
   .hc-hero, .hc-catalogue-hero, .hc-catalogue-cta { background: #fff; color: #102d43; }
   #home-page .hc-hero h1, #home-page .hc-hero-lead, #home-page .hc-hero-note, #tutorials-page .hc-catalogue-hero h1, #tutorials-page .hc-catalogue-hero p { color: #102d43; }
-  #tutorials-page .hc-catalogue-hero h1 span { color: #102d43; }
+  #tutorials-page .hc-catalogue-hero h1 span { color: #102d43; -webkit-text-fill-color: #102d43; background: none; }
   .hc-hero-art, .hc-catalogue-art, .hc-filter-panel, .hc-search-section { display: none; }
   .hc-featured-grid, #tutorials-page #all-tutorials-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .hc-featured-card, .tutorial-grid-card { break-inside: avoid; }
