@@ -126,13 +126,26 @@ function showTutorials() {
 function setupEventListeners() {
     // Search functionality
     const searchInput = document.getElementById('search-input');
+    const searchClear = document.getElementById('search-clear');
     if (searchInput && !document.getElementById('all-tutorials-list')) {
         const debouncedSearch = debounce(handleSearch, 180);
-        searchInput.addEventListener('input', () => { homeSearchDismissed = false; debouncedSearch(); });
+        const syncClearBtn = () => {
+            if (searchClear) searchClear.classList.toggle('is-visible', searchInput.value.trim().length > 0);
+        };
+        searchInput.addEventListener('input', () => { homeSearchDismissed = false; syncClearBtn(); debouncedSearch(); });
         searchInput.addEventListener('focus', () => {
             homeSearchDismissed = false;
+            syncClearBtn();
             if (searchInput.value.trim()) handleSearch();
         });
+        if (searchClear) {
+            searchClear.addEventListener('click', () => {
+                searchInput.value = '';
+                syncClearBtn();
+                dismissHomeSearchSuggestions();
+                searchInput.focus();
+            });
+        }
         searchInput.addEventListener('keydown', function(event) {
             if (event.key === 'Enter' && searchInput.value.trim()) {
                 event.preventDefault();
@@ -147,7 +160,7 @@ function setupEventListeners() {
         });
         document.addEventListener('click', event => {
             const panel = document.getElementById('search-suggestions');
-            if (panel && !panel.contains(event.target) && !searchInput.contains(event.target)) dismissHomeSearchSuggestions();
+            if (panel && !panel.contains(event.target) && !searchInput.contains(event.target) && !(searchClear && searchClear.contains(event.target))) dismissHomeSearchSuggestions();
         });
     }
 
@@ -1059,43 +1072,69 @@ function scoreSearchResult(card, queryTerms) {
     return score;
 }
 
-function renderSearchSuggestions(matches, rawQuery, queryTerms) {
+function renderSearchSuggestions(matches, rawQuery, queryTerms, showEmpty = false) {
     const panel = document.getElementById('search-suggestions');
     if (!panel) return;
 
     panel.replaceChildren();
-    if (!rawQuery || matches.length === 0) {
+    if (!rawQuery || (matches.length === 0 && !showEmpty)) {
         panel.classList.add('hidden');
         return;
     }
 
     const heading = document.createElement('div');
-    heading.className = 'px-4 py-2 text-xs font-bold uppercase tracking-wide text-slate-500 bg-slate-50 border-b border-slate-200';
-    heading.textContent = 'Best matches';
+    heading.className = 'oh-search-head px-4 py-2 text-xs font-bold uppercase tracking-wide text-slate-500 bg-slate-50 border-b border-slate-200 flex items-center justify-between';
+    const leftLabel = document.createElement('span');
+    leftLabel.textContent = `${matches.length} matching ${matches.length === 1 ? 'tutorial' : 'tutorials'}`;
+    const rightLabel = document.createElement('span');
+    rightLabel.textContent = matches.length ? 'Top matches' : 'Try another term';
+    heading.replaceChildren(leftLabel, rightLabel);
     panel.appendChild(heading);
+
+    if (matches.length === 0) {
+        const empty = document.createElement('div');
+        empty.className = 'px-4 py-3 text-sm text-slate-600';
+        empty.textContent = `No tutorials match “${rawQuery}”. Try scRNA-seq, Seurat, Slurm, DESeq2, or FASTQ.`;
+        panel.appendChild(empty);
+        panel.classList.remove('hidden');
+        return;
+    }
 
     [...matches]
         .sort((a, b) => scoreSearchResult(b, queryTerms) - scoreSearchResult(a, queryTerms))
-        .slice(0, 2)
+        .slice(0, 5)
         .forEach((card) => {
             const link = document.createElement('a');
             const sourceLink = card.querySelector('a[href$=".html"]');
             const title = card.querySelector('h3')?.textContent.trim() || 'Tutorial';
             const category = card.dataset.category || card.querySelector('span')?.textContent.trim() || 'Bioinformatics';
+            const textWrap = document.createElement('div');
             const titleLine = document.createElement('span');
             const categoryLine = document.createElement('span');
+            const arrow = document.createElement('span');
             link.href = sourceLink?.getAttribute('href') || '#tutorials';
-            link.className = 'block px-4 py-2.5 border-b border-slate-100 last:border-b-0 transition-colors hover:bg-slate-50 focus:bg-slate-50 focus:outline-none';
-            titleLine.className = 'block text-sm font-bold text-slate-900';
+            link.className = 'oh-search-item flex items-center justify-between gap-3 px-4 py-2.5 border-b border-slate-100 transition-colors hover:bg-blue-50 focus:bg-blue-50 focus:outline-none';
+            titleLine.className = 'oh-search-item-title block text-sm font-bold text-slate-900';
             titleLine.textContent = title;
-            categoryLine.className = 'mt-0.5 block text-xs font-medium text-blue-700';
+            categoryLine.className = 'oh-search-item-cat mt-0.5 block text-xs font-semibold text-blue-700';
             categoryLine.textContent = category;
-            link.replaceChildren(titleLine, categoryLine);
+            textWrap.replaceChildren(titleLine, categoryLine);
+            arrow.className = 'text-blue-600 font-bold text-sm flex-shrink-0';
+            arrow.textContent = '→';
+            link.replaceChildren(textWrap, arrow);
             link.addEventListener('click', () => {
                 panel.classList.add('hidden');
             });
             panel.appendChild(link);
         });
+
+    const viewAll = document.createElement('a');
+    const target = new URL('tutorials.html', window.location.href);
+    target.searchParams.set('q', rawQuery);
+    viewAll.href = target.href;
+    viewAll.className = 'oh-search-more flex items-center justify-center px-4 py-2.5 bg-slate-50 text-sm font-bold text-[#123B5D] hover:bg-sky-100 border-t border-slate-200 transition-colors';
+    viewAll.textContent = `View all ${matches.length} matching ${matches.length === 1 ? 'tutorial' : 'tutorials'} in Catalogue →`;
+    panel.appendChild(viewAll);
 
     panel.classList.remove('hidden');
 }
@@ -1119,16 +1158,20 @@ function handleSearch() {
     const queryTerms = normalizeSearchText(rawQuery).split(' ').filter(Boolean);
     const currentCards = [...document.querySelectorAll('#tutorials-list article')];
     filterTutorialCards('#tutorials-list article', queryTerms, '');
-    renderSearchSuggestions(currentCards.filter(card => searchTextMatches(normalizeSearchText(card.dataset.search || card.textContent), queryTerms)), rawQuery, queryTerms);
+    if (currentCards.length) {
+        renderSearchSuggestions(currentCards.filter(card => searchTextMatches(normalizeSearchText(card.dataset.search || card.textContent), queryTerms)), rawQuery, queryTerms, false);
+    } else if (!rawQuery) {
+        document.getElementById('search-suggestions')?.classList.add('hidden');
+    }
     if (status) {
         status.textContent = rawQuery ? 'Loading all tutorials…' : '';
-        status.classList.toggle('hidden', !rawQuery);
+        if (!status.classList.contains('sr-only')) status.classList.toggle('hidden', !rawQuery);
     }
     if (!rawQuery) return;
     getHomeCatalogueCards().then(cards => {
         if (revision !== homeSearchRevision || input.value.trim() !== rawQuery) return;
         const matches = cards.filter(card => searchTextMatches(normalizeSearchText(card.dataset.search || card.textContent), queryTerms));
-        if (document.activeElement === input && !homeSearchDismissed) renderSearchSuggestions(matches, rawQuery, queryTerms);
+        if (document.activeElement === input && !homeSearchDismissed) renderSearchSuggestions(matches, rawQuery, queryTerms, true);
         if (status) status.textContent = matches.length ? `${matches.length} matching ${matches.length === 1 ? 'tutorial' : 'tutorials'}. Choose a result or press Enter to view all.` : `No tutorials match “${rawQuery}”. Try a broader term.`;
     }).catch(() => {
         if (revision !== homeSearchRevision || input.value.trim() !== rawQuery) return;

@@ -205,7 +205,8 @@ def publication_layers():
             if generated_hash is not None:
                 if relative_path != "home-page.min.css" or not re.fullmatch(r"[0-9a-f]{64}", generated_hash):
                     raise AssertionError(f"invalid generated stylesheet pin: {relative_path}")
-                generated = (ROOT / relative_path).read_bytes()
+                from homepage_redesign_baseline import normalize_homepage_redesign_bytes
+                generated = normalize_homepage_redesign_bytes(relative_path, (ROOT / relative_path).read_bytes())
                 if _sha(generated) != generated_hash and _css_rules(generated) != _css_rules(base):
                     raise AssertionError("generated homepage stylesheet fingerprint mismatch")
                 if _css_rules(generated) != _css_rules(base):
@@ -261,6 +262,8 @@ def normalize_current_publication(relative_path, data):
     """Restore exact known mainline snapshots; preserve every other byte sequence."""
     if not isinstance(data, bytes):
         raise TypeError("current-publication normalization requires bytes")
+    from homepage_redesign_baseline import normalize_homepage_redesign_bytes
+    data = normalize_homepage_redesign_bytes(relative_path, data)
     if isinstance(relative_path, str) and relative_path.startswith("tutorials/") and relative_path.endswith(".html"):
         try:
             decoded = data.decode("utf-8")

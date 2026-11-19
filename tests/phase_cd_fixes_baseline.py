@@ -167,7 +167,11 @@ def _fixture():
         if original is None or _sha(original) != entry["base_sha256"]:
             raise AssertionError(f"phase-cd base asset unavailable or changed: {path}")
         current_path = ROOT / path
-        if not current_path.is_file() or _sha(current_path.read_bytes()) != entry["current_sha256"]:
+        if not current_path.is_file():
+            raise AssertionError(f"phase-cd current asset fingerprint mismatch: {path}")
+        from homepage_redesign_baseline import normalize_homepage_redesign_bytes
+        asset_bytes = normalize_homepage_redesign_bytes(path, current_path.read_bytes())
+        if _sha(asset_bytes) != entry["current_sha256"]:
             raise AssertionError(f"phase-cd current asset fingerprint mismatch: {path}")
         asset_map[path] = entry
 
@@ -180,6 +184,8 @@ def normalize_phase_cd_fix(relative_path, text):
     """Reverse one exact Phase C/D page revision; preserve unknown mutations."""
     if not isinstance(text, str):
         raise TypeError("phase-cd normalization requires decoded text")
+    from homepage_redesign_baseline import normalize_homepage_redesign
+    text = normalize_homepage_redesign(relative_path, text)
     from final_polish_baseline import normalize_final_polish
     text = normalize_final_polish(relative_path, text)
     entry = _fixture()["page_map"].get(relative_path)
@@ -202,6 +208,8 @@ def normalize_phase_cd_fix(relative_path, text):
 
 def restore_phase_cd_asset(relative_path, data):
     """Restore only an exact Phase C/D UI metadata asset to its 35ebb97c bytes."""
+    from homepage_redesign_baseline import normalize_homepage_redesign_bytes
+    data = normalize_homepage_redesign_bytes(relative_path, data)
     entry = _fixture()["asset_map"].get(relative_path)
     if entry is None:
         return data

@@ -195,16 +195,22 @@
   advertisingStatus.setAttribute('style', 'display: block; margin-top: 0.25rem; font-size: 0.875rem;');
   advertisingState.statusNode = advertisingStatus;
 
-  function updateAdvertisingStatus(message) {
-    if (advertisingState.statusNode) advertisingState.statusNode.textContent = message;
+  function updateAdvertisingStatus(message, state) {
+    if (advertisingState.statusNode) {
+      advertisingState.statusNode.textContent = message;
+      advertisingState.statusNode.setAttribute('data-consent-state', state || 'info');
+    }
   }
 
   function markAdvertisingApiReady() {
     var api = window.googlefc;
     advertisingState.ready = Boolean(api && typeof api.showRevocationMessage === 'function');
-    updateAdvertisingStatus(advertisingState.ready
-      ? 'Google advertising consent settings are available.'
-      : 'Google advertising consent settings are not available right now.');
+    updateAdvertisingStatus(
+      advertisingState.ready
+        ? 'Google advertising consent settings are available.'
+        : 'Google advertising consent settings are not available right now.',
+      advertisingState.ready ? 'ready' : 'unavailable'
+    );
   }
 
   if (!advertisingState.readinessRegistered && advertisingQueue && typeof advertisingQueue.push === 'function') {
@@ -236,7 +242,7 @@
           // Report the failure without claiming that the preference was changed.
         }
       }
-      updateAdvertisingStatus('Google advertising consent settings could not be opened. No change to your advertising choice is confirmed. Please try again later.');
+      updateAdvertisingStatus('Google advertising consent settings could not be opened. No change to your advertising choice is confirmed. Please try again later.', 'error');
     });
   }
 })();
