@@ -17,7 +17,7 @@ BASE_COMMIT = "8cfe69916e01724bdcb85d717a9e6af4d646c289"
 PINNED_FILES = {
     "index.html": {
         "base_sha256": "e0e0505fab71546fd27c7aea3be9f2bbf8399c6fec3ded42c8be30f8fa6f7e3d",
-        "current_sha256": "7114d7e4dc9a51a8004edc09d6b31e4d5299d641ae89ba6e96d988402229d988",
+        "current_sha256": "007ba4f34bee393acd6eeafbaee51b4cf2d390732334838a74329a26ac7e69bb",
     },
     "404.html": {
         "base_sha256": "51dcbd37197875cda5980e293d3f2eb5b3f21bcd37acd7a52755673ed7b70a3f",

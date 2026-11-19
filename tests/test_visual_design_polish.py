@@ -92,6 +92,9 @@ class VisualDesignPolishTests(unittest.TestCase):
         self.assertIn("min-height: calc(100svh - 73px);", html)
         self.assertIn("align-items: center;", html)
         self.assertIn("@media (min-width: 961px) and (max-height: 780px)", html)
+        self.assertIn(".oh-laptop-hero::before {", html)
+        self.assertIn("width: 87.0000%;", html)
+        self.assertIn('viewBox="0 0 1200 268"', html)
 
     def test_item6_amber_callout_border_and_code_header_mobile_dot_gap(self):
         style_css = (ROOT / "style.css").read_text(encoding="utf-8")
