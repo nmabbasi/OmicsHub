@@ -135,8 +135,10 @@ def _fixture():
         current_path = ROOT / path
         if not current_path.is_file():
             raise AssertionError(f"phase-cd current page fingerprint mismatch: {path}")
+        from homepage_redesign_baseline import normalize_homepage_redesign
         from final_polish_baseline import normalize_final_polish
-        text = normalize_final_polish(path, current_path.read_text(encoding="utf-8"))
+        text = normalize_homepage_redesign(path, current_path.read_text(encoding="utf-8"))
+        text = normalize_final_polish(path, text)
         if _sha(text.encode("utf-8")) != entry["current_sha256"]:
             raise AssertionError(f"phase-cd current page fingerprint mismatch: {path}")
         full_current = text

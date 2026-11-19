@@ -121,14 +121,17 @@ class PbmcWorkedExampleTests(unittest.TestCase):
         self.assertEqual(len(raw_entries), 67)
         self.assertEqual(len(raw_dates), 67)
         self.assertEqual(set(raw_dates.values()), {
-            '2026-10-21', '2026-10-22', '2026-10-23', '2026-10-25',
-            '2026-11-18',
+            '2026-10-25', '2026-11-18', '2026-11-19',
         })
         self.assertEqual(
             len({url for url, date in raw_dates.items() if date == '2026-11-18'}),
             60,
         )
-        self.assertEqual(raw_dates['https://theomicshub.com/about.html'], '2026-10-23')
+        self.assertEqual(
+            len({url for url, date in raw_dates.items() if date == '2026-11-19'}),
+            6,
+        )
+        self.assertEqual(raw_dates['https://theomicshub.com/about.html'], '2026-11-19')
         self.assertEqual(
             raw_dates['https://theomicshub.com/tutorials/wes-variant-calling-pipeline.html'],
             '2026-10-25',

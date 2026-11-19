@@ -74,7 +74,7 @@ class ContentModificationDateTests(unittest.TestCase):
         self.assertEqual(len(raw_entries), 67)
         self.assertEqual(len(raw_dates), 67)
         self.assertEqual(
-            raw_dates[SITE + "about.html"], "2026-10-23"
+            raw_dates[SITE + "about.html"], "2026-11-19"
         )
         self.assertEqual(
             raw_dates[SITE + "tutorials/wes-variant-calling-pipeline.html"], "2026-10-25"
@@ -176,7 +176,7 @@ class ContentModificationDateTests(unittest.TestCase):
         for relative_path in ("pages/privacy.html", "pages/cookie.html"):
             with self.subTest(page=relative_path):
                 self.assertIn(
-                    "Last updated: October 23, 2026",
+                    "Last updated: November 19, 2026",
                     (ROOT / relative_path).read_text(encoding="utf-8"),
                 )
                 self.assertEqual(

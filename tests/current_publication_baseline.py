@@ -35,6 +35,14 @@ def _sha(data):
     return hashlib.sha256(data).hexdigest()
 
 
+_TRUST_POLICY_APPROVED_SITEMAP_LASTMODS = {
+    "https://theomicshub.com/about.html": ("2026-10-23", "2026-11-19"),
+    "https://theomicshub.com/contact.html": ("2026-10-22", "2026-11-19"),
+    "https://theomicshub.com/pages/privacy.html": ("2026-10-23", "2026-11-19"),
+    "https://theomicshub.com/pages/terms.html": ("2026-10-21", "2026-11-19"),
+    "https://theomicshub.com/pages/disclaimer.html": ("2026-10-21", "2026-11-19"),
+    "https://theomicshub.com/pages/cookie.html": ("2026-10-23", "2026-11-19"),
+}
 _NEWEST_APPROVED_SITEMAP_LASTMODS = {
     "https://theomicshub.com/": ("2026-10-25", "2026-11-18"),
     "https://theomicshub.com/start-here.html": ("2026-10-25", "2026-11-18"),
@@ -112,10 +120,12 @@ def _rewrite_approved_sitemap_lastmods(data, *, reverse=False, strict=False, dat
         raise TypeError("sitemap date normalization requires bytes")
     if date_pairs is None:
         if reverse:
+            data = _rewrite_approved_sitemap_lastmods(data, reverse=True, strict=strict, date_pairs=_TRUST_POLICY_APPROVED_SITEMAP_LASTMODS)
             data = _rewrite_approved_sitemap_lastmods(data, reverse=True, strict=strict, date_pairs=_NEWEST_APPROVED_SITEMAP_LASTMODS)
             return _rewrite_approved_sitemap_lastmods(data, reverse=True, strict=strict, date_pairs=_PREVIOUS_APPROVED_SITEMAP_LASTMODS)
         data = _rewrite_approved_sitemap_lastmods(data, reverse=False, strict=strict, date_pairs=_PREVIOUS_APPROVED_SITEMAP_LASTMODS)
-        return _rewrite_approved_sitemap_lastmods(data, reverse=False, strict=strict, date_pairs=_NEWEST_APPROVED_SITEMAP_LASTMODS)
+        data = _rewrite_approved_sitemap_lastmods(data, reverse=False, strict=strict, date_pairs=_NEWEST_APPROVED_SITEMAP_LASTMODS)
+        return _rewrite_approved_sitemap_lastmods(data, reverse=False, strict=strict, date_pairs=_TRUST_POLICY_APPROVED_SITEMAP_LASTMODS)
     source_slot, target_slot = (1, 0) if reverse else (0, 1)
     replacements = []
     for url, dates in date_pairs.items():
@@ -276,6 +286,9 @@ def normalize_current_publication(relative_path, data):
         from approved_tutorial_fixes_baseline import restore_approved_tutorial_fix_asset
         data = restore_approved_tutorial_fix_asset(relative_path, data)
     elif relative_path == "sitemap.xml" and data == current_published_bytes(relative_path):
+        data = _rewrite_approved_sitemap_lastmods(
+            data, reverse=True, date_pairs=_TRUST_POLICY_APPROVED_SITEMAP_LASTMODS
+        )
         data = _rewrite_approved_sitemap_lastmods(
             data, reverse=True, date_pairs=_NEWEST_APPROVED_SITEMAP_LASTMODS
         )

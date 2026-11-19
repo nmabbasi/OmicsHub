@@ -51,7 +51,7 @@ class ExecutionSitemapCompositionTests(unittest.TestCase):
         self.assertIsNotNone(row)
         current_date = re.search(rb"<lastmod>(\d{4}-\d{2}-\d{2})</lastmod>", row.group(0))
         self.assertIsNotNone(current_date)
-        self.assertEqual(current_date.group(1), b"2026-10-23")
+        self.assertEqual(current_date.group(1), b"2026-11-19")
         mutated_row = row.group(0).replace(
             b"<lastmod>" + current_date.group(1) + b"</lastmod>",
             b"<lastmod>2099-01-01</lastmod>",
