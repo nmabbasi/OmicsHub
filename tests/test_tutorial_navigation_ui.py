@@ -133,10 +133,11 @@ class TutorialNavigationStyleTests(unittest.TestCase):
         cls.css = (ROOT / "tutorial-navigation.css").read_text(encoding="utf-8")
 
     def test_standalone_css_has_responsive_mobile_layouts_and_touch_targets(self):
+        self.assertIn(".reader-toolbar { display: none; }", self.css)
         self.assertIn("@media (max-width: 42rem)", self.css)
         self.assertIn("@media (max-width: 22rem)", self.css)
         self.assertIn("grid-template-columns: minmax(0, 1fr)", self.css)
-        self.assertIn("min-height: 3.25rem", self.css)
+        self.assertIn("min-height: 2.75rem", self.css)
         self.assertIn("min-height: 4rem", self.css)
         self.assertIn("overflow-wrap: anywhere", self.css)
 
@@ -153,7 +154,7 @@ class TutorialNavigationStyleTests(unittest.TestCase):
         self.assertIn("text-align: left", self.css)
         self.assertNotIn("text-align: center", self.css)
 
-    def test_paired_cards_use_navy_text_and_svg_library_icons(self):
+    def test_paired_cards_use_editorial_rail_theme_and_svg_library_icons(self):
         manifest, facts = generator.load_site(ROOT)
         item = manifest['tutorials']['data-visualization-fundamentals']
         toolbar = generator.render_toolbar('data-visualization-fundamentals', item, manifest, facts)
@@ -163,14 +164,14 @@ class TutorialNavigationStyleTests(unittest.TestCase):
         self.assertIn('reader-sequence-kicker', bottom)
         self.assertIn('reader-sequence-choices', bottom)
         self.assertNotIn('▤', toolbar + bottom)
-        self.assertIn('#eaf3ff', self.css)
-        self.assertIn('border-radius: 50%', self.css)
+        self.assertIn('border-top: 2px solid #0f172a', self.css)
+        self.assertIn('#0284c7', self.css)
 
     def test_legacy_layout_overrides_are_reset_with_scoped_specificity(self):
         self.assertIn(".reader-sequence .reader-path-card", self.css)
         self.assertIn("flex-direction: row", self.css)
-        self.assertIn(".reader-toolbar.reader-toolbar a.reader-toolbar__library", self.css)
-        self.assertIn(".reader-toolbar.reader-toolbar a.reader-toolbar__next", self.css)
+        self.assertIn(".reader-toolbar { display: none; }", self.css)
+        self.assertIn(".reader-sequence .reader-sequence-grid a.reader-path-card--previous", self.css)
         self.assertIn(".reader-sequence-utilities", self.css)
 
     def test_no_oversized_suggested_rows_and_native_top_control_is_progressively_floating(self):

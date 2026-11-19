@@ -59,6 +59,10 @@ PINNED_FILES = {
         "base_sha256": "ed840bbf32d42c3a10c46bec36bed1cf49fa2ee3aa753312e6be42a18869ea1b",
         "current_sha256": "eb6ed4e2ac71699d3e042298932c9f732a11fd5c632779508358aaf44f954f48",
     },
+    "tutorial-navigation.css": {
+        "base_sha256": "38bdf5f94775f586fffa53dbe4737940276b9d82d3f2f89b313317417dbf0e08",
+        "current_sha256": "0ee695bca27ff0ddd59cb1c58d3b53a58f947ebe347d2a629282e1943f7bccc4",
+    },
     "home-catalogue.css": {
         "base_sha256": "bb5d49b07212f011917b4fa7498c8b8e1fdf05a3081dded7b07e0e142cfb1c4e",
         "current_sha256": "4b97651d0ee63e9414f55264f82b5e08876ef88a6bc7ec7fa6cb972dbb30e57f",
