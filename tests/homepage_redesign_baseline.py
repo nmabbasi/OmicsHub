@@ -41,7 +41,7 @@ PINNED_FILES = {
     },
     "home-page.min.css": {
         "base_sha256": "588d5286a85d9d23357f9c06d647d9c3c9ba0c65ab238975d5c13e7877cc1e6a",
-        "current_sha256": "65073b8c3be8e09ba5a5332e1fd12b5bddc92dfaaae4ad88eb4be21fa0dba639",
+        "current_sha256": "9d8c27acab39f029d3a44d26bf3f5e658a1b1c318553b485e95cb8f191538c92",
     },
     "cookie-consent.js": {
         "base_sha256": "c9b21ce57c609be336dfe869928349cd8c536281f807621d54b3ed3df19ec972",
