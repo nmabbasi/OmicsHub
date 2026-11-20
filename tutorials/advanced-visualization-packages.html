@@ -326,7 +326,7 @@ p_heat &lt;- dittoSeq::dittoHeatmap(
 # dittoHeatmap returns a pheatmap object; pass p_heat$gtable to ggsave (or use filename= inside dittoHeatmap).
 ggsave("results/heatmap_top_markers.pdf", plot = p_heat$gtable, width = 8, height = 6)
 </code></pre>
-<p>Note two critical details in <code>dittoHeatmap()</code>: first, even when <code>scaled.to.max = FALSE</code>, the underlying <code>pheatmap</code> call defaults to <code>scale = "row"</code> (per-gene z-scoring across cells or pseudobulk columns), which highlights relative cluster specificity while hiding whether a transcript is abundant or barely expressed; pass <code>scale = "none"</code> explicitly when you want unscaled log-normalized expression. Second, because <code>dittoHeatmap()</code> returns a <code>pheatmap</code> list rather than a <code>ggplot</code> object, pass <code>plot = p_heat$gtable</code> to <code>ggsave()</code> (or supply <code>filename = "results/heatmap_top_markers.pdf"</code> directly to <code>dittoHeatmap</code>) and verify the rendered PDF.</p>
+<p>Remember two details when exporting <code>dittoHeatmap()</code>. First, even with <code>scaled.to.max = FALSE</code>, <code>pheatmap</code> defaults to <code>scale = "row"</code> (per-gene z-scoring across columns), which shows relative cluster contrast while hiding raw expression magnitude; pass <code>scale = "none"</code> if you need unscaled log-normalized values. Second, pass <code>plot = p_heat$gtable</code> to <code>ggsave()</code> (or set <code>filename = "results/heatmap_top_markers.pdf"</code> directly inside <code>dittoHeatmap()</code>) because it returns a <code>pheatmap</code> list rather than a <code>ggplot</code> object.</p>
 <h3>7) Optional template: assemble compatible ggplot panels; export the heatmap separately</h3>
 <pre><code># Purpose: combine ggplot panels; keep the dittoSeq heatmap as a separate file
 # Input: p_umap, p_feat, p_dot (ggplot panels); p_heat exported in step 6
@@ -337,7 +337,8 @@ stopifnot(all(vapply(list(p_umap, p_feat, p_dot), inherits, logical(1), "ggplot"
 combined &lt;- (p_umap + p_feat) / p_dot + plot_layout(guides = "collect")
 ggsave("results/panel_figure.pdf", combined, width = 12, height = 10)
 </code></pre>
-<p>Patchwork's <code>guides = "collect"</code> requests guide collection, but guides merge only when their scales are compatible. This example intentionally composes only objects checked as ggplots; guide collection still merges only compatible scales. The dittoSeq heatmap is saved independently in step 6 because its returned class and rendering method can vary with the installed version. Open the panel and heatmap PDFs and inspect labels, legends, cropping, and legibility at final size before treating them as a figure set. If your heatmap is a grid/grob object and you need a unified page, consult patchwork’s documented <code>wrap_elements()</code> support and test the exact returned object; this tutorial does not claim that path has been exercised.</p>
+<p>Patchwork's <code>guides = "collect"</code> merges legends only across <code>ggplot</code> objects with compatible scales, which is why we type-check <code>p_umap</code>, <code>p_feat</code>, and <code>p_dot</code> above and export the <code>dittoSeq</code> heatmap separately. Open both exported PDFs afterward to check font size, clipping, and readability before using them in a figure panel.</p>
+<p>If your grid-based heatmap must share the same page, check patchwork's <code>wrap_elements()</code> helper and inspect the combined output directly.</p>
 <h2>Interpreting the output files</h2>
 <p>When you open the generated images, inspect the following:</p>
 
@@ -348,15 +349,13 @@ ggsave("results/panel_figure.pdf", combined, width = 12, height = 10)
 <li>Dot plots: in Seurat's <code>DotPlot()</code>, dot size encodes the percentage of cells expressing the feature and color encodes average expression under the function's scaling. Read its legend and document the assay and scale; a large dot is prevalence, not high expression per cell.</li>
 <li>Heatmap: Confirm whether row-scaling was applied; heatmaps can emphasize relative differences but hide absolute expression scale.</li>
 </ul>
-<p>What a plausible result may indicate:</p>
+<p>How to read a passing figure (and its limits):</p>
 <ul>
-<li>Concordant marker expression in a cluster supports the assigned cell identity, but does not prove function or lineage; follow up with independent validation (e.g., protein-level assay).</li>
-<li>Differences in plotted composition are descriptive. Compare biological replicates with an appropriate sample-level differential-abundance or compositional method; cells from one sample are not independent replicates.</li>
+<li>Cluster-restricted marker expression supports an assigned label, but independent protein or spatial validation is still needed before claiming lineage or function.</li>
+<li>Visual shifts in cluster abundance across conditions are descriptive; test donor-level proportions properly instead of treating individual cells as biological replicates.</li>
 </ul>
-<p>What the figures do NOT prove:</p>
 <ul>
-<li>They do not establish causality or mechanism. Visualization is descriptive and hypothesis-generating unless paired with proper downstream statistical and experimental validation.</li>
-<li>Plots do not correct for upstream biases (batch effects, doublets, ambient RNA); these must be addressed in preprocessing.</li>
+<li>Figures generate hypotheses rather than proving mechanism or fixing upstream doublets, batch effects, or ambient RNA.</li>
 </ul>
 <h2>Troubleshooting</h2>
 <p>Here are common symptoms, likely causes, and suggested fixes.</p>
@@ -404,6 +403,9 @@ saveRDS(seurat_obj, file = "data/seurat_obj_with_umap.rds")
 <li>Create figure captions that state: data source, normalization/scale (e.g., log-normalized, row-scaled), color scales used, and any filtering applied.</li>
 <li>Perform the appropriate statistical tests for claims suggested by the visuals (differential expression, composition tests, etc.).</li>
 </ul>
+<aside aria-label="Author's lab note" class="lesson-summary">
+<p><strong>Author's lab note:</strong> Whenever a single-cell feature plot looks misleadingly bright across every cluster, the culprit is almost always autoscaling without an explicit cutoff (<code>max.cutoff = "q95"</code>) or unscaled <code>DotPlot</code> dot sizes. Fixing expression quantiles globally across panels and exporting vectors at 300 DPI stops figures from needing last-minute redraws before journal submission.</p>
+</aside>
 <h2>References</h2>
 <ul>
 <li>Bunis, D. G., Andrews, J., Fragiadakis, G. K., Burt, T. D., &amp; Sirota, M. (2020). dittoSeq: universal user-friendly single-cell and bulk RNA sequencing visualization toolkit. <em>Bioinformatics</em>, 36(22-23), 5535-5536. <a href="https://doi.org/10.1093/bioinformatics/btaa1011" rel="noopener" target="_blank">doi:10.1093/bioinformatics/btaa1011</a></li>

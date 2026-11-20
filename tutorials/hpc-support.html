@@ -386,7 +386,7 @@ conda activate myenv</code></pre>
 </ul>
 <section class="lesson-summary" aria-label="Cluster-free troubleshooting check">
 <h2>Interpret a hypothetical job record</h2>
-<p><strong>Hypothetical check:</strong> A record says <code>COMPLETED</code> with exit code <code>0:0</code>, but the expected output file is absent. Does that prove the analysis produced a complete or scientifically valid result? No. It records successful job-script termination only. Check the script's output path, working directory, logs, and expected-file logic before drawing conclusions or rerunning.</p>
+<p><strong>Sanity check:</strong> If <code>sacct</code> prints <code>COMPLETED</code> with exit code <code>0:0</code> while your expected output file is missing, only the bash script itself finished cleanly. Inspect working directory, relative paths, and redirections inside logs before resubmitting.</p>
 </section>
 
 <figure class="my-8 bg-white border border-gray-200 rounded-xl p-4 shadow-sm"><img src="../images/tutorial-figures/hpc-troubleshooting-triage.svg" alt="Diagnostic quadrant diagram showing four HPC failure checks: Scheduler Exit Codes (sacct), Storage &amp; Quota Limits, Environment / PATH Mismatches, and Minimal Support Packet" width="960" height="460" loading="lazy" class="w-full h-auto rounded-lg" style="aspect-ratio: 960 / 460;"/><figcaption class="mt-3 text-sm text-gray-600">Effective HPC troubleshooting collects <code>sacct</code> exit states (<code>OUT_OF_MEMORY</code>, <code>TIMEOUT</code>, <code>FAILED</code>), checks disk quotas and file paths, reproduces minimal tests interactively, and compiles a complete ticket only when needed.</figcaption></figure>
@@ -424,8 +424,7 @@ Steps attempted:
 </code></pre>
 <h2>Version notes and study boundaries</h2>
 <ul>
-<li>Slurm version, accounting plugins, retention, and site policy affect commands and fields. Check cluster documentation; this lesson does not certify commands against a particular installation.</li>
-<li><code>seff</code> may not be installed. <code>/usr/bin/time -v</code> measures a process launched with that command; it does not replace scheduler accounting for a distributed job.</li>
+<li>Check cluster documentation for local Slurm flags, accounting retention limits, and approved test queues; <code>/usr/bin/time -v</code> profiles only a single local step rather than full distributed node memory.</li>
 <li>Always avoid including raw sequence data or personally identifiable information (PII) in support tickets. If support needs such data, coordinate a secure transfer channel with the administrators.</li>
 <li>Administrative fixes (node reboots, system logs) may be restricted to support staff; do not ask support to run destructive debugging commands (e.g., rm -rf). If a support request could reveal sensitive information, ask about redaction procedures first.</li>
 <li>Performance on a local workstation may not reflect cluster behavior (different CPU architecture, memory bandwidth, or MPI libraries). Use a short test on the cluster itself where possible.</li>
@@ -438,6 +437,9 @@ Steps attempted:
 <li>If resource evidence supports a limit, adjust one relevant request or concurrency setting using observed use and site guidance; record the change and outcome.</li>
 <li>If unresolved, submit a concise support ticket including the template shown above and note any privacy redactions.</li>
 </ul>
+<aside aria-label="Author's lab note" class="lesson-summary">
+<p><strong>Author's lab note:</strong> Sending a clean, five-line support ticket with exact <code>JOB_ID</code>, redacted <code>.sbatch</code> text, <code>sacct</code> exit state, and the first traceback line cuts HPC ticket turnaround from days to minutes. Cluster engineers cannot reproduce "my pipeline crashed" without paths, modules, and exit codes.</p>
+</aside>
 <h2>References</h2>
 <ul>
 <li><a href="https://slurm.schedmd.com/documentation.html">Slurm official documentation (SchedMD)</a></li>

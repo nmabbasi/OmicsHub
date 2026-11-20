@@ -390,7 +390,8 @@ cnv_matrix = adata.obsm["X_cnv"]
 <li>If HMM prediction is enabled, inspect its generated files using the installed version documentation. These are model-derived states, not direct measurements of DNA dosage.</li>
 <li>InferCNV also saves stage-specific R objects and text matrices; consult the output directory and package documentation rather than relying on an assumed filename.</li>
 </ul>
-<p>The checkpoint saves the object returned by this run rather than guessing which stage file is final. It also checks the HMM region-table schema and the state codes for the recorded HMM type. A report with zero retained regions can be a valid outcome after neutral-state or posterior-probability filtering: it is not proof that every cell is diploid. Inspect the unfiltered and filtered reports and the run log. If another release changes the output schema, consult that release's documentation instead of renaming files or inventing calls to satisfy the check. This template uses a new, empty output folder so stale artifacts cannot masquerade as new results; deliberate checkpoint resumption needs separate review of the package's resume options.</p>
+<p>The verification block inspects the returned object and verifies HMM region columns directly. Remember that zero retained regions can be a valid outcome after neutral-state filtering or stringent posterior thresholds, so inspect both unfiltered and filtered outputs alongside the log before assuming a run failed.</p>
+<p>Start every fresh run in a clean empty output directory rather than pointing inferCNV at leftover files from an earlier attempt.</p>
 <p>What to look for:</p>
 <ul>
 <li>Look for broad, contiguous expression shifts across genes in genomic order. A regional pattern is a candidate signal to investigate, not a CNV call by itself.</li>
@@ -415,16 +416,14 @@ ref_q99 &lt;- stats::quantile(score_df$cnv_msq[score_df$is_reference], probs = 0
 print(aggregate(cnv_msq ~ cell_type + is_reference, data = score_df, FUN = stats::median))
 message("99th percentile of diploid reference CNV score: ", round(ref_q99, 5))</code></pre>
 <p>A global CNV burden score flags high-aneuploidy clusters relative to internal normal cells, though diploid or near-diploid tumors (such as many acute leukemias or pediatric cancers driven by balanced translocations) will score near the reference distribution and require fusion, mutation, or allele-specific BAF callers (such as <code>Numbat</code> when BAMs are available).</p>
-<p>What a plausible positive result means:</p>
+<p>How to interpret candidate CNV blocks:</p>
 <ul>
-<li>Coordinated amplification or deletion across many genes in a contiguous genomic region is consistent with a copy-number lesion and can be used to prioritise cells/clusters for DNA validation.</li>
-<li>Shared CNV patterns across cells that also express malignant markers strengthens the hypothesis of malignancy.</li>
+<li>Large contiguous amplifications or deletions spanning many neighboring genes alongside malignant markers help prioritize clusters for DNA validation.</li>
 </ul>
-<p>What the result does NOT prove:</p>
+<p>Interpretation limits:</p>
 <ul>
-<li>An expression-based CNV call is not a diagnostic DNA measurement. Confounding factors (cell cycle, strong transcriptional programs that co-regulate nearby genes, or an inappropriate reference) can produce false positives.</li>
-<li>Small focal events and balanced rearrangements are outside the method’s reliable scope; use an appropriate DNA assay to assess them.</li>
-<li>Quantitative copy number (exact integer ploidy) should not be assumed from inferred signal alone without orthogonal DNA data.</li>
+<li>Expression smoothing infers relative RNA dosage shifts, not direct DNA copy number; cell-cycle programs, lineage-specific loci (such as MHC or immunoglobulins), or non-diploid reference cells can mimic copy-number arms.</li>
+<li>Focal single-gene events and balanced translocations fall below moving-window resolution and require targeted DNA sequencing or FISH.</li>
 </ul>
 <h2>Troubleshooting</h2>
 <p>Below are common symptoms, likely causes, and practical fixes.</p>
@@ -494,6 +493,9 @@ message("99th percentile of diploid reference CNV score: ", round(ref_q99, 5))</
 <li>Compare CNV patterns to cluster annotations and known marker genes to prioritise candidate malignant clusters.</li>
 <li>Validate prioritized candidates with orthogonal DNA assays (shallow WGS, targeted DNA panels, FISH, or single-cell DNA-seq) before making biological or clinical claims.</li>
 </ol>
+<aside aria-label="Author's lab note" class="lesson-summary">
+<p><strong>Author's lab note:</strong> The classic inferCNV trap in solid tumors is including cycling T cells or fibroblasts with stressed gene programs as the sole diploid baseline, or leaving mitochondrial/ribosomal blocks cluttering chromosome arms. Checking that chromosome 6 MHC and immunoglobulin clusters aren't misread as focal gains alongside at least two independent normal cell types (such as endothelial cells and T cells) keeps tumor-clone calls grounded.</p>
+</aside>
 <h2>References</h2>
 <ul>
 <li>Patel AP, Tirosh I, Trombetta JJ, et al. (2014). Single-cell RNA-seq highlights intratumoral heterogeneity in primary glioblastoma. <em>Science</em>, 344(6190), 1396-1401 (origin of moving-window scRNA-seq CNV inference). <a href="https://doi.org/10.1126/science.1254257" rel="noopener" target="_blank">doi:10.1126/science.1254257</a></li>

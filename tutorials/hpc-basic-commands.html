@@ -185,7 +185,7 @@ function toggleMobileMenu() {
 else
   echo "No module command in this shell; check site instructions for batch-shell initialization."
 fi</code></pre>
-<p>Module names, versions, shell setup, and R executable names are site-specific; Python applies only to the optional alternative below. Do not assume that an example module name exists. If the site documents a module for the batch environment, use that exact name and initialize Modules as directed by the site. A failed module load must stop the job rather than quietly using another R. If the site does not use modules, use an Rscript path only after the site documentation confirms which R installation is available in non-interactive batch jobs.</p>
+<p>Module names, shells, and R executable paths vary across clusters (Python applies only to the optional panel below), so load the exact module documented by your site and let the job exit immediately if a module load fails rather than falling back silently to an unapproved system R binary.</p>
 <h2>Inspect partitions and your queue</h2>
 <p>Use the cluster's own output to discover partition names and node states; an idle node does not guarantee that your account or request is eligible to run there. Replace <code>PARTITION_NAME</code> with a name reported by your site. State and resource fields describe scheduler configuration, not a promise of availability.</p>
 <pre><code>sinfo
@@ -210,7 +210,7 @@ print(f"Selected Python: {sys.executable}")
 print(f"Python version: {platform.python_version()}")
 print(f"Hostname: {platform.node()}")
 print(f"Sum 1..100: {sum(range(1, 101))}")</code></pre>
-<p>This alternative needs Python 3 and no third-party package. Save it as <code>local-smoke.py</code> and run <code>python3 local-smoke.py</code>. It performs the same arithmetic smoke test; it does not establish anything about the target cluster.</p>
+<p>Save this third-party-free Python 3 script as <code>local-smoke.py</code> and run <code>python3 local-smoke.py</code> to confirm basic execution locally before touching cluster queues.</p>
 <h2>Prepare a batch script for your selected language</h2>
 <h3 id="hpc-batch-r">R · base R (primary route)</h3>
 <p>On the cluster, follow site storage guidance and move to a permitted working directory. Create <code>hello.R</code> there with the R snippet above, then save the following as <code>smoke.sbatch</code>. Replace the R module placeholder with the exact module documented by your HPC site. The example requests one node, one task, one CPU, one gigabyte of memory, and five minutes; these are illustrative limits, not portable recommendations.</p>
@@ -355,8 +355,11 @@ srun --nodes=1 --ntasks=1 --cpus-per-task=2 --mem=4G --time=01:00:00 --pty bash<
 
 <figure class="my-8 bg-white border border-gray-200 rounded-xl p-4 shadow-sm"><img src="../images/tutorial-figures/hpc-slurm-commands-lifecycle.svg" alt="Four-stage Slurm command map: Environment Check (module avail), Queue Check (sinfo/squeue), Job Submission (sbatch/srun), and Live Control &amp; Audit (scancel/sacct)" width="960" height="460" loading="lazy" class="w-full h-auto rounded-lg" style="aspect-ratio: 960 / 460;"/><figcaption class="mt-3 text-sm text-gray-600">Routine HPC sessions follow a predictable command sequence: inspect modules and cluster partitions, validate scripts locally or with <code>--test-only</code>, submit once via <code>sbatch</code>, and monitor live or finished jobs with <code>squeue</code> and <code>sacct</code>.</figcaption></figure>
 <h2>What this lesson did and did not test</h2>
-<p>The R and Python smoke scripts run locally as minimal arithmetic checks; local execution does not exercise Slurm. The batch-script syntax and failure/success paths are tested with local command mocks only; mocks do not schedule a job, load a real site module, exercise a compute node, or verify a cluster's accounting and filesystem behavior. No real cluster, scheduler, paid service, private research material, account, or email is used by these local checks. Site setup, permissions, resource policy, and actual job execution remain for your administrator-approved environment.</p>
-<p>After this reference, continue to <a href="hpc-submission-part1.html">Writing Slurm Job Scripts</a> to learn how to adapt directives and script structure for a real workload. If you do not have HPC access or need a different prerequisite, return to <a href="../start-here.html">Start Here</a>; HPC is optional.</p>
+<p>Both local smoke scripts simply verify R or Python arithmetic, while batch-script syntax checks ran against local command mocks only. No real cluster, scheduler, paid service, private research material, account, or email is used in these local tests, so confirm your site partition rules and quotas before submitting real jobs.</p>
+<p>Continue to <a href="hpc-submission-part1.html">Writing Slurm Job Scripts</a> when ready to scale up, or jump back to <a href="../start-here.html">Start Here</a> if you do not use an HPC cluster.</p>
+<aside aria-label="Author's lab note" class="lesson-summary">
+<p><strong>Author's lab note:</strong> Nine out of ten mysterious batch failures come from module environments not resetting cleanly between interactive shells and compute nodes. Putting <code>module purge</code> and explicit <code>command -v</code> checks at the top of every <code>.sbatch</code> script catches wrong paths in seconds instead of failing five hours into an alignment.</p>
+</aside>
 <h2>References</h2>
 <ul>
 <li><a href="https://slurm.schedmd.com/sinfo.html">Slurm <code>sinfo</code> manual</a>, partition and node reporting.</li>

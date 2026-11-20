@@ -200,12 +200,13 @@ function toggleMobileMenu() {
 <pre id="cli-part2-activate"><code>micromamba activate cli-sequences &amp;&amp;
 command -v seqkit &amp;&amp;
 seqkit version</code></pre>
-<p>Rerun the readiness check above before continuing. Expected evidence is a command path for each utility and a SeqKit version, not just a downloaded file or an environment name. In a new terminal, repeat the hook and activation checks, not environment creation. If solving fails, retain the error and inspect platform support and channel order instead of switching channels blindly. See the official <a href="https://mamba.readthedocs.io/en/latest/installation/micromamba-installation.html" rel="noopener" target="_blank">Micromamba installation guidance</a> and <a href="https://bioconda.github.io/" rel="noopener" target="_blank">Bioconda channel policy</a>.</p>
+<p>Rerun the readiness check above before continuing so you verify an installed command path for each utility plus a working SeqKit binary, rather than relying on an inactive environment name. In a new terminal, repeat the hook and activation checks rather than recreating the environment. If solving stalls, keep the error message and inspect platform support or channel priority; see the <a href="https://mamba.readthedocs.io/en/latest/installation/micromamba-installation.html" rel="noopener" target="_blank">Micromamba installation guide</a> and <a href="https://bioconda.github.io/" rel="noopener" target="_blank">Bioconda channel policy</a>.</p>
 <p><strong>Setup validation:</strong> On Ubuntu Linux x86_64, the displayed check, Bash hook, creation and activation commands succeeded with Micromamba 2.9.0 and SeqKit 2.14.0 in a fresh home directory and environment root, reusing an existing executable and package cache. The readiness check and both expected FASTA motif matches passed. The installer itself and other operating systems were not retested in this revision.</p>
 
 <figure class="my-8 bg-white border border-gray-200 rounded-xl p-4 shadow-sm"><img src="../images/tutorial-figures/command-line-unix-pipe-stream.svg" alt="Pipeline diagram showing stdin/stdout flow across compressed input zcat, grep/awk filtering, cut/sort/uniq aggregation, and safe file output redirection" width="960" height="460" loading="lazy" class="w-full h-auto rounded-lg" style="aspect-ratio: 960 / 460;"/><figcaption class="mt-3 text-sm text-gray-600">Unix pipelines stream text line by line from stdin to stdout, letting tools like <code>zcat</code>, <code>grep</code>, <code>cut</code>, and <code>awk</code> filter and summarize compressed annotations or count tables at minimal memory cost.</figcaption></figure>
 <h2>Why text processing matters in bioinformatics</h2>
-<p>Many bioinformatics data formats (FASTA, FASTQ, variant tables, gene annotation TSVs) are plain text. Being able to filter, extract, and summarize these files from the command line lets you explore data quickly, create reproducible preprocessing steps, and plug into larger pipelines. These tools process input a line at a time and can be useful in pipelines over large files; sorting may need substantial memory or temporary disk space, so do not assume every command in a pipeline has constant memory use. That same line-oriented behavior means you must know the file layout (for example, whether sequence lines are wrapped) before running a command like grep or cut.</p>
+<p>Standard genomic formats (FASTA, FASTQ, variant tables, and gene annotations) are plain text. Filtering and reshaping them on the command line lets you inspect cohorts quickly and wire reproducible preprocessing steps into larger pipelines.</p>
+<p>Because these utilities stream input line by line, inspect file layout first (for instance, whether FASTA sequences wrap across lines) before cutting fields, and remember that <code>sort</code> can require large amounts of memory or temporary disk space on big datasets.</p>
 <h3>Key concept: line orientation vs. record orientation</h3>
 <p>Tools such as grep, sed, cut, sort, and uniq work on lines. If a biological record spans multiple lines (common in wrapped FASTA), naive line-based commands can yield incorrect results. Sequence-aware tools (for example, seqkit) treat sequences as records and should be used when format complexity matters.</p>
 <h2>Reproducible workflow: filter, extract, and summarize</h2>
@@ -216,7 +217,7 @@ seqkit version</code></pre>
 <li><code>reads.fastq</code>: two invented eight-base reads, with equal sequence and quality lengths. <code>malformed.fastq</code> deliberately has four bases but only three quality characters.</li>
 <li>data.tsv: a tab-delimited table with a header line and multiple columns (e.g., gene_id, sample, count).</li>
 </ul>
-<p>Run the setup in a fresh practice area. These sequences, IDs, counts and quality characters are invented solely for this lesson; they are not biological observations. To rerun setup while inside <code>cli-part2-practice</code>, first run <code>cd ..</code> to return to its parent directory and check <code>pwd</code>; otherwise the setup creates a nested practice directory. Re-running from the same parent overwrites the five teaching filenames. For comparison or recovery, the same inputs are available as <a href="../files/text-processing-lesson/sequences.fasta">FASTA</a>, <a href="../files/text-processing-lesson/reads.fastq">valid FASTQ</a>, <a href="../files/text-processing-lesson/malformed.fastq">malformed FASTQ</a>, <a href="../files/text-processing-lesson/data.tsv">TSV</a>, and <a href="../files/text-processing-lesson/genes_of_interest.txt">ID list</a>.</p>
+<p>Set up a clean practice folder with invented sequences, IDs, counts, and quality strings (these are practice inputs, not biological observations). If you rerun setup while inside <code>cli-part2-practice</code>, first run <code>cd ..</code> to return to its parent directory and verify <code>pwd</code>; otherwise the setup creates a nested practice directory. Running setup again from the same parent overwrites the five practice files, which you can also download individually: <a href="../files/text-processing-lesson/sequences.fasta">FASTA</a>, <a href="../files/text-processing-lesson/reads.fastq">valid FASTQ</a>, <a href="../files/text-processing-lesson/malformed.fastq">malformed FASTQ</a>, <a href="../files/text-processing-lesson/data.tsv">TSV</a>, and <a href="../files/text-processing-lesson/genes_of_interest.txt">ID list</a>.</p>
 <pre id="cli-part2-setup"><code>mkdir -p cli-part2-practice
 cd cli-part2-practice
 printf 'gene_id\tsample\tcount\nGENE_A\tS1\t120\nGENE_B\tS1\t45\nGENE_A\tS2\t90\nGENE_C\tS2\t200\n' &gt; data.tsv
@@ -264,7 +265,7 @@ less sequences.fasta
 <pre><code># Count FASTA headers (sequences.fasta -&gt; counts to stdout)
 grep -c '^&gt;' sequences.fasta
 </code></pre>
-<p><strong>Predict, then check:</strong> the supplied FASTA should give <code>3</code>. This counts header lines, not sequence lines. It is a record count only under the usual FASTA convention of one header per record; it does not validate the sequences, their provenance, or ID uniqueness.</p>
+<p><strong>Predict, then check:</strong> the practice FASTA returns <code>3</code> because <code>grep</code> counts lines starting with <code>&gt;</code>. That assumes one header per record and does not check sequence bases or duplicate IDs.</p>
 <p>If you prefer a sequence-aware count using seqkit (recommended for complex FASTA files):</p>
 <pre><code># Requires seqkit installed; replace path or install in your environment
 seqkit stats sequences.fasta
@@ -300,8 +301,8 @@ seqkit seq -n -i matching_records.fasta
 <pre id="cli-part2-fastq-toy"><code># Demonstration ONLY for the supplied valid four-line teaching fixture
 awk 'NR%4==1{printf "&gt;%s\n", substr($0,2)} NR%4==2{print}' reads.fastq &gt; reads.toy.fasta
 </code></pre>
-<p>Expect two FASTA records, <code>read_1</code> and <code>read_2</code>, each eight bases long. A plausible output does not prove the original FASTQ was valid: the AWK command never checked its plus lines or sequence/quality length agreement.</p>
-<p>For general FASTQ conversion, use the record-aware parser. It can fail after reading part of a file, so this block writes to a temporary file and publishes the final filename only after a successful exit. This is format handling, not biological quality control.</p>
+<p>You should see two eight-base FASTA records (<code>read_1</code> and <code>read_2</code>). Notice that the quick AWK shortcut skips checking <code>+</code> separator lines and quality lengths, so it cannot catch a truncated record.</p>
+<p>For real data, use the record-aware parser below. Because a parser can fail partway through a corrupt file, the command writes to a temporary file first and publishes the final output only after a successful exit.</p>
 <pre id="cli-part2-fastq-record-aware"><code># Run in a child Bash shell so a parse failure stops before publishing output.
 bash &lt;&lt;'BASH'
 set -euo pipefail
@@ -366,7 +367,7 @@ awk -F'\t' 'FILENAME == ARGV[1] {a[$1]=1; next} ($1 in a)' genes_of_interest.txt
 <li>Matching_records.fasta: check that full records were preserved; if only partial sequences appear, you may have used a line-based grep on wrapped FASTA.</li>
 <li>Filtered TSV outputs: confirm the header presence and that numeric comparisons (such as $3 &gt; 100) behave as intended. Do not rely on an AWK numeric comparison to validate a field: nonnumeric text can be coerced or compared in ways that do not express the intended numeric threshold. Validate the field and normalize it before filtering.</li>
 </ul>
-<p>What a plausible result means and what it does NOT prove:</p>
+<p>How to read a passing output (and its limits):</p>
 <ul>
 <li>A list of sequence IDs matching 'ATGCG' indicates those sequences contain that motif. It does NOT imply functional significance or experimental validity; further validation and context are required.</li>
 <li>A high read count or many matching records may indicate biological signal or contamination; text processing alone cannot distinguish these possibilities.</li>
@@ -414,6 +415,9 @@ awk -F'\t' 'FILENAME == ARGV[1] {a[$1]=1; next} ($1 in a)' genes_of_interest.txt
 <li>When uncertain about format complexities, use seqkit or other format-aware tools rather than relying solely on line-based utilities.</li>
 <li>Practice safe data handling and check institutional policies before sharing processed data.</li>
 </ul>
+<aside aria-label="Author's lab note" class="lesson-summary">
+<p><strong>Author's lab note:</strong> Before writing a clever one-line <code>awk</code> parser for a new FASTA or TSV file, I always run <code>head</code> and check whether sequence lines wrap or header fields contain spaces. Half of the silent off-by-one bugs in bash pipelines come from multi-line FASTA wrapping breaking four-line record assumptions.</p>
+</aside>
 <h2>References</h2>
 <ul>
 <li><a href="https://www.gnu.org/software/grep/manual/grep.html">GNU grep manual</a>: documentation and options for pattern searching.</li>

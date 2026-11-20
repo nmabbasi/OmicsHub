@@ -469,10 +469,9 @@ Below are common issues and concrete steps to diagnose/fix them.
 Limitations to keep in mind:
 </p>
 <ul>
-<li>WNN is an unsupervised integration method. It reflects relative local informativeness but does not correct modality-specific artifacts such as antibody cross-reactivity or ambient RNA contamination.</li>
-<li>Normalization choices (CLR margin, RNA normalization method) substantially affect results. Carefully document settings, and, where possible, test alternatives (e.g., SCTransform for RNA).</li>
-<li>Results are sensitive to dim selection (dims.list). Inspect the available dimensions and their variance patterns before setting <code>dims.list</code>; the example values (30 RNA PCs and 18 ADT PCs) are placeholders, not validated choices for every dataset. Avoid requesting PCs that do not exist.</li>
-<li>Seurat APIs can change between versions. This workflow follows the official Seurat v4.3 example and current reference for these calls; check your installed version and save session information with <code>saveRDS(sessionInfo(), file = "results/session_info.rds")</code>.</li>
+<li><strong>WNN is descriptive integration, not artifact removal:</strong> it weights RNA vs ADT signal locally per cell without removing antibody cross-reactivity or ambient RNA soup. Compare standard RNA normalization alongside <code>SCTransform</code> and <code>dsb</code> where possible.</li>
+<li><strong>Validate <code>dims.list</code> on your own panel:</strong> inspect elbow plots before choosing RNA and ADT PCs; the 30 RNA / 18 ADT values in the worked code are starting settings rather than universal defaults.</li>
+<li><strong>Record exact Seurat versions:</strong> save <code>saveRDS(sessionInfo(), file = "results/session_info.rds")</code> since assay v4/v5 accessors differ across releases.</li>
 </ul>
 <p>
 Responsible-use notes:
@@ -490,6 +489,9 @@ Responsible-use notes:
 <li>Identify cluster markers in both modalities; validate with known biology and additional controls.</li>
 <li>Save final Seurat object and session info for provenance.</li>
 </ol>
+<aside aria-label="Author's lab note" class="lesson-summary">
+<p><strong>Author's lab note:</strong> In CITE-seq, surface protein background from unbound antibodies behaves completely differently from mRNA ambient soup. Always inspect raw ADT counts against empty droplets or isotype controls (with <code>margin = 2</code> CLR or <code>dsb</code>) before trusting WNN weights, otherwise a couple of sticky antibodies can dominate your neighbor graph.</p>
+</aside>
 <h2>References</h2>
 <ul>
 <li>Hao Y, Hao S, Andersen-Nissen E, et al. (2021). Integrated analysis of multimodal single-cell data. <em>Cell</em>, 184(13), 3573-3587 (primary Weighted Nearest Neighbor method paper). <a href="https://doi.org/10.1016/j.cell.2021.04.048" rel="noopener" target="_blank">doi:10.1016/j.cell.2021.04.048</a></li>

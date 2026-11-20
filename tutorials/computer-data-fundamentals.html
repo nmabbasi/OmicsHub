@@ -205,8 +205,8 @@ function toggleMobileMenu() {
 <li>Diagnose common error messages such as “out of memory”, “disk quota exceeded”, or “permission denied”.</li>
 </ul>
 <h2>Practical, reproducible workflow</h2>
-<p>The lab uses a tiny synthetic fixture so every command can be run without downloading biological data. Begin in Bash on Linux, macOS, or WSL; check that <code>bash</code>, <code>gzip</code>, and either GNU <code>sha256sum</code> or <code>shasum</code> are available (<code>command -v bash gzip sha256sum shasum</code>). Do not use synthetic checksums to validate real provider files.</p>
-<p>From any working directory, create the two compressed FASTQ files and a clearly local demonstration manifest. The sequences and identifiers below are invented teaching data.</p>
+<p>We generate a tiny pair of practice files locally so you can test every command without downloading real sequencing runs. Open Bash on Linux, macOS, or WSL and confirm that <code>bash</code>, <code>gzip</code>, and either <code>sha256sum</code> or <code>shasum</code> are installed (<code>command -v bash gzip sha256sum shasum</code>).</p>
+<p>From your working folder, create the two compressed FASTQ files and a matching manifest containing the invented teaching reads below:</p>
 <pre><code>mkdir -p ~/projects/my-study/data/raw
 cd ~/projects/my-study/data/raw
 printf '@demo/1\nACGT\n+\nIIII\n@demo/2\nTGCA\n+\nIIII\n' | gzip -c &gt; sample_R1.fastq.gz
@@ -256,7 +256,14 @@ free -h
 cd ~/projects/my-study
 df -h .
 </code></pre>
-<p>For example, <code>nproc</code> reporting 8 means eight logical CPUs are visible to this environment, not necessarily eight exclusively available cores. <code>free -h</code> reports memory and swap; use the available-memory field as a snapshot, since other processes and scheduler limits can change what a job may use. <code>df -h .</code> reports filesystem capacity and free space, not your quota or scratch allocation. As a practical capacity example, a single 30x human whole-genome paired-end dataset (~60 to 80 GB of compressed FASTQ) commonly needs 250 to 350 GB of temporary scratch space during alignment, coordinate sorting, and duplicate marking, while reference indices such as STAR for GRCh38 require roughly 30 to 32 GB of RAM. Network bandwidth is transfer rate rather than disk capacity: compare the size of an authorized transfer with observed transfer time, and consult the cluster or provider limits; this short exercise does not benchmark the network. If memory is low, storage is nearly full, or a quota is unclear, pause and ask the system administrator or choose an approved resource before running a large workflow.</p>
+<p>Read each hardware command carefully before allocating a large run:</p>
+<ul>
+<li><code>nproc</code> shows how many logical CPUs are visible to your shell (for instance <code>8</code>), though shared nodes or Slurm cgroups may restrict how many cores your job can actually use.</li>
+<li><code>free -h</code> summarizes RAM and swap; check the <em>available</em> column as a rough snapshot, bearing in mind that reference indices like STAR for human GRCh38 typically need 30 to 32 GB of RAM.</li>
+<li><code>df -h .</code> reports total filesystem space rather than your user quota; as a rule of thumb, a single 30x human WGS paired-end sample (~60 to 80 GB of compressed FASTQ) often requires 250 to 350 GB of scratch disk during alignment, sorting, and duplicate marking.</li>
+<li><strong>Network throughput</strong> is a transfer rate, not disk size. Time a real authorized download against your provider or cluster policy rather than guessing bandwidth from hardware specs.</li>
+</ul>
+<p>If RAM or scratch quotas look tight, ask your cluster administrator or test on a single downsampled file before submitting a full batch.</p>
 <h2>Inspect compressed FASTQ inputs</h2>
 <p>Use the example filenames below only after placing your own files in <code>data/raw/</code>. These commands read the files without creating uncompressed copies.</p>
 <pre><code># Show file type and compression container. This is safe and non-destructive.
@@ -290,9 +297,9 @@ zcat data/raw/sample_R1.fastq.gz | head -n 8
   echo "gzip exit status: 0"
 )
 </code></pre>
-<div class="lesson-result"><strong>Expected result:</strong> The two-entry synthetic manifest should print <code>sample_R1.fastq.gz: OK</code> and <code>sample_R2.fastq.gz: OK</code>; gzip exit status should be <code>0</code>. An edited/truncated file, missing manifest filename, or nonzero gzip status is a stop condition: do not proceed as though validation succeeded. A manifest match verifies bytes against that manifest; it does not establish sample identity, biological suitability, consent, or provenance.</div>
+<div class="lesson-result"><strong>Expected result:</strong> Your terminal should print <code>sample_R1.fastq.gz: OK</code> and <code>sample_R2.fastq.gz: OK</code> with <code>gzip exit status: 0</code>. Stop if either file fails, a filename is missing, or gzip exits non-zero. Keep in mind that a matching SHA-256 hash confirms byte-for-byte transfer integrity against the manifest; it says nothing about sample identity or assay quality.</div>
 <h3>Self-check: interpret a deliberate checksum failure</h3>
-<p>Use only the synthetic fixture. A new temporary directory receives a copy and a test checksum file that retains the original expected hash; the altered copy is compared with that hash. A cleanup trap removes only this temporary directory when the block ends. The original data and <code>SHA256SUMS</code> manifest are left unchanged.</p>
+<p>Next, copy one practice file into a temporary directory alongside the expected hash, modify the copy, and watch the check catch the corruption. A cleanup trap removes the temporary directory afterward while leaving your original files and <code>SHA256SUMS</code> untouched.</p>
 <pre><code class="language-bash">(
   set -e
   cd ~/projects/my-study/data/raw
@@ -356,7 +363,7 @@ count_fastq_records data/raw/sample_R1.fastq.gz
 <p>Expected result for the invented fixture: <code>2 records</code>. Negative example: the following command must exit nonzero and must not print a record count if that file is missing or contains a corrupt gzip stream.</p>
 <pre><code>count_fastq_records data/raw/missing_R1.fastq.gz
 </code></pre>
-<p>Counting reads scans the full compressed file and can take time; the gzip integrity precheck and count each read the compressed file. Dividing the line count by four is only a line-count sanity check, not full FASTQ validation: it does not check sequence/quality lengths, identifiers, whether paired files are synchronized, or biological correctness. Use available quotas and avoid writing expanded copies when possible.</p>
+<p>Counting reads scans the entire compressed archive twice (once for the gzip test, once for line counting), so budget I/O time on multi-gigabyte FASTQs. Dividing lines by four is a quick sanity check on record count rather than full FASTQ validation: it does not verify matching sequence/quality lengths, unique read IDs, or mate synchronization.</p>
 <h2>Troubleshooting: common symptoms, likely causes, and fixes</h2>
 <ul>
 <li>
@@ -400,6 +407,9 @@ count_fastq_records data/raw/sample_R1.fastq.gz
 <li>Confirm available RAM and disk before running memory- or I/O-intensive steps; adjust pipeline parallelism and temporary directories accordingly.</li>
 <li>Confirm legal and ethical permissions for data use before analysis or sharing results.</li>
 </ol>
+<aside aria-label="Author's lab note" class="lesson-summary">
+<p><strong>Author's lab note:</strong> Almost every corrupted-FASTQ ticket I see boils down to a truncated download that nobody hashed before launching alignment. Running <code>sha256sum -c</code> and <code>gzip -t</code> takes two minutes at the start of a project and saves days of troubleshooting downstream tools that crash mid-chromosome.</p>
+</aside>
 <h2>References</h2>
 <ul>
 <li><a href="https://www.gnu.org/software/coreutils/manual/coreutils.html">GNU coreutils manual (ls, du, df, mkdir, printf)</a></li>

@@ -184,7 +184,7 @@ function toggleMobileMenu() {
 
 <figure class="my-8 bg-white border border-gray-200 rounded-xl p-4 shadow-sm"><img src="../images/tutorial-figures/command-line-directory-tree.svg" alt="Diagram showing Linux bioinformatics directory hierarchy with absolute path /home/user/project/data/raw, relative navigation commands, and safety rules" width="960" height="460" loading="lazy" class="w-full h-auto rounded-lg" style="aspect-ratio: 960 / 460;"/><figcaption class="mt-3 text-sm text-gray-600">Mastering <code>pwd</code>, relative (<code>../</code>) vs absolute (<code>/</code>) paths, and safe flags (<code>cp -i</code>, <code>mv -n</code>, dry runs) prevents accidental overwrites of raw sequencing data.</figcaption></figure>
 <h2>Why basic command-line navigation matters in bioinformatics</h2>
-<p>Bioinformatics workflows typically involve many files (raw reads, reference genomes, intermediate results, logs). Graphical file managers become cumbersome or unavailable when you are connected to a remote compute server or working inside a batch job. A small set of command-line skills makes you more reproducible, efficient, and less likely to accidentally lose data when running analysis pipelines.</p>
+<p>Bioinformatics projects accumulate hundreds of files across raw FASTQs, reference genomes, logs, and outputs, often on headless remote servers where graphical file browsers are slow or unavailable. A handful of reliable terminal commands helps you verify locations and move files without accidental overwrites.</p>
 <p>Examples where these skills are essential:</p>
 <ul>
 <li>Transferring files between a local laptop and a remote cluster with scp or rsync.</li>
@@ -267,7 +267,7 @@ less projects/basic-nav/scripts/README.md
 <li><code>less</code> is a pager that lets you view large files page by page.</li>
 </ul>
 <h3 class="lesson-step">5. Copy, move, and rename files with examples</h3>
-<p>Check the source and destination before changing files. The <code>-i</code> option asks before replacing an existing destination. These examples copy and move only the practice files; they are not a backup strategy for irreplaceable data.</p>
+<p>Check both source and destination before modifying files: <code>-i</code> prompts you before overwriting an existing file. Treat these commands as safe file handling rather than a backup system for irreplaceable raw reads.</p>
 <pre><code># Copy only the R1 placeholder into results; the original remains in data
 cp -i projects/basic-nav/data/sample_R1.fastq.gz projects/basic-nav/results/
 
@@ -302,10 +302,10 @@ echo projects/basic-nav/data/raw/sample_R?.fastq.gz</code></pre>
 <li>Use <code>ls -lh</code> on files. Files created with <code>touch</code> are 0 bytes and cannot serve as reads for downstream tools. File size alone cannot establish whether a nonempty FASTQ is valid.</li>
 <li>If <code>file</code> identifies gzip data, <code>zcat</code> or <code>gunzip -c</code> can write decompressed text to standard output. If the file is plain text, inspect it with text tools instead. Neither file type nor a short preview checks FASTQ record structure, sequence/quality lengths, read pairing, or biological suitability.</li>
 </ul>
-<p>What a plausible result means and what it does not prove:</p>
+<p>What a quick glance shows (and what it misses):</p>
 <ul>
-<li>A FASTQ record has four lines: a header beginning with <code>@</code>, a sequence, a <code>+</code> separator, and a quality string. Seeing only a header and sequence is not enough to validate even the record structure, much less read pairing or biological suitability.</li>
-<li>Successful <code>cp</code> or <code>mv</code> indicates the filesystem accepted the operation; it does not validate file contents or integrity. To check integrity, compute checksums (see Troubleshooting below).</li>
+<li>Every FASTQ record spans four lines (<code>@header</code>, sequence, <code>+</code> separator, and quality scores), so peeking at the top two lines confirms readable text without verifying mate pairing or quality integrity.</li>
+<li>A quiet exit from <code>cp</code> or <code>mv</code> means the filesystem completed the write, not that the archive downloaded intact; run checksums before deleting originals (see Troubleshooting below).</li>
 </ul>
 <h2>Troubleshooting</h2>
 <p>Common symptoms, likely causes, and fixes.</p>
@@ -339,7 +339,7 @@ sha256sum -c sample_R1.sha256
 <p>Limitations:</p>
 <ul>
 <li><code>cd</code> and <code>pwd</code> are shell built-ins; <code>ls</code>, <code>cp</code>, <code>mv</code>, and other file commands have platform-specific variants. Bash brace expansion is not portable to every shell, and GNU-only options such as <code>--backup=numbered</code> may not exist on macOS or other systems. Check your shell and local manual pages before using options from a different platform.</li>
-<li>The <code>touch</code> files in this lesson are empty stand-ins, not biological data; downstream tools will fail or produce meaningless results if given zero-byte files.</li>
+<li>Empty files created with <code>touch</code> only test filenames and paths here; real alignment or QC tools fail on zero-byte FASTQs.</li>
 </ul>
 <p><strong>A few boundary notes:</strong></p>
 <ul>
@@ -358,6 +358,9 @@ sha256sum -c sample_R1.sha256
 <li>Learn how to compute and check checksums (<code>sha256sum</code>) for file integrity after transfers.</li>
 <li>Read the man pages for the commands covered: <code>man ls</code>, <code>man cp</code>, <code>man mv</code>, <code>man mkdir</code>.</li>
 </ol>
+<aside aria-label="Author's lab note" class="lesson-summary">
+<p><strong>Author's lab note:</strong> Always running <code>pwd</code> and <code>ls</code> before any wildcard move or removal is a five-second habit that protects raw sequencing runs. On shared HPC scratch folders, pairing interactive commands with <code>cp -i</code> or <code>mv -n</code> stops accidental clobbering before it happens.</p>
+</aside>
 <h2>References</h2>
 <ul>
 <li><a href="https://www.gnu.org/software/bash/manual/bash.html">GNU Bash Reference Manual: shell behavior, including brace expansion and <code>cd</code></a></li>

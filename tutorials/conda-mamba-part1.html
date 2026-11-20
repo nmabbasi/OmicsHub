@@ -341,7 +341,14 @@ The final list should show both names, and all three version checks must succeed
 <pre><code class="language-bash">micromamba env export -n qc-tools --from-history &gt; environment-history.yml
 micromamba env export -n qc-tools --explicit &gt; spec-explicit.txt</code></pre></li>
 </ol>
-<p>Keep the authored specification (<code>environment.yml</code>) alongside a resolved or locked record depending on your goal: <code>--from-history</code> captures only top-level human intent; <code>environment-resolved-reviewed.yml</code> pins package versions and build strings for readable auditing; <code>--explicit</code> writes exact package archive URLs and MD5 hashes for deterministic same-OS/same-CPU reinstallation without running the SAT solver; and multi-platform teams (for example macOS <code>osx-arm64</code> laptops plus Linux <code>linux-64</code> HPC nodes) use <a href="https://conda.github.io/conda-lock/" rel="noopener" target="_blank"><code>conda-lock</code></a> to generate a single multi-architecture <code>conda-lock.yml</code>. Neither file captures input data, reference builds, or analysis parameters: full workflow reproducibility requires recording those too.</p>
+<p>Keep your authored specification (<code>environment.yml</code>) alongside a resolved or locked export depending on how you share the workflow:</p>
+<ul>
+<li><code>--from-history</code> keeps only packages you requested directly so you can recreate the intent cleanly across platforms.</li>
+<li><code>environment-resolved-reviewed.yml</code> pins concrete versions and build strings for readable auditing.</li>
+<li><code>--explicit</code> records exact archive URLs and MD5 hashes for deterministic same-OS, same-CPU rebuilds without invoking the solver.</li>
+<li><a href="https://conda.github.io/conda-lock/" rel="noopener" target="_blank"><code>conda-lock</code></a> writes one multi-architecture <code>conda-lock.yml</code> when teammates mix macOS (<code>osx-arm64</code>) laptops and Linux (<code>linux-64</code>) HPC nodes.</li>
+</ul>
+<p>None of those files track raw inputs, genome builds, or script parameters, so archive those alongside your environment snapshot.</p>
 <h2>Use the environment in a workflow</h2>
 <p>Activation is a shell feature, so batch systems and scripts should initialize the shell in memory before calling <code>micromamba activate</code> (never write shell hooks to fixed shared paths in <code>/tmp</code> on multi-user clusters). A simpler alternative for single commands is <code>micromamba run</code>, which does not depend on shell initialization.</p>
 <pre><code class="language-bash"># Run one command without activating an interactive shell
@@ -426,7 +433,8 @@ echo "Environment verification completed: $(date -Iseconds)"</code></pre>
 </aside>
 <section aria-label="References and further reading" class="mt-10 p-6 bg-slate-50 border border-slate-200 rounded-xl">
 <h2 class="text-xl font-bold text-gray-900 mb-3">References and further reading</h2>
-<p class="text-sm text-gray-600 mb-3">Recorded bounded check: the authored YAML completed a fresh-name create under Ubuntu Linux x86_64 with Micromamba 2.9.0, explicit channel override and strict priority. Python 3.11.17, FastQC 0.13.0 and MultiQC 1.35 each ran their version command. The raw resolved export listed Bioconda before conda-forge, and its fresh solve failed with a libdeflate build conflict. A reviewed copy retained the package pins, restored conda-forge before Bioconda and removed the local prefix; fresh-name recreation and all three version checks then succeeded with the same versions on the same host. This checks neither byte-identical restoration nor another OS/architecture, the other installation routes, biological quality control or a production workflow. Package/channel metadata and availability change, so inspect and test your own result.</p>
+<p class="text-sm text-gray-600 mb-3">Recorded Ubuntu x86_64 check: with Micromamba 2.9.0 and explicit strict channels, <code>environment.yml</code> solved cleanly and verified Python 3.11.17, FastQC 0.13.0, and MultiQC 1.35.</p>
+<p class="text-sm text-gray-600 mb-3">When the raw resolved export listed Bioconda before conda-forge, its fresh solve failed with a libdeflate build conflict; restoring conda-forge first and removing the prefix fixed it so fresh-name recreation and all three version checks then succeeded on the same host.</p>
 <ul class="list-disc list-inside space-y-2 text-sm text-gray-700">
 <li><a class="text-blue-700 hover:underline" href="https://mamba.readthedocs.io/en/latest/installation/micromamba-installation.html" rel="noopener" target="_blank">Mamba documentation: Micromamba Installation</a></li>
 <li><a class="text-blue-700 hover:underline" href="https://mamba.readthedocs.io/en/latest/developer_zone/changes-2.0.html" rel="noopener" target="_blank">Mamba documentation: Mamba 2.0 Changes</a></li>

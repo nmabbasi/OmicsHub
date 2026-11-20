@@ -208,7 +208,14 @@ date
 <li><code>--job-name</code> labels the job in scheduler reports. Use <code>squeue -j JOB_ID</code> to inspect a pending or running job.</li>
 <li>Slurm substitutes <code>%j</code> in the output filename with the job ID. The log is useful only if the chosen path is writable and visible as expected under your site's filesystem rules.</li>
 </ul>
-<p>Slurm documents job environment variables individually; there is <strong>no general rule</strong> that uppercases every long option and transforms it into an environment-variable name. Examples in the official list include <code>SLURM_JOB_ID</code>, <code>SLURM_JOB_NAME</code>, and <code>SLURM_SUBMIT_DIR</code>. <code>SLURM_NTASKS</code> is set when <code>--ntasks</code> or an <code>--ntasks-per-*</code> option is specified; <code>SLURM_CPUS_PER_TASK</code> is set only when <code>--cpus-per-task</code> or <code>--tres-per-task=cpu=#</code> is specified; <code>SLURM_ARRAY_TASK_ID</code> is set for array tasks. <code>SLURM_JOB_NODELIST</code> describes nodes allocated to the job, so it is meaningful once an allocation exists. Names and conditions vary by variable: use the <a href="https://slurm.schedmd.com/sbatch.html#SECTION_OUTPUT-ENVIRONMENT-VARIABLES" rel="noopener noreferrer" target="_blank">official sbatch output environment-variable list</a>, not a guessed conversion. In shell code, a documented variable is expanded with a leading <code>$</code>.</p>
+<p>Slurm defines each job environment variable individually; there is <strong>no general rule</strong> mapping every flag automatically:</p>
+<ul>
+<li><code>SLURM_JOB_ID</code>, <code>SLURM_JOB_NAME</code>, and <code>SLURM_SUBMIT_DIR</code> identify the running job and launch path.</li>
+<li><code>SLURM_NTASKS</code> is defined when <code>--ntasks</code> or <code>--ntasks-per-*</code> is set, whereas <code>SLURM_CPUS_PER_TASK</code> is set only when <code>--cpus-per-task</code> or <code>--tres-per-task=cpu=#</code> is passed.</li>
+<li><code>SLURM_ARRAY_TASK_ID</code> is set for array tasks inside job arrays.</li>
+<li><code>SLURM_JOB_NODELIST</code> describes nodes allocated to the job once scheduled.</li>
+</ul>
+<p>Always check the <a href="https://slurm.schedmd.com/sbatch.html#SECTION_OUTPUT-ENVIRONMENT-VARIABLES" rel="noopener noreferrer" target="_blank">official sbatch output environment-variable list</a> instead of guessing variable names, and reference them in shell scripts with a leading <code>$</code>.</p>
 <h2>Decomposing the script</h2>
 <p>A submission script is composed of the following parts:</p>
 <ul>

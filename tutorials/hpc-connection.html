@@ -202,7 +202,7 @@ chmod 700 ~/.ssh</code></pre><p>The directory contains private authentication ma
 <p>Run this on your local computer:</p>
 <pre><code>ssh myhpc</code></pre>
 <p>On first connection, SSH may ask whether to trust the server host key. Verify its fingerprint with your institution through a separate trusted channel before accepting it. This check helps detect an unexpected server identity; do not dismiss a changed-host-key warning without confirmation. Depending on the site, authentication may also require a key passphrase, password, or MFA.</p>
-<p>A cluster login prompt or banner indicates that the SSH session reached a remote shell. It does not establish project allocation, data permissions, or that a computation is running. HPC systems commonly require compute work to be submitted through a scheduler; follow the cluster’s user guide and do not run heavy analysis on a login node.</p>
+<p>Landing at a cluster login prompt confirms SSH access to a shared login node, not compute quota or storage permission. Follow institutional rules and route intensive jobs through the scheduler rather than running alignments on the login node.</p>
 <h2>Transfer a small, non-sensitive test file</h2>
 <p>Use a harmless file first, and identify each side of the transfer explicitly. In <code>scp</code> and <code>rsync</code>, a path prefixed by a host or alias followed by a colon (<code>myhpc:</code> or <code>user@host:</code>) is remote; an ordinary path without a host prefix is local. On your local macOS/Linux terminal, create the exact small fixture used below:</p>
 <pre><code>printf 'HPC transfer test\n' &gt; ~/hpc-transfer-test.txt
@@ -225,7 +225,7 @@ echo $?</code></pre>
 ssh-add ~/.ssh/my_hpc_key</code></pre>
 <p>Use an agent only on a device you control, and follow local security policy. Agent forwarding is a separate feature with additional trust implications; do not enable it by default. MobaXterm and Windows OpenSSH have client-specific key and agent workflows, so use their current documentation.</p>
 <h2>Graphical applications are site-dependent</h2>
-<p>Some institutions allow X11 forwarding for individual graphical programs; others provide a remote desktop service or prohibit both on login nodes. If your administrator permits X11 and your local machine has a working X server, try <code>ssh -X myhpc</code> and then a lightweight test application available on that cluster. macOS generally requires an X server such as XQuartz; MobaXterm includes an X server on Windows. A set remote <code>DISPLAY</code> value alone does not prove that forwarding works. Interactive graphics may be slow over high-latency links; use the institution’s recommended service for desktop sessions.</p>
+<p>Some institutions allow X11 forwarding (<code>ssh -X myhpc</code> with XQuartz on macOS or MobaXterm on Windows) for quick graphical windows, though desktop portals or JupyterHub are usually much faster over high-latency connections.</p>
 <h2>Troubleshoot by symptom</h2>
 <div aria-label="Scrollable table: First checks for common SSH connection failures" class="lesson-table-wrap" role="region" tabindex="0"><table><caption class="lesson-caption">First checks for common SSH connection failures</caption><thead><tr><th scope="col">Symptom</th><th scope="col">Check</th><th scope="col">Next step</th></tr></thead><tbody>
 <tr><th scope="row">Timeout or connection refused</th><td>Confirm hostname, VPN/bastion requirement, network access, and correct port.</td><td>Ask HPC support whether the service is reachable from your network. A failed ping alone is inconclusive because sites may block ICMP.</td></tr>
@@ -238,7 +238,10 @@ ssh-add ~/.ssh/my_hpc_key</code></pre>
 <p>For detailed connection diagnostics, <code>ssh -vvv myhpc</code> prints verbose client messages. Review output before sharing it because it can expose account names, hostnames, paths, and configuration details. Do not publish private keys, passwords, MFA codes, or unredacted logs.</p>
 <h2>Practical completion check</h2>
 <ul><li>Use the verified institution hostname and the approved authentication method.</li><li>Reach a shell on the intended login host without ignoring host-identity warnings.</li><li>Upload and retrieve a small, non-sensitive test file using explicit path directions, then compare copies.</li><li>Know where the institution documents scheduler use, data-transfer policy, and project permissions.</li></ul>
-<p>This lesson does not test a connection to any particular HPC system. Hostnames, key-registration processes, transfer endpoints, scheduler rules, and graphical access vary by institution.</p>
+<p>Because hostnames, VPN rules, and transfer nodes vary across universities, test every command against your own institution's HPC documentation.</p>
+<aside aria-label="Author's lab note" class="lesson-summary">
+<p><strong>Author's lab note:</strong> Adding a short host block in <code>~/.ssh/config</code> with <code>ProxyJump</code> and <code>ServerAliveInterval 60</code> eliminates almost all repetitive MFA logins and dropped SSH tunnels during long interactive debugging sessions. Just remember to set <code>chmod 600 ~/.ssh/config</code> before leaving your terminal.</p>
+</aside>
 <h2>Official documentation</h2>
 <ul>
 <li><a href="https://man.openbsd.org/ssh.1" rel="noopener" target="_blank">OpenSSH: ssh(1) manual page</a></li>

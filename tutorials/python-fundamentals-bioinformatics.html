@@ -224,7 +224,7 @@ print("Unambiguous 4-mers:", kmers)</code></pre>
 <h2>Step 4: Why generators (<code>yield</code>) matter for genome-scale FASTA files</h2>
 <p>Reading an entire FASTA file into a list or dictionary works for three toy sequences, but human GRCh38 occupies ~3.1 GB uncompressed. A generator function using <code>yield</code> pauses after each complete record, holding only one sequence in RAM at a time while still allowing clean <code>for header, seq in fasta_records(path):</code> iteration.</p>
 <h2>Step 5: Complete FASTA-to-CSV command-line workflow</h2>
-<h3>1. Set up the project and create the synthetic FASTA fixture</h3>
+<h3>1. Set up the project and create the starter FASTA fixture</h3>
 <pre><code class="language-bash">mkdir -p ~/projects/python-bioinfo/data/raw ~/projects/python-bioinfo/scripts ~/projects/python-bioinfo/outputs
 cd ~/projects/python-bioinfo
 
@@ -341,11 +341,11 @@ for rec in SeqIO.parse("data/raw/example.fasta", "fasta"):
 <li>gc_fraction is the proportion of G or C bases (0.0–1.0). This script divides the count of G and C characters by the full normalized sequence length, including <code>N</code> in the denominator. Compare values only when the denominator rule and sequence scope match; GC content alone is not a quality verdict.</li>
 <li>The valid column flags records where non-standard characters were found (for this lesson that means characters outside A,C,G,T,N). If valid is "no", the gc_fraction field is left blank and you should inspect the corresponding sequence in the FASTA file.</li>
 </ul>
-<p>What a plausible result means and what it does NOT prove:</p>
+<p>How to interpret a passing output (and its limits):</p>
 <ul>
-<li>If a sequence has gc_fraction = 0.42, this simply means 42% of the characters in the provided string are G or C. It does not prove the sequence is error-free or biologically meaningful; contamination, assembly artifacts, or sequencing biases can change GC content.</li>
-<li>Short sequences or sequences labeled invalid may be genuine biological data (e.g., primers with ambiguous bases) or may indicate file corruption. Manual inspection or comparison to original data sources is required.</li>
-<li>Aggregate summaries (mean GC across records) are descriptive. They are not a substitute for statistical testing if you want to compare groups or draw biological conclusions.</li>
+<li>A <code>gc_fraction</code> of <code>0.42</code> tells you 42% of bases in that string are G or C; contamination, adapter read-through, or GC bias can all shift that fraction without flagging syntax errors.</li>
+<li>Short records or flagged invalid characters can represent genuine primers and IUPAC ambiguity codes just as easily as truncated files, so inspect flagged IDs against raw source files.</li>
+<li>Summary statistics like mean GC across records are descriptive checks rather than formal tests between groups.</li>
 </ul>
 <h2>Common errors and how to fix them</h2>
 <p>Symptom: The script crashes with UnicodeDecodeError when reading the FASTA.</p>
@@ -384,7 +384,7 @@ for rec in SeqIO.parse("data/raw/example.fasta", "fasta"):
 <ul>
 <li>Do not assume computed statistics imply biological meaning without appropriate controls and metadata assessment (sample origin, library preparation, sequencing platform).</li>
 <li>Be cautious when sharing sequence-derived files that may include sensitive or personally identifying information. Follow institutional policies and data-use agreements.</li>
-<li>Never run or paste unreviewed code into tools that will give it network access or elevate privileges. The examples here are safe for local file processing and avoid destructive commands (no rm, mv, or system calls that touch other directories).</li>
+<li>Never run or paste unreviewed code into tools that grant extra system privileges or network access. The examples here touch only local files in your practice directory (no <code>rm</code>, <code>mv</code>, or external calls).</li>
 </ul>
 <h2>Next steps</h2>
 <ol>
@@ -394,6 +394,9 @@ for rec in SeqIO.parse("data/raw/example.fasta", "fasta"):
 <li>Write small unit tests for gc_fraction and is_valid_dna using the pytest framework to ensure behavior is stable as you refactor.</li>
 <li>Keep the requirements file with the project and document how to recreate the environment. A freeze records package versions, but does not by itself capture Python, operating-system, or system-library details.</li>
 </ol>
+<aside aria-label="Author's lab note" class="lesson-summary">
+<p><strong>Author's lab note:</strong> Writing custom Python parsers without checking for blank lines, trailing carriage returns (<code>\r\n</code>), or lowercase soft-masked nucleotides is the classic trap when handling external FASTA downloads. Stripping whitespace cleanly and deciding early whether masked lowercase bases stay separate or get folded with <code>.upper()</code> keeps downstream GC and length scripts predictable.</p>
+</aside>
 <h2>References</h2>
 <ul>
 <li><a href="https://docs.python.org/3/">The Python 3 documentation</a>: language reference and library documentation.</li>
