@@ -29,7 +29,7 @@ PINNED_FILES = {
     },
     'tutorials.html': {
         "base_sha256": '169a31770f4ff89568c7088ad97c7b61bdb576abed561e50067dae4f6c1bf887',
-        "current_sha256": '1883ed6576d2cf5e58c2f22ae8ce4a0dfa8f0165a8bffc12776d6e20638271be',
+        "current_sha256": '4e1ebc8810295fad23fe66c1f155026f5635a7058d274c8cbb22ebc33e470d5e',
     },
     'style.css': {
         "base_sha256": '8f79a8a4ab7980d7fd04f2f135b9d8d559fb7c7e8f9cdf70f384dceab06289b6',
@@ -57,7 +57,11 @@ PINNED_FILES = {
     },
     'tutorial-reader.css': {
         "base_sha256": 'ed840bbf32d42c3a10c46bec36bed1cf49fa2ee3aa753312e6be42a18869ea1b',
-        "current_sha256": 'eb6ed4e2ac71699d3e042298932c9f732a11fd5c632779508358aaf44f954f48',
+        "current_sha256": 'f3f2806e5f54965b2195120b09e0698023ab4957432050c46be5c11f48542097',
+    },
+    'copy-code.js': {
+        "base_sha256": '3c83ad39f72d569f3b161944ad8c33e5b9c49c7796eab3c1dce58fa5cde7aae5',
+        "current_sha256": '88652f868a4bdbaf9a8763000738952df2f446e3e21b3adfa8aaf6545a6ba6c3',
     },
     'tutorial-navigation.css': {
         "base_sha256": '38bdf5f94775f586fffa53dbe4737940276b9d82d3f2f89b313317417dbf0e08',
@@ -361,31 +365,31 @@ PINNED_FILES = {
     },
     'tutorials/16s-rrna-prokka-annotation.html': {
         "base_sha256": 'c7eb6202af29e3b348620371a9159458821f21e486fcefe98efe576d0a5ea23d',
-        "current_sha256": 'e9b12577d65f9b8c4163ad7b4b01826f9cb22c429adc72f9df77a2373bee3cc7',
+        "current_sha256": '20fc87af469444ae55ee9a213ecb605521cda80e8cd6b187590e5d1672d9776b',
     },
     'tutorials/advanced-ai-orchestration-bioinformatics.html': {
         "base_sha256": '9276f85af4f931d21cdf7d06fdcd7b7e0cbe6238d4074c0158a3f5754a8f1a58',
-        "current_sha256": '61ff9eaef8b4d55c0e330f78c05d5614d17244c3a96ee41ce6d2e6366045a39b',
+        "current_sha256": '21319fbc9a3e1ae1eadd32fbc8eb21c93065796d4542eeac22699b6bec936c02',
     },
     'tutorials/advanced-ai-single-cell.html': {
         "base_sha256": 'e1ea2ec717c5d5055f0f54aa8f78b4de2d492d5b37dd966eab8967ca1af783f6',
-        "current_sha256": '599439a859bb9bb93fe0e9950520f5a394b1dbd7754305d3c56719ebdfea6692',
+        "current_sha256": 'b99be60de3a4ee1594e8484c7fe5ce864a122db95d51904a24ebfe29faf85a15',
     },
     'tutorials/advanced-visualization-packages.html': {
         "base_sha256": 'ebd135bc47eb8b72363190e91a1f34823bd46c54fbfdd1fcfa9bad5ddf063f65',
-        "current_sha256": '4ae38f916846c76c69088b87f278c552d0cedb6072085962f580870400d8c8f3',
+        "current_sha256": 'b91e6b09886571de513131625953449fe6a63ffab634dcb56c7dd5d22a7dd301',
     },
     'tutorials/ai-bioinformatics-github-copilot.html': {
         "base_sha256": '270c9e53bf8ce82659d24ea261d9dbf63585a74236dc4b7a4fea3d90a4e6d5b5',
-        "current_sha256": '5f84af13eed7e5870fd6799999afd71331ec853bf1669505d0eee671cd4096db',
+        "current_sha256": '1cdfeb7e3961343de195bd60d2ce8ceeadaab719ef2fbbec7dca54648bc84879',
     },
     'tutorials/ai-coding-cursor-aider.html': {
         "base_sha256": '460bb9de75cf0ac5ed72ac7ba6a6e635862391a36649aa3a5946b081fb5c33a1',
-        "current_sha256": '8413f08a45618fd6ce0cd6e1d86b8936d2b11a49f4e4ad0efb2d225739934715',
+        "current_sha256": '680116034dda8b37cffb0f7236c2d21aedbc8d81148e64acdd7f8999ce39e822',
     },
     'tutorials/ai-prompt-engineering-seurat.html': {
         "base_sha256": 'cb889cf8bee5c425e4de8b64bf38bf5be53383dc5778dc0c65a867b4c60baf57',
-        "current_sha256": '465ba61142d145c68bfc766f9ca148f308405813198735b78b6b0633cce6b548',
+        "current_sha256": '3260ddebfb610e2b931cd851ad5f69676b7f62d95e682450381ede4b259705fe',
     },
     'tutorials/autonomous-research-orchestrator.html': {
         "base_sha256": 'dca02440eb0a7fd50fc5d0259d633ac3c38b33835197fdd2d701c6a9df927575',
@@ -393,71 +397,71 @@ PINNED_FILES = {
     },
     'tutorials/biological-data-formats.html': {
         "base_sha256": '1f48fc48a97f82d17decb32f0a14270b0cf906ea392dd53c146d3a160c5ce785',
-        "current_sha256": '2a5695d74e8b210bf8a19bd98ae1e268f0ecd91cb93083b7f078be76de30195e',
+        "current_sha256": 'aa255baba01c8d6445355bb17b86c91bf7e5595fa9e7e0a593901dad43f594ed',
     },
     'tutorials/cell-cell-communication.html': {
         "base_sha256": '6128a0352dbee0063d983834d5ab7744e484f871b1cf1e9791f035d90c9ebb91',
-        "current_sha256": '8d10832ebd33fc4ba78017261597e9e6ed740ac938a21dc0fc22c18377e91767',
+        "current_sha256": '3550f828a349ab250a754d6b2651a0c6c2aa05a5927abed3d9c8aad4be00e9ee',
     },
     'tutorials/cell-type-annotation-methods.html': {
         "base_sha256": '6d35c6b0cd67e1fdd90c684e054feb60916fce8f1d4abc1b6febff020ac11c65',
-        "current_sha256": '50fa243454c1e26e92cdbec21b232659170d0d261f437d0a5f568323738c070f',
+        "current_sha256": '63a3e2cd070302fd4a2cb6102d5811778a0141ac09087dc3cf6a0e565c43eaa7',
     },
     'tutorials/cite-seq-wnn-multiomics.html': {
         "base_sha256": '89a2fba648a08ace1cae85bfd948b3c0e70f448394be9ecfcbd08e8c3ba52197',
-        "current_sha256": 'ba94fe780870cafbcebb0cf5b246ad39b0ae05ee28d66fc4b936af7c49f0d724',
+        "current_sha256": '86505737963afe9b7e2e7a4b291616bdb1d822eab3b623c061177fbd4c7b995b',
     },
     'tutorials/command-line-part1.html': {
         "base_sha256": '2146589eba8c196cde7217933d97b1755e5f139e5d5da6ece470f245a893ca2b',
-        "current_sha256": 'a5f02a0eff76806c57a55d8c5d2eb25428a6779e104c700afa0b7ff439ae4f28',
+        "current_sha256": 'ce21aa900df0d4f410290c3f22a281115c4ec9ae714e87039e5f43152eb2ed34',
     },
     'tutorials/command-line-part2.html': {
         "base_sha256": '73d40adab938ee9453a6e7c1ccdb739ec3a479b0527e581de2719132b12a839a',
-        "current_sha256": '1131c4267aad8198ad57fb83f688f9a7b39983424935ede9296661789941d70c',
+        "current_sha256": '12f074a8489b0b2c57b63bc1767eddcf471effe8a01625371a1298477e56a28e',
     },
     'tutorials/command-line-part3.html': {
         "base_sha256": '9f4cecb8c22cc7dc38c7768c31281bc8baae538ab14b21bb674df60585d4d0f0',
-        "current_sha256": '27f01d1958d4564cc2c1e2647d0ecb91398493e4fcf4194ced37d94ef9a11155',
+        "current_sha256": '9ee6e272d81d6ec177a7e47bb6319ded4af98907876de919e2fb93b98d8602bc',
     },
     'tutorials/computer-data-fundamentals.html': {
         "base_sha256": '7bd5e37675d8935c32478ed9afeafcc58540a2b4a00e454eb0b14ed676f6fda0',
-        "current_sha256": 'e404b43731e39144bd3dedae51f21cf00a8a52a95ac9943bad5ce073d86afe18',
+        "current_sha256": '05606d85d8aeedc0a2007573dbef45cde5812ba8583350ed541213840b7728ba',
     },
     'tutorials/conda-mamba-part1.html': {
         "base_sha256": '65bdb85f237f6c796e048bd7f8acbb63a9abc9069085bb010d4e7ecfc16273b2',
-        "current_sha256": '8a270052697bcfdc0877b3d0f58632071cd493e7d2e75eab1372f99b7bd5f896',
+        "current_sha256": '2541d8580c817bcf674f1710b9a8048ce8855a7ba69c977f37f709b16f265f43',
     },
     'tutorials/data-visualization-fundamentals.html': {
         "base_sha256": 'cf0837d2fdae10a3ff3bf346f5a6d4f1177a7ed67decd6a813d42dc1a8c69546',
-        "current_sha256": 'c1363a64bfe2cee41799a50c33ada8dd3bda4252b2bd0520e1ac784291a7c057',
+        "current_sha256": 'ba36881b28586914ddf8f67e0516bd30265bfb7576d9e69d365cf8e7917aae20',
     },
     'tutorials/deterministic-retrieval-gget-ai.html': {
         "base_sha256": '4d421390fb5eb2f4a59a78f29b1a82156c42c79e0c6ee75c3d4c27ce2abfb019',
-        "current_sha256": 'adb801b8992be26d2c28d88bbdefbe0c3f0fcdc2bf2dbec32de36b6a979865fc',
+        "current_sha256": '069e6bf9865e64624b4b37d06aa9f5e4ba60a0687680d042ac816fcf931f3fcd',
     },
     'tutorials/docker-singularity-bioinformatics.html': {
         "base_sha256": 'fa23060e956cbb04e27851ec77c809ec92b1505af358ebdb4999c203e498af16',
-        "current_sha256": '784998d5846eaf331ae39de8c322ed31598c11ddd12fd2de5f1cbd1bcd70b2f6',
+        "current_sha256": '547407f046e02e0507ebb4fbe82fd38432189c461e93e64d211551c9155913fc',
     },
     'tutorials/evolutionary-phylogeny-analysis.html': {
         "base_sha256": 'b39b36840612b4a92aa08293fb9ba8fc5a5e679d36057075c10836f93ef496b7',
-        "current_sha256": '1e4e0671e4daefd211985002902a13096423e4380ed50bc5f463940471a3533a',
+        "current_sha256": '6b34166cac934b8f9f3572f5ac91d0b34c7383205146542ada5101c0b8d8a530',
     },
     'tutorials/experimental-design-batch-effects.html': {
         "base_sha256": '0c8d1e02c1d043b6932c194d08ee6cf15dbb101d7bd48e53559974a3804f09c1',
-        "current_sha256": '3afa230425b46923d1997bf91612fd2275c540665ca55236a9263b7806e864cd',
+        "current_sha256": '196a38d59b8ab63e52b63b9caf3d470de9217f9a4795a4b7e04ec09bf05c108d',
     },
     'tutorials/git-github-bioinformatics.html': {
         "base_sha256": 'e819ec200f02d8f626bb20e2571c2a2fd650db97d3dc698697af2f3ff9dd715d',
-        "current_sha256": '99b7a49f3823a513c9db4033aad23d0d62dbb8e8ae9f1f0cfa33a1a7c083f6e7',
+        "current_sha256": '1fc6242441bfd7eb47ea3eed462f38f4bb7a8329336ce05722daa87cf8428c4e',
     },
     'tutorials/hpc-basic-commands.html': {
         "base_sha256": '89d95cf875bf03fb173f3b6448120c068e985d516ab38068ee7f188a60be7300',
-        "current_sha256": 'ac86cf41df4893836026890065d0acdb8eb67fe8fef0599786892c9786623989',
+        "current_sha256": '06c6647cd072b0a208155bd73e71c796846065479bb9db9449bf87947007e8f9',
     },
     'tutorials/hpc-connection.html': {
         "base_sha256": '59e9bd00ac99554d77b280fcf8ced7357a34ab7b18de5adbf9a98f1e2bc15292',
-        "current_sha256": '0f7d505d94d55652fbc21c48606eac65d8a03fd7743549e63ffc609ec76e492f',
+        "current_sha256": '8483da42e5d8ba73a2b57066475827420d9dffb41fcc581d1f6285664776e98e',
     },
     'tutorials/hpc-submission-part1.html': {
         "base_sha256": 'd2d0b2e9eaace8fe9de9c4322bc300696d812405d15f67b1ded43d6e280c939f',
@@ -465,51 +469,51 @@ PINNED_FILES = {
     },
     'tutorials/hpc-support.html': {
         "base_sha256": '15feca650cf0c414e5754dc823fb7e1ad90721c78bf182a38a645612c4edcc63',
-        "current_sha256": '19fbbdba5efd7894350afcd37266e26f7f428d9119d7d9cde49ac8fbfbb6f58c',
+        "current_sha256": '481aed4f9de85e133c48ee23077bb76efa484c6343ffedbd9289395a9d56730f',
     },
     'tutorials/infercnv-copy-number-variation.html': {
         "base_sha256": '7b773d5545e4e9f48eec0836d23f16a087ba20d7ffcfb040f20e5f0ef0bf216a',
-        "current_sha256": '890cc94da68ac7ba030797ad9cdf51357b87bca0623368cd92540df7f229e144',
+        "current_sha256": '07cf2fdfa04723e6e49d9a3fc9bdcbf3173d08d239275416671e03bde51b11c2',
     },
     'tutorials/introduction-to-bioinformatics.html': {
         "base_sha256": '749cb18a282e461c19c0fb7044d163eaa4dadeae0a6c51bbbd7d6a1039d84d03',
-        "current_sha256": '5db91f20e945955d8c93ee34f75d29d0680112c4f8d01fd5c34605e225502ab5',
+        "current_sha256": '715ed4acfd5df7c80cb3753b090b0b124bc62183b043d8d71bb8820bf7bac07a',
     },
     'tutorials/long-read-pacbio-nanopore.html': {
         "base_sha256": '2821b7fbe75ba6c7d896d7554ecd6ec1fff9fba621d13602c6e1b67e99b96228',
-        "current_sha256": '788d9493e34ef42294a90c56297b89cb6989ab6dbead2e8f89dea8edcaa6d6aa',
+        "current_sha256": 'a77c34a8302cd83261a13fe7a94604a73d77bba0e6f05be2bd40b18c727b3ebd',
     },
     'tutorials/mcp-zotero.html': {
         "base_sha256": 'ad00f15d2d2bf85b05568d14d79bc37366df1ec7e74e2a814348d25540fc4b2a',
-        "current_sha256": 'd3f07273dab6a20df5f90740bd173585ac3fa71ff605a0cd51fb1fb162af0695',
+        "current_sha256": '96748781aebcc56011ae9714b6caf128f567e1ba41341fb780bb4fd67438e0a5',
     },
     'tutorials/metagenomics-assembly-mapping.html': {
         "base_sha256": '31a3404bd344e75b94bc3a4f4c29e63753bf91e94e0ad2ed8c2e2fb98c577793',
-        "current_sha256": '2613303f6aca7d4d7db94dd0471c895acfac73dfc153cfd1f7ebfcf763fff30a',
+        "current_sha256": '89e25cd8132017a0f70f314c783b799fe92421d73578a2816c4d1d148146a044',
     },
     'tutorials/metagenomics-kraken2-bracken.html': {
         "base_sha256": 'b64613bd1a639742db63d96694561d0042d452a5bcc2f060bafe79ddb1da26bf',
-        "current_sha256": 'daa2137b80d2c35522d9289fb739e6bf4783dbd0fc863bb6d3959b871364c13d',
+        "current_sha256": '6435d72d527f63762b595fffe9e872617a3d87bb2687bb9ce1da36fdf0418590',
     },
     'tutorials/metatranscriptomics-functional-pathways.html': {
         "base_sha256": '4d97f6cecd5301ada7c90709f180d6a598c4e2973ed4adac9b3605cca1c017d8',
-        "current_sha256": 'a01b9838f533713a10dc03c1156b8b0fbe1b3faf5d26f2f3d38d8b4bde4bb1ae',
+        "current_sha256": '205156dbd1be6f8f87e4ad9aa62312751e6c68ffc23052dd064e8ac064859deb',
     },
     'tutorials/metatranscriptomics-guide.html': {
         "base_sha256": 'a15d2ff6cb9d676171c7a0e18ece18d79a2f58b9e2448b4b8a2edfe30f0671b8',
-        "current_sha256": 'b006e9f12561c8480a06171e330157282fffe9bad87e67131b86cfff8611d925',
+        "current_sha256": 'd60e12239910f6d6ff7dc9afb01110e1f6fa30ef4fefeb56eaaa18709ae9a33a',
     },
     'tutorials/modern-bioinformatics-methods-2026.html': {
         "base_sha256": 'f6aec522b3a7d0af283f38d4a0aaf23922d54ddedba1a2ece7e47a221ca21098',
-        "current_sha256": 'af069ff23d8c95c36902ee683d144b8e7039c39d724812d85eb11575f1e211ed',
+        "current_sha256": 'b1b0b52c34a184ecc92f930f732c80df65de873f6cee7cee530d48371e9600c2',
     },
     'tutorials/notebooklm-research-brain.html': {
         "base_sha256": 'c195a1b29167367bf67fc49b0e467f504fa392162190e3b43a878cd685958d39',
-        "current_sha256": '1c2a3d726bd954dc4b384cd904bf1d3b43ac1b587fe08868909ed1148182c6eb',
+        "current_sha256": '0cf05cae7d442e35f5b1557f4c2d626934e6b9271cc0e0b925b7b9096325e2d4',
     },
     'tutorials/phylogenomics-orthofinder.html': {
         "base_sha256": 'c0698c97b91c92e0569e2c911b524bc5d313839b670343051aed13c67411c600',
-        "current_sha256": '586f5ee094e47a4375506fbaad63a930f1f3ea16e47d4d6d966e324ca51dce07',
+        "current_sha256": '83fb086c7052e242a576fbd4e48264f2b7ede7be1ac7a59544cf0a694dabf7a1',
     },
     'tutorials/protein-structure-design-alphafold.html': {
         "base_sha256": 'f13cc00f7bf041016fecf508733e2dc0b711f621c87292da42109bf26c15e4b0',
@@ -517,35 +521,35 @@ PINNED_FILES = {
     },
     'tutorials/python-fundamentals-bioinformatics.html': {
         "base_sha256": 'dc8d9c4903071705322e05fe5583f2c8abef936d005456bf41314f822af71f6d',
-        "current_sha256": 'fb07b358a3c252da994b7eb5ec04480fb649d12e5dedb2f6e2bf7b9eb7162620',
+        "current_sha256": '6f7d0c6a12ff06eb1d2ac9531db1317892095f5dc9f3aebbdf81295bb6516155',
     },
     'tutorials/quality-control-fundamentals.html': {
         "base_sha256": '9f2cab49e7b3b1d839c959d9d99bbedaca4910b899e8f104fca946239356ccd2',
-        "current_sha256": '673ced0c12fd6f24a61aabd6ab7bee011fe45bd3284568bdd60201265ff3b552',
+        "current_sha256": '1526f9a815f74e11bea14ff6e7cbb28342c3d36a15edc7ed242e87adcd830793',
     },
     'tutorials/r-tidyverse-fundamentals.html': {
         "base_sha256": 'b31c18a40c3890ac0a75089f494ee992ec5f7cac838aeda438af91e1e1c01233',
-        "current_sha256": 'aeb04283a902451a9030fa70ab2e7db5b03bce8a07aa8d4944d2b1cc66d3bbee',
+        "current_sha256": '059ccb79ed257c209a49555b00826bd8544af7a37d3eea45506c2ea04d47ba48',
     },
     'tutorials/reference-genomes-annotation.html': {
         "base_sha256": 'be2f0a813c720bb8f5d9a31247224a85ddc1a95e41395b5c9d842b9f7ec44df2',
-        "current_sha256": 'd2106cb8fd573e5d7333551a78ff31265451f6b067d92b132a2aee80107bbffb',
+        "current_sha256": '83f87098eb6636393ba10d634bdd66da5c16c9c3e51cb3bad5fbdc33fbadb928',
     },
     'tutorials/reproducible-project-structure.html': {
         "base_sha256": 'aa784ad82ed1c0a701bbe47c927b1515f61fc14665289dc3cec508fa69f7cdde',
-        "current_sha256": 'e1d4f3a98e8a388bf79a7d2ea87631bc2b6eecd5977f11b3f21d499130f01342',
+        "current_sha256": 'eafb0435765018b67c7d4df524d7d0b309dff749fd5c22c7d8ba140cc5dd3474',
     },
     'tutorials/reproducible-workflows-snakemake-nextflow.html': {
         "base_sha256": '65ab730c457644e0a331392c7fabd943616ac026a51007d48bc19b44d2723303',
-        "current_sha256": '7f3cef7d716d025b11f7f2430b57bbd5babdd334f71d51dfda2833c1f2c501fb',
+        "current_sha256": 'ff712b09da3e6ebda116a1b0d1d1fa75f8f9e0972b41442004842570e87bd6dd',
     },
     'tutorials/research-reporting-interpretation.html': {
         "base_sha256": '4341f5a2213de576a3a5921dec10e23d3fe6e27fe1e1d72e29c0dcab5189a217',
-        "current_sha256": '32d928b1fcac8b2ae5ccc3bac0cf625441849023ad9150655b17ce638b1a2d1a',
+        "current_sha256": '2d9b1d0b9181d594cba8b616ef4e4c33a9306c146d96295ce37273faed3ffa1d',
     },
     'tutorials/scrna-seq-basics.html': {
         "base_sha256": '27f2cdf71ea3dc878008c37d33f731938e842c5fe9d55239e9e88850ec1a58c2',
-        "current_sha256": '1b28fce887bd00c6c2566236670f0c9ba4c3d33c1a35a64e235b035f64bdce9c',
+        "current_sha256": '851e9d143ca149f53e04dbc85c16bd3f214045dd08d5d1af0dc4188a49ef80f8',
     },
     'tutorials/scrna-seq-integration-strategies.html': {
         "base_sha256": '36b66c4f4a7a5fdddfb1d5dbe6f7e57b7e82074cdfcb6e097cfdbbd08298ddf2',
@@ -557,11 +561,11 @@ PINNED_FILES = {
     },
     'tutorials/scrna-seq-trajectory-inference.html': {
         "base_sha256": '2edbec4b2ed67576a6cc26edffe81d08e8fa4b05b8dd690acc6b9c93621f3995',
-        "current_sha256": '6b6bbfda125b927b2b9a2aaa63496aad0fd7b5c93f5093b9544ae6f55748b310',
+        "current_sha256": '556830891a5749c2bf9eb3ce29171d5adbef7e43969a975ebab7f1c21a03084c',
     },
     'tutorials/single-cell-deconvolution.html': {
         "base_sha256": '3c3b0e436ab9a5289e9e6f618ed591f47bdc9365e1dea10d7db006bdc3dbee27',
-        "current_sha256": 'b7ba8468055071830fe2ab38b0a0e7b165c00c327a2213ca8229726f4fe7e261',
+        "current_sha256": '746c296f66c0bfe528af72b59d8aa1f065a155397343cf09548f3f82aae228b3',
     },
     'tutorials/single-cell-foundation-models.html': {
         "base_sha256": 'f7ce6f1d87f01aa926751352b6190db65fa74fed1663bd6e05998b94cbd4b6f4',
@@ -569,23 +573,23 @@ PINNED_FILES = {
     },
     'tutorials/spatial-transcriptomics-r-python.html': {
         "base_sha256": '2bec6bf5446bf1b69dc2d15c2ec68cecf707789682177a27b057dda11ed7f2c4',
-        "current_sha256": '44416f479e9f2e1b0a2bf2d8f02d518b29c9954691987032fdfc415fab92ae71',
+        "current_sha256": '79cee4e30d2e3802f85ad23008c7647cc03c59cb2cb3078e76cb68f9b46066cb',
     },
     'tutorials/statistics-for-bioinformatics.html': {
         "base_sha256": '47e8e3cb3118f5436d98ca396922adfc9f186eb7d2ac1bd6bf3142fd505d07cb',
-        "current_sha256": '5aeb8f43a4cdac15e2c431c067abc7393ed1505ecb896a56a4956cd5a6391af7',
+        "current_sha256": '3005c566b41314e6064490b3c552b100c783d9195034658a2b84d4a7464b0b59',
     },
     'tutorials/tcr-bcr-repertoire-analysis.html': {
         "base_sha256": '2f330ad6dc40bcd9e5b05c8e5394f63ca508478c21e00fca98c8bc9350799338',
-        "current_sha256": '4904206bcd86d3882084b500302966758a0abebb6c3329796ccee83cfbf6444d',
+        "current_sha256": '03fef0b2789806fa60235790a4e291bb5495c1e60c377e9214ba0a4770e89206',
     },
     'tutorials/transcriptomics-differential-expression.html': {
         "base_sha256": '7ed1451e96227811ebcc6aba32bd7cc3646f69a532dac429eebe5424d82fb1e9',
-        "current_sha256": '1ceb70a42e8d010faf43455719b06325eb3595a69241cb978cf2c60be7ef4740',
+        "current_sha256": 'af19e93411a8e59d7adf2d406f63e7dc6cb390549b407de1c705a142d43817ff',
     },
     'tutorials/wes-variant-calling-pipeline.html': {
         "base_sha256": '1ed1d76d1677af76162dfcc5406b87b385372d2e353854df8d8edb0c09c2cc79',
-        "current_sha256": '6e6a920ccf3b921ddf7a9d5a86902dcd521fd3a9904c5c4b61bff41d9b39bb6b',
+        "current_sha256": '1ab9db4e307c3c9a7d1da934fb318caf762ef093731e53e90260925c10d986ac',
     },
     'wes-variant-calling-pipeline.html': {
         "base_sha256": '8d1d61d7a0ab3f2fbba0aff68b7972083c95b0e7b12946468c380ba087e03d69',

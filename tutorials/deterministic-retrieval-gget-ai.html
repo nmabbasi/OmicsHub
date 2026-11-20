@@ -165,7 +165,7 @@ function toggleMobileMenu() {
 <img alt="Deterministic Retrieval with gget" class="w-full aspect-video object-cover" decoding="async" loading="eager" src="../images/gget-ai.webp" width="1920" height="1920"/>
 </div>
 <nav aria-label="Learning path navigation" class="reader-toolbar"><span class="reader-toolbar__heading">Learning path</span><a href="reference-genomes-annotation.html" rel="prev" class="reader-toolbar__previous"><span class="reader-toolbar__direction"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5m0 0 7 7m-7-7 7-7"/></svg></span><span class="reader-toolbar__copy"><small>Previous prerequisite</small><strong>Reference Genomes and Annotation Databases</strong></span></a><a data-catalogue-return="" href="../tutorials.html" class="reader-toolbar__library"><span class="reader-toolbar__library-mark" aria-hidden="true"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="6" height="6" rx="1.3"/><rect x="14" y="4" width="6" height="6" rx="1.3"/><rect x="4" y="14" width="6" height="6" rx="1.3"/><rect x="14" y="14" width="6" height="6" rx="1.3"/></svg></span><span><small>Browse</small><strong>All tutorials</strong></span></a><a href="../start-here.html#sh-optional-tools" rel="next" class="reader-toolbar__next"><span class="reader-toolbar__copy"><small>Suggested next</small><strong>Return to optional tools</strong></span><span class="reader-toolbar__direction"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14m0 0-7-7m7 7-7 7"/></svg></span></a></nav>
-<article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--walkthrough"><p class="lesson-lead">Use gget to query Ensembl-linked metadata and sequence records, then preserve the raw response and enough provenance to interpret it later. Database retrieval is reproducible only when you record the software, query, source state, and response; an LLM can still misread supplied evidence.</p><section class="lesson-summary tutorial-learning-contract" data-tutorial-format="hands-on-lab" aria-label="Learning format"><p><strong>Format: Hands-on lab.</strong> This guided exercise is for learners comfortable with a Unix-like shell. Use the gget CLI to retrieve gene metadata and translated FASTA for the ACE2 Ensembl ID, then inspect the saved output with R and <code>jsonlite</code>. gget must already be available under its current official instructions; a Python API example is optional. No biological input files are supplied or needed. Live retrieval needs internet access.</p></section><h2>Learning objectives and prerequisites</h2>
+<article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--walkthrough"><p class="lesson-lead">Use gget to query Ensembl-linked metadata and sequence records, then preserve the raw response and enough provenance to interpret it later. Database retrieval is reproducible only when you record the software, query, source state, and response; an LLM can still misread supplied evidence.</p><section class="lesson-summary tutorial-learning-contract" data-tutorial-format="hands-on-lab" aria-label="Learning format"><p><strong>Format: Hands-on lab.</strong> Query Ensembl deterministically with the <code>gget</code> CLI to pull canonical <em>ACE2</em> gene metadata and protein FASTA, then inspect the saved JSON cleanly in R with <code>jsonlite</code> (plus an optional Python snippet). Live retrieval requires internet access and a working <code>gget</code> install.</p></section><h2>Learning objectives and prerequisites</h2>
 <p><strong>By the end of this lesson you will be able to:</strong></p>
 <ul>
 <li>Run gget's documented command-line retrievals for an Ensembl gene ID and save the raw JSON and FASTA responses.</li>
@@ -173,10 +173,12 @@ function toggleMobileMenu() {
 <li>Preserve query provenance and assess what the returned records do and do not support.</li>
 </ul>
 <p><strong>Prerequisites:</strong> basic command-line familiarity, the gget command-line program installed and configured using its current official instructions, an internet connection, and R with the small <code>jsonlite</code> package for JSON parsing. gget's CLI remains the retrieval tool; R reads its saved files. No research data are required. Do not install a new environment or paid service for this lesson unless your local policy permits it.</p>
+
+<figure class="my-8 bg-white border border-gray-200 rounded-xl p-4 shadow-sm"><img src="../images/tutorial-figures/deterministic-retrieval-gget-flow.svg" alt="Diagram showing deterministic retrieval pipeline from gene symbol to Ensembl ID, canonical transcript metadata, FASTA/GTF URLs, and reproducible provenance snapshot" width="960" height="460" loading="lazy" class="w-full h-auto rounded-lg"/><figcaption class="mt-3 text-sm text-gray-600">Using deterministic database queries (<code>gget search</code>, <code>gget info</code>, <code>gget seq</code>, <code>gget ref</code>) anchors gene IDs, transcript builds, and sequences directly to primary Ensembl records rather than ungrounded LLM memory.</figcaption></figure>
 <h2>Why deterministic retrieval matters in bioinformatics</h2>
 <p>Large Language Models (LLMs) can synthesize text and generate code, but they are not authoritative sources of changing biological facts such as current Ensembl gene IDs, transcript coordinates, or canonical UniProt accessions. Supplying an LLM with a saved database response gives it evidence to inspect, but does not prevent hallucinations or guarantee correct interpretation. Record the query, retrieval time, software version, and relevant database release so another person can assess the result.</p>
 <p>gget provides native command-line subcommands for querying bioinformatics resources. The route below uses gget CLI for retrieval, then R only to inspect the saved response. A request made through gget CLI is not the same request or API behavior as a separate gget Python API call. Remote annotations can change between runs; saving the response preserves what you received, not the database service itself.</p>
-<h2>Reproducible, sequential workflow</h2>
+<h2>Step-by-step workflow</h2>
 <p>The example uses the human ACE2 Ensembl gene ID shown in gget's documented quick start, <code>ENSG00000130234</code>. Commands assume a Unix-like shell and internet access. Gene symbols can be ambiguous; resolve a symbol to an intended Ensembl ID before using this pattern. Responses from external services may change over time.</p>
 <h3>1) Check the CLI and prepare output files</h3>
 <p>Start with gget already installed according to its current official documentation. The project does not pin or reinstall Python dependencies for the R inspection route. From a new working directory, create a results folder, check the CLI help and executable path, and record a UTC timestamp:</p>
@@ -281,7 +283,7 @@ print("Rows:", len(records), "Columns:", list(records.columns))</code></pre>
 </div>
 <p>Inspect the <a href="../files/gget-example/observed/ACE2_info.json">complete raw gene response</a> and <a href="../files/gget-example/observed/ACE2_protein.fasta">returned FASTA</a> rather than relying on this table. The response does not establish an explicit annotation release, and missing NCBI/PDB fields are not evidence that no such records exist. These are dated database retrievals, not experimental results or clinical claims.</p>
 </section>
-<h2>Output inspection and interpretation</h2>
+<h2>Interpreting the output files</h2>
 <p>After you save retrieval outputs, inspect them systematically. For each saved file ask:</p>
 <ul>
 <li>Does the response include the queried Ensembl ID and any linked transcript/protein identifiers?</li>
@@ -293,7 +295,7 @@ print("Rows:", len(records), "Columns:", list(records.columns))</code></pre>
 <li><strong>Requested ID and linked IDs</strong>: distinguish the gene ID from transcript and protein IDs. A successful query for one identifier does not establish that every linked record is current or relevant to your analysis.</li>
 <li><strong>Coordinates</strong>: confirm coordinate convention, assembly, and annotation release using returned metadata or the source database. If any are absent, report them as unknown rather than assuming GRCh38.</li>
 <li><strong>uniprot_id</strong>: link to UniProt canonical accessions, if present. Absence does not mean the protein is uncharacterized; it may reflect lacking cross-reference in that release.</li>
-<li><strong>description</strong>: human-readable gene description. Do not treat this as a definitive function annotation; it's a short text string from the database.</li>
+<li><strong>description</strong>: human-readable gene description. Treat this as a helpful summary line rather than a complete functional characterization of the gene.</li>
 </ul>
 <p>What a plausible result means and does not prove:</p>
 <ul>
@@ -301,7 +303,7 @@ print("Rows:", len(records), "Columns:", list(records.columns))</code></pre>
 <li>Presence of a UniProt accession means UniProt and Ensembl are cross-referenced in that release; absence could be due to timing or curation differences, not necessarily absence of an actual protein product.</li>
 <li>For <code>gget seq --translate</code>, the gget manual identifies UniProt as the amino-acid sequence source. Do not label a record canonical unless the returned record establishes which sequence was selected. Sequence retrieval is not experimental validation, and alternative isoforms may exist.</li>
 </ul>
-<h2>Troubleshooting: symptoms, likely causes, and fixes</h2>
+<h2>Common errors and how to fix them</h2>
 <p>Below are common issues when working with gget and how to proceed.</p>
 <h3>Symptom: gget command not found</h3>
 <ul>
@@ -354,8 +356,8 @@ print("Rows:", len(records), "Columns:", list(records.columns))</code></pre>
 </ol>
 </li>
 </ul>
-<h2>Limitations, reference-data caveats, and responsible use</h2>
-<p>Limitations and caveats to keep in mind:</p>
+<h2>Practical limits and version checks</h2>
+<p><strong>A few boundary notes:</strong></p>
 <ul>
 <li>Database currency: gget queries external services. Responses reflect service state at retrieval time and can change with database releases or service changes. The saved response preserves the received result, not a snapshot of the database.</li>
 <li>Identifier granularity: Ensembl has separate namespaces for genes (ENSG), transcripts (ENST) and proteins (ENSP). Ensure you request the correct namespace for your task.</li>
@@ -369,7 +371,7 @@ print("Rows:", len(records), "Columns:", list(records.columns))</code></pre>
 <li>Do not assume that a retrieved gene description equals experimentally validated function. Use appropriate experimental evidence when making biological claims.</li>
 <li>For human genomic data with privacy concerns, ensure that any identifiers or sequences do not inadvertently reveal participant-level data or violate consent agreements.</li>
 </ul>
-<h2>Next-step checklist</h2>
+<h2>Next steps</h2>
 <ol>
 <li>Confirm the gget CLI is available and record <code>retrieval-results/gget-help.txt</code>, its version using the documented installation method, and the R/jsonlite versions printed by the inspector.</li>
 <li>Run the gget CLI retrieval for at least one gene and save the raw JSON and FASTA in <code>retrieval-results/</code>; use the R utility to inspect the saved files.</li>

@@ -244,6 +244,8 @@ test "$(wc -l &lt; refs/reference_manifest.tsv)" -eq 3 &amp;&amp; \
 <section><h3>GTF parser or indexing errors</h3><p>Check that the downloaded object is actually gzip-compressed GTF, has nine tab-separated fields, and is accepted by the tool. Some tabix workflows require BGZF compression and coordinate-sorted input; ordinary gzip alone is not sufficient for indexed random access. Follow the exact indexer documentation for your file type and preserve an unmodified source.</p></section>
 <section><h3>Checksum or download failure</h3><p>A failed <code>curl</code>, gzip test, or checksum comparison means stop and inspect the HTTP status, local file, URL, and checksum source. Do not index or analyze a partial download. A successful checksum only detects a mismatch against the recorded digest; it does not validate the biological choice.</p></section>
 </div>
+
+<figure class="my-8 bg-white border border-gray-200 rounded-xl p-4 shadow-sm"><img src="../images/tutorial-figures/reference-genomes-sync-checklist.svg" alt="Three-stage reference genome sync diagram: Matched Provider Release (GENCODE/Ensembl), Checksums &amp; Chromosome Prefix Check, and Index + Manifest Lock" width="960" height="460" loading="lazy" class="w-full h-auto rounded-lg"/><figcaption class="mt-3 text-sm text-gray-600">Every alignment and quantification workflow depends on pairing the exact same reference assembly and release across genome FASTA, GTF annotation, and aligner indexes, backed by checksums in <code>reference_manifest.tsv</code>.</figcaption></figure>
 <h2>Before using the reference</h2>
 <ul>
 <li>Confirm the species, assembly accession/version, annotation release, and region scope fit the analysis.</li>

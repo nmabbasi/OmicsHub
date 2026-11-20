@@ -168,7 +168,7 @@ function toggleMobileMenu() {
 <nav aria-label="Learning path navigation" class="reader-toolbar"><span class="reader-toolbar__heading">Learning path</span><a href="cell-type-annotation-methods.html" rel="prev" class="reader-toolbar__previous"><span class="reader-toolbar__direction"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5m0 0 7 7m-7-7 7-7"/></svg></span><span class="reader-toolbar__copy"><small>Previous prerequisite</small><strong>Choosing and Checking Cell-Type Annotation Methods</strong></span></a><a data-catalogue-return="" href="../tutorials.html" class="reader-toolbar__library"><span class="reader-toolbar__library-mark" aria-hidden="true"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="6" height="6" rx="1.3"/><rect x="14" y="4" width="6" height="6" rx="1.3"/><rect x="4" y="14" width="6" height="6" rx="1.3"/><rect x="14" y="14" width="6" height="6" rx="1.3"/></svg></span><span><small>Browse</small><strong>All tutorials</strong></span></a><a href="autonomous-research-orchestrator.html" rel="next" class="reader-toolbar__next"><span class="reader-toolbar__copy"><small>Suggested next</small><strong>Bounded Count-Matrix QC and CPM Workflows</strong></span><span class="reader-toolbar__direction"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14m0 0-7-7m7 7-7 7"/></svg></span></a></nav>
 <article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--walkthrough">
 <p class="lesson-lead">Learn to specify single-cell analysis tasks for optional AI-assisted code drafting. State the data, biological question, method, and outputs, then review any proposed code and inspect results if you choose to run it.</p>
-<section class="lesson-summary tutorial-learning-contract" data-tutorial-format="advanced-template" aria-label="Learning format"><p><strong>Format: Advanced template.</strong> For readers comfortable with basic scRNA-seq and command-line use: the main worked route is a Seurat cluster-marker workflow in R. A separate Scanpy QC/clustering workflow in Python is optional and answers a different analysis question, so the two are not language-equivalent tabs. The account-free reasoning exercise below can be completed by reading the templates; AI code generation is optional. Prepare compatible inputs yourself; no dataset is bundled, and these are not end-to-end data-preparation labs.</p></section>
+<section class="lesson-summary tutorial-learning-contract" data-tutorial-format="advanced-template" aria-label="Learning format"><p><strong>Format: Advanced template.</strong> Built around an R/Seurat cluster-marker template alongside a separate optional Python/Scanpy QC example (each answers a distinct question rather than mirroring line for line). The account-free prompt review can be completed right away, and you can adapt either script once you supply your own count object.</p></section>
 <div class="lesson-warning"><p><strong>Scope:</strong> These scripts are starting examples, not validated analyses. Thresholds, identities, assay or layer selection, and statistical design must match your data. Cell-level marker tests do not replace sample-aware inference for condition comparisons.</p></div><div class="flex flex-wrap items-center gap-4 text-xs font-mono text-gray-500 bg-gray-50 p-3 rounded-lg border border-gray-200 mb-6">
 <div class="flex items-center gap-1">
 <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
@@ -211,7 +211,7 @@ Output: ./results/cluster2_markers.csv and UMAP plot ./results/umap_seurat_clust
 Checks: verify the file exists, inspect actual column names and row count (zero rows can be valid), confirm the intended identities were compared, and open the UMAP PNG.
 Ask: show all package imports and version prints; explain any assumptions and cite Seurat functions used.
 </code></pre>
-<h2>Reproducible, sequential workflow examples</h2>
+<h2>Step-by-step workflow</h2>
 <p>The R Seurat workflow below is the main route and implements the cluster-2 marker prompt. The optional Python Scanpy workflow is a separate QC → clustering → exploratory marker-ranking task; it is not an equivalent implementation of the Seurat prompt or a shared sequential pipeline. Both are templates for prepared objects.</p>
 <h3 id="seurat-workflow-r">Main workflow: Seurat cluster markers (R)</h3>
 <p>Prepare a serialized Seurat object at <code>./data/seurat_obj.rds</code>, with an RNA expression assay and a <code>seurat_clusters</code> metadata column. Check its structure from the project root before running the workflow:</p>
@@ -425,7 +425,7 @@ print("Wrote results to", outdir)
 <p><strong>Task.</strong> Your Seurat input already has <code>seurat_clusters</code> values <code>0, 1, 2</code>, but no UMAP. Which labels define cluster 2 versus the reference group after the visualization step? For Scanpy, which values feed marker ranking if the input already has a <code>.raw</code> field?</p>
 <details><summary>Show the answer and feedback</summary><p>The Seurat script saves the incoming <code>seurat_clusters</code> vector, makes only a PCA/neighbor/UMAP visualization, checks that the vector is unchanged, then records <code>identity_field = "seurat_clusters"</code>, <code>ident.1 = "2"</code>, and <code>ident.2 = NULL</code> (all other cells). It does not recluster. In Scanpy, ranking explicitly reads <code>layer="log1p_norm"</code> with <code>use_raw=False</code>: values are total-count normalized to 10,000 per cell and log1p-transformed, but not scaled. The layer is saved before HVG selection; ranking covers all genes retained after filtering, whereas scaled HVGs are used only to build embeddings. Neither task establishes sample-level condition effects or biological validation.</p></details>
 <p><strong>Validation boundary:</strong> focused synthetic checks exercised label preservation with R 4.3.3/Seurat 5.0.1 and expression-source selection/full-retained-gene ranking with Python 3.12.3/Scanpy 1.11.5. The Seurat check substituted Wilcoxon for MAST because MAST was unavailable. Neither complete script nor the MAST path was executed; these remain advanced templates, not biologically validated analyses.</p>
-<h2>Output inspection and interpretation</h2>
+<h2>Checking what the run produced</h2>
 <p>After running a generated script, inspect outputs with these checks and interpret them cautiously.</p>
 <ul>
 <li><strong>QC plots</strong> Check whether the distributions of gene counts, total counts, and mitochondrial percentage look sensible for your sample type. Very high mitochondrial percentages often indicate damaged cells, but thresholds are dataset-specific; 5% is typical for fresh PBMCs and not a universal rule.</li>
@@ -438,7 +438,7 @@ print("Wrote results to", outdir)
 <li>Marker genes with strong log fold-change and low p_adj suggest genes enriched in that cluster under analysis choices (normalization, test). They do not by themselves validate cell identity; you should cross-reference with known marker gene sets and, if possible, orthogonal assays.</li>
 <li>Absence of significant markers could mean clusters are not biologically distinct, the cluster is too small, or the test lacks power (low cell counts or high variability).</li>
 </ul>
-<h2>Troubleshooting: symptoms, likely causes, and fixes</h2>
+<h2>Common errors and how to fix them</h2>
 <ul>
 <li>
 <strong>Symptom:</strong> Script errors on loading files (FileNotFoundError / cannot open file).<br/>
@@ -471,13 +471,15 @@ print("Wrote results to", outdir)
 <strong>Fix:</strong> Inspect PCA elbow/variance explained, verify neighbor graph settings, and check sample/batch mixing.
   </li>
 </ul>
+
+<figure class="my-8 bg-white border border-gray-200 rounded-xl p-4 shadow-sm"><img src="../images/tutorial-figures/prompt-engineering-seurat-anatomy.svg" alt="Diagram connecting four prompt specification pillars (Input Contract, Statistical Assumptions, Exact Versions, Verified Outputs) into reproducible Seurat and Scanpy scripts" width="960" height="460" loading="lazy" class="w-full h-auto rounded-lg"/><figcaption class="mt-3 text-sm text-gray-600">Providing explicit object paths, assay slots, species gene-prefix conventions, statistical model covariates, and exact output paths eliminates guessed parameters in AI-generated Seurat and Scanpy scripts.</figcaption></figure>
 <h2>Weak vs specification-backed prompts: what changes in generated code</h2>
 <div aria-label="Scrollable table: Weak vs strong single-cell prompts" class="lesson-table-wrap" role="region" tabindex="0"><table><caption>Weak vs strong single-cell prompts</caption><thead><tr><th scope="col">Prompt style</th><th scope="col">Typical assistant output hazard</th><th scope="col">How the specification prompt prevents it</th></tr></thead><tbody>
 <tr><th scope="row">Weak: <em>"Find markers for cluster 2 in my Seurat object and plot UMAP."</em></th><td>Calls <code>RunUMAP()</code> + <code>FindClusters()</code> (overwriting cluster 2!), uses deprecated <code>slot = "data"</code> or <code>avg_logFC</code>, and drops zero-row outputs without checking <code>Idents()</code>.</td><td>Declares incoming <code>seurat_clusters</code> immutable, names <code>assay</code>, <code>test.use = "MAST"</code>, <code>avg_log2FC</code> / <code>p_val_adj</code>, and asserts label identity before and after UMAP.</td></tr>
 <tr><th scope="row">Weak: <em>"Run Scanpy QC, clustering, and rank marker genes on adata.h5ad."</em></th><td>Subsets <code>adata</code> to 2,000 HVGs in-place, scales <code>.X</code> to unit variance (producing negative values), and then runs <code>rank_genes_groups</code> on scaled HVGs or stale <code>.raw</code>.</td><td>Saves unscaled <code>adata.layers["log1p_norm"]</code> across all retained genes before HVG scaling and passes <code>layer="log1p_norm", use_raw=False</code>.</td></tr>
 </tbody></table></div>
-<h2>Limitations, version and reference-data caveats, and responsible use</h2>
-<p>Limitations and practical caveats:</p>
+<h2>Reproducible, sequential workflow examples</h2>
+<p><strong>A few boundary notes:</strong></p>
 <ul>
 <li>AI-generated code is only as good as the prompt and the training distribution of the model. Always read, run, and vet generated scripts before applying them to sensitive data.</li>
 <li>Different versions of Seurat, Scanpy, and dependent packages change defaults and returned structures. Record package versions, consult installed documentation, and check actual column names instead of assuming a fixed output schema.</li>
@@ -490,7 +492,7 @@ print("Wrote results to", outdir)
 <li>Check network calls in generated code. If code downloads reference data, ensure the source URL is trustworthy and that you are allowed to access it in your environment.</li>
 <li>Do not paste identifiable or otherwise protected human data into an external AI service unless institutional policies, approvals, and service terms permit it. Share schema or synthetic examples instead when possible.</li>
 </ul>
-<h2>Concise next-step checklist</h2>
+<h2>Next steps</h2>
 <ol>
 <li>Before requesting code, record each prepared object's dimensions, metadata columns, feature identifiers, assay or layer, and provenance; stop if required fields or intended data are unclear.</li>
 <li>Use the prompt template at the top of this tutorial to request an initial script from your AI assistant. Require that the assistant prints package versions and lists its assumptions.</li>

@@ -182,9 +182,7 @@ function toggleMobileMenu() {
 <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
 <span>Updated 25 October 2026</span></div>
 </div><p class="lesson-lead">QC turns a set of files and tool reports into a documented decision about what can be analyzed, what needs investigation, and why. This lesson follows a paired-end short-read example, then contrasts it with single-cell checks. Thresholds must come from the assay and study context.</p>
-<section class="lesson-summary tutorial-learning-contract" data-tutorial-format="conceptual-guide" aria-label="Learning format">
-<p><strong>Format: Conceptual guide.</strong> For learners who can read basic shell commands and sequencing reports: compare evidence across assays and complete a sample-level QC decision record. No data are supplied; use the explicitly illustrative record below or bring reports prepared for your own study.</p>
-</section>
+<section class="lesson-summary tutorial-learning-contract" data-tutorial-format="conceptual-guide" aria-label="Learning format"><p><strong>Format: Conceptual guide.</strong> Compare sequencing QC signals across short-read and long-read assays, practice logging a sample-level review record, and bring your own FastQC/MultiQC reports to apply the same checklist.</p></section>
 <h2>What you will produce</h2>
 <p>Work through the checks below and finish with a sample-level QC record: tool versions, selected metrics, a pass/review/exclude decision, its evidence, and a next action. The commands are templates, not a tested end-to-end pipeline.</p>
 <ul>
@@ -394,7 +392,7 @@ plt.close()
 <p>Meaning and limits: average depth does not substitute for per-target depth. For clinical genes or actionable loci, document per-site coverage before making claims about negative findings.</p>
 <h3>Contamination and identity checks</h3>
 <p>What to look for: Kraken2 reporting a sizable fraction of non-target taxa; VerifyBamID reporting non-zero freemix suggestive of cross-sample contamination. Peddy and other tools can detect sample swaps using genotypes.</p>
-<p>Meaning and limits: low-level microbial reads may reflect environmental DNA or index-hopping in multiplexed runs. Interpret contamination estimates against the method, controls, and downstream analysis. A single numeric estimate is not a universal acceptability threshold; document the evidence and its limits.</p>
+<p>Meaning and limits: low-level microbial reads may reflect environmental DNA or index-hopping in multiplexed runs. Interpret contamination estimates against the method, controls, and downstream analysis. no single numeric estimate works as a blanket threshold; document the evidence and its limits.</p>
 <h2>When a sample looks different</h2>
 <ul>
 <li>
@@ -444,7 +442,7 @@ plt.close()
 <li>For single-cell data, compute per-cell QC metrics and visualize distributions before filtering.</li>
 <li>Create a QC summary file (e.g., qc/qc_summary.tsv) listing sample, tool versions, key metrics, decision (pass/review/exclude), and next action.</li>
 </ul>
-<p>Use one row per sample and write <code>NA</code> when a metric was not measured; do not treat missing evidence as a pass. The following row is illustrative, not a universal cutoff or a biological benchmark. Its review decision follows from the stated study-specific comparison: the sample's mapped fraction is below its matched batch range, so reference compatibility and read-level reports should be checked before downstream interpretation.</p>
+<p>Use one row per sample and write <code>NA</code> when a metric was not measured; keep missing fields explicit rather than assuming a pass. Notice the thresholds shown here are one study-specific example, not fixed rules across assays. Its review decision follows from the stated study-specific comparison: the sample's mapped fraction is below its matched batch range, so reference compatibility and read-level reports should be checked before downstream interpretation.</p>
 <pre><code>sample	tool_versions	metrics	decision	evidence	next_action
 SYNTH_A	fastp 0.23.2; samtools 1.17	reads=1,000,000; mapped=62%; proper_pairs=58%; mean_depth=18x	review	mapped fraction below matched-batch range (illustrative); controls pending	verify reference build and inspect FastQC/MultiQC reports; reassess with controls
 </code></pre>

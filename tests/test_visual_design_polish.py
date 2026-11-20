@@ -100,8 +100,15 @@ class VisualDesignPolishTests(unittest.TestCase):
         style_css = (ROOT / "style.css").read_text(encoding="utf-8")
         reader_css = (ROOT / "tutorial-reader.css").read_text(encoding="utf-8")
         self.assertIn(".border-amber-300 { border-color: #fcd34d !important; }", style_css)
-        self.assertIn("padding: .3rem .65rem .3rem 4.55rem;", reader_css)
-        self.assertIn("padding-left: 4.55rem;", reader_css)
+        self.assertNotIn(".code-block-toolbar::before", reader_css)
+        for token in (
+            ".code-block-language",
+            ".code-wrap-button",
+            ".code-line-gutter",
+            ".is-output-frame",
+            ".code-expand-button",
+        ):
+            self.assertIn(token, reader_css, f"tutorial-reader.css missing {token}")
 
     def test_item7_cookie_contact_about_and_services_polish(self):
         cookie_html = (ROOT / "pages/cookie.html").read_text(encoding="utf-8")
@@ -171,6 +178,49 @@ class VisualDesignPolishTests(unittest.TestCase):
         ):
             self.assertIn(token, home_html, f"index.html missing {token}")
             self.assertIn(token, cat_css, f"home-catalogue.css missing {token}")
+
+    def test_all_58_tutorials_have_figures_and_valid_svgs(self):
+        tuts = sorted((ROOT / "tutorials").glob("*.html"))
+        self.assertEqual(len(tuts), 58)
+        for page in tuts:
+            html = page.read_text(encoding="utf-8")
+            article_m = re.search(r"<article\b[^>]*>(.*?)</article>", html, re.S)
+            self.assertIsNotNone(article_m, page.name)
+            article = article_m.group(1)
+            self.assertIn("<figure", article, f"Missing figure in {page.name}")
+            for svg_rel in re.findall(r'src="\.\./(images/tutorial-figures/[^"]+\.svg)"', article):
+                svg_path = ROOT / svg_rel
+                self.assertTrue(svg_path.is_file(), f"Missing SVG {svg_rel}")
+                svg_txt = svg_path.read_text(encoding="utf-8").strip()
+                self.assertTrue(svg_txt.startswith("<svg"), svg_rel)
+                self.assertTrue(svg_txt.endswith("</svg>"), svg_rel)
+                self.assertNotIn("\u2014", svg_txt, f"em-dash in {svg_rel}")
+
+    def test_reader_ux_and_code_display_contracts(self):
+        reader_css = (ROOT / "tutorial-reader.css").read_text(encoding="utf-8")
+        copy_js = (ROOT / "copy-code.js").read_text(encoding="utf-8")
+        self.assertNotIn("position: fixed", reader_css)
+        for token in (
+            "code-wrap-button",
+            "code-line-gutter",
+            "code-expand-button",
+            "tutorial-toc",
+            "tutorial-reading-progress",
+            "tutorial-meta-strip",
+            "tutorial-lightbox",
+        ):
+            self.assertIn(token, reader_css, f"tutorial-reader.css missing {token}")
+            self.assertIn(token, copy_js, f"copy-code.js missing {token}")
+
+    def test_tutorials_hero_shows_all_four_format_counts(self):
+        catalogue = (ROOT / "tutorials.html").read_text(encoding="utf-8")
+        for token in (
+            "<strong>21</strong> Hands-on labs",
+            "<strong>20</strong> Conceptual guides",
+            "<strong>15</strong> Templates",
+            "<strong>2</strong> References",
+        ):
+            self.assertIn(token, catalogue)
 
 
 if __name__ == "__main__":

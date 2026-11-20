@@ -216,7 +216,7 @@ git -C ../aider-practice status --short
 <ol class="lesson-steps">
 <li>Open Cursor and choose <strong>File → Open Folder</strong>, then open the <code>cursor-practice</code> copy.</li>
 <li>Open Agent and use the exact shared task below. Review the proposed diff before accepting changes into the working tree.</li>
-<li>Run the offline validator yourself; do not treat the editor's review interface as proof that the change is correct.</li>
+<li>Always run the offline test validator directly in your terminal rather than assuming an accepted editor diff is free of logic bugs.</li>
 </ol>
 <p>Cursor's quickstart describes opening Agent with <kbd>Cmd</kbd>+<kbd>I</kbd>. Key bindings and labels can change, so consult the quickstart if the shortcut differs. Cursor's <a href="https://cursor.com/data-use" rel="noopener noreferrer" target="_blank">data-use documentation</a> describes handling based on privacy settings; it also states that requests go through Cursor's backend even when you use your own API key. Review current settings and terms before sharing any project context.</p>
 <h2>Install Aider in an isolated environment</h2>
@@ -260,6 +260,8 @@ Rscript test_inspect_counts.R inspect_counts.R counts.tsv</code></pre>
 <p><strong>Answer rubric:</strong> identify genes as rows and samples as columns; report 16 and 12 by summing columns; reject negative values, decimals, NaN, and infinity as not nonnegative integer counts; and state that shape, integer, and sum checks do not prove that values are truly raw counts, have correct provenance, preserve sample identity, represent independent samples, or support any biological conclusion. The example is synthetic arithmetic only. Do not infer biology from it.</p>
 <p><strong>Python tool boundary:</strong> the optional Python checker uses only the Python standard library. This offline exercise never calls Cursor, Aider, or a hosted model, so it costs nothing to run; hosted model use in the live comparison above is optional and may incur charges.</p>
 
+
+<figure class="my-8 bg-white border border-gray-200 rounded-xl p-4 shadow-sm"><img src="../images/tutorial-figures/cursor-aider-diff-test-loop.svg" alt="Four-stage workflow comparing bounded Cursor rules and Aider git-diff loops through scoped edit, diff audit, and testthat verification" width="960" height="460" loading="lazy" class="w-full h-auto rounded-lg"/><figcaption class="mt-3 text-sm text-gray-600">Whether using an interactive editor (Cursor with <code>.cursor/rules</code>) or a CLI git-diff tool (Aider), safe AI-assisted coding confines changes to named files and validates every edit against automated tests.</figcaption></figure>
 <h2>Auditing AI edits on real bioinformatics code: Cursor rules, Aider test gates, and rejected diffs</h2>
 <p>In day-to-day bioinformatics, you use Cursor or Aider to extend scripts such as <code>inspect_counts.R</code> rather than editing prose. The two tools enforce boundaries differently:</p>
 <ul>

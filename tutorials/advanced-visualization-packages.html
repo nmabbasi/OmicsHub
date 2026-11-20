@@ -194,7 +194,7 @@ function toggleMobileMenu() {
 <h2>How plot choices affect interpretation</h2>
 <p>Exploratory plots in Seurat (DimPlot, FeaturePlot, DotPlot) are excellent for iterative analysis, but default styling is designed for quick inspection rather than publication. Well-crafted figures must communicate a specific biological message: which cell types change with condition, which genes mark a cluster, or how pathway activities distribute across cell states. Poor color choices, inconsistent legends, and cluttered axis labels can obscure biological signals or, worse, mislead the reader.</p>
 <p>These packages expose different plotting interfaces and defaults. A helper function can shorten repeated plotting code, but it does not make a palette accessible to every reader or make separate plots directly comparable. Check the data mapping, legends, and scale in each exported figure.</p>
-<h2>Reproducible, sequential workflow</h2>
+<h2>Step-by-step workflow</h2>
 <p>The first route below runs from the repository root with the included synthetic fixture. The later wrapper examples are optional templates, not required dependencies for the core route; when adapting them, verify that your object contains the named metadata, features, and reductions.</p>
 <h3>Verified core route: generate the fixture, compute PCA/UMAP, and export plots</h3>
 <p>The script makes a deterministic toy dataset (seed <code>20261023</code>) and writes its input fixture to <code>files/visualization-example/synthetic_counts.csv</code> and <code>synthetic_metadata.csv</code>. It then reloads those files, builds a Seurat object, computes PCA and R-native uwot UMAP, and exports the four figures shown here. Run it from the repository root with <code>Rscript files/visualization-example/run_example.R</code>; only Seurat and ggplot2 are required. The tested environment used R 4.3.3, Seurat 5.0.1, SeuratObject 5.0.1, ggplot2 3.4.4, and uwot 0.1.16. See the script, captured run output, session info, and checksums in <code>files/visualization-example/</code>.</p>
@@ -338,7 +338,7 @@ combined &lt;- (p_umap + p_feat) / p_dot + plot_layout(guides = "collect")
 ggsave("results/panel_figure.pdf", combined, width = 12, height = 10)
 </code></pre>
 <p>Patchwork's <code>guides = "collect"</code> requests guide collection, but guides merge only when their scales are compatible. This example intentionally composes only objects checked as ggplots; guide collection still merges only compatible scales. The dittoSeq heatmap is saved independently in step 6 because its returned class and rendering method can vary with the installed version. Open the panel and heatmap PDFs and inspect labels, legends, cropping, and legibility at final size before treating them as a figure set. If your heatmap is a grid/grob object and you need a unified page, consult patchwork’s documented <code>wrap_elements()</code> support and test the exact returned object; this tutorial does not claim that path has been exercised.</p>
-<h2>Output inspection and interpretation</h2>
+<h2>Interpreting the output files</h2>
 <p>When you open the generated images, inspect the following:</p>
 
 <figure class="my-8 bg-white border border-gray-200 rounded-xl p-4 shadow-sm"><img src="../images/tutorial-figures/advanced-viz-scpubr-layout.png" alt="Publication-grade PBMC Harmony UMAP paired with canonical marker expression matrix" width="1590" height="795" loading="lazy" class="w-full h-auto rounded-lg"/><figcaption class="mt-3 text-sm text-gray-600">Real bundled public 10x PBMC data: (A) balanced colorblind-safe UMAP clustering paired with (B) compact mean marker expression intensities across CD3D, MS4A1, LYZ, and NKG7.</figcaption></figure>
@@ -384,7 +384,7 @@ saveRDS(seurat_obj, file = "data/seurat_obj_with_umap.rds")
 <li>Cause: Gene naming inconsistencies (e.g., case differences, gene symbols vs Ensembl IDs).</li>
 <li>Fix: compare the requested symbols with feature names in the selected assay (for example, <code>rownames(seurat_obj[["RNA"]])</code> for a common assay). Identifier conversion depends on organism, reference annotation, and assay; do not assume a symbol-to-Ensembl mapping is one-to-one.</li>
 </ul>
-<h2>Limitations, version &amp; reference-data caveats, and responsible use</h2>
+<h2>Scope limits and version checks</h2>
 <ul>
 <li>Package versions matter: plotting functions and defaults can change between versions. Save the package versions used with <code>sessionInfo()</code> inside a <code>results/session_info.txt</code> file to aid reproducibility.</li>
 <li>Visualization does not substitute for statistical testing. For multi-donor condition differential expression, aggregate raw counts to sample-by-cell-type pseudobulks and test with <code>DESeq2</code>, <code>edgeR</code>, or <code>limma-voom</code> rather than treating pooled cells as independent replicates (Squair et al., 2021; see <a href="transcriptomics-differential-expression.html">Differential Expression</a>). For differential cell-type proportions across patients, use compositional models such as <code>propeller</code> (<code>speckle</code>), <code>scCODA</code>, or neighborhood-level <code>miloR</code>.</li>
@@ -396,7 +396,7 @@ saveRDS(seurat_obj, file = "data/seurat_obj_with_umap.rds")
 <li>Report the number of biological samples and cells behind a plotted group, especially for rare populations. A fixed cell-count cutoff does not establish reliability; interpret it in the context of sampling and the analysis design.</li>
 <li>When publishing, provide the exact code and data (or a minimal reproducible example) so peers can reproduce the figure-generation steps.</li>
 </ul>
-<h2>Next-step checklist</h2>
+<h2>Next steps</h2>
 <ul>
 <li>Confirm Seurat object has required metadata and reductions; save a snapshot: <code>saveRDS(seurat_obj, "data/seurat_obj_for_figures.rds")</code>.</li>
 <li>Run the provided scripts and save high-resolution outputs in <code>results/</code>.</li>

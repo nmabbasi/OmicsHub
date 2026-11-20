@@ -181,9 +181,7 @@ function toggleMobileMenu() {
 <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
 <span>Updated 24 October 2026</span></div>
 </div><p class="lesson-lead">This tutorial is a prepared-input template: it validates the three inferCNV inputs, constructs an R analysis object, and guides inspection of expression patterns without treating them as DNA copy-number measurements.</p>
-<section class="lesson-summary tutorial-learning-contract" data-tutorial-format="advanced-template" aria-label="Learning format">
-<p><strong>Format: Advanced template.</strong> For readers with prior scRNA-seq and R experience who already have filtered raw counts, cell annotations, and assembly-matched gene coordinates; you will validate these inputs, run inferCNV, and review its outputs. No dataset is supplied, so prepare the inputs before starting.</p>
-</section>
+<section class="lesson-summary tutorial-learning-contract" data-tutorial-format="advanced-template" aria-label="Learning format"><p><strong>Format: Advanced template.</strong> Designed for single-cell analysts who already have filtered raw UMI counts, confident non-malignant reference cell annotations, and a build-matched gene-ordering file. Prepare those inputs first before running the workflow.</p></section>
 <h2>Learning objectives and prerequisites</h2>
 <p>By the end of this lesson you will be able to:</p>
 <ul>
@@ -224,7 +222,7 @@ missing &lt;- needed[!vapply(needed, requireNamespace, logical(1), quietly = TRU
 if (length(missing)) stop("Setup incomplete: ", paste(missing, collapse = ", "))
 message("JAGS: ", as.character(rjags::jags.version()))
 message("infercnv: ", as.character(packageVersion("infercnv")))</code></pre>
-<p>Proceed only when both packages load and the native JAGS version prints. Package installation can warn about failures without stopping R, so do not treat the return from the installer as proof of readiness. Keep setup and analysis in the same R library/environment.</p>
+<p>Proceed only when both packages load and the native JAGS version prints. R package installers can print compilation warnings without throwing an error, so always load the packages and check JAGS directly before starting an analysis. Keep setup and analysis in the same R library/environment.</p>
 <h3>Verified execution and limits</h3>
 <p>The original R route was executed on Ubuntu 24.04.4 with R 4.3.3, infercnv 1.18.1 and JAGS 4.3.2 using 170 genuine public cells from a CELLxGENE-curated <a href="https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE84465">GSE84465</a> subset and 20,374 exact GRCh37 gene matches. The run retained 14,319 genes and all 170 cells, with HMM and denoising enabled. The returned object was reloaded in a fresh R process; gene coordinates, cell identities, HMM report links and opaque white-background heatmaps were checked. Reference labels, input paths and a two-thread limit were adapted for this bounded test.</p>
 <p>This is software-execution evidence, not DNA or clinical validation. The input is a Smart-seq2 GBM subset: <code>cutoff=0.1</code> was retained to test the displayed template, not established as the appropriate threshold for these full-length data. Choose the assay-appropriate cutoff before your own analysis. Candidate reference labels were not independently verified as diploid. Setup reused existing R libraries, so this was not a fresh whole-stack installation or a test of inferCNV on other operating systems or hardware.</p>
@@ -383,7 +381,7 @@ cnv.tl.infercnv(
 # Confirm the installed version and coordinate metadata before downstream use.
 cnv_matrix = adata.obsm["X_cnv"]
 </code></pre>
-<h2>Output inspection and interpretation</h2>
+<h2>How to inspect the results</h2>
 <p>Primary outputs to inspect in the inferCNV output directory:</p>
 
 <figure class="my-8 bg-white border border-gray-200 rounded-xl p-4 shadow-sm"><img src="../images/tutorial-figures/infercnv-chr-profile.png" alt="Genome-ordered relative expression deviation profile comparing diploid baseline and synthetic clone across chr1-chr22" width="1560" height="840" loading="lazy" class="w-full h-auto rounded-lg"/><figcaption class="mt-3 text-sm text-gray-600">Illustrative simulated benchmark (synthetic chromosome coordinates, zero patient data): sustained multi-gene arm gains (>1.15) and deletions (<0.85) stand out above diploid transcriptional noise.</figcaption></figure>
@@ -470,8 +468,8 @@ message("99th percentile of diploid reference CNV score: ", round(ref_q99, 5))</
 <li>Possible causes: reference set contains a subpopulation with true CNV; reference composition differs across samples.</li>
 <li>Fixes: build a stricter reference set (e.g., only well-characterised immune subsets), or use matched normal tissue when available. Run inferCNV with reference groups from the same sample where possible.</li>
 </ul>
-<h2>Limitations, version and reference-data caveats, and responsible use</h2>
-<p>Limitations and caveats:</p>
+<h2>Scope limits and version checks</h2>
+<p><strong>A few boundary notes:</strong></p>
 <ul>
 <li>Genome build consistency: gene coordinates in the gene_order file must match the gene symbols and the genome assembly you intend to represent (e.g., hg19/GRCh37 vs hg38/GRCh38). Mismatches will produce incorrect genomic ordering and misleading heatmaps.</li>
 <li>Resolution depends on gene coverage, expression, smoothing, and data quality. This expression-based approach is intended for broad patterns, not single-exon or small focal CNV detection.</li>
@@ -488,7 +486,7 @@ message("99th percentile of diploid reference CNV score: ", round(ref_q99, 5))</
 <li>Treat inferCNV results as hypothesis-generating. Any claim about malignancy or diagnostics should rely on orthogonal DNA-based validation and expert pathology review.</li>
 <li>Do not report expression-inferred CNVs as clinical diagnoses. Label results explicitly as inferred from transcriptome data in any downstream communication.</li>
 </ul>
-<h2>Next-step checklist</h2>
+<h2>Next steps</h2>
 <ol>
 <li>Confirm raw counts and gene-ordering are consistent (matching gene symbols and genome build).</li>
 <li>Define and document reference groups; re-check that these cells are likely diploid.</li>

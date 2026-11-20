@@ -173,9 +173,7 @@ function toggleMobileMenu() {
 </div>
 <nav aria-label="Learning path navigation" class="reader-toolbar"><span class="reader-toolbar__heading">Learning path</span><a href="../start-here.html#sh-single-cell" class="reader-toolbar__previous"><span class="reader-toolbar__direction"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5m0 0 7 7m-7-7 7-7"/></svg></span><span class="reader-toolbar__copy"><small>Previous path choice</small><strong>Back to single-cell choices</strong></span></a><a data-catalogue-return="" href="../tutorials.html" class="reader-toolbar__library"><span class="reader-toolbar__library-mark" aria-hidden="true"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="6" height="6" rx="1.3"/><rect x="14" y="4" width="6" height="6" rx="1.3"/><rect x="4" y="14" width="6" height="6" rx="1.3"/><rect x="14" y="14" width="6" height="6" rx="1.3"/></svg></span><span><small>Browse</small><strong>All tutorials</strong></span></a><a href="#reader-course-navigation" class="reader-toolbar__next"><span class="reader-toolbar__copy"><small>Several directions</small><strong>Choose a next step</strong></span><span class="reader-toolbar__direction"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14m0 0 7-7m-7 7-7-7"/></svg></span></a></nav>
 <article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--walkthrough"><p class="lesson-lead">This walkthrough takes a filtered 10x feature-barcode matrix from input checks through cell-level QC, normalization, PCA, neighbor graphs, clustering, and UMAP. It gives parallel Seurat and Scanpy examples; it does not claim that one set of QC thresholds fits every tissue.</p>
-<section class="lesson-summary tutorial-learning-contract" data-tutorial-format="hands-on-lab" aria-label="Learning format">
-<p><strong>Format: Hands-on lab.</strong> Learners with basic R or Python experience will run one of two QC-to-clustering workflows on the public PBMC 3k matrix; commands below stage the input locally, and the analysis scripts are provided.</p>
-</section>
+<section class="lesson-summary tutorial-learning-contract" data-tutorial-format="hands-on-lab" aria-label="Learning format"><p><strong>Format: Hands-on lab.</strong> Run a full single-cell QC, normalization, PCA, clustering, and UMAP workflow on the public PBMC 3k matrix. Commands below stage the data locally and walk through parallel Seurat (R) and Scanpy (Python) scripts.</p></section>
 <h2>Learning objectives and prerequisites</h2>
 <p><strong>Learning objectives.</strong> After completing this tutorial, you will be able to:</p>
 <ul>
@@ -361,7 +359,7 @@ adata.write("results/pbmc_scanpy.h5ad")
 <p><strong>Scope of verification:</strong> this execution verifies the displayed R/Seurat route on the public filtered count matrix only. The optional Scanpy route was not run as part of this execution. No marker-based annotation, doublet calling, clinical validation, or raw-read processing is represented by these figures.</p>
 <p><strong>Data source:</strong> <a href="https://cf.10xgenomics.com/samples/cell/pbmc3k/pbmc3k_filtered_gene_bc_matrices.tar.gz">10x Genomics PBMC 3k filtered matrix</a>, hg19 legacy layout. The cached official archive used for this run had SHA256 <code>847d6ebd9a1ec9a768f2be7e40ca42cbfe75ebeb6d76a4c24167041699dc28b5</code>.</p>
 <h3>Optional PBMC marker sanity check</h3>
-<p>This illustrative marker-candidate panel lets you inspect expression across the saved Seurat clusters. It is a sanity check, not cell-type annotation. Confirm candidate gene symbols in your matrix; no marker pattern or cell identity is assumed here.</p>
+<p>This illustrative marker-candidate panel lets you inspect expression across the saved Seurat clusters. Treat this marker plot as a quick sanity check that clusters reflect real biology rather than a finished cell-type annotation. Always confirm gene symbols exist in your matrix and check multiple markers before assigning labels.</p>
 <pre><code class="language-r">library(Seurat)
 
 pbmc &lt;- readRDS("results/pbmc_seurat.rds")
@@ -409,7 +407,7 @@ if (length(features)) {
   </div>
 </figcaption>
 </figure>
-<h2>Output inspection and interpretation</h2>
+<h2>Checking what the run produced</h2>
 <p>At each stage inspect both numeric summaries and visual diagnostics. Key places to look and how to interpret them:</p>
 
 <figure class="my-8 bg-white border border-gray-200 rounded-xl p-4 shadow-sm"><img src="../images/tutorial-figures/pbmc10x-qc-violin-prefilter.png" alt="Pre-filter scRNA-seq violin distributions of nFeature_RNA, nCount_RNA, and percent.mt in public 10x PBMC data" width="1152" height="768" loading="lazy" class="w-full h-auto rounded-lg"/><figcaption class="mt-3 text-sm text-gray-600">Public 10x PBMC dataset pre-filter QC distributions before removing high-mitochondrial (>7%) or extreme-count outlier droplets.</figcaption></figure>
@@ -446,8 +444,8 @@ if (length(features)) {
 <strong>Likely causes:</strong> Gradual decay of variance due to continuous biological gradients or high noise.<br/>
 <strong>Fixes:</strong> Inspect top PC gene loadings (<code>VizDimLoadings</code> / <code>DimHeatmap</code>) and evaluate whether cluster identities and biological markers remain stable across a sensible PC range (for example 15, 25, and 35 PCs). Note that Seurat's older <code>JackStraw</code> permutation test is computationally slow, legacy, and incompatible with <code>SCTransform</code> workflows.</li>
 </ul>
-<h2>Limitations, version and reference-data caveats, and responsible-use notes</h2>
-<p>Limitations and caveats to remember:</p>
+<h2>Practical boundaries and version notes</h2>
+<p><strong>A few boundary notes:</strong></p>
 <ul>
 <li>Tool versions matter. Seurat and Scanpy APIs and defaults change between major releases; scripts should pin package versions or be run in a reproducible environment (container or conda environment). Record the exact package versions used when producing results.</li>
 <li>Reference genomes and gene identifiers: 10x datasets can be aligned to different references (hg19, GRCh38). Gene name prefixes (e.g., MT- vs mt-) vary; pattern matching for mitochondrial genes must reflect your annotation source.</li>
@@ -455,7 +453,7 @@ if (length(features)) {
 <li>UMAP uses a stochastic algorithm. Record random seeds, toolkit versions, and graph parameters; the tested Scanpy 1.11.5 workflow uses the default random state of 0. Identical seeds do not guarantee matching embeddings across software versions or platforms.</li>
 <li>Ethical/responsible use: scRNA-seq from human samples may contain personally identifiable information in metadata. Follow data-use agreements and IRB guidance for controlled-access datasets.</li>
 </ul>
-<h2>Next-step checklist (concise)</h2>
+<h2>Checklist before moving on</h2>
 <ol>
 <li>Confirm input files: <code>data/pbmc3k/filtered_feature_bc_matrix/</code> contains valid 10x files.</li>
 <li>Run the provided R or Python script and inspect saved figures in <code>results/figures/</code>.</li>

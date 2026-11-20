@@ -178,9 +178,7 @@ function toggleMobileMenu() {
 <span><strong>Example environment:</strong> Ubuntu 24.04, Bash 5.1 (BWA-MEM 0.7.17, GATK 4.4.0)</span>
 </div>
 </div><p class="lesson-lead">Follow the data contract from paired reads to a filtered single-sample VCF, then calculate and inspect read-based allele fractions. The commands are a workflow template: paths, indexes, target intervals, software versions, and filtering decisions must match your experiment.</p>
-<section class="lesson-summary tutorial-learning-contract" data-tutorial-format="advanced-template" aria-label="Learning format">
-<p><strong>Format: Advanced template.</strong> For learners comfortable with Linux and sequencing files, this walkthrough traces the decisions and checks in a single-sample WES workflow. It supplies command templates, not sequencing data or reference resources; readers must obtain a mutually compatible FASTQ, reference, and capture-target set.</p>
-</section>
+<section class="lesson-summary tutorial-learning-contract" data-tutorial-format="advanced-template" aria-label="Learning format"><p><strong>Format: Advanced template.</strong> Follow each step of a single-sample whole-exome variant pipeline from BWA alignment through GATK/bcftools calling and capture-target checks. Plug in your own matched FASTQ reads, genome build, and exome capture BED.</p></section>
 <h2>Learning objectives and prerequisites</h2>
 <p><strong>By the end of this lesson</strong> you will be able to:</p>
 <ul>
@@ -381,7 +379,7 @@ dev.off()
 '
 </code></pre>
 <p>For a diploid, high-quality biallelic germline call, heterozygous and homozygous-alternate genotypes often have allele fractions near 0.5 and 1, respectively. A histogram is descriptive, not a genotype caller: depth, allele balance, ploidy, mapping/base quality, contamination, and capture bias affect the values. The included plot command assumes the table has a numeric VAF column and an existing diagnostics directory.</p>
-<h2>Output inspection and interpretation</h2>
+<h2>How to inspect the results</h2>
 <p>When inspecting results, focus on both file-level metrics and per-variant signals. For quick read-level QC and BAM summaries, run from the project root:</p>
 
 <figure class="my-8 bg-white border border-gray-200 rounded-xl p-4 shadow-sm"><img src="../images/tutorial-figures/wes-vaf-depth-filter.png" alt="Scatter plot of read depth DP versus variant allele frequency VAF separating PASS and filtered WES calls" width="1440" height="810" loading="lazy" class="w-full h-auto rounded-lg"/><figcaption class="mt-3 text-sm text-gray-600">Illustrative simulated benchmark: diploid PASS variants cluster around VAF ~ 0.5 (heterozygous) and ~ 1.0 (homozygous alternate) above DP >= 20x, whereas low-depth and strand-bias artifacts accumulate below filter cutoffs.</figcaption></figure>
@@ -417,7 +415,7 @@ gatk CollectHsMetrics \
 <p>Likely cause: Library preparation or capture failure, incorrect BED file (wrong build or coordinate system), or mislabeled sample. Fix: verify BED build matches reference, re-run capture QC, inspect insert-size distribution, and consult wet-lab team.</p>
 <h3>Symptom: Unexpected Ti/Tv ratio (very low)</h3>
 <p>Likely cause: excessive false positives from permissive filters, contamination, or misaligned reads. Fix: first confirm the variant class, target region, sample, and filtering method are comparable to the benchmark. Review annotation distributions and inspect representative calls before changing thresholds; tightening filters blindly can remove true variants.</p>
-<h2>Limitations, version and reference-data caveats, and responsible use</h2>
+<h2>Scope limits and version checks</h2>
 <ul>
 <li>Reference-build mismatch: Known-sites, interval BEDs, and chain files must match the reference FASTA. Using GRCh37 resources on GRCh38 BAMs will produce incorrect results.</li>
 <li>Version differences: GATK, BWA, and samtools evolve. Command flags or default behaviors may change. Always test on a small subset and consult the tool's versioned documentation. Pipeline reproducibility requires recording exact versions.</li>

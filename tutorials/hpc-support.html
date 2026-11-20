@@ -181,9 +181,7 @@ function toggleMobileMenu() {
 <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
 <span>Updated 24 October 2026</span></div>
 </div><p class="lesson-lead">Use the job record and its logs to narrow down a failure before changing the submission script. Slurm reports what happened to the job; the application log and your script help explain why.</p>
-<section class="lesson-summary tutorial-learning-contract" data-tutorial-format="conceptual-guide" aria-label="Learning format">
-<p><strong>Format: Conceptual guide.</strong> For cluster users with an existing job, script and logs: practise a structured diagnosis and prepare a support-ready evidence summary. You supply your own job records, approved input files and cluster-specific tool/reference paths; no data or executable test fixture is bundled.</p>
-</section>
+<section class="lesson-summary tutorial-learning-contract" data-tutorial-format="conceptual-guide" aria-label="Learning format"><p><strong>Format: Conceptual guide.</strong> Walk through a structured, evidence-first diagnosis when an HPC batch job crashes, hits OOM, or stalls, then compile a crisp support packet from your own job logs, script paths, and Slurm accounting output.</p></section>
 <h2>Learning objectives and prerequisites</h2>
 <p>
   By the end of this lesson you should be able to:
@@ -323,7 +321,7 @@ sbatch tiny_test.sbatch
 </code></pre>
 <p>
   For paired-end reads, create R1 and R2 subsets from the same source records using a paired-aware method, then pass both files to BWA in mate order; never downsample mates independently. Adapt the command, reference/index format and resource request to the original pipeline and site policy. Files produced: test_reads.fastq.gz, test_reads.sam (or tinytest-%j.out and tinytest.sam). The FASTQ line-count check confirms only a non-empty, four-line record boundary, not that sequence, quality and header fields are biologically valid or mates match. A successful small test shows only that this particular subset worked in that environment; it does not establish that the full input fits requested resources or rule out data-specific failures. Stop and ask cluster support if paths, permitted compute location, index files, or input format cannot be verified.</p>
-<h2>Output inspection and interpretation</h2>
+<h2>Checking what the run produced</h2>
 <p>
   After you collect the outputs above, here are the common pieces of evidence and how to interpret them, including what a result does not prove.
 </p>
@@ -339,7 +337,7 @@ sbatch tiny_test.sbatch
 <li>"command not found" points to command resolution in that execution context. Check module and environment setup, executable paths, and whether the command exists on compute nodes. The message alone does not establish why it was absent.</li>
 <li>Segmentation faults or "Bus error": could be corrupted input, a software bug, or exceeding memory/stack limits. These messages require more investigation (e.g., trying a small test or a different software version).</li>
 </ul>
-<h2>Troubleshooting: symptoms, possible causes, and next checks</h2>
+<h2>Troubleshooting common issues</h2>
 <p>
   The examples below suggest evidence to examine, not a guaranteed diagnosis or universal fix. Confirm resource, software, and environment changes against job records and local policy.
 </p>
@@ -390,6 +388,8 @@ conda activate myenv</code></pre>
 <h2>Interpret a hypothetical job record</h2>
 <p><strong>Hypothetical check:</strong> A record says <code>COMPLETED</code> with exit code <code>0:0</code>, but the expected output file is absent. Does that prove the analysis produced a complete or scientifically valid result? No. It records successful job-script termination only. Check the script's output path, working directory, logs, and expected-file logic before drawing conclusions or rerunning.</p>
 </section>
+
+<figure class="my-8 bg-white border border-gray-200 rounded-xl p-4 shadow-sm"><img src="../images/tutorial-figures/hpc-troubleshooting-triage.svg" alt="Diagnostic quadrant diagram showing four HPC failure checks: Scheduler Exit Codes (sacct), Storage &amp; Quota Limits, Environment / PATH Mismatches, and Minimal Support Packet" width="960" height="460" loading="lazy" class="w-full h-auto rounded-lg"/><figcaption class="mt-3 text-sm text-gray-600">Effective HPC troubleshooting collects <code>sacct</code> exit states (<code>OUT_OF_MEMORY</code>, <code>TIMEOUT</code>, <code>FAILED</code>), checks disk quotas and file paths, reproduces minimal tests interactively, and compiles a complete ticket only when needed.</figcaption></figure>
 <h2>How to prepare an effective support request</h2>
 <p>
   If you need to contact cluster support, include a concise, privacy-respecting set of items. Avoid attaching raw data that may be sensitive. A useful support-ready report includes:
@@ -422,7 +422,7 @@ Steps attempted:
 - Small test: (input subset, command, and observed result, if performed)
 - Resource changes: (request and recorded result, if changed)
 </code></pre>
-<h2>Limitations, version and data caveats, and responsible use</h2>
+<h2>Version notes and study boundaries</h2>
 <ul>
 <li>Slurm version, accounting plugins, retention, and site policy affect commands and fields. Check cluster documentation; this lesson does not certify commands against a particular installation.</li>
 <li><code>seff</code> may not be installed. <code>/usr/bin/time -v</code> measures a process launched with that command; it does not replace scheduler accounting for a distributed job.</li>
@@ -430,7 +430,7 @@ Steps attempted:
 <li>Administrative fixes (node reboots, system logs) may be restricted to support staff; do not ask support to run destructive debugging commands (e.g., rm -rf). If a support request could reveal sensitive information, ask about redaction procedures first.</li>
 <li>Performance on a local workstation may not reflect cluster behavior (different CPU architecture, memory bandwidth, or MPI libraries). Use a short test on the cluster itself where possible.</li>
 </ul>
-<h2>Next-step checklist (concise)</h2>
+<h2>Quick wrap-up checklist</h2>
 <ul>
 <li>Collect available <code>sacct</code> records and the relevant log excerpt. Use <code>scontrol show job</code> only if details remain available.</li>
 <li>If policy and software permit, try a small, representative test; record its limits and avoid treating success as proof about the full run.</li>

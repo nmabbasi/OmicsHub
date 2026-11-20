@@ -172,7 +172,7 @@ function toggleMobileMenu() {
 <img alt="Evolutionary Phylogeny" class="w-full aspect-video object-cover" decoding="async" loading="eager" src="../images/evolutionary-phylogeny.webp" width="1024" height="1024"/>
 </div>
 <nav aria-label="Learning path navigation" class="reader-toolbar"><span class="reader-toolbar__heading">Learning path</span><a href="reference-genomes-annotation.html" rel="prev" class="reader-toolbar__previous"><span class="reader-toolbar__direction"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5m0 0 7 7m-7-7 7-7"/></svg></span><span class="reader-toolbar__copy"><small>Previous prerequisite</small><strong>Reference Genomes and Annotation Databases</strong></span></a><a data-catalogue-return="" href="../tutorials.html" class="reader-toolbar__library"><span class="reader-toolbar__library-mark" aria-hidden="true"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="6" height="6" rx="1.3"/><rect x="14" y="4" width="6" height="6" rx="1.3"/><rect x="4" y="14" width="6" height="6" rx="1.3"/><rect x="14" y="14" width="6" height="6" rx="1.3"/></svg></span><span><small>Browse</small><strong>All tutorials</strong></span></a><a href="phylogenomics-orthofinder.html" rel="next" class="reader-toolbar__next"><span class="reader-toolbar__copy"><small>Suggested next</small><strong>Phylogenomics with OrthoFinder</strong></span><span class="reader-toolbar__direction"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14m0 0-7-7m7 7-7 7"/></svg></span></a></nav>
-<article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--walkthrough"><p class="lesson-lead">This walkthrough follows one alignment from input checks through tree inference and interpretation. The commands are templates: verify each program version and analysis setting locally, then keep the resulting files and logs with your project.</p><section class="lesson-summary tutorial-learning-contract" data-tutorial-format="advanced-template" aria-label="Learning format"><p><strong>Format: Advanced template.</strong> For readers who can prepare homologous FASTA sequences and use a Unix-like shell, this lesson walks through alignment, tree inference with one selected program, and interpretation. You supply and validate the sequences and tool settings; no biological dataset or MEGA options file is bundled.</p></section><div class="flex flex-wrap items-center gap-4 text-xs font-mono text-gray-500 bg-gray-50 p-3 rounded-lg border border-gray-200 mb-6">
+<article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--walkthrough"><p class="lesson-lead">This walkthrough follows one alignment from input checks through tree inference and interpretation. The commands are templates: verify each program version and analysis setting locally, then keep the resulting files and logs with your project.</p><section class="lesson-summary tutorial-learning-contract" data-tutorial-format="advanced-template" aria-label="Learning format"><p><strong>Format: Advanced template.</strong> Follow this sequence alignment and maximum-likelihood tree workflow using your own curated homologous FASTA sequences. Bring aligned or unaligned ortholog sequences and adjust model parameters to match your gene family.</p></section><div class="flex flex-wrap items-center gap-4 text-xs font-mono text-gray-500 bg-gray-50 p-3 rounded-lg border border-gray-200 mb-6">
 <div class="flex items-center gap-1">
 <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
 <span><strong>Scope:</strong> command examples are not represented as end-to-end tested here.</span>
@@ -202,7 +202,7 @@ Prerequisites:
 Phylogenetic analysis reconstructs relationships among genes, proteins, or organisms by comparing homologous characters (nucleotides or amino acids). Trees summarize hypotheses of shared ancestry: topology (branching pattern) suggests relative relationships, branch lengths often represent estimated genetic change, and support values indicate statistical confidence in clades under the chosen model and data. Phylogenies are used in systematics, comparative genomics, functional inference, and epidemiology, but they are hypotheses, not definitive histories; results depend on the input alignment, model choice, taxon sampling, and methodological assumptions.
 </p>
 <p>To infer phylogenies robustly, perform two main preprocessing steps: (1) generate a reliable MSA with MAFFT that aligns homologous positions across sequences, and (2) choose a phylogenetic method (distance, maximum likelihood, Bayesian, or approximate methods) and explicitly state the evolutionary model and the support strategy (bootstraps, posterior probabilities). This tutorial emphasizes reproducible command-line workflows and careful recording of all settings.</p>
-<h2>Reproducible workflow (sequential)</h2>
+<h2>Workflow steps</h2>
 <p>
 Overview: work in a project directory containing raw sequences, intermediate files, configuration files, and results. These examples use paths relative to the project directory. Supply homologous, unaligned sequences in a single FASTA file; records should represent the same locus or a defensible set of orthologous characters, not merely sequences with similar names. Create the results directory before analysis. Validate program flags against installed versions.
 </p>
@@ -362,7 +362,7 @@ megacc -a ML_Tree_Settings.mao -d results/aligned_sequences.fasta -o results/meg
 FastTree -gtr -nt results/aligned_sequences.fasta &gt; results/fasttree.nwk
 </code></pre>
 <p>FastTree writes a Newick tree to standard output, redirected here to a file. For nucleotide data this command uses GTR+CAT. FastTree reports local support values on a 0-to-1 scale; consult its documentation before comparing them with bootstrap percentages from another program.</p>
-<h2>Output inspection and interpretation</h2>
+<h2>Reading your outputs</h2>
 <p>
 After producing trees, inspect both the tree file contents and the associated logs to interpret meaningfully:
 </p>
@@ -416,7 +416,7 @@ What the tree does NOT prove:
     <br/><strong>Fix:</strong> Check the installation instructions for each tool and the channels available on your platform; resolve channel priority using the current Conda/Mamba documentation rather than assuming one command covers MAFFT and whichever single tree-inference tool you selected. MEGA-CC is an alternative, not an additional required installation.
   </li>
 </ul>
-<h2>Limitations, version and reference-data caveats, and responsible use</h2>
+<h2>Version notes and study boundaries</h2>
 <p>
 Limitations:
 </p>
@@ -425,9 +425,7 @@ Limitations:
 <li>Bootstraps and posterior probabilities measure data consistency under chosen assumptions, not absolute truth.</li>
 <li>FastTree uses an approximate maximum-likelihood approach; its model and support summaries differ from other ML workflows, so state the method rather than treating it as interchangeable with a full alternative.</li>
 </ul>
-<p>
-Version and reference-data caveats:
-</p>
+<p><strong>A few boundary notes:</strong></p>
 <ul>
 <li>Software behavior and available models change across versions. Record program versions using each installed tool's documented version command (for example, IQ-TREE documents <code>iqtree --version</code>); do not assume version flags are identical across tools.</li>
 <li>Substitution model sets differ between programs; the same model name may have different parameterizations. Report the exact model string and where it was selected.</li>
@@ -440,6 +438,8 @@ Responsible use:
 <li>Avoid overinterpreting trees. When making biological claims (e.g., taxonomic changes, epidemiological inferences), combine phylogenetic evidence with additional data and appropriate statistical tests.</li>
 <li>Follow data-sharing policies and privacy considerations for sequence data (e.g., human-derived viruses) and cite sequence sources.</li>
 </ul>
+
+<figure class="my-8 bg-white border border-gray-200 rounded-xl p-4 shadow-sm"><img src="../images/tutorial-figures/evolutionary-phylogeny-pipeline.svg" alt="Four-step phylogeny workflow diagram: Homolog Curation, Multiple Sequence Alignment (MAFFT), Maximum Likelihood Tree + Bootstrap (IQ-TREE2), and Rooting &amp; Interpretation" width="960" height="460" loading="lazy" class="w-full h-auto rounded-lg"/><figcaption class="mt-3 text-sm text-gray-600">Phylogenetic inference moves from curated homologous sequences through MAFFT multiple alignment, model selection and ultrafast bootstrap search in IQ-TREE2, and explicit outgroup or midpoint rooting in R or Python.</figcaption></figure>
 <h2>Save an interpretable analysis record</h2>
 <ol>
 <li>Record provenance: save copies of <code>aligned_sequences.fasta</code>, the MEGA .mao file (if used), IQ-TREE logs, and the exact commands in <code>command.txt</code>.</li>

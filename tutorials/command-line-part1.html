@@ -172,7 +172,7 @@ function toggleMobileMenu() {
 <img alt="Command-Line Navigation for Bioinformatics Projects" class="w-full aspect-video object-cover" decoding="async" loading="eager" src="../images/shell-commands-part1-workstation.webp" width="1024" height="1024"/>
 </div>
 <nav aria-label="Learning path navigation" class="reader-toolbar"><span class="reader-toolbar__heading">Learning path</span><a href="computer-data-fundamentals.html" rel="prev" class="reader-toolbar__previous"><span class="reader-toolbar__direction"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5m0 0 7 7m-7-7 7-7"/></svg></span><span class="reader-toolbar__copy"><small>Previous prerequisite</small><strong>Computer and Data Fundamentals for Biologists</strong></span></a><a data-catalogue-return="" href="../tutorials.html" class="reader-toolbar__library"><span class="reader-toolbar__library-mark" aria-hidden="true"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="6" height="6" rx="1.3"/><rect x="14" y="4" width="6" height="6" rx="1.3"/><rect x="4" y="14" width="6" height="6" rx="1.3"/><rect x="14" y="14" width="6" height="6" rx="1.3"/></svg></span><span><small>Browse</small><strong>All tutorials</strong></span></a><a href="command-line-part2.html" rel="next" class="reader-toolbar__next"><span class="reader-toolbar__copy"><small>Suggested next</small><strong>Command-line text processing for bioinformatics</strong></span><span class="reader-toolbar__direction"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14m0 0-7-7m7 7-7 7"/></svg></span></a></nav>
-<article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--walkthrough"><p class="lesson-lead">Build a small project directory, practice moving through it, and inspect file operations without mistaking placeholder files for usable sequencing data. The examples use a Bash-like shell and common command-line utilities.</p><section class="lesson-summary tutorial-learning-contract" data-tutorial-format="hands-on-lab" aria-label="Learning format"><p><strong>Format: Hands-on lab.</strong> Beginners with terminal access will create and inspect a disposable bioinformatics-style directory tree, then practice safe copy and move operations. The commands create their own zero-byte placeholder files; no sequencing data are supplied or required.</p></section><h2>Learning objectives and prerequisites</h2>
+<article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--walkthrough"><p class="lesson-lead">Build a small project directory, practice moving through it, and inspect file operations without mistaking placeholder files for usable sequencing data. The examples use a Bash-like shell and common command-line utilities.</p><section class="lesson-summary tutorial-learning-contract" data-tutorial-format="hands-on-lab" aria-label="Learning format"><p><strong>Format: Hands-on lab.</strong> Open a terminal and practice navigating, inspecting, and safely moving files inside a disposable bioinformatics directory tree. Every command builds lightweight zero-byte practice files on the spot, so no external sequencing data are needed.</p></section><h2>Learning objectives and prerequisites</h2>
 <p>Prerequisites: a working terminal on Linux, macOS, or Windows Subsystem for Linux (WSL). No prior shell experience required, but basic familiarity with copying and pasting text will help.</p>
 <p>By the end of this lesson you will be able to:</p>
 <ul>
@@ -181,6 +181,8 @@ function toggleMobileMenu() {
 <li>Create, copy, move, and inspect files and directories reliably.</li>
 <li>Use safe practices for naming and working with bioinformatics project files.</li>
 </ul>
+
+<figure class="my-8 bg-white border border-gray-200 rounded-xl p-4 shadow-sm"><img src="../images/tutorial-figures/command-line-directory-tree.svg" alt="Diagram showing Linux bioinformatics directory hierarchy with absolute path /home/user/project/data/raw, relative navigation commands, and safety rules" width="960" height="460" loading="lazy" class="w-full h-auto rounded-lg"/><figcaption class="mt-3 text-sm text-gray-600">Mastering <code>pwd</code>, relative (<code>../</code>) vs absolute (<code>/</code>) paths, and safe flags (<code>cp -i</code>, <code>mv -n</code>, dry runs) prevents accidental overwrites of raw sequencing data.</figcaption></figure>
 <h2>Why basic command-line navigation matters in bioinformatics</h2>
 <p>Bioinformatics workflows typically involve many files (raw reads, reference genomes, intermediate results, logs). Graphical file managers become cumbersome or unavailable when you are connected to a remote compute server or working inside a batch job. A small set of command-line skills makes you more reproducible, efficient, and less likely to accidentally lose data when running analysis pipelines.</p>
 <p>Examples where these skills are essential:</p>
@@ -189,7 +191,7 @@ function toggleMobileMenu() {
 <li>Running containerised software (Docker/Singularity) that expects file paths as inputs.</li>
 <li>Reading and inspecting log files produced by long-running alignment or variant-calling jobs.</li>
 </ul>
-<h2>Reproducible, sequential workflow</h2>
+<h2>Step-by-step workflow</h2>
 <p>We'll create a small project directory, add example files (empty placeholders for practice), and run commands that show the file system state at each step. Replace the example paths with ones appropriate for your machine. Commands assume a Bourne-like shell (bash, zsh).</p>
 <h3 class="lesson-step">1. Start from your home directory and create a project structure</h3>
 <p>Open a terminal and run the following. They create directories and three empty files under <code>~/projects/basic-nav</code>; they do not create sequencing data. Note that brace expansion (<code>{data,results,scripts,logs}</code>) works in <code>bash</code>, <code>zsh</code> (macOS's default login shell), and <code>ksh</code>, whereas strict POSIX <code>/bin/sh</code> (such as <code>dash</code> on Debian/Ubuntu) treats braces literally.</p>
@@ -293,7 +295,7 @@ mv -i projects/basic-nav/data/sample_R2.fastq.gz projects/basic-nav/data/raw/
 ls -lh projects/basic-nav/data/raw/*_R1.fastq.gz
 echo projects/basic-nav/data/raw/sample_R?.fastq.gz</code></pre>
 <p><strong>Four shell traps that destroy bioinformatics data:</strong> (1) typing <code>&gt;</code> instead of <code>&gt;&gt;</code> immediately truncates an existing output file to 0 bytes before the command even starts; (2) spaces around a wildcard in <code>rm * .tmp</code> delete every file in the current directory instead of <code>*.tmp</code>; (3) on default case-insensitive macOS filesystems (APFS), writing <code>tp53.tsv</code> overwrites <code>TP53.tsv</code> whereas Linux ext4/XFS treats them as two distinct files; (4) copying a directory recursively into a subdirectory of itself creates nested copies.</p>
-<h2>Output inspection and interpretation</h2>
+<h2>How to inspect the results</h2>
 <p>After each command, inspect the file system state. Here are concrete checks and how to interpret them safely.</p>
 <ul>
 <li>After creating directories with <code>mkdir -p</code>, run <code>ls -la projects/basic-nav</code>. You should see the subdirectories; if one is missing, check for typos in the path.</li>
@@ -333,13 +335,13 @@ sha256sum -c sample_R1.sha256
 <li>Cause: you do not own the file or lack read/write permission.</li>
 <li>Fix: check ownership and permissions with <code>ls -l</code>. If appropriate and you have sudo privileges, ask an administrator to change ownership (<code>chown</code>) or permission (<code>chmod</code>), or use a group with shared access. Avoid changing permissions to 777 on production systems.</li>
 </ul>
-<h2>Limitations, version and reference-data caveats, and responsible-use notes</h2>
+<h2>Practical limits and version checks</h2>
 <p>Limitations:</p>
 <ul>
 <li><code>cd</code> and <code>pwd</code> are shell built-ins; <code>ls</code>, <code>cp</code>, <code>mv</code>, and other file commands have platform-specific variants. Bash brace expansion is not portable to every shell, and GNU-only options such as <code>--backup=numbered</code> may not exist on macOS or other systems. Check your shell and local manual pages before using options from a different platform.</li>
 <li>The <code>touch</code> files in this lesson are empty stand-ins, not biological data; downstream tools will fail or produce meaningless results if given zero-byte files.</li>
 </ul>
-<p>Version and reference-data caveats:</p>
+<p><strong>A few boundary notes:</strong></p>
 <ul>
 <li>Always record the versions of key tools (bash, coreutils, samtools, etc.) and reference files (genomes, annotations) as part of project metadata. Small differences in tool versions or reference genomes can change reproducibility.</li>
 </ul>
@@ -348,7 +350,7 @@ sha256sum -c sample_R1.sha256
 <li>Be cautious with destructive commands (<code>rm</code>, <code>rm -rf</code>). Never run a remove command unless you are sure of the target path. Prefer making backups or moving files to a <code>trash</code> directory in the project for safe deletion workflows.</li>
 <li>When working with sensitive biological or patient data, follow your institution's data governance policies. Do not copy or expose controlled-access files to unsecured systems.</li>
 </ul>
-<h2>Concise next-step checklist</h2>
+<h2>Next steps</h2>
 <ol>
 <li>Confirm that you can run <code>pwd</code>, <code>ls -la</code>, and <code>cd</code> without errors in your environment.</li>
 <li>Create a new project tree under <code>~/projects</code> and add at least one real small test FASTQ (or download a small public sample) rather than placeholders.</li>

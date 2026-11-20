@@ -181,9 +181,7 @@ function toggleMobileMenu() {
 <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
 <span>Updated 23 October 2026</span></div>
 </div><p class="lesson-lead">Before running an omics workflow, know where its files live, what resources it can exhaust, and how to check that a transfer arrived intact. This walkthrough builds a project directory and practices safe inspection of compressed FASTQ files.</p>
-<section class="lesson-summary tutorial-learning-contract" data-tutorial-format="hands-on-lab" aria-label="Learning format">
-<p><strong>Format: Hands-on lab.</strong> For beginning command-line users: create a small synthetic paired-FASTQ fixture, organize it, and inspect its integrity and resource context. No biological inputs are supplied or required; real datasets need provider-issued checksums.</p>
-</section>
+<section class="lesson-summary tutorial-learning-contract" data-tutorial-format="hands-on-lab" aria-label="Learning format"><p><strong>Format: Hands-on lab.</strong> Create a tiny synthetic paired-end FASTQ fixture on your computer and check file sizes, permissions, gzip integrity, and checksums. Real sequencing deliveries should always be verified against provider checksums on arrival.</p></section>
 <h2>What you will produce and what you need</h2>
 <p>By the end, you will have a documented project layout and a verification log for provider-supplied files. You will also be able to tell whether a failure points to storage, memory, permissions, or file integrity.</p>
 <ul>
@@ -323,7 +321,7 @@ zcat data/raw/sample_R1.fastq.gz | head -n 8
 <li>gzip -t tests whether the gzip stream can be decompressed to the end without producing errors. A non-zero exit code or stderr messages indicate a corrupted stream.</li>
 <li>Important: a checksum check confirms the file you downloaded matches the provider's published bytes. It does not guarantee the biological suitability of the data (correct sample, experimental design, or consent and metadata). Always keep the manifest and your log files with the project.</li>
 </ul>
-<h2>Output inspection and interpretation</h2>
+<h2>Reading your outputs</h2>
 <p>Use the output to decide what to investigate next. File checks answer narrow questions; they do not certify the experiment or metadata.</p>
 <ul>
 <li>ls -lah shows file permissions in the left-most column, e.g., -rw-r--r--. The first character indicates type (dash for regular file, d for directory). The next three are owner permissions (read/write/execute), then group, then others. If you cannot read a file, you may see permission denied errors; changing permissions requires caution and appropriate authorization.</li>
@@ -387,7 +385,7 @@ count_fastq_records data/raw/sample_R1.fastq.gz
 <strong>Fixes:</strong> re-download; if using transfer acceleration (e.g., parallel downloads) try a single-stream download; verify network stability.
   </li>
 </ul>
-<h2>Limitations, version caveats, and responsible-use notes</h2>
+<h2>Scope limits and version checks</h2>
 <ul>
 <li>These examples use GNU utilities. macOS ships BSD variants, and <code>sha256sum</code> may be unavailable by default; use the checksum utility and options documented for your system, and confirm they accept the provider manifest. macOS may also use <code>gzcat</code> where this lesson uses <code>zcat</code>. Consult the relevant system manual pages before adapting commands.</li>
 <li>Checksum algorithms: SHA-256 is preferred for collision resistance. Some archives still publish MD5 manifests; MD5 detects most accidental corruption but is cryptographically weaker. Use whatever algorithm the provider supplies and record which one you used.</li>
