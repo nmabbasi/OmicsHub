@@ -13,9 +13,8 @@ RENAMED = {
     "mcp-zotero": {
         "title": "Choosing and Safely Evaluating a Zotero MCP Server",
         "description": (
-            "A conceptual guide to selecting and safely evaluating a specific Zotero MCP server: "
-            "inspect its access path, permissions, and data flow, then verify a read-only test "
-            "against a disposable collection. No MCP server installation or live Zotero test is included."
+            "Evaluate Zotero MCP server architectures, inspect read permissions and credential "
+            "boundaries, and verify safe read-only workflows."
         ),
         "neighbors": (
             "tutorials/ai-coding-cursor-aider.html",
@@ -25,9 +24,8 @@ RENAMED = {
     "single-cell-foundation-models": {
         "title": "Evaluating External scGPT & Geneformer Embeddings",
         "description": (
-            "Use a standard-library evaluator to check externally generated scGPT or Geneformer "
-            "embedding exports with donor-held-out kNN; first run a deliberately synthetic software "
-            "check. This lesson includes no model output, inference, or biological accuracy claim."
+            "Benchmark exported scGPT or Geneformer embeddings using donor-held-out kNN metrics "
+            "alongside reproducible linear baselines in R or Python."
         ),
         "neighbors": (
             "tutorials/protein-structure-design-alphafold.html",
@@ -37,17 +35,15 @@ RENAMED = {
     "autonomous-research-orchestrator": {
         "title": "Bounded Count-Matrix QC and CPM Workflows",
         "description": (
-            "Run deterministic, local RNA-seq count-matrix QC and optional CPM workflows in R or Python, "
-            "with synthetic fixtures, provenance records, and human review; the separate optional Python "
-            "provider demo is not needed for the core exercises."
+            "Run deterministic RNA-seq count-matrix QC and CPM workflows in R or Python with "
+            "explicit schemas, SHA-256 provenance, and human review gates."
         ),
     },
     "modern-bioinformatics-methods-2026": {
         "title": "Modern Bioinformatics Method Decision Guide",
         "description": (
-            "A conceptual decision guide for matching bioinformatics methods to study questions, data inputs, "
-            "assumptions, and validation checks; it compares single-cell, spatial, isoform, trajectory, and "
-            "donor-aware approaches without a dataset or runnable pipeline."
+            "Select the right single-cell, spatial, long-read, trajectory, or pseudobulk "
+            "method for your study design, inputs, and validation checks."
         ),
         "check_neighbors": False,
     },
@@ -202,8 +198,8 @@ class EditorialScopeFixTests(unittest.TestCase):
         self.assertIn("not a universal installation walkthrough", text)
         self.assertIn("No server or Zotero records are supplied", text)
         self.assertIn("disposable test collection", text)
-        self.assertIn("verify a read-only test", text)
-        self.assertIn("No MCP server installation or live Zotero test is included.", text)
+        self.assertIn("read-only", text)
+        self.assertIn(RENAMED["mcp-zotero"]["description"], text)
 
     def test_embedding_evaluator_foregrounds_external_vectors_and_synthetic_check(self):
         text = (ROOT / "tutorials/single-cell-foundation-models.html").read_text(encoding="utf-8")

@@ -6,20 +6,20 @@
 <link as="font" crossorigin="anonymous" href="../fonts/inter-e3237528af.woff2" rel="preload" type="font/woff2"/>
 <link href="../fonts/fonts.css" rel="stylesheet"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<meta content="Choose and interpret downstream single-cell RNA-seq analyses: ligand–receptor inference, transcription-factor activity scoring, and clear visualizations, with attention to inputs, replicates, and limits." name="description"/>
+<meta content="Choose post-clustering scRNA-seq analyses across pseudobulk DE, composition testing, trajectories, ligand-receptor signaling, and regulons." name="description"/>
 <meta content="bioinformatics, single-cell RNA-seq, shell commands, conda, computational biology, tutorials, data analysis" name="keywords"/>
 <meta content="Nasir Mahmood Abbasi, PhD" name="author"/>
 <meta content="index, follow" name="robots"/>
 <!-- Open Graph tags for social sharing -->
 <meta content="Single-Cell RNA-seq Downstream Analysis" property="og:title"/>
-<meta content="Choose and interpret downstream single-cell RNA-seq analyses: ligand–receptor inference, transcription-factor activity scoring, and clear visualizations, with attention to inputs, replicates, and limits." property="og:description"/>
+<meta content="Choose post-clustering scRNA-seq analyses across pseudobulk DE, composition testing, trajectories, ligand-receptor signaling, and regulons." property="og:description"/>
 <meta content="https://theomicshub.com/tutorials/scrna-seq-downstream-analysis.html" property="og:url"/>
-<meta content="website" property="og:type"/>
+<meta content="article" property="og:type"/>
 <meta content="https://theomicshub.com/images/scrna-downstream-analysis.webp" property="og:image"/>
 <!-- Twitter Card tags -->
 <meta content="summary_large_image" name="twitter:card"/>
 <meta content="Single-Cell RNA-seq Downstream Analysis" name="twitter:title"/>
-<meta content="Choose and interpret downstream single-cell RNA-seq analyses: ligand–receptor inference, transcription-factor activity scoring, and clear visualizations, with attention to inputs, replicates, and limits." name="twitter:description"/>
+<meta content="Choose post-clustering scRNA-seq analyses across pseudobulk DE, composition testing, trajectories, ligand-receptor signaling, and regulons." name="twitter:description"/>
 <meta content="https://theomicshub.com/images/scrna-downstream-analysis.webp" name="twitter:image"/>
 <title>Single-Cell RNA-seq Downstream Analysis | The Omics Hub</title><!-- Favicon -->
 <link href="../images/favicon.svg" rel="icon" type="image/svg+xml"/>
@@ -38,17 +38,18 @@ gtag('consent', 'default', {
   'ad_storage': 'denied',
   'ad_user_data': 'denied',
   'ad_personalization': 'denied',
-  'analytics_storage': 'denied'
+    'analytics_storage': 'denied',
+  'wait_for_update': 500
 });
 </script>
 <script async="" crossorigin="anonymous" src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2910340533244599"></script>
-<meta content="ca-pub-2910340533244599" name="google-adsense-account"/><meta content="XioIUjAyO5PEAT-N6nLrowdiDe4ATl-vKdRGmmrDHZM" name="google-site-verification"/>
-<link href="https://theomicshub.com/tutorials/scrna-seq-downstream-analysis.html" rel="canonical"/>
-<script type="application/ld+json">{
+<meta content="ca-pub-2910340533244599" name="google-adsense-account"/><link href="https://theomicshub.com/tutorials/scrna-seq-downstream-analysis.html" rel="canonical"/>
+<script type="application/ld+json">
+{
   "@context": "https://schema.org",
   "@type": "TechArticle",
   "headline": "Single-Cell RNA-seq Downstream Analysis",
-  "description": "Choose and interpret downstream single-cell RNA-seq analyses: ligand–receptor inference, transcription-factor activity scoring, and clear visualizations, with attention to inputs, replicates, and limits.",
+  "description": "Choose post-clustering scRNA-seq analyses across pseudobulk DE, composition testing, trajectories, ligand-receptor signaling, and regulons.",
   "mainEntityOfPage": {
     "@type": "WebPage",
     "@id": "https://theomicshub.com/tutorials/scrna-seq-downstream-analysis.html"
@@ -75,7 +76,7 @@ gtag('consent', 'default', {
     }
   },
   "datePublished": "2026-08-28",
-  "dateModified": "2026-11-18",
+  "dateModified": "2026-11-20",
   "url": "https://theomicshub.com/tutorials/scrna-seq-downstream-analysis.html",
   "name": "Single-Cell RNA-seq Downstream Analysis",
   "isPartOf": {
@@ -84,7 +85,8 @@ gtag('consent', 'default', {
     "url": "https://theomicshub.com/"
   },
   "inLanguage": "en"
-}</script><link href="../tutorial-library.css" rel="stylesheet"/><link href="../tutorial-reader.css?v=20261025-r-first-v1" rel="stylesheet"/>
+}
+</script><link href="../tutorial-library.css" rel="stylesheet"/><link href="../tutorial-reader.css?v=20261025-r-first-v1" rel="stylesheet"/>
 <link href="../tutorial-navigation.css?v=20261025-learning-navigation-v2" rel="stylesheet"/><link href="../back-to-top.css?v=20261025-r-first-v1" rel="stylesheet"/>
 </head>
 <body class="bg-white text-gray-900">
@@ -137,7 +139,6 @@ function toggleMobileMenu() {
 <a class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-blue-600 rounded-md hover:bg-gray-50 transition-all" href="/" id="nav-desktop-home">Home</a>
 <a class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-blue-600 rounded-md hover:bg-gray-50 transition-all flex items-center gap-1" href="../start-here.html" id="nav-desktop-starthere">Start Here <span aria-hidden="true" class="nav-network-mark"><svg viewbox="0 0 32 32"><path d="M6 10 L15 16 L25 7 M15 16 L25 25 M15 16 L7 25" fill="none" stroke="#FFFFFF" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2"></path><circle cx="6" cy="10" fill="#22D3EE" r="3.2" stroke="#FFFFFF" stroke-width="1.1"></circle><circle cx="25" cy="7" fill="#A78BFA" r="3.2" stroke="#FFFFFF" stroke-width="1.1"></circle><circle cx="15" cy="16" fill="#FFFFFF" r="3.6" stroke="#123B5D" stroke-width="1.1"></circle><circle cx="25" cy="25" fill="#FBBF24" r="3.2" stroke="#FFFFFF" stroke-width="1.1"></circle><circle cx="7" cy="25" fill="#55C7D9" r="3.2" stroke="#FFFFFF" stroke-width="1.1"></circle></svg></span></a>
 <a aria-current="page" class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-blue-600 rounded-md hover:bg-gray-50 transition-all cursor-pointer" href="../tutorials.html" id="nav-desktop-tutorials">Tutorials</a>
-<!-- Hidden commercial navigation link: <a class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-blue-600 rounded-md hover:bg-gray-50 transition-all" href="../services.html" id="nav-desktop-services">Services</a> -->
 <a class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-blue-600 rounded-md hover:bg-gray-50 transition-all" href="../about.html" id="nav-desktop-about">About</a>
 <a class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-blue-600 rounded-md hover:bg-gray-50 transition-all" href="../contact.html" id="nav-desktop-contact">Contact</a>
 <!-- Mobile Button -->
@@ -152,7 +153,6 @@ function toggleMobileMenu() {
 <a class="px-4 py-2 text-sm text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors" href="/" id="nav-mobile-home">Home</a>
 <a class="px-4 py-2 text-sm text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors" href="../start-here.html" id="nav-mobile-starthere">Start Here <span aria-hidden="true" class="nav-network-mark"><svg viewbox="0 0 32 32"><path d="M6 10 L15 16 L25 7 M15 16 L25 25 M15 16 L7 25" fill="none" stroke="#FFFFFF" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2"></path><circle cx="6" cy="10" fill="#22D3EE" r="3.2" stroke="#FFFFFF" stroke-width="1.1"></circle><circle cx="25" cy="7" fill="#A78BFA" r="3.2" stroke="#FFFFFF" stroke-width="1.1"></circle><circle cx="15" cy="16" fill="#FFFFFF" r="3.6" stroke="#123B5D" stroke-width="1.1"></circle><circle cx="25" cy="25" fill="#FBBF24" r="3.2" stroke="#FFFFFF" stroke-width="1.1"></circle><circle cx="7" cy="25" fill="#55C7D9" r="3.2" stroke="#FFFFFF" stroke-width="1.1"></circle></svg></span></a>
 <a aria-current="page" class="px-4 py-2 text-sm text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors cursor-pointer" href="../tutorials.html" id="nav-mobile-tutorials">Tutorials</a>
-<!-- Hidden commercial navigation link: <a class="px-4 py-2 text-sm text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors" href="../services.html" id="nav-mobile-services">Services</a> -->
 <a class="px-4 py-2 text-sm text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors" href="../about.html" id="nav-mobile-about">About</a>
 <a class="px-4 py-2 text-sm text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors" href="../contact.html" id="nav-mobile-contact">Contact</a>
 </div>
@@ -190,6 +190,8 @@ function toggleMobileMenu() {
 <tr><th scope="row">Which transcription factors or pathways match target-gene shifts?</th><td>CollecTRI or DoRothEA regulons scored with <code>decoupleR</code> / <code>decoupler</code> (ULM/MLM) or <code>VIPER</code></td><td>Normalized expression (or pseudobulk DE t-statistics) + signed TF-target prior network</td><td>That the TF protein is translated, post-translationally modified, or directly bound to chromatin without ATAC/ChIP evidence</td></tr>
 </tbody></table></div>
 <h2>Decision summaries for each downstream branch</h2>
+<figure class="my-8 bg-white border border-gray-200 rounded-xl p-4 shadow-sm"><img src="../images/tutorial-figures/scrna-downstream-summary.png" alt="Annotated Harmony PBMC UMAP and replicate cell-type composition bars from real bundled PBMC data" width="1590" height="795" loading="lazy" class="w-full h-auto rounded-lg"/><figcaption class="mt-3 text-sm text-gray-600">Real bundled 10x PBMC worked example: (A) Harmony-corrected embedding preserves distinct immune lineages for within-type pseudobulk DE, while (B) sample-level cell-type composition reveals relative shifts prior to formal compositional modeling.</figcaption></figure>
+
 <ol class="lesson-steps">
 <li class="lesson-step"><strong>Pseudobulk differential expression (gene-level state changes):</strong> aggregate raw UMI counts by summing across cells for each <code>(sample_id, cell_type)</code> pair before fitting negative-binomial GLMs in <code>DESeq2</code> or <code>edgeR</code> (Crowell et al., 2020; Squair et al., 2021). Exclude donor-cell-type combinations with very few cells (commonly &lt;10 to 20 cells) and check whether ambient transcripts from abundant populations (such as myeloid <em>LYZ</em> or tumour keratins) contaminate neighboring cell types across batches.</li>
 <li class="lesson-step"><strong>Differential abundance and compositional analysis:</strong> cell-type proportions sum to 100% within every library. In a tumour biopsy where infiltrating neutrophils double in number, T-cell percentages drop mechanically even if T-cell density per milligram of tissue is unchanged, and enzymatic dissociation biases recovery of fragile epithelial versus hardy lymphoid cells. Use compositional log-ratio or Dirichlet-multinomial models with a reference cell type (<code>scCODA</code>, Büttner et al., 2021; <code>propeller</code>, Phipson et al., 2022) or cluster-free kNN neighborhood testing across biological replicates (<code>miloR</code>, Dann et al., 2022).</li>
@@ -246,7 +248,7 @@ print(wide, row.names = FALSE)</code></pre>
 <li><a href="https://doi.org/10.1038/s41587-021-01133-0" rel="noopener noreferrer" target="_blank">Dann et al. (2022), Differential abundance testing on single-cell data using k-nearest neighbor graphs (Milo)</a>, <em>Nature Biotechnology</em>, and <a href="https://doi.org/10.1038/s41467-021-27150-6" rel="noopener noreferrer" target="_blank">Büttner et al. (2021), scCODA</a>, <em>Nature Communications</em>.</li>
 <li><a href="https://doi.org/10.1093/bioadv/vbac016" rel="noopener noreferrer" target="_blank">Badia-i-Mompel et al. (2022), decoupleR</a>, <em>Bioinformatics Advances</em>, and <a href="https://doi.org/10.1093/nar/gkad841" rel="noopener noreferrer" target="_blank">Müller-Dott et al. (2023), CollecTRI</a>, <em>Nucleic Acids Research</em>; see <a href="https://decoupler.readthedocs.io/en/stable/" rel="noopener noreferrer" target="_blank">decoupler stable documentation</a> for v1.x vs v2.x API differences.</li>
 <li><a href="https://github.com/jinworks/CellChat" rel="noopener noreferrer" target="_blank">CellChat repository</a> and <a href="https://cellphonedb.readthedocs.io/en/latest/RESULTS-DOCUMENTATION.html" rel="noopener noreferrer" target="_blank">CellPhoneDB documentation</a>.</li>
-<li><a href="cell-cell-communication.html">Cell-Cell Communication guide</a>, <a href="tcr-bcr-repertoire-analysis.html">TCR/BCR Repertoire Analysis guide</a>, <a href="examples/WNN_analysis_of_CITE_seq_RNA_ADT.html">CITE-seq WNN example</a>, and <a href="examples/inferCNV_analysis.html">inferCNV example</a>.</li>
+<li><a href="cell-cell-communication.html">Cell-Cell Communication guide</a>, <a href="tcr-bcr-repertoire-analysis.html">TCR/BCR Repertoire Analysis guide</a>, <a href="cite-seq-wnn-multiomics.html">CITE-seq WNN Multi-Omics guide</a>, and <a href="infercnv-copy-number-variation.html">inferCNV Copy Number Variation guide</a>.</li>
 </ul>
 <aside aria-labelledby="tutorial-feedback-title" class="lesson-feedback" id="tutorial-feedback"><h2 id="tutorial-feedback-title">Help improve this tutorial</h2><p>Found an error, a broken link, or a step that needs a clearer explanation? Please <a href="../contact.html">contact me</a>. Your feedback helps me keep this resource accurate and useful.</p></aside></article>
 <section class="mt-12 mb-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-100">
@@ -301,12 +303,11 @@ print(wide, row.names = FALSE)</code></pre>
 <p class="text-gray-400 text-sm leading-relaxed mb-4">Practical, hands-on tutorials for bioinformatics, HPC, and single-cell RNA-seq analysis.</p>
 <div class="flex flex-col sm:flex-row items-start gap-3">
 
-<!-- AdSense: temporarily hidden <a aria-label="Join The Omics Hub on Telegram" class="telegram-community-button group ml-0 sm:ml-2 inline-flex items-center gap-2 px-5 py-2.5 bg-white/5 text-gray-400 font-medium rounded-lg hover:opacity-100 hover:bg-[#34D399] hover:text-gray-950 hover:shadow-[0_0_20px_rgba(52,211,153,0.7)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#34D399] transition-all duration-300 text-sm transform hover:-translate-y-0.5" href="https://t.me/theomicshub" rel="noopener noreferrer" target="_blank" title="Join The Omics Hub on Telegram"><svg aria-hidden="true" class="w-4 h-4 grayscale group-hover:grayscale-0" fill="currentColor" viewbox="0 0 24 24"><path d="M21.7 3.4 18.4 20c-.25 1.17-.9 1.46-1.83.91l-5.05-3.72-2.44 2.35c-.27.27-.5.5-1.02.5l.36-5.14 9.36-8.46c.41-.36-.09-.56-.64-.2L5.57 13.5.58 11.94c-1.09-.34-1.11-1.09.23-1.61L20.3 2.78c.91-.34 1.71.2 1.4.62Z"></path></svg><span class="font-bold">Join us on Telegram</span></a> -->
 </div>
 </div>
 <div>
 <h2 class="font-semibold text-white mb-3 text-sm uppercase tracking-wide">Explore</h2>
-<ul class="space-y-2 text-sm text-gray-400"><li><a class="hover:text-white transition-colors" href="/">Home</a></li><li><a class="hover:text-white transition-colors" href="../start-here.html">Start Here</a></li><li><a class="hover:text-white transition-colors" href="../tutorials.html">Tutorials</a></li><li><!-- Hidden commercial navigation link: <a class="hover:text-white transition-colors" href="../services.html">Services</a> --></li><li><a class="hover:text-white transition-colors" href="../about.html">About</a></li><li><a class="hover:text-white transition-colors" href="../contact.html">Contact</a></li></ul>
+<ul class="space-y-2 text-sm text-gray-400"><li><a class="hover:text-white transition-colors" href="/">Home</a></li><li><a class="hover:text-white transition-colors" href="../start-here.html">Start Here</a></li><li><a class="hover:text-white transition-colors" href="../tutorials.html">Tutorials</a></li><li><a class="hover:text-white transition-colors" href="../about.html">About</a></li><li><a class="hover:text-white transition-colors" href="../contact.html">Contact</a></li></ul>
 </div>
 <div>
 <h2 class="font-semibold text-white mb-3 text-sm uppercase tracking-wide">Policies</h2>

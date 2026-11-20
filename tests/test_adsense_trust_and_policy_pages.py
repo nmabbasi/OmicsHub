@@ -16,34 +16,41 @@ TRUST_PAGES = (
     "pages/terms.html",
     "pages/disclaimer.html",
 )
-SITEMAP_TRUST_URLS = (
-    "https://theomicshub.com/about.html",
-    "https://theomicshub.com/contact.html",
+NON_EDITORIAL_PAGES = (
+    "about.html",
+    "contact.html",
+    "services.html",
+    "start-here.html",
+    "tutorials.html",
+    "404.html",
+    "success.html",
+    "pages/privacy.html",
+    "pages/cookie.html",
+    "pages/terms.html",
+    "pages/disclaimer.html",
+)
+EXCLUDED_LEGAL_URLS = (
     "https://theomicshub.com/pages/privacy.html",
     "https://theomicshub.com/pages/terms.html",
     "https://theomicshub.com/pages/disclaimer.html",
     "https://theomicshub.com/pages/cookie.html",
+    "https://theomicshub.com/services.html",
+    "https://theomicshub.com/404.html",
+    "https://theomicshub.com/success.html",
 )
 SCHEMA_RE = re.compile(r'<script[^>]*type="application/ld\+json">(.*?)</script>', re.S)
 NS = {"s": "http://www.sitemaps.org/schemas/sitemap/0.9"}
 
 
 class AdSenseTrustAndPolicyPageTests(unittest.TestCase):
-    def test_all_trust_and_policy_pages_share_complete_adsense_cmp_and_head_setup(self):
+    def test_all_trust_and_policy_pages_share_clean_consent_and_head_setup(self):
         for rel in TRUST_PAGES:
             with self.subTest(page=rel):
                 text = (ROOT / rel).read_text(encoding="utf-8")
                 self.assertNotIn("\u2014", unescape(text), f"em-dash found in {rel}")
-                consent_pos = text.find("gtag('consent', 'default'")
-                ads_pos = text.find(
-                    "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2910340533244599"
-                )
-                self.assertGreater(consent_pos, 0, f"{rel} missing Consent Mode default")
-                self.assertGreater(ads_pos, consent_pos, f"{rel} must load adsbygoogle.js after Consent Mode default")
-                self.assertIn(
-                    '<meta content="ca-pub-2910340533244599" name="google-adsense-account"/>',
-                    text,
-                )
+                self.assertNotIn("adsbygoogle.js", text, f"non-editorial page {rel} must not load adsbygoogle.js")
+                self.assertNotIn("google-adsense-account", text, f"non-editorial page {rel} must not declare google-adsense-account")
+                self.assertIn("gtag('consent', 'default'", text, f"{rel} missing Consent Mode default")
                 self.assertIn('images/favicon.svg" rel="icon" type="image/svg+xml"', text)
                 self.assertRegex(text, r'<script\s+defer=""\s+src="(?:\.\./)?analytics\.js"></script>')
                 self.assertIn("cookie-consent.js", text)
@@ -108,6 +115,10 @@ class AdSenseTrustAndPolicyPageTests(unittest.TestCase):
                 self.assertNotIn("google.com/settings/ads", text)
                 self.assertNotIn('rel="noopener"', text)
                 self.assertIn("Last updated: November 19, 2026", text)
+        self.assertIn("Google Funding Choices", privacy)
+        self.assertIn("Google Funding Choices", cookie)
+        self.assertIn("IAB", privacy)
+        self.assertIn("IAB TCF v2.2", cookie)
         self.assertIn("Data controller:", privacy)
         self.assertIn("Nasir Mahmood Abbasi, PhD", privacy)
         self.assertIn("Data retention:", privacy)
@@ -138,8 +149,13 @@ class AdSenseTrustAndPolicyPageTests(unittest.TestCase):
         services = (ROOT / "services.html").read_text(encoding="utf-8")
         self.assertIn("scroll-margin-top:", services)
         self.assertIn("#newsletter-title #nl-error", services)
+        self.assertIn('<meta content="noindex, follow" name="robots"/>', services)
+        not_found = (ROOT / "404.html").read_text(encoding="utf-8")
+        self.assertNotIn("google-adsense-account", not_found)
+        self.assertNotIn("impact-site-verification", not_found)
+        self.assertNotIn('rel="canonical"', not_found)
 
-    def test_all_70_canonical_pages_share_sitewide_adsense_meta_favicon_consent_and_author_schema(self):
+    def test_editorial_vs_non_editorial_adsense_consent_and_comment_hygiene(self):
         root_pages = (
             "index.html", "start-here.html", "tutorials.html", "about.html",
             "contact.html", "services.html", "success.html", "404.html",
@@ -154,19 +170,23 @@ class AdSenseTrustAndPolicyPageTests(unittest.TestCase):
             rel = page.relative_to(ROOT).as_posix()
             with self.subTest(page=rel):
                 text = page.read_text(encoding="utf-8")
-                self.assertIn(
-                    '<meta content="ca-pub-2910340533244599" name="google-adsense-account"/>',
-                    text,
-                )
+                self.assertNotIn("AdSense: temporarily hidden", text)
+                self.assertNotIn("Hidden commercial navigation link", text)
                 self.assertIn("favicon.svg", text)
                 self.assertIn("gtag('consent', 'default'", text)
                 self.assertIn("cookie-consent.js", text)
-                if rel in ("404.html", "success.html"):
-                    # AdSense Program Policies prohibit ad scripts on error/thank-you pages.
+                if rel in NON_EDITORIAL_PAGES:
                     self.assertNotIn("adsbygoogle.js", text)
+                    self.assertNotIn("google-adsense-account", text)
                 else:
+                    consent_pos = text.find("gtag('consent', 'default'")
+                    ads_pos = text.find(
+                        "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2910340533244599"
+                    )
+                    self.assertGreater(ads_pos, consent_pos)
+                    self.assertIn("'wait_for_update': 500", text)
                     self.assertIn(
-                        "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2910340533244599",
+                        '<meta content="ca-pub-2910340533244599" name="google-adsense-account"/>',
                         text,
                     )
                 blocks = SCHEMA_RE.findall(text)
@@ -180,15 +200,18 @@ class AdSenseTrustAndPolicyPageTests(unittest.TestCase):
                 ):
                     self.assertIn(profile, entity["author"]["sameAs"])
 
-    def test_sitemap_records_fresh_lastmod_for_updated_trust_and_policy_pages(self):
+    def test_sitemap_excludes_legal_and_utility_pages_and_tracks_fresh_lastmod(self):
         root = ET.parse(ROOT / "sitemap.xml").getroot()
         dates = {
             entry.findtext("s:loc", namespaces=NS): entry.findtext("s:lastmod", namespaces=NS)
             for entry in root.findall("s:url", NS)
         }
-        for url in SITEMAP_TRUST_URLS:
-            with self.subTest(url=url):
-                self.assertEqual(dates[url], "2026-11-19")
+        self.assertEqual(len(dates), 63)
+        for url in EXCLUDED_LEGAL_URLS:
+            with self.subTest(excluded=url):
+                self.assertNotIn(url, dates)
+        self.assertEqual(dates["https://theomicshub.com/"], "2026-11-20")
+        self.assertEqual(dates["https://theomicshub.com/tutorials.html"], "2026-11-20")
 
 
 if __name__ == "__main__":

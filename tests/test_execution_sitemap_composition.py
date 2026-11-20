@@ -10,6 +10,7 @@ from tutorial_execution_baseline import (
     restore_overlapping_execution_asset,
 )
 from current_publication_baseline import normalize_current_publication
+from homepage_redesign_baseline import normalize_homepage_redesign_bytes
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -40,7 +41,7 @@ class ExecutionSitemapCompositionTests(unittest.TestCase):
         self.assertEqual(BASE_COMMIT, "122bd466feb11efd304769faff19e77bd40a98b4")
 
     def test_direct_remaining_entry_point_composes_and_rejects_unknown_dates(self):
-        current = (ROOT / "sitemap.xml").read_bytes()
+        current = normalize_homepage_redesign_bytes("sitemap.xml", (ROOT / "sitemap.xml").read_bytes())
         base = _base_bytes("sitemap.xml")
         self.assertEqual(
             normalize_remaining_validation_sitemap(current),
@@ -63,7 +64,7 @@ class ExecutionSitemapCompositionTests(unittest.TestCase):
             normalize_remaining_validation_sitemap(mutation)
 
     def test_unpinned_sitemap_mutations_are_not_absorbed_by_asset_restore(self):
-        current = (ROOT / "sitemap.xml").read_bytes()
+        current = normalize_homepage_redesign_bytes("sitemap.xml", (ROOT / "sitemap.xml").read_bytes())
         restored = restore_overlapping_execution_asset("sitemap.xml", current)
 
         # Alter one row's date and a separate row attribute. Neither modified

@@ -109,8 +109,12 @@ class PbmcWorkedExampleTests(unittest.TestCase):
         self.assertNotIn(OLD_RANDOM, text)
 
     def test_sitemap_dates_match_reviewed_updates_and_historical_baseline(self):
+        from homepage_redesign_baseline import normalize_homepage_redesign_bytes
         ns = {'s': 'http://www.sitemaps.org/schemas/sitemap/0.9'}
-        raw_sitemap = (ROOT / 'sitemap.xml').read_bytes()
+        live_sitemap = (ROOT / 'sitemap.xml').read_bytes()
+        live_root = ET.fromstring(live_sitemap)
+        self.assertEqual(len(live_root.findall('s:url', ns)), 63)
+        raw_sitemap = normalize_homepage_redesign_bytes('sitemap.xml', live_sitemap)
         self.assertEqual(raw_sitemap, current_published_bytes('sitemap.xml'))
         raw_root = ET.fromstring(raw_sitemap)
         raw_entries = raw_root.findall('s:url', ns)

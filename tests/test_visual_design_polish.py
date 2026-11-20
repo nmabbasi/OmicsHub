@@ -140,16 +140,25 @@ class VisualDesignPolishTests(unittest.TestCase):
             "tutorials/examples/Combined_LIANA_Analysis_Conserved_Specific_Signaling.html",
             "tutorials/examples/Benchmark_cell_Prediction_Methods_5_012_2025_on_Clusters_v2.html",
             "tutorials/examples/TCR_Analysis_v2.html",
+            "tutorials/examples/CyteTypeR_Annotation_using_AI_Finalized.html",
+            "tutorials/examples/inferCNV_analysis.html",
+            "tutorials/examples/Integration_by_CCA_Harmony.html",
+            "tutorials/examples/mLLM_Annotatin_of_all_clusters.html",
+            "tutorials/examples/scASSIST_AI_METHOD.html",
+            "tutorials/examples/Trajectory_inference_using_Slingshot.html",
+            "tutorials/examples/WNN_analysis_of_CITE_seq_RNA_ADT.html",
         )
         for rel in removed_paths:
             self.assertFalse((ROOT / rel).exists(), f"Thesis PDF figure asset must stay removed: {rel}")
         downstream = (ROOT / "tutorials/scrna-seq-downstream-analysis.html").read_text(encoding="utf-8")
         self.assertNotIn("Combined_LIANA_Analysis_Conserved_Specific_Signaling.html", downstream)
         self.assertNotIn("TCR_Analysis_v2.html", downstream)
+        self.assertNotIn("examples/WNN_analysis_of_CITE_seq_RNA_ADT.html", downstream)
+        self.assertNotIn("examples/inferCNV_analysis.html", downstream)
         self.assertIn('href="cell-cell-communication.html"', downstream)
         self.assertIn('href="tcr-bcr-repertoire-analysis.html"', downstream)
-        self.assertIn('href="examples/WNN_analysis_of_CITE_seq_RNA_ADT.html"', downstream)
-        self.assertIn('href="examples/inferCNV_analysis.html"', downstream)
+        self.assertIn('href="cite-seq-wnn-multiomics.html"', downstream)
+        self.assertIn('href="infercnv-copy-number-variation.html"', downstream)
 
     def test_featured_and_tutorial_cards_have_elevated_shadow_and_hover_popout(self):
         home_html = (ROOT / "index.html").read_text(encoding="utf-8")

@@ -134,7 +134,7 @@ class RFirstRevisionBaselineTests(unittest.TestCase):
         self.assertNotEqual(normalize_r_first_revision(article, body_mutation),
                             pre_r_first_bytes(article).decode("utf-8"))
         date_mutation = article_current.replace(
-            '"dateModified": "2026-11-18"', '"dateModified": "2099-01-01"', 1
+            '"dateModified": "2026-11-20"', '"dateModified": "2099-01-01"', 1
         )
         normalized_date_mutation = normalize_r_first_revision(article, date_mutation)
         self.assertNotEqual(normalized_date_mutation, pre_r_first_bytes(article).decode("utf-8"))

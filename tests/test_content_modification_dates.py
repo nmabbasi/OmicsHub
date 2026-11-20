@@ -13,6 +13,7 @@ from advanced_validation_baseline import (
     published_bytes as advanced_published_bytes,
 )
 from current_publication_baseline import current_published_bytes, normalize_latest_publication
+from homepage_redesign_baseline import normalize_homepage_redesign_bytes
 from resource_content_baseline import (
     load_manifest as load_resource_content_manifest,
     published_bytes as resource_published_bytes,
@@ -61,9 +62,27 @@ NS = {"s": "http://www.sitemaps.org/schemas/sitemap/0.9"}
 
 class ContentModificationDateTests(unittest.TestCase):
     def setUp(self):
-        # Pin the real current sitemap exactly, then restore only that known
-        # mainline revision for the historical content-date checks below.
-        raw_sitemap = (ROOT / "sitemap.xml").read_bytes()
+        # Verify the post-remediation 63-URL canonical sitemap first, then restore
+        # only the pinned remediation delta so historical content-date checks run intact.
+        live_sitemap = (ROOT / "sitemap.xml").read_bytes()
+        live_root = ET.fromstring(live_sitemap)
+        live_entries = live_root.findall("s:url", NS)
+        live_dates = {
+            entry.findtext("s:loc", namespaces=NS): entry.findtext("s:lastmod", namespaces=NS)
+            for entry in live_entries
+        }
+        self.assertEqual(len(live_entries), 63)
+        self.assertEqual(len(live_dates), 63)
+        self.assertEqual(live_dates[SITE], "2026-11-20")
+        self.assertEqual(live_dates[SITE + "tutorials.html"], "2026-11-20")
+        self.assertEqual(live_dates[SITE + "about.html"], "2026-11-19")
+        for loc, lm in live_dates.items():
+            if "/tutorials/" in loc:
+                rel_p = loc.removeprefix(SITE)
+                t_entity = json.loads(SCHEMA.findall((ROOT / rel_p).read_text(encoding="utf-8"))[0])
+                self.assertEqual(t_entity["dateModified"], lm, f"dateModified != lastmod for {rel_p}")
+
+        raw_sitemap = normalize_homepage_redesign_bytes("sitemap.xml", live_sitemap)
         self.assertEqual(raw_sitemap, current_published_bytes("sitemap.xml"))
         raw_root = ET.fromstring(raw_sitemap)
         raw_entries = raw_root.findall("s:url", NS)

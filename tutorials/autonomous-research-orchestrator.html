@@ -6,18 +6,18 @@
 <link as="font" crossorigin="anonymous" href="../fonts/inter-e3237528af.woff2" rel="preload" type="font/woff2"/>
 <link href="../fonts/fonts.css" rel="stylesheet"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<meta content="Run deterministic, local RNA-seq count-matrix QC and optional CPM workflows in R or Python, with synthetic fixtures, provenance records, and human review; the separate optional Python provider demo is not needed for the core exercises." name="description"/>
+<meta content="Run deterministic RNA-seq count-matrix QC and CPM workflows in R or Python with explicit schemas, SHA-256 provenance, and human review gates." name="description"/>
 <meta content="RNA-seq, count matrix quality control, CPM, R, Python, deterministic workflow, provenance, optional AI provider demo" name="keywords"/>
 <meta content="Nasir Mahmood Abbasi, PhD" name="author"/>
 <meta content="index, follow" name="robots"/>
 <meta content="Bounded Count-Matrix QC and CPM Workflows" property="og:title"/>
-<meta content="Run deterministic, local RNA-seq count-matrix QC and optional CPM workflows in R or Python, with synthetic fixtures, provenance records, and human review; the separate optional Python provider demo is not needed for the core exercises." property="og:description"/>
+<meta content="Run deterministic RNA-seq count-matrix QC and CPM workflows in R or Python with explicit schemas, SHA-256 provenance, and human review gates." property="og:description"/>
 <meta content="https://theomicshub.com/tutorials/autonomous-research-orchestrator.html" property="og:url"/>
-<meta content="website" property="og:type"/>
+<meta content="article" property="og:type"/>
 <meta content="https://theomicshub.com/images/autonomous-research-orchestrator.webp" property="og:image"/>
 <meta content="summary_large_image" name="twitter:card"/>
 <meta content="Bounded Count-Matrix QC and CPM Workflows" name="twitter:title"/>
-<meta content="Run deterministic, local RNA-seq count-matrix QC and optional CPM workflows in R or Python, with synthetic fixtures, provenance records, and human review; the separate optional Python provider demo is not needed for the core exercises." name="twitter:description"/>
+<meta content="Run deterministic RNA-seq count-matrix QC and CPM workflows in R or Python with explicit schemas, SHA-256 provenance, and human review gates." name="twitter:description"/>
 <meta content="https://theomicshub.com/images/autonomous-research-orchestrator.webp" name="twitter:image"/>
 <title>Bounded Count-Matrix QC and CPM Workflows | The Omics Hub</title>
 <link href="../images/favicon.svg" rel="icon" type="image/svg+xml"/>
@@ -32,18 +32,19 @@ gtag('consent', 'default', {
   'ad_storage': 'denied',
   'ad_user_data': 'denied',
   'ad_personalization': 'denied',
-  'analytics_storage': 'denied'
+    'analytics_storage': 'denied',
+  'wait_for_update': 500
 });
 </script>
 <script async="" crossorigin="anonymous" src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2910340533244599"></script>
 <meta content="ca-pub-2910340533244599" name="google-adsense-account"/>
-<meta content="XioIUjAyO5PEAT-N6nLrowdiDe4ATl-vKdRGmmrDHZM" name="google-site-verification"/>
 <link href="https://theomicshub.com/tutorials/autonomous-research-orchestrator.html" rel="canonical"/>
-<script type="application/ld+json">{
+<script type="application/ld+json">
+{
   "@context": "https://schema.org",
   "@type": "TechArticle",
   "headline": "Bounded Count-Matrix QC and CPM Workflows",
-  "description": "Run deterministic, local RNA-seq count-matrix QC and optional CPM workflows in R or Python, with synthetic fixtures, provenance records, and human review; the separate optional Python provider demo is not needed for the core exercises.",
+  "description": "Run deterministic RNA-seq count-matrix QC and CPM workflows in R or Python with explicit schemas, SHA-256 provenance, and human review gates.",
   "mainEntityOfPage": {
     "@type": "WebPage",
     "@id": "https://theomicshub.com/tutorials/autonomous-research-orchestrator.html"
@@ -70,8 +71,9 @@ gtag('consent', 'default', {
     }
   },
   "datePublished": "2026-08-27",
-  "dateModified": "2026-11-18"
-}</script>
+  "dateModified": "2026-11-20"
+}
+</script>
 <link href="../tutorial-library.css" rel="stylesheet"/><link href="../tutorial-reader.css?v=20261025-r-first-v1" rel="stylesheet"/>
 <link href="../tutorial-navigation.css?v=20261025-learning-navigation-v2" rel="stylesheet"/><link href="../back-to-top.css?v=20261025-r-first-v1" rel="stylesheet"/>
 </head>
@@ -94,7 +96,7 @@ function toggleMobileMenu() {
 <nav class="container mx-auto px-6 py-4">
 <div class="flex items-center justify-between">
 <div class="flex items-center gap-6">
-<div class="flex items-center space-x-3">
+<a class="flex items-center space-x-3" href="../index.html">
 <div class="w-10 h-10 rounded-lg flex items-center justify-center shadow shadow-blue-900/30" style="width:40px;height:40px;background-color:#123B5D;flex:0 0 40px">
 <svg aria-hidden="true" class="w-7 h-7" role="img" viewbox="0 0 32 32">
 <path d="M6 10 L15 16 L25 7 M15 16 L25 25 M15 16 L7 25" fill="none" stroke="#ffffff" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2"></path>
@@ -106,7 +108,7 @@ function toggleMobileMenu() {
 </svg>
 </div>
 <span class="text-xl font-bold text-gray-900 tracking-tight">The Omics Hub</span>
-</div>
+</a>
 <div class="hidden md:flex items-center gap-3 pl-6 border-l border-gray-200">
 <a aria-label="LinkedIn Profile" class="text-gray-400 hover:text-[#0A66C2] transition-colors duration-200" href="https://www.linkedin.com/in/nmabbasi" rel="noopener noreferrer" target="_blank" title="LinkedIn">
 <svg class="w-4 h-4" fill="currentColor" viewbox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"></path></svg>
@@ -124,7 +126,6 @@ function toggleMobileMenu() {
 <a class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-blue-600 rounded-md hover:bg-gray-50 transition-all" href="/" id="nav-desktop-home">Home</a>
 <a class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-blue-600 rounded-md hover:bg-gray-50 transition-all flex items-center gap-1" href="../start-here.html" id="nav-desktop-starthere">Start Here <span aria-hidden="true" class="nav-network-mark"><svg viewbox="0 0 32 32"><path d="M6 10 L15 16 L25 7 M15 16 L25 25 M15 16 L7 25" fill="none" stroke="#FFFFFF" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2"></path><circle cx="6" cy="10" fill="#22D3EE" r="3.2" stroke="#FFFFFF" stroke-width="1.1"></circle><circle cx="25" cy="7" fill="#A78BFA" r="3.2" stroke="#FFFFFF" stroke-width="1.1"></circle><circle cx="15" cy="16" fill="#FFFFFF" r="3.6" stroke="#123B5D" stroke-width="1.1"></circle><circle cx="25" cy="25" fill="#FBBF24" r="3.2" stroke="#FFFFFF" stroke-width="1.1"></circle><circle cx="7" cy="25" fill="#55C7D9" r="3.2" stroke="#FFFFFF" stroke-width="1.1"></circle></svg></span></a>
 <a aria-current="page" class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-blue-600 rounded-md hover:bg-gray-50 transition-all cursor-pointer" href="../tutorials.html" id="nav-desktop-tutorials">Tutorials</a>
-<!-- Hidden commercial navigation link: <a class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-blue-600 rounded-md hover:bg-gray-50 transition-all" href="../services.html" id="nav-desktop-services">Services</a> -->
 <a class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-blue-600 rounded-md hover:bg-gray-50 transition-all" href="../about.html" id="nav-desktop-about">About</a>
 <a class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-blue-600 rounded-md hover:bg-gray-50 transition-all" href="../contact.html" id="nav-desktop-contact">Contact</a>
 <!-- Legal dropdown -->
@@ -152,7 +153,6 @@ Legal
 <a class="px-4 py-2 text-sm text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors" href="/" id="nav-mobile-home">Home</a>
 <a class="px-4 py-2 text-sm text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors" href="../start-here.html" id="nav-mobile-starthere">Start Here <span aria-hidden="true" class="nav-network-mark"><svg viewbox="0 0 32 32"><path d="M6 10 L15 16 L25 7 M15 16 L25 25 M15 16 L7 25" fill="none" stroke="#FFFFFF" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2"></path><circle cx="6" cy="10" fill="#22D3EE" r="3.2" stroke="#FFFFFF" stroke-width="1.1"></circle><circle cx="25" cy="7" fill="#A78BFA" r="3.2" stroke="#FFFFFF" stroke-width="1.1"></circle><circle cx="15" cy="16" fill="#FFFFFF" r="3.6" stroke="#123B5D" stroke-width="1.1"></circle><circle cx="25" cy="25" fill="#FBBF24" r="3.2" stroke="#FFFFFF" stroke-width="1.1"></circle><circle cx="7" cy="25" fill="#55C7D9" r="3.2" stroke="#FFFFFF" stroke-width="1.1"></circle></svg></span></a>
 <a aria-current="page" class="px-4 py-2 text-sm text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors cursor-pointer" href="../tutorials.html" id="nav-mobile-tutorials">Tutorials</a>
-<!-- Hidden commercial navigation link: <a class="px-4 py-2 text-sm text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors" href="../services.html" id="nav-mobile-services">Services</a> -->
 <a class="px-4 py-2 text-sm text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors" href="../about.html" id="nav-mobile-about">About</a>
 <a class="px-4 py-2 text-sm text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors" href="../contact.html" id="nav-mobile-contact">Contact</a>
 <div class="px-4 pt-2 pb-1 text-xs font-semibold text-gray-400 uppercase tracking-wide">Legal</div>
@@ -280,6 +280,8 @@ S3,case</code></pre>
 <h2 id="review">7. Inspect provenance and review limits</h2>
 <ul><li><code>plan.json</code> records the actual accepted steps.</li><li><code>manifest.json</code> records input and script SHA-256 hashes, Python version, task, parameters, and planner mode. Hashes identify file contents; they do not prove a dataset is scientifically suitable.</li><li><code>events.jsonl</code> records the roles and success/failure states. A failed run keeps its failure record when an output directory has been created.</li><li><code>sample_qc.csv</code>, optional <code>cpm.csv</code>, and <code>report.md</code> separate numerical outputs from the human-review decision.</li></ul>
 <p>Before accepting any output, a person must confirm that sample identities and units are correct, warnings have been investigated, the chosen analysis answers the research question, and no result is being inferred beyond what the data support. The numerical reviewer is a second implementation check, not an independent biological expert.</p>
+
+<figure class="my-8 bg-white border border-gray-200 rounded-xl p-4 shadow-sm"><img src="../images/tutorial-figures/orchestrator-bounded-workflow.svg" alt="Diagram of bounded RNA-seq QC and CPM workflow with contract checking, provenance logging, and human review gate" width="960" height="440" loading="lazy" class="w-full h-auto rounded-lg"/><figcaption class="mt-3 text-sm text-gray-600">Architecture diagram: deterministic matrix validation, QC metric generation, and SHA-256 provenance logging remain decoupled from optional AI summarization under explicit human review.</figcaption></figure>
 <p>This is not a security sandbox or a production workflow engine. It runs with your Python process's normal permissions. Its small input caps, fixed tool registry, new output directories, and absence of generated-code execution reduce the teaching example's scope; they do not make arbitrary untrusted software safe.</p>
 <p>For a real study, first inspect the specific files and document how they were generated. A GEO accession or Series record does not guarantee an analysis-ready raw-count matrix: GEO distinguishes raw sequencing reads, submitter-supplied processed files, metadata, and, for some studies, NCBI-generated count matrices. Check the file description and units before using it. Do not feed log-normalized expression into this integer-count example or truncate a real matrix silently to pass its training limits. <a href="https://www.ncbi.nlm.nih.gov/geo/info/faq.html">GEO's official FAQ</a> describes these data types.</p>
 <h2 id="tests">8. Run tests and practice</h2>
@@ -304,6 +306,7 @@ S3,case</code></pre>
 <li>Love, M. I., Huber, W., &amp; Anders, S. (2014). Moderated estimation of fold change and dispersion for RNA-seq data with DESeq2. <em>Genome Biology</em>, 15, 550. <a href="https://doi.org/10.1186/s13059-014-0550-8" rel="noopener" target="_blank">doi:10.1186/s13059-014-0550-8</a></li>
 <li><a href="https://bioconductor.org/packages/release/bioc/html/edgeR.html" rel="noopener" target="_blank">Bioconductor edgeR documentation</a>, <a href="https://docs.python.org/3/library/csv.html" rel="noopener" target="_blank">Python csv module</a>, and <a href="https://platform.openai.com/docs/guides/structured-outputs" rel="noopener" target="_blank">OpenAI structured-outputs guide</a>.</li>
 </ul>
+<div class="lesson-reference"><strong>Structural provenance example:</strong> Apply the same SHA-256 verification and bounded metadata discipline to structural models in <a href="protein-structure-design-alphafold.html">AlphaFold Protein Structure Confidence &amp; PAE Analysis</a>.</div>
 <aside aria-labelledby="tutorial-feedback-title" class="lesson-feedback" id="tutorial-feedback"><h2 id="tutorial-feedback-title">Help improve this tutorial</h2><p>Found an error, a broken link, or a step that needs a clearer explanation? Please <a href="../contact.html">contact me</a>. Your feedback helps me keep this resource accurate and useful.</p></aside></article>
 <section class="mt-12 mb-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-100">
 <div class="flex items-start gap-4">
@@ -356,7 +359,7 @@ S3,case</code></pre>
 </div>
 <div>
 <h2 class="font-semibold text-white mb-3 text-sm uppercase tracking-wide">Explore</h2>
-<ul class="space-y-2 text-sm text-gray-400"><li><a class="hover:text-white transition-colors" href="/">Home</a></li><li><a class="hover:text-white transition-colors" href="../start-here.html">Start Here</a></li><li><a class="hover:text-white transition-colors" href="../tutorials.html">Tutorials</a></li><li><!-- Hidden commercial navigation link: <a class="hover:text-white transition-colors" href="../services.html">Services</a> --></li><li><a class="hover:text-white transition-colors" href="../about.html">About</a></li><li><a class="hover:text-white transition-colors" href="../contact.html">Contact</a></li></ul>
+<ul class="space-y-2 text-sm text-gray-400"><li><a class="hover:text-white transition-colors" href="/">Home</a></li><li><a class="hover:text-white transition-colors" href="../start-here.html">Start Here</a></li><li><a class="hover:text-white transition-colors" href="../tutorials.html">Tutorials</a></li><li><a class="hover:text-white transition-colors" href="../about.html">About</a></li><li><a class="hover:text-white transition-colors" href="../contact.html">Contact</a></li></ul>
 </div>
 <div>
 <h2 class="font-semibold text-white mb-3 text-sm uppercase tracking-wide">Policies</h2>

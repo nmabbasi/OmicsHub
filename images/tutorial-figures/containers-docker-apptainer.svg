@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 440" width="960" height="440" role="img" aria-label="Docker (Local Workstation) vs Apptainer/Singularity (Shared HPC Cluster)">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#475569"/>
+    </marker>
+    <marker id="arrow-blue" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#2563EB"/>
+    </marker>
+    <filter id="card-shadow" x="-4%" y="-4%" width="108%" height="112%">
+      <feDropShadow dx="0" dy="3" stdDeviation="4" flood-color="#0F172A" flood-opacity="0.08"/>
+    </filter>
+  </defs>
+  <rect x="0" y="0" width="960" height="440" rx="14" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="1.5"/>
+  <text x="36" y="42" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="20" font-weight="700" fill="#0F172A">Docker (Local Workstation) vs Apptainer/Singularity (Shared HPC Cluster)</text>
+  <text x="36" y="66" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="13" fill="#475569">Build OCI images once with root on laptop or CI, then run immutable rootless .sif containers safely on multi-user HPC nodes</text>
+<g filter="url(#card-shadow)">
+  <rect x="36" y="98" width="280" height="210" rx="10" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.6"/>
+  <path d="M 36 108 Q 36 98 46 98 L 306 98 Q 316 98 316 108 L 316 132 L 36 132 Z" fill="#1D4ED8"/>
+  <text x="50" y="120" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="13" font-weight="700" fill="#FFFFFF">1. Build OCI Image (Docker)</text>
+  <text x="302" y="120" text-anchor="end" font-family="monospace" font-size="11" font-weight="700" fill="#E2E8F0">Dev / CI</text>
+  <text x="50" y="156" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="12.5" fill="#334155">Dockerfile pins base + versions</text>
+  <text x="50" y="178" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="12.5" fill="#334155">RUN micromamba install samtools</text>
+  <text x="50" y="200" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="12.5" fill="#334155">Produces immutable image digest</text>
+  <text x="50" y="222" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="12.5" fill="#334155">docker build -t lab/rnaseq:1.2 .</text>
+  <text x="50" y="244" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="12.5" fill="#334155">Requires Docker daemon (local/CI)</text>
+  <text x="50" y="266" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="12.5" fill="#334155">Push to GHCR / Docker Hub</text>
+</g><line x1="316" y1="203" x2="358" y2="203" stroke="#2563EB" stroke-width="2.2" marker-end="url(#arrow-blue)"/><g filter="url(#card-shadow)">
+  <rect x="362" y="98" width="240" height="210" rx="10" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.6"/>
+  <path d="M 362 108 Q 362 98 372 98 L 592 98 Q 602 98 602 108 L 602 132 L 362 132 Z" fill="#0D9488"/>
+  <text x="376" y="120" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="13" font-weight="700" fill="#FFFFFF">2. Convert to SIF</text>
+  <text x="588" y="120" text-anchor="end" font-family="monospace" font-size="11" font-weight="700" fill="#E2E8F0">Bridge</text>
+  <text x="376" y="156" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="12.5" fill="#334155">No root daemon on HPC</text>
+  <text x="376" y="178" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="12.5" fill="#334155">pull or build .sif bundle</text>
+  <text x="376" y="200" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="12.5" fill="#334155">apptainer pull \</text>
+  <text x="376" y="222" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="12.5" fill="#334155">  rnaseq_1.2.sif \</text>
+  <text x="376" y="244" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="12.5" fill="#334155">  docker://ghcr.io/.../1.2</text>
+  <text x="376" y="266" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="12.5" fill="#334155">Single portable file on Lustre</text>
+</g><line x1="602" y1="203" x2="644" y2="203" stroke="#2563EB" stroke-width="2.2" marker-end="url(#arrow-blue)"/><g filter="url(#card-shadow)">
+  <rect x="648" y="98" width="276" height="210" rx="10" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.6"/>
+  <path d="M 648 108 Q 648 98 658 98 L 914 98 Q 924 98 924 108 L 924 132 L 648 132 Z" fill="#7C3AED"/>
+  <text x="662" y="120" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="13" font-weight="700" fill="#FFFFFF">3. Run Rootless on HPC</text>
+  <text x="910" y="120" text-anchor="end" font-family="monospace" font-size="11" font-weight="700" fill="#E2E8F0">Compute</text>
+  <text x="662" y="156" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="12.5" fill="#334155">Runs under YOUR Linux UID</text>
+  <text x="662" y="178" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="12.5" fill="#334155">Safe on shared cluster nodes</text>
+  <text x="662" y="200" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="12.5" fill="#334155">Bind explicit host data paths:</text>
+  <text x="662" y="222" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="12.5" fill="#334155">apptainer exec \</text>
+  <text x="662" y="244" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="12.5" fill="#334155">  -B /project:/data rnaseq.sif</text>
+  <text x="662" y="266" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="12.5" fill="#334155">  samtools view /data/in.bam</text>
+</g><rect x="36" y="330" width="888" height="84" rx="10" fill="#FFFBEB" stroke="#FDE68A" stroke-width="1.4"/><text x="56" y="358" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="14" font-weight="700" fill="#92400E">Reproducibility Tip: Pair One Container Per Process/Rule With Exact Digest Pinning</text><text x="56" y="384" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="13" fill="#78350F">Store .sif files in shared project scratch (not $HOME), pass --cleanenv when needed, and verify tool --version inside the container.</text>
+</svg>

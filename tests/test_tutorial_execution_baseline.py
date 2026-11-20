@@ -53,7 +53,7 @@ class TutorialExecutionBaselineTests(unittest.TestCase):
         mutations = {
             "code": mutated_code,
             "prose": current.replace("<p>", "<p>Unapproved prose. ", 1),
-            "date": current.replace('"dateModified": "2026-11-18"', '"dateModified": "2099-01-01"', 1),
+            "date": current.replace('"dateModified": "2026-11-20"', '"dateModified": "2099-01-01"', 1),
             "cache_key": current.replace(
                 "20261026-startup-v1", "unapproved-cache-key", 1
             ),

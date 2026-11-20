@@ -72,5 +72,5 @@ OmicsHub/
 
 **Nasir Mahmood Abbasi, PhD**  
 Computational Biologist | Open to New Opportunities  
-- Website: [nmabbasi.github.io](https://nmabbasi.github.io/)  
+- Website: [theomicshub.com](https://theomicshub.com/)  
 - Email: [nmabbasi@gmail.com](mailto:nmabbasi@gmail.com)
