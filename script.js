@@ -239,69 +239,51 @@ async function loadTutorials() {
             return;
         }
         
-        // List of tutorial files (you'll add more as you create them)
+        // List of curated core tutorial files
         const tutorialFiles = [
             // Introduction to Bioinformatics
             'introduction-to-bioinformatics.md',
-            'modern-bioinformatics-methods-2026.md',
-            
+
+            // Foundations & Prerequisites
+            'computer-data-fundamentals.md',
+            'r-tidyverse-fundamentals.md',
+            'python-fundamentals-bioinformatics.md',
+            'data-visualization-fundamentals.md',
+            'statistics-for-bioinformatics.md',
+            'quality-control-fundamentals.md',
+            'experimental-design-batch-effects.md',
+
             // Shell Command Basics
             'command-line-part1.md',
             'command-line-part2.md',
-            'command-line-part3.md',
-            
+
             // Package Management
             'conda-mamba-part1.md',
-            
+
             // High-Performance Computing (HPC)
-            '1-Connection.md',
-            '2-HPC_Basic_Commands.md',
             'hpc-submission-part1.md',
-            '4-Support.md',
-            
+
             // Workflow & Containerization
             'reproducible-workflows-snakemake-nextflow.md',
-            'docker-singularity-bioinformatics.md',
-            
-            // Metagenomics
-            '16s-rrna-prokka-annotation.md',
-            'metagenomics-assembly-mapping.md',
-            'metagenomics-kraken2-bracken.md',
-            
-            // Metatranscriptomics
-            'metatranscriptomics-guide.md',
-            'metatranscriptomics-functional-pathways.md',
-            
-            // Evolutionary Bioinformatics Analysis
-            'evolutionary-phylogeny-analysis.md',
-            'phylogenomics-orthofinder.md',
-            
+
             // Genomics & Whole Exome Sequencing
             'wes-variant-calling-pipeline.md',
-            
+
             // Single-Cell RNA-seq
             'scrna-seq-basics.md',
+            'scrna-seq-quality-control.md',
             'scrna-seq-integration-strategies.md',
             'scrna-seq-downstream-analysis.md',
-            'scrna-seq-trajectory-inference.md',
             'transcriptomics-differential-expression.md',
-            
+
             // Advanced Single-Cell Analysis
-            'scrna-seq-quality-control.md',
-            'advanced-visualization-packages.md',
-            'tcr-bcr-repertoire-analysis.md',
-            'cell-cell-communication.md',
             'cell-type-annotation-methods.md',
-            'advanced-ai-single-cell.md',
+            'advanced-visualization-packages.md',
             'infercnv-copy-number-variation.md',
-            'single-cell-deconvolution.md',
             'cite-seq-wnn-multiomics.md',
-            
+
             // Spatial Transcriptomics
-            'spatial-transcriptomics-r-python.md',
-            
-            // Long-Read Sequencing
-            'long-read-pacbio-nanopore.md'
+            'spatial-transcriptomics-r-python.md'
         ];
         
         tutorials = [];
@@ -536,15 +518,10 @@ const CATEGORY_TONES = {
     'Package Management': 'package',
     'High-Performance Computing (HPC)': 'hpc',
     'Workflow Management and Containerization': 'workflow',
-    'Metagenomics': 'metagenomics',
-    'Metatranscriptomics': 'metatranscriptomics',
-    'Evolutionary and Comparative Genomics': 'evolutionary',
     'Genomics and Whole-Exome Sequencing': 'genomics',
     'Single-Cell RNA-seq': 'single-cell',
     'Advanced Single-Cell Analysis': 'advanced-single-cell',
-    'Spatial Transcriptomics': 'spatial',
-    'Long-Read Sequencing': 'long-read',
-    'AI-Driven Research & Agentic Bioinformatics': 'ai-driven'
+    'Spatial Transcriptomics': 'spatial'
 };
 
 function updateSidebar() {
@@ -559,9 +536,7 @@ function updateSidebar() {
 
     // Populate Categories with counts
     const categories = [...new Set(tutorials.map(t => t.category))];
-    const categoryLabels = {
-        'AI-Driven Research & Agentic Bioinformatics': 'AI & Agentic Research'
-    };
+    const categoryLabels = {};
     categories.forEach(category => {
         const count = tutorials.filter(t => t.category === category).length;
         const categoryButton = document.createElement('button');

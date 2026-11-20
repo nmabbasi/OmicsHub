@@ -76,8 +76,8 @@ def load_metadata() -> dict:
         raise ValueError('Expected catalogue metadata schemaVersion 1 and a lesson mapping')
     metadata = data['lessons']
     expected = {p.stem for p in (ROOT / 'tutorials').glob('*.html')}
-    if len(expected) != 58 or set(metadata) != expected:
-        raise ValueError('Metadata must cover exactly the same 58 published lessons')
+    if len(expected) != 24 or set(metadata) != expected:
+        raise ValueError('Metadata must cover exactly the same 24 published lessons')
     for slug, item in metadata.items():
         if item.get('level') not in LEVELS or item.get('lessonPath') != f'tutorials/{slug}.html':
             raise ValueError(f'Invalid level or lesson source for {slug}')
@@ -144,8 +144,8 @@ def render(document: str, metadata: dict) -> str:
         return card
 
     updated, count = CARD_RE.subn(replace, document)
-    if count != 58 or len(set(found)) != 58 or set(found) != set(metadata):
-        raise ValueError('Expected 58 unique catalogue cards matching the reviewed metadata')
+    if count != 24 or len(set(found)) != 24 or set(found) != set(metadata):
+        raise ValueError('Expected 24 unique catalogue cards matching the reviewed metadata')
     return updated
 
 
@@ -162,7 +162,7 @@ def main() -> int:
             return 1
         if not args.check and updated != document:
             HTML_PATH.write_text(updated, encoding='utf-8')
-        print('Verified 58 evidence-backed catalogue cards.' if args.check else 'Generated 58 evidence-backed catalogue cards.')
+        print('Verified 24 evidence-backed catalogue cards.' if args.check else 'Generated 24 evidence-backed catalogue cards.')
         return 0
     except (ValueError, KeyError, OSError, json.JSONDecodeError) as exc:
         print(f'Catalogue metadata error: {exc}')

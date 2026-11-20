@@ -42,21 +42,20 @@ class LearningPromiseTests(unittest.TestCase):
         self.start = (ROOT / 'start-here.html').read_text(encoding='utf-8')
         self.catalogue = (ROOT / 'tutorials.html').read_text(encoding='utf-8')
 
-    def test_all_58_tutorials_and_format_counts_remain(self):
+    def test_all_24_tutorials_and_format_counts_remain(self):
         labels = re.findall(r'<span[^>]*data-tutorial-format="([^"]+)"', self.catalogue)
         self.assertEqual(Counter(labels), {
-            'hands-on-lab': 21, 'conceptual-guide': 20,
-            'advanced-template': 15, 'reference': 2,
+            'hands-on-lab': 12, 'conceptual-guide': 5, 'advanced-template': 7,
         })
-        self.assertEqual(len(list((ROOT / 'tutorials').glob('*.html'))), 58)
-        self.assertIn('aria-label="58 tutorials"', self.catalogue)
+        self.assertEqual(len(list((ROOT / 'tutorials').glob('*.html'))), 24)
+        self.assertIn('aria-label="24 tutorials"', self.catalogue)
 
     def test_homepage_description_fields_agree(self):
         parser = DescriptionParser()
         parser.feed(self.home)
         self.assertEqual(len(parser.descriptions), 4)  # meta, Open Graph, Twitter, and one merged JSON-LD entity
         self.assertEqual(len(set(parser.descriptions)), 1)
-        for word in ('hands-on labs', 'conceptual guides', 'advanced templates', 'references'):
+        for word in ('hands-on labs', 'conceptual guides', 'advanced templates'):
             self.assertIn(word, parser.descriptions[0])
 
     def test_featured_cards_state_existing_lesson_formats(self):
@@ -64,10 +63,10 @@ class LearningPromiseTests(unittest.TestCase):
         expected = {
             'computer-data-fundamentals': 'Hands-on lab',
             'conda-mamba-part1': 'Hands-on lab',
-            'hpc-connection': 'Conceptual guide',
+            'hpc-submission-part1': 'Hands-on lab',
             'scrna-seq-basics': 'Hands-on lab',
-            'metagenomics-kraken2-bracken': 'Advanced template',
-            'advanced-ai-orchestration-bioinformatics': 'Conceptual guide',
+            'spatial-transcriptomics-r-python': 'Advanced template',
+            'wes-variant-calling-pipeline': 'Advanced template',
         }
         for slug, label in expected.items():
             with self.subTest(slug=slug):

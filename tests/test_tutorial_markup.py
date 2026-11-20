@@ -31,12 +31,6 @@ class TutorialMarkupTests(unittest.TestCase):
                 with self.subTest(page=page.name, block=index):
                     self.assertNotIn('<', code, 'Escape literal less-than operators as &lt;')
 
-    def test_phylogeny_shell_ampersands_are_escaped(self):
-        page = ROOT / 'tutorials' / 'evolutionary-phylogeny-analysis.html'
-        for index, code in enumerate(CODE_BLOCK.findall(page.read_text(encoding='utf-8')), 1):
-            with self.subTest(block=index):
-                self.assertIsNone(BARE_AMPERSAND.search(code))
-
 
 class NavigationMarkupTests(unittest.TestCase):
     def test_every_tutorial_has_global_navigation(self):

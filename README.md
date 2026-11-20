@@ -1,6 +1,6 @@
 # The Omics Hub
 
-Source code for [theomicshub.com](https://theomicshub.com), an open-access curriculum and interactive portal designed for life scientists moving from Linux HPC terminal workflows into R-based single-cell transcriptomics.
+Source code for [theomicshub.com](https://theomicshub.com), a curated 24-tutorial curriculum and interactive portal designed for life scientists moving from Linux HPC and reproducible workflows into R/Python single-cell multi-omics, spatial transcriptomics, and cancer genomics.
 
 [![Website: Live](https://img.shields.io/badge/Website-theomicshub.com-0284c7.svg)](https://theomicshub.com)
 [![Tests: 585 Passing](https://img.shields.io/badge/Tests-585%20Passed-10b981.svg)]()

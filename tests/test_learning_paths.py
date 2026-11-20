@@ -38,8 +38,8 @@ class LearningPathManifestTests(unittest.TestCase):
     def setUpClass(cls):
         cls.manifest, cls.facts = generator.load_site(ROOT)
 
-    def test_manifest_covers_exactly_58_pages_and_links_resolve(self):
-        self.assertEqual(len(self.facts), 58)
+    def test_manifest_covers_exactly_24_pages_and_links_resolve(self):
+        self.assertEqual(len(self.facts), 24)
         self.assertEqual(set(self.manifest["tutorials"]), set(self.facts))
         for key, item in self.manifest["tutorials"].items():
             for target in ([item.get("previous")] + [e["target"] for e in item["next"]]):
@@ -59,17 +59,15 @@ class LearningPathManifestTests(unittest.TestCase):
         self.assertEqual(nodes["introduction-to-bioinformatics"]["next"][0]["target"], "computer-data-fundamentals")
         self.assertEqual(nodes["computer-data-fundamentals"]["previous"], "introduction-to-bioinformatics")
         self.assertEqual(nodes["computer-data-fundamentals"]["next"][0]["target"], "command-line-part1")
-        self.assertTrue(any(e["target"] == "biological-data-formats" for e in nodes["computer-data-fundamentals"]["next"]))
         self.assertEqual(nodes["command-line-part1"]["next"][0]["target"], "command-line-part2")
-        self.assertEqual(nodes["command-line-part2"]["next"][0]["target"], "command-line-part3")
-        self.assertEqual(nodes["command-line-part3"]["next"][0]["target"], "conda-mamba-part1")
+        self.assertEqual(nodes["command-line-part2"]["next"][0]["target"], "conda-mamba-part1")
         conda_choices = {edge["target"] for edge in nodes["conda-mamba-part1"]["next"]}
         self.assertTrue({"r-tidyverse-fundamentals", "python-fundamentals-bioinformatics"}.issubset(conda_choices))
         self.assertIn("@sh-hpc", conda_choices)
         self.assertEqual(nodes["r-tidyverse-fundamentals"]["next"][0]["target"], "statistics-for-bioinformatics")
         self.assertEqual(nodes["python-fundamentals-bioinformatics"]["next"][0]["target"], "statistics-for-bioinformatics")
         self.assertIn("either", nodes["r-tidyverse-fundamentals"]["next"][0]["reason"].lower())
-        self.assertEqual(nodes["hpc-connection"]["previous"], "@sh-hpc")
+        self.assertEqual(nodes["hpc-submission-part1"]["previous"], "@sh-hpc")
 
     def test_single_cell_order_and_question_dependent_options(self):
         nodes = self.manifest["tutorials"]
@@ -77,17 +75,14 @@ class LearningPathManifestTests(unittest.TestCase):
         self.assertEqual(nodes["quality-control-fundamentals"]["next"][0]["target"], "cell-type-annotation-methods")
         annotation_targets = {edge["target"] for edge in nodes["cell-type-annotation-methods"]["next"]}
         self.assertIn("scrna-seq-integration-strategies", annotation_targets)
-        self.assertIn("cell-cell-communication", annotation_targets)
+        self.assertIn("scrna-seq-downstream-analysis", annotation_targets)
         integration = nodes["scrna-seq-integration-strategies"]["next"][0]
         self.assertEqual(integration["target"], "scrna-seq-quality-control")
         metrics = nodes["scrna-seq-quality-control"]
         self.assertEqual(metrics["next"][0]["target"], "scrna-seq-downstream-analysis")
         self.assertIn("not basic cell-level QC", metrics["next"][0]["reason"])
-        self.assertIn("continuous-process", nodes["scrna-seq-trajectory-inference"]["next"][0]["reason"])
-        self.assertEqual(nodes["scrna-seq-trajectory-inference"]["previous"], "cell-type-annotation-methods")
-        self.assertEqual(nodes["cell-cell-communication"]["previous"], "cell-type-annotation-methods")
         self.assertNotIn("scrna-seq-basics", [edge["target"] for edge in nodes["wes-variant-calling-pipeline"]["next"]])
-        self.assertEqual(nodes["wes-variant-calling-pipeline"]["previous"], "reference-genomes-annotation")
+        self.assertEqual(nodes["wes-variant-calling-pipeline"]["previous"], "@sh-genomics")
 
     def test_cross_modality_branches_and_optional_methods_are_not_false_prerequisites(self):
         nodes = self.manifest["tutorials"]
@@ -96,9 +91,7 @@ class LearningPathManifestTests(unittest.TestCase):
             edge["target"] for edge in nodes["wes-variant-calling-pipeline"]["next"]
         ])
         self.assertEqual(nodes["infercnv-copy-number-variation"]["previous"], "cell-type-annotation-methods")
-        self.assertEqual(nodes["tcr-bcr-repertoire-analysis"]["next"][0]["target"], "@sh-single-cell")
         self.assertEqual(nodes["scrna-seq-downstream-analysis"]["previous"], "cell-type-annotation-methods")
-        self.assertNotEqual(nodes["ai-prompt-engineering-seurat"]["previous"], "single-cell-foundation-models")
 
     def test_compact_toolbar_keeps_three_slots_and_branches_to_explained_choices(self):
         for key, item in self.manifest["tutorials"].items():
@@ -112,7 +105,7 @@ class LearningPathManifestTests(unittest.TestCase):
     def test_generated_navigation_has_named_routes_no_catalogue_loss_or_linear_counter(self):
         for key, item in self.manifest["tutorials"].items():
             generated = generator.render_page(key, (ROOT / "tutorials" / f"{key}.html").read_text(encoding="utf-8"), self.manifest, self.facts)
-            self.assertNotRegex(generated, r"Tutorial\s+\d+\s+of\s+58")
+            self.assertNotRegex(generated, r"Tutorial\s+\d+\s+of\s+24")
             for pattern in generator.NAV_PATTERNS.values():
                 match = pattern.search(generated)
                 self.assertIsNotNone(match)
@@ -165,7 +158,7 @@ class LearningPathManifestTests(unittest.TestCase):
             original = {p.name: p.read_bytes() for p in (site / "tutorials").glob("*.html")}
             first = self._run(site)
             self.assertEqual(first.returncode, 0, first.stderr + first.stdout)
-            self.assertIn("58 tutorial pages", first.stdout)
+            self.assertIn("24 tutorial pages", first.stdout)
 
             for name, before_bytes in original.items():
                 after_bytes = (site / "tutorials" / name).read_bytes()

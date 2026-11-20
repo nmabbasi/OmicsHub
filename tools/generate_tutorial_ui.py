@@ -60,8 +60,8 @@ def load_metadata(root):
     groups = json.loads((root / 'tools/tutorial-code-groups.json').read_text())
     if languages.get('schema') != 1 or groups.get('schema') != 1: raise ValueError('Unsupported UI metadata schema')
     pages = sorted((root / 'tutorials').glob('*.html'))
-    if len(pages) != 58 or {p.stem for p in pages} != set(languages['tutorials']):
-        raise ValueError('UI metadata must cover exactly the 58 public tutorials')
+    if len(pages) != 24 or {p.stem for p in pages} != set(languages['tutorials']):
+        raise ValueError('UI metadata must cover exactly the 24 public tutorials')
     if not set(groups['tutorials']).issubset(languages['tutorials']): raise ValueError('Unknown grouped tutorial')
     result = {'schema': 1, 'tutorials': {}}
     for page in pages:
@@ -174,7 +174,7 @@ def main(argv=None):
             return 1
         count = sum(len(s['blocks']) for s in metadata['tutorials'].values())
         grouped = sum(len(s['groups']) for s in metadata['tutorials'].values())
-        print(f'Tutorial UI: 58 pages, {count} fingerprinted code blocks, {grouped} reviewed language groups; {len(changes)} files {"stale" if args.check else "updated"}.')
+        print(f'Tutorial UI: 24 pages, {count} fingerprinted code blocks, {grouped} reviewed language groups; {len(changes)} files {"stale" if args.check else "updated"}.')
         return 0
     except (OSError, ValueError, KeyError, IndexError, TypeError) as error:
         print(f'tutorial-ui generator: {error}', file=sys.stderr)

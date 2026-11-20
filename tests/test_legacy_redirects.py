@@ -14,11 +14,7 @@ import xml.etree.ElementTree as ET
 ROOT = Path(__file__).resolve().parents[1]
 MANIFEST = ROOT / "tools" / "legacy-redirects.json"
 GENERATOR = ROOT / "tools" / "generate_legacy_redirects.py"
-EXPECTED_HISTORICAL_ALIASES = {
-    "/1-Connection.html": "tutorials/hpc-connection.html",
-    "/2-HPC_Basic_Commands.html": "tutorials/hpc-basic-commands.html",
-    "/4-Support.html": "tutorials/hpc-support.html",
-}
+EXPECTED_HISTORICAL_ALIASES = {}
 
 
 class PageMetadata(HTMLParser):
@@ -59,22 +55,18 @@ class LegacyRedirectTests(unittest.TestCase):
             source: "tutorials/" + Path(source).name for source in cls.migrated
         } | cls.aliases
 
-    def test_migration_mapping_is_complete_and_matches_all_58_current_tutorials(self):
+    def test_migration_mapping_is_complete_and_matches_all_24_current_tutorials(self):
         self.assertEqual(self.manifest["migration_commit"], "118e16e4a4ac4dcd4acf132c9019104784787d52")
-        self.assertEqual(self.manifest["migration_root_url_count"], 58)
-        self.assertEqual(len(self.migrated), 58)
+        self.assertEqual(self.manifest["migration_root_url_count"], 24)
+        self.assertEqual(len(self.migrated), 24)
         expected_root_urls = {"/" + path.name for path in (ROOT / "tutorials").glob("*.html")}
         self.assertEqual(self.migrated, expected_root_urls)
-        # Each of the six externally identified examples is covered by the exact
-        # old-root-name -> same-name /tutorials/ migration recorded in commit 118e16e.
+        # Kept GSC-indexed root redirect routes covered by commit 118e16e.
         for name in (
-            "advanced-ai-single-cell.html",
             "computer-data-fundamentals.html",
-            "metatranscriptomics-functional-pathways.html",
             "transcriptomics-differential-expression.html",
             "scrna-seq-quality-control.html",
             "command-line-part1.html",
-            "long-read-pacbio-nanopore.html",
         ):
             with self.subTest(path=name):
                 self.assertIn("/" + name, self.migrated)
@@ -136,7 +128,7 @@ class LegacyRedirectTests(unittest.TestCase):
             text=True,
         )
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-        self.assertIn("Verified 61", result.stdout)
+        self.assertIn("Verified 24", result.stdout)
 
 
 if __name__ == "__main__":

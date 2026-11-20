@@ -1,6 +1,5 @@
-"""Bounded source/runtime contracts; mock NanoPlot is not real long-read QC."""
+"""Bounded source/runtime contracts for the CITE-seq WNN tutorial."""
 from pathlib import Path
-import gzip
 import os
 import shutil
 import subprocess
@@ -11,17 +10,12 @@ from test_remaining_qc import DisplayedCode
 
 ROOT = Path(__file__).resolve().parents[1]
 CITE = ROOT/'tutorials/cite-seq-wnn-multiomics.html'
-LONGREAD = ROOT/'tutorials/long-read-pacbio-nanopore.html'
 CITE_STAGES = ['cite-build-stage', 'cite-rna-stage', 'cite-adt-stage',
                'cite-wnn-stage', 'cite-plots-stage']
 
 
 def cite():
     return DisplayedCode(CITE.read_text(encoding='utf-8')).named
-
-
-def longread_stage():
-    return DisplayedCode(LONGREAD.read_text(encoding='utf-8')).named['longread-nanoplot-stage']
 
 
 class CITEWorkflowContractTests(unittest.TestCase):
@@ -104,82 +98,6 @@ class CITEWorkflowContractTests(unittest.TestCase):
                 image = Image.open(png).convert('RGBA')
                 for xy in [(0,0),(image.width-1,0),(0,image.height-1),(image.width-1,image.height-1)]:
                     self.assertEqual(image.getpixel(xy), (255,255,255,255), png.name)
-
-
-@unittest.skipUnless(shutil.which('bash'), 'Bash required for the long-read stage contract')
-class LongReadShellRuntimeTests(unittest.TestCase):
-    def setup_project(self, project, mode='success', input_exists=True):
-        if input_exists:
-            source = (ROOT/'files/text-processing-lesson/reads.fastq').read_bytes()
-            (project/'reads.fastq.gz').write_bytes(gzip.compress(source, mtime=0))
-        tool = project/'NanoPlot'
-        tool.write_text('''#!/bin/sh
-# An explicit test double: no reads are analyzed and no scientific report is made.
-echo called > "$TEST_CALL"
-while [ "$#" -gt 0 ]; do
-  if [ "$1" = --outdir ]; then outdir="$2"; shift 2; else shift; fi
-done
-mkdir -p "$outdir"
-if [ "$TEST_MODE" = failure ]; then exit 7; fi
-printf 'mock HTML report\\n' > "$outdir/NanoPlot-report.html"
-if [ "$TEST_MODE" != missing_stats ]; then printf 'mock statistics\\n' > "$outdir/NanoStats.txt"; fi
-if [ "$TEST_MODE" = empty_html ]; then : > "$outdir/NanoPlot-report.html"; fi
-''')
-        tool.chmod(0o755)
-        return dict(os.environ, PATH=str(project)+os.pathsep+os.environ['PATH'],
-                    TEST_CALL=str(project/'called.txt'), TEST_MODE=mode)
-
-    def run_stage(self, project, env):
-        return subprocess.run(['bash', '-c', longread_stage()], cwd=project, env=env,
-                              capture_output=True, text=True, timeout=15)
-
-    def test_mock_complete_reports_succeed(self):
-        with tempfile.TemporaryDirectory() as temporary:
-            project = Path(temporary)
-            result = self.run_stage(project, self.setup_project(project))
-            self.assertEqual(result.returncode, 0, result.stderr)
-            self.assertIn('both expected reports are non-empty', result.stdout)
-
-    def test_missing_input_does_not_run_tool(self):
-        with tempfile.TemporaryDirectory() as temporary:
-            project = Path(temporary)
-            result = self.run_stage(project, self.setup_project(project, input_exists=False))
-            self.assertNotEqual(result.returncode, 0)
-            self.assertIn('Missing or empty input', result.stderr)
-            self.assertFalse((project/'called.txt').exists())
-
-    def test_corrupt_gzip_does_not_run_tool(self):
-        with tempfile.TemporaryDirectory() as temporary:
-            project = Path(temporary)
-            env = self.setup_project(project)
-            (project/'reads.fastq.gz').write_bytes(b'not gzip\n')
-            result = self.run_stage(project, env)
-            self.assertNotEqual(result.returncode, 0)
-            self.assertFalse((project/'called.txt').exists())
-
-    def test_existing_output_does_not_run_tool_or_reuse_old_reports(self):
-        with tempfile.TemporaryDirectory() as temporary:
-            project = Path(temporary)
-            env = self.setup_project(project)
-            (project/'nanoplot_qc').mkdir()
-            (project/'nanoplot_qc/NanoPlot-report.html').write_text('old report\n')
-            result = self.run_stage(project, env)
-            self.assertNotEqual(result.returncode, 0)
-            self.assertIn('already exists', result.stderr)
-            self.assertFalse((project/'called.txt').exists())
-
-    def test_failed_tool_or_incomplete_reports_never_claim_success(self):
-        for mode in ['failure','missing_stats','empty_html']:
-            with self.subTest(mode=mode), tempfile.TemporaryDirectory() as temporary:
-                project = Path(temporary)
-                result = self.run_stage(project, self.setup_project(project, mode))
-                self.assertNotEqual(result.returncode, 0)
-                self.assertNotIn('both expected reports are non-empty', result.stdout)
-
-    def test_displayed_stage_has_valid_bash_syntax(self):
-        result = subprocess.run(['bash', '-n'], input=longread_stage(), capture_output=True,
-                                text=True, timeout=10)
-        self.assertEqual(result.returncode, 0, result.stderr)
 
 
 if __name__ == '__main__':

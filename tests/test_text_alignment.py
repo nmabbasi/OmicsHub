@@ -47,7 +47,7 @@ class TextAlignmentTests(unittest.TestCase):
 
     def test_alignment_rule_covers_all_current_tutorial_articles(self):
         tutorial_pages = sorted((ROOT / "tutorials").glob("*.html"))
-        self.assertEqual(len(tutorial_pages), 58)
+        self.assertEqual(len(tutorial_pages), 24)
         for page in tutorial_pages:
             with self.subTest(page=page.name):
                 self.assertRegex(

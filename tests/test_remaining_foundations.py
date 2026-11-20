@@ -120,53 +120,5 @@ class VisualizationRealFixtureTests(unittest.TestCase):
             self.assertFalse((directory/'results/pca_full.tsv').exists())
 
 
-@unittest.skipUnless(all(shutil.which(command) for command in ['bash','sha256sum','awk','gzip','sort']),
-                     'reference shell utilities required')
-class ReferenceHandoffRuntimeTests(unittest.TestCase):
-    def prepare(self,directory):
-        refs=directory/'refs';refs.mkdir()
-        # Deliberately tiny artificial references: software/path tests, not human-reference validation.
-        data={
-            'GRCh38.p14.genome.fa.gz':b'>chr1\nACGT\n>chrM\nAA\n',
-            'gencode.v46.chr_patch_hapl_scaff.annotation.gtf.gz':
-                b'#synthetic fixture\nchr1\ttest\tgene\t1\t4\t.\t+\t.\tgene_id "test1";\nchrM\ttest\tgene\t1\t2\t.\t+\t.\tgene_id "test2";\n'
-        }
-        for name,content in data.items(): (refs/name).write_bytes(gzip.compress(content,mtime=0))
-        return refs
-
-    def test_manifest_runs_from_refs_and_hashes_the_actual_compressed_files(self):
-        with tempfile.TemporaryDirectory() as temporary:
-            directory=Path(temporary);refs=self.prepare(directory)
-            code=stages('reference-genomes-annotation')['reference-manifest-stage']
-            run=subprocess.run(['bash','-c',code],cwd=refs,capture_output=True,text=True,timeout=15)
-            self.assertEqual(run.returncode,0,run.stderr)
-            with (refs/'reference_manifest.tsv').open(newline='') as handle:
-                rows=list(csv.DictReader(handle,delimiter='\t'))
-            self.assertEqual(len(rows),2)
-            for row in rows:
-                path=directory/row['file_path']
-                self.assertTrue(path.is_file())
-                self.assertEqual(row['sha256'],hashlib.sha256(path.read_bytes()).hexdigest())
-                self.assertEqual(row['region_scope'],'ALL')
-
-    def test_missing_compressed_file_never_claims_complete_manifest(self):
-        with tempfile.TemporaryDirectory() as temporary:
-            directory=Path(temporary);refs=self.prepare(directory)
-            (refs/'GRCh38.p14.genome.fa.gz').unlink()
-            run=subprocess.run(['bash','-c',stages('reference-genomes-annotation')['reference-manifest-stage']],
-                               cwd=refs,capture_output=True,text=True,timeout=15)
-            self.assertNotEqual(run.returncode,0)
-            self.assertNotIn('look complete',run.stdout)
-
-    def test_exact_gtf_pipeline_preserves_full_sequence_names(self):
-        with tempfile.TemporaryDirectory() as temporary:
-            directory=Path(temporary);refs=self.prepare(directory)
-            stage=stages('reference-genomes-annotation')['reference-index-stage']
-            code='zcat '+stage.split('\nzcat ',1)[1]
-            run=subprocess.run(['bash','-c',code],cwd=refs,capture_output=True,text=True,timeout=15)
-            self.assertEqual(run.returncode,0,run.stderr)
-            self.assertEqual((refs/'gtf_contigs.txt').read_text().splitlines(),['chr1','chrM'])
-
-
 if __name__=='__main__':
     unittest.main()

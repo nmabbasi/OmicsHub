@@ -72,8 +72,8 @@ def inspect(root: Path):
     warnings: list[str] = []
     formats: Counter = Counter()
     pages = sorted((root / "tutorials").glob("*.html"))
-    if len(pages) != 58:
-        errors.append(f"Expected 58 tutorials, found {len(pages)}")
+    if len(pages) != 24:
+        errors.append(f"Expected 24 tutorials, found {len(pages)}")
     cache: dict[Path, Page] = {}
 
     def load(path: Path):

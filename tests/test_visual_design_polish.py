@@ -124,7 +124,7 @@ class VisualDesignPolishTests(unittest.TestCase):
         self.assertIn('style="padding-top:2rem;padding-bottom:0;"', about_html)
         self.assertIn('style="padding-bottom:0;"', services_html)
 
-    def test_all_70_public_pages_have_zero_em_dashes(self):
+    def test_all_36_public_pages_have_zero_em_dashes(self):
         root_pages = (
             "index.html", "start-here.html", "tutorials.html", "about.html",
             "contact.html", "services.html", "success.html", "404.html",
@@ -134,7 +134,7 @@ class VisualDesignPolishTests(unittest.TestCase):
             *sorted((ROOT / "pages").glob("*.html")),
             *sorted((ROOT / "tutorials").glob("*.html")),
         ]
-        self.assertEqual(len(all_pages), 70)
+        self.assertEqual(len(all_pages), 36)
         for page in all_pages:
             rel = page.relative_to(ROOT).as_posix()
             text = page.read_text(encoding="utf-8")
@@ -162,8 +162,6 @@ class VisualDesignPolishTests(unittest.TestCase):
         self.assertNotIn("TCR_Analysis_v2.html", downstream)
         self.assertNotIn("examples/WNN_analysis_of_CITE_seq_RNA_ADT.html", downstream)
         self.assertNotIn("examples/inferCNV_analysis.html", downstream)
-        self.assertIn('href="cell-cell-communication.html"', downstream)
-        self.assertIn('href="tcr-bcr-repertoire-analysis.html"', downstream)
         self.assertIn('href="cite-seq-wnn-multiomics.html"', downstream)
         self.assertIn('href="infercnv-copy-number-variation.html"', downstream)
 
@@ -179,9 +177,9 @@ class VisualDesignPolishTests(unittest.TestCase):
             self.assertIn(token, home_html, f"index.html missing {token}")
             self.assertIn(token, cat_css, f"home-catalogue.css missing {token}")
 
-    def test_all_58_tutorials_have_figures_and_valid_svgs(self):
+    def test_all_24_tutorials_have_figures_and_valid_svgs(self):
         tuts = sorted((ROOT / "tutorials").glob("*.html"))
-        self.assertEqual(len(tuts), 58)
+        self.assertEqual(len(tuts), 24)
         for page in tuts:
             html = page.read_text(encoding="utf-8")
             article_m = re.search(r"<article\b[^>]*>(.*?)</article>", html, re.S)
@@ -212,13 +210,13 @@ class VisualDesignPolishTests(unittest.TestCase):
             self.assertIn(token, reader_css, f"tutorial-reader.css missing {token}")
             self.assertIn(token, copy_js, f"copy-code.js missing {token}")
 
-    def test_tutorials_hero_shows_all_four_format_counts(self):
+    def test_tutorials_hero_shows_all_active_format_and_topic_counts(self):
         catalogue = (ROOT / "tutorials.html").read_text(encoding="utf-8")
         for token in (
-            "<strong>21</strong> Hands-on labs",
-            "<strong>20</strong> Conceptual guides",
-            "<strong>15</strong> Templates",
-            "<strong>2</strong> References",
+            "<strong>12</strong> Hands-on labs",
+            "<strong>5</strong> Conceptual guides",
+            "<strong>7</strong> Templates",
+            "<strong>10</strong> Topics",
         ):
             self.assertIn(token, catalogue)
 

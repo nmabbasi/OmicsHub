@@ -17,7 +17,6 @@ EXPECTED={
  'images/tutorial-figures/visualization-fundamentals-r-umap_plot.png',
  'images/tutorial-figures/visualization-fundamentals-r-heatmap_topgenes.png',
  'images/tutorial-figures/visualization-fundamentals-r-volcano.png',
- 'images/tutorial-figures/research-reporting-r-synthetic-qc.png',
  'images/tutorial-figures/tidyverse-r-supplied-count-totals.png',
  'images/tutorial-figures/quality-control-r-public-pbmc3k-violin.png',
  'images/tutorial-figures/scrna-seq-basics-r-pbmc3k-qc.png',
@@ -46,9 +45,9 @@ class VerifiedAnalysisFigureTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.data=json.loads(EVIDENCE.read_text())
-        cls.figures=[(slug,f) for slug,row in cls.data['tutorials'].items() for f in row.get('figures',[])]
-    def test_exact_twelve_reviewed_pngs_match_fingerprints_and_dimensions(self):
-        self.assertEqual(len(self.figures),12);self.assertEqual({f['path'] for _,f in self.figures},EXPECTED)
+        cls.figures=[(slug,f) for slug,row in cls.data['tutorials'].items() if (ROOT/'tutorials'/(slug+'.html')).is_file() for f in row.get('figures',[])]
+    def test_exact_eleven_kept_reviewed_pngs_match_fingerprints_and_dimensions(self):
+        self.assertEqual(len(self.figures),11);self.assertEqual({f['path'] for _,f in self.figures},EXPECTED)
         for slug,f in self.figures:
             with self.subTest(slug=slug,path=f['path']):
                 raw=(ROOT/f['path']).read_bytes();self.assertEqual(raw[:8],b'\x89PNG\r\n\x1a\n');self.assertEqual(raw[12:16],b'IHDR')
@@ -66,6 +65,7 @@ class VerifiedAnalysisFigureTests(unittest.TestCase):
         for row in self.data['tutorials'].values():self.assertTrue(row['notExecuted'])
     def test_linked_source_and_teaching_input_hashes_are_current(self):
         for slug,row in self.data['tutorials'].items():
+            if not (ROOT/'tutorials'/(slug+'.html')).is_file(): continue
             for record in row.get('inputs',[]) if isinstance(row.get('inputs'),list) else [row.get('inputs',{})]:
                 if record.get('path') and record.get('sha256'):self.assertEqual(sha((ROOT/record['path']).read_bytes()),record['sha256'])
             sources=([row['source']] if row.get('source') else [])+row.get('sources',[])+([row['summarySource']] if row.get('summarySource') else [])
@@ -79,14 +79,14 @@ class VerifiedAnalysisFigureTests(unittest.TestCase):
                         matches=[code for code in facts.blocks if source['contains'] in code];self.assertEqual(len(matches),1,source);code=matches[0]
                     self.assertEqual(sha(code.encode()),source['codeSHA256'])
     def test_public_data_and_synthetic_boundaries_remain_explicit(self):
-        for slug in ['data-visualization-fundamentals','research-reporting-interpretation','r-tidyverse-fundamentals']:
+        for slug in ['data-visualization-fundamentals','r-tidyverse-fundamentals']:
             self.assertIn('synthetic',self.data['tutorials'][slug]['status'])
         basics=self.data['tutorials']['scrna-seq-basics'];self.assertEqual(basics['inputs']['inputCells'],2700);self.assertFalse(basics['inputs']['extraSubsampling'])
         self.assertIn('2638',' '.join(basics['checks']))
         qc=self.data['tutorials']['scrna-seq-quality-control'];self.assertIn('LISI',qc['notExecuted']);self.assertIn('cell_type',qc['notExecuted'])
         self.assertEqual(self.data['tutorials']['wes-variant-calling-pipeline']['figures'],[])
     def test_new_result_sections_are_static_accessible_and_reader_facing(self):
-        for slug in ['data-visualization-fundamentals','research-reporting-interpretation','r-tidyverse-fundamentals','quality-control-fundamentals']:
+        for slug in ['data-visualization-fundamentals','r-tidyverse-fundamentals','quality-control-fundamentals']:
             text=(ROOT/'tutorials'/(slug+'.html')).read_text();self.assertEqual(text.count('class="lesson-results"'),1)
             section=text.split('<!-- Verified analysis outputs: 2026-10-25 -->',1)[1].split('<!-- /Verified analysis outputs -->',1)[0]
             self.assertIn('aria-labelledby="observed-analysis-results"',section);self.assertIn('<figcaption>',section);self.assertIn('Run details and limits',section);self.assertNotIn('\u2014',section)

@@ -3,29 +3,27 @@ import json
 from pathlib import Path
 import re
 import unittest
-from r_first_revision_baseline import normalize_r_first_revision
 
 ROOT = Path(__file__).resolve().parents[1]
 SCHEMA = re.compile(r'<script[^>]*type="application/ld\+json">(.*?)</script>', re.S)
 
 class SeoMetadataTests(unittest.TestCase):
     def entity(self, page):
-        relative = page.relative_to(ROOT).as_posix()
-        source = normalize_r_first_revision(relative, page.read_text(encoding='utf-8'))
+        source = page.read_text(encoding='utf-8')
         blocks = SCHEMA.findall(source)
         self.assertEqual(len(blocks), 1, f'{page.relative_to(ROOT)} should have one primary structured entity')
         return json.loads(blocks[0])
 
     def test_tutorial_has_one_complete_tech_article_entity(self):
-        page = ROOT / 'tutorials' / 'ai-prompt-engineering-seurat.html'
+        page = ROOT / 'tutorials' / 'scrna-seq-basics.html'
         entity = self.entity(page)
         self.assertEqual(entity['@type'], 'TechArticle')
         for field in ('headline', 'description', 'mainEntityOfPage', 'author', 'publisher', 'datePublished', 'dateModified', 'url', 'isPartOf'):
             with self.subTest(field=field):
                 self.assertIn(field, entity)
-        self.assertEqual(entity['author']['name'], 'Dr. Nasir Mahmood Abbasi, PhD')
-        self.assertTrue(entity['mainEntityOfPage']['@id'].endswith('/tutorials/ai-prompt-engineering-seurat.html'))
-        self.assertEqual(entity['dateModified'], '2026-10-24')
+        self.assertEqual(entity['author']['name'], 'Nasir Mahmood Abbasi, PhD')
+        self.assertTrue(entity['mainEntityOfPage']['@id'].endswith('/tutorials/scrna-seq-basics.html'))
+        self.assertEqual(entity['dateModified'], '2026-11-20')
 
     def test_tutorial_catalogue_has_correct_open_graph_url(self):
         text = (ROOT / 'tutorials.html').read_text(encoding='utf-8')

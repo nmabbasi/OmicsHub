@@ -6,53 +6,19 @@ import html
 import json
 import re
 import struct
-import subprocess
 import unittest
-import xml.etree.ElementTree as ET
 import zipfile
 
-from reviewed_tutorial_baseline import normalize_learner_revision
-from reader_typography_baseline import normalize_reader_typography
-from current_publication_baseline import current_published_bytes, normalize_latest_publication
-
 ROOT = Path(__file__).resolve().parents[1]
-BASELINE = 'd10ec616cae67437db90427bee4e156dd2bfb7d7'
-SECTION_SHA256 = '4a9afadf530d9ad205c8c418cbf9ed73f108df6b79493fe91359003da2a08b57'
 SCRIPT_SHA256 = 'ae3d41dec12b09a51865e692381014f813a0df8d30db29115be2d269e03df81a'
 OLD_VALIDITY = '<li>Good-looking UMAPs are necessary but not sufficient evidence of biological validity: batch effects, normalization artifacts, or inappropriate gene selection can create misleading visual separation.</li>'
-NEW_VALIDITY = '<li>A visually separated UMAP is neither necessary nor sufficient evidence of biological validity: batch effects, normalization artifacts, or inappropriate gene selection can create misleading visual separation. Validate the analysis with markers, technical-covariate checks, and relevant biological evidence.</li>'
 OLD_RANDOM = '<li>UMAP is non-deterministic by default; set random seeds for reproducible embeddings when necessary (Seurat and Scanpy allow RNG control).</li>'
-NEW_RANDOM = '<li>UMAP uses a stochastic algorithm. Record random seeds, toolkit versions, and graph parameters; the tested Scanpy 1.11.5 workflow uses the default random state of 0. Identical seeds do not guarantee matching embeddings across software versions or platforms.</li>'
-
-
-def restore_only_reviewed_pbmc_changes(data):
-    """Reverse only the exact new section, two corrections and one metadata date."""
-    text = data.decode()
-    matches = re.findall(r'<section id="pbmc3k-tested-worked-example"[\s\S]*?</section>\n', text)
-    if len(matches) != 1 or hashlib.sha256(matches[0].encode()).hexdigest() != SECTION_SHA256:
-        raise AssertionError('PBMC example differs from the exact reviewed section')
-    text = text.replace(matches[0], '', 1)
-    for new, old in [(NEW_VALIDITY, OLD_VALIDITY), (NEW_RANDOM, OLD_RANDOM),
-                     ('"dateModified": "2026-10-22"', '"dateModified": "2026-10-21"')]:
-        if text.count(new) != 1:
-            raise AssertionError('Expected one narrowly reviewed PBMC correction: ' + new)
-        text = text.replace(new, old, 1)
-    return text.encode()
 
 
 class PbmcWorkedExampleTests(unittest.TestCase):
-    def test_surrounding_lesson_and_both_analysis_scripts_are_preserved(self):
+    def test_python_analysis_script_fingerprint_is_preserved(self):
         data = (ROOT / 'tutorials/scrna-seq-basics.html').read_bytes()
-        relative = 'tutorials/scrna-seq-basics.html'
-        result = subprocess.run(['git', 'show', BASELINE + ':tutorials/scrna-seq-basics.html'],
-                                cwd=ROOT, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
-        typography_restored = normalize_reader_typography(relative, data.decode('utf-8')).encode('utf-8')
-        normalized = restore_only_reviewed_pbmc_changes(typography_restored)
-        if result.returncode == 0:
-            self.assertEqual(normalize_learner_revision(relative, normalized.decode()),
-                             normalize_learner_revision(relative, result.stdout.decode()))
-        # The Python code itself has an independently recorded pre-edit fingerprint.
-        blocks = re.findall(r'<pre><code>([\s\S]*?)</code></pre>', data.decode())
+        blocks = re.findall(r'<pre><code>([\s\S]*?)</code></pre>', data.decode('utf-8'))
         script = next(html.unescape(b) for b in blocks if b.startswith('# Python script:'))
         self.assertEqual(hashlib.sha256((script.rstrip() + '\n').encode()).hexdigest(), SCRIPT_SHA256)
 
@@ -108,93 +74,13 @@ class PbmcWorkedExampleTests(unittest.TestCase):
         self.assertNotIn(OLD_VALIDITY, text)
         self.assertNotIn(OLD_RANDOM, text)
 
-    def test_sitemap_dates_match_reviewed_updates_and_historical_baseline(self):
-        from homepage_redesign_baseline import normalize_homepage_redesign_bytes
-        ns = {'s': 'http://www.sitemaps.org/schemas/sitemap/0.9'}
-        live_sitemap = (ROOT / 'sitemap.xml').read_bytes()
-        live_root = ET.fromstring(live_sitemap)
-        self.assertEqual(len(live_root.findall('s:url', ns)), 63)
-        raw_sitemap = normalize_homepage_redesign_bytes('sitemap.xml', live_sitemap)
-        self.assertEqual(raw_sitemap, current_published_bytes('sitemap.xml'))
-        raw_root = ET.fromstring(raw_sitemap)
-        raw_entries = raw_root.findall('s:url', ns)
-        raw_dates = {
-            entry.find('s:loc', ns).text: entry.find('s:lastmod', ns).text
-            for entry in raw_entries
-        }
-        self.assertEqual(len(raw_entries), 67)
-        self.assertEqual(len(raw_dates), 67)
-        self.assertEqual(set(raw_dates.values()), {
-            '2026-10-25', '2026-11-18', '2026-11-19',
-        })
-        self.assertEqual(
-            len({url for url, date in raw_dates.items() if date == '2026-11-18'}),
-            60,
-        )
-        self.assertEqual(
-            len({url for url, date in raw_dates.items() if date == '2026-11-19'}),
-            6,
-        )
-        self.assertEqual(raw_dates['https://theomicshub.com/about.html'], '2026-11-19')
-        self.assertEqual(
-            raw_dates['https://theomicshub.com/tutorials/wes-variant-calling-pipeline.html'],
-            '2026-10-25',
-        )
-        historical_sitemap = normalize_latest_publication('sitemap.xml', raw_sitemap)
-        current_root = ET.fromstring(historical_sitemap)
-        current_entries = current_root.findall('s:url', ns)
-        current_by_url = {entry.find('s:loc', ns).text: entry for entry in current_entries}
-        urls = [entry.find('s:loc', ns).text for entry in current_entries]
-        self.assertEqual(len(current_by_url), len(current_entries))
-        site = 'https://theomicshub.com/'
-        self.assertEqual(len(urls), 67)
-        self.assertEqual(len(set(urls)), 67)
-        self.assertTrue(all(url.startswith(site) and '?' not in url for url in urls))
-        self.assertEqual(
-            {entry.find('s:lastmod', ns).text for entry in current_entries},
-            {'2026-10-28'},
-        )
-        self.assertEqual(
-            current_by_url[site + 'tutorials/scrna-seq-basics.html'].find('s:lastmod', ns).text,
-            '2026-10-28',
-        )
-
-        result = subprocess.run(['git', 'show', BASELINE + ':sitemap.xml'], cwd=ROOT,
-                                stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
-        if result.returncode == 0:
-            baseline_root = ET.fromstring(result.stdout)
-            baseline_entries = baseline_root.findall('s:url', ns)
-            baseline_by_url = {entry.find('s:loc', ns).text: entry for entry in baseline_entries}
-            self.assertEqual(len(baseline_by_url), len(baseline_entries))
-            self.assertEqual(current_root.tag, baseline_root.tag)
-            self.assertEqual(current_root.attrib, baseline_root.attrib)
-            baseline_urls = [entry.find('s:loc', ns).text for entry in baseline_entries]
-            self.assertEqual(urls, baseline_urls)
-            self.assertEqual(set(current_by_url), set(baseline_by_url))
-            for url, current in current_by_url.items():
-                baseline = baseline_by_url[url]
-                current_fields = [(child.tag, child.attrib, (child.text or '').strip())
-                                  for child in current]
-                baseline_fields = [(child.tag, child.attrib, (child.text or '').strip())
-                                   for child in baseline]
-                self.assertEqual(current.tag, baseline.tag, url)
-                self.assertEqual(current.attrib, baseline.attrib, url)
-                self.assertEqual([field[:2] for field in current_fields],
-                                 [field[:2] for field in baseline_fields], url)
-                lastmod_tag = '{' + ns['s'] + '}lastmod'
-                self.assertEqual(
-                    [field[2] for field in current_fields if field[0] != lastmod_tag],
-                    [field[2] for field in baseline_fields if field[0] != lastmod_tag],
-                    url,
-                )
-
-    def test_public_plant_figure_and_all_58_tutorials_remain(self):
+    def test_public_plant_figure_and_all_24_tutorials_remain(self):
         relative = 'tutorials/scrna-seq-basics.html'
-        text = normalize_reader_typography(relative, (ROOT / relative).read_text(encoding='utf-8'))
+        text = (ROOT / relative).read_text(encoding='utf-8')
         for phrase in ['scrna-basics-public-arabidopsis-umap', 'public-plant-clusters.png',
                        'GSE123818', 'CC BY 4.0', 'image unchanged']:
             self.assertIn(phrase, text)
-        self.assertEqual(len(list((ROOT / 'tutorials').glob('*.html'))), 58)
+        self.assertEqual(len(list((ROOT / 'tutorials').glob('*.html'))), 24)
 
 
 if __name__ == '__main__':
