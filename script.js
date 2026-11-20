@@ -261,7 +261,10 @@ async function loadTutorials() {
             'conda-mamba-part1.md',
 
             // High-Performance Computing (HPC)
+            'hpc-connection.md',
+            'hpc-basic-commands.md',
             'hpc-submission-part1.md',
+            'hpc-support.md',
 
             // Workflow & Containerization
             'reproducible-workflows-snakemake-nextflow.md',

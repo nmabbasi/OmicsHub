@@ -38,8 +38,8 @@ class LearningPathManifestTests(unittest.TestCase):
     def setUpClass(cls):
         cls.manifest, cls.facts = generator.load_site(ROOT)
 
-    def test_manifest_covers_exactly_24_pages_and_links_resolve(self):
-        self.assertEqual(len(self.facts), 24)
+    def test_manifest_covers_exactly_27_pages_and_links_resolve(self):
+        self.assertEqual(len(self.facts), 27)
         self.assertEqual(set(self.manifest["tutorials"]), set(self.facts))
         for key, item in self.manifest["tutorials"].items():
             for target in ([item.get("previous")] + [e["target"] for e in item["next"]]):
@@ -67,7 +67,10 @@ class LearningPathManifestTests(unittest.TestCase):
         self.assertEqual(nodes["r-tidyverse-fundamentals"]["next"][0]["target"], "statistics-for-bioinformatics")
         self.assertEqual(nodes["python-fundamentals-bioinformatics"]["next"][0]["target"], "statistics-for-bioinformatics")
         self.assertIn("either", nodes["r-tidyverse-fundamentals"]["next"][0]["reason"].lower())
-        self.assertEqual(nodes["hpc-submission-part1"]["previous"], "@sh-hpc")
+        self.assertEqual(nodes["hpc-connection"]["previous"], "@sh-hpc")
+        self.assertEqual(nodes["hpc-connection"]["next"][0]["target"], "hpc-basic-commands")
+        self.assertEqual(nodes["hpc-basic-commands"]["next"][0]["target"], "hpc-submission-part1")
+        self.assertEqual(nodes["hpc-submission-part1"]["next"][0]["target"], "hpc-support")
 
     def test_single_cell_order_and_question_dependent_options(self):
         nodes = self.manifest["tutorials"]
@@ -105,7 +108,7 @@ class LearningPathManifestTests(unittest.TestCase):
     def test_generated_navigation_has_named_routes_no_catalogue_loss_or_linear_counter(self):
         for key, item in self.manifest["tutorials"].items():
             generated = generator.render_page(key, (ROOT / "tutorials" / f"{key}.html").read_text(encoding="utf-8"), self.manifest, self.facts)
-            self.assertNotRegex(generated, r"Tutorial\s+\d+\s+of\s+24")
+            self.assertNotRegex(generated, r"Tutorial\s+\d+\s+of\s+27")
             for pattern in generator.NAV_PATTERNS.values():
                 match = pattern.search(generated)
                 self.assertIsNotNone(match)
@@ -158,7 +161,7 @@ class LearningPathManifestTests(unittest.TestCase):
             original = {p.name: p.read_bytes() for p in (site / "tutorials").glob("*.html")}
             first = self._run(site)
             self.assertEqual(first.returncode, 0, first.stderr + first.stdout)
-            self.assertIn("24 tutorial pages", first.stdout)
+            self.assertIn("27 tutorial pages", first.stdout)
 
             for name, before_bytes in original.items():
                 after_bytes = (site / "tutorials" / name).read_bytes()

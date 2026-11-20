@@ -165,7 +165,7 @@ class AdSenseTrustAndPolicyPageTests(unittest.TestCase):
             *sorted((ROOT / "pages").glob("*.html")),
             *sorted((ROOT / "tutorials").glob("*.html")),
         ]
-        self.assertEqual(len(all_pages), 36)
+        self.assertEqual(len(all_pages), 39)
         for page in all_pages:
             rel = page.relative_to(ROOT).as_posix()
             with self.subTest(page=rel):
@@ -206,7 +206,7 @@ class AdSenseTrustAndPolicyPageTests(unittest.TestCase):
             entry.findtext("s:loc", namespaces=NS): entry.findtext("s:lastmod", namespaces=NS)
             for entry in root.findall("s:url", NS)
         }
-        self.assertEqual(len(dates), 29)
+        self.assertEqual(len(dates), 32)
         for url in EXCLUDED_LEGAL_URLS:
             with self.subTest(excluded=url):
                 self.assertNotIn(url, dates)

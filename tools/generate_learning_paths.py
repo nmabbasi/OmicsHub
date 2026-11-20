@@ -15,7 +15,7 @@ from pathlib import Path
 import re
 import sys
 
-EXPECTED_TUTORIALS = 24
+EXPECTED_TUTORIALS = 27
 NAV_PATTERNS = {
     "toolbar": re.compile(
         r'<nav\b(?=[^>]*\bclass\s*=\s*["\'][^"\']*\breader-toolbar\b[^"\']*["\'])[^>]*>.*?</nav\s*>',

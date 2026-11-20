@@ -42,20 +42,21 @@ class LearningPromiseTests(unittest.TestCase):
         self.start = (ROOT / 'start-here.html').read_text(encoding='utf-8')
         self.catalogue = (ROOT / 'tutorials.html').read_text(encoding='utf-8')
 
-    def test_all_24_tutorials_and_format_counts_remain(self):
+    def test_all_27_tutorials_and_format_counts_remain(self):
         labels = re.findall(r'<span[^>]*data-tutorial-format="([^"]+)"', self.catalogue)
         self.assertEqual(Counter(labels), {
-            'hands-on-lab': 12, 'conceptual-guide': 5, 'advanced-template': 7,
+            'hands-on-lab': 12, 'conceptual-guide': 7,
+            'advanced-template': 7, 'reference': 1,
         })
-        self.assertEqual(len(list((ROOT / 'tutorials').glob('*.html'))), 24)
-        self.assertIn('aria-label="24 tutorials"', self.catalogue)
+        self.assertEqual(len(list((ROOT / 'tutorials').glob('*.html'))), 27)
+        self.assertIn('aria-label="27 tutorials"', self.catalogue)
 
     def test_homepage_description_fields_agree(self):
         parser = DescriptionParser()
         parser.feed(self.home)
         self.assertEqual(len(parser.descriptions), 4)  # meta, Open Graph, Twitter, and one merged JSON-LD entity
         self.assertEqual(len(set(parser.descriptions)), 1)
-        for word in ('hands-on labs', 'conceptual guides', 'advanced templates'):
+        for word in ('hands-on labs', 'conceptual guides', 'advanced templates', 'references'):
             self.assertIn(word, parser.descriptions[0])
 
     def test_featured_cards_state_existing_lesson_formats(self):

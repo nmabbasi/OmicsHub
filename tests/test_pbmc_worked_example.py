@@ -74,13 +74,13 @@ class PbmcWorkedExampleTests(unittest.TestCase):
         self.assertNotIn(OLD_VALIDITY, text)
         self.assertNotIn(OLD_RANDOM, text)
 
-    def test_public_plant_figure_and_all_24_tutorials_remain(self):
+    def test_public_plant_figure_and_all_27_tutorials_remain(self):
         relative = 'tutorials/scrna-seq-basics.html'
         text = (ROOT / relative).read_text(encoding='utf-8')
         for phrase in ['scrna-basics-public-arabidopsis-umap', 'public-plant-clusters.png',
                        'GSE123818', 'CC BY 4.0', 'image unchanged']:
             self.assertIn(phrase, text)
-        self.assertEqual(len(list((ROOT / 'tutorials').glob('*.html'))), 24)
+        self.assertEqual(len(list((ROOT / 'tutorials').glob('*.html'))), 27)
 
 
 if __name__ == '__main__':

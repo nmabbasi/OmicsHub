@@ -15,9 +15,9 @@ def canonical_pages() -> list[Path]:
 
 
 class SitewideTopControlContracts(unittest.TestCase):
-    def test_canonical_inventory_has_36_pages_and_shared_script_coverage(self):
+    def test_canonical_inventory_has_39_pages_and_shared_script_coverage(self):
         pages = canonical_pages()
-        self.assertEqual(len(pages), 36)
+        self.assertEqual(len(pages), 39)
         for page in pages:
             with self.subTest(page=page.relative_to(ROOT).as_posix()):
                 html = page.read_text(encoding="utf-8")

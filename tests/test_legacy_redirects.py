@@ -14,7 +14,11 @@ import xml.etree.ElementTree as ET
 ROOT = Path(__file__).resolve().parents[1]
 MANIFEST = ROOT / "tools" / "legacy-redirects.json"
 GENERATOR = ROOT / "tools" / "generate_legacy_redirects.py"
-EXPECTED_HISTORICAL_ALIASES = {}
+EXPECTED_HISTORICAL_ALIASES = {
+    "/1-Connection.html": "tutorials/hpc-connection.html",
+    "/2-HPC_Basic_Commands.html": "tutorials/hpc-basic-commands.html",
+    "/4-Support.html": "tutorials/hpc-support.html",
+}
 
 
 class PageMetadata(HTMLParser):
@@ -55,10 +59,10 @@ class LegacyRedirectTests(unittest.TestCase):
             source: "tutorials/" + Path(source).name for source in cls.migrated
         } | cls.aliases
 
-    def test_migration_mapping_is_complete_and_matches_all_24_current_tutorials(self):
+    def test_migration_mapping_is_complete_and_matches_all_27_current_tutorials(self):
         self.assertEqual(self.manifest["migration_commit"], "118e16e4a4ac4dcd4acf132c9019104784787d52")
-        self.assertEqual(self.manifest["migration_root_url_count"], 24)
-        self.assertEqual(len(self.migrated), 24)
+        self.assertEqual(self.manifest["migration_root_url_count"], 27)
+        self.assertEqual(len(self.migrated), 27)
         expected_root_urls = {"/" + path.name for path in (ROOT / "tutorials").glob("*.html")}
         self.assertEqual(self.migrated, expected_root_urls)
         # Kept GSC-indexed root redirect routes covered by commit 118e16e.
@@ -128,7 +132,7 @@ class LegacyRedirectTests(unittest.TestCase):
             text=True,
         )
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-        self.assertIn("Verified 24", result.stdout)
+        self.assertIn("Verified 30", result.stdout)
 
 
 if __name__ == "__main__":

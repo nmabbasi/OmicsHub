@@ -49,9 +49,9 @@ class HomepageAndFooterConsistencyTests(unittest.TestCase):
             cat = parse_qs(parsed.query).get("category", [None])[0]
             self.assertIn(cat, valid_categories, f"Invalid category filter in homepage card: {href}")
 
-    def test_all_36_canonical_pages_share_consistent_footer_with_social_icons(self):
+    def test_all_39_canonical_pages_share_consistent_footer_with_social_icons(self):
         pages = canonical_pages()
-        self.assertEqual(len(pages), 36)
+        self.assertEqual(len(pages), 39)
         for page in pages:
             rel = page.relative_to(ROOT).as_posix()
             text = page.read_text(encoding="utf-8")
