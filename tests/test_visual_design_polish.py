@@ -221,6 +221,43 @@ class VisualDesignPolishTests(unittest.TestCase):
         ):
             self.assertIn(token, catalogue)
 
+    def test_live_ux_friction_polish_contracts(self):
+        cat_css = (ROOT / "home-catalogue.css").read_text(encoding="utf-8")
+        self.assertRegex(
+            cat_css,
+            re.compile(r"@media\s*\(max-width:\s*760px\).*?#tutorials-page\s+\.hc-quick-pills\s*\{[^}]*flex-wrap:\s*wrap;", re.S),
+            msg="Mobile quick pills should wrap cleanly without hidden horizontal clipping",
+        )
+
+        code_tabs_js = (ROOT / "code-tabs.js").read_text(encoding="utf-8")
+        reader_css = (ROOT / "tutorial-reader.css").read_text(encoding="utf-8")
+        self.assertIn("code-tab-heading-sr", code_tabs_js)
+        self.assertIn("code-tab-heading-sr", reader_css)
+        self.assertIn("word-break: normal;\n  overflow-wrap: normal;", reader_css)
+
+        copy_js = (ROOT / "copy-code.js").read_text(encoding="utf-8")
+        self.assertIn("'advanced-template': 'Advanced template'", copy_js)
+        self.assertIn("'reference': 'Reference'", copy_js)
+
+        micromamba = (ROOT / "tutorials/conda-mamba-part1.html").read_text(encoding="utf-8")
+        self.assertIn("<span>2026-08-30</span>", micromamba)
+        self.assertIn("<span>Updated 20 November 2026</span>", micromamba)
+        self.assertLess(
+            micromamba.index('class="lesson-lead"'),
+            micromamba.index('class="lesson-summary tutorial-learning-contract"'),
+        )
+
+        home_html = (ROOT / "index.html").read_text(encoding="utf-8")
+        self.assertIn('alt="Micromamba Environments for Bioinformatics"', home_html)
+
+        for page in sorted((ROOT / "tutorials").glob("*.html")):
+            html = page.read_text(encoding="utf-8")
+            for figure in re.findall(r"<figure\b[^>]*>.*?</figure>", html, re.S):
+                for img in re.findall(r'<img\b[^>]*loading="lazy"[^>]*>', figure):
+                    self.assertRegex(img, r'\bwidth="\d+"', page.name)
+                    self.assertRegex(img, r'\bheight="\d+"', page.name)
+                    self.assertIn("aspect-ratio:", img, page.name)
+
 
 if __name__ == "__main__":
     unittest.main()

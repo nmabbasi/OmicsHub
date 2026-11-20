@@ -4,7 +4,12 @@
 
   const VALID_LEVELS = new Set(['all', 'beginner', 'intermediate', 'advanced']);
   const VALID_FORMATS = new Set(['all', 'hands-on-lab', 'conceptual-guide', 'advanced-template', 'reference']);
-  const FILTER_KEYS = ['category', 'q', 'level', 'format'];
+  const PILLAR_GROUPS = {
+    'foundations-intro': ['Foundations & Prerequisites', 'Introduction to Bioinformatics'],
+    'shell-hpc-workflows': ['Shell Command Basics', 'Package Management', 'High-Performance Computing (HPC)', 'Workflow Management and Containerization'],
+    'multi-omics-spatial-wes': ['Advanced Single-Cell Analysis', 'Spatial Transcriptomics', 'Genomics and Whole-Exome Sequencing']
+  };
+  const FILTER_KEYS = ['category', 'pillar', 'q', 'level', 'format'];
 
   function getControls() {
     return {
@@ -15,7 +20,16 @@
     };
   }
 
+  function validPillar(value) {
+    return Object.prototype.hasOwnProperty.call(PILLAR_GROUPS, value) ? value : null;
+  }
+
+  function pillarKeyFromCategory(value) {
+    return typeof value === 'string' && value.startsWith('pillar:') ? validPillar(value.slice(7)) : null;
+  }
+
   function validCategory(value) {
+    if (pillarKeyFromCategory(value)) return value;
     const values = [...document.querySelectorAll('#category-filter .category-btn')].map(button => button.dataset.category);
     return values.includes(value) ? value : 'all';
   }
@@ -33,7 +47,9 @@
   function urlForState(state) {
     const params = new URLSearchParams(window.location.search);
     FILTER_KEYS.forEach(key => params.delete(key));
-    if (state.category !== 'all') params.set('category', state.category);
+    const pillarKey = pillarKeyFromCategory(state.category);
+    if (pillarKey) params.set('pillar', pillarKey);
+    else if (state.category !== 'all') params.set('category', state.category);
     if (state.q) params.set('q', state.q);
     if (state.level !== 'all') params.set('level', state.level);
     if (state.format !== 'all') params.set('format', state.format);
@@ -73,7 +89,9 @@
     let count = 0;
 
     cards.forEach(card => {
-      const categoryMatch = chosenCategory === 'all' || card.dataset.category === chosenCategory;
+      const pillarKey = pillarKeyFromCategory(chosenCategory);
+      const allowedCategories = pillarKey ? PILLAR_GROUPS[pillarKey] : null;
+      const categoryMatch = chosenCategory === 'all' || (allowedCategories ? allowedCategories.includes(card.dataset.category) : card.dataset.category === chosenCategory);
       const levelMatch = chosenLevel === 'all' || card.dataset.level === chosenLevel;
       const formatMatch = chosenFormat === 'all' || card.dataset.format === chosenFormat;
       const queryMatch = window.searchTextMatches(
@@ -109,7 +127,8 @@
     if (!document.getElementById('all-tutorials-list')) return;
     const params = new URLSearchParams(window.location.search);
     const controls = getControls();
-    const category = validCategory(params.get('category') || 'all');
+    const pillar = validPillar(params.get('pillar'));
+    const category = pillar ? `pillar:${pillar}` : validCategory(params.get('category') || 'all');
     const level = VALID_LEVELS.has(params.get('level')) ? params.get('level') : 'all';
     const format = VALID_FORMATS.has(params.get('format')) ? params.get('format') : 'all';
     const query = params.get('q') || '';

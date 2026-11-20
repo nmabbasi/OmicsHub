@@ -22,8 +22,8 @@
   const formatLabels = {
     'hands-on-lab': 'Hands-on lab',
     'conceptual-guide': 'Conceptual guide',
-    'advanced-template': 'Workflow template',
-    'reference': 'Reference guide'
+    'advanced-template': 'Advanced template',
+    'reference': 'Reference'
   };
   const copyIcon = '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="8" y="8" width="12" height="12" rx="2"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>';
   const wrapIcon = '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M3 12h15a3 3 0 1 1 0 6h-4"/><path d="m16 16-2 2 2 2"/><path d="M3 18h7"/></svg>';

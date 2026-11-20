@@ -117,6 +117,10 @@
       tabs.push(tab); panels.push(panel);
       tabList.append(tab); container.append(panel);
       for (let member = branch.start; member <= branch.end; member += 1) panel.append(nodes[member]);
+      const firstHeading = panel.firstElementChild;
+      if (firstHeading && firstHeading.tagName === 'H3' && /^(r|python|base r|seurat|scanpy|squidpy)(\b[\s·:()/-]*(base r|seurat|scanpy|squidpy|and|workflow|alternative|optional|primary|route|batch|r|python)\)?)*$/i.test(firstHeading.textContent.trim())) {
+        firstHeading.classList.add('code-tab-heading-sr');
+      }
       tab.addEventListener('click', () => selectLanguage(branch.language, controller));
       tab.addEventListener('keydown', event => {
         let next = null;

@@ -1,5 +1,7 @@
 """Regression tests for the Option 1A laptop homepage redesign and site-wide icon footer consistency."""
+from html import unescape
 from pathlib import Path
+import json
 import re
 import unittest
 from urllib.parse import parse_qs, urlsplit
@@ -40,14 +42,34 @@ class HomepageAndFooterConsistencyTests(unittest.TestCase):
         self.assertIn('<footer class="bg-gray-900 text-white">', home)
         self.assertNotIn('<footer class="bg-gray-900 text-white mt-16">', home)
 
-        # Ensure all 4 Explore-the-library topic links target real tutorials.html categories
-        topic_links = re.findall(r'class="v1-tcard"\s+href="([^"]+)"', home)
-        self.assertEqual(len(topic_links), 4)
-        for href in topic_links:
+        # Ensure all 4 Explore-the-library topic links target real tutorials.html categories or pillars and match card counts
+        catalogue_js = (ROOT / "catalogue-browser.js").read_text(encoding="utf-8")
+        pillar_block = re.search(r"const PILLAR_GROUPS = (\{.*?\});", catalogue_js, re.S)
+        self.assertIsNotNone(pillar_block, "catalogue-browser.js missing PILLAR_GROUPS")
+        pillar_groups = json.loads(pillar_block.group(1).replace("'", '"'))
+        card_categories = [unescape(c) for c in re.findall(r'<article\b[^>]*\bdata-category="([^"]+)"', tutorials)]
+
+        topic_cards = re.findall(r'<a class="v1-tcard" href="([^"]+)">(.*?)</a>', home, re.S)
+        self.assertEqual(len(topic_cards), 4)
+        for href, card_body in topic_cards:
             parsed = urlsplit(href)
             self.assertEqual(parsed.path, "tutorials.html")
-            cat = parse_qs(parsed.query).get("category", [None])[0]
-            self.assertIn(cat, valid_categories, f"Invalid category filter in homepage card: {href}")
+            query = parse_qs(parsed.query)
+            claimed_m = re.search(r">(\d+)\s+tutorials\s+→<", card_body)
+            self.assertIsNotNone(claimed_m, f"Missing count label in homepage card: {href}")
+            claimed = int(claimed_m.group(1))
+            if "pillar" in query:
+                pillar = query["pillar"][0]
+                self.assertIn(pillar, pillar_groups, f"Invalid pillar filter in homepage card: {href}")
+                allowed = set(pillar_groups[pillar])
+                self.assertTrue(allowed.issubset(valid_categories), f"Unknown categories in pillar {pillar}")
+                matched = sum(1 for c in card_categories if c in allowed)
+                self.assertEqual(matched, claimed, f"Pillar {pillar} displays {matched} cards, homepage claims {claimed}")
+            else:
+                cat = query.get("category", [None])[0]
+                self.assertIn(cat, valid_categories, f"Invalid category filter in homepage card: {href}")
+                matched = sum(1 for c in card_categories if c == cat)
+                self.assertEqual(matched, claimed, f"Category {cat} displays {matched} cards, homepage claims {claimed}")
 
     def test_all_39_canonical_pages_share_consistent_footer_with_social_icons(self):
         pages = canonical_pages()
