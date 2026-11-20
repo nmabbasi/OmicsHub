@@ -35,7 +35,7 @@ class SeoMetadataTests(unittest.TestCase):
         pages = list(ROOT.glob('*.html')) + list((ROOT / 'pages').glob('*.html')) + list((ROOT / 'tutorials').glob('*.html'))
         manifest = json.loads((ROOT / 'tools' / 'legacy-redirects.json').read_text(encoding='utf-8'))
         redirects = set(manifest['migration_root_urls']) | set(manifest['historical_aliases'])
-        pages = [page for page in pages if '/' + page.relative_to(ROOT).as_posix() not in redirects]
+        pages = [page for page in pages if page.name != 'google746d5ec35a19552d.html' and '/' + page.relative_to(ROOT).as_posix() not in redirects]
         for page in pages:
             with self.subTest(page=page.relative_to(ROOT)):
                 text = page.read_text(encoding='utf-8')

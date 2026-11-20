@@ -51,7 +51,7 @@ class NavigationMarkupTests(unittest.TestCase):
     def test_standalone_pages_load_menu_handlers(self):
         pages = sorted(ROOT.glob('*.html')) + sorted((ROOT / 'pages').glob('*.html'))
         for page in pages:
-            if '/' + page.relative_to(ROOT).as_posix() in REDIRECT_PATHS:
+            if page.name == 'google746d5ec35a19552d.html' or '/' + page.relative_to(ROOT).as_posix() in REDIRECT_PATHS:
                 continue
             with self.subTest(page=page.name):
                 text = page.read_text(encoding='utf-8')
