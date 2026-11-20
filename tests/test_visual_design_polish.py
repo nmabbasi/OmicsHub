@@ -94,7 +94,11 @@ class VisualDesignPolishTests(unittest.TestCase):
         self.assertIn("@media (min-width: 961px) and (max-height: 780px)", html)
         self.assertIn(".oh-laptop-hero::before {", html)
         self.assertIn("width: 87.0000%;", html)
-        self.assertIn('viewBox="0 0 1200 268"', html)
+        self.assertIn('src="images/hero-laptop-keyboard.svg"', html)
+        self.assertNotIn('<svg aria-hidden="true" class="oh-laptop-base-svg"', html)
+        svg = (ROOT / "images/hero-laptop-keyboard.svg").read_text(encoding="utf-8")
+        self.assertIn('viewBox="0 0 1200 268"', svg)
+        self.assertNotIn("\u2014", svg)
 
     def test_item6_amber_callout_border_and_code_header_mobile_dot_gap(self):
         style_css = (ROOT / "style.css").read_text(encoding="utf-8")

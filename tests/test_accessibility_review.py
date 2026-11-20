@@ -38,23 +38,31 @@ class AccessibilityReviewTests(unittest.TestCase):
                 )
                 self.assertNotIn('aria-label="Join The Omics Hub on Telegram"', text, str(path))
 
-    def test_subscribe_markup_matches_committed_baseline(self):
-        pattern = re.compile(r'<a\b(?=[^>]*\bSubscribe\b)[^>]*>.*?</a>', re.I | re.S)
-        checked = 0
-        for path in HTML_FILES:
+    def test_subscribe_markup_targets_indexed_contact_newsletter(self):
+        pattern = re.compile(r'<a\b(?=[^>]*\bsubscribe-community-button\b)[^>]*>.*?</a>', re.I | re.S)
+        canonical_pages = (
+            *(ROOT / name for name in ("index.html", "start-here.html", "tutorials.html", "about.html", "contact.html", "services.html", "success.html", "404.html")),
+            *sorted((ROOT / "pages").glob("*.html")),
+            *sorted((ROOT / "tutorials").glob("*.html")),
+        )
+        self.assertEqual(len(canonical_pages), 39)
+        for path in canonical_pages:
             relative = path.relative_to(ROOT).as_posix()
-            baseline = subprocess.run(
-                ["git", "show", f"HEAD:{relative}"], cwd=ROOT,
-                text=True, capture_output=True, check=False,
-            )
-            if baseline.returncode:
-                continue
-            before = pattern.findall(baseline.stdout)
-            if not before:
-                continue
-            checked += 1
-            self.assertEqual(pattern.findall(path.read_text(errors="ignore")), before, relative)
-        self.assertGreater(checked, 0)
+            text = path.read_text(encoding="utf-8")
+            links = pattern.findall(text)
+            self.assertEqual(len(links), 1, relative)
+            self.assertNotIn("services.html#newsletter-title", links[0], relative)
+            if path.name == "404.html":
+                expected_href = 'href="/contact.html#newsletter-title"'
+            elif path.parent == ROOT:
+                expected_href = 'href="contact.html#newsletter-title"'
+            else:
+                expected_href = 'href="../contact.html#newsletter-title"'
+            self.assertIn(expected_href, links[0], relative)
+            self.assertIn("Subscribe &amp; Get Cheat Sheet", links[0], relative)
+        contact_text = (ROOT / "contact.html").read_text(encoding="utf-8")
+        self.assertIn('id="newsletter-title"', contact_text)
+        self.assertIn('action="contact.html#newsletter-title"', contact_text)
 
 
 if __name__ == "__main__":
