@@ -151,6 +151,18 @@ class VisualDesignPolishTests(unittest.TestCase):
         self.assertIn('href="examples/WNN_analysis_of_CITE_seq_RNA_ADT.html"', downstream)
         self.assertIn('href="examples/inferCNV_analysis.html"', downstream)
 
+    def test_featured_and_tutorial_cards_have_elevated_shadow_and_hover_popout(self):
+        home_html = (ROOT / "index.html").read_text(encoding="utf-8")
+        cat_css = (ROOT / "home-catalogue.css").read_text(encoding="utf-8")
+        for token in (
+            "transform: translateY(-8px) scale(1.018);",
+            "border-color: #38BDF8;",
+            "0 22px 44px -10px rgba(11, 39, 65, 0.28)",
+            "transform: scale(1.045);",
+        ):
+            self.assertIn(token, home_html, f"index.html missing {token}")
+            self.assertIn(token, cat_css, f"home-catalogue.css missing {token}")
+
 
 if __name__ == "__main__":
     unittest.main()

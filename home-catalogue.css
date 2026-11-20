@@ -434,12 +434,43 @@
 #tutorials-page .tutorial-format-guide dl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem 2rem; padding: .5rem 1rem; margin: 0; }
 #tutorials-page .tutorial-format-guide dt { font-size: .85rem; font-weight: 750; color: var(--hc-ink); }
 #tutorials-page .tutorial-format-guide dd { margin: .25rem 0 0; font-size: .82rem; color: var(--hc-muted); }
-#tutorials-page #all-tutorials-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.15rem; padding-bottom: 3rem; }
-#tutorials-page .tutorial-grid-card { position: relative; isolation: isolate; display: flex; flex-direction: column; min-width: 0; overflow: hidden; border: 1px solid var(--hc-line); border-radius: 1rem; background: #fff; transform: none; transition: border-color 150ms ease, box-shadow 150ms ease; box-shadow: 0 3px 12px rgb(16 45 67 / 4%); cursor: pointer; }
-#tutorials-page .tutorial-grid-card:hover { border-color: #9ebcbe; transform: none; box-shadow: 0 6px 18px rgb(16 45 67 / 7%); }
-#tutorials-page .tutorial-grid-card:focus-within { outline: 3px solid #127c75; outline-offset: 3px; }
+#tutorials-page #all-tutorials-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.4rem; padding-bottom: 3rem; }
+#tutorials-page .tutorial-grid-card {
+  position: relative;
+  z-index: 1;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid #D5E0EC;
+  border-radius: 1rem;
+  background: #fff;
+  box-shadow:
+    0 2px 6px rgba(11, 39, 65, 0.06),
+    0 10px 26px -6px rgba(11, 39, 65, 0.14),
+    0 20px 42px -16px rgba(15, 23, 42, 0.12);
+  transition:
+    transform 240ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 240ms cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 200ms ease;
+  cursor: pointer;
+}
+#tutorials-page .tutorial-grid-card:hover,
+#tutorials-page .tutorial-grid-card:focus-within {
+  z-index: 5;
+  transform: translateY(-8px) scale(1.018);
+  border-color: #38BDF8;
+  box-shadow:
+    0 4px 10px rgba(11, 39, 65, 0.08),
+    0 22px 44px -10px rgba(11, 39, 65, 0.28),
+    0 36px 68px -18px rgba(15, 23, 42, 0.22);
+}
+#tutorials-page .tutorial-grid-card:focus-within { outline: 3px solid #0284C7; outline-offset: 3px; }
 #tutorials-page .hc-card-image, #tutorials-page .tutorial-grid-card > div:first-child:has(> img) { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; flex: 0 0 auto; overflow: hidden; border-bottom: 1px solid var(--hc-line); background: #f1f6f7; }
-#tutorials-page .tutorial-grid-card img { display: block; width: 100%; height: 100%; object-fit: cover; transform: none; }
+#tutorials-page .tutorial-grid-card img { display: block; width: 100%; height: 100%; object-fit: cover; transition: transform 320ms cubic-bezier(0.22, 1, 0.36, 1); }
+#tutorials-page .tutorial-grid-card:hover img,
+#tutorials-page .tutorial-grid-card:focus-within img { transform: scale(1.045); }
 #tutorials-page .hc-card-copy, #tutorials-page .tutorial-grid-card > div:last-child { display: flex; flex-direction: column; flex: 1; min-width: 0; padding: 1.2rem; }
 #tutorials-page .hc-card-meta { display: flex; flex-direction: column; align-items: flex-start; width: 100%; gap: .28rem; margin: 0 0 .75rem; text-align: left; }
 #tutorials-page .hc-card-meta > span:first-child { display: inline-block; max-width: 100%; white-space: normal; padding: .2rem .55rem; background: #edf5f8; color: #1d5274; font-size: .67rem; font-weight: 700; line-height: 1.5; letter-spacing: 0; border-radius: .4rem; }
@@ -534,6 +565,10 @@
 }
 @media (prefers-reduced-motion: reduce) {
   #home-page *, #tutorials-page * { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+  #tutorials-page .tutorial-grid-card:hover,
+  #tutorials-page .tutorial-grid-card:focus-within,
+  #tutorials-page .tutorial-grid-card:hover img,
+  #tutorials-page .tutorial-grid-card:focus-within img { transform: none !important; }
 }
 @media print {
   .hc-hero, .hc-catalogue-hero, .hc-catalogue-cta { background: #fff; color: #102d43; }

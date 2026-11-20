@@ -17,7 +17,7 @@ BASE_COMMIT = "8cfe69916e01724bdcb85d717a9e6af4d646c289"
 PINNED_FILES = {
     "index.html": {
         "base_sha256": "e0e0505fab71546fd27c7aea3be9f2bbf8399c6fec3ded42c8be30f8fa6f7e3d",
-        "current_sha256": "007ba4f34bee393acd6eeafbaee51b4cf2d390732334838a74329a26ac7e69bb",
+        "current_sha256": "90a2999d9f44569b410544d1a111ebfabec3b030a6d99f210487f0551c267677",
     },
     "404.html": {
         "base_sha256": "51dcbd37197875cda5980e293d3f2eb5b3f21bcd37acd7a52755673ed7b70a3f",
@@ -41,7 +41,7 @@ PINNED_FILES = {
     },
     "home-page.min.css": {
         "base_sha256": "588d5286a85d9d23357f9c06d647d9c3c9ba0c65ab238975d5c13e7877cc1e6a",
-        "current_sha256": "9d8c27acab39f029d3a44d26bf3f5e658a1b1c318553b485e95cb8f191538c92",
+        "current_sha256": "6aac28fc7dcee56e3f38c00a3af09869c0b891bf07563da5ae79be15e156d03b",
     },
     "cookie-consent.js": {
         "base_sha256": "c9b21ce57c609be336dfe869928349cd8c536281f807621d54b3ed3df19ec972",
@@ -65,7 +65,7 @@ PINNED_FILES = {
     },
     "home-catalogue.css": {
         "base_sha256": "bb5d49b07212f011917b4fa7498c8b8e1fdf05a3081dded7b07e0e142cfb1c4e",
-        "current_sha256": "4b97651d0ee63e9414f55264f82b5e08876ef88a6bc7ec7fa6cb972dbb30e57f",
+        "current_sha256": "888e0c47d7435185f20a9968d147e6f3bce9adf917b7e1c4d539819afc55b10c",
     },
     "start-here.css": {
         "base_sha256": "95e06b81bfae634962e6078874ab0ba0de1e926ac472def734804102f29e1382",
