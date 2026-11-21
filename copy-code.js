@@ -297,7 +297,7 @@
     }
 
     // 3. Auto "On this page" TOC before <article> (never alters <article> child indices)
-    const headings = Array.from(article.querySelectorAll(':scope > h2'));
+    const headings = Array.from(article.querySelectorAll('h2')).filter(h => !h.closest('aside, nav, .lesson-summary'));
     const tutorialPage = document.getElementById('tutorial-page');
     if (headings.length >= 3 && !document.querySelector('.tutorial-toc')) {
       const usedIds = new Set(Array.from(document.querySelectorAll('[id]'), el => el.id));

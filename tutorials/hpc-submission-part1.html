@@ -438,12 +438,12 @@ conda deactivate
 <div class="p-8 bg-gray-50 border border-gray-200 rounded-xl">
 <div class="space-y-4">
 <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-<h4 class="font-bold text-gray-800 mb-2">1. Concept Verification</h4>
+<h3 class="font-bold text-gray-800 mb-2" style="margin-top:0">1. Concept Verification</h3>
 <p class="text-gray-600 text-sm">Which Slurm directives control resources, output logging, job naming, and the executable command?</p>
 <details class="mt-2 text-sm text-gray-700"><summary class="font-medium cursor-pointer text-blue-700">Check model answer</summary><p class="mt-1"><code>--ntasks</code>, <code>--cpus-per-task</code>, <code>--mem</code> (or <code>--mem-per-cpu</code>), <code>--time</code>, and <code>--partition</code> control the resource allocation; <code>--output</code> and <code>--error</code> control log paths; <code>--job-name</code> labels the job in queue/accounting output; and ordinary shell/<code>srun</code> lines below the <code>#SBATCH</code> header run the actual executable commands.</p></details>
 </div>
 <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-<h4 class="font-bold text-gray-800 mb-2" id="submit-job">2. Practical Execution</h4>
+<h3 class="font-bold text-gray-800 mb-2" id="submit-job" style="margin-top:0">2. Practical Execution</h3>
 <p class="text-gray-600 text-sm">Save the smoke-test script above as <code>smoke-test.sbatch</code> in a suitable working directory. Replace the placeholder partition before submitting. This command captures the actual numeric ID; <code>--parsable</code> can include an optional cluster suffix, which the parameter expansion removes:</p>
 <pre><code class="language-bash">if SUBMISSION=$(sbatch --parsable smoke-test.sbatch); then
   JOB_ID=${SUBMISSION%%;*}
@@ -453,7 +453,7 @@ else
   echo "sbatch submission failed; inspect the partition and account error above." &gt;&amp;2
 fi
 </code></pre>
-<h5 id="job-state">Check the final state and log</h5>
+<h4 id="job-state">Check the final state and log</h4>
 <p class="text-gray-600 text-sm">A returned ID means submission was accepted, not that the job has started or finished. Use <code>squeue</code> while it is pending or running. Once it leaves the queue, inspect the accounting record (it can take time to appear) and the job log:</p>
 <pre><code class="language-bash">sacct -j "$JOB_ID" --format=JobID,State,ExitCode
 cat "hpc-smoke-${JOB_ID}.out"
@@ -462,7 +462,7 @@ cat "hpc-smoke-${JOB_ID}.out"
 <p class="text-gray-600 text-sm mt-2">A submission rejection means no accepted job ID was returned: check the partition, any required account, and request limits in local guidance. If the final state is <code>FAILED</code> or the exit code is nonzero, inspect the state, exit code, log contents, and log path; for this command pair, a missing hostname/date line points to a command or script failure. Do not infer completion from an ID or repeatedly resubmit without resolving the reported cause.</p>
 </div>
 <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-<h4 class="font-bold text-gray-800 mb-2">3. Troubleshooting</h4>
+<h3 class="font-bold text-gray-800 mb-2" style="margin-top:0">3. Troubleshooting</h3>
 <p class="text-gray-600 text-sm">If a job is pending, cancelled, or out of memory, which Slurm fields and site documentation should you inspect first?</p>
 <details class="mt-2 text-sm text-gray-700"><summary class="font-medium cursor-pointer text-blue-700">Check model answer</summary><p class="mt-1">Check <code>NODELIST(REASON)</code> in <code>squeue -j JOB_ID</code> while pending; once finished, inspect <code>State</code>, <code>ExitCode</code>, <code>Elapsed</code>, <code>ReqMem</code>, and <code>MaxRSS</code> in <code>sacct -j JOB_ID</code> (plus the <code>.batch</code> step), check <code>slurm-JOB_ID.out</code> for cgroup OOM or application errors, and verify partition walltime/memory limits in your facility's documentation.</p></details>
 </div>
