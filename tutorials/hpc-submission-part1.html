@@ -434,8 +434,8 @@ conda deactivate
 <pre><code class="language-bash">unxz my_file.txt.xz
 </code></pre>
 <p>Choose a format supported by the downstream tools and balance CPU time against storage savings. In genomics, distinguish standard single-stream <code>gzip</code> from <strong><code>bgzip</code></strong> (blocked GNU zip from <code>htslib</code> / <code>samtools</code>): standard <code>gzip</code> works for sequentially streamed FASTQ files, whereas indexed coordinate-sorted VCF (<code>.vcf.gz</code> + <code>.tbi</code>/<code>.csi</code>), BED, and FASTA files <strong>must</strong> be compressed with <code>bgzip</code> (<code>bgzip variants.vcf &amp;&amp; tabix -p vcf variants.vcf.gz</code>) because <code>tabix</code> and <code>bcftools index</code> reject plain <code>gzip</code> streams.</p>
-<div class="mt-10 p-8 bg-gray-50 border border-gray-200 rounded-xl">
-<h3 class="text-xl font-bold text-gray-900 mb-4">Knowledge Check &amp; Assessment</h3>
+<h2 class="text-2xl font-bold text-gray-900 mt-10 mb-4" id="knowledge-check">Knowledge Check &amp; Assessment</h2>
+<div class="p-8 bg-gray-50 border border-gray-200 rounded-xl">
 <div class="space-y-4">
 <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
 <h4 class="font-bold text-gray-800 mb-2">1. Concept Verification</h4>
@@ -458,7 +458,8 @@ fi
 <pre><code class="language-bash">sacct -j "$JOB_ID" --format=JobID,State,ExitCode
 cat "hpc-smoke-${JOB_ID}.out"
 </code></pre>
-<p class="text-gray-600 text-sm">For this exercise, a successful result is a final batch state of <code>COMPLETED</code> and exit code <code>0:0</code>, with exactly two output lines: a hostname, then a date (their values and date formatting vary). A <code>PENDING</code> record is waiting, not a failure; a missing log while pending or before the job starts is not by itself a diagnosis. A submission rejection means no accepted job ID was returned: check the partition, any required account, and request limits in local guidance. If the final state is <code>FAILED</code> or the exit code is nonzero, inspect the state, exit code, log contents, and log path; for this command pair, a missing hostname/date line points to a command or script failure. Do not infer completion from an ID or repeatedly resubmit without resolving the reported cause.</p>
+<p class="text-gray-600 text-sm">For this exercise, a successful result is a final batch state of <code>COMPLETED</code> and exit code <code>0:0</code>, with exactly two output lines: a hostname, then a date (their values and date formatting vary). A <code>PENDING</code> record is waiting, not a failure; a missing log while pending or before the job starts is not by itself a diagnosis.</p>
+<p class="text-gray-600 text-sm mt-2">A submission rejection means no accepted job ID was returned: check the partition, any required account, and request limits in local guidance. If the final state is <code>FAILED</code> or the exit code is nonzero, inspect the state, exit code, log contents, and log path; for this command pair, a missing hostname/date line points to a command or script failure. Do not infer completion from an ID or repeatedly resubmit without resolving the reported cause.</p>
 </div>
 <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
 <h4 class="font-bold text-gray-800 mb-2">3. Troubleshooting</h4>

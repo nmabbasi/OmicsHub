@@ -219,7 +219,7 @@ class VisualDesignPolishTests(unittest.TestCase):
         for token in (
             "<strong>12</strong> Hands-on labs",
             "<strong>7</strong> Conceptual guides",
-            "<strong>7</strong> Templates",
+            "<strong>7</strong> Advanced templates",
             "<strong>1</strong> Reference",
             "<strong>10</strong> Topics",
         ):

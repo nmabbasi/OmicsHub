@@ -143,6 +143,8 @@ function setupEventListeners() {
                 searchInput.value = '';
                 syncClearBtn();
                 dismissHomeSearchSuggestions();
+                const searchStatus = document.getElementById('search-results-status');
+                if (searchStatus) searchStatus.textContent = '';
                 searchInput.focus();
             });
         }

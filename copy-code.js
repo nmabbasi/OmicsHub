@@ -345,25 +345,41 @@
         desktopQuery.addEventListener('change', syncOpenForViewport);
       }
 
-      if (typeof IntersectionObserver === 'function') {
-        let activeId = headings[0].id;
-        const setActive = id => {
-          if (!id || !linkMap.has(id)) return;
-          activeId = id;
-          linkMap.forEach((link, key) => {
-            const current = key === id;
-            link.classList.toggle('is-active', current);
-            if (current) link.setAttribute('aria-current', 'location');
-            else link.removeAttribute('aria-current');
+      let activeId = headings[0].id;
+      const setActive = id => {
+        if (!id || !linkMap.has(id)) return;
+        activeId = id;
+        linkMap.forEach((link, key) => {
+          const current = key === id;
+          link.classList.toggle('is-active', current);
+          if (current) link.setAttribute('aria-current', 'location');
+          else link.removeAttribute('aria-current');
+        });
+      };
+      const updateActiveHeading = () => {
+        const atBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 24;
+        let currentId = headings[0].id;
+        if (atBottom) {
+          currentId = headings[headings.length - 1].id;
+        } else {
+          headings.forEach(heading => {
+            if (heading.getBoundingClientRect().top <= 125) currentId = heading.id;
           });
-        };
-        setActive(activeId);
-        const observer = new IntersectionObserver(entries => {
-          const visible = entries.filter(entry => entry.isIntersecting).sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
-          if (visible.length > 0) setActive(visible[0].target.id);
-        }, { rootMargin: '-90px 0px -65% 0px', threshold: 0.01 });
-        headings.forEach(heading => observer.observe(heading));
-      }
+        }
+        setActive(currentId);
+      };
+      let tocRaf = 0;
+      const scheduleTocUpdate = () => {
+        if (tocRaf) return;
+        tocRaf = window.requestAnimationFrame(() => {
+          tocRaf = 0;
+          updateActiveHeading();
+        });
+      };
+      updateActiveHeading();
+      window.addEventListener('scroll', scheduleTocUpdate, { passive: true });
+      window.addEventListener('resize', scheduleTocUpdate, { passive: true });
+      window.addEventListener('hashchange', scheduleTocUpdate);
     }
 
     // 4. Native <dialog> click-to-zoom lightbox for all tutorial figures
@@ -391,6 +407,8 @@
         body.className = 'tutorial-lightbox__body';
         const previewImg = document.createElement('img');
         previewImg.className = 'tutorial-lightbox__img';
+        previewImg.alt = '';
+        previewImg.hidden = true;
         const caption = document.createElement('p');
         caption.className = 'tutorial-lightbox__caption';
         body.append(previewImg, caption);
@@ -398,8 +416,16 @@
         document.body.append(dialog);
 
         let lastTrigger = null;
+        const resetDialogMedia = () => {
+          previewImg.removeAttribute('src');
+          previewImg.alt = '';
+          previewImg.hidden = true;
+          caption.textContent = '';
+          caption.hidden = true;
+        };
         const closeDialog = () => {
           if (dialog.open) dialog.close();
+          resetDialogMedia();
           if (lastTrigger && typeof lastTrigger.focus === 'function') {
             lastTrigger.focus({ preventScroll: true });
           }
@@ -410,6 +436,7 @@
           if (event.target === dialog) closeDialog();
         });
         dialog.addEventListener('close', () => {
+          resetDialogMedia();
           if (lastTrigger && typeof lastTrigger.focus === 'function') {
             lastTrigger.focus({ preventScroll: true });
           }
@@ -439,6 +466,7 @@
               event.stopPropagation();
             }
             lastTrigger = img;
+            previewImg.hidden = false;
             previewImg.src = img.currentSrc || img.src;
             previewImg.alt = img.alt || '';
             caption.textContent = figcaption ? figcaption.textContent.trim() : (img.alt || '');
