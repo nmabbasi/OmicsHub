@@ -1,0 +1,97 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 450" width="960" height="450" role="img" aria-labelledby="wnn-arch-title wnn-arch-desc">
+  <title id="wnn-arch-title">Seurat CITE-seq Weighted Nearest Neighbor (WNN) integration architecture</title>
+  <desc id="wnn-arch-desc">Diagram showing two parallel modality preprocessing tracks (RNA counts through LogNormalize and PCA into pca; ADT surface protein counts through CLR margin 2 or dsb and PCA into apca) feeding into FindMultiModalNeighbors, which compares within-modality and cross-modality k-NN prediction error per cell to compute RNA.weight and ADT.weight, construct weighted.nn and wsnn graphs, and drive WNN UMAP, SLM clustering, and separate RNA and ADT marker validation.</desc>
+  <defs>
+    <marker id="wnn-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#475569"/>
+    </marker>
+    <filter id="wnn-shadow" x="-4%" y="-4%" width="108%" height="112%">
+      <feDropShadow dx="0" dy="3" stdDeviation="4" flood-color="#0F172A" flood-opacity="0.08"/>
+    </filter>
+  </defs>
+
+  <rect x="0" y="0" width="960" height="450" rx="14" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="1.5"/>
+  <text x="28" y="36" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="18.5" font-weight="700" fill="#0F172A">How Seurat WNN Combines RNA and Surface Protein (ADT) Without Concatenation</text>
+  <text x="28" y="57" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="12.5" fill="#475569">Preprocess each assay separately, then learn per-cell modality weights from within- vs cross-modality k-NN predictions</text>
+
+  <!-- Track 1: RNA -->
+  <g filter="url(#wnn-shadow)">
+    <rect x="24" y="80" width="286" height="122" rx="10" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.5"/>
+    <path d="M 24 90 Q 24 80 34 80 L 300 80 Q 310 80 310 90 L 310 112 L 24 112 Z" fill="#1E3A8A"/>
+    <text x="36" y="101" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="12.5" font-weight="700" fill="#FFFFFF">Track 1: RNA Assay (10,000+ genes)</text>
+    <text x="36" y="132" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11.5" fill="#334155">1. QC: nFeature_RNA, nCount_RNA, percent.mt</text>
+    <text x="36" y="150" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11.5" fill="#334155">2. LogNormalize (1e4) + 3,000 HVGs + ScaleData</text>
+    <text x="36" y="170" font-family="monospace" font-size="11" font-weight="700" fill="#1E3A8A">RunPCA() -&gt; "pca" (e.g., 1:30)</text>
+    <text x="36" y="189" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11" fill="#64748B">Captures broad transcriptional states &amp; lineages</text>
+  </g>
+
+  <!-- Track 2: ADT -->
+  <g filter="url(#wnn-shadow)">
+    <rect x="24" y="218" width="286" height="122" rx="10" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.5"/>
+    <path d="M 24 228 Q 24 218 34 218 L 300 218 Q 310 218 310 228 L 310 250 L 24 250 Z" fill="#0F766E"/>
+    <text x="36" y="239" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="12.5" font-weight="700" fill="#FFFFFF">Track 2: ADT Assay (10 to 200+ proteins)</text>
+    <text x="36" y="270" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11.5" fill="#334155">1. Align shared barcodes; check nCount_ADT</text>
+    <text x="36" y="288" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11.5" fill="#334155">2. CLR (margin = 2) or dsb + ScaleData (all features)</text>
+    <text x="36" y="308" font-family="monospace" font-size="11" font-weight="700" fill="#0F766E">RunPCA() -&gt; "apca" (min(18, P-1) PCs)</text>
+    <text x="36" y="327" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11" fill="#64748B">Resolves surface isoforms (e.g., CD45RA vs CD45RO)</text>
+  </g>
+
+  <!-- Arrows into WNN -->
+  <path d="M 312 141 L 348 182" fill="none" stroke="#475569" stroke-width="2" marker-end="url(#wnn-arrow)"/>
+  <path d="M 312 279 L 348 238" fill="none" stroke="#475569" stroke-width="2" marker-end="url(#wnn-arrow)"/>
+
+  <!-- Middle: WNN Integration -->
+  <g filter="url(#wnn-shadow)">
+    <rect x="352" y="88" width="290" height="244" rx="10" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.5"/>
+    <path d="M 352 98 Q 352 88 362 88 L 632 88 Q 642 88 642 98 L 642 122 L 352 122 Z" fill="#6D28D9"/>
+    <text x="365" y="109" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="12.5" font-weight="700" fill="#FFFFFF">FindMultiModalNeighbors()</text>
+    <text x="365" y="144" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11.5" font-weight="700" fill="#0F172A">1. L2-normalize pca &amp; apca embeddings</text>
+    <text x="365" y="162" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11" fill="#475569">Builds separate k-NN graphs (default k.nn = 20)</text>
+
+    <line x1="365" y1="174" x2="629" y2="174" stroke="#E2E8F0" stroke-width="1"/>
+    <text x="365" y="193" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11.5" font-weight="700" fill="#0F172A">2. Within- vs cross-modality test (per cell)</text>
+    <text x="365" y="211" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11" fill="#475569">How well do RNA neighbors vs ADT neighbors</text>
+    <text x="365" y="226" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11" fill="#475569">predict cell i's RNA and ADT profiles?</text>
+
+    <line x1="365" y1="238" x2="629" y2="238" stroke="#E2E8F0" stroke-width="1"/>
+    <text x="365" y="257" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11.5" font-weight="700" fill="#0F172A">3. Per-cell modality weights (sum = 1)</text>
+    <rect x="365" y="268" width="124" height="24" rx="5" fill="#EFF6FF" stroke="#93C5FD" stroke-width="1"/>
+    <text x="375" y="284" font-family="monospace" font-size="11" font-weight="700" fill="#1E3A8A">RNA.weight</text>
+    <rect x="501" y="268" width="124" height="24" rx="5" fill="#F0FDFA" stroke="#5EEAD4" stroke-width="1"/>
+    <text x="511" y="284" font-family="monospace" font-size="11" font-weight="700" fill="#0F766E">ADT.weight</text>
+    <text x="365" y="314" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11" fill="#64748B">Outputs: weighted.nn (k-NN) &amp; wsnn (SNN)</text>
+  </g>
+
+  <!-- Arrows to Downstream -->
+  <line x1="644" y1="160" x2="678" y2="140" fill="none" stroke="#475569" stroke-width="2" marker-end="url(#wnn-arrow)"/>
+  <line x1="644" y1="260" x2="678" y2="280" fill="none" stroke="#475569" stroke-width="2" marker-end="url(#wnn-arrow)"/>
+
+  <!-- Output 1: Embedding & Clustering -->
+  <g filter="url(#wnn-shadow)">
+    <rect x="682" y="80" width="254" height="122" rx="10" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.5"/>
+    <path d="M 682 90 Q 682 80 692 80 L 926 80 Q 936 80 936 90 L 936 112 L 682 112 Z" fill="#0369A1"/>
+    <text x="694" y="101" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="12.5" font-weight="700" fill="#FFFFFF">Joint Graph &amp; Embedding</text>
+    <text x="694" y="133" font-family="monospace" font-size="10.5" fill="#334155">RunUMAP(nn.name = "weighted.nn")</text>
+    <text x="694" y="150" font-family="monospace" font-size="10.5" fill="#334155">-&gt; "wnn.umap"</text>
+    <text x="694" y="171" font-family="monospace" font-size="10.5" fill="#334155">FindClusters(graph.name = "wsnn",</text>
+    <text x="694" y="187" font-family="monospace" font-size="10.5" fill="#334155">             algorithm = 3)</text>
+  </g>
+
+  <!-- Output 2: Validation -->
+  <g filter="url(#wnn-shadow)">
+    <rect x="682" y="218" width="254" height="122" rx="10" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.5"/>
+    <path d="M 682 228 Q 682 218 692 218 L 926 218 Q 936 218 936 228 L 936 250 L 682 250 Z" fill="#B45309"/>
+    <text x="694" y="239" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="12.5" font-weight="700" fill="#FFFFFF">Diagnostic &amp; Marker Checks</text>
+    <text x="694" y="270" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11.5" fill="#334155">1. Plot RNA.weight &amp; ADT.weight</text>
+    <text x="694" y="288" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11.5" fill="#334155">2. Compare vs RNA-only &amp; ADT-only</text>
+    <text x="694" y="306" font-family="monospace" font-size="10.5" fill="#B45309">FindMarkers(..., assay = "RNA")</text>
+    <text x="694" y="324" font-family="monospace" font-size="10.5" fill="#B45309">FindMarkers(..., assay = "ADT")</text>
+  </g>
+
+  <!-- Bottom Note Bar -->
+  <g filter="url(#wnn-shadow)">
+    <rect x="24" y="360" width="912" height="68" rx="10" fill="#EFF6FF" stroke="#93C5FD" stroke-width="1.5"/>
+    <text x="42" y="385" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="13" font-weight="700" fill="#1E3A8A">Key rule: Modality weights reflect local neighborhood prediction utility, not biological ground truth</text>
+    <text x="42" y="407" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="12" fill="#1E293B">Always check raw ADT counts, isotype controls, and separate RNA/ADT markers before naming cell types or interpreting weight shifts.</text>
+  </g>
+</svg>

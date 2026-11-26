@@ -248,7 +248,7 @@ def stage_pbmc3k_archive(project: Path) -> dict[str, object]:
 class PublishedPythonFundamentalsTests(unittest.TestCase):
     def test_exact_fasta_script_reads_published_fixture_and_writes_expected_csv(self) -> None:
         lesson = "tutorials/python-fundamentals-bioinformatics.html"
-        setup = block(lesson, needles=("cat > data/raw/example.fasta", "AGCTTAGC--NNNN", "Rscript --version"))
+        setup = block(lesson, needles=("cat > data/raw/example.fasta", "AGCTTAGC--NNNN"))
         script = block(lesson, needles=("def fasta_records", "gc_fraction", "compute_fasta_stats.py"))
         fasta = heredoc(setup, "data/raw/example.fasta")
         with tempfile.TemporaryDirectory(prefix="omics-python-fundamentals-") as temp:

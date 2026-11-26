@@ -1,0 +1,123 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 440" width="960" height="440" role="img" aria-labelledby="spatial-align-title spatial-align-desc">
+  <title id="spatial-align-title">Visium file alignment and spatial assay resolution comparison</title>
+  <desc id="spatial-align-desc">Two-part diagram. Top row shows how four Space Ranger outputs combine: filtered_feature_bc_matrix.h5 provides gene counts per spot barcode, tissue_positions_list.csv or tissue_positions.csv maps barcodes to full-resolution pixels, scalefactors_json.json scales pixel coordinates to lowres and hires PNG images, producing an aligned Seurat or Squidpy AnnData spatial object. Bottom row compares three assay resolutions: conventional Visium at 55 micrometres capturing 1 to 10 or more cells per spot requiring deconvolution, Visium HD binned to 8 or 16 micrometres requiring sketching or Zarr storage, and targeted subcellular imaging such as Xenium, CosMx, and MERFISH requiring segmentation checks.</desc>
+  <defs>
+    <marker id="sp-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#475569"/>
+    </marker>
+    <filter id="sp-shadow" x="-4%" y="-4%" width="108%" height="112%">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#0F172A" flood-opacity="0.07"/>
+    </filter>
+  </defs>
+
+  <rect x="0" y="0" width="960" height="440" rx="14" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="1.5"/>
+  <text x="26" y="34" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="18" font-weight="700" fill="#0F172A">How Visium Links Counts to Tissue Pixels (and How Resolution Changes Interpretation)</text>
+  <text x="26" y="54" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="12" fill="#475569">Top: the three Space Ranger assets required for spot-to-image alignment. Bottom: matching analysis tools to physical capture resolution.</text>
+
+  <!-- Top Section Label -->
+  <text x="26" y="78" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11.5" font-weight="700" fill="#1E3A8A" letter-spacing="0.4">A. VISIUM DATA ALIGNMENT (ONE DIRECTORY FOR BOTH R AND PYTHON)</text>
+
+  <!-- Card 1 -->
+  <g filter="url(#sp-shadow)">
+    <rect x="26" y="88" width="212" height="162" rx="9" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.3"/>
+    <path d="M 26 97 Q 26 88 35 88 L 229 88 Q 238 88 238 97 L 238 118 L 26 118 Z" fill="#1E3A8A"/>
+    <text x="38" y="108" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#FFFFFF">1. Expression Matrix</text>
+    <text x="38" y="138" font-family="monospace" font-size="10.2" font-weight="600" fill="#1E3A8A">filtered_feature_bc_</text>
+    <text x="38" y="152" font-family="monospace" font-size="10.2" font-weight="600" fill="#1E3A8A">matrix.h5</text>
+    <line x1="38" y1="162" x2="226" y2="162" stroke="#E2E8F0" stroke-width="1"/>
+    <text x="38" y="180" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11.5" fill="#334155">UMI counts: genes x spots</text>
+    <text x="38" y="198" font-family="monospace" font-size="10.5" fill="#475569">32,285 features x 2,702 spots</text>
+    <text x="38" y="218" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11" fill="#64748B">Key: spot barcode ID</text>
+    <text x="38" y="236" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="10.5" fill="#64748B">(requires hdf5r in R)</text>
+  </g>
+
+  <line x1="241" y1="169" x2="255" y2="169" stroke="#475569" stroke-width="2" marker-end="url(#sp-arrow)"/>
+
+  <!-- Card 2 -->
+  <g filter="url(#sp-shadow)">
+    <rect x="259" y="88" width="212" height="162" rx="9" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.3"/>
+    <path d="M 259 97 Q 259 88 268 88 L 462 88 Q 471 88 471 97 L 471 118 L 259 118 Z" fill="#0F766E"/>
+    <text x="271" y="108" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#FFFFFF">2. Spot Coordinates</text>
+    <text x="271" y="138" font-family="monospace" font-size="10.2" font-weight="600" fill="#0F766E">tissue_positions_list.csv</text>
+    <text x="271" y="152" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="10.5" fill="#475569">(SR v1) or tissue_positions.csv (v2+)</text>
+    <line x1="271" y1="162" x2="459" y2="162" stroke="#E2E8F0" stroke-width="1"/>
+    <text x="271" y="180" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11.5" fill="#334155">Maps each barcode to:</text>
+    <text x="271" y="198" font-family="monospace" font-size="10.2" fill="#475569">in_tissue, array_row/col</text>
+    <text x="271" y="216" font-family="monospace" font-size="10.2" fill="#475569">pxl_row/col_in_fullres</text>
+    <text x="271" y="236" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="10.5" fill="#64748B">v2+ adds a CSV header row</text>
+  </g>
+
+  <line x1="474" y1="169" x2="488" y2="169" stroke="#475569" stroke-width="2" marker-end="url(#sp-arrow)"/>
+
+  <!-- Card 3 -->
+  <g filter="url(#sp-shadow)">
+    <rect x="492" y="88" width="212" height="162" rx="9" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.3"/>
+    <path d="M 492 97 Q 492 88 501 88 L 695 88 Q 704 88 704 97 L 704 118 L 492 118 Z" fill="#B45309"/>
+    <text x="504" y="108" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#FFFFFF">3. Images &amp; Scale Factors</text>
+    <text x="504" y="138" font-family="monospace" font-size="10.2" font-weight="600" fill="#B45309">scalefactors_json.json</text>
+    <text x="504" y="152" font-family="monospace" font-size="10.2" fill="#475569">tissue_lowres/hires_image.png</text>
+    <line x1="504" y1="162" x2="692" y2="162" stroke="#E2E8F0" stroke-width="1"/>
+    <text x="504" y="180" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11.5" fill="#334155">Converts full-res pixels:</text>
+    <text x="504" y="198" font-family="monospace" font-size="10.2" fill="#475569">pxl * tissue_lowres_scalef</text>
+    <text x="504" y="216" font-family="monospace" font-size="10.2" fill="#475569">spot_diameter_fullres</text>
+    <text x="504" y="236" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="10.5" fill="#64748B">Mismatch shifts or hides spots</text>
+  </g>
+
+  <line x1="707" y1="169" x2="721" y2="169" stroke="#475569" stroke-width="2" marker-end="url(#sp-arrow)"/>
+
+  <!-- Card 4 -->
+  <g filter="url(#sp-shadow)">
+    <rect x="725" y="88" width="209" height="162" rx="9" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.3"/>
+    <path d="M 725 97 Q 725 88 734 88 L 925 88 Q 934 88 934 97 L 934 118 L 725 118 Z" fill="#6D28D9"/>
+    <text x="737" y="108" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#FFFFFF">4. Spatial Object</text>
+    <text x="737" y="138" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11.5" font-weight="700" fill="#1E3A8A">R: Seurat</text>
+    <text x="737" y="154" font-family="monospace" font-size="10.2" fill="#334155">Load10X_Spatial() -&gt; slice1</text>
+    <line x1="737" y1="165" x2="922" y2="165" stroke="#E2E8F0" stroke-width="1"/>
+    <text x="737" y="184" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11.5" font-weight="700" fill="#0F766E">Python: Squidpy / AnnData</text>
+    <text x="737" y="200" font-family="monospace" font-size="10.2" fill="#334155">obsm["spatial"] (coords)</text>
+    <text x="737" y="216" font-family="monospace" font-size="10.2" fill="#334155">uns["spatial"] (img+scales)</text>
+    <text x="737" y="236" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="10.5" fill="#64748B">Verify alignment before clustering</text>
+  </g>
+
+  <!-- Bottom Section Label -->
+  <text x="26" y="276" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11.5" font-weight="700" fill="#0F766E" letter-spacing="0.4">B. MATCH THE METHOD TO THE ASSAY RESOLUTION AND PRIMARY ERROR MODE</text>
+
+  <!-- Resolution Tier 1 -->
+  <g filter="url(#sp-shadow)">
+    <rect x="26" y="286" width="292" height="136" rx="9" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.3"/>
+    <rect x="26" y="286" width="6" height="136" rx="3" fill="#1E3A8A"/>
+    <text x="44" y="308" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="12.5" font-weight="700" fill="#0F172A">Visium v1/v2 (55 um spots)</text>
+    <text x="44" y="326" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11" fill="#475569">~1-10+ cells per spot; ~3k-5k tissue spots</text>
+    <text x="44" y="348" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11.5" font-weight="600" fill="#9A3412">Risk: Cell mixing + lateral diffusion</text>
+    <text x="44" y="366" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11" fill="#334155">Spot clusters blend neighboring cell types.</text>
+    <text x="44" y="388" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="700" fill="#1E3A8A">Use:</text>
+    <text x="72" y="388" font-family="monospace" font-size="10.5" fill="#334155">RCTD (spacexr), cell2location</text>
+    <text x="44" y="406" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="10.5" fill="#64748B">Covered hands-on in this tutorial</text>
+  </g>
+
+  <!-- Resolution Tier 2 -->
+  <g filter="url(#sp-shadow)">
+    <rect x="334" y="286" width="292" height="136" rx="9" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.3"/>
+    <rect x="334" y="286" width="6" height="136" rx="3" fill="#0F766E"/>
+    <text x="352" y="308" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="12.5" font-weight="700" fill="#0F172A">Visium HD (2 um -> 8/16 um bins)</text>
+    <text x="352" y="326" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11" fill="#475569">Subcellular capture; ~10^5-10^6 bins/slide</text>
+    <text x="352" y="348" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11.5" font-weight="600" fill="#9A3412">Risk: RAM limits + sparse bin counts</text>
+    <text x="352" y="366" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11" fill="#334155">Full dense matrices overwhelm memory.</text>
+    <text x="352" y="388" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="700" fill="#0F766E">Use:</text>
+    <text x="380" y="388" font-family="monospace" font-size="10.5" fill="#334155">bin.size + SketchData / SpatialData</text>
+    <text x="352" y="406" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="10.5" fill="#64748B">See Seurat v5 &amp; spatialdata_io.visium_hd</text>
+  </g>
+
+  <!-- Resolution Tier 3 -->
+  <g filter="url(#sp-shadow)">
+    <rect x="642" y="286" width="292" height="136" rx="9" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.3"/>
+    <rect x="642" y="286" width="6" height="136" rx="3" fill="#6D28D9"/>
+    <text x="660" y="308" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="12.5" font-weight="700" fill="#0F172A">Xenium / CosMx / MERFISH</text>
+    <text x="660" y="326" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11" fill="#475569">Targeted panel; single-molecule (x, y, z)</text>
+    <text x="660" y="348" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11.5" font-weight="600" fill="#9A3412">Risk: Cell-segmentation spillover</text>
+    <text x="660" y="366" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11" fill="#334155">Expanded masks assign neighbor transcripts.</text>
+    <text x="660" y="388" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="700" fill="#6D28D9">Use:</text>
+    <text x="688" y="388" font-family="monospace" font-size="10.5" fill="#334155">Nuclear-only, Baysor, Proseg</text>
+    <text x="660" y="406" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="10.5" fill="#64748B">Check boundary sensitivity before labeling</text>
+  </g>
+</svg>

@@ -172,35 +172,62 @@ function toggleMobileMenu() {
 <img alt="scRNA-seq Basics" class="w-full aspect-video object-cover" decoding="async" loading="eager" src="../images/scrna-seq-basics.webp" width="1024" height="1024"/>
 </div>
 <nav aria-label="Learning path navigation" class="reader-toolbar"><span class="reader-toolbar__heading">Learning path</span><a href="../start-here.html#sh-single-cell" class="reader-toolbar__previous"><span class="reader-toolbar__direction"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5m0 0 7 7m-7-7 7-7"/></svg></span><span class="reader-toolbar__copy"><small>Previous path choice</small><strong>Back to single-cell choices</strong></span></a><a data-catalogue-return="" href="../tutorials.html" class="reader-toolbar__library"><span class="reader-toolbar__library-mark" aria-hidden="true"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="6" height="6" rx="1.3"/><rect x="14" y="4" width="6" height="6" rx="1.3"/><rect x="4" y="14" width="6" height="6" rx="1.3"/><rect x="14" y="14" width="6" height="6" rx="1.3"/></svg></span><span><small>Browse</small><strong>All tutorials</strong></span></a><a href="#reader-course-navigation" class="reader-toolbar__next"><span class="reader-toolbar__copy"><small>Several directions</small><strong>Choose a next step</strong></span><span class="reader-toolbar__direction"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14m0 0 7-7m-7 7-7-7"/></svg></span></a></nav>
-<article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--walkthrough"><p class="lesson-lead">This walkthrough takes a filtered 10x feature-barcode matrix from input checks through cell-level QC, normalization, PCA, neighbor graphs, clustering, and UMAP. It gives parallel Seurat and Scanpy examples; it does not claim that one set of QC thresholds fits every tissue.</p>
+<article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--walkthrough"><p class="lesson-lead">Turn a 10x Genomics feature-barcode count matrix into quality-filtered cells, principal components, graph-based clusters, and a UMAP embedding using parallel Seurat (R) and Scanpy (Python) workflows on the public PBMC 3k dataset.</p>
 <section class="lesson-summary tutorial-learning-contract" data-tutorial-format="hands-on-lab" aria-label="Learning format"><p><strong>Format: Hands-on lab.</strong> Run a full single-cell QC, normalization, PCA, clustering, and UMAP workflow on the public PBMC 3k matrix. Commands below stage the data locally and walk through parallel Seurat (R) and Scanpy (Python) scripts.</p></section>
-<h2>Learning objectives and prerequisites</h2>
-<p><strong>Learning objectives.</strong> After completing this tutorial, you will be able to:</p>
+<div class="lesson-summary">
+<p><strong>What problem this solves:</strong> Raw droplet single-cell count matrices mix intact cells with empty droplets, damaged cells leaking cytoplasmic RNA, and wide differences in sequencing depth. Clustering uncleaned counts groups technical artifacts instead of cell types.</p>
+<p><strong>What you will be able to do:</strong></p>
 <ul>
-<li>Perform rigorous quality control (QC) on a 10x Genomics single-cell RNA-seq (scRNA-seq) count matrix.</li>
-<li>Normalize and identify highly variable genes (HVGs).</li>
-<li>Compute PCA and choose components for downstream analysis using an elbow plot and heuristic checks.</li>
-<li>Generate 2D embeddings (UMAP) and perform graph-based clustering (Leiden or Louvain).</li>
-<li>Interpret QC metrics and common failure modes, and make principled adjustments to thresholds based on biology.</li>
+<li>Stage and verify a 10x Genomics Matrix Exchange directory (<code>matrix.mtx</code>, <code>barcodes.tsv</code>, and <code>genes.tsv</code> or <code>features.tsv.gz</code>).</li>
+<li>Compute per-cell quality control (QC) metrics (detected genes, UMI counts, mitochondrial RNA fraction) and inspect violin distributions before filtering.</li>
+<li>Normalize counts, select 2,000 highly variable genes (HVGs), scale expression, and choose principal components (PCs) from an elbow plot.</li>
+<li>Construct a nearest-neighbor graph, run Louvain or Leiden clustering, visualize embeddings with UMAP, and check clusters against canonical PBMC marker genes.</li>
 </ul>
-<p><strong>Prerequisites.</strong> You should be comfortable with the Linux command line, basic R, count matrices and gene identifiers, and introductory statistics. The main route uses Seurat in R. Install Scanpy only if you choose the optional Python alternative for the same QC-to-clustering task. The Python example also needs Scanpy's <code>scikit-misc</code> optional dependency for the <code>seurat_v3</code> highly-variable-gene flavor and an available Leiden backend for clustering; version-specific installation details are maintained in the official documentation. The next section provides a download and extraction command for the public PBMC 3k archive. Capture your environment versions with <code>sessionInfo()</code> in R or <code>python -c "import scanpy; print(scanpy.__version__)"</code> in Python.</p>
-<h2>Why this matters: biological and computational context</h2>
-<p>Single-cell RNA sequencing measures RNA molecules captured in individual barcodes. A barcode can represent a cell, an empty or background droplet, or more than one cell. Cell-level QC helps identify unusual libraries, but gene-count and mitochondrial metrics alone cannot distinguish every low-quality cell from a real rare or activated population. Keep the distributions and biological context in view when filtering.</p>
-<p>Two widely used toolkits for scRNA-seq are Seurat (R) and Scanpy (Python). This tutorial provides parallel example commands for both, so you can reproduce the pipeline in your preferred environment. The workflow is demonstrated on the 10x Genomics PBMC 3k dataset as a pedagogical example; the same principles apply to other datasets, but thresholds should be adapted to your tissue and experimental protocol.</p>
-<h2>Required files and workspace</h2>
-<p>The official <a href="https://satijalab.org/seurat/articles/pbmc3k_tutorial">Seurat PBMC 3k tutorial</a> links a public archive from 10x Genomics. From the tutorial project root, stage its legacy <code>matrix.mtx</code>, <code>barcodes.tsv</code>, and <code>genes.tsv</code> files at the expected path (the archive extracts under <code>filtered_gene_bc_matrices/hg19/</code>):</p>
+<p><strong>Prerequisites &amp; time:</strong> About 45-60 minutes. Assumes basic shell commands (<a href="command-line-part1.html">Command Line Part 1</a>), introductory R or Python, and familiarity with count matrices (<a href="introduction-to-bioinformatics.html">Introduction to Bioinformatics</a>).</p>
+<p><strong>Scope:</strong> Uses the public 10x Genomics PBMC 3k filtered matrix (<code>2,700</code> input barcodes) with Seurat v4/v5 in R as the primary executed route and Scanpy in Python as a parallel route. Example thresholds (<code>200-2,500</code> genes and <code>&lt;5%</code> mitochondrial counts) are teaching starting points for PBMCs, calibrated per tissue and protocol on real studies.</p>
+</div>
+
+<h2 id="biological-context">Why each stage exists before you run the code</h2>
+<p>In droplet single-cell RNA-seq, each droplet is tagged with a cell <strong>barcode</strong> (identifying the droplet) and each captured transcript carries a <strong>unique molecular identifier (UMI)</strong> (a random tag that collapses PCR duplicates so each original mRNA molecule counts once). Three QC covariates capture most library failures:</p>
+<ul>
+<li><strong>Detected genes per barcode</strong> (<code>nFeature_RNA</code> in Seurat; <code>n_genes_by_counts</code> in Scanpy): very low counts flag empty droplets or degraded fragments, while unusually high counts can flag doublets (two cells captured in one droplet).</li>
+<li><strong>Total UMI counts per barcode</strong> (<code>nCount_RNA</code> in Seurat; <code>total_counts</code> in Scanpy): measures sequencing depth and transcript capture per cell; scales strongly with detected genes.</li>
+<li><strong>Mitochondrial transcript percentage</strong> (<code>percent.mt</code> in Seurat; <code>pct_counts_mt</code> in Scanpy): when a cell membrane ruptures during dissociation, cytoplasmic mRNA leaks out while mitochondrial transcripts remain enclosed, raising the fraction of reads mapping to <code>MT-</code> genes.</li>
+</ul>
+<figure class="my-8 bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+<img src="../images/tutorial-figures/scrna-seq-basics-pipeline-map.svg" alt="Five-stage scRNA-seq preprocessing pipeline: Stage 1 Load and Cell QC with Read10X or read_10x_mtx; Stage 2 Normalize and select 2,000 HVGs while preserving unscaled data; Stage 3 Scale HVGs and compute PCA; Stage 4 Build k-NN or SNN graph and cluster with Louvain or Leiden; Stage 5 Compute UMAP and check marker genes." width="960" height="440" loading="lazy" decoding="async" class="w-full h-auto rounded-lg" style="aspect-ratio: 960 / 440;"/>
+<figcaption class="mt-3 text-sm text-gray-600"><strong>From raw counts to communities.</strong> Each stage narrows noise before clustering: QC removes damaged barcodes, normalization equalizes sequencing depth, HVGs focus on informative genes, PCA compresses correlated genes into orthogonal axes, and graph clustering runs in PC space before UMAP draws a 2D view.</figcaption>
+</figure>
+<p>Why the pipeline follows this exact order:</p>
+<ol>
+<li><strong>Cell QC before normalization:</strong> Removing broken droplets first prevents outlier cells from distorting gene-variance estimates during HVG selection.</li>
+<li><strong>Log-normalization (scale factor 10,000):</strong> Divides each cell's gene counts by its total UMI count, multiplies by <code>10,000</code> (counts per 10,000), and takes <code>log(1 + x)</code> so differences in sequencing depth do not dominate distances between cells.</li>
+<li><strong>Selecting 2,000 HVGs (and saving unscaled expression):</strong> Most of the ~33,000 annotated features are zero or invariant across cells. Restricting PCA to the 2,000 genes with the highest cell-to-cell variance concentrates biological signal and reduces memory, while keeping <code>adata.raw</code> (Scanpy) or the full <code>RNA</code> assay (Seurat) preserves all genes for later marker plots.</li>
+<li><strong>Scaling and PCA:</strong> Zero-centering and unit-variance scaling puts highly and moderately expressed HVGs on a comparable scale before PCA summarizes correlated gene programs (such as T-cell or monocyte modules) into 50 orthogonal principal components.</li>
+<li><strong>Neighbor graph, community detection, and UMAP:</strong> <code>FindNeighbors</code> / <code>sc.pp.neighbors</code> builds a k-nearest-neighbor graph in the selected PC space (here PCs 1-10), Louvain or Leiden partitions that graph into discrete communities, and UMAP projects the same neighborhood structure into two dimensions for inspection.</li>
+</ol>
+
+<h2 id="workspace-setup">Required files and workspace</h2>
+<p>The official <a href="https://satijalab.org/seurat/articles/pbmc3k_tutorial.html" rel="noopener noreferrer" target="_blank">Seurat PBMC 3k tutorial</a> uses a public 10x Genomics PBMC archive. From your project root, download and stage its legacy <code>matrix.mtx</code>, <code>barcodes.tsv</code>, and <code>genes.tsv</code> files under <code>data/pbmc3k/filtered_feature_bc_matrix</code> (the archive extracts under <code>filtered_gene_bc_matrices/hg19/</code>):</p>
 <pre><code>mkdir -p data/pbmc3k
 curl -L --fail --output /tmp/pbmc3k_filtered.tar.gz https://cf.10xgenomics.com/samples/cell/pbmc3k/pbmc3k_filtered_gene_bc_matrices.tar.gz
 tar -xzf /tmp/pbmc3k_filtered.tar.gz -C data/pbmc3k
 mv data/pbmc3k/filtered_gene_bc_matrices/hg19 data/pbmc3k/filtered_feature_bc_matrix
 ls -lh data/pbmc3k/filtered_feature_bc_matrix</code></pre>
-<p>The Scanpy reader recognizes the legacy <code>genes.tsv</code> layout; for current Cell Ranger v3+ input, use the <code>features.tsv.gz</code> layout documented by <a href="https://scanpy.readthedocs.io/en/stable/generated/scanpy.read_10x_mtx.html">Scanpy <code>read_10x_mtx</code></a>. Do not rename files to disguise a different layout. The Scanpy example selects gene-expression features; for multimodal matrices, inspect feature types and select the intended assay.</p>
+<div class="lesson-checkpoint">
+<p><strong>Check your staged directory:</strong> <code>ls -lh data/pbmc3k/filtered_feature_bc_matrix</code> should show three non-empty files: <code>barcodes.tsv</code>, <code>genes.tsv</code>, and <code>matrix.mtx</code>. Cell Ranger v2 exports uncompressed <code>genes.tsv</code>, whereas Cell Ranger v3+ exports compressed <code>barcodes.tsv.gz</code>, <code>features.tsv.gz</code>, and <code>matrix.mtx.gz</code>. Keep the native filenames; both <a href="https://satijalab.org/seurat/articles/essential_commands.html" rel="noopener noreferrer" target="_blank">Seurat <code>Read10X</code></a> and <a href="https://scanpy.readthedocs.io/en/stable/generated/scanpy.read_10x_mtx.html" rel="noopener noreferrer" target="_blank">Scanpy <code>read_10x_mtx</code></a> auto-detect both layouts. On multimodal matrices (such as CITE-seq), <code>Read10X()</code> returns a named list where you pass <code>pbmc.data[["Gene Expression"]]</code> to <code>CreateSeuratObject()</code>, while Scanpy uses <code>gex_only=True</code>.</p>
+</div>
 <ul>
-<li><code>data/pbmc3k/filtered_feature_bc_matrix/</code> contains the extracted legacy matrix with <code>barcodes.tsv</code> and <code>genes.tsv</code>; for Cell Ranger v3+ use the matching compressed <code>features.tsv.gz</code> layout.</li>
-<li>For R: you will create an R object file <code>results/pbmc_seurat.rds</code>.</li>
-<li>For Python: you will create AnnData files <code>results/pbmc_scanpy.h5ad</code> and intermediate figures in <code>results/figures/</code>.</li>
+<li><code>data/pbmc3k/filtered_feature_bc_matrix/</code>: staged 10x Matrix Exchange input.</li>
+<li><code>results/pbmc_seurat.rds</code> and <code>results/figures/*.png</code>: outputs created by the R/Seurat script.</li>
+<li><code>results/pbmc_scanpy.h5ad</code> and <code>results/figures/*.png</code>: outputs created by the optional Python/Scanpy script.</li>
 </ul>
-<h2>Reproducible sequential workflow</h2>
+<details class="mt-4 rounded-lg border border-gray-200 bg-gray-50 p-4">
+<summary class="font-medium cursor-pointer text-blue-700">Optional: software prerequisites and recording versions</summary>
+<p class="mt-2 text-sm text-gray-700">The main route uses R with <code>Seurat</code> (v4 or v5) and <code>ggplot2</code>; running Leiden clustering in Seurat v5 (<code>algorithm = 4</code>) also requires the <code>leidenbase</code> R package. For the optional Python route, Scanpy requires <code>scikit-misc</code> for <code>flavor="seurat_v3"</code> and <code>igraph</code> plus <code>leidenalg</code> for <code>sc.tl.leiden</code>. Record your exact environment with <code>sessionInfo()</code> in R or <code>python -c "import scanpy; print(scanpy.__version__)"</code> in Python (see <a href="conda-mamba-part1.html">Conda &amp; Mamba Part 1</a> for isolated environments).</p>
+</details>
+
+<h2 id="reproducible-workflow">Reproducible sequential workflow</h2>
 <h3>Seurat (R) workflow</h3>
 <pre><code># R script: scripts/01_seurat_qc_clustering.R
 # Input: data/pbmc3k/filtered_feature_bc_matrix/
@@ -252,13 +279,13 @@ dev.off()
 # 8) Save object
 saveRDS(pbmc, file = "results/pbmc_seurat.rds")
 </code></pre>
-<p>The R script writes plots under <code>results/figures/</code> and saves the filtered Seurat object at the stated RDS path. The 200/2,500-gene and 5% mitochondrial examples are starting values shown for illustration, not a PBMC result or recommended universal cutoff. Inspect your own distributions before filtering.</p>
-<p>What each command produces:</p>
+<p>Save this script as <code>scripts/01_seurat_qc_clustering.R</code> and run it from the project root with <code>Rscript scripts/01_seurat_qc_clustering.R</code>. In Seurat v5, expression matrices live inside <code>Assay5</code> layers (<code>counts</code>, <code>data</code>, and <code>scale.data</code>, inspected with <code>Layers(pbmc)</code> or <code>LayerData()</code>); all functions above work identically across Seurat v4 and v5.</p>
+<p>Key outputs and what each step controls:</p>
 <ul>
-<li><code>VlnPlot</code> figure for per-cell QC distributions (nFeature_RNA = number of genes detected per cell, nCount_RNA = UMI counts, percent.mt = fraction of mitochondrial reads).</li>
-<li>Subsetted Seurat object with filtered cells (the subset call produces a smaller in-memory object).</li>
-<li><code>ElbowPlot</code> saved as PNG for choosing the number of PCs.</li>
-<li>UMAP plot and saved Seurat object <code>results/pbmc_seurat.rds</code>.</li>
+<li><code>min.cells = 3, min.features = 200</code> drops genes present in fewer than 3 cells and barcodes with fewer than 200 detected genes; <code>VlnPlot</code> saves <code>results/figures/qc_violin.png</code> so you can verify the <code>200-2,500</code> gene and <code>&lt;5%</code> mitochondrial cutoffs visually.</li>
+<li><code>NormalizeData</code>, <code>FindVariableFeatures(selection.method = "vst", nfeatures = 2000)</code>, and <code>ScaleData</code> standardize library depth and isolate the 2,000 most variable genes for PCA without modifying raw counts.</li>
+<li><code>ElbowPlot</code> saves <code>results/figures/pca_elbow.png</code> across 50 PCs so you can adjust <code>pcs &lt;- 1:10</code> before building the SNN graph (<code>FindNeighbors</code>) and Louvain clusters (<code>FindClusters</code>, default <code>algorithm = 1</code>; pass <code>algorithm = 4</code> for Leiden when <code>leidenbase</code> is installed).</li>
+<li><code>DimPlot</code> saves <code>results/figures/umap_clusters.png</code> and <code>saveRDS</code> writes <code>results/pbmc_seurat.rds</code> with cluster labels stored in <code>seurat_clusters</code>.</li>
 </ul>
 <h3>Scanpy (Python) workflow</h3>
 <pre><code># Python script: scripts/01_scanpy_qc_clustering.py
@@ -321,12 +348,12 @@ sc.tl.umap(adata)
 sc.pl.umap(adata, color=["leiden"], save="_umap_clusters.png")
 adata.write("results/pbmc_scanpy.h5ad")
 </code></pre>
-<p>What each command produces:</p>
+<p>Save this script as <code>scripts/01_scanpy_qc_clustering.py</code> and run it with <code>python3 scripts/01_scanpy_qc_clustering.py</code>. In Scanpy 1.10+, calling <code>sc.tl.leiden(adata, resolution=0.5)</code> without a backend emits a <code>FutureWarning</code> because the default backend is shifting from <code>leidenalg</code> to <code>igraph</code>; for new scripts, pass <code>flavor="igraph", n_iterations=2, directed=False</code> to silence the warning and use the faster backend.</p>
 <ul>
-<li>QC violin plots saved under <code>results/figures/</code> for visual threshold selection.</li>
-<li>Filtered AnnData object <code>results/pbmc_scanpy.h5ad</code> that contains expression, computed metrics, and cluster labels.</li>
-<li>PCA variance ratio figure to help pick the number of components.</li>
-<li>UMAP and cluster plots saved as image files.</li>
+<li><code>sc.pl.violin</code> writes <code>results/figures/violin_qc_violin.png</code> (Scanpy prepends the plot type to <code>save=</code>) and prints cell counts after each filter step.</li>
+<li><code>adata.layers["counts"]</code> retains unnormalized counts for <code>flavor="seurat_v3"</code>, while <code>adata.raw = adata.copy()</code> saves full log-normalized expression across all genes before slicing <code>adata</code> to 2,000 HVGs for <code>sc.pp.scale</code>.</li>
+<li><code>sc.pl.pca_variance_ratio</code> saves <code>results/figures/pca_variance_ratio_pca_elbow.png</code> so you can tune <code>n_pcs</code> before computing <code>sc.pp.neighbors</code>, <code>sc.tl.leiden</code>, and <code>sc.tl.umap</code>.</li>
+<li><code>adata.write</code> saves <code>results/pbmc_scanpy.h5ad</code> containing the scaled HVG matrix, <code>adata.raw</code>, <code>layers["counts"]</code>, PC/UMAP coordinates in <code>adata.obsm</code>, and cluster assignments in <code>adata.obs["leiden"]</code>.</li>
 </ul>
 <section id="pbmc3k-tested-worked-example" aria-labelledby="pbmc3k-tested-example-title">
 <h2 id="pbmc3k-tested-example-title">Tested worked example: public PBMC 3k</h2>
@@ -341,25 +368,32 @@ adata.write("results/pbmc_scanpy.h5ad")
 <tr><td>Fewer than 2,500 detected genes</td><td>2,695</td></tr>
 <tr><td>Mitochondrial-count percentage below 5</td><td>2,638</td></tr>
 </tbody></table></div>
-<p>The example removed 5 cells at the upper gene-count filter and another 57 at the mitochondrial filter: <strong>62 removed and 97.70% retained</strong>. These numbers are checkpoints for this archive and the shown parameters, not a target retention rate or proof that the filters are biologically optimal. Inspect distributions and the removed cells before adopting the same criteria for another sample.</p>
+<p>The example removed 5 cells at the upper gene-count filter and another 57 at the mitochondrial filter: <strong>62 removed and 97.70% retained</strong>. Treat these checkpoints as verification that your local script read the archive and applied the cutoffs as written, not as a target retention rate for every experiment.</p>
+<div class="lesson-checkpoint">
+<p><strong>Expected console checkpoint (R/Seurat run):</strong></p>
+<p><code>Cells before QC filters: 2700</code><br/>
+<code>After gene-count filters: 2695</code><br/>
+<code>After mitochondrial filter: 2638</code></p>
+<p><strong>If a number is 0 or drops sharply:</strong> Stop before normalization. Confirm <code>data/pbmc3k/filtered_feature_bc_matrix/</code> is non-empty and verify that your mitochondrial pattern (<code>^MT-</code> for human symbols) matches the gene names in <code>genes.tsv</code>.</p>
+</div>
 <figure id="pbmc3k-tested-qc-figure" aria-labelledby="pbmc3k-tested-qc-caption">
 <a href="../images/tutorial-figures/scrna-seq-basics-r-pbmc3k-qc.png" target="_blank" rel="noopener noreferrer" aria-label="Open the R Seurat PBMC quality-control violin plot at full size"><img src="../images/tutorial-figures/scrna-seq-basics-r-pbmc3k-qc.png" alt="Seurat violin plots of detected genes, UMI counts, and mitochondrial-read percentage across 2,700 public PBMC 3k input cells before filtering." width="1200" height="400" loading="lazy" decoding="async" style="display:block;width:100%;height:auto;aspect-ratio: 1200 / 400;"/></a>
-<figcaption id="pbmc3k-tested-qc-caption" class="tutorial-figure-caption"><p><strong>QC before filtering.</strong> Seurat violin plots show detected genes, UMI counts, and mitochondrial-read percentage across 2,700 input cells. They support inspection of this sample; they do not diagnose doublets or validate universal cutoffs. Generated by the R/Seurat workflow from the public <a href="https://cf.10xgenomics.com/samples/cell/pbmc3k/pbmc3k_filtered_gene_bc_matrices.tar.gz">10x Genomics PBMC 3k filtered matrix</a>.</p></figcaption>
+<figcaption id="pbmc3k-tested-qc-caption" class="tutorial-figure-caption"><p><strong>QC before filtering.</strong> Seurat violin plots show detected genes (<code>nFeature_RNA</code>), UMI counts (<code>nCount_RNA</code>), and mitochondrial percentage (<code>percent.mt</code>) across 2,700 PBMC 3k input cells. Most cells sit between 500 and 2,000 detected genes and below 5% mitochondrial reads, with a small upper tail of candidate multiplets and dying cells. Generated by the R/Seurat workflow from the public <a href="https://cf.10xgenomics.com/samples/cell/pbmc3k/pbmc3k_filtered_gene_bc_matrices.tar.gz">10x Genomics PBMC 3k filtered matrix</a>.</p></figcaption>
 </figure>
 <figure id="pbmc3k-tested-pca-figure" aria-labelledby="pbmc3k-tested-pca-caption">
 <a href="../images/tutorial-figures/scrna-seq-basics-r-pbmc3k-elbow.png" target="_blank" rel="noopener noreferrer" aria-label="Open the R Seurat PBMC PCA elbow plot at full size"><img src="../images/tutorial-figures/scrna-seq-basics-r-pbmc3k-elbow.png" alt="Seurat elbow plot of standard deviation across the first 50 principal components for the public PBMC 3k run." width="800" height="600" loading="lazy" decoding="async" style="display:block;width:100%;height:auto;aspect-ratio: 800 / 600;"/></a>
-<figcaption id="pbmc3k-tested-pca-caption" class="tutorial-figure-caption"><p><strong>PCA elbow diagnostic.</strong> Seurat computed 50 principal components; the displayed workflow uses the first 10 for its neighbor graph. That range was not independently optimized for this sample. Inspect variance decay and marker or covariate relationships when choosing components. Generated by the R/Seurat workflow from the public <a href="https://cf.10xgenomics.com/samples/cell/pbmc3k/pbmc3k_filtered_gene_bc_matrices.tar.gz">10x Genomics PBMC 3k filtered matrix</a>.</p></figcaption>
+<figcaption id="pbmc3k-tested-pca-caption" class="tutorial-figure-caption"><p><strong>PCA elbow diagnostic.</strong> Standard deviation drops steeply across the first 8-10 PCs before flattening around PC 10-15. The script uses PCs 1-10 for the neighbor graph; on more complex tissues, compare 15-30 PCs and check whether marker genes separate cleanly. Generated by the R/Seurat workflow from the public <a href="https://cf.10xgenomics.com/samples/cell/pbmc3k/pbmc3k_filtered_gene_bc_matrices.tar.gz">10x Genomics PBMC 3k filtered matrix</a>.</p></figcaption>
 </figure>
 <figure id="pbmc3k-tested-umap-figure" aria-labelledby="pbmc3k-tested-umap-caption">
 <a href="../images/tutorial-figures/scrna-seq-basics-r-pbmc3k-umap.png" target="_blank" rel="noopener noreferrer" aria-label="Open the R Seurat PBMC UMAP at full size"><img src="../images/tutorial-figures/scrna-seq-basics-r-pbmc3k-umap.png" alt="UMAP of 2,638 retained public PBMC cells colored and labeled by nine Seurat Louvain communities, numbered 0 through 8; these are not cell-type labels." width="800" height="600" loading="lazy" decoding="async" style="display:block;width:100%;height:auto;aspect-ratio: 800 / 600;"/></a>
-<figcaption id="pbmc3k-tested-umap-caption" class="tutorial-figure-caption"><p><strong>Clustering output, not cell-type validation.</strong> Seurat produced nine Louvain communities at resolution 0.5 among the 2,638 cells retained by the example filters. These numeric labels are computational groups, not cell-type identities. No cell-type annotation, doublet calling, or clinical validation was performed. UMAP axes and gaps are not calibrated biological distances. Generated by the R/Seurat workflow from the public <a href="https://cf.10xgenomics.com/samples/cell/pbmc3k/pbmc3k_filtered_gene_bc_matrices.tar.gz">10x Genomics PBMC 3k filtered matrix</a>.</p></figcaption>
+<figcaption id="pbmc3k-tested-umap-caption" class="tutorial-figure-caption"><p><strong>Clustering output, not cell-type validation.</strong> Seurat produced nine Louvain communities (0-8) at resolution 0.5 among the 2,638 retained cells. These numeric labels are computational groups, not cell-type identities. No cell-type annotation, doublet calling, or clinical validation was performed. UMAP axes and inter-cluster gaps are not calibrated biological distances. Generated by the R/Seurat workflow from the public <a href="https://cf.10xgenomics.com/samples/cell/pbmc3k/pbmc3k_filtered_gene_bc_matrices.tar.gz">10x Genomics PBMC 3k filtered matrix</a>.</p></figcaption>
 </figure>
 <h3>Inspect the saved Seurat object alongside the plots</h3>
-<p>The saved object <code>results/pbmc_seurat.rds</code> contains the post-filter Seurat analysis. In this execution, 2,638 cells remained after the example filters; 2,000 variable features were selected, 50 PCs computed, and the first 10 PCs used for neighbors, clustering, and UMAP. The plotted groups are computational communities, not validated cell types.</p>
+<p>The saved file <code>results/pbmc_seurat.rds</code> stores the 2,638 filtered cells, 2,000 variable features, 50 computed PCs, the 10-PC neighbor graph, Louvain clusters (<code>seurat_clusters</code>), and 2D UMAP coordinates.</p>
 <p><strong>Scope of verification:</strong> this execution verifies the displayed R/Seurat route on the public filtered count matrix only. The optional Scanpy route was not run as part of this execution. No marker-based annotation, doublet calling, clinical validation, or raw-read processing is represented by these figures.</p>
-<p><strong>Data source:</strong> <a href="https://cf.10xgenomics.com/samples/cell/pbmc3k/pbmc3k_filtered_gene_bc_matrices.tar.gz">10x Genomics PBMC 3k filtered matrix</a>, hg19 legacy layout. The cached official archive used for this run had SHA256 <code>847d6ebd9a1ec9a768f2be7e40ca42cbfe75ebeb6d76a4c24167041699dc28b5</code>.</p>
+<p><strong>Data source:</strong> <a href="https://cf.10xgenomics.com/samples/cell/pbmc3k/pbmc3k_filtered_gene_bc_matrices.tar.gz">10x Genomics PBMC 3k filtered matrix</a>, hg19 legacy layout (archive SHA256 <code>847d6ebd9a1ec9a768f2be7e40ca42cbfe75ebeb6d76a4c24167041699dc28b5</code>).</p>
 <h3>Optional PBMC marker sanity check</h3>
-<p>This illustrative marker-candidate panel lets you inspect expression across the saved Seurat clusters. Treat this marker plot as a quick sanity check that clusters reflect real biology rather than a finished cell-type annotation. Always confirm gene symbols exist in your matrix and check multiple markers before assigning labels.</p>
+<p>Before assigning biological names, verify that your numeric clusters correspond to coherent immune gene programs using a canonical PBMC marker panel: B cells (<code>MS4A1</code>, <code>CD79A</code>), T cells (<code>CD3D</code>, <code>IL7R</code>), NK cells (<code>NKG7</code>), monocytes (<code>LYZ</code>, <code>FCGR3A</code>), and platelets (<code>PPBP</code>). Checking expression across clusters confirms the clustering reflects real biology rather than library depth alone.</p>
 <pre><code class="language-r">library(Seurat)
 
 pbmc &lt;- readRDS("results/pbmc_seurat.rds")
@@ -386,10 +420,11 @@ if (length(features)) {
 } else {
   message("No candidate genes are present; no plot made.")
 }</code></pre>
-<p>Candidate expression alone does not establish cell identity. Interpret any plot alongside broader marker patterns, QC, and biological context.</p>
+<p>Candidate dot plots are a sanity check rather than formal annotation; for full reference mapping and statistical marker testing, continue to <a href="cell-type-annotation-methods.html">Cell-Type Annotation Methods</a>.</p>
 </section>
+
 <figure id="scrna-basics-public-arabidopsis-umap" class="my-8" aria-labelledby="scrna-basics-public-arabidopsis-umap-caption">
-<a href="../images/tutorial-figures/public-plant-clusters.png" target="_blank" rel="noopener noreferrer" aria-label="Open this figure at full size"><img src="../images/tutorial-figures/public-plant-clusters.png" alt="Two views of the same UMAP embedding of Arabidopsis root cells, with axes UMAP1 and UMAP2. Each point is a cell. The left panel, titled 'leiden,' colors cells by clusters 0–12; these numbers are cluster identifiers, not cell-type names. The right panel, titled 'batch' in the source, colors short-root mutant cells (shr) purple and wild-type cells (wt) red; these labels identify biological genotypes, not technical batches. This is a separate public example, not an output of the OmicsHub PBMC workflow." width="1221" height="429" loading="lazy" decoding="async" style="display:block;width:100%;height:auto;aspect-ratio: 1221 / 429;"/></a>
+<a href="../images/tutorial-figures/public-plant-clusters.png" target="_blank" rel="noopener noreferrer" aria-label="Open this figure at full size"><img src="../images/tutorial-figures/public-plant-clusters.png" alt="Two views of the same UMAP embedding of Arabidopsis root cells, with axes UMAP1 and UMAP2. Each point is a cell. The left panel, titled 'leiden,' colors cells by clusters 0-12; these numbers are cluster identifiers, not cell-type names. The right panel, titled 'batch' in the source, colors short-root mutant cells (shr) purple and wild-type cells (wt) red; these labels identify biological genotypes, not technical batches. This is a separate public example, not an output of the OmicsHub PBMC workflow." width="1221" height="429" loading="lazy" decoding="async" style="display:block;width:100%;height:auto;aspect-ratio: 1221 / 429;"/></a>
 <figcaption id="scrna-basics-public-arabidopsis-umap-caption" class="tutorial-figure-caption">
   <div class="figure-caption-heading">
     <strong class="figure-caption-title">Reading clusters and sample labels</strong>
@@ -407,74 +442,123 @@ if (length(features)) {
   </div>
 </figcaption>
 </figure>
-<h2>Checking what the run produced</h2>
-<p>At each stage inspect both numeric summaries and visual diagnostics. Key places to look and how to interpret them:</p>
 
-<figure class="my-8 bg-white border border-gray-200 rounded-xl p-4 shadow-sm"><img src="../images/tutorial-figures/pbmc10x-qc-violin-prefilter.png" alt="Pre-filter scRNA-seq violin distributions of nFeature_RNA, nCount_RNA, and percent.mt in public 10x PBMC data" width="1152" height="768" loading="lazy" class="w-full h-auto rounded-lg" style="aspect-ratio: 1152 / 768;"/><figcaption class="mt-3 text-sm text-gray-600">Public 10x PBMC dataset pre-filter QC distributions before removing high-mitochondrial (>7%) or extreme-count outlier droplets.</figcaption></figure>
+<h2 id="decision-guide">Decision guide: choosing parameters and methods</h2>
+<p>The PBMC 3k script uses simple defaults so every step is transparent. When you move to multi-sample studies or non-PBMC tissues, use this table to decide when to stick with the defaults and when to switch methods:</p>
+<div class="overflow-x-auto"><table>
+<thead>
+<tr>
+<th scope="col">Decision</th>
+<th scope="col">Starter default</th>
+<th scope="col">Production / alternative</th>
+<th scope="col">When to switch</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Cell QC cutoffs</strong></td>
+<td>Fixed bounds (<code>200-2,500</code> genes, <code>&lt;5%</code> MT)</td>
+<td>Sample-stratified MAD outliers (<code>scuttle::isOutlier</code>) + doublet caller (<code>scDblFinder</code> / <code>Scrublet</code>) + ambient RNA removal (<code>SoupX</code> / <code>CellBender</code>)</td>
+<td>Switch for multi-batch studies, high-mito tissues (heart, kidney, liver, tumors), or libraries with &gt;3,000 cells where doublets exceed ~2-3%.</td>
+</tr>
+<tr>
+<td><strong>Normalization</strong></td>
+<td><code>LogNormalize</code> (scale <code>1e4</code> + <code>log1p</code>)</td>
+<td><code>SCTransform</code> (regularized negative binomial residuals, SCT v2 in Seurat)</td>
+<td>Use <code>SCTransform</code> when sequencing depth varies widely or when regressing covariates like <code>percent.mt</code>; stick with <code>LogNormalize</code> for &gt;300,000 cells or non-UMI protocols like Smart-seq2.</td>
+</tr>
+<tr>
+<td><strong>PC count</strong></td>
+<td><code>1:10</code></td>
+<td><code>1:15</code> to <code>1:30</code></td>
+<td>Increase when the elbow plot decays gradually or when rare subclusters only separate at higher PCs; check PC gene loadings first.</td>
+</tr>
+<tr>
+<td><strong>Clustering algorithm &amp; resolution</strong></td>
+<td>Louvain (<code>algorithm = 1</code>, <code>res = 0.5</code>) or Scanpy Leiden</td>
+<td>Leiden (Seurat <code>algorithm = 4</code> with <code>leidenbase</code>; Scanpy <code>flavor="igraph", n_iterations=2, directed=False</code>)</td>
+<td>Prefer Leiden on large graphs because it guarantees connected communities; use lower resolution (<code>0.2-0.4</code>) for major lineages and higher (<code>0.8-1.2</code>) to inspect fine subtypes.</td>
+</tr>
+</tbody>
+</table></div>
+
+<h2 id="checking-and-troubleshooting">Interpreting outputs and troubleshooting common errors</h2>
+<p>Before moving downstream, confirm that your clusters reflect cell biology rather than technical artifacts:</p>
 <ul>
-<li><strong>QC violin plots:</strong> Compare detected genes per cell, total UMI counts, and mitochondrial-count percentage. Low values can flag low-complexity barcodes; high gene or count values can flag possible multiplets. These patterns are prompts for review, not diagnoses.</li>
-<li><strong>Mitochondrial fraction (<code>percent.mt</code> in Seurat; <code>pct_counts_mt</code> in Scanpy):</strong> A high fraction can accompany stressed or damaged cells, while mitochondria-rich cell types may be expected in some tissues. Interpret the distribution against tissue, protocol, and annotation. Neither one cutoff nor a high sample-wide median proves a preparation problem.</li>
-<li><strong>Retention after QC:</strong> Record how many barcodes remain at each filtering step and inspect which cells were removed. There is no universal target retention fraction; unusually large losses warrant checking paths, metric definitions, and thresholds. Each script prints the starting cell count and the retained count after each filter. Counts depend on the input and chosen cutoffs; treat them as a run checkpoint, not fixed expected biological results. If a checkpoint is zero or unexpectedly drops sharply, stop before normalization and inspect the input path, QC distributions, and threshold units.</li>
-<li><strong>Elbow plot / PCA variance:</strong> The "elbow" shows when additional PCs explain diminishing variance. Use the elbow as a guide (e.g., 10–30 PCs) but also inspect biological interpretability: do clusters separate only when you include more PCs? Visualize marker genes across PCs when uncertain.</li>
-<li><strong>UMAP/clustering:</strong> UMAP is a visualization and not a clustering algorithm. If cluster separations are weak in UMAP, check whether the clustering is driven by technical covariates (sequencing depth, percent.mt) by coloring UMAP by those metrics.</li>
+<li><strong>Color UMAP by QC covariates:</strong> Plot <code>nCount_RNA</code>, <code>nFeature_RNA</code>, and <code>percent.mt</code> (or <code>total_counts</code>, <code>n_genes_by_counts</code>, <code>pct_counts_mt</code>) on the UMAP. If an entire cluster is defined solely by low UMI counts or high mitochondrial fraction without distinct marker genes, inspect it as a candidate damaged-cell group.</li>
+<li><strong>Inspect doublet candidates carefully:</strong> A small cluster with high gene and UMI counts might be doublets (co-expressing mutually exclusive lineage markers such as <code>CD3D</code> and <code>MS4A1</code>) or a genuinely large, transcriptionally active population (such as cycling plasmablasts). Check marker co-expression before discarding it.</li>
+<li><strong>Check canonical PBMC markers:</strong> In healthy PBMCs, clusters typically align with naive/memory CD4+ T cells (<code>IL7R</code>, <code>CCR7</code>, <code>S100A4</code>), CD8+ T cells (<code>CD8A</code>), NK cells (<code>GNLY</code>, <code>NKG7</code>, low <code>CD3D</code>), B cells (<code>MS4A1</code>, <code>CD79A</code>), CD14+ monocytes (<code>CD14</code>, <code>LYZ</code>), FCGR3A+ monocytes (<code>FCGR3A</code>, <code>MS4A7</code>), dendritic cells (<code>FCER1A</code>, <code>CST3</code>), and platelets (<code>PPBP</code>).</li>
 </ul>
-<p>How to read the result without over-interpreting it:</p>
+<p>Common errors and symptoms with concrete fixes:</p>
 <ul>
-<li>Finding discrete clusters that correspond to known immune cell types (e.g., T cells, B cells, monocytes) is consistent with expected biology in PBMC samples. In the public PBMC 3k benchmark, canonical marker panels typically separate naive and memory CD4+ T cells (<code>IL7R</code>, <code>CCR7</code>, <code>S100A4</code>), CD8+ T cells (<code>CD8A</code>), NK cells (<code>GNLY</code>, <code>NKG7</code>, <code>CD3D</code>-low), B cells (<code>MS4A1</code>, <code>CD79A</code>), classical CD14+ monocytes (<code>CD14</code>, <code>LYZ</code>), non-classical FCGR3A+ monocytes (<code>FCGR3A</code>, <code>MS4A7</code>), dendritic cells (<code>FCER1A</code>, <code>CST3</code>), and platelets/megakaryocyte fragments (<code>PPBP</code>). Even clear marker enrichment remains expression-derived; orthogonal assays (flow cytometry, CITE-seq surface antibodies) strengthen cell-type claims.</li>
-<li>Beyond fixed teaching cutoffs (<code>200-2,500</code> genes and <code>&lt;5%</code> mitochondrial counts), multi-sample production pipelines combine sample-specific median-absolute-deviation (MAD) outlier rules (for example <code>scuttle::isOutlier</code>), explicit heterotypic doublet callers (<code>scDblFinder</code> in R or <code>Scrublet</code> in Python), and ambient cell-free RNA decontamination (<code>SoupX</code> or <code>CellBender</code>) when droplet background is high.</li>
-<li>Detecting a small cluster with high n_genes and n_counts might indicate doublets but could also be a biologically large or activated cell type (such as proliferating plasmablasts). Do not automatically remove such clusters without checking marker co-expression (for example simultaneous <code>CD3D</code> and <code>MS4A1</code>).</li>
-<li>A visually separated UMAP is neither necessary nor sufficient evidence of biological validity: batch effects, normalization artifacts, or inappropriate gene selection can create misleading visual separation. Validate the analysis with markers, technical-covariate checks, and relevant biological evidence.</li>
+<li><strong>Seurat error on multimodal 10x input (<code>Read10X()</code> returns a list):</strong><br/>
+<em>Cause:</em> Datasets with antibody capture (CITE-seq) or CRISPR guides return a named list rather than a single matrix, so <code>CreateSeuratObject(counts = pbmc.data)</code> fails.<br/>
+<em>Fix:</em> Check <code>names(pbmc.data)</code> and pass the RNA matrix explicitly: <code>CreateSeuratObject(counts = pbmc.data[["Gene Expression"]], ...)</code>.</li>
+<li><strong><code>percent.mt</code> is <code>0</code> for every cell:</strong><br/>
+<em>Cause:</em> Mouse gene symbols use lowercase <code>mt-</code> (not <code>MT-</code>), or your matrix uses Ensembl gene IDs (<code>ENSG...</code>) instead of gene symbols.<br/>
+<em>Fix:</em> Inspect <code>head(rownames(pbmc))</code> (R) or <code>adata.var_names[:10]</code> (Python). Use <code>pattern = "^mt-"</code> for mouse symbols, or match against the chromosome/MT gene list from your GTF if using Ensembl IDs.</li>
+<li><strong>Scanpy <code>ImportError</code> for <code>scikit-misc</code> or <code>igraph</code> / <code>leidenalg</code>:</strong><br/>
+<em>Cause:</em> <code>flavor="seurat_v3"</code> in <code>sc.pp.highly_variable_genes</code> needs <code>scikit-misc</code>, and <code>sc.tl.leiden</code> needs <code>igraph</code> and <code>leidenalg</code>.<br/>
+<em>Fix:</em> Install them in your active environment (<code>pip install scikit-misc igraph leidenalg</code> or via conda-forge). If <code>sc.tl.leiden</code> prints a <code>FutureWarning</code> about the default backend changing to <code>igraph</code>, pass <code>flavor="igraph", n_iterations=2, directed=False</code>.</li>
+<li><strong>Seurat v5 <code>GetAssayData</code> / <code>slot</code> deprecation errors when inspecting matrices:</strong><br/>
+<em>Cause:</em> Seurat v5 stores counts and normalized data in layers (<code>Assay5</code>) rather than v4 slots.<br/>
+<em>Fix:</em> Use <code>LayerData(pbmc, assay = "RNA", layer = "counts")</code> or <code>LayerData(pbmc, layer = "data")</code> instead of <code>slot = ...</code>.</li>
+<li><strong>Clusters driven by <code>nCount_RNA</code> or <code>percent.mt</code> instead of markers:</strong><br/>
+<em>Cause:</em> Sequencing depth or cell-stress variation dominates the top PCs, or multiple samples have batch effects.<br/>
+<em>Fix:</em> For single-sample technical trends, pass <code>vars.to.regress = c("nCount_RNA", "percent.mt")</code> to <code>ScaleData()</code> or <code>SCTransform()</code>. For multi-sample batches, use dedicated integration (see <a href="scrna-seq-integration-strategies.html">scRNA-seq Integration Strategies</a>).</li>
+<li><strong>No sharp elbow in PCA, or over-clustered UMAP:</strong><br/>
+<em>Cause:</em> Complex tissues decay smoothly in variance, or <code>resolution</code> is too high for the sample size.<br/>
+<em>Fix:</em> Inspect top PC gene loadings with <code>VizDimLoadings(pbmc, dims = 1:15)</code> or <code>DimHeatmap()</code> (prefer these over Seurat's slow, legacy <code>JackStraw</code> test, which is incompatible with <code>SCTransform</code>), and test resolutions from <code>0.3</code> to <code>0.8</code> alongside marker dot plots.</li>
 </ul>
-<h2>Troubleshooting</h2>
-<p>Common symptoms, likely causes, and practical fixes:</p>
-<ul>
-<li><strong>Symptom:</strong> Very low median genes/cell and many cells with zero or very few genes.<br/>
-<strong>Likely causes:</strong> Using the raw (unfiltered) matrix that includes ambient RNA, degraded sample, or wrong file path leading to an empty object.<br/>
-<strong>Fixes:</strong> Confirm the input files (matrix.mtx, barcodes.tsv) are present and non-empty. Use the 10x filtered matrix if intended. Check sample QC at the wet-lab stage.</li>
-<li><strong>Symptom:</strong> High fraction of mitochondrial reads across most cells.<br/>
-<strong>Likely causes:</strong> Cell lysis during dissociation, poor viability, or sequencing of RNA from dying cells.<br/>
-<strong>Fixes:</strong> Re-examine experimental protocol; increase mito cutoff if cells are known to be mitochondrial-rich (e.g., muscle), but document the rationale. Consider removing cells with extreme percent.mt values and check downstream impact.</li>
-<li><strong>Symptom:</strong> Clusters correlate with n_counts or percent.mt rather than biological markers.<br/>
-<strong>Likely causes:</strong> Technical variation dominating the signal (batch effects, library size differences).<br/>
-<strong>Fixes:</strong> Regress out technical covariates during scaling (for example <code>ScaleData(..., vars.to.regress = c("nCount_RNA", "percent.mt"))</code> in Seurat) or apply multi-sample integration (Harmony, Seurat v5 <code>IntegrateLayers</code>, or scVI) when combining distinct batches.</li>
-<li><strong>Symptom:</strong> Too many small clusters or over-clustering.<br/>
-<strong>Likely causes:</strong> High clustering resolution or too many PCs with noise.<br/>
-<strong>Fixes:</strong> Lower clustering resolution (e.g., from 1.0 to 0.4), reduce number of PCs, or merge clusters based on marker gene expression.</li>
-<li><strong>Symptom:</strong> No clear elbow in PCA variance plot.<br/>
-<strong>Likely causes:</strong> Gradual decay of variance due to continuous biological gradients or high noise.<br/>
-<strong>Fixes:</strong> Inspect top PC gene loadings (<code>VizDimLoadings</code> / <code>DimHeatmap</code>) and evaluate whether cluster identities and biological markers remain stable across a sensible PC range (for example 15, 25, and 35 PCs). Note that Seurat's older <code>JackStraw</code> permutation test is computationally slow, legacy, and incompatible with <code>SCTransform</code> workflows.</li>
-</ul>
-<h2>Practical boundaries and version notes</h2>
-<p><strong>A few boundary notes:</strong></p>
-<ul>
-<li>Tool versions matter. Seurat and Scanpy APIs and defaults change between major releases; scripts should pin package versions or be run in a reproducible environment (container or conda environment). Record the exact package versions used when producing results.</li>
-<li>Reference genomes and gene identifiers: 10x datasets can be aligned to different references (hg19, GRCh38). Gene name prefixes (e.g., MT- vs mt-) vary; pattern matching for mitochondrial genes must reflect your annotation source.</li>
-<li>Thresholds (percent.mt, gene/UMI cutoffs, number of PCs, clustering resolution) are dataset- and biology-specific. Default tutorial values are starting points, not universal rules. For disease contexts (e.g., tumors), many canonical thresholds are inappropriate and can remove biologically relevant populations.</li>
-<li>UMAP uses a stochastic algorithm. Record random seeds, toolkit versions, and graph parameters; the tested Scanpy 1.11.5 workflow uses the default random state of 0. Identical seeds do not guarantee matching embeddings across software versions or platforms.</li>
-<li>Ethical/responsible use: scRNA-seq from human samples may contain personally identifiable information in metadata. Follow data-use agreements and IRB guidance for controlled-access datasets.</li>
-</ul>
-<h2>Checklist before moving on</h2>
+
+<section class="lesson-exercise" aria-labelledby="practice-check-title">
+<h2 id="practice-check-title">Practice check: diagnose two QC scenarios</h2>
 <ol>
-<li>Confirm input files: <code>data/pbmc3k/filtered_feature_bc_matrix/</code> contains valid 10x files.</li>
-<li>Run the provided R or Python script and inspect saved figures in <code>results/figures/</code>.</li>
-<li>Adjust QC thresholds based on violin plots and biological expectations; re-run filtering if needed.</li>
-<li>Decide on number of PCs using ElbowPlot and biological tests (marker separation); recompute neighbors and clustering if you change PCs.</li>
-<li>Annotate clusters with marker genes, and validate with orthogonal data where available.</li>
-<li>Record software versions, random seeds, and input file checksums for reproducibility.</li>
+<li><strong>Scenario A:</strong> In a 10,000-cell PBMC run, Cluster 7 (90 cells) has twice the median <code>nFeature_RNA</code> and <code>nCount_RNA</code> of all other clusters and expresses both <code>CD3D</code> (T-cell marker) and <code>MS4A1</code> (B-cell marker). Should you keep it as a rare hybrid cell type or flag it?</li>
+<li><strong>Scenario B:</strong> On a dissociated human kidney biopsy, 38% of cells have <code>percent.mt</code> between 6% and 14% with high <code>nFeature_RNA</code> and normal tubular marker expression. Should you apply the PBMC <code>percent.mt &lt; 5</code> cutoff?</li>
+</ol>
+<details class="mt-3 rounded-lg border border-gray-200 bg-gray-50 p-4">
+<summary class="font-medium cursor-pointer text-blue-700">Check your reasoning</summary>
+<p class="mt-2 text-sm text-gray-700"><strong>Scenario A:</strong> Flag Cluster 7 as likely T-cell/B-cell doublets and confirm with a doublet caller (<code>scDblFinder</code> or <code>Scrublet</code>). High UMI and gene counts plus co-expression of mutually exclusive lineage markers is a classic heterotypic doublet signature, whereas cycling plasmablasts show high counts with B-cell/plasma markers (<code>MZB1</code>, <code>JCHAIN</code>, <code>MKI67</code>) rather than <code>CD3D</code>.</p>
+<p class="mt-2 text-sm text-gray-700"><strong>Scenario B:</strong> Do not blindly apply <code>percent.mt &lt; 5</code>. Renal proximal tubule cells are mitochondria-rich; a strict 5% cutoff would discard viable epithelium. Plot <code>nFeature_RNA</code> against <code>percent.mt</code> per sample, distinguish damaged low-gene/high-MT cells from high-gene/moderate-MT tubular cells, and set a tissue-appropriate or MAD-based threshold.</p>
+</details>
+</section>
+
+<h2 id="practical-boundaries">Practical boundaries and version notes</h2>
+<ul>
+<li><strong>Pin package versions:</strong> Seurat and Scanpy defaults evolve across major releases. Record <code>sessionInfo()</code> (R) or <code>pip freeze</code> (Python) alongside your analysis script.</li>
+<li><strong>Match mitochondrial patterns to your reference:</strong> Human symbols use <code>^MT-</code>, mouse uses <code>^mt-</code>, and Ensembl IDs require mapping against mitochondrial gene annotations.</li>
+<li><strong>UMAP reproducibility:</strong> UMAP is stochastic and version-sensitive. Record random seeds (Scanpy defaults to <code>random_state=0</code>; Seurat defaults to <code>seed.use = 42</code> in <code>RunUMAP</code>) and do not expect identical coordinates across OSes or package versions.</li>
+<li><strong>Human data governance:</strong> Clinical or donor scRNA-seq matrices can carry identifiable metadata; follow IRB and data-use agreements before sharing objects.</li>
+</ul>
+
+<h2 id="checklist">Checklist before moving on</h2>
+<ol>
+<li>Confirm <code>data/pbmc3k/filtered_feature_bc_matrix/</code> holds valid 10x files and log your starting cell count.</li>
+<li>Inspect <code>qc_violin.png</code> before applying filters; confirm retained cell counts match expectations without silent zeroing.</li>
+<li>Verify <code>pca_elbow.png</code> and adjust PC count if major biological variation extends past PC 10.</li>
+<li>Check <code>umap_clusters.png</code> colored by both QC covariates and canonical markers before assigning biological labels.</li>
+<li>Archive software versions, random seeds, and input checksums alongside <code>results/pbmc_seurat.rds</code> or <code>results/pbmc_scanpy.h5ad</code>.</li>
 </ol>
 <aside aria-label="Author's lab note" class="lesson-summary">
 <p><strong>Author's lab note:</strong> When I move from PBMC benchmarks to real tumour biopsies or metabolically active tissues (such as kidney, myocardium, or hepatocytes), the classic 5% mitochondrial cutoff almost always throws away real biological populations. I plot <code>nFeature_RNA</code> against <code>percent.mt</code> separately for each library first, flag outliers with sample-stratified MAD bounds, and check whether high-mito clusters express coherent epithelial or stromal markers before removing a single cell.</p>
 </aside>
-<h2>References</h2>
+<h2 id="references">References</h2>
 <ul>
 <li>Hao Y, Stuart T, Kowalski MH, et al. (2024). Dictionary learning for integrative, multimodal and scalable single-cell analysis. <em>Nature Biotechnology</em>, 42, 293-304 (Seurat v5). <a href="https://doi.org/10.1038/s41587-023-01767-y" rel="noopener" target="_blank">doi:10.1038/s41587-023-01767-y</a></li>
 <li>Wolf FA, Angerer P, Theis FJ (2018). SCANPY: large-scale single-cell gene expression data analysis. <em>Genome Biology</em>, 19, 15. <a href="https://doi.org/10.1186/s13059-017-1382-0" rel="noopener" target="_blank">doi:10.1186/s13059-017-1382-0</a></li>
 <li>Traag VA, Waltman L, van Eck NJ (2019). From Louvain to Leiden: guaranteeing well-connected communities. <em>Scientific Reports</em>, 9, 5233. <a href="https://doi.org/10.1038/s41598-019-41695-z" rel="noopener" target="_blank">doi:10.1038/s41598-019-41695-z</a></li>
 <li>Luecken MD, Theis FJ (2019). Current best practices in single-cell RNA-seq analysis: a tutorial. <em>Molecular Systems Biology</em>, 15(6), e8746. <a href="https://doi.org/10.15252/msb.20188746" rel="noopener" target="_blank">doi:10.15252/msb.20188746</a></li>
-<li>Butler A, Hoffman P, Smibert P, Papalexi E, Satija R (2018). Integrating single-cell transcriptomic data across different conditions, technologies, and species. <em>Nature Biotechnology</em>, 36, 411-420. <a href="https://www.nature.com/articles/nbt.4096" rel="noopener" target="_blank">doi:10.1038/nbt.4096</a></li>
-<li><a href="https://satijalab.org/seurat/">Seurat official documentation</a>, <a href="https://scanpy.readthedocs.io/">Scanpy documentation</a>, and <a href="https://www.10xgenomics.com/support/single-cell-gene-expression">10x Genomics Gene Expression support</a></li>
+<li>Heumos L, Schaar AC, Lance C, et al. (2023). Best practices for single-cell analysis across modalities. <em>Nature Reviews Genetics</em>, 24, 550-572, and <a href="https://www.sc-best-practices.org/rna/quality_control.html" rel="noopener" target="_blank">Single-cell Best Practices: Quality Control</a>.</li>
+<li>Official tool docs: <a href="https://satijalab.org/seurat/articles/pbmc3k_tutorial.html" rel="noopener" target="_blank">Seurat PBMC 3k vignette</a>, <a href="https://satijalab.org/seurat/articles/sctransform_vignette.html" rel="noopener" target="_blank">Seurat SCTransform vignette</a>, <a href="https://scanpy.readthedocs.io/en/stable/" rel="noopener" target="_blank">Scanpy documentation</a>, and <a href="https://www.10xgenomics.com/support/single-cell-gene-expression" rel="noopener" target="_blank">10x Genomics Gene Expression support</a>.</li>
 </ul>
-<div class="lesson-reference"><strong>Choosing downstream methods:</strong> Compare single-cell pseudobulk DE, compositional analysis, signaling, and multimodal workflows in <a href="scrna-seq-downstream-analysis.html">Single-Cell RNA-seq Downstream Analysis</a>.</div>
+<div class="lesson-reference">
+<p><strong>Next steps in this track:</strong></p>
+<ul>
+<li>Deepen sample and droplet QC in <a href="quality-control-fundamentals.html">Quality Control Fundamentals</a> or evaluate multi-batch integration in <a href="scrna-seq-quality-control.html">scRNA-seq Integration QC: LISI and Silhouette</a> and <a href="scrna-seq-integration-strategies.html">scRNA-seq Integration Strategies</a>.</li>
+<li>Move from numeric clusters to labeled cell types in <a href="cell-type-annotation-methods.html">Cell-Type Annotation Methods</a> and compare pseudobulk differential expression and signaling in <a href="scrna-seq-downstream-analysis.html">Single-Cell RNA-seq Downstream Analysis</a>.</li>
+</ul>
+</div>
 <aside aria-labelledby="tutorial-feedback-title" class="lesson-feedback" id="tutorial-feedback"><h2 id="tutorial-feedback-title">Help improve this tutorial</h2><p>Found an error, a broken link, or a step that needs a clearer explanation? Please <a href="../contact.html">contact me</a>. Your feedback helps me keep this resource accurate and useful.</p></aside></article>
 <section class="mt-12 mb-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-100">
 <div class="flex items-start gap-4">
@@ -613,7 +697,7 @@ if (length(features)) {
 </script>
 <script src="../assets/vendor/prism/prism-1.29.0.js"></script>
 <script id="tutorial-code-data">
-window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"scrna-seq-basics":{"blocks":[{"language":"bash","sha256":"f68a64402c57ba060c2ccfc592828a80a666f62cbe830cdf01466cc7b6a97883"},{"language":"r","sha256":"65f9516fb31f7de082048fef07fe91109adab1cbb65980679bcdb9ea706c6f9d"},{"language":"python","sha256":"ae3d41dec12b09a51865e692381014f813a0df8d30db29115be2d269e03df81a"},{"language":"r","sha256":"185dfc63e833ec359e82c1b64469c45cd5cfcac0cc05a78ca8b692254c8c8cc7"}],"groups":[{"title":"QC and clustering","panels":[{"start":15,"end":19,"language":"r","label":"R \u00b7 Seurat"},{"start":20,"end":23,"language":"python","label":"Python \u00b7 Scanpy"}],"members":[{"index":15,"tag":"h3","sha256":"fffdb7014be67b88220bc33cb0e9051dbddc6e71117cdd39a85a53c661ee08bf"},{"index":16,"tag":"pre","sha256":"65f9516fb31f7de082048fef07fe91109adab1cbb65980679bcdb9ea706c6f9d"},{"index":17,"tag":"p","sha256":"68e667d153df3e84cf91cf11a1dc00bb105c66bdfbfb4bc41806a66daa975b7e"},{"index":18,"tag":"p","sha256":"3df2127912210ef4139e531f2e6e08bdd8c2ffa465be1d98dec5eb665de0008e"},{"index":19,"tag":"ul","sha256":"fe79f3a7bbec5a1386ec6fc306c74d49f201651785bc837d48c5be182d22cbf7"},{"index":20,"tag":"h3","sha256":"70cd4f647d6c605d98691a18d0178e7d8f163c2dfbe1ee8acadaac90b15a460f"},{"index":21,"tag":"pre","sha256":"ae3d41dec12b09a51865e692381014f813a0df8d30db29115be2d269e03df81a"},{"index":22,"tag":"p","sha256":"3df2127912210ef4139e531f2e6e08bdd8c2ffa465be1d98dec5eb665de0008e"},{"index":23,"tag":"ul","sha256":"74ccef7ecae8884b88037545ebca582f93deec9f05904c54fae462a86e3e1bf8"}],"tabOrder":["r","python"]}]}}};
+window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"scrna-seq-basics":{"blocks":[{"language":"bash","sha256":"f68a64402c57ba060c2ccfc592828a80a666f62cbe830cdf01466cc7b6a97883"},{"language":"r","sha256":"65f9516fb31f7de082048fef07fe91109adab1cbb65980679bcdb9ea706c6f9d"},{"language":"python","sha256":"ae3d41dec12b09a51865e692381014f813a0df8d30db29115be2d269e03df81a"},{"language":"r","sha256":"185dfc63e833ec359e82c1b64469c45cd5cfcac0cc05a78ca8b692254c8c8cc7"}],"groups":[{"title":"QC and clustering","panels":[{"start":16,"end":20,"language":"r","label":"R \u00b7 Seurat"},{"start":21,"end":24,"language":"python","label":"Python \u00b7 Scanpy"}],"members":[{"index":16,"tag":"h3","sha256":"fffdb7014be67b88220bc33cb0e9051dbddc6e71117cdd39a85a53c661ee08bf"},{"index":17,"tag":"pre","sha256":"65f9516fb31f7de082048fef07fe91109adab1cbb65980679bcdb9ea706c6f9d"},{"index":18,"tag":"p","sha256":"67347a3868a7ce529fa4aef9f8bf0a1ccc0dd56e5144d535a909f4d68c12ff6a"},{"index":19,"tag":"p","sha256":"d51d420ea0f2593ef63ca2a4b01633600d14e8ade059456524dedb8b85040ec6"},{"index":20,"tag":"ul","sha256":"82138ddfca1419b04c22d60b4c339aafab32d40b2fc0ab5f038edaf4770787d8"},{"index":21,"tag":"h3","sha256":"70cd4f647d6c605d98691a18d0178e7d8f163c2dfbe1ee8acadaac90b15a460f"},{"index":22,"tag":"pre","sha256":"ae3d41dec12b09a51865e692381014f813a0df8d30db29115be2d269e03df81a"},{"index":23,"tag":"p","sha256":"8cb73364b977a7a84ec759394e07ddc31c7f2b7fa462d78fb96977300ac2fba9"},{"index":24,"tag":"ul","sha256":"871b9a5ad38640cfc35c4e4e9c4db909fd899075f2af649f25ede7eb0302b5e7"}],"tabOrder":["r","python"]}]}}};
 </script>
 <script src="../code-tabs.js?v=20261026-startup-v1"></script>
 <script src="../copy-code.js?v=20261025-r-first-v1"></script>

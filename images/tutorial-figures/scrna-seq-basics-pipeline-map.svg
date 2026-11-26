@@ -1,0 +1,118 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 440" width="960" height="440" role="img" aria-labelledby="scrna-map-title scrna-map-desc">
+  <title id="scrna-map-title">Five-stage single-cell RNA-seq preprocessing pipeline from count matrix to clusters and UMAP</title>
+  <desc id="scrna-map-desc">Diagram showing the five core stages of scRNA-seq preprocessing in Seurat (R) and Scanpy (Python): Stage 1 Load and Cell QC using Read10X or read_10x_mtx; Stage 2 Log-Normalize and Select 2,000 Highly Variable Genes while preserving unscaled expression; Stage 3 Scale HVGs and Run PCA to compress genes into principal components; Stage 4 Build k-NN or SNN Graph and Detect Communities with Louvain or Leiden; Stage 5 Compute UMAP for Visualization and Check Marker Genes.</desc>
+  <defs>
+    <marker id="scrna-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#475569"/>
+    </marker>
+    <filter id="scrna-shadow" x="-4%" y="-4%" width="108%" height="112%">
+      <feDropShadow dx="0" dy="3" stdDeviation="4" flood-color="#0F172A" flood-opacity="0.08"/>
+    </filter>
+  </defs>
+
+  <rect x="0" y="0" width="960" height="440" rx="14" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="1.5"/>
+  <text x="28" y="38" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="19" font-weight="700" fill="#0F172A">From Raw Count Matrix to Cell Communities: What Each Stage Changes</text>
+  <text x="28" y="60" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="12.5" fill="#475569">Each step transforms the matrix or derives a lower-dimensional representation; keep unscaled expression for marker checks</text>
+
+  <!-- Stage 1 -->
+  <g filter="url(#scrna-shadow)">
+    <rect x="24" y="84" width="166" height="236" rx="10" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.5"/>
+    <path d="M 24 94 Q 24 84 34 84 L 180 84 Q 190 84 190 94 L 190 120 L 24 120 Z" fill="#1E3A8A"/>
+    <text x="36" y="107" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="12.5" font-weight="700" fill="#FFFFFF">1. Load &amp; Cell QC</text>
+    <text x="36" y="142" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11.5" font-weight="700" fill="#1E3A8A">R (Seurat)</text>
+    <text x="36" y="158" font-family="monospace" font-size="10.5" fill="#334155">Read10X() + subset()</text>
+    <text x="36" y="180" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11.5" font-weight="700" fill="#0F766E">Python (Scanpy)</text>
+    <text x="36" y="196" font-family="monospace" font-size="10.5" fill="#334155">read_10x_mtx()</text>
+    <line x1="36" y1="210" x2="178" y2="210" stroke="#E2E8F0" stroke-width="1"/>
+    <text x="36" y="228" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11.5" font-weight="700" fill="#0F172A">What changes</text>
+    <text x="36" y="245" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11.5" fill="#475569">Drop low-gene and</text>
+    <text x="36" y="261" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11.5" fill="#475569">high-MT% barcodes</text>
+    <text x="36" y="286" font-family="monospace" font-size="10.5" font-weight="600" fill="#1E3A8A">PBMC3k: 2700 -&gt; 2638</text>
+    <text x="36" y="303" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11" fill="#64748B">Inspect violins first</text>
+  </g>
+
+  <line x1="192" y1="202" x2="208" y2="202" stroke="#475569" stroke-width="2" marker-end="url(#scrna-arrow)"/>
+
+  <!-- Stage 2 -->
+  <g filter="url(#scrna-shadow)">
+    <rect x="211" y="84" width="166" height="236" rx="10" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.5"/>
+    <path d="M 211 94 Q 211 84 221 84 L 367 84 Q 377 84 377 94 L 377 120 L 211 120 Z" fill="#0F766E"/>
+    <text x="223" y="107" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="12.5" font-weight="700" fill="#FFFFFF">2. Normalize &amp; HVGs</text>
+    <text x="223" y="142" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11.5" font-weight="700" fill="#1E3A8A">R (Seurat)</text>
+    <text x="223" y="158" font-family="monospace" font-size="10.5" fill="#334155">NormalizeData()</text>
+    <text x="223" y="172" font-family="monospace" font-size="10.5" fill="#334155">FindVariableFeatures()</text>
+    <text x="223" y="192" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11.5" font-weight="700" fill="#0F766E">Python (Scanpy)</text>
+    <text x="223" y="208" font-family="monospace" font-size="10.5" fill="#334155">normalize_total+log1p</text>
+    <line x1="223" y1="218" x2="365" y2="218" stroke="#E2E8F0" stroke-width="1"/>
+    <text x="223" y="236" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11.5" font-weight="700" fill="#0F172A">What changes</text>
+    <text x="223" y="253" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11.5" fill="#475569">Equalizes cell depth</text>
+    <text x="223" y="269" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11.5" fill="#475569">(10,000) &amp; picks top</text>
+    <text x="223" y="286" font-family="monospace" font-size="10.5" font-weight="600" fill="#0F766E">2,000 variable genes</text>
+    <text x="223" y="303" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11" fill="#64748B">Save adata.raw first</text>
+  </g>
+
+  <line x1="379" y1="202" x2="395" y2="202" stroke="#475569" stroke-width="2" marker-end="url(#scrna-arrow)"/>
+
+  <!-- Stage 3 -->
+  <g filter="url(#scrna-shadow)">
+    <rect x="398" y="84" width="166" height="236" rx="10" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.5"/>
+    <path d="M 398 94 Q 398 84 408 84 L 554 84 Q 564 84 564 94 L 564 120 L 398 120 Z" fill="#B45309"/>
+    <text x="410" y="107" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="12.5" font-weight="700" fill="#FFFFFF">3. Scale &amp; PCA</text>
+    <text x="410" y="142" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11.5" font-weight="700" fill="#1E3A8A">R (Seurat)</text>
+    <text x="410" y="158" font-family="monospace" font-size="10.5" fill="#334155">ScaleData() + RunPCA()</text>
+    <text x="410" y="180" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11.5" font-weight="700" fill="#0F766E">Python (Scanpy)</text>
+    <text x="410" y="196" font-family="monospace" font-size="10.5" fill="#334155">scale() + tl.pca()</text>
+    <line x1="410" y1="210" x2="552" y2="210" stroke="#E2E8F0" stroke-width="1"/>
+    <text x="410" y="228" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11.5" font-weight="700" fill="#0F172A">What changes</text>
+    <text x="410" y="245" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11.5" fill="#475569">Zero-centers HVGs;</text>
+    <text x="410" y="261" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11.5" fill="#475569">compresses 2,000 genes</text>
+    <text x="410" y="286" font-family="monospace" font-size="10.5" font-weight="600" fill="#B45309">into 50 PCs (pick 10-30)</text>
+    <text x="410" y="303" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11" fill="#64748B">Inspect elbow plot</text>
+  </g>
+
+  <line x1="566" y1="202" x2="582" y2="202" stroke="#475569" stroke-width="2" marker-end="url(#scrna-arrow)"/>
+
+  <!-- Stage 4 -->
+  <g filter="url(#scrna-shadow)">
+    <rect x="585" y="84" width="166" height="236" rx="10" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.5"/>
+    <path d="M 585 94 Q 585 84 595 84 L 741 84 Q 751 84 751 94 L 751 120 L 585 120 Z" fill="#6D28D9"/>
+    <text x="597" y="107" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="12.5" font-weight="700" fill="#FFFFFF">4. Graph &amp; Clusters</text>
+    <text x="597" y="142" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11.5" font-weight="700" fill="#1E3A8A">R (Seurat)</text>
+    <text x="597" y="158" font-family="monospace" font-size="10.5" fill="#334155">FindNeighbors()</text>
+    <text x="597" y="172" font-family="monospace" font-size="10.5" fill="#334155">FindClusters(res=0.5)</text>
+    <text x="597" y="192" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11.5" font-weight="700" fill="#0F766E">Python (Scanpy)</text>
+    <text x="597" y="208" font-family="monospace" font-size="10.5" fill="#334155">neighbors() + leiden()</text>
+    <line x1="597" y1="218" x2="739" y2="218" stroke="#E2E8F0" stroke-width="1"/>
+    <text x="597" y="236" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11.5" font-weight="700" fill="#0F172A">What changes</text>
+    <text x="597" y="253" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11.5" fill="#475569">Builds k-NN/SNN graph</text>
+    <text x="597" y="269" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11.5" fill="#475569">in PC space; assigns</text>
+    <text x="597" y="286" font-family="monospace" font-size="10.5" font-weight="600" fill="#6D28D9">numeric clusters 0..8</text>
+    <text x="597" y="303" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11" fill="#64748B">Resolution sets detail</text>
+  </g>
+
+  <line x1="753" y1="202" x2="769" y2="202" stroke="#475569" stroke-width="2" marker-end="url(#scrna-arrow)"/>
+
+  <!-- Stage 5 -->
+  <g filter="url(#scrna-shadow)">
+    <rect x="772" y="84" width="164" height="236" rx="10" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.5"/>
+    <path d="M 772 94 Q 772 84 782 84 L 926 84 Q 936 84 936 94 L 936 120 L 772 120 Z" fill="#0369A1"/>
+    <text x="784" y="107" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="12.5" font-weight="700" fill="#FFFFFF">5. UMAP &amp; Markers</text>
+    <text x="784" y="142" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11.5" font-weight="700" fill="#1E3A8A">R (Seurat)</text>
+    <text x="784" y="158" font-family="monospace" font-size="10.5" fill="#334155">RunUMAP() + DotPlot()</text>
+    <text x="784" y="180" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11.5" font-weight="700" fill="#0F766E">Python (Scanpy)</text>
+    <text x="784" y="196" font-family="monospace" font-size="10.5" fill="#334155">tl.umap() + pl.umap()</text>
+    <line x1="784" y1="210" x2="924" y2="210" stroke="#E2E8F0" stroke-width="1"/>
+    <text x="784" y="228" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11.5" font-weight="700" fill="#0F172A">What changes</text>
+    <text x="784" y="245" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11.5" fill="#475569">2D layout for viewing;</text>
+    <text x="784" y="261" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11.5" fill="#475569">verify markers &amp; QC</text>
+    <text x="784" y="286" font-family="monospace" font-size="10.5" font-weight="600" fill="#0369A1">Not a clustering step</text>
+    <text x="784" y="303" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11" fill="#64748B">Save .rds or .h5ad</text>
+  </g>
+
+  <!-- Bottom Note Bar -->
+  <g filter="url(#scrna-shadow)">
+    <rect x="24" y="344" width="912" height="72" rx="10" fill="#EFF6FF" stroke="#93C5FD" stroke-width="1.5"/>
+    <text x="42" y="370" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="13" font-weight="700" fill="#1E3A8A">Key distinction: Graph clustering runs in PC space; UMAP only draws a 2D map</text>
+    <text x="42" y="394" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="12" fill="#1E293B">Never cluster on UMAP coordinates or compare gap sizes on UMAP as biological distances. Confirm clusters with marker genes and QC covariates.</text>
+  </g>
+</svg>

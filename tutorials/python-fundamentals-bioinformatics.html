@@ -173,14 +173,20 @@ function toggleMobileMenu() {
 </div>
 <nav aria-label="Learning path navigation" class="reader-toolbar"><span class="reader-toolbar__heading">Learning path</span><a href="conda-mamba-part1.html" rel="prev" class="reader-toolbar__previous"><span class="reader-toolbar__direction"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5m0 0 7 7m-7-7 7-7"/></svg></span><span class="reader-toolbar__copy"><small>Previous prerequisite</small><strong>Micromamba Environments for Bioinformatics</strong></span></a><a data-catalogue-return="" href="../tutorials.html" class="reader-toolbar__library"><span class="reader-toolbar__library-mark" aria-hidden="true"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="6" height="6" rx="1.3"/><rect x="14" y="4" width="6" height="6" rx="1.3"/><rect x="4" y="14" width="6" height="6" rx="1.3"/><rect x="14" y="14" width="6" height="6" rx="1.3"/></svg></span><span><small>Browse</small><strong>All tutorials</strong></span></a><a href="statistics-for-bioinformatics.html" rel="next" class="reader-toolbar__next"><span class="reader-toolbar__copy"><small>Suggested next</small><strong>Statistics for Bioinformatics</strong></span><span class="reader-toolbar__direction"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14m0 0-7-7m7 7-7 7"/></svg></span></a></nav>
 <article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--lab">
-<p class="lesson-lead">Learn core Python 3 constructs for bioinformatics step by step: string normalization and reverse complements, reusable functions with explicit ambiguous-base rules, k-mer dictionaries, constant-memory FASTA generators (<code>yield</code>), and validated CSV output. Readers following the R-first track can jump directly to <a href="r-tidyverse-fundamentals.html">R and Tidyverse Fundamentals</a> or open the collapsible base-R comparison at the bottom of this page.</p>
+<p class="lesson-lead">Sequence files (FASTA) often wrap DNA across multiple lines, mix uppercase and lowercase letters for repeat masking, and include ambiguous <code>N</code> bases or alignment dashes. Shell one-liners like <code>grep</code> and <code>awk</code> break easily on multi-line records, so this lab teaches core Python 3 constructs by building a clean, constant-memory FASTA summary script from scratch. Readers following the R-first track can jump to <a href="r-tidyverse-fundamentals.html">R and Tidyverse Fundamentals</a> or open the collapsible base-R comparison in Step 5.</p>
 <section class="lesson-summary tutorial-learning-contract" data-tutorial-format="hands-on-lab" aria-label="Learning format">
 <p><strong>Format: Hands-on lab.</strong> Builds a complete Python 3 standard-library FASTA validator and summary CLI from individual language building blocks, with locally executed Python 3.12 outputs at every step and no external package requirement.</p>
 </section>
 <h2>What you will build and prerequisites</h2>
-<p>You will progress from interactive Python expressions on a single DNA sequence to a modular command-line script (<code>scripts/compute_fasta_stats.py</code>) that streams multi-record FASTA files in constant memory and writes a checked CSV (<code>id</code>, <code>length</code>, <code>gc_fraction</code>, <code>valid</code>). All core steps require only Python 3.10+ and a POSIX terminal.</p>
+<p>By the end of this tutorial, you will take raw multi-record nucleotide sequences and produce a checked CSV summary table (<code>id</code>, <code>length</code>, <code>gc_fraction</code>, <code>valid</code>) using a reusable script (<code>scripts/compute_fasta_stats.py</code>).</p>
+<ul>
+<li><strong>Skills practiced:</strong> normalizing sequence strings and computing reverse complements, writing reusable functions with <code>set</code> validation and explicit GC denominators, counting <em>k</em>-mers with dictionaries, streaming large files with <code>yield</code> generators, and isolating optional packages in a local virtual environment.</li>
+<li><strong>Prerequisites and time:</strong> basic terminal navigation (<a href="command-line-part1.html">Command-Line Navigation</a> and <a href="conda-mamba-part1.html">Micromamba Environments</a>), Python 3.10 or newer (tested locally on Python 3.12.3), and roughly 25 minutes. No prior Python experience is required.</li>
+<li><strong>How to follow along:</strong> run Steps 1-4 in an interactive Python prompt (type <code>python3</code> in your terminal, or save each snippet to a small test file and run <code>python3 test.py</code>), then assemble the full project in Step 5.</li>
+</ul>
 <h2>Step 1: Strings, slicing, and reverse complements</h2>
-<p>Raw sequence strings from text files or primers often arrive with leading/trailing whitespace, newline characters, mixed case, or ambiguous <code>N</code> bases. Python strings are immutable sequences supporting zero-based slicing (<code>seq[start:stop]</code>), reversal (<code>seq[::-1]</code>), and fast character translation tables via <code>str.maketrans()</code>:</p>
+<p>DNA is double-stranded, and sequencing primers or reference downloads routinely arrive with trailing newlines, spaces, or lowercase soft-masked bases (used by RepeatMasker to mark repetitive DNA without deleting it). Before matching motifs or computing base composition, normalize whitespace and case, and know how to reverse-complement a primer sequence.</p>
+<p>Python strings are immutable (unchangeable in place) sequences with <strong>zero-based indexing</strong>: index <code>0</code> is the first base, and slicing <code>seq[0:3]</code> returns characters at indices <code>0</code>, <code>1</code>, and <code>2</code> (stopping before <code>3</code>). Reversing uses slice step <code>-1</code> (<code>seq[::-1]</code>), and <code>str.maketrans()</code> builds a fast 1-to-1 character lookup table for complementing bases:</p>
 <pre><code class="language-python">raw_seq = "  acgtacgtnnacgt \n"
 seq = "".join(raw_seq.split()).upper()
 complement_table = str.maketrans("ACGTN", "TGCAN")
@@ -191,9 +197,15 @@ print(f"Reverse complement: {rev_comp}")</code></pre>
 <p>Observed output (Python 3.12.3):</p>
 <pre><code class="language-text">Normalized: ACGTACGTNNACGT (length = 14, first_codon = ACG)
 Reverse complement: ACGTNNACGTACGT</code></pre>
-<p><strong>Mini-exercise:</strong> Why use <code>"".join(raw_seq.split())</code> instead of <code>raw_seq.strip()</code>? Because multi-line FASTA sequences or GenBank pastes can contain internal spaces or newlines; <code>.split()</code> removes all whitespace characters anywhere in the string, whereas <code>.strip()</code> trims only the ends.</p>
+<p><strong>Key lines explained and check:</strong></p>
+<ul>
+<li><code>"".join(raw_seq.split())</code> vs <code>raw_seq.strip()</code>: <code>.strip()</code> trims whitespace only at the start and end, whereas <code>.split()</code> splits on all whitespace (including internal newlines in wrapped FASTA blocks) and <code>"".join(...)</code> stitches the chunks back together.</li>
+<li>Order matters: call <code>.upper()</code> <em>before</em> <code>.translate(complement_table)</code>. Because <code>str.maketrans("ACGTN", "TGCAN")</code> maps only uppercase letters, any lowercase <code>a</code> left behind would pass through untranslated.</li>
+<li><strong>Check:</strong> confirm <code>len(seq)</code> is <code>14</code> and <code>rev_comp</code> begins with <code>ACGTNN</code>. Notice that if <code>raw_seq</code> contained RNA <code>U</code> or a dash <code>-</code>, <code>translate()</code> would leave it unchanged, which is why Step 2 validates the alphabet explicitly.</li>
+</ul>
 <h2>Step 2: Functions, sets, and the GC denominator trap</h2>
-<p>Membership checks against a <code>set</code> (<code>ch in VALID_BASES</code>) run in <i>O</i>(1) average time. When writing a GC-content function, decide explicitly whether ambiguous <code>N</code> bases belong in the denominator: dividing <code>G + C</code> by full sequence length (<code>6 / 14 = 0.42857</code>) differs from Biopython's <code>Bio.SeqUtils.gc_fraction(seq, ambiguous="remove")</code> default, which drops <code>N</code> from the denominator (<code>6 / 12 = 0.50000</code>):</p>
+<p>GC content (the proportion of <code>G</code> and <code>C</code> bases) influences PCR primer annealing temperature, sequencing coverage, and CpG-island annotation. A common reproducibility bug occurs when two tools report different GC fractions on the same sequence because one includes ambiguous <code>N</code> bases in the denominator and the other drops them.</p>
+<p>To prevent silent errors, put validation and calculation into named functions (<code>def</code>) and store allowed characters in a <code>set</code>. Checking <code>ch in VALID_BASES</code> on a <code>set</code> runs in constant average time (<em>O</em>(1)) rather than scanning a list element by element. Notice also the <code>bool(seq)</code> guard: in Python, <code>all(...)</code> on an empty string returns <code>True</code> (vacuous truth), so <code>bool(seq)</code> ensures empty records return <code>False</code> instead:</p>
 <pre><code class="language-python">VALID_BASES = set("ACGTN")
 
 def is_valid_dna(seq: str) -&gt; bool:
@@ -206,24 +218,64 @@ def gc_fraction(seq: str, include_n: bool = True) -&gt; float:
     return sum(1 for ch in seq if ch in "GC") / denom
 
 seq = "ACGTACGTNNACGT"
-print(f"Valid: {is_valid_dna(seq)} | GC (with N): {gc_fraction(seq, True):.5f} | GC (A/C/G/T only): {gc_fraction(seq, False):.5f}")</code></pre>
-<p>Observed output:</p>
+print(
+    f"Valid: {is_valid_dna(seq)} | "
+    f"GC (with N): {gc_fraction(seq, True):.5f} | "
+    f"GC (A/C/G/T only): {gc_fraction(seq, False):.5f}"
+)</code></pre>
+<p>Observed output (Python 3.12.3):</p>
 <pre><code class="language-text">Valid: True | GC (with N): 0.42857 | GC (A/C/G/T only): 0.50000</code></pre>
-<h2>Step 3: Lists, loops, and dictionaries for k-mer counting</h2>
-<p>Dictionaries (<code>dict</code>) map unique keys (such as record IDs or short oligonucleotide <i>k</i>-mers) to values in constant average lookup time. Sliding a window of length <i>k</i> = 4 across <code>seq</code> while skipping windows containing <code>N</code> illustrates loops, conditionals, and <code>dict.get(key, 0)</code>:</p>
+<p><strong>Why the two numbers differ:</strong> <code>seq</code> has 6 <code>G</code>/<code>C</code> bases, 6 <code>A</code>/<code>T</code> bases, and 2 <code>N</code> bases. Dividing by all 14 bases gives <code>6 / 14 = 0.42857</code>; dividing by only called <code>A/C/G/T</code> bases gives <code>6 / 12 = 0.50000</code>. In Biopython (&gt;= 1.80), <code>Bio.SeqUtils.gc_fraction(seq)</code> (which replaced the older 0-100 <code>GC()</code> function) defaults to <code>ambiguous="remove"</code>, excluding <code>N</code> from the denominator (<code>0.50000</code>), whereas <code>ambiguous="ignore"</code> keeps <code>N</code> in the full length (<code>0.42857</code>). Also check the <code>if denom == 0</code> guard: passing <code>"NNNN"</code> with <code>include_n=False</code> returns <code>0.0</code> cleanly instead of crashing with <code>ZeroDivisionError</code>.</p>
+<h2>Step 3: Loops and dictionaries for k-mer counting</h2>
+<p>A <strong><em>k</em>-mer</strong> is a DNA substring of fixed length <em>k</em> (for example, a 4-mer is 4 bases long). Genome assemblers, metagenomic classifiers, and motif-enrichment tools count <em>k</em>-mers across reads using hash tables. In Python, a dictionary (<code>dict</code>) maps each unique <em>k</em>-mer string to its integer count.</p>
+<p>For a sequence of length <code>14</code> and <code>k = 4</code>, valid start indices run from <code>0</code> through <code>10</code>, giving <code>len(seq) - k + 1 = 11</code> overlapping windows. Skipping any window containing <code>"N"</code> (such as <code>"GTNN"</code> or <code>"NNAC"</code>) avoids polluting the table with uncalled bases:</p>
 <pre><code class="language-python">seq = "ACGTACGTNNACGT"
+k = 4
 kmers: dict[str, int] = {}
-for i in range(len(seq) - 4 + 1):
-    kmer = seq[i : i + 4]
+for i in range(len(seq) - k + 1):
+    kmer = seq[i : i + k]
     if "N" not in kmer:
         kmers[kmer] = kmers.get(kmer, 0) + 1
 
 print("Unambiguous 4-mers:", kmers)</code></pre>
-<p>Observed output:</p>
+<p>Observed output (Python 3.12.3):</p>
 <pre><code class="language-text">Unambiguous 4-mers: {'ACGT': 3, 'CGTA': 1, 'GTAC': 1, 'TACG': 1}</code></pre>
-<h2>Step 4: Why generators (<code>yield</code>) matter for genome-scale FASTA files</h2>
-<p>Reading an entire FASTA file into a list or dictionary works for three toy sequences, but human GRCh38 occupies ~3.1 GB uncompressed. A generator function using <code>yield</code> pauses after each complete record, holding only one sequence in RAM at a time while still allowing clean <code>for header, seq in fasta_records(path):</code> iteration.</p>
+<p><strong>Common beginner error (<code>KeyError</code>):</strong> Writing <code>kmers[kmer] += 1</code> before a key exists in <code>kmers</code> raises <code>KeyError: 'ACGT'</code>. Using <code>kmers.get(kmer, 0) + 1</code> safely defaults unseen keys to <code>0</code> (for larger scripts, <code>collections.Counter</code> from the standard library also handles this automatically).</p>
+<h2>Step 4: Streaming large FASTA files with generators (<code>yield</code>)</h2>
+<p>Reading an entire FASTA file into a Python <code>list</code> works for three toy sequences, but the uncompressed human reference genome (GRCh38) is roughly 3.1 GB, and sequencing read sets can be much larger. A <strong>generator function</strong> replaces <code>return</code> with <code>yield</code>: it pauses after producing one <code>(header, sequence)</code> record and resumes only when the <code>for</code> loop asks for the next record, keeping only one sequence in RAM at a time.</p>
+<p>Run this small in-memory example (using <code>io.StringIO</code> to simulate a file) to see how <code>yield</code> behaves and why a generator can only be consumed once:</p>
+<pre><code class="language-python">import io
+
+fasta_stream = io.StringIO("&gt;chr1_frag\nACGT\nACGT\n&gt;chr2_frag\nTTAA\n")
+
+def iter_toy_fasta(handle):
+    header = None
+    chunks: list[str] = []
+    for raw in handle:
+        line = raw.strip()
+        if not line:
+            continue
+        if line.startswith("&gt;"):
+            if header is not None:
+                yield header, "".join(chunks)
+            header = line[1:].strip()
+            chunks = []
+        else:
+            chunks.append(line)
+    if header is not None:
+        yield header, "".join(chunks)
+
+records = iter_toy_fasta(fasta_stream)
+for header, seq_piece in records:
+    print(f"{header}: {len(seq_piece)} bp -&gt; {seq_piece}")
+print("Second pass count:", len(list(records)))</code></pre>
+<p>Observed output (Python 3.12.3):</p>
+<pre><code class="language-text">chr1_frag: 8 bp -&gt; ACGTACGT
+chr2_frag: 4 bp -&gt; TTAA
+Second pass count: 0</code></pre>
+<p><strong>Watch out for single-pass exhaustion:</strong> Because <code>records</code> streams on demand rather than storing data in memory, looping over the same <code>records</code> object a second time yields <code>0</code> items. If you need multiple passes over a file, call the generator function again on a freshly opened file handle.</p>
 <h2>Step 5: Complete FASTA-to-CSV command-line workflow</h2>
+<p>Now combine Steps 1-4 into a standalone command-line script that reads any FASTA file, checks every record against the <code>A/C/G/T/N</code> alphabet, and writes a clean CSV summary.</p>
 <h3>1. Set up the project and create the starter FASTA fixture</h3>
 <pre><code class="language-bash">mkdir -p ~/projects/python-bioinfo/data/raw ~/projects/python-bioinfo/scripts ~/projects/python-bioinfo/outputs
 cd ~/projects/python-bioinfo
@@ -238,12 +290,18 @@ AGCTTAGC--NNNN
 EOF
 
 cat data/raw/example.fasta</code></pre>
-<p><code>seq3</code> intentionally contains alignment gap characters (<code>--</code>) so you can verify that invalid records are flagged (<code>valid=no</code>, blank <code>gc_fraction</code>) rather than silently stripped.</p>
-<h3>2. Optional virtual environment for third-party packages</h3>
-<pre><code class="language-bash">python3 -m venv .venv
-source .venv/bin/activate
-# Optional only if you want Step 6's Biopython comparison:
-# python -m pip install biopython &amp;&amp; python -m pip freeze &gt; envs-requirements.txt</code></pre>
+<p><code>seq2</code> is lowercase (simulating soft-masked repeats) and <code>seq3</code> intentionally includes alignment gap characters (<code>--</code>) so you can confirm that invalid records are flagged (<code>valid=no</code>, blank <code>gc_fraction</code>) rather than silently altered.</p>
+<h3>2. Optional isolated environment for third-party packages</h3>
+<p>The main CLI script in Subsection 3 uses only Python's built-in standard library (<code>csv</code>, <code>pathlib</code>, <code>sys</code>), so you can skip package installation completely unless you want Biopython for Subsection 5 or <code>pytest</code> for unit tests. When you do install third-party packages, first check whether the project already uses a dependency manager (such as <code>uv.lock</code>, <code>pyproject.toml</code> for Poetry/uv, <code>Pipfile</code>, or <code>environment.yml</code> for Conda/Micromamba) and match that tool instead of running a global <code>pip install</code>. For a plain project directory with no existing lockfile, create a local <code>.venv</code> and invoke <code>.venv/bin/pip</code> and <code>.venv/bin/python</code> explicitly:</p>
+<pre><code class="language-bash"># Check if an existing dependency manager or lockfile is already configured
+ls uv.lock poetry.lock Pipfile environment.yml requirements.txt pyproject.toml 2&gt;/dev/null || true
+
+# Isolated venv + pip workflow (only needed for optional third-party packages)
+python3 -m venv .venv
+# Optional only if you want Subsection 5's Biopython comparison:
+# .venv/bin/pip install biopython
+# .venv/bin/pip freeze &gt; requirements.txt</code></pre>
+<p>To reproduce that environment on another machine later, create <code>.venv</code> and run <code>.venv/bin/pip install -r requirements.txt</code> (or use <code>micromamba</code> as covered in <a href="conda-mamba-part1.html">Micromamba Environments for Bioinformatics</a>).</p>
 <h3>3. Save <code>scripts/compute_fasta_stats.py</code></h3>
 <pre><code class="language-python">#!/usr/bin/env python3
 """Read FASTA records, validate A/C/G/T/N after normalization, and write CSV."""
@@ -311,16 +369,22 @@ def main() -&gt; None:
 
 if __name__ == "__main__":
     main()</code></pre>
+<p><strong>Defensive checks built into this script:</strong> <code>main()</code> exits with status <code>2</code> if you pass the wrong number of arguments or accidentally pass the input FASTA path as the output CSV path (preventing file clobbering), and <code>fasta_records()</code> raises a clear <code>ValueError</code> on empty headers (<code>&gt;</code>) or sequence lines appearing before any header. Note that <code>line[1:].strip()</code> keeps the full header string; if your FASTA headers include descriptions after a space (for example <code>&gt;TP53_ENST00000269305 Homo sapiens</code>) and you want only the accession token, change that line to <code>line[1:].strip().split()[0]</code> to match Biopython's <code>rec.id</code>.</p>
 <h3>4. Run the script and verify the CSV output</h3>
 <pre><code class="language-bash">python3 scripts/compute_fasta_stats.py data/raw/example.fasta outputs/sequence_stats.csv
-cat outputs/sequence_stats.csv</code></pre>
-<p>Observed CSV output (executed locally with Python 3.12.3):</p>
+cat outputs/sequence_stats.csv
+# Check the overwrite guard (expected to print an error and exit with status 2):
+python3 scripts/compute_fasta_stats.py data/raw/example.fasta data/raw/example.fasta || echo "Blocked overwrite (exit $?)"</code></pre>
+<p>Observed output (executed locally with Python 3.12.3):</p>
 <pre><code class="language-text">id,length,gc_fraction,valid
 seq1,14,0.42857,yes
 seq2,20,0.50000,yes
-seq3,14,,no</code></pre>
-<h3>5. Optional Biopython comparison and base-R counterpart</h3>
-<p>When Biopython is installed, <code>Bio.SeqIO.parse(path, "fasta")</code> replaces custom header/line splitting while leaving alphabet and denominator choices to your analysis:</p>
+seq3,14,,no
+Input and output paths must be different
+Blocked overwrite (exit 2)</code></pre>
+<p><strong>Check:</strong> confirm <code>seq1</code> has length <code>14</code> and <code>gc_fraction</code> <code>0.42857</code> (6 GC bases divided by 14 total bases, including both <code>N</code>s), <code>seq2</code> was uppercased to length <code>20</code> and <code>0.50000</code>, and <code>seq3</code> has <code>valid=no</code> with a blank <code>gc_fraction</code> because of <code>--</code>.</p>
+<h3>5. Optional Biopython and base-R counterparts</h3>
+<p>When Biopython is installed inside your isolated environment (<code>.venv/bin/python</code>), <code>Bio.SeqIO.parse(path, "fasta")</code> handles FASTA parsing and header splitting (<code>rec.id</code> vs <code>rec.description</code>) while leaving alphabet and GC-denominator policies explicit. For very large FASTA files with millions of records, Biopython also provides <code>Bio.SeqIO.FastaIO.SimpleFastaParser</code>, which yields plain <code>(title, sequence)</code> string tuples without allocating <code>SeqRecord</code> objects:</p>
 <pre><code class="language-python">from Bio import SeqIO
 
 valid_bases = set("ACGTN")
@@ -329,83 +393,66 @@ for rec in SeqIO.parse("data/raw/example.fasta", "fasta"):
     valid = bool(seq) and all(base in valid_bases for base in seq)
     gc_text = f"{sum(1 for b in seq if b in 'GC') / len(seq):.5f}" if valid else ""
     print(rec.id, len(seq), gc_text, "yes" if valid else "no")</code></pre>
+<p>Example output (illustrative; requires Biopython):</p>
+<pre><code class="language-text">seq1 14 0.42857 yes
+seq2 20 0.50000 yes
+seq3 14  no</code></pre>
 <details class="mt-4 mb-6 rounded-xl border border-gray-200 bg-gray-50 p-4"><summary class="font-semibold cursor-pointer">Optional R comparison: equivalent base-R FASTA script</summary><p class="mt-2">For learners comparing Python with R, the repository also provides <a href="../files/tutorial-examples/python-fundamentals-bioinformatics/compute_fasta_stats.R"><code>compute_fasta_stats.R</code></a>, which applies the identical <code>A/C/G/T/N</code> rule and <code>N</code>-inclusive GC denominator via <code>Rscript compute_fasta_stats.R data/raw/example.fasta outputs/sequence_stats_r.csv</code>. For full R data-frame workflows, continue to <a href="r-tidyverse-fundamentals.html">R and Tidyverse Fundamentals</a>.</p></details>
-<div>
-
-<figure class="my-8 bg-white border border-gray-200 rounded-xl p-4 shadow-sm"><img src="../images/tutorial-figures/python-bioinformatics-stack.svg" alt="Diagram showing Python bioinformatics progression: Sequence Strings -&gt; GC &amp; K-mer Dictionaries -&gt; Streaming Generators (yield) -&gt; CLI CSV/TSV Script" width="960" height="460" loading="lazy" class="w-full h-auto rounded-lg" style="aspect-ratio: 960 / 460;"/><figcaption class="mt-3 text-sm text-gray-600">Mastering Python sequence slicing, exact denominator helpers, dictionary k-mer counting, and lazy <code>yield</code> FASTA generators lets you parse multi-gigabyte genomic files cleanly in constant memory.</figcaption></figure>
-<h2>What to look for in the output</h2>
-<p>When you open outputs/sequence_stats.csv, check the following:</p>
+<figure class="my-8 bg-white border border-gray-200 rounded-xl p-4 shadow-sm"><img src="../images/tutorial-figures/python-bioinformatics-stack.svg" alt="Diagram showing Python bioinformatics progression: Sequence Strings -&gt; GC &amp; K-mer Dictionaries -&gt; Streaming Generators (yield) -&gt; CLI CSV/TSV Script" width="960" height="460" loading="lazy" class="w-full h-auto rounded-lg" style="aspect-ratio: 960 / 460;"/><figcaption class="mt-3 text-sm text-gray-600">Python bioinformatics progression: string normalization, explicit GC denominators, dictionary <em>k</em>-mer counting, and lazy <code>yield</code> FASTA generators combine into a constant-memory CLI workflow.</figcaption></figure>
+<h2>When to use shell tools vs standard-library Python vs Biopython</h2>
+<p>Choose the lightest tool that keeps your assumptions visible and testable:</p>
+<table>
+<thead>
+<tr><th>Approach</th><th>Best suited for</th><th>Trade-offs</th></tr>
+</thead>
+<tbody>
+<tr><td><strong>Shell (<code>grep</code>, <code>awk</code>, <code>seqkit</code>)</strong></td><td>Quick header counts (<code>grep -c '^&gt;'</code>), fast filtering, and one-off CLI checks on clean FASTA/FASTQ.</td><td>Multi-line wrapping and custom per-base validation are error-prone in plain <code>awk</code>.</td></tr>
+<tr><td><strong>Standard-library Python</strong></td><td>Custom validation rules, HPC or container scripts with zero third-party dependencies, and tailored CSV/TSV summaries.</td><td>Supports only the formats you write or wrap yourself (for example FASTA, not GenBank or BAM).</td></tr>
+<tr><td><strong>Biopython (<code>SeqIO</code>, <code>SeqUtils</code>)</strong></td><td>Multi-format parsing (FASTA, FASTQ, GenBank, EMBL), IUPAC-aware <code>gc_fraction()</code>, and record metadata handling.</td><td>Requires an isolated environment dependency; default <code>gc_fraction(..., ambiguous="remove")</code> differs from total-length denominators.</td></tr>
+</tbody>
+</table>
+<h2>Practice exercise: accept IUPAC codes while still rejecting gaps</h2>
+<p>Suppose your FASTA file comes from a consensus sequence containing IUPAC ambiguity codes (<code>R, Y, S, W, K, M, B, D, H, V</code>) in addition to <code>A, C, G, T, N</code>, plus Windows carriage returns (<code>\r\n</code>), and you still want to reject gap dashes (<code>-</code>). Update the allowed-base set and test it on <code>"  acgtRYsw-n \r\n"</code> before opening the solution.</p>
+<details class="mt-4 mb-6 rounded-xl border border-gray-200 bg-gray-50 p-4">
+<summary class="font-semibold cursor-pointer">Show solution and locally run output</summary>
+<div class="mt-3">
+<pre><code class="language-python">IUPAC_DNA = set("ACGTNRYSWKMBDHV")
+test_seq = "  acgtRYsw-n \r\n"
+cleaned = "".join(test_seq.split()).upper()
+has_gap = "-" in cleaned
+valid_iupac = bool(cleaned) and all(ch in IUPAC_DNA for ch in cleaned)
+print(f"Cleaned: {cleaned} | valid_iupac: {valid_iupac} | has_gap: {has_gap}")</code></pre>
+<p>Observed output (Python 3.12.3):</p>
+<pre><code class="language-text">Cleaned: ACGTRYSW-N | valid_iupac: False | has_gap: True</code></pre>
+<p>Because <code>"-"</code> is not in <code>IUPAC_DNA</code>, <code>valid_iupac</code> returns <code>False</code> while <code>.split()</code> strips both spaces and <code>\r\n</code> cleanly. Removing <code>-</code> (only when appropriate for unaligned sequence summaries) flips <code>valid_iupac</code> to <code>True</code>.</p>
+</div>
+</details>
+<h2>Common errors, checkpoints, and scope limits</h2>
 <ul>
-<li>All expected record IDs are present. Missing IDs may indicate a parsing error or that the input FASTA lines were malformed.</li>
-<li>Length values reflect the number of characters after normalization (spaces and tabs removed). Very short sequences (length 0–3) should be inspected manually because they may be fragments, adapter sequences, or corrupted lines.</li>
-<li>gc_fraction is the proportion of G or C bases (0.0–1.0). This script divides the count of G and C characters by the full normalized sequence length, including <code>N</code> in the denominator. Compare values only when the denominator rule and sequence scope match; GC content alone is not a quality verdict.</li>
-<li>The valid column flags records where non-standard characters were found (for this lesson that means characters outside A,C,G,T,N). If valid is "no", the gc_fraction field is left blank and you should inspect the corresponding sequence in the FASTA file.</li>
+<li><strong><code>UnicodeDecodeError</code> on input:</strong> the file uses non-UTF-8 encoding (such as Windows-1252) or is gzipped/binary. Inspect it first with <code>file input.fasta</code> and <code>head -n 5 input.fasta</code>; decompress <code>.fa.gz</code> files or convert encoding with <code>iconv -f WINDOWS-1252 -t UTF-8 input.fasta -o output.fasta</code>.</li>
+<li><strong>Many records flagged <code>valid=no</code>:</strong> the file contains alignment gaps (<code>-</code>), IUPAC ambiguity codes outside <code>ACGTN</code>, RNA <code>U</code> bases, or FASTQ quality lines. Decide which alphabet belongs in <code>VALID_BASES</code> and document that choice.</li>
+<li><strong>Header-only or empty CSV:</strong> confirm the FASTA has at least one <code>&gt;</code> header line using <code>grep -c '^&gt;' data/raw/example.fasta</code>. The parser raises <code>ValueError</code> if sequence lines appear before the first <code>&gt;</code> header, while a completely empty file writes a header-only CSV.</li>
+<li><strong>GC mismatch against external tools:</strong> check whether the comparison tool excludes <code>N</code> from the denominator (Biopython's default <code>ambiguous="remove"</code>) or keeps <code>N</code> in total length (this script and Biopython's <code>ambiguous="ignore"</code>). Also compare values only across the same reference genome assembly and soft-masking policy.</li>
+<li><strong>Scope of this script:</strong> <code>fasta_records()</code> yields one record at a time so total memory stays proportional to the longest single chromosome or contig rather than the whole file. It handles FASTA (not FASTQ quality scores or indexed random access) and formats <code>gc_fraction</code> as a 5-decimal string; for downstream statistics, keep raw numeric floats or compute counts directly.</li>
 </ul>
-<p>How to interpret a passing output (and its limits):</p>
-<ul>
-<li>A <code>gc_fraction</code> of <code>0.42</code> tells you 42% of bases in that string are G or C; contamination, adapter read-through, or GC bias can all shift that fraction without flagging syntax errors.</li>
-<li>Short records or flagged invalid characters can represent genuine primers and IUPAC ambiguity codes just as easily as truncated files, so inspect flagged IDs against raw source files.</li>
-<li>Summary statistics like mean GC across records are descriptive checks rather than formal tests between groups.</li>
-</ul>
-<h2>Common errors and how to fix them</h2>
-<p>Symptom: The script crashes with UnicodeDecodeError when reading the FASTA.</p>
-<ul>
-<li>Cause: The input file uses a non-UTF-8 encoding (e.g., Windows-1252) or contains binary content.</li>
-<li>Fix: Convert the file to UTF-8 or open with the correct encoding. Example: iconv -f WINDOWS-1252 -t UTF-8 input.fasta -o output.fasta. Always inspect binary files (e.g., using file and head commands) before processing.</li>
-</ul>
-<p>Symptom: Many sequences are flagged valid=no.</p>
-<ul>
-<li>Cause: The input FASTA contains characters outside the accepted set (e.g., gap character '-', IUPAC codes like R/Y, or quality scores accidentally included).</li>
-<li>Fix: Decide what extended characters you want to accept (IUPAC codes: R, Y, S, W, K, M, B, D, H, V) and extend VALID_BASES accordingly. Alternatively, pre-filter or clean sequences to remove gap characters if appropriate for your analysis.</li>
-</ul>
-<p>Symptom: Output CSV is missing records or header only.</p>
-<ul>
-<li>Cause: The file may be empty, contain no header beginning with <code>&gt;</code>, or use malformed record structure. The parser now rejects sequence text before the first header, but an empty file still produces a header-only CSV.</li>
-<li>Fix: Confirm the FASTA file contains at least one header line (beginning with '&gt;') and sequence lines. Use wc -l and grep '^&gt;' to count headers: grep -c '^&gt;' data/raw/example.fasta.</li>
-</ul>
-<p>Symptom: Incorrect GC values compared to external tools.</p>
-<ul>
-<li>Cause: Differences in normalization: some tools ignore ambiguous bases or gaps when computing fractions, others count them in the denominator.</li>
-<li>Fix: Make your normalization explicit. If you want GC fraction computed as GC / (A+C+G+T) excluding ambiguous bases, implement that rule rather than using the raw length.</li>
-</ul>
-<h2>Scope limits and version checks</h2>
-<p>Limitations of this lesson and script:</p>
-<ul>
-<li>The simple parser is educational and reads records incrementally, though it holds each record sequence in memory. It does not validate FASTA headers against a controlled schema (for example, embedded tabs or spaces), support FASTQ, or provide indexed access. For production work, use a maintained parser such as Biopython SeqIO and validate records against your workflow's requirements.</li>
-<li>Validation here is limited to a user-defined alphabet (A, C, G, T, N). Biological sequences sometimes include IUPAC ambiguity codes or gap characters (e.g., '-'). Decide which characters your pipeline should accept and document that choice.</li>
-<li>Floating-point representation of GC fraction uses simple rounding for readability; for downstream statistical analysis you may want more precision or native numeric types (not formatted strings).</li>
-</ul>
-<p><strong>A few boundary notes:</strong></p>
-<ul>
-<li>Different versions of Biopython, pandas, or Python may change behavior (for example, encoding defaults or CSV dialect handling). Record exact versions with pip freeze or conda list for reproducibility.</li>
-<li>Reference genome sequences and annotations can change over time. If you are comparing GC content to published values, ensure you are using the same assembly and coordinate convention as the reference.</li>
-</ul>
-<p>Responsible use notes:</p>
-<ul>
-<li>Do not assume computed statistics imply biological meaning without appropriate controls and metadata assessment (sample origin, library preparation, sequencing platform).</li>
-<li>Be cautious when sharing sequence-derived files that may include sensitive or personally identifying information. Follow institutional policies and data-use agreements.</li>
-<li>Never run or paste unreviewed code into tools that grant extra system privileges or network access. The examples here touch only local files in your practice directory (no <code>rm</code>, <code>mv</code>, or external calls).</li>
-</ul>
-<h2>Next steps</h2>
+<h2>Recap and next steps</h2>
+<p>You practiced core Python 3 sequence handling (<code>.split()</code>, <code>.upper()</code>, slicing, <code>str.maketrans()</code>), wrote deterministic validation and GC helpers, counted <em>k</em>-mers in dictionaries, streamed FASTA records with <code>yield</code>, and packaged the workflow into <code>scripts/compute_fasta_stats.py</code>.</p>
 <ol>
-<li>Run the script on your own FASTA files and confirm outputs/sequence_stats.csv contains expected rows and values.</li>
-<li>Decide how to treat ambiguous bases and update VALID_BASES and gc_fraction semantics accordingly.</li>
-<li>For large inputs, consider a streaming parser such as Biopython SeqIO; this script still holds each individual record sequence in memory.</li>
-<li>Write small unit tests for gc_fraction and is_valid_dna using the pytest framework to ensure behavior is stable as you refactor.</li>
-<li>Keep the requirements file with the project and document how to recreate the environment. A freeze records package versions, but does not by itself capture Python, operating-system, or system-library details.</li>
+<li>Continue along the learning path to <a href="statistics-for-bioinformatics.html">Statistics for Bioinformatics</a>, or explore <a href="data-visualization-fundamentals.html">Data Visualization Fundamentals</a> and <a href="reproducible-workflows-snakemake-nextflow.html">Reproducible Workflows with Snakemake and Nextflow</a>.</li>
+<li>Write small unit tests for <code>is_valid_dna</code> and <code>gc_fraction</code> (covering empty strings, all-<code>N</code> sequences, and lowercase input) using <a href="https://docs.pytest.org/en/stable/" rel="noopener" target="_blank">pytest</a> inside your project's isolated environment.</li>
+<li>When your project adds third-party packages, keep <code>requirements.txt</code> (or your tool's lockfile) alongside the repository and document the Python version used.</li>
 </ol>
 <aside aria-label="Author's lab note" class="lesson-summary">
 <p><strong>Author's lab note:</strong> Writing custom Python parsers without checking for blank lines, trailing carriage returns (<code>\r\n</code>), or lowercase soft-masked nucleotides is the classic trap when handling external FASTA downloads. Stripping whitespace cleanly and deciding early whether masked lowercase bases stay separate or get folded with <code>.upper()</code> keeps downstream GC and length scripts predictable.</p>
 </aside>
 <h2>References</h2>
 <ul>
-<li><a href="https://docs.python.org/3/">The Python 3 documentation</a>: language reference and library documentation.</li>
-<li><a href="https://biopython.org/docs/latest/api/Bio.SeqIO.html">Biopython SeqIO API documentation</a>: parser and record-iterator reference.</li>
-<li><a href="https://docs.python.org/3/library/venv.html">Python venv documentation</a>: environment creation and activation.</li>
-<li><a href="https://pandas.pydata.org/docs/">Pandas documentation</a>: for tabular data manipulation, reading/writing CSV/TSV, and summary statistics.</li>
-<li><a href="https://www.ncbi.nlm.nih.gov/genbank/fastaformat/">NCBI FASTA format guidance</a>: nucleotide submission header and sequence conventions.</li>
+<li><a href="https://docs.python.org/3/" rel="noopener" target="_blank">Python 3 documentation</a>: language reference, standard library, and <a href="https://docs.python.org/3/library/stdtypes.html#str.maketrans" rel="noopener" target="_blank"><code>str.maketrans</code></a>, <a href="https://docs.python.org/3/library/csv.html" rel="noopener" target="_blank"><code>csv</code></a>, and <a href="https://docs.python.org/3/library/venv.html" rel="noopener" target="_blank"><code>venv</code></a> modules.</li>
+<li><a href="https://biopython.org/docs/latest/api/Bio.SeqIO.html" rel="noopener" target="_blank">Biopython <code>Bio.SeqIO</code> API documentation</a>: streaming sequence parsers (<code>parse</code> and <code>SimpleFastaParser</code>).</li>
+<li><a href="https://biopython.org/docs/latest/api/Bio.SeqUtils.html" rel="noopener" target="_blank">Biopython <code>Bio.SeqUtils</code> API documentation</a>: <code>gc_fraction()</code> and ambiguous-base handling options.</li>
+<li><a href="https://www.ncbi.nlm.nih.gov/genbank/fastaformat/" rel="noopener" target="_blank">NCBI FASTA format guidance</a>: nucleotide header conventions and IUPAC ambiguity symbols.</li>
+<li><a href="https://docs.pytest.org/en/stable/" rel="noopener" target="_blank">pytest documentation</a>: writing automated unit tests for Python functions.</li>
 </ul>
-</div>
 <aside aria-labelledby="tutorial-feedback-title" class="lesson-feedback" id="tutorial-feedback"><h2 id="tutorial-feedback-title">Help improve this tutorial</h2><p>Found an error, a broken link, or a step that needs a clearer explanation? Please <a href="../contact.html">contact me</a>. Your feedback helps me keep this resource accurate and useful.</p></aside></article>
 <section class="mt-12 mb-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-100">
 <div class="flex items-start gap-4">
@@ -544,7 +591,7 @@ for rec in SeqIO.parse("data/raw/example.fasta", "fasta"):
 </script>
 <script src="../assets/vendor/prism/prism-1.29.0.js"></script>
 <script id="tutorial-code-data">
-window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"python-fundamentals-bioinformatics":{"blocks":[{"language":"python","sha256":"d685bf7635ac8c91d30405c4c340a015333cf022d4e6ab4f475bfc6dee76f974"},{"language":"text","sha256":"47343fcc98ecbe0d53fcb7b210686e3616a4f316085378c8b298101b6a93f322"},{"language":"python","sha256":"8f449dcb18ef91e48bfad783fcec3825b4f67bdf52fdfcfbc79a28fe4902f303"},{"language":"text","sha256":"f2a6752811225e24f14b3e4ca199f3361bb8401cd1b227845a1d6736fc58fcd8"},{"language":"python","sha256":"337eff5e8fc5904aa9cff391bc93f05d9b0f36d85e18980b38f6a413e4b5ce42"},{"language":"text","sha256":"db438aa2086192c6bec5d3ad905879a84f2e6e213105d43227f6a876944ea0e2"},{"language":"bash","sha256":"c54209576c12fd546a24418f7e809c298d4eb6947ed2170147f645d39f637417"},{"language":"bash","sha256":"a5b4ddc24a556002fd5bf9281c3e24d2b6dab455b6f907fa5599a79ca04378de"},{"language":"python","sha256":"1d3b5501d07f4ab789b0c3bd6f8af97fa3151ac7dc81f3e899cc8d5f9ae3f5b8"},{"language":"bash","sha256":"24edff48e37c4b5f3df5f9b9d9e9cfc366e1ba82249a339a60e9c64d463b9893"},{"language":"text","sha256":"b75a266cfcd7616cc04629d7ce1dfb499f0d98065b78c6ca7f03b4711eb803bd"},{"language":"python","sha256":"a8bb05c718758020b1a33fd0d9f2bf587676372460eb452fab1c27879bd3cf23"}],"groups":[]}}};
+window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"python-fundamentals-bioinformatics":{"blocks":[{"language":"python","sha256":"d685bf7635ac8c91d30405c4c340a015333cf022d4e6ab4f475bfc6dee76f974"},{"language":"text","sha256":"47343fcc98ecbe0d53fcb7b210686e3616a4f316085378c8b298101b6a93f322"},{"language":"python","sha256":"8b00f4146e2db48b58591b69c52fbb94cce76605b497ff765ef6dd70d83da297"},{"language":"text","sha256":"f2a6752811225e24f14b3e4ca199f3361bb8401cd1b227845a1d6736fc58fcd8"},{"language":"python","sha256":"dbf36088a3c1f662dc9846fbcb73503e6d17c2f96041f3b147707c86431698d7"},{"language":"text","sha256":"db438aa2086192c6bec5d3ad905879a84f2e6e213105d43227f6a876944ea0e2"},{"language":"python","sha256":"76394e66055df041508d952af16306330158c7edf102a11c848fe88ee00a8a6d"},{"language":"text","sha256":"14b314e9592a83111369f9a03b017fdd6bd8e156ab7f53c2b9f5b2d353d2243f"},{"language":"bash","sha256":"c54209576c12fd546a24418f7e809c298d4eb6947ed2170147f645d39f637417"},{"language":"bash","sha256":"ed14bcaad7393d704af3aef345e4e8b7a349b22926c5c32465c600ab2e125f23"},{"language":"python","sha256":"1d3b5501d07f4ab789b0c3bd6f8af97fa3151ac7dc81f3e899cc8d5f9ae3f5b8"},{"language":"bash","sha256":"3405f0a87089175b884590ae051ec0ba5f3c7b0736eb794a088bf419bfd8f2f1"},{"language":"text","sha256":"41cbeb5b53d2768a22ba94f5ac298dd0c07991fe98fe71f72fddc626012bf37c"},{"language":"python","sha256":"a8bb05c718758020b1a33fd0d9f2bf587676372460eb452fab1c27879bd3cf23"},{"language":"text","sha256":"5cbf7caa7048a2c4e7352bf6a3fd2bcb7aeab17b4c717a32a2d8320d0e38b4b0"},{"language":"python","sha256":"14fc0bd19a3aea7f9635be469598048217aeb084c94f4d29eac1ab298380d81e"},{"language":"text","sha256":"bc70b4410415fe0b485bd96a39e8e917db0e35025b00da4f7d48b7dd421df216"}],"groups":[]}}};
 </script>
 <script src="../code-tabs.js?v=20261026-startup-v1"></script>
 <script src="../copy-code.js?v=20261025-r-first-v1"></script>

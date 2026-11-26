@@ -1,0 +1,92 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 410" width="880" height="410" role="img" aria-labelledby="triage-title triage-desc">
+  <title id="triage-title">Cell-type annotation comparison and marker triage workflow</title>
+  <desc id="triage-desc">Diagram showing 1,149 PBMC query cells and 537 disjoint reference cells processed by SingleR (Wilcoxon marker correlation and MAD pruning) and Seurat label transfer (20-PC anchor voting), routing into 1,046 agreed calls, 37 SingleR Unassigned abstentions, and 66 competing named labels such as 20 Cytotoxic T versus Natural killer cells for RNA marker review.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#475569"/>
+    </marker>
+    <style>
+      .bg { fill: #f8fafc; stroke: #dbe4ed; stroke-width: 1.5; }
+      .title { font-family: Inter, system-ui, -apple-system, sans-serif; font-size: 16px; font-weight: 700; fill: #0f172a; }
+      .sub { font-family: Inter, system-ui, -apple-system, sans-serif; font-size: 12px; fill: #475569; }
+      .card-title { font-family: Inter, system-ui, -apple-system, sans-serif; font-size: 13px; font-weight: 700; fill: #0f172a; }
+      .card-body { font-family: Inter, system-ui, -apple-system, sans-serif; font-size: 11px; fill: #334155; }
+      .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 10.5px; fill: #1e293b; }
+      .foot { font-family: Inter, system-ui, -apple-system, sans-serif; font-size: 11px; font-weight: 600; fill: #1e3a5f; }
+      .conn { fill: none; stroke: #64748b; stroke-width: 1.6; marker-end: url(#arrow); }
+      .conn-plain { fill: none; stroke: #64748b; stroke-width: 1.6; }
+    </style>
+  </defs>
+
+  <rect class="bg" x="2" y="2" width="876" height="406" rx="12"/>
+
+  <text class="title" x="24" y="32">How SingleR and Seurat Label Transfer Route Query Cells to Review</text>
+  <text class="sub" x="24" y="51">Observed counts from 1,149 public PBMC query cells (10x v2 A + v3) mapped against 537 disjoint reference cells (10x v2 B)</text>
+
+  <!-- Column 1: Inputs -->
+  <rect x="24" y="80" width="205" height="114" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="1.5"/>
+  <text class="card-title" x="36" y="102">Query RNA (1,149 cells)</text>
+  <text class="card-body" x="36" y="122">10x v2 A (590) + 10x v3 (559)</text>
+  <text class="card-body" x="36" y="140">LogNormalize (scale 10,000)</text>
+  <text class="card-body" x="36" y="158">0 shared IDs or count profiles</text>
+  <text class="card-body" x="36" y="176">pDC absent in v3 (source n = 0)</text>
+
+  <rect x="24" y="226" width="205" height="114" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="1.5"/>
+  <text class="card-title" x="36" y="248">Reference RNA (537 cells)</text>
+  <text class="card-body" x="36" y="268">10x v2 B (9 PBMC labels)</text>
+  <text class="card-body" x="36" y="286">2,000 variable features, 20 PCs</text>
+  <text class="card-body" x="36" y="304">Capped at &lt;= 80 cells / stratum</text>
+  <text class="card-body" x="36" y="322">Labels = prior calls, not truth</text>
+
+  <!-- Connectors Column 1 -> Column 2 -->
+  <path class="conn" d="M 229 125 L 270 125"/>
+  <path class="conn-plain" d="M 248 125 L 248 270"/>
+  <path class="conn" d="M 248 270 L 270 270"/>
+  <path class="conn" d="M 229 295 L 270 295"/>
+  <path class="conn-plain" d="M 258 295 L 258 150"/>
+  <path class="conn" d="M 258 150 L 270 150"/>
+
+  <!-- Column 2: Classifiers -->
+  <rect x="274" y="80" width="272" height="114" rx="8" fill="#eff6ff" stroke="#2563eb" stroke-width="1.5"/>
+  <text class="card-title" x="288" y="102">1. SingleR (de.method = "wilcox")</text>
+  <text class="card-body" x="288" y="122">Spearman correlation on Wilcoxon markers</text>
+  <text class="card-body" x="288" y="140">Fine-tuning between top candidate labels</text>
+  <text class="card-body" x="288" y="158">pruneScores() flags MAD delta.med outliers</text>
+  <text class="mono" x="288" y="178">labels, pruned.labels, delta.next</text>
+
+  <rect x="274" y="226" width="272" height="114" rx="8" fill="#f0fdfa" stroke="#0f766e" stroke-width="1.5"/>
+  <text class="card-title" x="288" y="248">2. Seurat Label Transfer</text>
+  <text class="card-body" x="288" y="268">FindTransferAnchors() in 20-PC space</text>
+  <text class="card-body" x="288" y="286">TransferData() weighted anchor voting</text>
+  <text class="card-body" x="288" y="304">Assigns nearest class to every cell</text>
+  <text class="mono" x="288" y="324">predicted.id, prediction.score.max</text>
+
+  <!-- Connectors Column 2 -> Column 3 -->
+  <path class="conn-plain" d="M 546 137 L 568 137"/>
+  <path class="conn-plain" d="M 546 283 L 568 283"/>
+  <path class="conn-plain" d="M 568 118 L 568 308"/>
+  <path class="conn" d="M 568 118 L 590 118"/>
+  <path class="conn" d="M 568 208 L 590 208"/>
+  <path class="conn" d="M 568 308 L 590 308"/>
+
+  <!-- Column 3: Triage Outcomes -->
+  <rect x="594" y="80" width="262" height="76" rx="8" fill="#f0fdf4" stroke="#15803d" stroke-width="1.5"/>
+  <text class="card-title" x="608" y="100">Agree (1,046 cells, 91.0%)</text>
+  <text class="card-body" x="608" y="119">Same named label from both methods.</text>
+  <text class="card-body" x="608" y="137">Check markers too: shared ref bias possible.</text>
+
+  <rect x="594" y="168" width="262" height="80" rx="8" fill="#fffbeb" stroke="#b45309" stroke-width="1.5"/>
+  <text class="card-title" x="608" y="188">SingleR abstains (37 cells, 3.2%)</text>
+  <text class="card-body" x="608" y="207">Keep Unassigned; do not force a call.</text>
+  <text class="card-body" x="608" y="225">Seurat scores still 0.472-1.000 (med 0.899).</text>
+
+  <rect x="594" y="260" width="262" height="94" rx="8" fill="#fef2f2" stroke="#b91c1c" stroke-width="1.5"/>
+  <text class="card-title" x="608" y="280">Competing labels (66 cells, 5.7%)</text>
+  <text class="card-body" x="608" y="299">Top pair: 20 Cytotoxic T vs NK cells.</text>
+  <text class="card-body" x="608" y="317">Seurat scores 0.510-0.945 (none &lt; 0.5).</text>
+  <text class="card-body" x="608" y="335">Audit CD3D, NKG7, TRAC, KLRD1 in RNA.</text>
+
+  <!-- Bottom rule -->
+  <rect x="24" y="368" width="832" height="28" rx="6" fill="#e2e8f0"/>
+  <text class="foot" x="38" y="386">Decision rule: retain per-cell IDs, margins, and abstentions; validate disputed or novel states with RNA markers and independent assays.</text>
+</svg>

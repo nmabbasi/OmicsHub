@@ -1,0 +1,135 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="920" height="422" viewBox="0 0 920 422" role="img" aria-labelledby="svg-title svg-desc">
+  <title id="svg-title">How inferCNV transforms raw gene counts into chromosome-arm copy-number profiles</title>
+  <desc id="svg-desc">Three-step conceptual diagram: Step 1 orders raw counts by chromosome; Step 2 subtracts trusted diploid reference expression in log space and converts back to linear relative expression centered at 1.0; Step 3 applies a 101-gene moving average, denoising, and HMM segmentation to reveal broad gains and losses while flagging reference contamination and focal MHC artifacts.</desc>
+  <defs>
+    <marker id="arrow-blue" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#2057a5"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="920" height="422" rx="12" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
+
+  <text x="460" y="34" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="16" font-weight="700" fill="#0f172a">How inferCNV Separates Broad Copy-Number Shifts from Single-Gene Noise</text>
+
+  <!-- Step 1 -->
+  <rect x="24" y="56" width="262" height="252" rx="10" fill="#ffffff" stroke="#94a3b8" stroke-width="1.5"/>
+  <rect x="24" y="56" width="262" height="36" rx="10" fill="#1e3a5f"/>
+  <rect x="24" y="80" width="262" height="12" fill="#1e3a5f"/>
+  <text x="155" y="79" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="13" font-weight="700" fill="#ffffff">1. Order Raw Counts by Genome</text>
+
+  <text x="40" y="114" font-family="Inter, system-ui, sans-serif" font-size="11.5" font-weight="600" fill="#334155">Unnormalized UMI counts (genes x cells)</text>
+  <text x="40" y="130" font-family="Inter, system-ui, sans-serif" font-size="11" fill="#475569">Individual genes spike from dropouts &amp; bursts</text>
+
+  <!-- Noisy single-gene bars along genome -->
+  <line x1="42" y1="224" x2="268" y2="224" stroke="#64748b" stroke-width="1.2"/>
+  <rect x="46" y="176" width="8" height="48" fill="#64748b" rx="1"/>
+  <rect x="58" y="206" width="8" height="18" fill="#94a3b8" rx="1"/>
+  <rect x="70" y="158" width="8" height="66" fill="#475569" rx="1"/>
+  <rect x="82" y="212" width="8" height="12" fill="#94a3b8" rx="1"/>
+  <rect x="94" y="188" width="8" height="36" fill="#64748b" rx="1"/>
+  <line x1="112" y1="150" x2="112" y2="232" stroke="#cbd5e1" stroke-dasharray="3,3" stroke-width="1.2"/>
+  <rect x="120" y="164" width="8" height="60" fill="#475569" rx="1"/>
+  <rect x="132" y="182" width="8" height="42" fill="#64748b" rx="1"/>
+  <rect x="144" y="152" width="8" height="72" fill="#475569" rx="1"/>
+  <rect x="156" y="196" width="8" height="28" fill="#94a3b8" rx="1"/>
+  <rect x="168" y="170" width="8" height="54" fill="#64748b" rx="1"/>
+  <line x1="186" y1="150" x2="186" y2="232" stroke="#cbd5e1" stroke-dasharray="3,3" stroke-width="1.2"/>
+  <rect x="194" y="204" width="8" height="20" fill="#94a3b8" rx="1"/>
+  <rect x="206" y="190" width="8" height="34" fill="#64748b" rx="1"/>
+  <rect x="218" y="214" width="8" height="10" fill="#94a3b8" rx="1"/>
+  <rect x="230" y="172" width="8" height="52" fill="#64748b" rx="1"/>
+  <rect x="242" y="208" width="8" height="16" fill="#94a3b8" rx="1"/>
+
+  <text x="76" y="242" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="10.5" font-weight="600" fill="#475569">chr1</text>
+  <text x="149" y="242" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="10.5" font-weight="600" fill="#475569">chr7</text>
+  <text x="224" y="242" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="10.5" font-weight="600" fill="#475569">chr10</text>
+
+  <rect x="40" y="256" width="230" height="40" rx="6" fill="#f1f5f9" stroke="#cbd5e1"/>
+  <text x="155" y="273" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="10.5" font-weight="600" fill="#1e293b">Contract: same genome build (GRCh38)</text>
+  <text x="155" y="288" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="10" fill="#475569">Natural chr order; exclude chrX, chrY, chrM</text>
+
+  <!-- Arrow 1 -> 2 -->
+  <line x1="292" y1="182" x2="322" y2="182" stroke="#2057a5" stroke-width="2.4" marker-end="url(#arrow-blue)"/>
+
+  <!-- Step 2 -->
+  <rect x="329" y="56" width="262" height="252" rx="10" fill="#ffffff" stroke="#94a3b8" stroke-width="1.5"/>
+  <rect x="329" y="56" width="262" height="36" rx="10" fill="#2057a5"/>
+  <rect x="329" y="80" width="262" height="12" fill="#2057a5"/>
+  <text x="460" y="79" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="13" font-weight="700" fill="#ffffff">2. Subtract Diploid Reference</text>
+
+  <text x="345" y="114" font-family="Inter, system-ui, sans-serif" font-size="11.5" font-weight="600" fill="#334155">Log-subtract ref mean, convert to linear</text>
+  <text x="345" y="130" font-family="Inter, system-ui, sans-serif" font-size="11" fill="#475569">Baseline 1.0 = diploid T / endothelial cells</text>
+
+  <!-- Reference-subtracted residuals -->
+  <line x1="347" y1="194" x2="573" y2="194" stroke="#334155" stroke-width="1.4" stroke-dasharray="4,2"/>
+  <text x="569" y="188" text-anchor="end" font-family="Inter, system-ui, sans-serif" font-size="10" font-weight="600" fill="#334155">1.0 (neutral)</text>
+
+  <!-- chr1 near 1.0 -->
+  <circle cx="358" cy="192" r="3.5" fill="#64748b"/>
+  <circle cx="370" cy="198" r="3.5" fill="#64748b"/>
+  <circle cx="382" cy="187" r="3.5" fill="#64748b"/>
+  <circle cx="394" cy="201" r="3.5" fill="#64748b"/>
+  <circle cx="406" cy="191" r="3.5" fill="#64748b"/>
+  <line x1="418" y1="148" x2="418" y2="232" stroke="#cbd5e1" stroke-dasharray="3,3" stroke-width="1.2"/>
+  <!-- chr7 shifted up (red) -->
+  <circle cx="428" cy="166" r="3.5" fill="#dc2626"/>
+  <circle cx="440" cy="176" r="3.5" fill="#dc2626"/>
+  <circle cx="452" cy="158" r="3.5" fill="#dc2626"/>
+  <circle cx="464" cy="171" r="3.5" fill="#dc2626"/>
+  <circle cx="476" cy="162" r="3.5" fill="#dc2626"/>
+  <line x1="488" y1="148" x2="488" y2="232" stroke="#cbd5e1" stroke-dasharray="3,3" stroke-width="1.2"/>
+  <!-- chr10 shifted down (blue) -->
+  <circle cx="498" cy="216" r="3.5" fill="#2563eb"/>
+  <circle cx="510" cy="222" r="3.5" fill="#2563eb"/>
+  <circle cx="522" cy="209" r="3.5" fill="#2563eb"/>
+  <circle cx="534" cy="226" r="3.5" fill="#2563eb"/>
+  <circle cx="546" cy="214" r="3.5" fill="#2563eb"/>
+
+  <text x="382" y="242" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="10.5" font-weight="600" fill="#475569">chr1</text>
+  <text x="453" y="242" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="10.5" font-weight="600" fill="#b91c1c">chr7 (+)</text>
+  <text x="524" y="242" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="10.5" font-weight="600" fill="#1d4ed8">chr10 (-)</text>
+
+  <rect x="345" y="256" width="230" height="40" rx="6" fill="#eff6ff" stroke="#bfdbfe"/>
+  <text x="460" y="273" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="10.5" font-weight="600" fill="#1e3a8a">Use >= 2 normal reference lineages</text>
+  <text x="460" y="288" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="10" fill="#1e40af">Bounds cell-type-specific marker bias</text>
+
+  <!-- Arrow 2 -> 3 -->
+  <line x1="597" y1="182" x2="627" y2="182" stroke="#2057a5" stroke-width="2.4" marker-end="url(#arrow-blue)"/>
+
+  <!-- Step 3 -->
+  <rect x="634" y="56" width="262" height="252" rx="10" fill="#ffffff" stroke="#94a3b8" stroke-width="1.5"/>
+  <rect x="634" y="56" width="262" height="36" rx="10" fill="#0f766e"/>
+  <rect x="634" y="80" width="262" height="12" fill="#0f766e"/>
+  <text x="765" y="79" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="13" font-weight="700" fill="#ffffff">3. Smooth (101 Genes) &amp; Call HMM</text>
+
+  <text x="650" y="114" font-family="Inter, system-ui, sans-serif" font-size="11.5" font-weight="600" fill="#334155">Moving window + denoise + JAGS HMM</text>
+  <text x="650" y="130" font-family="Inter, system-ui, sans-serif" font-size="11" fill="#475569">Contiguous arm blocks emerge above noise</text>
+
+  <!-- Smoothed profile -->
+  <line x1="652" y1="194" x2="878" y2="194" stroke="#334155" stroke-width="1.2" stroke-dasharray="4,2"/>
+  <line x1="723" y1="148" x2="723" y2="232" stroke="#cbd5e1" stroke-dasharray="3,3" stroke-width="1.2"/>
+  <line x1="793" y1="148" x2="793" y2="232" stroke="#cbd5e1" stroke-dasharray="3,3" stroke-width="1.2"/>
+
+  <!-- Neutral chr1 -->
+  <rect x="656" y="189" width="60" height="10" rx="3" fill="#cbd5e1"/>
+  <!-- Gain chr7 -->
+  <rect x="729" y="158" width="58" height="36" rx="3" fill="#fca5a5" stroke="#dc2626" stroke-width="1.4"/>
+  <text x="758" y="180" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="10.5" font-weight="700" fill="#991b1b">Gain &gt;1</text>
+  <!-- Loss chr10 -->
+  <rect x="799" y="194" width="58" height="32" rx="3" fill="#93c5fd" stroke="#2563eb" stroke-width="1.4"/>
+  <text x="828" y="214" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="10.5" font-weight="700" fill="#1e3a8a">Loss &lt;1</text>
+
+  <text x="686" y="242" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="10.5" font-weight="600" fill="#475569">chr1</text>
+  <text x="758" y="242" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="10.5" font-weight="600" fill="#b91c1c">chr7</text>
+  <text x="828" y="242" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="10.5" font-weight="600" fill="#1d4ed8">chr10</text>
+
+  <rect x="650" y="256" width="230" height="40" rx="6" fill="#f0fdfa" stroke="#99f6e4"/>
+  <text x="765" y="273" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="10.5" font-weight="600" fill="#115e59">Outputs: infercnv.png &amp; HMM states</text>
+  <text x="765" y="288" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="10" fill="#134e4a">Candidate RNA signals (confirm with DNA)</text>
+
+  <!-- Bottom Pitfall Strip -->
+  <rect x="24" y="324" width="872" height="78" rx="8" fill="#fffbeb" stroke="#f59e0b" stroke-width="1.4"/>
+  <text x="42" y="346" font-family="Inter, system-ui, sans-serif" font-size="12" font-weight="700" fill="#92400e">Two common traps to audit before calling a clone malignant:</text>
+  <text x="42" y="367" font-family="Inter, system-ui, sans-serif" font-size="11.5" fill="#78350f">1. Contaminated reference cells invert tumor gains and losses into normal cells.</text>
+  <text x="42" y="387" font-family="Inter, system-ui, sans-serif" font-size="11.5" fill="#78350f">2. Localized gene-cluster programs (chr6p MHC, immunoglobulin loci) mimic focal gains without DNA CNVs.</text>
+</svg>

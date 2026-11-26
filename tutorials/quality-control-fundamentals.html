@@ -181,43 +181,47 @@ function toggleMobileMenu() {
 <div class="flex items-start gap-2">
 <svg class="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
 <span>Updated 25 October 2026</span></div>
-</div><p class="lesson-lead">QC turns a set of files and tool reports into a documented decision about what can be analyzed, what needs investigation, and why. This lesson follows a paired-end short-read example, then contrasts it with single-cell checks. Thresholds must come from the assay and study context.</p>
+</div><p class="lesson-lead">Sequencing quality control (QC) turns raw FASTQ files, alignment logs, and count tables into an auditable decision: which samples are ready for analysis, which need investigation, and why. Follow this layered workflow to catch file corruption, adapter read-through, wrong genome builds, cross-sample contamination, and damaged single cells before they distort downstream statistics.</p>
 <section class="lesson-summary tutorial-learning-contract" data-tutorial-format="conceptual-guide" aria-label="Learning format"><p><strong>Format: Conceptual guide.</strong> Compare sequencing QC signals across short-read and long-read assays, practice logging a sample-level review record, and bring your own FastQC/MultiQC reports to apply the same checklist.</p></section>
-<h2>What you will produce</h2>
-<p>Work through the checks below and finish with a sample-level QC record: tool versions, selected metrics, a pass/review/exclude decision, its evidence, and a next action. The commands are templates, not a tested end-to-end pipeline.</p>
+<div class="lesson-summary">
+<p><strong>What problem this solves:</strong> Downstream variant callers and differential-expression models assume your reads come from intact libraries, the right reference build, and the right biological donor. Without layered QC, a truncated download, 10% human cross-contamination, or a swapped sample sheet produces plausible-looking numbers that are biologically wrong.</p>
+<p><strong>What you will be able to do:</strong></p>
 <ul>
-<li>Define and interpret common quality-control (QC) metrics for sequencing experiments: per-base read quality, adapter content, mapping rate, read-pairing, duplication, coverage, contamination, and sample missingness.</li>
-<li>Differentiate technical failure from plausible biological signals and identify useful short-read, long-read, and single-cell QC views.</li>
-<li>Create a concise, reproducible QC record that lists tools and versions, key metrics, a pass/review decision, and the next action for each sample.</li>
-<li>Apply basic troubleshooting steps and document exclusions without deleting original raw data.</li>
+<li>Verify FASTQ file integrity with checksums and decompression tests before spending compute time.</li>
+<li>Read FastQC, MultiQC, and <code>fastp</code> reports to decide when trimming helps and when a red flag is a normal protocol artifact.</li>
+<li>Audit BAM alignments, duplicate rates, RNA-seq strandedness, coverage breadth, and contamination (<code>Kraken2</code>, <code>VerifyBamID2</code>).</li>
+<li>Evaluate single-cell RNA-seq covariates jointly in R (Seurat) or Python (Scanpy) and record reproducible <code>pass</code> / <code>review</code> / <code>exclude</code> decisions in <code>qc/qc_summary.tsv</code>.</li>
 </ul>
-<p>Prerequisites:</p>
+<p><strong>Prerequisites &amp; time:</strong> About 35-45 minutes. Assumes basic shell navigation (<a href="command-line-part1.html">Command Line Part 1</a>) and familiarity with FASTQ, BAM, BED, and count-matrix formats (<a href="introduction-to-bioinformatics.html">Introduction to Bioinformatics</a>).</p>
+<p><strong>Scope:</strong> Pairs a standard short-read alignment template with locally verified checksum and <code>samtools depth</code> calculations plus an executed public PBMC3k Seurat check. Numeric cutoffs depend on assay, protocol, and matched controls; treat every threshold below as a starting point to calibrate against your own batch.</p>
+</div>
+
+<h2 id="why-qc">Start with the question QC must answer</h2>
+<p>QC reports measure technical properties of sequencing data; they do not prove a biological hypothesis. Poor base quality, residual adapters, uneven target capture, or cross-sample mixing distort allele frequencies and gene counts, whereas an unusual value can also reflect real biology or protocol design (for example, higher mitochondrial transcripts in cardiomyocytes than in lymphocytes).</p>
+<figure class="my-8 bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+<img src="../images/tutorial-figures/quality-control-fundamentals-workflow.svg" alt="Four-stage sequencing quality control funnel: Stage 1 File Integrity with sha256sum and gzip -t; Stage 2 Read and Adapter QC with FastQC, MultiQC, and fastp; Stage 3 Alignment, Duplicates, and Depth with samtools, Picard, bedtools, and RSeQC; Stage 4 Identity and Single-Cell QC with Kraken2, VerifyBamID2, and Seurat or Scanpy, feeding into qc_summary.tsv." width="960" height="440" loading="lazy" decoding="async" class="w-full h-auto rounded-lg" style="aspect-ratio: 960 / 440;"/>
+<figcaption class="mt-3 text-sm text-gray-600"><strong>Four layers of sequencing QC.</strong> Each layer catches errors invisible to the others: file corruption stops before alignment, read QC guides trimming, alignment metrics verify reference and library complexity, and identity checks catch swaps or contamination before modeling.</figcaption>
+</figure>
+<p>Check quality across five complementary scales:</p>
 <ul>
-<li>Familiarity with command-line basics and file paths.</li>
-<li>Completed an introduction to biological data formats (FASTQ, BAM/CRAM, VCF, gene-count matrices).</li>
-<li>Thresholds depend on assay, organism, library protocol, instrument, and study design. This tutorial does not prescribe universal cutoffs.</li>
+<li><strong>Read level:</strong> per-base Phred quality scores, adapter read-through, GC content, and read-length distribution.</li>
+<li><strong>Alignment level:</strong> mapped fraction, properly paired reads, mapping quality (MAPQ), and fragment insert-size distribution.</li>
+<li><strong>Duplicate and coverage level:</strong> PCR vs. optical duplicates, library complexity, mean depth, and target coverage breadth.</li>
+<li><strong>Sample identity level:</strong> cross-species reads, within-species human DNA mixing (<code>FREEMIX</code>), sex concordance, and genotype swaps.</li>
+<li><strong>Single-cell level:</strong> detected genes and UMI counts per barcode, mitochondrial RNA fraction, ambient RNA, and doublets.</li>
 </ul>
-<h2>Start with the question QC must answer</h2>
-<p>QC reports describe technical properties of the data; they do not establish whether a biological hypothesis is true. Poor base quality, contamination, low coverage, or duplication can affect downstream analyses. An unusual measurement can also reflect the sample or protocol. For example, a high mitochondrial RNA fraction needs interpretation alongside tissue, cell handling, and the distribution across cells and samples.</p>
-<p>QC matters at multiple scales:</p>
+
+<h2 id="paired-end-workflow">Paired-end short-read workflow</h2>
+<p>The shell stages below follow one paired-end sample stored under <code>raw/</code> alongside a provider checksum manifest, writing logs to <code>logs/</code> and QC reports to <code>qc/</code>. Create <code>raw/</code>, <code>reference/</code>, <code>targets/</code>, and <code>logs/</code> in your project root and substitute your own sample names, reference FASTA, and installed tool environment. Save each stage as its own Bash script and run it with <code>bash stage-name.sh</code>. Every stage begins with <code>set -euo pipefail</code> so a failed command or pipe stops execution immediately instead of passing empty or partial files downstream.</p>
+<p>Expected input files:</p>
 <ul>
-<li>Read-level: per-base quality, adapters, read length distribution.</li>
-<li>Alignment-level: mapping fraction, properly paired reads, insert-size distribution.</li>
-<li>Duplicate and coverage-level: PCR duplicates, uniformity of coverage for target capture.</li>
-<li>Sample-level: cross-sample contamination, identity swaps, missingness.</li>
-<li>Single-cell: cell complexity, mitochondrial fraction, doublets.</li>
+<li><code>raw/sample_R1.fastq.gz</code>, <code>raw/sample_R2.fastq.gz</code>: read-only raw paired-end FASTQ files.</li>
+<li><code>raw/checksums.txt</code> (SHA-256) or <code>raw/md5checksums.txt</code> (MD5): the provider's original checksum manifest using paths relative to <code>raw/</code> (for example <code>sample_R1.fastq.gz</code>). Keep the provider's manifest intact rather than overwriting it with locally computed hashes.</li>
+<li><code>reference/genome.fa</code> and matching aligner/FASTA indexes (for alignment and contamination stages).</li>
 </ul>
-<h2>Paired-end short-read workflow</h2>
-<p>This example assumes two gzip-compressed FASTQ files for one sample, matching provider checksums, and (for alignment) a reference FASTA with compatible indexes. Create the top-level <code>raw/</code>, <code>reference/</code>, and <code>logs/</code> inputs or directories as needed; the files shown are placeholders, not a supplied dataset. Run from the project directory after installing and testing the named tools. Replace sample names and paths. The snippets illustrate stages; they do not install tools, download references, or configure a compute environment.</p>
-<p>Save each shell stage in a Bash script and run it with <code>bash stage-name.sh</code> from the project directory. Each script starts with <code>set -euo pipefail</code>, so a failed command or pipeline stops that stage. Do not continue to later stages after a failure, and do not treat an old output file as evidence that a new run succeeded.</p>
-<p>Required inputs (example):</p>
-<ul>
-<li>raw/ sample_R1.fastq.gz, sample_R2.fastq.gz: primary raw FASTQ files.</li>
-<li><code>raw/checksums.txt</code>: provider SHA-256 manifest, or <code>raw/md5checksums.txt</code>: provider MD5 manifest. Entries must name files relative to <code>raw/</code>, for example <code>sample_R1.fastq.gz</code>. Use the provider's actual names and algorithm; do not replace a provider manifest with locally computed hashes.</li>
-<li>reference/ genome.fa and its index files (if performing alignment).</li>
-</ul>
+
 <h3>1. Verify input files before analysis</h3>
-<p>What you do: confirm that each FASTQ matches the checksum provided by the data source. This step prevents downstream QC confusion caused by partial or corrupted downloads.</p>
+<p><strong>Why:</strong> Network transfers can silently truncate a <code>.fastq.gz</code> file or swap files without raising an obvious shell error. Checksums verify that every byte matches the sequencing core's original file, while <code>gzip -t</code> verifies that the compressed archive stream decompresses cleanly from start to finish.</p>
 <pre id="qc-integrity-stage"><code>set -euo pipefail
 # Input: provider manifest and FASTQ files beneath raw/
 # Output: logs/checksum_validation.log
@@ -235,9 +239,16 @@ fi
 gzip -t raw/sample_R1.fastq.gz raw/sample_R2.fastq.gz
 echo "Provider checksums and gzip integrity checks passed."
 </code></pre>
-<p>Interpretation: all files should report OK and gzip -t should exit with code 0. If any check fails, re-download that specific file rather than editing the manifest. Save checksum_validation.log in logs/.</p>
-<h3>2. Compare read-level reports</h3>
-<p>What you do: run a per-file QC tool that reports per-base quality, adapter content, GC distribution, and overrepresented sequences. FastQC and fastp are common choices; run MultiQC to aggregate multiple FastQC outputs into a single report.</p>
+<div class="lesson-checkpoint">
+<p><strong>Expected output (verified locally on paired gzipped teaching FASTQs):</strong></p>
+<p><code>sample_R1.fastq.gz: OK</code><br/>
+<code>sample_R2.fastq.gz: OK</code><br/>
+<code>Provider checksums and gzip integrity checks passed.</code></p>
+<p><strong>If it fails:</strong> Any <code>FAILED</code> line from <code>sha256sum -c</code>/<code>md5sum -c</code> or an <code>unexpected end of file</code> error from <code>gzip -t</code> means the local copy is corrupt or mismatched. Re-download the affected file rather than editing the manifest.</p>
+</div>
+
+<h3>2. Inspect read-level quality with FastQC and MultiQC</h3>
+<p><strong>Why:</strong> Before aligning millions of reads, inspect base-calling accuracy, adapter carryover, and lane-level anomalies. A <strong>Phred quality score (Q)</strong> measures base-call error probability on a log scale: <code>Q20</code> corresponds to a 1% error rate (99% accuracy) and <code>Q30</code> to a 0.1% error rate (99.9% accuracy). <strong>FastQC</strong> inspects one FASTQ file at a time, while <strong>MultiQC</strong> aggregates all FastQC outputs across R1, R2, and samples into a single interactive report so outliers stand out immediately.</p>
 <pre><code>set -euo pipefail
 # Input: raw/*.fastq.gz
 # Outputs: qc/fastqc/ (HTML + raw), qc/multiqc_read_qc.html
@@ -249,9 +260,23 @@ cd qc
 multiqc -n multiqc_read_qc.html -o . fastqc
 cd ..
 </code></pre>
-<p>FastQC writes a report for each input file. MultiQC searches the supplied directory for recognized report files and compiles a combined report; review sample names and modules to ensure it found the intended inputs.</p>
-<h3>3. Trim only when a report supports it</h3>
-<p>By default, <code>fastp</code> enables quality filtering (Phred &lt; 15 in &gt;40% of bases), N-base filtering (&gt;5 Ns), and minimum-length filtering (15 bp) in addition to adapter trimming; pass <code>--disable_quality_filtering</code> if you strictly want adapter-only removal. Retain the original FASTQ in <code>raw/</code> and write trimmed reads and reports to separate paths:</p>
+<p><strong>Check &amp; avoid false alarms:</strong> FastQC applies fixed generic thresholds that often trigger amber warnings or red crosses on healthy assay-specific libraries. Compare samples within the same batch instead of reacting to every red icon:</p>
+<div class="lesson-table-wrap">
+<table>
+<thead>
+<tr><th scope="col">FastQC module</th><th scope="col">Normal protocol artifact (do not panic)</th><th scope="col">True technical issue to investigate</th></tr>
+</thead>
+<tbody>
+<tr><td><strong>Per base sequence quality</strong></td><td>Mild 3' tail dip from Q36 to Q28 at cycle 150</td><td>Median score drops below Q20 across half the read or in one failed lane/tile</td></tr>
+<tr><td><strong>Per base sequence content</strong></td><td>Non-uniform composition in the first 10-12 bp of RNA-seq (random-hexamer priming bias)</td><td>Constant single-base spike or biased composition across the entire read length</td></tr>
+<tr><td><strong>Adapter content / Overrepresented sequences</strong></td><td>&lt;1-2% trace adapter at extreme 3' ends</td><td>Steep adapter climb from cycle 50 onward (short inserts) or adapter dimers</td></tr>
+<tr><td><strong>Sequence duplication levels</strong></td><td>High duplication in bulk RNA-seq (highly expressed genes like <code>ACTB</code>) or amplicon panels</td><td>High duplication in low-depth WGS (&lt;30x) paired with low library yield</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>3. Trim only when the read report supports it</h3>
+<p><strong>Why:</strong> Modern splice-aware and DNA aligners (<code>bwa-mem2</code>, <code>STAR</code>) soft-clip mismatched read ends automatically. Aggressive quality trimming can shorten reads below optimal mapping length or distort fragment-size estimates. Trim selectively when MultiQC shows substantial adapter read-through (from inserts shorter than the read length), two-color poly-G tails, or collapsed 3' base quality. Always write trimmed reads to <code>trimmed/</code> and leave <code>raw/</code> untouched.</p>
 <pre><code>set -euo pipefail
 # Input: raw/*.fastq.gz
 # Output: trimmed/sample_R1.trim.fastq.gz, trimmed/sample_R2.trim.fastq.gz
@@ -261,10 +286,11 @@ fastp -i raw/sample_R1.fastq.gz -I raw/sample_R2.fastq.gz \
       --detect_adapter_for_pe \
       --thread 4 --html qc/fastp_report.html --json qc/fastp_report.json
 </code></pre>
-<p>Note: adapt parameters to your platform and chemistry (for NovaSeq/NextSeq two-color instruments, consider <code>--trim_poly_g</code>). Keep <code>qc/fastp_report.html</code> and <code>qc/fastp_report.json</code> alongside MultiQC.</p>
-<h3>4. Align, sort, and inspect the BAM</h3>
-<p>Align reads with your chosen aligner (<code>bwa-mem2</code> for short-read DNA, <code>STAR</code> for RNA-seq, <code>minimap2</code> for long reads). Include an explicit <code>@RG</code> read-group header with <code>ID</code>, <code>SM</code> (biological sample identifier), <code>LB</code> (library), and <code>PL</code> so Picard MarkDuplicates, GATK, and sample-swap tools track provenance accurately:</p>
-<p>The indexing line writes companion files beside the FASTA and is needed only once for that exact reference and aligner version. Use a writable reference copy, or skip that line when matching bwa-mem2 indexes have already been prepared. A FASTA <code>.fai</code> alone is not a bwa-mem2 index.</p>
+<p><strong>Key <code>fastp</code> defaults to know:</strong> Out of the box, <code>fastp</code> performs adapter trimming plus quality filtering (dropping reads with &gt;40% of bases below Q15, &gt;5 <code>N</code> bases, or post-trim length &lt;15 bp). Pass <code>--disable_quality_filtering</code> if you want adapter removal without read dropping. On two-color Illumina instruments (NextSeq and NovaSeq), dark cycles with no fluorescence signal are called as <code>G</code>, creating artificial high-Q poly-G tails; <code>fastp</code> enables poly-G trimming automatically when it detects two-color data, and <code>--trim_poly_g</code> forces it on for any run (use <code>--disable_trim_poly_g</code> to turn it off). Keep <code>qc/fastp_report.json</code> so MultiQC tracks exact pre- and post-trimming read counts.</p>
+
+<h3>4. Align, sort, mark duplicates, and inspect the BAM</h3>
+<p><strong>Why:</strong> Read-level metrics cannot tell you whether reads actually come from your target organism or reference build. Aligning reads with <code>bwa-mem2</code> (short-read DNA), <code>STAR</code> (bulk RNA-seq), or <code>minimap2</code> (long reads) reveals mapping efficiency, fragment pairing, and library complexity. Always attach a SAM/BAM <code>@RG</code> read-group header specifying <code>ID</code> (lane/run), <code>SM</code> (biological sample), <code>LB</code> (library), and <code>PL</code> (platform) so duplicate marking separates physical libraries and downstream tools (GATK, <code>VerifyBamID2</code>) track sample provenance.</p>
+<p>The indexing step writes companion files next to <code>genome.fa</code> and runs only once per reference and <code>bwa-mem2</code> version (skip it if pre-built indexes exist; a plain FASTA <code>.fai</code> index alone is not a <code>bwa-mem2</code> index).</p>
 <pre><code>set -euo pipefail
 # Inputs: reference/genome.fa and trimmed/*.fastq.gz
 # Outputs: indexed BAMs, flagstat/idxstats logs, duplicate metrics
@@ -286,16 +312,26 @@ samtools idxstats aligned/sample.bam 2&gt;&amp;1 | tee qc/alignment_idxstats.txt
 picard MarkDuplicates I=aligned/sample.bam O=aligned/sample.dedup.bam \
       M=qc/picard_markdup_metrics.txt CREATE_INDEX=true
 </code></pre>
-<p><code>flagstat</code> summarizes alignment flag categories, including mapped reads, proper pairs, and records marked duplicate; <code>idxstats</code> reports counts per contig after indexing. Unusual mitochondrial or unplaced-contig fractions warrant follow-up, though contig counts alone do not prove cross-species contamination.</p>
-<h3>4b. Bulk RNA-seq alignment and strandedness QC</h3>
-<p>For bulk RNA-seq aligned with <code>STAR</code> and quantified with <code>featureCounts</code> or <code>Salmon</code>, check four RNA-specific diagnostics aggregated by MultiQC before running differential expression:</p>
+<div class="lesson-checkpoint">
+<p><strong>Check these alignment outputs:</strong></p>
 <ul>
-<li><strong><code>STAR Log.final.out</code>:</strong> inspect <code>Uniquely mapped reads %</code> (typically &gt;75-85% for intact mammalian poly(A) libraries), <code>% of reads mapped to multiple loci</code> (elevated by rRNA carry-over), and <code>% of reads unmapped: too short</code> (often adapter dimers or degraded FFPE fragments).</li>
-<li><strong><code>featureCounts .summary</code>:</strong> check the <code>Assigned</code> fraction versus <code>Unassigned_NoFeatures</code>. If <code>Assigned</code> drops near 5-10% while genomic mapping is &gt;85% (or drops to ~50% in stranded mode), verify library strandedness or intronic pre-mRNA enrichment.</li>
-<li><strong>Library strandedness (<code>RSeQC infer_experiment.py</code>):</strong> run <code>infer_experiment.py -r genes.bed -i aligned/sample.bam</code> to confirm whether reads come from an unstranded (<code>~0.5 / 0.5</code>), forward-stranded, or standard Illumina dUTP reverse-stranded (<code>1+-,1-+,2++,2--</code> &gt; 0.90 -&gt; <code>featureCounts -s 2</code>) protocol.</li>
-<li><strong>3' transcript coverage bias and rRNA fraction (<code>Qualimap rnaseq</code> / <code>RSeQC geneBody_coverage.py</code>):</strong> strong 3' skew signals RNA degradation (low RIN) and can confound comparisons when degradation differs systematically between study groups.</li>
+<li><strong><code>samtools flagstat</code>:</strong> Verify total primary alignments match trimmed FASTQ read counts (note that secondary and supplementary split alignments appear as extra BAM records, so primary count is the accurate read tally). For matched human WGS/WES libraries, mapped % and properly paired % are typically high (&gt;90-95%); a sharp drop points to contamination, adapter carryover, or a mismatched genome build.</li>
+<li><strong><code>samtools idxstats</code>:</strong> Lists mapped and unmapped read counts per contig (<code>chr1</code>, <code>chrM</code>, decoy contigs). Check that mitochondrial reads (<code>chrM</code>) and unplaced contigs are not absorbing a disproportionate share of the library, and compare <code>chrX</code>/<code>chrY</code> ratios against reported sample sex.</li>
+<li><strong><code>Picard MarkDuplicates</code> (<code>qc/picard_markdup_metrics.txt</code>):</strong> Inspect <code>PERCENT_DUPLICATION</code> and <code>ESTIMATED_LIBRARY_SIZE</code>. Marking duplicates is essential in DNA variant calling so PCR copies of one molecule do not fake heterozygous or somatic support. By contrast, for non-UMI bulk RNA-seq gene quantification, do <em>not</em> drop duplicates blindly: highly expressed genes (such as <code>GAPDH</code> or <code>ALB</code>) naturally share identical 5' start positions. If you run Picard <code>MarkDuplicates</code> on RNA-seq for diagnostic inspection, Broad/GATK recommends setting <code>READ_NAME_REGEX=null</code> to skip DNA flowcell optical-duplicate modeling; if your library uses Unique Molecular Identifiers (UMIs), deduplicate with UMI-aware tools (<code>umi_tools</code> or <code>fgbio</code>, or Picard <code>--BARCODE_TAG</code>) rather than coordinate-only marking.</li>
 </ul>
-<h3>5. Check depth where the assay needs it</h3>
+</div>
+
+<h3>4b. Bulk RNA-seq alignment and strandedness QC</h3>
+<p>If your assay is bulk RNA-seq aligned with <code>STAR</code> and quantified with <code>featureCounts</code> or <code>Salmon</code> rather than DNA alignment above, check these four RNA-specific diagnostics (all supported by MultiQC) before running differential expression:</p>
+<ul>
+<li><strong><code>STAR Log.final.out</code>:</strong> Inspect <code>Uniquely mapped reads %</code> (often &gt;75-85% for intact mammalian poly(A) libraries), <code>% of reads mapped to multiple loci</code> (spikes when rRNA depletion fails), and <code>% of reads unmapped: too short</code> (common with adapter dimers or degraded FFPE RNA).</li>
+<li><strong><code>featureCounts .summary</code>:</strong> Compare <code>Assigned</code> reads against <code>Unassigned_NoFeatures</code> and <code>Unassigned_Ambiguity</code>. If genomic mapping is &gt;85% but <code>Assigned</code> collapses to ~5-10% (or ~50%), the wrong strandedness flag or an unmatched GTF annotation release is the first suspect.</li>
+<li><strong>Library strandedness (<code>RSeQC infer_experiment.py</code>):</strong> Run <code>infer_experiment.py -r genes.bed -i aligned/sample.bam</code> to verify whether reads match an unstranded (<code>~0.5 / 0.5</code>), forward-stranded (<code>1++,1--,2+-,2-+</code> -&gt; <code>featureCounts -s 1</code>), or standard Illumina dUTP reverse-stranded (<code>1+-,1-+,2++,2--</code> &gt; 0.90 -&gt; <code>featureCounts -s 2</code>) library kit.</li>
+<li><strong>3' transcript coverage bias and rRNA fraction (<code>Qualimap rnaseq</code> / <code>RSeQC geneBody_coverage.py</code>):</strong> Pronounced 3' skew reflects RNA degradation (low RIN). If degradation differs systematically between cases and controls, downstream fold changes can confound biology with RNA integrity.</li>
+</ul>
+
+<h3>5. Measure coverage depth and target breadth</h3>
+<p><strong>Why:</strong> Mean depth alone can hide severe target dropouts. A WES sample with 60x mean depth can still leave 10% of clinical exons below 10x coverage if capture hybridization was uneven. Measure both <strong>depth</strong> (reads per base) and <strong>breadth</strong> (fraction of target bases reaching your minimum usable depth, such as &ge;10x or &ge;20x), and verify what denominator your tool uses.</p>
 <pre id="qc-depth-stage"><code>set -euo pipefail
 # Input: aligned/sample.dedup.bam
 # Output: qc/coverage_mean_depth.txt
@@ -307,10 +343,11 @@ samtools depth -aa aligned/sample.dedup.bam | \
 # Target breadth: fraction of each interval overlapped, not mean depth.
 bedtools coverage -a targets/regions.bed -b aligned/sample.dedup.bam &gt; qc/targets_coverage.tsv
 </code></pre>
-<p>Notice the denominator difference: <code>-aa</code> includes every position in the BAM header (even contigs with no mapped reads), whereas <code>-a</code> drops unused contigs and can inflate whole-genome mean depth. For targeted panels, define the capture BED denominator and compute per-target depth and breadth instead; remember that <code>bedtools coverage</code> reports covered bases and fraction rather than depth (it does not report mean depth). Record read-quality, duplicate, and overlap settings too, since <code>samtools depth</code> skips marked duplicates by default unless told otherwise.</p>
+<p>Notice the denominator difference: <code>samtools depth -aa</code> outputs every reference base including contigs with no mapped reads, whereas <code>-a</code> omits unused contigs and can artificially inflate whole-genome mean depth. Also note that <code>samtools depth</code> excludes unmapped, secondary, QC-fail, and marked duplicate reads (<code>DUP</code>) by default (pass <code>-g DUP</code> only if you intentionally want duplicates included). For targeted panels or exomes, evaluate coverage over the capture BED rather than the whole genome: default <code>bedtools coverage</code> appends four columns (overlap count, covered bases, interval length, and fraction covered), so it reports covered bases and fraction rather than depth (it does not report mean depth unless you add <code>-mean</code>). For large cohorts, <code>mosdepth</code> computes whole-genome and BED-window coverage thresholds orders of magnitude faster than <code>samtools depth</code>.</p>
 <div class="lesson-result" id="qc-tested-counterexample"><p><strong>Checked software example:</strong> with SAMtools 1.19.2, an artificial alignment of one 8-base teaching read to two 16-base contigs gives 0.5 mean depth with <code>-a</code> but 0.25 with <code>-aa</code>. The second contig has no reads; including its positions changes the denominator from 16 to 32. This tests the calculation, not biological coverage or a sample's suitability. Copied teaching files were also used to check checksum failure handling. Full alignment, contamination analysis, and other operating systems were not tested here.</p></div>
-<h3>6) Contamination and sample identity checks</h3>
-<p>Use lightweight taxonomic classifiers for microbial contamination (Kraken2) and fingerprinting tools (e.g., VerifyBamID2 or Peddy for human samples) for swaps/contamination. Keep results in logs/.</p>
+
+<h3>6. Check contamination and sample identity</h3>
+<p><strong>Why:</strong> Contamination and sample swaps happen in three distinct ways that require different detectors: (1) <strong>cross-species or microbial DNA</strong> (caught by taxonomic classification with <code>Kraken2</code>), (2) <strong>within-species DNA mixing</strong> such as 5% DNA from another human (caught by allele-balance mixture modeling via <code>VerifyBamID2</code>), and (3) <strong>complete sample swaps</strong> where a BAM is 100% pure DNA from the wrong patient (where <code>FREEMIX</code> stays near 0, so you must also check genotype concordance across matched samples with <code>somalier</code> or <code>peddy</code> and verify sex-chromosome depth).</p>
 <pre><code>set -euo pipefail
 # Kraken2 taxonomic profile
 # Input: trimmed sample FASTQ, kraken2 database path
@@ -334,9 +371,11 @@ mkdir -p qc/verifybamid2
 )
 # Outputs: qc/verifybamid2/result.selfSM and result.Ancestry, plus the log.
 </code></pre>
-<p>Passing <code>--output -</code> (or <code>/dev/null</code> depending on your Kraken2 build) hides huge per-read stdout dumps while saving the summary in <code>--report qc/kraken2_report.txt</code>. For human BAMs, <code>verifybamid2</code> replaces the older <code>verifyBamID</code> CLI and needs a build-matched SVD panel in its own subfolder; inspect <code>FREEMIX</code> in <code>result.selfSM</code> alongside cohort baselines (values above 0.02-0.03 warrant review, and pair with <code>somalier</code> or <code>peddy</code> to catch full sample swaps where <code>FREEMIX</code> stays near zero). Treat the block above as a documented template, not an executed contamination analysis.</p>
-<h3>7) Single-cell specific QC</h3>
-<p>Start from a count matrix produced by your pipeline (for example, Cell Ranger or STARsolo). The R route below is the primary example; it reads a 10x Matrix Market directory, calculates per-cell features, counts and mitochondrial fraction, and draws distributions. The input is not included. Confirm feature naming and organism before using the mitochondrial pattern.</p>
+<p>Passing <code>--output -</code> (or <code>/dev/null</code> depending on your Kraken2 build) suppresses huge per-read stdout dumps while saving the clade summary to <code>qc/kraken2_report.txt</code>. For human BAMs, <code>verifybamid2</code> replaces the legacy <code>verifyBamID</code> CLI and uses a genome-build-matched SVD resource panel (such as 1000 Genomes GRCh38/GRCh37) inside its own directory. Inspect <code>FREEMIX</code> in <code>result.selfSM</code> alongside cohort baselines: values &le; 0.01 (1%) are generally clean, 0.01-0.03 warrant review (especially for low-VAF somatic calling), and &gt; 0.03-0.05 commonly trigger exclusion in germline and somatic pipelines. Treat the block above as a documented template, not an executed contamination analysis.</p>
+
+<h3>7. Single-cell RNA-seq QC: evaluate covariates jointly</h3>
+<p><strong>Why:</strong> In droplet single-cell RNA-seq (scRNA-seq), each barcode represents a droplet, not guaranteed single-cell biology. Three core covariates must be inspected together rather than one fixed cutoff at a time: detected genes (<code>nFeature_RNA</code> / <code>n_genes_by_counts</code>), total UMI counts (<code>nCount_RNA</code> / <code>total_counts</code>), and mitochondrial fraction (<code>percent.mt</code> / <code>pct_counts_mt</code>). Low counts + low genes + high mitochondrial percentage signal dying or ruptured cells whose cytoplasmic mRNA leaked out; very high counts + high genes signal potential doublets (two cells captured in one droplet); low genes despite moderate counts point to low-complexity cells (such as erythrocytes) or ambient-RNA-dominated droplets.</p>
+<p>The R workflow below is the primary example reading a 10x Genomics Matrix Market directory (produced by Cell Ranger or STARsolo). Confirm organism gene-symbol casing before running: human mitochondrial symbols start with <code>MT-</code>, whereas mouse symbols typically start with <code>mt-</code>.</p>
 <h3>R workflow: Seurat QC metrics</h3>
 <pre id="qc-single-cell-r"><code># Input: a prepared 10x filtered_feature_bc_matrix/ directory
 # Output: a Seurat object in memory and qc/seurat_qc_violin.png
@@ -374,79 +413,72 @@ sc.pl.violin(adata, qc_columns, jitter=0.25, multi_panel=True, show=False)
 plt.savefig("qc/scanpy_qc_violin.png", bbox_inches="tight")
 plt.close()
 </code></pre>
-<p>Inspect distributions of genes and counts per cell, mitochondrial fraction, and relationships between metrics across samples. The mitochondrial pattern assumes human-style gene symbols; adapt it for the organism and annotation or omit it when inappropriate. Use plots to evaluate candidate filters; do not copy thresholds from another study without justification. These snippets calculate metrics and visualize them; they do not choose or apply a universal cell-filtering threshold.</p>
-<h2>Read the reports as comparisons, not verdicts</h2>
-<p>Below are common metrics, what they mean, and important caveats.</p>
-<h3>Per-base quality and adapter content</h3>
-<p>What to look for: consistently high Phred scores across reads; a low-quality tail at read ends suggests trimming. Adapter content above background indicates library preparation or sequencing artifacts.</p>
-<p>Meaning and limits: high average quality reduces base-calling error, but does not guarantee correct alignment if the reference is distant. Adapter presence often indicates short inserts; confirm insert-size distribution before trimming aggressively.</p>
-<p>For long reads, inspect read-length and per-read quality distributions (for example, with the platform's read-QC report) alongside mapped-read yield and coverage breadth/depth. A long-read length histogram can reveal short-fragment tails or a mixture of molecule sizes, but neither read length nor a single quality summary establishes assembly or variant-call accuracy. Compare samples prepared and sequenced with compatible chemistry, and consult platform-specific guidance before setting filters; this page does not provide a long-read processing recipe.</p>
-<h3>Mapping rate and properly paired reads</h3>
-<p>What to look for: mapping fraction and properly paired percentage in the context of the assay and comparable samples. A low mapping fraction or unexpected contig counts can prompt checks of reference build, library type, and possible contamination.</p>
-<p>Meaning and limits: a low mapping rate can be caused by a wrong reference build, contamination, library type mismatch (e.g., RNA reads to DNA reference), or very divergent genomes. A high mapping rate alone does not guarantee correct variant calls; also check the mapping quality (MAPQ) distribution and variant-level metrics.</p>
-<h3>Duplicate fraction and library complexity</h3>
-<p>What to look for: high duplicate fraction indicates low complexity or over-amplification. Duplicate fractions depend on library preparation, sequencing depth, and assay; compare like samples and consider library complexity and UMI design.</p>
-<p>Meaning and limits: Marked duplicates inflate apparent coverage. Removing duplicates is appropriate for many DNA analyses but may be inappropriate for some RNA-seq quantification or UMIs (unique molecular identifiers); treat UMI-aware processing differently.</p>
-<h3>Coverage uniformity and target dropouts</h3>
-<p>What to look for: per-target coverage reports that show consistent depth across the target set. Regions with zero or very low coverage are problematic and make variant calling unreliable at those loci.</p>
-<p>Meaning and limits: average depth does not substitute for per-target depth. For clinical genes or actionable loci, document per-site coverage before making claims about negative findings.</p>
-<h3>Contamination and identity checks</h3>
-<p>What to look for: Kraken2 reporting a sizable fraction of non-target taxa; VerifyBamID reporting non-zero freemix suggestive of cross-sample contamination. Peddy and other tools can detect sample swaps using genotypes.</p>
-<p>Meaning and limits: low-level microbial reads may reflect environmental DNA or index-hopping in multiplexed runs. Interpret contamination estimates against the method, controls, and downstream analysis. no single numeric estimate works as a blanket threshold; document the evidence and its limits.</p>
-<h2>When a sample looks different</h2>
+<p><strong>Pair violins with bivariate scatterplots and data-driven thresholds:</strong> Violin plots show each metric alone, but decisions depend on their joint relationship (for example, <code>FeatureScatter(seurat_obj, "nCount_RNA", "nFeature_RNA")</code> and <code>FeatureScatter(seurat_obj, "nCount_RNA", "percent.mt")</code> in Seurat, or <code>sc.pl.scatter</code> in Scanpy). Following current single-cell best practices (Heumos et al., 2023), prefer <strong>per-sample or per-batch Median Absolute Deviation (MAD)</strong> outlier bounds (commonly 5 MADs on log-transformed counts/genes and 3 MADs on mitochondrial fraction) over copying a fixed 5% or 10% cutoff from another paper. Always inspect excluded cells by sample, batch, and preliminary cluster so filtering does not silently erase a metabolically active cell type (like cardiomyocytes) or low-RNA population (like neutrophils), and follow basic filtering with doublet detection (<code>scDblFinder</code> / <code>Scrublet</code>) and ambient-RNA checks covered in <a href="scrna-seq-quality-control.html">scRNA-seq Quality Control</a>.</p>
+
+<h2 id="interpret-metrics">Interpret metrics by assay and context, not universal cutoffs</h2>
+<p>A metric that signals failure in one assay can be expected in another. Use the comparison below to separate platform-specific expectations from true quality problems:</p>
+<div class="lesson-table-wrap">
+<table>
+<thead>
+<tr><th scope="col">QC metric</th><th scope="col">Short-read WGS / WES</th><th scope="col">Bulk RNA-seq</th><th scope="col">Long-read (HiFi / ONT)</th></tr>
+</thead>
+<tbody>
+<tr><td><strong>Read quality &amp; length</strong></td><td>Consistent Phred &ge;Q30; uniform 100-150 bp</td><td>Q30 across body; random-hexamer 5' base bias normal</td><td>Inspect read-length N50 and histogram for short-fragment tails alongside per-read Q-score distributions</td></tr>
+<tr><td><strong>Mapping &amp; pairing</strong></td><td>High mapped and proper-pair rates; check MAPQ &ge;20</td><td>Check unique mapping, splice junctions, and rRNA multi-mappers</td><td>Check primary mapped yield and chimeric/split-read fraction against compatible chemistry</td></tr>
+<tr><td><strong>Duplicates</strong></td><td>Mark and exclude PCR/optical duplicates before calling</td><td>Do not drop coordinate duplicates without UMIs</td><td>PCR-free long-read libraries typically have minimal PCR duplication</td></tr>
+<tr><td><strong>Coverage / Depth</strong></td><td>Check per-target breadth (&ge;10x/20x) before reporting negative variants</td><td>Check 3' transcript bias (RIN) and strandedness (<code>-s 0/1/2</code>)</td><td>Inspect genome-wide breadth and N50-weighted coverage depth across target loci</td></tr>
+<tr><td><strong>Contamination / Identity</strong></td><td><code>Kraken2</code> (cross-species) + <code>VerifyBamID2 FREEMIX</code> + <code>somalier</code>/<code>peddy</code></td><td><code>Kraken2</code> + rRNA rate + sex-gene expression (<code>XIST</code>, <code>RPS4Y1</code>)</td><td><code>Kraken2</code> / read taxonomic screen + sample genotype concordance</td></tr>
+</tbody>
+</table>
+</div>
+<p>Note on long reads: neither read length N50 nor a single mean Q-score proves assembly contiguity or variant accuracy on its own. Always compare samples generated with the same sequencing chemistry and basecaller version, and consult platform-specific documentation before applying length or quality filters.</p>
+
+<h2 id="troubleshooting">Troubleshooting: when a sample looks different</h2>
+<div class="lesson-table-wrap">
+<table>
+<thead>
+<tr><th scope="col">Symptom</th><th scope="col">Likely technical or biological cause</th><th scope="col">First check &amp; action</th></tr>
+</thead>
+<tbody>
+<tr><td><strong>Low mapping rate (&lt;70% in human DNA/RNA)</strong></td><td>Wrong reference build, cross-species contamination, unremoved adapter dimers, or RNA reads aligned to a DNA pipeline</td><td>Verify reference FASTA/index; inspect FastQC adapter module; run <code>Kraken2</code> on unmapped or raw reads</td></tr>
+<tr><td><strong>High duplicate fraction</strong></td><td>Low input mass, excessive PCR cycles, narrow targeted panel, or missing UMI deduplication</td><td>Check library prep notes; enable UMI-aware deduplication if UMIs exist; do not drop non-UMI RNA-seq duplicates</td></tr>
+<tr><td><strong>Low <code>featureCounts</code> Assigned % (&lt;20%) with high genomic mapping</strong></td><td>Wrong strandedness parameter (<code>-s</code>), pre-mRNA / intronic nuclei capture, or mismatched GTF build</td><td>Run <code>RSeQC infer_experiment.py</code> to confirm <code>-s 0</code>, <code>1</code>, or <code>2</code>; check intronic/intergenic read fractions</td></tr>
+<tr><td><strong>High <code>percent.mt</code> in scRNA-seq</strong></td><td>Cell lysis during dissociation, dead cells, or high-mitochondria tissue (heart, kidney, skeletal muscle)</td><td>Compare across batches and clusters; apply per-batch MAD bounds rather than one rigid global percentage</td></tr>
+<tr><td><strong>Elevated <code>FREEMIX</code> (&gt;0.03) or unexpected <code>Kraken2</code> taxa</strong></td><td>Cross-sample pipetting carry-over, index hopping, environmental microbe, or sample mix-up</td><td>Check negative controls and plate layout; pair with <code>somalier</code>/<code>peddy</code> genotype checks; exclude or re-sequence if compromised</td></tr>
+<tr><td><strong>Large QC shifts between batches</strong></td><td>Different library kits, sequencers, operators, or tissue dissociation timing</td><td>Visualize QC covariates by batch; model batch covariates (<a href="experimental-design-batch-effects.html">Experimental Design &amp; Batch Effects</a>) or re-sequence key replicates</td></tr>
+</tbody>
+</table>
+</div>
+
+<h2 id="record-decisions">Record decisions, protect raw data, and log qc_summary.tsv</h2>
+<p>Every QC review should leave behind two permanent guarantees: untouched source data and a machine-readable audit table explaining every inclusion or exclusion.</p>
+<p class="lesson-checkpoint"><strong>Before interpreting a flag:</strong> compare samples processed with the same assay and reference, verify the report's sample ID, and review negative controls and batch structure. A flagged metric is a prompt to investigate, not an automatic exclusion rule.</p>
 <ul>
-<li>
-<strong>Symptom:</strong> Unexpectedly low mapping rate<br/>
-<strong>Likely causes:</strong> Common causes include a wrong reference build, contamination, an unexpected sample type (e.g., a microbial sample aligned to a human reference), a degraded or low-complexity library, adapter contamination, or very short reads.<br/>
-<strong>Fixes:</strong> confirm reference fasta and its index; run Kraken2 to detect major taxa; inspect FastQC for adapters/short inserts; re-run alignment with relaxed settings if reads are from a divergent strain; consider re-sequencing.
-  </li>
-<li>
-<strong>Symptom:</strong> Unexpectedly high duplicate fraction<br/>
-<strong>Likely causes:</strong> low input DNA, over-amplification, targeted enrichment, or issues with UMI handling.<br/>
-<strong>Fixes:</strong> check library prep notes, use UMI-aware duplicate handling if UMIs were used, evaluate whether duplicates should be marked or not for your intended analysis; for low-input samples consider re-preparing with higher input if possible.
-  </li>
-<li>
-<strong>Symptom:</strong> High mitochondrial RNA fraction in scRNA-seq cells<br/>
-<strong>Likely causes:</strong> abundant dead/dying cells, dissociation-induced stress, or tissue-specific biology (e.g., muscle).<br/>
-<strong>Fixes:</strong> inspect distribution across samples/batches; if confined to a subset consider excluding those cells but document criteria and numbers excluded; consider alternative dissociation protocols in future experiments.
-  </li>
-<li>
-<strong>Symptom:</strong> Unexpected taxa dominate Kraken2 report<br/>
-<strong>Likely causes:</strong> environmental contamination, index bleed, or mislabeled sample.<br/>
-<strong>Fixes:</strong> check lab records and sample sheet for potential swaps; examine negative controls; if the contamination compromises analysis, remove contaminated libraries or re-sequence.
-  </li>
-<li>
-<strong>Symptom:</strong> Large differences in QC metrics between batches<br/>
-<strong>Likely causes:</strong> library preparation batch effects, different sequencer models/chemistries, operator differences.<br/>
-<strong>Fixes:</strong> include batch covariates in downstream models, consider re-processing to harmonize protocols, or re-sequence critical samples if possible.
-  </li>
+<li><strong>Protect raw files:</strong> Keep originals read-only in <code>raw/</code> (<code>chmod -R a-w raw/</code>) and never overwrite them with trimmed FASTQs.</li>
+<li><strong>Record exact provenance:</strong> Log tool versions (<code>fastp --version</code>, <code>samtools --version</code>), reference assembly and annotation release (e.g., GRCh38 GENCODE v45, noting <code>chr1</code> vs. <code>1</code> naming and decoy contigs), and database build dates for <code>Kraken2</code>.</li>
+<li><strong>Protect human data privacy:</strong> Human BAMs, genotypes, and sample sheets can be re-identifying. Enforce access controls before sharing MultiQC HTML reports or QC tables containing donor identifiers.</li>
+<li><strong>Make missingness explicit:</strong> In <code>qc/qc_summary.tsv</code>, write one row per sample and enter <code>NA</code> whenever a metric was not measured rather than leaving blanks or assuming a pass.</li>
 </ul>
-<h2>Record decisions and protect source data</h2>
-<p>Tools and databases change. Always record tool names and exact versions (e.g., fastp v0.23.2, bwa-mem2 v2.2.1, samtools v1.17). Reference genomes and annotation versions matter: chromosome names (chr1 vs 1), contig order, and the presence of decoy or alternate contigs affect mapping statistics. When using taxonomic classifiers (Kraken2), record the database build date and the specific database used. Contamination detection is only as good as the database.</p>
-<p>Responsible-use notes:</p>
-<ul>
-<li>Do not delete raw files. Keep originals in raw/ and store logs alongside them.</li>
-<li>Document all QC decisions: who made them, when, and why. If samples are excluded, record the exact rationale and provide the outputs that led to exclusion.</li>
-<li>Do not apply rigid thresholds blindly. Use data visualization to understand distributions and make context-aware decisions.</li>
-<li>Privacy: human sequencing data are sensitive. Ensure appropriate access controls when storing and sharing QC outputs that may contain sample identifiers.</li>
-</ul>
-<h2>Make the QC record actionable</h2>
-<p class="lesson-checkpoint"><strong>Before interpreting a flag:</strong> compare samples processed with the same assay and reference, check the report's sample identity, and review controls and batch structure. A flagged metric is a prompt to investigate, not an automatic exclusion rule.</p>
-<ul>
-<li>Store provider checksum manifest and logs in logs/ and confirm all files are OK.</li>
-<li>Run FastQC (or fastp) on raw FASTQ and aggregate with MultiQC; save the HTML report.</li>
-<li>Decide whether trimming is justified; if so, produce trimmed FASTQ in a separate directory and save trimming reports.</li>
-<li>Align reads, index BAMs, run flagstat and Picard MarkDuplicates; store outputs under qc/.</li>
-<li>Compute coverage metrics and per-target coverage if applicable.</li>
-<li>Run contamination/identity checks and save reports.</li>
-<li>For single-cell data, compute per-cell QC metrics and visualize distributions before filtering.</li>
-<li>Create a QC summary file (e.g., qc/qc_summary.tsv) listing sample, tool versions, key metrics, decision (pass/review/exclude), and next action.</li>
-</ul>
-<p>Use one row per sample and write <code>NA</code> when a metric was not measured; keep missing fields explicit rather than assuming a pass. Notice the thresholds shown here are one study-specific example, not fixed rules across assays. Its review decision follows from the stated study-specific comparison: the sample's mapped fraction is below its matched batch range, so reference compatibility and read-level reports should be checked before downstream interpretation.</p>
 <pre><code>sample	tool_versions	metrics	decision	evidence	next_action
 SYNTH_A	fastp 0.23.2; samtools 1.17	reads=1,000,000; mapped=62%; proper_pairs=58%; mean_depth=18x	review	mapped fraction below matched-batch range (illustrative); controls pending	verify reference build and inspect FastQC/MultiQC reports; reassess with controls
 </code></pre>
-<p>To make the record reproducible, place it at <code>qc/qc_summary.tsv</code>, retain the corresponding reports in <code>qc/</code>, and record exact installed versions rather than copying the illustrative version labels. A completed row documents a decision and its evidence; it does not by itself validate a sample or establish a universal pass threshold.</p>
+<p>Notice the decision logic in that illustrative row: <code>SYNTH_A</code> is marked <code>review</code> rather than an immediate <code>exclude</code> because its 62% mapping rate falls below the matched batch range while controls and reference-build checks are still pending. Store the completed table at <code>qc/qc_summary.tsv</code> alongside the saved tool reports in <code>qc/</code>.</p>
+
+<details class="lesson-summary"><summary><strong>Practice exercise: triage three WES samples into pass, review, or exclude (click for solution)</strong></summary>
+<p>Suppose three matched human whole-exome samples from the same sequencing batch report these metrics (batch median: mapped = 98.5%, 20x target breadth = 94%, <code>FREEMIX</code> = 0.004):</p>
+<ul>
+<li><strong>Sample S1:</strong> mapped = 98.7%, duplicates = 14%, 20x breadth = 95%, <code>FREEMIX</code> = 0.003, <code>chrY</code> depth matches reported male sex.</li>
+<li><strong>Sample S2:</strong> mapped = 98.4%, duplicates = 15%, 20x breadth = 93%, <code>FREEMIX</code> = 0.002, <code>chrY</code> depth = 0x despite reported male sex.</li>
+<li><strong>Sample S3:</strong> mapped = 97.9%, duplicates = 18%, 20x breadth = 91%, <code>FREEMIX</code> = 0.078 (7.8% estimated human DNA mixture).</li>
+</ul>
+<p><strong>Solution:</strong></p>
+<ul>
+<li><strong>S1 -&gt; <code>pass</code>:</strong> All metrics match the batch baseline and sex check agrees with metadata.</li>
+<li><strong>S2 -&gt; <code>review</code> (or hold from analysis):</strong> Read quality and <code>FREEMIX</code> look clean, which is classic for a <strong>complete sample swap or metadata sex typo</strong>. Verify genotype concordance with <code>somalier</code>/<code>peddy</code> and check the lab sample sheet before deciding whether to re-label or exclude.</li>
+<li><strong>S3 -&gt; <code>exclude</code> (or flag as severely contaminated):</strong> A <code>FREEMIX</code> of 0.078 exceeds standard 0.03-0.05 contamination limits and will introduce false-positive variant calls; keep raw FASTQs intact and request re-library/re-sequencing if needed.</li>
+</ul>
+</details>
+
 <!-- Verified analysis outputs: 2026-10-25 -->
 <section class="lesson-results" aria-labelledby="observed-analysis-results">
 <h2 id="observed-analysis-results">What this run produced</h2>
@@ -459,20 +491,22 @@ SYNTH_A	fastp 0.23.2; samtools 1.17	reads=1,000,000; mapped=62%; proper_pairs=58
 </section>
 <!-- /Verified analysis outputs -->
 <aside aria-label="Author's lab note" class="lesson-summary">
-<p><strong>Author's lab note:</strong> Before wasting cluster hours aligning dozens of samples, I always check two numbers on a freshly delivered FASTQ batch: adapter read-through in MultiQC and human DNA swap/contamination (<code>FREEMIX</code> plus sex-chromosome depth). Catching a swapped sample sheet or rRNA-heavy library before alignment saves full pipeline reruns.</p>
+<p><strong>Author's lab note:</strong> Before running heavy downstream analyses across dozens of samples, I check adapter read-through and k-mer contamination/rRNA screening (MultiQC plus FastQ Screen or Kraken2) on freshly delivered FASTQ files, then verify sample identity and human DNA contamination (<code>FREEMIX</code> plus sex-chromosome depth) right after initial alignment. Catching an rRNA-heavy library or swapped sample sheet early saves full pipeline reruns.</p>
 </aside>
 <h2>References and official tool documentation</h2>
 <ul>
 <li>Chen S, Zhou Y, Chen Y, Gu J (2018). fastp: an ultra-fast all-in-one FASTQ preprocessor. <em>Bioinformatics</em>, 34(17), i884-i890. <a href="https://doi.org/10.1093/bioinformatics/bty560" rel="noopener" target="_blank">doi:10.1093/bioinformatics/bty560</a></li>
 <li>Ewels P, Magnusson M, Lundin S, Käller M (2016). MultiQC: summarize analysis results for multiple tools and samples in a single report. <em>Bioinformatics</em>, 32(19), 3047-3048. <a href="https://doi.org/10.1093/bioinformatics/btw354" rel="noopener" target="_blank">doi:10.1093/bioinformatics/btw354</a></li>
+<li>Pedersen BS, Quinlan AR (2018). Mosdepth: quick coverage calculation for genomes and exomes. <em>Bioinformatics</em>, 34(5), 867-868. <a href="https://doi.org/10.1093/bioinformatics/btx699" rel="noopener" target="_blank">doi:10.1093/bioinformatics/btx699</a></li>
 <li>Wood DE, Lu J, Langmead B (2019). Improved metagenomic analysis with Kraken 2. <em>Genome Biology</em>, 20, 257. <a href="https://doi.org/10.1186/s13059-019-1891-0" rel="noopener" target="_blank">doi:10.1186/s13059-019-1891-0</a></li>
 <li>Zhang F, Flickinger M, Taliun SAG, et al. (2020). Ancestry-agnostic estimation of DNA sample contamination from sequence reads. <em>Genome Research</em>, 30(2), 185-194 (VerifyBamID2). <a href="https://doi.org/10.1101/gr.246934.118" rel="noopener" target="_blank">doi:10.1101/gr.246934.118</a></li>
-<li><a href="https://www.bioinformatics.babraham.ac.uk/projects/fastqc/">FastQC: Babraham Bioinformatics</a>, <a href="https://docs.seqera.io/multiqc">MultiQC documentation</a>, and <a href="https://github.com/OpenGene/fastp">fastp documentation</a></li>
-<li><a href="https://www.htslib.org/doc/samtools.html">SAMtools documentation</a> and <a href="https://www.htslib.org/doc/samtools-depth.html">SAMtools depth denominator and filtering options</a></li>
-<li><a href="https://github.com/Griffan/VerifyBamID">VerifyBamID2 repository</a> and <a href="https://github.com/snakemake/snakemake-wrappers/blob/master/bio/verifybamid/verifybamid2/wrapper.py">Snakemake VerifyBamID2 wrapper</a></li>
-<li><a href="https://www.gnu.org/software/coreutils/manual/html_node/sha2-utilities.html">GNU SHA checksum documentation</a> and <a href="https://broadinstitute.github.io/picard/">Picard tools documentation</a></li>
-<li><a href="https://satijalab.org/seurat/reference/percentagefeatureset">Seurat PercentageFeatureSet reference</a> and <a href="https://scanpy.readthedocs.io/en/stable/api/scanpy.pp.calculate_qc_metrics.html">Scanpy QC metrics API</a></li>
+<li>Heumos L, Schaar AC, Lance C, et al. (2023). Best practices for single-cell analysis across modalities. <em>Nature Reviews Genetics</em>, 24, 550-572. <a href="https://doi.org/10.1038/s41576-023-00586-w" rel="noopener" target="_blank">doi:10.1038/s41576-023-00586-w</a></li>
+<li><a href="https://www.bioinformatics.babraham.ac.uk/projects/fastqc/" rel="noopener" target="_blank">FastQC: Babraham Bioinformatics</a>, <a href="https://docs.seqera.io/multiqc" rel="noopener" target="_blank">MultiQC documentation</a>, and <a href="https://github.com/OpenGene/fastp" rel="noopener" target="_blank">fastp documentation</a></li>
+<li><a href="https://www.htslib.org/doc/samtools.html" rel="noopener" target="_blank">SAMtools documentation</a>, <a href="https://www.htslib.org/doc/samtools-depth.html" rel="noopener" target="_blank">SAMtools depth denominator and filtering options</a>, and <a href="https://bedtools.readthedocs.io/en/latest/content/tools/coverage.html" rel="noopener" target="_blank">bedtools coverage documentation</a></li>
+<li><a href="https://github.com/Griffan/VerifyBamID" rel="noopener" target="_blank">VerifyBamID2 repository</a> and <a href="https://broadinstitute.github.io/picard/" rel="noopener" target="_blank">Picard tools documentation</a></li>
+<li><a href="https://www.gnu.org/software/coreutils/manual/html_node/sha2-utilities.html" rel="noopener" target="_blank">GNU SHA checksum documentation</a>, <a href="https://satijalab.org/seurat/reference/percentagefeatureset" rel="noopener" target="_blank">Seurat PercentageFeatureSet reference</a>, and <a href="https://scanpy.readthedocs.io/en/stable/api/scanpy.pp.calculate_qc_metrics.html" rel="noopener" target="_blank">Scanpy QC metrics API</a></li>
 </ul>
+<p><strong>Next steps:</strong> Apply these QC principles directly in <a href="wes-variant-calling-pipeline.html">Whole Exome Sequencing (WES) Variant Calling</a>, <a href="transcriptomics-differential-expression.html">Transcriptomics Differential Expression</a>, <a href="scrna-seq-quality-control.html">scRNA-seq Quality Control</a>, or <a href="experimental-design-batch-effects.html">Experimental Design and Batch Effects</a>.</p>
 <aside aria-labelledby="tutorial-feedback-title" class="lesson-feedback" id="tutorial-feedback"><h2 id="tutorial-feedback-title">Help improve this tutorial</h2><p>Found an error, a broken link, or a step that needs a clearer explanation? Please <a href="../contact.html">contact me</a>. Your feedback helps me keep this resource accurate and useful.</p></aside></article>
 <section class="mt-12 mb-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-100">
 <div class="flex items-start gap-4">
@@ -612,7 +646,7 @@ SYNTH_A	fastp 0.23.2; samtools 1.17	reads=1,000,000; mapped=62%; proper_pairs=58
 </script>
 <script src="../assets/vendor/prism/prism-1.29.0.js"></script>
 <script id="tutorial-code-data">
-window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"quality-control-fundamentals":{"blocks":[{"language":"bash","sha256":"b55ceb4d04bd154ce16974feb9a851488c0f1b104afd1b54993bc77ae6c00a60"},{"language":"bash","sha256":"6bc47fd4bca2fabad158da97a1d9357e8e2d7aadaa57e146ece6acae928ad893"},{"language":"bash","sha256":"d249b5c39a1d2bc020c1189aaaed3c31e6cba037fdada2f291c193d5a5f77697"},{"language":"bash","sha256":"e8897a3277d1e071f947cce0ecb0218010e9f4c333b54d4c8949c2565413af92"},{"language":"bash","sha256":"5c63be6088ecfbd2ae6f73d535ec5ffa74adb2eefcb6bc4f8e7e326ff6e0bd8d"},{"language":"bash","sha256":"b9a74dafc973c0e1b69cbfc8ccd6361ee8ec41a4e29ea669d6357f34c8c2756b"},{"language":"r","sha256":"93aa0bee173e2cc0806565ca5fa975786bf62e53421df5c81f3a8024c310847a"},{"language":"python","sha256":"3dd0245816610f9000b1e2cebda15f05492da693e98ba094956a1c430d97af63"},{"language":"text","sha256":"ab6fa40dc8b97c3958bcb0e75d467a64ff84cfa2c2c3ee4d85b43ab7ce688e86"}],"groups":[{"title":"Single-cell QC metrics","panels":[{"start":47,"end":48,"language":"r","label":"R \u00b7 Seurat"},{"start":49,"end":50,"language":"python","label":"Python \u00b7 Scanpy"}],"members":[{"index":47,"tag":"h3","sha256":"c73f9ab0b47487aaa027aaa29f3ec56ac5248ec6a477a2d723955f9ec3c49239"},{"index":48,"tag":"pre","sha256":"93aa0bee173e2cc0806565ca5fa975786bf62e53421df5c81f3a8024c310847a"},{"index":49,"tag":"h3","sha256":"17db763575e495fa10ec732556db7dfbf2318d3fe6c439f5a2292aaa8f5c090e"},{"index":50,"tag":"pre","sha256":"3dd0245816610f9000b1e2cebda15f05492da693e98ba094956a1c430d97af63"}],"tabOrder":["r","python"]}]}}};
+window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"quality-control-fundamentals":{"blocks":[{"language":"bash","sha256":"b55ceb4d04bd154ce16974feb9a851488c0f1b104afd1b54993bc77ae6c00a60"},{"language":"bash","sha256":"6bc47fd4bca2fabad158da97a1d9357e8e2d7aadaa57e146ece6acae928ad893"},{"language":"bash","sha256":"d249b5c39a1d2bc020c1189aaaed3c31e6cba037fdada2f291c193d5a5f77697"},{"language":"bash","sha256":"e8897a3277d1e071f947cce0ecb0218010e9f4c333b54d4c8949c2565413af92"},{"language":"bash","sha256":"5c63be6088ecfbd2ae6f73d535ec5ffa74adb2eefcb6bc4f8e7e326ff6e0bd8d"},{"language":"bash","sha256":"b9a74dafc973c0e1b69cbfc8ccd6361ee8ec41a4e29ea669d6357f34c8c2756b"},{"language":"r","sha256":"93aa0bee173e2cc0806565ca5fa975786bf62e53421df5c81f3a8024c310847a"},{"language":"python","sha256":"3dd0245816610f9000b1e2cebda15f05492da693e98ba094956a1c430d97af63"},{"language":"text","sha256":"ab6fa40dc8b97c3958bcb0e75d467a64ff84cfa2c2c3ee4d85b43ab7ce688e86"}],"groups":[{"title":"Single-cell QC metrics","panels":[{"start":46,"end":47,"language":"r","label":"R \u00b7 Seurat"},{"start":48,"end":49,"language":"python","label":"Python \u00b7 Scanpy"}],"members":[{"index":46,"tag":"h3","sha256":"c73f9ab0b47487aaa027aaa29f3ec56ac5248ec6a477a2d723955f9ec3c49239"},{"index":47,"tag":"pre","sha256":"93aa0bee173e2cc0806565ca5fa975786bf62e53421df5c81f3a8024c310847a"},{"index":48,"tag":"h3","sha256":"17db763575e495fa10ec732556db7dfbf2318d3fe6c439f5a2292aaa8f5c090e"},{"index":49,"tag":"pre","sha256":"3dd0245816610f9000b1e2cebda15f05492da693e98ba094956a1c430d97af63"}],"tabOrder":["r","python"]}]}}};
 </script>
 <script src="../code-tabs.js?v=20261026-startup-v1"></script>
 <script src="../copy-code.js?v=20261025-r-first-v1"></script>

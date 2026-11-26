@@ -172,24 +172,36 @@ function toggleMobileMenu() {
 <img alt="Writing Job Scripts" class="w-full aspect-video object-cover" decoding="async" loading="eager" src="../images/hpc-writing-job-scripts.webp" width="1024" height="1024"/>
 </div>
 <nav aria-label="Learning path navigation" class="reader-toolbar"><span class="reader-toolbar__heading">Learning path</span><a href="hpc-basic-commands.html" rel="prev" class="reader-toolbar__previous"><span class="reader-toolbar__direction"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5m0 0 7 7m-7-7 7-7"/></svg></span><span class="reader-toolbar__copy"><small>Previous prerequisite</small><strong>Basic Slurm Commands</strong></span></a><a data-catalogue-return="" href="../tutorials.html" class="reader-toolbar__library"><span class="reader-toolbar__library-mark" aria-hidden="true"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="6" height="6" rx="1.3"/><rect x="14" y="4" width="6" height="6" rx="1.3"/><rect x="4" y="14" width="6" height="6" rx="1.3"/><rect x="14" y="14" width="6" height="6" rx="1.3"/></svg></span><span><small>Browse</small><strong>All tutorials</strong></span></a><a href="#reader-course-navigation" class="reader-toolbar__next"><span class="reader-toolbar__copy"><small>Several directions</small><strong>Choose a next step</strong></span><span class="reader-toolbar__direction"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14m0 0 7-7m-7 7-7-7"/></svg></span></a></nav>
-<article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--walkthrough"><p class="lesson-lead">A Slurm submission script describes the resources a batch job requests and the commands it runs after the scheduler starts it. This walkthrough starts with a small smoke test; later optional examples cover task launches and arrays. Some optional examples use site-specific module names and partition values; confirm any such values with your cluster documentation before adapting or submitting those examples.</p>
+<article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--walkthrough">
+<p class="lesson-lead">Running read alignments, quality control, or differential expression scripts directly on an HPC login node slows down shared infrastructure and gets terminated when your SSH session drops or admins enforce CPU limits. A <strong>Slurm batch script</strong> puts your resource request (CPUs, memory, walltime, and log file) and shell commands into a plain text file so the scheduler queues your job and runs it unattended on a compute node.</p>
+
 <section class="lesson-summary tutorial-learning-contract" data-tutorial-format="hands-on-lab" aria-label="Learning format">
-<p><strong>Format: Hands-on lab.</strong> With an authorized Slurm account and site-specific submission details, learners who have completed Basic Slurm Commands can adapt the harmless batch script, submit it, and inspect its log and final scheduler record. Without cluster access, use the planning check below to practise reading the script and distinguishing an accepted submission from a completed job.</p>
+<p><strong>Format: Hands-on lab (about 25 minutes for the core submission route).</strong> <strong>Prerequisites:</strong> basic Linux shell commands and <a href="hpc-basic-commands.html">Basic Slurm Commands</a>. <strong>Goal:</strong> write and submit a minimal smoke-test script, read its scheduler state and accounting log, and adapt templates for threaded bioinformatics tools, multi-sample job arrays, Conda/Lmod environments, and indexed genomic compression. No cluster account yet? Read through the script structure, decision table, and simulated sample-sheet check to prepare before your first login.</p>
 </section>
+
 <nav aria-label="First-job learning route" class="lesson-summary">
 <h2>First-job route</h2>
-<ol><li><a href="#before-submit">Check before submitting</a></li><li><a href="#smoke-job">Adapt the safe smoke-test script</a></li><li><a href="#resources">Understand its resource request</a></li><li><a href="#submit-job">Submit and capture the job ID</a></li><li><a href="#job-state">Inspect the log and final state</a></li></ol>
-<p>After this first job, optional topics are available: <a href="#optional-parallel">parallel steps and arrays</a>, <a href="#optional-x11">X11</a>, <a href="#optional-custom-modules">custom modules</a>, <a href="#optional-conda">Conda</a>, and <a href="#optional-compression">compression</a>.</p>
+<ol>
+<li><a href="#before-submit">Check cluster details before submitting</a></li>
+<li><a href="#smoke-job">Write and read a safe smoke-test script</a></li>
+<li><a href="#resources">Size CPUs, memory, and walltime</a></li>
+<li><a href="#submit-job">Submit the script and capture its job ID</a></li>
+<li><a href="#job-state">Inspect the log and final scheduler state</a></li>
+</ol>
+<p>Optional topics after your first job: <a href="#optional-parallel">parallel steps, interactive shells, and job arrays</a>, <a href="#optional-x11">X11 GUIs</a>, <a href="#optional-custom-modules">custom Lmod modulefiles</a>, <a href="#optional-conda">Conda and Miniforge</a>, and <a href="#optional-compression">compression and genomic indexing</a>.</p>
 </nav>
-<div class="lesson-summary" id="before-submit"><h2>Before you submit</h2><ul><li>Complete the preceding <a href="hpc-basic-commands.html">Basic Slurm Commands</a> lesson.</li><li>Check your cluster's account, allowed partition, time limit, output-file location, and submission rules. Add an account directive only if your site requires one.</li><li>Start with the harmless hostname/date smoke test below; do not substitute a research workload until you understand its input, resource, and storage requirements.</li></ul><p><strong>Deliverable:</strong> an adapted script, its submitted job ID, the log, and the final scheduler state. A job ID means Slurm accepted the submission; it does not mean the job started or completed.</p>
-<figure class="my-8 bg-white border border-gray-200 rounded-xl p-4 shadow-sm"><img src="../images/tutorial-figures/slurm-job-lifecycle.svg" alt="Lifecycle diagram of Slurm job submission from login node through scheduler queue, compute execution, and sacct accounting" width="960" height="440" loading="lazy" class="w-full h-auto rounded-lg" style="aspect-ratio: 960 / 440;"/><figcaption class="mt-3 text-sm text-gray-600">Slurm execution lifecycle: resource requests leave the login node into the scheduler queue, stage data onto compute scratch storage, and conclude with sacct memory and runtime verification.</figcaption></figure>
-</div>
-<section class="lesson-summary" aria-label="Cluster-free planning check">
-<h2>Before you have cluster access</h2>
-<p><strong>Hypothetical check:</strong> In the script below, which values must come from your cluster documentation, and what does a returned job ID establish? The partition and any required account or resource limits are site-specific; the example time and CPU values are illustrative. A returned ID means the scheduler accepted the submission, not that the job started or completed.</p>
-</section>
-<h2 id="smoke-job">First job: a safe smoke test</h2>
-<p>This one-task example uses only <code>hostname</code> and <code>date</code>; it needs no biological data or software modules. Replace <code>YOUR_ALLOWED_PARTITION</code> with a partition confirmed in your site documentation (for example, use <code>sinfo</code> if your site permits it). Add an account directive only when local policy requires it. The short time limit and resource values are illustrative, not guarantees or universal defaults.</p>
+
+<h2 id="before-submit">1. Check cluster details before submitting</h2>
+<p>Every HPC cluster enforces its own partition names, billing accounts, and storage rules. Copying another institution's <code>#SBATCH</code> header verbatim is the most common reason a first submission fails immediately.</p>
+<ul>
+<li><strong>Allowed partition and account:</strong> inspect available partitions with <code>sinfo</code> and check your institution's docs to see whether <code>#SBATCH --account=...</code> or <code>#SBATCH --qos=...</code> is required.</li>
+<li><strong>Writable working directory:</strong> submit from a project or scratch directory that compute nodes can read and write. If you send logs to a subfolder such as <code>--output=logs/%x-%j.out</code>, create <code>logs/</code> with <code>mkdir -p logs</code> before running <code>sbatch</code>, because Slurm will not create missing parent directories for log files and the job will fail silently or cancel.</li>
+<li><strong>Safe first payload:</strong> test your queue path with a 1-CPU, 2-minute <code>hostname</code> and <code>date</code> script before running a multi-hour alignment or R analysis.</li>
+</ul>
+<figure class="my-8 bg-white border border-gray-200 rounded-xl p-4 shadow-sm"><img src="../images/tutorial-figures/slurm-job-lifecycle.svg" alt="Lifecycle diagram of Slurm job submission from login node through scheduler queue, compute execution, and sacct accounting" width="960" height="440" loading="lazy" class="w-full h-auto rounded-lg" style="aspect-ratio: 960 / 440;"/><figcaption class="mt-3 text-sm text-gray-600">Slurm execution lifecycle: resource requests leave the login node into the scheduler queue, stage data onto compute scratch storage, and conclude with <code>sacct</code> memory and runtime verification.</figcaption></figure>
+
+<h2 id="smoke-job">2. Write and read a safe smoke-test script</h2>
+<p>Before running real FASTQ or BAM files, prove that your script syntax, partition, account, and output log path work end to end. Replace <code>YOUR_ALLOWED_PARTITION</code> with a valid partition from <code>sinfo</code> (and add <code>#SBATCH --account=YOUR_ACCOUNT</code> only if your site requires it), then save the file as <code>smoke-test.sbatch</code>:</p>
 <pre><code class="language-bash">#!/bin/sh
 #SBATCH --job-name=hpc-smoke
 #SBATCH --ntasks=1
@@ -201,67 +213,112 @@ function toggleMobileMenu() {
 hostname
 date
 </code></pre>
-<h3 id="resources">What the resource request means</h3>
-<p><code>--ntasks=1</code> requests one task (typically one process); <code>--cpus-per-task=1</code> requests one CPU for that task. Neither directive makes an application multithreaded: a threaded program must also be configured according to its own documentation, and its thread count should fit the CPUs requested. Here the two simple diagnostic commands need no parallel configuration. A time limit and partition are site-policy choices; consult local documentation rather than copying another cluster's settings.</p>
-<p>A few other details:</p>
+
+<h3>How a batch script is structured</h3>
+<p>Slurm parses a submission script in three distinct layers from top to bottom:</p>
 <ul>
-<li><code>--job-name</code> labels the job in scheduler reports. Use <code>squeue -j JOB_ID</code> to inspect a pending or running job.</li>
-<li>Slurm substitutes <code>%j</code> in the output filename with the job ID. The log is useful only if the chosen path is writable and visible as expected under your site's filesystem rules.</li>
+<li><strong>Shebang (line 1):</strong> <code>#!/bin/sh</code> or <code>#!/bin/bash</code> tells the compute node which shell executes the commands below. Use <code>#!/bin/bash</code> if your script uses Bash features such as arrays, <code>[[ ... ]]</code>, or <code>source .../conda.sh</code>.</li>
+<li><strong><code>#SBATCH</code> directives (header):</strong> Slurm reads <code>#SBATCH</code> lines from the top of the file until it encounters the first non-comment, non-blank executable command. Directives placed below a command like <code>module load</code> or <code>mkdir</code> are ignored as plain comments. Shell variables (such as <code>$USER</code>) are not expanded inside <code>#SBATCH</code> lines; use Slurm filename tokens like <code>%j</code> (job ID) and <code>%x</code> (job name) instead. To temporarily disable a directive, add a second <code>#</code> so the line starts with <code>##SBATCH</code>:</li>
 </ul>
-<p>Slurm defines each job environment variable individually; there is <strong>no general rule</strong> mapping every flag automatically:</p>
+<pre><code class="language-bash">##SBATCH --mem=2G   # ignored by Slurm as an ordinary comment
+</code></pre>
 <ul>
-<li><code>SLURM_JOB_ID</code>, <code>SLURM_JOB_NAME</code>, and <code>SLURM_SUBMIT_DIR</code> identify the running job and launch path.</li>
+<li><strong>Shell setup and execution commands (body):</strong> Commands that modify the shell environment (<code>module load</code>, <code>conda activate</code>, <code>export</code>, <code>cd</code>) must run directly in the batch shell and must <strong>not</strong> be prefixed with <code>srun</code>, because an <code>srun</code> step runs in a separate sub-process whose environment changes disappear as soon as that step exits. Serial programs (such as <code>Rscript</code>, <code>fastp</code>, or <code>hostname</code>) can run directly in the batch script, whereas MPI programs or tracked parallel steps use <code>srun</code>.</li>
+</ul>
+<p>To look up any directive on your cluster, check the built-in manual:</p>
+<pre><code class="language-bash">man sbatch
+</code></pre>
+
+<h2 id="resources">3. Size CPUs, memory, and walltime</h2>
+<p>Allocating 16 CPUs does not make a single-threaded script run 16 times faster; if the tool is not told to spawn 16 threads, 15 CPUs sit idle while your queue priority drops. Conversely, under-requesting memory gets your job killed by Linux cgroups with <code>OUT_OF_MEMORY</code>.</p>
+
+<figure class="my-8 bg-white border border-gray-200 rounded-xl p-4 shadow-sm"><img src="../images/tutorial-figures/hpc-submission-part1-tasks-cpus-array.svg" alt="Comparison diagram of Slurm --ntasks, --cpus-per-task, --mem, and --array patterns for multithreaded tools, MPI tasks, and sample-sheet cohorts" width="960" height="440" loading="lazy" class="w-full h-auto rounded-lg" style="aspect-ratio: 960 / 440;"/><figcaption class="mt-3 text-sm text-gray-600">Match Slurm resource flags to your software: use <code>--ntasks=1</code> with <code>--cpus-per-task=N</code> for threaded genomics tools, <code>--ntasks=N</code> for MPI ranks, and <code>--array</code> for independent samples.</figcaption></figure>
+
+<div class="overflow-x-auto my-6">
+<table class="min-w-full text-sm border border-gray-200 rounded-lg">
+<thead class="bg-gray-100 text-left text-gray-800">
+<tr><th class="p-3 border-b">Directive</th><th class="p-3 border-b">What it controls</th><th class="p-3 border-b">When to choose it &amp; bioinformatics example</th></tr>
+</thead>
+<tbody class="divide-y divide-gray-200">
+<tr><td class="p-3"><code>--ntasks=1</code> + <code>--cpus-per-task=8</code></td><td class="p-3">One process allowed to use 8 CPU cores on one node</td><td class="p-3">Most multithreaded tools: <code>bwa mem -t "$SLURM_CPUS_PER_TASK"</code>, <code>STAR --runThreadN</code>, <code>fastp -w</code>, <code>samtools sort -@</code>, R/Python scripts</td></tr>
+<tr><td class="p-3"><code>--ntasks=4</code> + <code>--cpus-per-task=1</code></td><td class="p-3">Four independent processes (can span nodes)</td><td class="p-3">MPI-enabled tools or multiple concurrent <code>srun --exact</code> sub-steps</td></tr>
+<tr><td class="p-3"><code>--mem=32G</code></td><td class="p-3">Total RAM per node (default unit is MB if suffix omitted)</td><td class="p-3">Preferred for single-task multithreaded jobs (e.g., 32 GiB for human STAR alignment)</td></tr>
+<tr><td class="p-3"><code>--mem-per-cpu=4G</code></td><td class="p-3">RAM multiplied by total allocated CPUs</td><td class="p-3">Useful for MPI or variable CPU counts; mutually exclusive with <code>--mem</code></td></tr>
+<tr><td class="p-3"><code>--time=02:00:00</code></td><td class="p-3">Maximum walltime (<code>HH:MM:SS</code> or <code>D-HH:MM:SS</code>)</td><td class="p-3">Shorter accurate limits get scheduled faster via backfill; jobs running past this limit are killed (<code>TIMEOUT</code>)</td></tr>
+<tr><td class="p-3"><code>--output=%x-%j.out</code><br/><code>--error=%x-%j.err</code></td><td class="p-3">Files for stdout and stderr (default combines both into <code>slurm-%j.out</code>)</td><td class="p-3">Separating <code>.out</code> and <code>.err</code> helps isolate tool warnings from tabular stdout; omitting <code>--error</code> merges both into <code>--output</code></td></tr>
+</tbody>
+</table>
+</div>
+
+<p><strong>CPU threads and cluster policy:</strong> Slurm's CPU units, hardware threads (hyperthreading), and memory enforcement depend on each site's configuration. An optional <code>--hint=nomultithread</code> flag may alter CPU placement or be unsupported on some clusters; check local documentation before using it. Inside your script, pass <code>${SLURM_CPUS_PER_TASK:-1}</code> to thread flags so the command still defaults to 1 thread if you test it directly in a shell.</p>
+
+<h3>Monitoring and Slurm environment variables</h3>
+<p>While a job is pending or running, inspect its queue state or live memory footprint through Slurm rather than SSHing to compute nodes (only SSH directly if your cluster explicitly permits it). For interactive debugging, request a scheduler shell with <code>srun --pty --cpus-per-task=2 --mem=8G --time=01:00:00 bash</code>.</p>
+<pre><code class="language-bash">squeue -j JOB_ID                                   # queue state while pending (PD) or running (R)
+sstat -j JOB_ID.batch --format=JobID,MaxRSS,AveCPU # live memory/CPU while running
+sacct -j JOB_ID --format=JobID,State,Elapsed,MaxRSS,AllocCPUS # final accounting after exit
+</code></pre>
+
+<p>Inside a running batch script, Slurm defines each output environment variable individually; there is <strong>no general rule</strong> mapping every flag automatically:</p>
+<ul>
+<li><code>SLURM_JOB_ID</code>, <code>SLURM_JOB_NAME</code>, and <code>SLURM_SUBMIT_DIR</code> identify the running job and the directory where <code>sbatch</code> was called.</li>
 <li><code>SLURM_NTASKS</code> is defined when <code>--ntasks</code> or <code>--ntasks-per-*</code> is set, whereas <code>SLURM_CPUS_PER_TASK</code> is set only when <code>--cpus-per-task</code> or <code>--tres-per-task=cpu=#</code> is passed.</li>
 <li><code>SLURM_ARRAY_TASK_ID</code> is set for array tasks inside job arrays.</li>
 <li><code>SLURM_JOB_NODELIST</code> describes nodes allocated to the job once scheduled.</li>
 </ul>
-<p>Always check the <a href="https://slurm.schedmd.com/sbatch.html#SECTION_OUTPUT-ENVIRONMENT-VARIABLES" rel="noopener noreferrer" target="_blank">official sbatch output environment-variable list</a> instead of guessing variable names, and reference them in shell scripts with a leading <code>$</code>.</p>
-<h2>Decomposing the script</h2>
-<p>A submission script is composed of the following parts:</p>
-<ul>
-<li>A shebang.</li>
-<li>Options.</li>
-<li>Comments.</li>
-<li>Shell commands.</li>
-<li>Run commands.</li>
-</ul>
-<h3>Shebang</h3>
-<p>The shebang is always the first line of the script. It specifies which shell interpreter to use for shell commands. Replace <code>sh</code> with whatever shell you want in the following line.</p>
-<pre><code class="language-bash">#!/bin/sh
+<p>Check the <a href="https://slurm.schedmd.com/sbatch.html#SECTION_OUTPUT-ENVIRONMENT-VARIABLES" rel="noopener noreferrer" target="_blank">official sbatch output environment-variable list</a> instead of guessing variable names, and reference them in shell scripts with a leading <code>$</code>.</p>
+
+<h2 id="submit-job">4. Submit the script and capture its job ID</h2>
+<p>Always test your shell syntax first with <code>sh -n smoke-test.sbatch</code> (no output means valid syntax). Then submit with <code>--parsable</code> so <code>sbatch</code> prints only the numeric job ID (or <code>ID;cluster</code> on multi-cluster setups, which <code>${SUBMISSION%%;*}</code> strips cleanly):</p>
+<pre><code class="language-bash">if SUBMISSION=$(sbatch --parsable smoke-test.sbatch); then
+  JOB_ID=${SUBMISSION%%;*}
+  printf 'Submitted job ID: %s\n' "$JOB_ID"
+  squeue -j "$JOB_ID"
+else
+  echo "sbatch submission failed; inspect the partition and account error above." &gt;&amp;2
+fi
 </code></pre>
-<h3>Options</h3>
-<p>Options are lines that start with:</p>
-<pre><code class="language-bash">#SBATCH
+<p><strong>Expected output (illustrative):</strong> if accepted, Slurm returns a job ID and shows the job in <code>squeue</code> as <code>PD</code> (pending) or <code>R</code> (running):</p>
+<pre><code class="language-text">Submitted job ID: 1849203
+             JOBID PARTITION     NAME     USER ST       TIME  NODES NODELIST(REASON)
+           1849203   general hpc-smok  jdoe     PD       0:00      1 (Priority)
 </code></pre>
-<p>They have two purposes:</p>
-<ul>
-<li>
-<p>The directives request resources: <code>--ntasks</code> is the number of processes/tasks and <code>--cpus-per-task</code> is CPUs per task. In the smoke test, one task times one CPU per task requests one CPU total; that script does not specify a memory amount. These are requests subject to site limits and scheduler configuration.</p>
-<p><strong>Note:</strong> Allocating a lot of resources does not mean that all of them will be used. If a program is not configured for parallel execution, it will use one CPU even when more are allocated. Start with a documented estimate, run a small test, then inspect actual resource use with the scheduler rather than logging directly into a compute node:</p>
-<pre><code class="language-bash">squeue -j JOB_ID                 # queue state while pending or running
-sstat -j JOB_ID.batch --format=JobID,MaxRSS,AveCPU
-sacct -j JOB_ID --format=JobID,State,Elapsed,MaxRSS,AllocCPUS</code></pre>
-<p>If you need an interactive diagnostic session, request one through the scheduler, for example <code>srun --pty --cpus-per-task=2 --mem=8G --time=01:00:00 bash</code>. Only SSH to a compute node when your own cluster documentation explicitly permits it.</p>
-<p>Actual CPU allocation and binding can differ with the cluster's select and task plugins, core/thread topology, and request options. Check the local documentation and the allocation reported for your job rather than assuming a fixed multiplier.</p>
-</li>
-<li>
-<p>The directives configure the batch allocation. An <code>srun</code> command launches a job step inside it; do not assume every batch option maps to a step option identically. Set step-level task or CPU counts explicitly when needed and check the Slurm documentation for the particular option.</p>
-</li>
-</ul>
-<p>There are many more options:</p>
-<pre><code class="language-bash">man sbatch
+<p>A returned job ID means Slurm accepted the script into the queue; it does not mean the job has started or succeeded. If <code>sbatch</code> rejects the script immediately (for example, <code>sbatch: error: Invalid partition name specified</code> or <code>Invalid account or account/partition combination specified</code>), no job ID is returned and you should fix the <code>#SBATCH</code> header using your site's <code>sinfo</code> output.</p>
+
+<h2 id="job-state">5. Inspect the log and final scheduler state</h2>
+<p>Once a job finishes, it disappears from <code>squeue</code>. Query <code>sacct</code> for the permanent accounting record (it can take a few seconds to populate after completion) and read the output file:</p>
+<pre><code class="language-bash">sacct -j "$JOB_ID" --format=JobID,State,ExitCode,Elapsed,ReqMem,MaxRSS
+cat "hpc-smoke-${JOB_ID}.out"
 </code></pre>
-<p>Slurm reads <code>#SBATCH</code> directives before the first non-comment, non-whitespace script line. Shell variables and expansions in those directive lines are not evaluated by the shell. To disable a directive, add another <code>#</code> so the line no longer begins with <code>#SBATCH</code>; for example, <code>##SBATCH --mem=2G</code> is an ordinary shell comment, not a memory request.</p>
-<pre><code class="language-bash">##SBATCH --mem=2G
+<p><strong>Expected output (illustrative):</strong> notice that <code>sacct</code> prints a top-level allocation row (<code>1849203</code>) and a <code>.batch</code> step row (<code>1849203.batch</code>), where peak memory (<code>MaxRSS</code>) is recorded:</p>
+<pre><code class="language-text">JobID             State ExitCode    Elapsed     ReqMem     MaxRSS
+------------ ---------- -------- ---------- ---------- ----------
+1849203       COMPLETED      0:0   00:00:02       500M
+1849203.batch COMPLETED      0:0   00:00:02                 3120K
 </code></pre>
-<h3>Shell commands</h3>
-<p>Shell commands are used to set up Linux environment variables. They should <strong>not</strong> be preceded by <code>srun</code></p>
-<h3>Run commands</h3>
-<p>Use <code>srun</code> when launching a parallel job step so Slurm starts and tracks the task or tasks within the allocation. A serial command can sometimes run directly in the batch shell, but <code>srun</code> makes the step and requested task count explicit. Match task count and CPUs per task to the program's documented parallel model.</p>
-<h2 id="hyperthreading">CPU threads and cluster policy</h2>
-<p>Slurm's CPU units, hardware threads, cores, and binding behavior depend on the site's configuration. A request for one CPU does not imply a universal number of physical cores or a fixed performance level. The optional <code>--hint=nomultithread</code> setting may be unsupported or may alter placement; use it only according to local guidance. For memory-per-CPU requests, verify how your cluster counts allocated CPUs and applies limits.</p>
-<h2 id="optional-parallel">Optional advanced topic: parallel steps and arrays</h2>
-<h3>Calling the same program multiple times in parallel</h3>
+<p>For the smoke test, <code>hpc-smoke-1849203.out</code> should contain two lines: the compute node's hostname and the timestamp (for example, <code>node042.cluster.local</code> and <code>Thu Nov 26 21:15:02 CET 2026</code>). A <code>PENDING</code> state in <code>squeue</code> means waiting, not failed, and a missing log file before the job starts is normal.</p>
+
+<h3>Reading common Slurm failures and queue reasons</h3>
+<div class="overflow-x-auto my-6">
+<table class="min-w-full text-sm border border-gray-200 rounded-lg">
+<thead class="bg-gray-100 text-left text-gray-800">
+<tr><th class="p-3 border-b">Status / Symptom</th><th class="p-3 border-b">What happened</th><th class="p-3 border-b">How to fix it</th></tr>
+</thead>
+<tbody class="divide-y divide-gray-200">
+<tr><td class="p-3"><code>PD (Resources)</code> or <code>(Priority)</code></td><td class="p-3">Waiting in queue for free nodes or fairshare turn</td><td class="p-3">Wait; avoid resubmitting duplicates. Reducing oversized <code>--time</code> or <code>--mem</code> helps backfill</td></tr>
+<tr><td class="p-3"><code>PD (QOSMaxCpuPerUserLimit)</code> or <code>(AssocGrpMemLimit)</code></td><td class="p-3">Request exceeds your account or QOS quota</td><td class="p-3">Lower CPUs/memory or throttle array concurrency with <code>%N</code></td></tr>
+<tr><td class="p-3"><code>OUT_OF_MEMORY</code> (exit <code>0:125</code> or <code>137</code>)</td><td class="p-3">Process exceeded <code>--mem</code> cgroup limit and was SIGKILLed</td><td class="p-3">Increase <code>--mem</code> (start at 1.5x-2x the observed <code>MaxRSS</code> on smaller inputs)</td></tr>
+<tr><td class="p-3"><code>TIMEOUT</code></td><td class="p-3">Job hit the <code>--time</code> walltime limit</td><td class="p-3">Increase <code>--time</code> or add threads if the tool scales cleanly</td></tr>
+<tr><td class="p-3"><code>FAILED</code> (<code>ExitCode 1:0</code> or <code>127:0</code>)</td><td class="p-3">Script error (<code>127</code> = command not found)</td><td class="p-3">Read the <code>.out</code>/<code>.err</code> log; check <code>module load</code>, Conda activation, or input file paths</td></tr>
+</tbody>
+</table>
+</div>
+
+<h2 id="optional-parallel">Optional: parallel steps, interactive shells, and job arrays</h2>
+<p>Once your single-task smoke test succeeds, use the patterns below to run independent sub-steps, test tools interactively, or scale across a cohort of samples.</p>
+
+<h3>Calling the same MPI executable across tasks</h3>
+<p>Here the allocation requests three 1-CPU tasks. Launching <code>srun --ntasks=3</code> starts three copies of the executable simultaneously, so use this pattern <strong>only</strong> for MPI programs or tools designed for coordinated multi-rank launches (do not use it for single-process tools like <code>bwa</code> or <code>Rscript</code>, or you will run three identical copies overwriting the same output):</p>
 <pre><code class="language-bash">#!/bin/sh
 #SBATCH --job-name example_script
 #SBATCH --ntasks 3
@@ -275,9 +332,9 @@ module purge
 
 srun --ntasks=3 program
 </code></pre>
-<p>Here the allocation requests three one-CPU tasks. A step that launches three tasks starts the executable three times simultaneously, so use this pattern only when the program is designed for independent task launches or MPI ranks.</p>
-<h3>Several independent steps in parallel (<code>srun --exact</code>)</h3>
-<p>In Slurm 20.11+, a background <code>srun</code> step without <code>--exact</code> can claim all CPUs or memory of the parent allocation and block subsequent background steps until the first step finishes. Pass <code>--exact</code> with explicit per-step <code>--ntasks</code>, <code>--cpus-per-task</code>, and <code>--mem</code> so all three 1-CPU / 2-GiB steps run concurrently inside the 3-CPU / 6-GiB job:</p>
+
+<h3>Running independent parallel steps in one allocation (<code>srun --exact</code>)</h3>
+<p>In Slurm 20.11+, a background <code>srun</code> step without <code>--exact</code> can claim all CPUs or memory of the parent allocation and block subsequent background steps until the first step finishes. Pass <code>--exact</code> with explicit per-step <code>--ntasks</code>, <code>--cpus-per-task</code>, and <code>--mem</code> so all three 1-CPU / 2-GiB steps run concurrently inside the 3-CPU / 6-GiB allocation, and wait on every PID so a silent failure in step 0 or 1 cannot be masked by step 2:</p>
 <pre><code class="language-bash">#!/bin/sh
 #SBATCH --job-name example_script
 #SBATCH --ntasks 3
@@ -304,9 +361,14 @@ if [ "$step0_status" -ne 0 ] || [ "$step1_status" -ne 0 ] || [ "$step2_status" -
   exit 1
 fi
 </code></pre>
-<p>The shell records and waits for both background PIDs and checks the foreground step so any failed sub-step makes the batch job exit nonzero instead of silently masking an earlier crash.</p>
+
+<h3>Interactive sessions on a compute node (<code>srun --pty</code>)</h3>
+<p>When prototyping an R script or testing a command's peak memory, never run it on the login node. Request an interactive shell through Slurm, and type <code>exit</code> when done so you release the node back to the queue:</p>
+<pre><code class="language-bash">srun --pty --job-name interactive --partition YOUR_ALLOWED_PARTITION --mem 2G --cpus-per-task 1 bash
+</code></pre>
+
 <h3>Job arrays for multi-sample bioinformatics cohorts</h3>
-<p>For processing 10 or 100 independent FASTQ samples through the same aligner or variant caller, a <strong>Slurm job array</strong> is cleaner and safer than background subshells because each sample gets its own independent <code>State</code>, <code>MaxRSS</code>, and retryable array task ID (<code>SLURM_ARRAY_TASK_ID</code>):</p>
+<p>When processing 10 to 500 independent FASTQ, BAM, or VCF files with the same pipeline step, a <strong>Slurm job array</strong> is cleaner and safer than background subshells. Each array task receives a separate <code>State</code>, <code>MaxRSS</code>, log file, and <code>SLURM_ARRAY_TASK_ID</code>, and failed samples can be resubmitted individually (for example, <code>sbatch --array=7,14 ...</code>):</p>
 <pre><code class="language-bash">#!/bin/sh
 #SBATCH --job-name example_array
 #SBATCH --array=0-2%2
@@ -321,50 +383,81 @@ module purge
 
 srun program --arg=$SLURM_ARRAY_TASK_ID
 </code></pre>
-<p>This array launches task indices <code>0</code>, <code>1</code>, and <code>2</code> with at most <code>2</code> running concurrently (<code>%2</code>, useful for avoiding filesystem I/O saturation), and <code>%A</code> / <code>%a</code> write separate logs per array master ID and task index. In real cohorts, map <code>SLURM_ARRAY_TASK_ID</code> (1-based <code>--array=1-N</code>) to row <code>N</code> of a tab-separated <code>samples.tsv</code> manifest via <code>awk -v idx="$SLURM_ARRAY_TASK_ID" 'NR == idx {print $1}'</code>.</p>
-<h2>Optional: running an interactive session</h2>
-<pre><code class="language-bash">srun --pty --job-name interactive --partition YOUR_ALLOWED_PARTITION --mem 2G --cpus-per-task 1 bash
+<p>Here <code>--array=0-2%2</code> runs indices <code>0</code>, <code>1</code>, and <code>2</code> with at most <code>2</code> tasks running concurrently (<code>%2</code> protects shared filesystems from I/O storms). In log patterns, <code>%A</code> is the master array job ID and <code>%a</code> is the task index.</p>
+
+<p><strong>Bioinformatics example (sample-sheet array):</strong> for a real cohort, list one sample per row in a tab-separated <code>samples.tsv</code> file with a header line, use 1-based <code>--array=1-3%2</code>, and skip the header with <code>NR == idx + 1</code> in <code>awk</code> so task 1 reads row 2 (the first data sample):</p>
+<pre><code class="language-text">sample_id	r1	r2
+S01_CTRL	fastq/S01_R1.fastq.gz	fastq/S01_R2.fastq.gz
+S02_TREAT	fastq/S02_R1.fastq.gz	fastq/S02_R2.fastq.gz
+S03_TREAT	fastq/S03_R1.fastq.gz	fastq/S03_R2.fastq.gz
 </code></pre>
-<p><code>srun --pty</code> requests an interactive shell on a compute node through Slurm rather than running heavy jobs on shared login nodes.</p>
-<h2 id="optional-x11">Optional advanced topic: running a GUI with X11</h2>
+<pre><code class="language-bash">#!/bin/bash
+#SBATCH --job-name=fastp-qc
+#SBATCH --array=1-3%2
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=4
+#SBATCH --mem=8G
+#SBATCH --time=00:30:00
+#SBATCH --partition=YOUR_ALLOWED_PARTITION
+#SBATCH --output=logs/%x-%A-%a.out
+
+set -euo pipefail
+
+row=$(awk -F'\t' -v idx="$SLURM_ARRAY_TASK_ID" 'NR == idx + 1 {print $1 "\t" $2 "\t" $3}' samples.tsv)
+IFS=$'\t' read -r sample r1 r2 &lt;&lt;&lt; "$row"
+
+mkdir -p trimmed
+fastp --thread "${SLURM_CPUS_PER_TASK:-1}" \
+  -i "$r1" -I "$r2" \
+  -o "trimmed/${sample}_R1.fastq.gz" \
+  -O "trimmed/${sample}_R2.fastq.gz" \
+  -h "trimmed/${sample}_fastp.html"
+</code></pre>
+<p>Running that exact <code>awk</code> lookup locally across <code>SLURM_ARRAY_TASK_ID</code> values <code>1</code>, <code>2</code>, and <code>3</code> resolves each task cleanly to its paired FASTQ paths:</p>
+<pre><code class="language-text">Task 1 -&gt; sample=S01_CTRL r1=fastq/S01_R1.fastq.gz r2=fastq/S01_R2.fastq.gz
+Task 2 -&gt; sample=S02_TREAT r1=fastq/S02_R1.fastq.gz r2=fastq/S02_R2.fastq.gz
+Task 3 -&gt; sample=S03_TREAT r1=fastq/S03_R1.fastq.gz r2=fastq/S03_R2.fastq.gz
+</code></pre>
+
+<h2 id="optional-x11">Optional: running a GUI with X11</h2>
+<p>To launch graphical tools (such as IGV or an R plot window) from a compute node, add <code>--x11</code> to an interactive allocation if your cluster enables X11 forwarding (and your local SSH client connected with <code>ssh -Y</code> or <code>ssh -X</code>). Many modern HPC centers provide Open OnDemand web desktops (RStudio Server, JupyterLab) instead, which are faster and more reliable over high-latency connections:</p>
 <pre><code class="language-bash">srun --pty --job-name gui --partition YOUR_ALLOWED_PARTITION --mem 2G --cpus-per-task 1 --x11 bash
 </code></pre>
-<p><code>--x11</code> requests X11 forwarding where cluster policy supports it; many modern centres provide Open OnDemand web desktops instead.</p>
-<h2 id="optional-custom-modules">Optional advanced topic: custom Lmod modulefiles</h2>
-<h3>Creating and registering a personal Lmod Lua modulefile</h3>
-<p>On clusters running <strong>Lmod</strong> (Lua-based environment modules), you can expose a locally compiled tool in <code>$HOME/modulefiles/myprogram/1.0.lua</code> and prepend <code>$HOME/modulefiles</code> to <code>MODULEPATH</code> with <code>module use</code>:</p>
-<pre><code class="language-lua">help([[This Lmod modulefile loads MyProgram version 1.0]])
+
+<h2 id="optional-custom-modules">Optional: custom Lmod modulefiles</h2>
+<p>When you compile a bioinformatics tool locally into your project directory, putting it directly into <code>~/.bashrc</code> can break other pipelines later. On clusters using <strong>Lmod</strong> (Lua-based environment modules), write a personal modulefile such as <code>$HOME/modulefiles/myprogram/1.0.lua</code> so paths are loaded cleanly on demand and automatically reversed by <code>module unload</code> or <code>module purge</code>:</p>
+<pre><code class="language-lua">whatis("Name: MyProgram 1.0")
+help([[This Lmod modulefile loads MyProgram version 1.0]])
 
 prepend_path("PATH", "/path/to/myprogram/bin")
 prepend_path("LD_LIBRARY_PATH", "/path/to/myprogram/lib")
 </code></pre>
+<p>Register your personal directory and load the module in interactive shells or inside batch scripts:</p>
 <pre><code class="language-bash">module use "$HOME/modulefiles"
 module load myprogram/1.0
 </code></pre>
-<h2 id="optional-conda">Optional advanced topic: Conda on a cluster</h2>
-<h3>Installing Miniforge (Conda-forge default)</h3>
-<p>Before installing software on a shared cluster, check whether the site permits user-managed Conda or Micromamba installations, where environment thousands-of-files trees should live (often project storage rather than small <code>$HOME</code> inode quotas), and whether outbound downloads are allowed. Prefer the cluster's documented module when provided. When installing your own manager, use <strong>Miniforge</strong> (or Micromamba, as taught in the dedicated package-management lesson) rather than Anaconda/Miniconda so <code>conda-forge</code> is configured by default without implicit <code>defaults</code> channel licensing or solver conflicts:</p>
+
+<h2 id="optional-conda">Optional: Conda and Miniforge on a cluster</h2>
+<p>Before installing your own Conda distribution on an HPC cluster, check whether the site already provides a Conda or Micromamba module and whether <code>$HOME</code> has strict file-count (inode) quotas. Conda environments contain tens of thousands of small files, so install them in approved project or software storage rather than filling <code>$HOME</code>. When self-installing, use <strong>Miniforge</strong> (or Micromamba, covered in <a href="conda-mamba-part1.html">Conda and Micromamba</a>) so <code>conda-forge</code> is configured by default without Anaconda's commercial <code>defaults</code> channel:</p>
 <pre><code class="language-bash">curl -fsSLO https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-x86_64.sh
 bash Miniforge3-Linux-x86_64.sh
 </code></pre>
-<p>Follow the prompts and choose an approved prefix directory. On shared clusters, decline automatic shell initialization in <code>~/.bashrc</code> (choose <code>no</code>) so login shells stay clean and batch scripts activate environments explicitly.</p>
-<h3>Using Conda Environments</h3>
-<p>Create isolated per-project environments with explicit <code>conda-forge</code> and <code>bioconda</code> channel priority rather than installing tools into <code>base</code>.</p>
-<p><strong>Create an environment with explicit channels:</strong></p>
+<p>During setup, choose an approved installation prefix and answer <code>no</code> to editing <code>~/.bashrc</code> automatically so your login shell stays clean and batch scripts explicitly activate only the environment they need.</p>
+
+<h3>Creating and activating project environments</h3>
+<p>Create isolated per-project environments with explicit <code>conda-forge</code> and <code>bioconda</code> channel priority rather than installing software into <code>base</code>:</p>
 <pre><code class="language-bash">conda create --name omics-r --override-channels -c conda-forge -c bioconda r-base r-ggplot2
 </code></pre>
-<p><strong>Activate an environment:</strong></p>
+<p>Activate the environment interactively, add Bioconductor packages from the same channel hierarchy, and deactivate when finished:</p>
 <pre><code class="language-bash">conda activate omics-r
 </code></pre>
-<p><strong>Add a package from the same channel hierarchy:</strong></p>
 <pre><code class="language-bash">conda install --override-channels -c conda-forge -c bioconda bioconductor-deseq2
 </code></pre>
-<p><strong>Deactivate an environment:</strong></p>
 <pre><code class="language-bash">conda deactivate
 </code></pre>
-<p>The primary analysis example uses R. Python-based command-line tools can still require a Python runtime inside their own environment; that does not make Python a prerequisite for the R analysis. Inspect the solve plan before installing and record the actual package versions.</p>
-<h3>Conda in Submission Scripts</h3>
-<p>This example assumes Bash and a Miniforge/Conda installation at the placeholder path. Replace it with your actual installation prefix and environment name. Activation in a non-interactive batch shell must source <code>conda.sh</code> (or evaluate the Micromamba shell hook) before calling <code>conda activate</code>.</p>
+
+<h3>Activating Conda inside a non-interactive batch script</h3>
+<p>Non-interactive batch shells do not source <code>~/.bashrc</code>, so running <code>conda activate</code> directly fails with <code>CommandNotFoundError: Your shell has not been properly configured to use 'conda activate'</code>. Source <code>conda.sh</code> from your Miniforge prefix (or load your site Conda module) first. Note: if you enable <code>set -u</code> in your batch script, some older package activation scripts inside Conda environments reference unset variables, so activate the environment before turning on <code>set -u</code>:</p>
 <pre><code class="language-bash">#!/bin/bash
 #SBATCH --job-name conda_job
 #SBATCH --ntasks 1
@@ -383,103 +476,88 @@ srun Rscript --vanilla my_script.R
 # Deactivate environment (optional, but good practice)
 conda deactivate
 </code></pre>
-<h2 id="optional-compression">Optional advanced topic: compression of files</h2>
-<p>Compression can reduce storage for some data, but it costs CPU time and can affect downstream tools. FASTQ files are often already gzip-compressed. Check the workflow's expected input format and storage policy before recompressing or deleting any source data.</p>
-<h3>Using <code>gzip</code></h3>
-<p><code>gzip</code> is a common compression utility. It replaces the original file with a compressed version (<code>.gz</code> extension).</p>
-<p><strong>Compress a disposable or backed-up file:</strong> by default <code>gzip</code> removes the original after creating the compressed file. Keep an independent copy if the source must be retained.</p>
-<pre><code class="language-bash">gzip my_file.txt
+
+<h2 id="optional-compression">Optional: file compression and genomic indexing</h2>
+<p>Large sequencing intermediates waste quota fast, but choosing the wrong compression tool costs CPU hours or breaks downstream indexers. Remember two rules before compressing anything: first, raw FASTQ files from sequencers are almost always already gzipped (do not re-compress them); second, standard <code>gzip</code>, <code>bzip2</code>, and <code>xz</code> delete the original file unless you pass <code>-k</code> (keep) or redirect with <code>-c</code>.</p>
+
+<div class="overflow-x-auto my-6">
+<table class="min-w-full text-sm border border-gray-200 rounded-lg">
+<thead class="bg-gray-100 text-left text-gray-800">
+<tr><th class="p-3 border-b">Tool</th><th class="p-3 border-b">Extension</th><th class="p-3 border-b">Best used for</th><th class="p-3 border-b">Notes</th></tr>
+</thead>
+<tbody class="divide-y divide-gray-200">
+<tr><td class="p-3"><code>gzip</code> / <code>gunzip</code></td><td class="p-3"><code>.gz</code></td><td class="p-3">FASTQ, general text logs, streamed tables</td><td class="p-3">Fast, universal; use <code>pigz -p "$SLURM_CPUS_PER_TASK"</code> for parallel gzip if installed</td></tr>
+<tr><td class="p-3"><code>tar -czf</code> / <code>-xzf</code></td><td class="p-3"><code>.tar.gz</code></td><td class="p-3">Archiving entire result folders before long-term storage</td><td class="p-3">Bundles many small files into one archive (saves HPC inode quota)</td></tr>
+<tr><td class="p-3"><code>bzip2</code> / <code>bunzip2</code></td><td class="p-3"><code>.bz2</code></td><td class="p-3">Smaller text archives when speed is secondary</td><td class="p-3">Tighter compression than <code>gzip</code>, slower</td></tr>
+<tr><td class="p-3"><code>xz</code> / <code>unxz</code></td><td class="p-3"><code>.xz</code></td><td class="p-3">Cold archival storage of large reference text</td><td class="p-3">Highest ratio, slowest CPU time and higher RAM</td></tr>
+<tr><td class="p-3"><code>bgzip</code> + <code>tabix</code></td><td class="p-3"><code>.vcf.gz</code> + <code>.tbi</code></td><td class="p-3">Coordinate-sorted VCF, BED, GFF, and FASTA files</td><td class="p-3">Block-compressed (BGZF) for random genomic region queries</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>Common file and folder commands:</p>
+<pre><code class="language-bash">gzip -k my_file.txt      # keeps my_file.txt and creates my_file.txt.gz
+gunzip my_file.txt.gz    # restores my_file.txt and removes .gz
 </code></pre>
-<p>This will create <code>my_file.txt.gz</code> and remove <code>my_file.txt</code></p>
-<p><strong>Decompress a file:</strong></p>
-<pre><code class="language-bash">gunzip my_file.txt.gz
+<pre><code class="language-bash">tar -czvf my_directory.tar.gz my_directory/   # archive + gzip compress directory
+tar -xzvf my_directory.tar.gz                 # extract archive
 </code></pre>
-<p>This will restore <code>my_file.txt</code> and remove <code>my_file.txt.gz</code></p>
-<h3>Using <code>tar</code> with <code>gzip</code> (for directories)</h3>
-<p>To compress entire directories, you typically use <code>tar</code> to archive the directory first, and then <code>gzip</code> to compress the archive. The <code>tar</code> command has options to do both simultaneously.</p>
-<p><strong>Compress a directory:</strong></p>
-<pre><code class="language-bash">tar -czvf my_directory.tar.gz my_directory/
+<pre><code class="language-bash">bzip2 my_file.txt &amp;&amp; bunzip2 my_file.txt.bz2
+xz my_file.txt &amp;&amp; unxz my_file.txt.xz
 </code></pre>
-<ul>
-<li><code>-c</code> Create a new archive.</li>
-<li><code>-z</code> Compress the archive with <code>gzip</code></li>
-<li><code>-v</code> Verbose output (show progress).</li>
-<li><code>-f</code> Specify the archive filename.</li>
-</ul>
-<p><strong>Decompress a directory:</strong></p>
-<pre><code class="language-bash">tar -xzvf my_directory.tar.gz
+
+<h3>Genomics critical rule: <code>bgzip</code> vs <code>gzip</code></h3>
+<p>Although both produce a <code>.gz</code> extension, standard single-stream <code>gzip</code> cannot be seeked by genomic coordinate. Tools such as <code>tabix</code> and <code>bcftools index</code> reject plain <code>gzip</code> files. For sorted VCF, BED, or GFF files, compress with <code>bgzip</code> (part of HTSlib) and then index:</p>
+<pre><code class="language-bash">bgzip variants.vcf &amp;&amp; tabix -p vcf variants.vcf.gz
 </code></pre>
-<ul>
-<li><code>-x</code> Extract files from an archive.</li>
-<li><code>-z</code> Decompress with <code>gzip</code></li>
-<li><code>-v</code> Verbose output.</li>
-<li><code>-f</code> Specify the archive filename.</li>
-</ul>
-<h3>Using <code>bzip2</code></h3>
-<p><code>bzip2</code> often provides better compression ratios than <code>gzip</code> but is slower.</p>
-<p><strong>Compress a file:</strong></p>
-<pre><code class="language-bash">bzip2 my_file.txt
-</code></pre>
-<p>This creates <code>my_file.txt.bz2</code></p>
-<p><strong>Decompress a file:</strong></p>
-<pre><code class="language-bash">bunzip2 my_file.txt.bz2
-</code></pre>
-<h3>Using <code>xz</code></h3>
-<p><code>xz</code> provides even better compression than <code>bzip2</code> but is the slowest.</p>
-<p><strong>Compress a file:</strong></p>
-<pre><code class="language-bash">xz my_file.txt
-</code></pre>
-<p>This creates <code>my_file.txt.xz</code></p>
-<p><strong>Decompress a file:</strong></p>
-<pre><code class="language-bash">unxz my_file.txt.xz
-</code></pre>
-<p>Choose a format supported by the downstream tools and balance CPU time against storage savings. In genomics, distinguish standard single-stream <code>gzip</code> from <strong><code>bgzip</code></strong> (blocked GNU zip from <code>htslib</code> / <code>samtools</code>): standard <code>gzip</code> works for sequentially streamed FASTQ files, whereas indexed coordinate-sorted VCF (<code>.vcf.gz</code> + <code>.tbi</code>/<code>.csi</code>), BED, and FASTA files <strong>must</strong> be compressed with <code>bgzip</code> (<code>bgzip variants.vcf &amp;&amp; tabix -p vcf variants.vcf.gz</code>) because <code>tabix</code> and <code>bcftools index</code> reject plain <code>gzip</code> streams.</p>
+
 <h2 class="text-2xl font-bold text-gray-900 mt-10 mb-4" id="knowledge-check">Knowledge Check &amp; Assessment</h2>
 <div class="p-8 bg-gray-50 border border-gray-200 rounded-xl">
 <div class="space-y-4">
 <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-<h3 class="font-bold text-gray-800 mb-2" style="margin-top:0">1. Concept Verification</h3>
-<p class="text-gray-600 text-sm">Which Slurm directives control resources, output logging, job naming, and the executable command?</p>
-<details class="mt-2 text-sm text-gray-700"><summary class="font-medium cursor-pointer text-blue-700">Check model answer</summary><p class="mt-1"><code>--ntasks</code>, <code>--cpus-per-task</code>, <code>--mem</code> (or <code>--mem-per-cpu</code>), <code>--time</code>, and <code>--partition</code> control the resource allocation; <code>--output</code> and <code>--error</code> control log paths; <code>--job-name</code> labels the job in queue/accounting output; and ordinary shell/<code>srun</code> lines below the <code>#SBATCH</code> header run the actual executable commands.</p></details>
+<h3 class="font-bold text-gray-800 mb-2" style="margin-top:0">1. Matching tasks and CPUs</h3>
+<p class="text-gray-600 text-sm">You want to run <code>bwa mem -t 8</code> with 32 GiB of RAM. What happens if you write <code>#SBATCH --ntasks=8</code> and omit <code>--cpus-per-task</code>, and what should you write instead?</p>
+<details class="mt-2 text-sm text-gray-700"><summary class="font-medium cursor-pointer text-blue-700">Check model answer</summary><p class="mt-1"><code>--ntasks=8</code> reserves 8 separate task slots (which could even be split across nodes) while leaving <code>SLURM_CPUS_PER_TASK</code> unset and giving task 0 only 1 CPU. Instead, write <code>#SBATCH --ntasks=1</code>, <code>#SBATCH --cpus-per-task=8</code>, and <code>#SBATCH --mem=32G</code>, then invoke <code>bwa mem -t "$SLURM_CPUS_PER_TASK" ...</code>.</p></details>
 </div>
 <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-<h3 class="font-bold text-gray-800 mb-2" id="submit-job" style="margin-top:0">2. Practical Execution</h3>
-<p class="text-gray-600 text-sm">Save the smoke-test script above as <code>smoke-test.sbatch</code> in a suitable working directory. Replace the placeholder partition before submitting. This command captures the actual numeric ID; <code>--parsable</code> can include an optional cluster suffix, which the parameter expansion removes:</p>
-<pre><code class="language-bash">if SUBMISSION=$(sbatch --parsable smoke-test.sbatch); then
-  JOB_ID=${SUBMISSION%%;*}
-  printf 'Submitted job ID: %s\n' "$JOB_ID"
-  squeue -j "$JOB_ID"
-else
-  echo "sbatch submission failed; inspect the partition and account error above." &gt;&amp;2
-fi
-</code></pre>
-<h4 id="job-state">Check the final state and log</h4>
-<p class="text-gray-600 text-sm">A returned ID means submission was accepted, not that the job has started or finished. Use <code>squeue</code> while it is pending or running. Once it leaves the queue, inspect the accounting record (it can take time to appear) and the job log:</p>
-<pre><code class="language-bash">sacct -j "$JOB_ID" --format=JobID,State,ExitCode
-cat "hpc-smoke-${JOB_ID}.out"
-</code></pre>
-<p class="text-gray-600 text-sm">For this exercise, a successful result is a final batch state of <code>COMPLETED</code> and exit code <code>0:0</code>, with exactly two output lines: a hostname, then a date (their values and date formatting vary). A <code>PENDING</code> record is waiting, not a failure; a missing log while pending or before the job starts is not by itself a diagnosis.</p>
-<p class="text-gray-600 text-sm mt-2">A submission rejection means no accepted job ID was returned: check the partition, any required account, and request limits in local guidance. If the final state is <code>FAILED</code> or the exit code is nonzero, inspect the state, exit code, log contents, and log path; for this command pair, a missing hostname/date line points to a command or script failure. Do not infer completion from an ID or repeatedly resubmit without resolving the reported cause.</p>
+<h3 class="font-bold text-gray-800 mb-2" style="margin-top:0">2. Diagnosing pending, missing-log, and OOM jobs</h3>
+<p class="text-gray-600 text-sm">Your job finished quickly with no output files, or ended overnight with <code>OUT_OF_MEMORY</code>. Which Slurm commands and log checks diagnose each case?</p>
+<details class="mt-2 text-sm text-gray-700"><summary class="font-medium cursor-pointer text-blue-700">Check model answer</summary><p class="mt-1">While queued, check <code>NODELIST(REASON)</code> in <code>squeue -j JOB_ID</code>; a missing log while <code>PD</code> is normal, whereas a missing log after rapid exit often means the directory in <code>--output=logs/...</code> did not exist beforehand. After exit, inspect <code>sacct -j JOB_ID --format=JobID,State,ExitCode,Elapsed,ReqMem,MaxRSS</code> and compare <code>ReqMem</code> against <code>MaxRSS</code> on the <code>.batch</code> row (and read the job's <code>.out</code>/<code>.err</code> log for cgroup OOM messages).</p></details>
 </div>
 <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-<h3 class="font-bold text-gray-800 mb-2" style="margin-top:0">3. Troubleshooting</h3>
-<p class="text-gray-600 text-sm">If a job is pending, cancelled, or out of memory, which Slurm fields and site documentation should you inspect first?</p>
-<details class="mt-2 text-sm text-gray-700"><summary class="font-medium cursor-pointer text-blue-700">Check model answer</summary><p class="mt-1">Check <code>NODELIST(REASON)</code> in <code>squeue -j JOB_ID</code> while pending; once finished, inspect <code>State</code>, <code>ExitCode</code>, <code>Elapsed</code>, <code>ReqMem</code>, and <code>MaxRSS</code> in <code>sacct -j JOB_ID</code> (plus the <code>.batch</code> step), check <code>slurm-JOB_ID.out</code> for cgroup OOM or application errors, and verify partition walltime/memory limits in your facility's documentation.</p></details>
+<h3 class="font-bold text-gray-800 mb-2" style="margin-top:0">3. Safe array indexing on a sample sheet</h3>
+<p class="text-gray-600 text-sm">Your <code>samples.tsv</code> has a header on line 1 followed by 24 samples (lines 2 to 25). Why does <code>--array=1-24</code> with <code>NR == idx</code> fail on sample 24, and how do you fix it?</p>
+<details class="mt-2 text-sm text-gray-700"><summary class="font-medium cursor-pointer text-blue-700">Check model answer</summary><p class="mt-1"><code>NR == idx</code> sends the header line (<code>sample_id</code>) into task 1 and skips line 25 entirely. Use <code>NR == idx + 1</code> in <code>awk -v idx="$SLURM_ARRAY_TASK_ID"</code> so tasks 1-24 map to lines 2-25.</p></details>
 </div>
 </div>
 </div>
-<p><strong>Validation boundary:</strong> local shell-syntax and mocked-command checks exercised the smoke, array and parallel-step examples, including a failed parallel step. No job was submitted to a real Slurm cluster, and no site's scheduler configuration or policy was validated. Confirm local requirements before submitting your own first job.</p>
+
+<section class="lesson-summary mt-8" aria-label="Recap and next steps">
+<h2>Recap and next steps</h2>
+<ul>
+<li>Start every new workflow or partition with a tiny smoke test, then inspect <code>sacct</code> (especially <code>MaxRSS</code> on <code>.batch</code>) before scaling up.</li>
+<li>Use <code>--ntasks=1 --cpus-per-task=N --mem=XG</code> for multithreaded genomics tools, and <code>--array=1-N%M</code> with a sample sheet for cohorts.</li>
+<li>Keep environments reproducible with Lmod modules or Miniforge/Micromamba activated explicitly inside the script, and use <code>bgzip</code> for indexed genomic intervals.</li>
+</ul>
+<p>Continue to <a href="hpc-support.html">HPC Troubleshooting and Support</a> when a job fails or stalls, or scale multi-step pipelines with <a href="reproducible-workflows-snakemake-nextflow.html">Reproducible Workflows: Snakemake and Nextflow</a>.</p>
+</section>
+
+<p><strong>Validation boundary:</strong> local shell-syntax checks (<code>sh -n</code>), mocked Slurm step/array tests, and the <code>awk</code> sample-sheet lookup ran locally without a live Slurm controller; scheduler outputs shown for <code>sbatch</code>, <code>squeue</code>, and <code>sacct</code> are illustrative examples matching official Slurm formats. Confirm local partition, account, and storage rules before submitting.</p>
+
 <aside aria-label="Author's lab note" class="lesson-summary">
 <p><strong>Author's lab note:</strong> Before launching a 50-sample Slurm array job, I always push a single representative sample through an interactive node or short test queue first and inspect <code>sacct -j "$JOB_ID" --format=JobID,State,Elapsed,ReqMem,MaxRSS</code> afterward. Guessing RAM and walltime for a full cohort usually either wastes queue priority with huge over-requests or leaves half the array killed with <code>OUT_OF_MEMORY</code> overnight.</p>
 </aside>
+
 <section aria-label="References and further reading" class="mt-10 p-6 bg-slate-50 border border-slate-200 rounded-xl">
 <h2 class="text-xl font-bold text-gray-900 mb-3">References and further reading</h2>
-<p class="text-sm text-gray-600 mb-3">Use these official resources to check current software behaviour, terminology, and production guidance. Tool versions and defaults change, so verify commands against the documentation before applying them to a research dataset.</p>
+<p class="text-sm text-gray-600 mb-3">Use these official resources to verify current directives, environment variables, and tool behavior.</p>
 <ul class="list-disc list-inside space-y-2 text-sm text-gray-700">
-<li><a class="text-blue-700 hover:underline" href="https://slurm.schedmd.com/sbatch.html" rel="noopener" target="_blank">Slurm sbatch(1) manual</a>: directives, environment variables, and batch submission options.</li>
+<li><a class="text-blue-700 hover:underline" href="https://slurm.schedmd.com/sbatch.html" rel="noopener" target="_blank">Slurm sbatch(1) manual</a>: directives, output tokens (<code>%x</code>, <code>%j</code>), memory flags, and output environment variables.</li>
 <li><a class="text-blue-700 hover:underline" href="https://slurm.schedmd.com/srun.html" rel="noopener" target="_blank">Slurm srun(1) manual</a>: parallel job steps, <code>--exact</code> resource partitioning, <code>--pty</code> interactive shells, and <code>--x11</code>.</li>
+<li><a class="text-blue-700 hover:underline" href="https://slurm.schedmd.com/sacct.html" rel="noopener" target="_blank">Slurm sacct(1) manual</a> and <a class="text-blue-700 hover:underline" href="https://slurm.schedmd.com/sstat.html" rel="noopener" target="_blank">sstat(1) manual</a>: accounting states, exit codes, and <code>MaxRSS</code> step reporting.</li>
 <li><a class="text-blue-700 hover:underline" href="https://slurm.schedmd.com/job_array.html" rel="noopener" target="_blank">Slurm Job Array support</a>: <code>--array</code> index syntax, concurrency throttling (<code>%N</code>), and <code>%A</code>/<code>%a</code> log tokens.</li>
 <li><a class="text-blue-700 hover:underline" href="https://lmod.readthedocs.io/en/latest/015_writing_modules.html" rel="noopener" target="_blank">Lmod documentation: Writing Modulefiles</a>: Lua modulefile functions and personal <code>MODULEPATH</code> management.</li>
+<li><a class="text-blue-700 hover:underline" href="https://www.htslib.org/doc/bgzip.html" rel="noopener" target="_blank">HTSlib bgzip(1)</a> and <a class="text-blue-700 hover:underline" href="https://www.htslib.org/doc/tabix.html" rel="noopener" target="_blank">tabix(1) manuals</a>: block compression and coordinate indexing for VCF/BED/GFF files.</li>
 </ul>
 </section>
 <aside aria-labelledby="tutorial-feedback-title" class="lesson-feedback" id="tutorial-feedback"><h2 id="tutorial-feedback-title">Help improve this tutorial</h2><p>Found an error, a broken link, or a step that needs a clearer explanation? Please <a href="../contact.html">contact me</a>. Your feedback helps me keep this resource accurate and useful.</p></aside></article>
@@ -621,7 +699,7 @@ cat "hpc-smoke-${JOB_ID}.out"
 </script>
 <script src="../assets/vendor/prism/prism-1.29.0.js"></script>
 <script id="tutorial-code-data">
-window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"hpc-submission-part1":{"blocks":[{"language":"bash","sha256":"0cbef55a4e021ecf986ab9a059032e8ebaec3c2a65d72b82a7a1dbb99cd2319e"},{"language":"bash","sha256":"a8076d3d28d21e02012b20eaf7dbf75409a6277134439025f282e368e3305abf"},{"language":"bash","sha256":"27e9e09f02c96a529d846e682179b633d2e8a100874de1cd5a0155589928cbc7"},{"language":"bash","sha256":"368240e53d57809de596317fd7dc7d087a72fad8eb3646456a24afe3f662221f"},{"language":"bash","sha256":"62e2c42ece647a4533d734f3a2e37932547c3b53ebca05108707f9270ecf6957"},{"language":"bash","sha256":"b11b2d5ef4433dfe3a5c8f454a4cd4dba18b3e73fcb34d11fa833292966f71e2"},{"language":"bash","sha256":"ebc145bb3b418bbe712fad68828fa14d7c7099e4b568701ed05b6d7d28885767"},{"language":"bash","sha256":"6021929acb22b988e6c67bfdc82c6bf211d5290a1969fffd9dcba03c72d66ff8"},{"language":"bash","sha256":"2d11c3132a1dfbfeeffb1a943fd03a378dbcc5274d32456940cebdc478ed8a5b"},{"language":"bash","sha256":"5e547d3bf9fe4a57bafcd088de5b39d2a5d05297396df24d925b64b968d09377"},{"language":"bash","sha256":"b1919a4b1e0476faec1057c936963f75a9cb873f2e77059474157303d15abd76"},{"language":"lua","sha256":"b757e8301ec9d2878f10463b06e413855ec9acd987e78b22a3407d94751db2b3"},{"language":"bash","sha256":"531fdb80f81ee2ab893dcff2b395b6f3c154c3f5877e715edbe0967e0d0955a2"},{"language":"bash","sha256":"177eac120068dc3645f54c32947b3710bb10609dc0e3d795e940bd6887a3ab11"},{"language":"bash","sha256":"8a3fa98d79dd639c3cdab5d86ab54c70397fc457ee79d0021af931514c2a7a69"},{"language":"bash","sha256":"28243580898e8605713c4a15a2eb084e914a9b1fbaaf72860af49461a732726b"},{"language":"bash","sha256":"afde6ad39f18891bf9ae8c29cb4e401833c8d01396e27050b742c7dfeb4f6755"},{"language":"bash","sha256":"45bb4ccfd5e33e54af0a102acf422e4d26dc9c69437f26721f16f219ec77c6de"},{"language":"bash","sha256":"4f9aec9c92cbc4207ab3c3c3cd22f341ec36a81d0995942b4de2fd1770a69bd4"},{"language":"bash","sha256":"b5a11f546e70468e0412971a514d9d7e35a691b859046179c94264fa1bef688b"},{"language":"bash","sha256":"f870dac97ab25456c916d7a69d9c021a09caed3a11f6c923dbaca7cda637eaf1"},{"language":"bash","sha256":"7e694f328d698996072396a87c6ae8662ccc182b57cc33779221a37b37ed811d"},{"language":"bash","sha256":"341ecf59478ca646bb7a86b67e9a6ebe7be19317b580d124b6d3e04999c321b7"},{"language":"bash","sha256":"315197df03727c2330b6ce33579c0ee569f3bcb7c52827727e5b492781fc8872"},{"language":"bash","sha256":"cba8736da769fdeebfb7cdebe72d9166b694f3163032f6288fd775105f4d7bb4"},{"language":"bash","sha256":"60f8deccd24c9bcaf011554461a05e1f7475296cd51686e8ff99909c6bb74df5"},{"language":"bash","sha256":"6a36448a668868088e416af0df31e65d3b5cda056038abfbf24ef70a6134cf97"},{"language":"bash","sha256":"5bb203580a30f89bf0d30c956170c803b6fd4f26d68210d7f3195f4a79ea0b1d"},{"language":"bash","sha256":"9a4e5852ac4f87988cd38ab2784f2766968f1051566e3e146ece255d5f7a8229"}],"groups":[]}}};
+window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"hpc-submission-part1":{"blocks":[{"language":"bash","sha256":"0cbef55a4e021ecf986ab9a059032e8ebaec3c2a65d72b82a7a1dbb99cd2319e"},{"language":"bash","sha256":"5b6f134b790653b516c37985e6274d93dcd1db49c19674ce9952b36b86a3e09e"},{"language":"bash","sha256":"62e2c42ece647a4533d734f3a2e37932547c3b53ebca05108707f9270ecf6957"},{"language":"bash","sha256":"00d3d94988e1d0e8b82181d8d77f5de964ccc94e59925af5b71913e3d90a43d0"},{"language":"bash","sha256":"5bb203580a30f89bf0d30c956170c803b6fd4f26d68210d7f3195f4a79ea0b1d"},{"language":"text","sha256":"a84d7c734543c425cb4f11223d34b549fa78b586aee8c26028058076c4fa019e"},{"language":"bash","sha256":"0a6f0df204d23bb29cd9d7a3ba9a3ff9b2a097a8df55d541410cf753342821dc"},{"language":"text","sha256":"462b16c12a3c9ae35cd8b0d835fee043a6a4d5dd946df74b65ac4eb89c70ab6a"},{"language":"bash","sha256":"ebc145bb3b418bbe712fad68828fa14d7c7099e4b568701ed05b6d7d28885767"},{"language":"bash","sha256":"6021929acb22b988e6c67bfdc82c6bf211d5290a1969fffd9dcba03c72d66ff8"},{"language":"bash","sha256":"5e547d3bf9fe4a57bafcd088de5b39d2a5d05297396df24d925b64b968d09377"},{"language":"bash","sha256":"2d11c3132a1dfbfeeffb1a943fd03a378dbcc5274d32456940cebdc478ed8a5b"},{"language":"text","sha256":"a0e12bf1ff4044d62ba994d68e040cda9859bf8b8f47a09e263b098f5ab696d5"},{"language":"bash","sha256":"f298dd935112aa0199c7422efdd42de1e526ee691f97fcbcc30ab64f90e5abf4"},{"language":"text","sha256":"668d3456ce85a250e0aefe60636e0c5b9f9e7e2c7a1a1ad45f258a2a8df3d8a1"},{"language":"bash","sha256":"b1919a4b1e0476faec1057c936963f75a9cb873f2e77059474157303d15abd76"},{"language":"lua","sha256":"154d7a03c570b57175a79a52ac944a4757a27bfb4f4ce537b6c91b9a39cda72b"},{"language":"bash","sha256":"531fdb80f81ee2ab893dcff2b395b6f3c154c3f5877e715edbe0967e0d0955a2"},{"language":"bash","sha256":"177eac120068dc3645f54c32947b3710bb10609dc0e3d795e940bd6887a3ab11"},{"language":"bash","sha256":"8a3fa98d79dd639c3cdab5d86ab54c70397fc457ee79d0021af931514c2a7a69"},{"language":"bash","sha256":"28243580898e8605713c4a15a2eb084e914a9b1fbaaf72860af49461a732726b"},{"language":"bash","sha256":"afde6ad39f18891bf9ae8c29cb4e401833c8d01396e27050b742c7dfeb4f6755"},{"language":"bash","sha256":"45bb4ccfd5e33e54af0a102acf422e4d26dc9c69437f26721f16f219ec77c6de"},{"language":"bash","sha256":"4f9aec9c92cbc4207ab3c3c3cd22f341ec36a81d0995942b4de2fd1770a69bd4"},{"language":"bash","sha256":"d5ea9777b1b98d1fd9c6ed3c49064599cb55b6a64523d7de96c8039a15fe8f48"},{"language":"bash","sha256":"e4b0e770b9d1fac379cda55f27fd666a638e428d81d27bde1c299cb775fcee82"},{"language":"bash","sha256":"fe2788839f7358a1ddc218457c8de8fe7993147cac99a906d0f0d42fff585eaf"},{"language":"bash","sha256":"fe292054d9d9d45141134092af3d6f5f1c8403aaecd4fe92c46322041b48201f"}],"groups":[]}}};
 </script>
 <script src="../code-tabs.js?v=20261026-startup-v1"></script>
 <script src="../copy-code.js?v=20261025-r-first-v1"></script>

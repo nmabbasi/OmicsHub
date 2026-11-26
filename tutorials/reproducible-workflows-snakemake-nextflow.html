@@ -173,17 +173,30 @@ function toggleMobileMenu() {
 </div>
 <nav aria-label="Learning path navigation" class="reader-toolbar"><span class="reader-toolbar__heading">Learning path</span><a href="hpc-submission-part1.html" rel="prev" class="reader-toolbar__previous"><span class="reader-toolbar__direction"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5m0 0 7 7m-7-7 7-7"/></svg></span><span class="reader-toolbar__copy"><small>Previous prerequisite</small><strong>Writing Slurm Job Scripts</strong></span></a><a data-catalogue-return="" href="../tutorials.html" class="reader-toolbar__library"><span class="reader-toolbar__library-mark" aria-hidden="true"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="6" height="6" rx="1.3"/><rect x="14" y="4" width="6" height="6" rx="1.3"/><rect x="4" y="14" width="6" height="6" rx="1.3"/><rect x="14" y="14" width="6" height="6" rx="1.3"/></svg></span><span><small>Browse</small><strong>All tutorials</strong></span></a><a href="../start-here.html#sh-routes" rel="next" class="reader-toolbar__next"><span class="reader-toolbar__copy"><small>Suggested next</small><strong>Return to analysis routes</strong></span><span class="reader-toolbar__direction"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14m0 0-7-7m7 7-7 7"/></svg></span></a></nav>
 <article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--walkthrough">
-<p class="lesson-lead">A workflow makes file dependencies explicit so a runner can determine what must run, what can run in parallel, and what outputs are missing. This walkthrough compares Snakemake and Nextflow, then builds a small file-copy workflow you can adapt before connecting real sequencing tools.</p>
-<section class="lesson-summary tutorial-learning-contract" data-tutorial-format="hands-on-lab" aria-label="Learning format"><p><strong>Format: Hands-on lab.</strong> Build minimal local test inputs and run side-by-side Snakemake and Nextflow DAG workflows so you can see how targets, wildcards, and resume caching behave.</p></section>
-<div class="lesson-summary"><p><strong>Scope and prerequisites.</strong> You should be comfortable with shell commands, paths, and the idea that each analysis step consumes files and produces files. Install either Snakemake or Nextflow in an isolated environment, and check its current installation guide. The examples below use text fixtures, not biological data; they teach workflow mechanics only.</p></div>
-<p>R remains the main language for analysis steps in this collection. A workflow can call a reviewed R script with <code>Rscript --vanilla</code> and render an R Markdown report as a later step. The definitions below must still use the manager's native syntax: Snakemake's Python-based rule language and Nextflow's Groovy-based DSL. They are not alternative R/Python implementations of a biological analysis.</p>
-<h2>Start with the file contract</h2>
-<p>Write down each step as an input-to-output contract before choosing a workflow manager. For a two-step analysis, the contract might be: raw reads plus a reference produce an alignment; the alignment plus an annotation produce a count table. Record the exact filenames, sample identifiers, software versions, parameters, and expected outputs. A workflow cannot correct a mismatched sample sheet, an incomplete reference, or an inappropriate biological method.</p>
+<p class="lesson-lead">Ad-hoc shell scripts break down as sample counts grow: half-written files look finished, parameters drift between runs, and restarting after a cluster timeout wastes hours of compute. A workflow manager tracks every input-to-output dependency in a directed acyclic graph (DAG) so only missing or outdated steps run. In this hands-on lab, you will build and dry-run a two-sample Snakemake pipeline, execute and resume a Nextflow DSL2 fixture, and compare both architectures for your own sequencing projects.</p>
+
+<section class="lesson-summary tutorial-learning-contract" data-tutorial-format="hands-on-lab" aria-label="Learning format">
+<p><strong>Format: Hands-on lab (about 30-40 minutes).</strong> <strong>Prerequisites:</strong> basic Linux shell commands and paths (<a href="command-line-part2.html">Command-Line Text Processing</a>) plus isolated environment basics (<a href="conda-mamba-part1.html">Micromamba Environments</a>). <strong>What you will do:</strong> define a multi-sample <code>Snakefile</code>, set up an isolated workflow environment without touching system Python, run and <code>-resume</code> a Nextflow DSL2 script, diagnose common scheduler/cache errors, and pin an <code>nf-core/rnaseq</code> release.</p>
+</section>
+
+<div class="lesson-summary">
+<p><strong>Lab scope and environment rule:</strong> The exercises use small plain-text fixtures so you can inspect DAG planning, parallel execution, resume caching, and missing-input failures in seconds without downloading FASTQ files. Workflows orchestrate external tools (such as <code>fastp</code>, <code>STAR</code>, or downstream analysis scripts run with <code>Rscript --vanilla</code>) rather than replacing R or Python statistics. When installing Snakemake or plugins, match the project's declared tooling (<code>uv.lock</code>, <code>pyproject.toml</code>, <code>environment.yml</code>, or <code>requirements.txt</code>) inside an isolated environment (<a href="#snakemake-setup">Snakemake setup</a>, <a href="#nextflow-setup">Nextflow setup</a>); never run a bare global <code>pip install</code>.</p>
+</div>
+
+<h2 id="file-contract">1. Start with the file contract</h2>
+<p>Before writing workflow code, write down the input-to-output contract for every analysis stage: exact input filenames, sample identifiers, software dependencies, compute budget (threads, memory, runtime), and expected outputs. For a standard RNA-seq pipeline, that chain looks like this:</p>
+<ul>
+<li><strong>Trimming and QC:</strong> raw paired reads (<code>raw/{sample}_R1.fastq.gz</code>, <code>raw/{sample}_R2.fastq.gz</code>) produce trimmed reads and a JSON QC report via <code>fastp</code>.</li>
+<li><strong>Alignment:</strong> trimmed reads plus a pinned reference genome (<code>ref/genome.fa</code>) and annotation (<code>ref/genes.gtf</code>) produce a coordinate-sorted BAM file (<code>bam/{sample}.bam</code>) via <code>STAR</code>.</li>
+<li><strong>Cohort fan-in:</strong> all per-sample BAMs and QC JSONs aggregate into one cohort count matrix (<code>results/counts.tsv</code>) via <code>featureCounts</code> and one summary report (<code>results/multiqc.html</code>) via MultiQC.</li>
+</ul>
+<p>This dependency structure is a <strong>directed acyclic graph (DAG)</strong>: each node is a task, each arrow means an upstream output file must exist before a downstream task can start, and no path loops back on itself. Because independent sample branches do not depend on one another, the workflow engine can run them in parallel and skip completed branches after an interruption.</p>
 
 <figure class="my-8 bg-white border border-gray-200 rounded-xl p-4 shadow-sm"><img src="../images/tutorial-figures/workflow-dag-snakemake-nextflow.svg" alt="Directed acyclic graph diagram showing per-sample QC and alignment scattering into cohort MultiQC reporting" width="960" height="460" loading="lazy" class="w-full h-auto rounded-lg" style="aspect-ratio: 960 / 460;"/><figcaption class="mt-3 text-sm text-gray-600">Directed Acyclic Graph (DAG) scheduling lets Snakemake and Nextflow parallelize independent sample alignment tasks while automatically caching completed work for safe resumption.</figcaption></figure>
-<p>Shell scripts work well for quick one-off steps, yet as sample counts grow, implicit working directories and half-written outputs become brittle. Workflow engines track explicit input-to-output dependencies and resume safely after interruptions, though always check output contents alongside timestamps.</p>
-<h2>A two-step multi-sample Snakemake workflow</h2>
-<p>Snakemake builds a directed acyclic graph (DAG) backward from requested target files (<code>rule all</code>) to raw inputs using filename wildcards. To see real workflow scheduling rather than a single file copy, the <code>Snakefile</code> below processes two sample fixtures (<code>sampleA</code> and <code>sampleB</code>) in parallel (<code>summarize_sample</code>), declares per-rule software environments (<code>conda:</code>) and Slurm-ready compute budgets (<code>threads</code> and <code>resources</code>), and then aggregates all sample outputs in a fan-in rule (<code>merge_cohort</code>):</p>
+
+<h2 id="snakemake-workflow">2. Build and run a two-sample Snakemake workflow</h2>
+<p>Snakemake uses a <strong>pull-based</strong> model written in a Python-based rule language (<code>Snakefile</code>). You declare your final desired files in <code>rule all</code>, and Snakemake works backward from target filenames to raw inputs by matching <code>{wildcards}</code> such as <code>{sample}</code>. When a downstream rule requests outputs for multiple samples via <code>expand(...)</code>, Snakemake schedules the independent per-sample jobs concurrently up to the core limit you pass with <code>--cores</code>.</p>
+<p>Save the following pipeline as <code>Snakefile</code> inside a new directory (for example <code>snakemake-demo/</code>). It processes two sample files in parallel (<code>summarize_sample</code>) and combines them into a cohort table (<code>merge_cohort</code>):</p>
 <pre data-code-label="Snakemake DSL"><code class="language-python">SAMPLES = ["sampleA", "sampleB"]
 
 rule all:
@@ -206,8 +219,8 @@ rule summarize_sample:
     shell:
         """
         mkdir -p results/per_sample logs
-        lines=$(wc -l &lt; {input.txt:q})
-        printf '%s\t%s\n' {wildcards.sample:q} "$lines" &gt; {output.tsv:q} 2&gt; {log:q}
+        lines=$(wc -l &lt; {input.txt:q} 2&gt; {log:q} | tr -d ' ')
+        printf '%s\t%s\n' {wildcards.sample:q} "$lines" &gt; {output.tsv:q} 2&gt;&gt; {log:q}
         """
 
 rule merge_cohort:
@@ -224,15 +237,82 @@ rule merge_cohort:
         cat {input:q} &gt;&gt; {output:q}
         """
 </code></pre>
-<p>Save this as <code>Snakefile</code>, create <code>data/sampleA.txt</code> and <code>data/sampleB.txt</code>, and preview the 3-job DAG with <code>snakemake -n -p</code> before running <code>snakemake --cores 2</code> (or <code>snakemake --cores 2 --sdm conda</code> in Snakemake 8+).</p>
-<p>Because <code>merge_cohort</code> requests <code>expand("results/per_sample/{sample}.lines.tsv", sample=SAMPLES)</code>, Snakemake runs both <code>summarize_sample</code> jobs concurrently on two cores and aggregates them afterward. On Slurm, those same <code>threads</code> and <code>resources</code> map directly via <code>snakemake --executor slurm --jobs 20</code> (see <a href="hpc-submission-part1.html">HPC Job Submission</a>).</p>
-<div class="lesson-checkpoint"><p><strong>Before adapting the rule:</strong> confirm that every output path is unique per sample, every input exists, and the command really creates the file declared under <code>output</code>. A command that exits successfully while leaving a truncated file can still mislead downstream steps.</p></div>
-<h3>Dry runs and failures</h3>
-<p>Use <code>snakemake -n</code> before a larger run to inspect the jobs Snakemake plans to execute without running them. A missing input should stop rule planning or execution with an informative error. If a result is unexpectedly considered current, inspect the target, input paths, timestamps, and whether the rule fully declares the files it creates. A dry run checks the planned graph; it does not validate the scientific suitability of the commands.</p>
-<h2>How Nextflow represents the same work</h2>
-<p>Nextflow describes processes and connects their inputs and outputs through channels. A channel carries values or file paths; a process declares what it consumes, the command to run, and what it emits. This dataflow model differs in emphasis from Snakemake's file-target graph, although both tools can express multi-step, parallel workflows. The following small DSL2 example copies the same kind of plain-text fixture; it demonstrates process input/output staging and publication, not a biological analysis.</p>
-<h3>Run the matching text-fixture workflow</h3>
-<p>Use Bash, Nextflow, and a Java release supported by your installed Nextflow version; this text fixture was checked with Nextflow 26.10.3 and Java 21 on Ubuntu Linux. Check <code>java -version</code> and <code>nextflow info</code> first; follow the <a href="https://docs.seqera.io/nextflow/install" rel="noopener" target="_blank">official installation guide</a> if either command is unavailable. Starting from your working directory, create a separate project and save the following Groovy script there as <code>main.nf</code>:</p>
+<p>Key parts of this <code>Snakefile</code>:</p>
+<ul>
+<li><strong><code>rule all</code>:</strong> lists the final target file(s). Snakemake runs nothing unless an upstream rule produces what <code>rule all</code> asks for.</li>
+<li><strong>Wildcards and <code>expand()</code>:</strong> <code>merge_cohort</code> expands <code>{sample}</code> over <code>SAMPLES</code> into <code>results/per_sample/sampleA.lines.tsv</code> and <code>results/per_sample/sampleB.lines.tsv</code>, triggering one parallel <code>summarize_sample</code> job per sample.</li>
+<li><strong><code>:q</code> shell quoting:</strong> <code>{input.txt:q}</code> and <code>{output.tsv:q}</code> automatically quote paths so spaces or special characters do not break Bash.</li>
+<li><strong><code>conda:</code>, <code>threads:</code>, and <code>resources:</code>:</strong> declare the rule's software environment and Slurm-compatible CPU, memory (MB), and runtime (minutes) budgets right next to the command.</li>
+</ul>
+
+<h3 id="snakemake-setup">Install Snakemake in an isolated environment and create fixtures</h3>
+<p>Before installing Snakemake into a project directory, check whether the repository already declares a dependency manager (<code>uv.lock</code>, <code>pyproject.toml</code>, <code>environment.yml</code>, or <code>requirements.txt</code>) and use that existing tool. For a new bioinformatics workflow project, <strong>Micromamba or Conda</strong> from <code>conda-forge</code> and <code>bioconda</code> is recommended because it installs Snakemake alongside the Slurm executor plugin and supports per-rule <code>conda:</code> environments. If you only run local rules that rely on system binaries without <code>conda:</code> directives, use a project-local Python <code>venv</code> instead of global <code>pip</code>.</p>
+<pre><code class="language-bash"># Option A (recommended for bioinformatics and HPC): Micromamba / Conda
+# Include conda so --sdm conda finds a supported frontend (conda or mamba) on PATH
+micromamba create -y -n snakemake-lab -c conda-forge -c bioconda \
+  snakemake snakemake-executor-plugin-slurm conda
+micromamba activate snakemake-lab
+
+# Option B (Python-only local venv; never use global pip install)
+# python3 -m venv .venv
+# .venv/bin/pip install snakemake
+# .venv/bin/pip freeze &gt; requirements.txt</code></pre>
+<p>Next, create the working directory, the two input fixtures, and the Conda environment file referenced by <code>conda: "envs/coreutils.yaml"</code>:</p>
+<pre><code class="language-bash">mkdir -p snakemake-demo/data snakemake-demo/envs
+cd snakemake-demo
+printf 'read1\nread2\nread3\n' &gt; data/sampleA.txt
+printf 'read1\nread2\nread3\nread4\nread5\n' &gt; data/sampleB.txt</code></pre>
+<p>Save the following YAML specification as <code>envs/coreutils.yaml</code> so Snakemake can resolve the rule's <code>conda:</code> directive when run with software deployment enabled:</p>
+<pre><code class="language-yaml">channels:
+  - conda-forge
+dependencies:
+  - coreutils=9.5
+</code></pre>
+
+<h3 id="snakemake-run">Preview the DAG, execute, and verify the output</h3>
+<p>Always run a dry run first with <code>-n</code> (do not execute) and <code>-p</code> (print the resolved shell commands):</p>
+<pre><code class="language-bash"># 1. Preview planned jobs and shell commands without running anything
+snakemake -n -p
+
+# 2. Run locally on 2 cores (with per-rule Conda deployment in Snakemake 8+)
+snakemake --cores 2 --sdm conda
+
+# Or run using host coreutils without building the Conda prefix:
+# snakemake --cores 2</code></pre>
+<p>In Snakemake 8+, <code>--sdm conda</code> (short for <code>--software-deployment-method conda</code>) replaces the legacy <code>--use-conda</code> flag. Because Snakemake's <code>--conda-frontend</code> accepts <code>conda</code> or <code>mamba</code> (not <code>micromamba</code>), including <code>conda</code> inside <code>snakemake-lab</code> ensures <code>--sdm conda</code> finds it on <code>PATH</code>. On an HPC cluster with Slurm, pre-create Conda environments on a node with network access first, then submit worker jobs through the Slurm executor plugin (see <a href="hpc-submission-part1.html">Writing Slurm Job Scripts</a>):</p>
+<pre><code class="language-bash"># Pre-build Conda environments before submitting Slurm jobs
+snakemake --sdm conda --conda-create-envs-only --cores 1
+
+# Submit jobs to Slurm using the threads and resources declared in each rule
+snakemake --executor slurm --sdm conda --jobs 20</code></pre>
+<p>When the local run finishes, inspect the merged cohort table:</p>
+<pre><code class="language-bash">cat results/cohort_line_counts.tsv</code></pre>
+<div class="lesson-checkpoint">
+<p><strong>Expected output (checked locally on the text fixtures):</strong> <code>results/cohort_line_counts.tsv</code> should contain three tab-separated lines:</p>
+<pre><code class="language-text">sample_id	line_count
+sampleA	3
+sampleB	5
+</code></pre>
+<p>Re-run the same command you used above (<code>snakemake --cores 2 --sdm conda</code>, or <code>snakemake --cores 2</code> if you ran with host <code>coreutils</code>) immediately afterward so software-deployment provenance settings match: Snakemake should report <code>Nothing to be done</code> because every declared output exists and is newer than its inputs. Remember that timestamp and file-existence checks verify dependency completion, not scientific validity; always inspect logs and summary values.</p>
+</div>
+
+<h2 id="nextflow-workflow">3. Build and resume a Nextflow DSL2 workflow</h2>
+<p>Nextflow uses a <strong>push-based dataflow</strong> model written in a Groovy-based DSL (DSL2). Instead of working backward from a target filename, Nextflow creates asynchronous <strong>channels</strong> that emit file paths or metadata tuples into <strong>processes</strong>. Each task runs inside an isolated hash directory under <code>work/</code> (such as <code>work/ab/cdef123.../</code>) with symlinked inputs, so parallel tasks never collide on temporary filenames. Only files matched by <code>publishDir</code> are copied or linked into your public results folder.</p>
+
+<h3 id="nextflow-setup">Check Java, install Nextflow, and run the text fixture</h3>
+<p>Nextflow runs on Linux, macOS, or WSL and requires Bash 3.2+ plus <strong>Java 17 or later</strong> (up to Java 26) on <code>PATH</code> or <code>JAVA_HOME</code> for Nextflow 26.10.x; starting in Nextflow 27.04+, you can instead bundle Java automatically on Linux and macOS with <code>NXF_JAVA_BUNDLE=true</code>. This text fixture was checked with Nextflow 26.10.3 and Java 21 on Ubuntu Linux. Verify your runtime first:</p>
+<pre><code class="language-bash">java -version
+nextflow info</code></pre>
+<p>If <code>nextflow</code> is not installed, use either the official self-installer from <a href="https://docs.seqera.io/nextflow/install" rel="noopener" target="_blank">Nextflow installation docs</a> or Micromamba:</p>
+<pre><code class="language-bash"># Option A: official self-installer (requires Java 17-26 on 26.10.x; Nextflow 27.04+ supports NXF_JAVA_BUNDLE=true)
+curl -s https://get.nextflow.io | bash
+chmod +x nextflow
+mkdir -p "$HOME/.local/bin"
+mv nextflow "$HOME/.local/bin/"
+
+# Option B: isolated Micromamba environment
+# micromamba create -y -n nextflow-lab -c conda-forge -c bioconda nextflow</code></pre>
+<p>Create a separate demo folder and input fixture, then save the DSL2 pipeline below as <code>main.nf</code>:</p>
 <pre><code class="language-bash">mkdir -p nextflow-demo/data
 cd nextflow-demo
 printf 'fixture text for workflow practice\n' &gt; data/demo.txt</code></pre>
@@ -257,34 +337,88 @@ workflow {
     source_ch = channel.fromPath(params.input, checkIfExists: true)
     COPY_FIXTURE(source_ch)
 }</code></pre>
-<p>Run <code>nextflow run main.nf</code>. In the process, <code>source</code> is the staged path for the file found by <code>channel.fromPath</code>; <code>cp "$source" copied.txt</code> writes the declared output in the task directory. The <code>publishDir 'results', mode: 'copy'</code> directive copies that declared output to <code>results/copied.txt</code> in the launch directory.</p>
-<div class="lesson-checkpoint"><p><strong>Success check:</strong> run <code>cmp -- data/demo.txt results/copied.txt</code>. It should print nothing and return exit status 0: the result has exactly the input bytes. This checks copying and publication, not the suitability of a biological analysis.</p></div>
-<p><strong>Try one failure:</strong> run <code>nextflow run main.nf --input data/missing.txt</code>. It should fail before the process runs and name the missing path. This command does not rename or delete the original input; rerun the original command to use <code>data/demo.txt</code> again.</p>
-<p>Nextflow records task cache entries on each run, but reuses them only when you explicitly pass <code>-resume</code>. Use <code>nextflow run main.nf -resume</code> to request reuse when the task is eligible; keep the associated cache and work directories. See the official <a href="https://docs.seqera.io/nextflow/cache-and-resume" rel="noopener" target="_blank">caching and resuming guide</a> and <a href="https://docs.seqera.io/nextflow/reference/process/directives/publish-dir" rel="noopener" target="_blank">publication directive reference</a>.</p>
-<p>For a real read-mapping workflow, declare explicitly whether reads are single-end or paired-end and keep both mates bound to their sample identifier as a single unit (for example, using <code>Channel.fromFilePairs('data/*_R{1,2}.fastq.gz', checkIfExists: true)</code> in Nextflow or paired <code>data/{sample}_R1.fastq.gz</code> and <code>data/{sample}_R2.fastq.gz</code> inputs in Snakemake). When wrapping an existing command-line tool, test it on one sample outside the workflow engine first, then encode the exact inputs, container or Conda environment directive, thread/memory resources, and output files in the rule or process definition.</p>
-<h2>Choose by workflow architecture: Snakemake vs Nextflow</h2>
+<p>How this script works: <code>channel.fromPath(params.input, checkIfExists: true)</code> verifies the input path exists and emits it into <code>source_ch</code>. Inside <code>COPY_FIXTURE</code>, Nextflow stages that file as <code>source</code> inside a fresh <code>work/...</code> directory, copies it to <code>copied.txt</code>, and <code>publishDir 'results', mode: 'copy'</code> copies the declared output to <code>results/copied.txt</code>.</p>
+<pre><code class="language-bash">nextflow run main.nf
+cmp -- data/demo.txt results/copied.txt</code></pre>
+<div class="lesson-checkpoint">
+<p><strong>Success check:</strong> <code>cmp -- data/demo.txt results/copied.txt</code> should print nothing and return exit status 0, confirming that the published output matches the input byte for byte.</p>
+</div>
+<p><strong>Try one failure and one resume:</strong> run <code>nextflow run main.nf --input data/missing.txt</code>. Because <code>checkIfExists: true</code> is set on the channel factory, Nextflow stops immediately before launching <code>COPY_FIXTURE</code> and prints the missing path without modifying your existing <code>data/demo.txt</code>.</p>
+<p>Nextflow records task cache entries on each run, but reuses them only when you explicitly pass <code>-resume</code>. Run <code>nextflow run main.nf -resume</code> after fixing an upstream parameter or restarting an interrupted run: Nextflow matches task hashes against <code>.nextflow/cache</code> and <code>work/</code> and skips tasks whose script, inputs, and container have not changed. Keep both <code>work/</code> and <code>.nextflow/</code> intact until your analysis is complete, because <code>publishDir</code> outputs alone cannot satisfy <code>-resume</code>. See the official <a href="https://docs.seqera.io/nextflow/cache-and-resume" rel="noopener" target="_blank">caching and resuming guide</a> and <a href="https://docs.seqera.io/nextflow/reference/process/directives/publish-dir" rel="noopener" target="_blank">publication directive reference</a>.</p>
+
+<h3 id="paired-end-scaling">Scaling from a single fixture to paired-end FASTQ samples</h3>
+<p>In a real sequencing pipeline, never handle R1 and R2 mates as independent wildcards or separate channels that could fall out of order. Keep each sample identifier bound to its read pair as one unit:</p>
+<ul>
+<li><strong>In Snakemake:</strong> declare both mates in the rule's <code>input:</code> block (<code>r1="data/{sample}_R1.fastq.gz", r2="data/{sample}_R2.fastq.gz"</code>) or load sample IDs and file paths from a checked-in <code>samples.tsv</code> table.</li>
+<li><strong>In Nextflow DSL2:</strong> use <code>channel.fromFilePairs('data/*_R{1,2}.fastq.gz', checkIfExists: true)</code> for uniform filenames, or parse a structured CSV samplesheet with <code>channel.fromPath(params.samplesheet).splitCsv(header: true)</code> (recommended by Nextflow docs when samples carry strandedness, lane, or donor metadata).</li>
+</ul>
+
+<h2 id="compare-snakemake-nextflow">4. Choose by workflow architecture: Snakemake vs Nextflow</h2>
 <div aria-label="Scrollable table: Snakemake vs Nextflow technical comparison" class="lesson-table-wrap" role="region" tabindex="0"><table><caption>Snakemake vs Nextflow technical comparison</caption><thead><tr><th scope="col">Dimension</th><th scope="col">Snakemake (Molder et al., 2021)</th><th scope="col">Nextflow DSL2 (Di Tommaso et al., 2017)</th></tr></thead><tbody>
 <tr><th scope="row">Scheduling model</th><td>Pull-based backward chaining: starts from requested target paths (<code>rule all</code>) and resolves upstream rules via filename wildcards.</td><td>Push-based dataflow: channels emit items or <code>tuple val(sample_id), path(reads)</code> objects into downstream processes as soon as upstream tasks finish.</td></tr>
-<tr><th scope="row">Working directory &amp; staging</th><td>Runs in the project working tree writing directly to declared paths; metadata and Conda prefixes live under <code>.snakemake/</code>.</td><td>Runs every task inside an isolated hash directory (<code>work/ab/cdef123.../</code>) with symlinked inputs; copies selected outputs via <code>publishDir</code>.</td></tr>
-<tr><th scope="row">Resume semantics</th><td>Skips rules whose outputs exist and are newer than inputs (plus code/param provenance checks in Snakemake 8+); re-evaluates automatically.</td><td>Re-runs from scratch by default unless you pass <code>-resume</code>, which matches cached task hashes in <code>work/</code>.</td></tr>
-<tr><th scope="row">Software &amp; HPC directives</th><td>Per-rule <code>conda: "envs/tool.yaml"</code> or <code>container: "docker://..."</code> plus <code>threads:</code> and <code>resources: mem_mb=..., runtime=...</code>; Slurm via <code>--executor slurm</code>.</td><td>Per-process <code>conda</code> or <code>container 'quay.io/biocontainers/...'</code> plus <code>cpus</code>, <code>memory</code>, <code>time</code>; Slurm via <code>process.executor = 'slurm'</code> in <code>nextflow.config</code>.</td></tr>
+<tr><th scope="row">Working directory &amp; staging</th><td>Runs in the project working tree writing directly to declared paths; metadata and Conda prefixes live under <code>.snakemake/</code>.</td><td>Runs every task inside an isolated hash directory (<code>work/ab/cdef123.../</code>) with symlinked inputs; copies selected outputs via <code>publishDir</code> (or workflow outputs in recent releases).</td></tr>
+<tr><th scope="row">Resume semantics</th><td>Skips rules whose outputs exist and are newer than inputs (plus code/param provenance checks in Snakemake 8+); re-evaluates automatically.</td><td>Re-runs from scratch by default unless you pass <code>-resume</code>, which matches cached task hashes in <code>.nextflow/cache</code> and <code>work/</code>.</td></tr>
+<tr><th scope="row">Software &amp; HPC directives</th><td>Per-rule <code>conda: "envs/tool.yaml"</code> (<code>--sdm conda</code>) or <code>container: "docker://..."</code> plus <code>threads:</code> and <code>resources: mem_mb=..., runtime=...</code>; Slurm via <code>--executor slurm</code> (requires <code>snakemake-executor-plugin-slurm</code>).</td><td>Per-process <code>conda</code> or <code>container 'quay.io/biocontainers/...'</code> plus <code>cpus</code>, <code>memory</code>, <code>time</code>; Slurm via <code>process.executor = 'slurm'</code> in <code>nextflow.config</code>.</td></tr>
 </tbody></table></div>
-<div class="lesson-decision"><p><strong>Consider Snakemake</strong> when your analysis naturally centers on predictable directory trees, R/Python custom scripts, and file-target wildcards.</p><p><strong>Consider Nextflow (or nf-core)</strong> when sample sheets drive complex multi-branch channel routing across local workstations, Slurm clusters, and cloud object stores, or when a peer-reviewed <a href="https://nf-co.re/" rel="noopener" target="_blank">nf-core</a> pipeline (Ewels et al., 2020) already matches your assay.</p></div>
-<p>Neither choice guarantees biological validity on its own. Version-control the workflow and configuration, pin container digests or Conda lockfiles, and retain run logs and output checksums.</p>
-<h2>Running an nf-core pipeline safely</h2>
-<p>Pin exact <a href="https://nf-co.re/rnaseq/" rel="noopener" target="_blank">nf-core/rnaseq</a> releases with <code>-r</code> (for example <code>nextflow run nf-core/rnaseq -r 3.14.0 -profile test,singularity --outdir results_test</code>) after checking the samplesheet and GTF/FASTA requirements in that release's docs. A green <code>-profile test</code> run checks container and scheduler mechanics before you point the pipeline at your real samplesheet and genome build.</p>
-<h2>Practice and self-check</h2>
-<section class="lesson-exercise"><h3>Exercise: test a two-sample dependency graph</h3><ol><li>Create <code>data/sampleA.txt</code> (3 lines) and <code>data/sampleB.txt</code> (5 lines), run <code>snakemake -n -p</code> to inspect the 3-job DAG, and then run <code>snakemake --cores 2</code> (omitting or commenting <code>conda:</code> if testing with system coreutils).</li><li>Add <code>"sampleC"</code> to <code>SAMPLES</code> without creating <code>data/sampleC.txt</code>, run <code>snakemake -n</code>, and verify that planning halts with <code>MissingInputException</code> before touching existing outputs.</li><li>Create <code>data/sampleC.txt</code>, rerun, and verify that Snakemake runs <code>summarize_sample</code> only for <code>sampleC</code> before updating <code>merge_cohort</code>.</li></ol><p><strong>Check your reasoning:</strong> incremental re-execution proves dependency tracking, not read quality, strand orientation, or alignment accuracy.</p></section>
+
+<div class="lesson-decision">
+<p><strong>Choose Snakemake</strong> when your lab already writes Python and R scripts, prefers readable file-target directory layouts, and wants tight control over custom pipelines on a workstation or Slurm cluster.</p>
+<p><strong>Choose Nextflow (or nf-core)</strong> when sample sheets drive multi-branch routing across HPC and cloud storage, or when a peer-reviewed <a href="https://nf-co.re/" rel="noopener" target="_blank">nf-core</a> pipeline (Ewels et al., 2020) already covers your assay.</p>
+</div>
+
+<p>Neither engine guarantees scientific reproducibility by itself. Version-control your <code>Snakefile</code>, <code>main.nf</code>, and <code>nextflow.config</code> in Git, pin exact package versions in <code>envs/*.yaml</code> (or export a lockfile) and explicit container tags/digests (such as <code>quay.io/biocontainers/fastp:0.23.4--h5f740d0_0</code>), and archive run logs alongside output checksums (<code>sha256sum</code>).</p>
+
+<h2 id="nf-core-safely">5. Running an nf-core pipeline safely</h2>
+<p>Community pipelines save months of engineering when an assay already has a maintained standard, provided you pin the release tag and test container mechanics on tiny test data first. For example, with <a href="https://nf-co.re/rnaseq/" rel="noopener" target="_blank">nf-core/rnaseq</a> (pin an explicit release such as <code>-r 3.28.0</code> from the <a href="https://nf-co.re/rnaseq/releases" rel="noopener" target="_blank">nf-core/rnaseq releases page</a>):</p>
+<pre><code class="language-bash"># Cache Singularity/Apptainer images in a shared directory to avoid re-downloading
+export NXF_SINGULARITY_CACHEDIR="$HOME/.singularity/cache"
+mkdir -p "$NXF_SINGULARITY_CACHEDIR"
+
+# Verify container pulls and scheduler behavior on the built-in test dataset
+nextflow run nf-core/rnaseq -r 3.28.0 -profile test,singularity --outdir results_test</code></pre>
+<p>Once <code>-profile test,singularity</code> succeeds, prepare your CSV samplesheet with the four required columns (<code>sample,fastq_1,fastq_2,strandedness</code>, where <code>strandedness</code> is <code>unstranded</code>, <code>forward</code>, <code>reverse</code>, or <code>auto</code>) and point the run at your real reads and genome build (<code>--input samplesheet.csv --genome GRCh38</code> or explicit <code>--fasta</code> and <code>--gtf</code>).</p>
+
+<h2 id="common-errors">6. Common workflow errors and how to fix them</h2>
+<div aria-label="Scrollable table: Common Snakemake and Nextflow errors and fixes" class="lesson-table-wrap" role="region" tabindex="0"><table><caption>Common Snakemake and Nextflow errors and fixes</caption><thead><tr><th scope="col">Symptom or error</th><th scope="col">Likely cause</th><th scope="col">How to fix it</th></tr></thead><tbody>
+<tr><th scope="row"><code>MissingInputException</code> (Snakemake)</th><td>A raw input file does not exist, or a wildcard/filename typo prevents matching any upstream rule's <code>output:</code>.</td><td>Run <code>snakemake -n -p</code> and compare the exact missing path against your <code>data/</code> directory and upstream <code>output:</code> pattern.</td></tr>
+<tr><th scope="row"><code>LockException: Error: Directory cannot be locked</code> (Snakemake)</th><td>A previous Snakemake process crashed or was killed by Slurm before releasing the directory lock.</td><td>Confirm no Snakemake process is still running (<code>squeue -u "$USER"</code>), then clear the stale lock with <code>snakemake --unlock</code>.</td></tr>
+<tr><th scope="row"><code>MissingOutputException</code> on HPC NFS/Lustre (Snakemake)</th><td>A Slurm job exited cleanly, but network filesystem metadata took longer than 5 seconds to sync, or the command wrote to a different filename.</td><td>Check the rule's log file for the output path; if the file appears a few seconds later, pass <code>--latency-wait 60</code>.</td></tr>
+<tr><th scope="row">Conda env fails on compute nodes (Snakemake)</th><td>Forgot <code>--sdm conda</code>, missing <code>envs/*.yaml</code>, parallel jobs raced to create the same prefix, or compute nodes lack internet.</td><td>Pre-build prefixes on a network-enabled node using <code>snakemake --sdm conda --conda-create-envs-only --cores 1</code> before launching Slurm jobs.</td></tr>
+<tr><th scope="row"><code>-resume</code> re-runs every task (Nextflow)</th><td><code>work/</code> or <code>.nextflow/cache</code> was deleted, or a timestamp/random value inside a script changed the task hash.</td><td>Preserve <code>work/</code> until the workflow finishes (use <code>nextflow clean -f -before &lt;run_name&gt;</code> only for old runs) and remove non-deterministic timestamps from script bodies.</td></tr>
+</tbody></table></div>
+
+<h2 id="practice">7. Practice and self-check</h2>
+<section class="lesson-exercise">
+<h3>Exercise: test incremental execution and failure handling in Snakemake</h3>
+<ol>
+<li>Run <code>snakemake -n -p</code> in <code>snakemake-demo/</code> to verify the planned jobs, then run <code>snakemake --cores 2 --sdm conda</code> (or <code>snakemake --cores 2</code> if using host <code>coreutils</code>) and check <code>results/cohort_line_counts.tsv</code>.</li>
+<li>Add <code>"sampleC"</code> to <code>SAMPLES</code> in <code>Snakefile</code> without creating <code>data/sampleC.txt</code>, run <code>snakemake -n</code>, and observe how Snakemake halts before modifying existing outputs.</li>
+<li>Create <code>data/sampleC.txt</code> with 2 lines, rerun <code>snakemake --cores 2</code>, and inspect which jobs execute.</li>
+</ol>
+<details class="mt-4">
+<summary class="cursor-pointer font-semibold text-blue-700 hover:underline">Show expected checks and answers</summary>
+<div class="mt-3 text-sm text-gray-700 space-y-2">
+<p><strong>Step 1:</strong> <code>snakemake -n -p</code> plans two <code>summarize_sample</code> jobs (<code>sampleA</code>, <code>sampleB</code>), one <code>merge_cohort</code> job, and the target <code>all</code> rule. After execution, <code>results/cohort_line_counts.tsv</code> lists <code>sampleA	3</code> and <code>sampleB	5</code>.</p>
+<p><strong>Step 2:</strong> <code>snakemake -n</code> raises <code>MissingInputException</code> naming <code>data/sampleC.txt</code> (needed by <code>summarize_sample</code>) before touching <code>results/cohort_line_counts.tsv</code>.</p>
+<p><strong>Step 3:</strong> Snakemake skips <code>sampleA</code> and <code>sampleB</code> (already up to date), runs <code>summarize_sample</code> only for <code>sampleC</code>, and then re-runs <code>merge_cohort</code> so <code>results/cohort_line_counts.tsv</code> gains <code>sampleC	2</code>.</p>
+<p><strong>Check your reasoning:</strong> incremental re-execution proves dependency tracking, not read quality, strand orientation, or alignment accuracy.</p>
+</div>
+</details>
+</section>
+
 <aside aria-label="Author's lab note" class="lesson-summary">
 <p><strong>Author's lab note:</strong> Never start debugging a 40-sample workflow inside Nextflow or Snakemake. Run one single sample manually inside the target Singularity or Conda container first, confirm paths and memory peak, and only then wire that tested command into a rule or process.</p>
 </aside>
-<h2>References and further reading</h2>
+
+<h2 id="references">8. References and next steps</h2>
 <ul>
 <li>Molder, F., Jablonski, K. P., Letcher, B., et al. (2021). Sustainable data analysis with Snakemake. <em>F1000Research</em>, 10, 33. <a href="https://doi.org/10.12688/f1000research.29032.2" rel="noopener" target="_blank">doi:10.12688/f1000research.29032.2</a></li>
 <li>Di Tommaso, P., Chatzou, M., Floden, E. W., et al. (2017). Nextflow enables reproducible computational workflows. <em>Nature Biotechnology</em>, 35, 316-319. <a href="https://doi.org/10.1038/nbt.3820" rel="noopener" target="_blank">doi:10.1038/nbt.3820</a></li>
 <li>Ewels, P. A., Peltzer, A., Fillinger, S., et al. (2020). The nf-core framework for community-curated bioinformatics pipelines. <em>Nature Biotechnology</em>, 38, 276-278. <a href="https://doi.org/10.1038/s41587-020-0439-x" rel="noopener" target="_blank">doi:10.1038/s41587-020-0439-x</a></li>
-<li><a href="https://snakemake.readthedocs.io/en/stable/tutorial/tutorial.html" rel="noopener" target="_blank">Snakemake tutorial</a>, <a href="https://docs.seqera.io/nextflow/" rel="noopener" target="_blank">Nextflow documentation</a>, and <a href="https://nf-co.re/rnaseq/" rel="noopener" target="_blank">nf-core/rnaseq usage</a></li>
+<li>Official documentation: <a href="https://snakemake.readthedocs.io/en/stable/getting_started/installation.html" rel="noopener" target="_blank">Snakemake installation</a>, <a href="https://snakemake.readthedocs.io/en/stable/tutorial/tutorial.html" rel="noopener" target="_blank">Snakemake tutorial</a>, <a href="https://docs.seqera.io/nextflow/" rel="noopener" target="_blank">Nextflow documentation</a>, and <a href="https://nf-co.re/rnaseq/" rel="noopener" target="_blank">nf-core/rnaseq usage</a></li>
+<li>Related tutorials on The Omics Hub: <a href="conda-mamba-part1.html">Micromamba Environments for Bioinformatics</a>, <a href="hpc-submission-part1.html">Writing Slurm Job Scripts</a>, <a href="wes-variant-calling-pipeline.html">WES Variant Calling Pipeline</a>, and <a href="transcriptomics-differential-expression.html">Transcriptomics Differential Expression</a>.</li>
 </ul>
+
 <aside aria-labelledby="tutorial-feedback-title" class="lesson-feedback" id="tutorial-feedback"><h2 id="tutorial-feedback-title">Help improve this tutorial</h2><p>Found an error, a broken link, or a step that needs a clearer explanation? Please <a href="../contact.html">contact me</a>. Your feedback helps me keep this resource accurate and useful.</p></aside></article>
 <section class="mt-12 mb-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-100">
 <div class="flex items-start gap-4">
@@ -292,7 +426,7 @@ workflow {
 <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
 </div>
 <div>
-<p class="text-sm text-gray-600 mb-2">Validation boundary: the displayed Nextflow text fixture was executed with Nextflow 26.10.3 (build 14229) and Java 21 on Ubuntu Linux; exact-byte publication and missing-input failure were checked. The Snakemake example was not executed in this revision, and no biological workflow was run. Record your own operating system, <code>snakemake --version</code> and/or <code>nextflow info</code>, and <code>java -version</code> before adapting the examples. Report failures with command and version details through the <a class="text-blue-600 hover:underline" href="../contact.html">Contact page</a>.</p>
+<p class="text-sm text-gray-600 mb-2">Validation boundary: the displayed Nextflow text fixture was executed with Nextflow 26.10.3 (build 14229) and Java 21 on Ubuntu Linux; exact-byte publication and missing-input failure were checked. The Snakemake text-fixture line-counting and TSV aggregation logic was checked locally with Bash, while Snakemake CLI, Conda deployment, Slurm executor, and nf-core commands were verified against official documentation and not executed in this environment. Record your own operating system, <code>snakemake --version</code> and/or <code>nextflow info</code>, and <code>java -version</code> before adapting the examples. Report failures with command and version details through the <a class="text-blue-600 hover:underline" href="../contact.html">Contact page</a>.</p>
 <p class="text-sm text-gray-500">Author: <a class="text-blue-600 hover:underline font-medium" href="../about.html">Nasir Mahmood Abbasi, PhD</a> - Category: Workflow Management and Containerization</p>
 </div>
 </div>
@@ -423,7 +557,7 @@ workflow {
 </script>
 <script src="../assets/vendor/prism/prism-1.29.0.js"></script>
 <script id="tutorial-code-data">
-window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"reproducible-workflows-snakemake-nextflow":{"blocks":[{"language":"python","sha256":"56998d0835c4f5465120815864f285a2510d167ff811d520c6c5081553dc47db"},{"language":"bash","sha256":"94bc219d61e36b81a65f108dc1661f85c73d4599d55d5750c4d16b0361d83979"},{"language":"groovy","sha256":"519e74ad0b3a570e2ae48423437c3af04353270b45884ae5163e800a14c66650"}],"groups":[]}}};
+window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"reproducible-workflows-snakemake-nextflow":{"blocks":[{"language":"python","sha256":"23cd3efe2c0f3c65370e76b401a89410f3dfce8203cfc017aa3d355f1ebdd63a"},{"language":"bash","sha256":"3debc17f57ef4c99d467cebfc6f996c6912c87a8fc5d365f8fe7535674c02651"},{"language":"bash","sha256":"fa760fdbf9cb9a610e0f7388a753b79033bda20db08449792a2a7ea3a2469988"},{"language":"yaml","sha256":"38eb3644496bba3549629fa58e361bb1496c6257a8d77a1f39f74eb78efddde2"},{"language":"bash","sha256":"c58e6db938081a9a07f99066ad64e2ae9ca013a8a2a55083425e569b0a9a64ab"},{"language":"bash","sha256":"286586238942dadb62bc5e74b8190e9522a2f3d22b25a23b74f22be99ff68af7"},{"language":"bash","sha256":"6879f3c809b2c4d130352d06133394b7dcdd3116e4edfb0c7dc2d30d7705d0bd"},{"language":"text","sha256":"69d22f07d1b897eab3eaf615d60e5b9e18148ee90905df1a03518a0d9fdb2dc1"},{"language":"bash","sha256":"b1eeb93f24b29b9aaa0bfdb5182eec87acc8200d475cab5ed3ca46acd094b2c1"},{"language":"bash","sha256":"4a7d01634ce63568bde83289b0923fbcd8158b94ae391885a6d91c52239b8910"},{"language":"bash","sha256":"94bc219d61e36b81a65f108dc1661f85c73d4599d55d5750c4d16b0361d83979"},{"language":"groovy","sha256":"519e74ad0b3a570e2ae48423437c3af04353270b45884ae5163e800a14c66650"},{"language":"bash","sha256":"1ff53da64d93d9c1a5473372edcc95480605ec2f669ce5494e066172b06f332d"},{"language":"bash","sha256":"ffa0c54ae867ed46cf603ea0673cb901784f11de9e0516b9e9853eed4c389d00"}],"groups":[]}}};
 </script>
 <script src="../code-tabs.js?v=20261026-startup-v1"></script>
 <script src="../copy-code.js?v=20261025-r-first-v1"></script>

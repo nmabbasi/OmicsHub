@@ -1,0 +1,106 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 440" width="960" height="440" role="img" aria-labelledby="cdf-res-title cdf-res-desc">
+  <title id="cdf-res-title">How Network, Disk Storage, RAM, and CPU Interact in a Bioinformatics Workflow</title>
+  <desc id="cdf-res-desc">Flow diagram showing sequencing files arriving over the network into persistent disk storage, loading into volatile RAM for alignment or indexing, executing across CPU cores, and writing temporary sort files to scratch storage.</desc>
+  <defs>
+    <marker id="cdf-arrow-slate" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#475569"/>
+    </marker>
+    <marker id="cdf-arrow-blue" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#1D4ED8"/>
+    </marker>
+    <marker id="cdf-arrow-amber" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#B45309"/>
+    </marker>
+    <filter id="cdf-shadow" x="-4%" y="-4%" width="108%" height="112%">
+      <feDropShadow dx="0" dy="3" stdDeviation="4" flood-color="#0F172A" flood-opacity="0.07"/>
+    </filter>
+  </defs>
+
+  <rect x="0" y="0" width="960" height="440" rx="14" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="1.5"/>
+  <text x="32" y="40" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="20" font-weight="700" fill="#0F172A">Where Omics Workflows Hit Limits: Network, Disk, RAM, and CPU</text>
+  <text x="32" y="64" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="13" fill="#475569">Each hardware resource fails differently. Match the error message to the bottleneck before resizing a job.</text>
+
+  <!-- Card 1: Network -->
+  <g filter="url(#cdf-shadow)">
+    <rect x="32" y="92" width="198" height="208" rx="10" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.5"/>
+    <path d="M 32 102 Q 32 92 42 92 L 220 92 Q 230 92 230 102 L 230 128 L 32 128 Z" fill="#0F766E"/>
+    <text x="46" y="115" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="13" font-weight="700" fill="#FFFFFF">1. Network</text>
+    <text x="218" y="115" text-anchor="end" font-family="monospace" font-size="11" font-weight="700" fill="#CCFBF1">MB/s</text>
+    <text x="46" y="152" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="12.5" font-weight="600" fill="#0F172A">Data transfer rate</text>
+    <text x="46" y="174" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="12" fill="#334155">Downloads FASTQ files</text>
+    <text x="46" y="191" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="12" fill="#334155">from core or SRA/ENA.</text>
+    <line x1="46" y1="208" x2="216" y2="208" stroke="#E2E8F0" stroke-width="1"/>
+    <text x="46" y="228" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11.5" font-weight="700" fill="#0F766E">Common failure:</text>
+    <text x="46" y="246" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11.5" fill="#475569">Truncated archive</text>
+    <text x="46" y="266" font-family="monospace" font-size="11" fill="#0F172A">sha256sum -c</text>
+    <text x="46" y="282" font-family="monospace" font-size="11" fill="#0F172A">gzip -t</text>
+  </g>
+
+  <!-- Arrow 1 -> 2 -->
+  <line x1="230" y1="196" x2="258" y2="196" stroke="#475569" stroke-width="2.2" marker-end="url(#cdf-arrow-slate)"/>
+
+  <!-- Card 2: Persistent Disk Storage -->
+  <g filter="url(#cdf-shadow)">
+    <rect x="262" y="92" width="210" height="208" rx="10" fill="#FFFFFF" stroke="#93C5FD" stroke-width="1.5"/>
+    <path d="M 262 102 Q 262 92 272 92 L 462 92 Q 472 92 472 102 L 472 128 L 262 128 Z" fill="#1D4ED8"/>
+    <text x="276" y="115" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="13" font-weight="700" fill="#FFFFFF">2. Storage (Disk)</text>
+    <text x="460" y="115" text-anchor="end" font-family="monospace" font-size="11" font-weight="700" fill="#DBEAFE">GB - TB</text>
+    <text x="276" y="152" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="12.5" font-weight="600" fill="#0F172A">Persistent files on drive</text>
+    <text x="276" y="174" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="12" fill="#334155">Stores .fastq.gz, BAM,</text>
+    <text x="276" y="191" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="12" fill="#334155">and reference genomes.</text>
+    <line x1="276" y1="208" x2="458" y2="208" stroke="#E2E8F0" stroke-width="1"/>
+    <text x="276" y="228" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11.5" font-weight="700" fill="#1D4ED8">Common failure:</text>
+    <text x="276" y="246" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11.5" fill="#475569">No space / quota hit</text>
+    <text x="276" y="266" font-family="monospace" font-size="11" fill="#0F172A">du -sh . / df -h .</text>
+    <text x="276" y="282" font-family="monospace" font-size="11" fill="#0F172A">chmod a-w data/raw/*</text>
+  </g>
+
+  <!-- Arrow 2 -> 3 -->
+  <line x1="472" y1="196" x2="500" y2="196" stroke="#1D4ED8" stroke-width="2.2" marker-end="url(#cdf-arrow-blue)"/>
+
+  <!-- Card 3: RAM (Memory) -->
+  <g filter="url(#cdf-shadow)">
+    <rect x="504" y="92" width="212" height="208" rx="10" fill="#FFFFFF" stroke="#C4B5FD" stroke-width="1.5"/>
+    <path d="M 504 102 Q 504 92 514 92 L 706 92 Q 716 92 716 102 L 716 128 L 504 128 Z" fill="#6D28D9"/>
+    <text x="518" y="115" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="13" font-weight="700" fill="#FFFFFF">3. RAM (Memory)</text>
+    <text x="704" y="115" text-anchor="end" font-family="monospace" font-size="11" font-weight="700" fill="#EDE9FE">4 - 256 GB</text>
+    <text x="518" y="152" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="12.5" font-weight="600" fill="#0F172A">Active workspace</text>
+    <text x="518" y="174" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="12" fill="#334155">Holds genome indexes,</text>
+    <text x="518" y="191" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="12" fill="#334155">e.g. STAR GRCh38 ~32 GB.</text>
+    <line x1="518" y1="208" x2="702" y2="208" stroke="#E2E8F0" stroke-width="1"/>
+    <text x="518" y="228" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11.5" font-weight="700" fill="#6D28D9">Common failure:</text>
+    <text x="518" y="246" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11.5" fill="#475569">Out-of-memory (OOM)</text>
+    <text x="518" y="266" font-family="monospace" font-size="11" fill="#0F172A">free -h  (Linux/WSL)</text>
+    <text x="518" y="282" font-family="monospace" font-size="11" fill="#0F172A">vm_stat  (macOS)</text>
+  </g>
+
+  <!-- Arrow 3 -> 4 -->
+  <line x1="716" y1="196" x2="744" y2="196" stroke="#475569" stroke-width="2.2" marker-end="url(#cdf-arrow-slate)"/>
+
+  <!-- Card 4: CPU -->
+  <g filter="url(#cdf-shadow)">
+    <rect x="748" y="92" width="180" height="208" rx="10" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.5"/>
+    <path d="M 748 102 Q 748 92 758 92 L 918 92 Q 928 92 928 102 L 928 128 L 748 128 Z" fill="#0F172A"/>
+    <text x="762" y="115" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="13" font-weight="700" fill="#FFFFFF">4. CPU Cores</text>
+    <text x="916" y="115" text-anchor="end" font-family="monospace" font-size="11" font-weight="700" fill="#E2E8F0">Threads</text>
+    <text x="762" y="152" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="12.5" font-weight="600" fill="#0F172A">Compute workers</text>
+    <text x="762" y="174" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="12" fill="#334155">Aligns reads &amp; compresses</text>
+    <text x="762" y="191" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="12" fill="#334155">streams in parallel.</text>
+    <line x1="762" y1="208" x2="914" y2="208" stroke="#E2E8F0" stroke-width="1"/>
+    <text x="762" y="228" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11.5" font-weight="700" fill="#0F172A">Check capacity:</text>
+    <text x="762" y="246" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11.5" fill="#475569">More threads can</text>
+    <text x="762" y="262" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11.5" fill="#475569">raise RAM demand.</text>
+    <text x="762" y="282" font-family="monospace" font-size="11" fill="#0F172A">nproc / hw.logicalcpu</text>
+  </g>
+
+  <!-- Bottom Scratch / Temp callout bar -->
+  <g filter="url(#cdf-shadow)">
+    <rect x="262" y="330" width="666" height="84" rx="10" fill="#FFFBEB" stroke="#FCD34D" stroke-width="1.5"/>
+    <text x="280" y="356" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="13" font-weight="700" fill="#92400E">Why Disk Needs Exceed Input Size: Temporary Scratch ($TMPDIR)</text>
+    <text x="280" y="378" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="12.5" fill="#78350F">Sorting BAMs, marking duplicates, and decompressing streams write large temporary files back to disk.</text>
+    <text x="280" y="398" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="12.5" fill="#78350F">Example: one 30x human WGS sample (~60-150 GB .fastq.gz) often requires 300-500 GB scratch space.</text>
+  </g>
+
+  <!-- Feedback arrow from CPU/RAM down to Scratch & back to Storage -->
+  <path d="M 838 300 L 838 328" fill="none" stroke="#B45309" stroke-width="2" marker-end="url(#cdf-arrow-amber)"/>
+</svg>

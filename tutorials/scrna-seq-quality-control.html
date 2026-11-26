@@ -173,20 +173,28 @@ function toggleMobileMenu() {
 </div>
 <nav aria-label="Learning path navigation" class="reader-toolbar"><span class="reader-toolbar__heading">Learning path</span><a href="scrna-seq-integration-strategies.html" rel="prev" class="reader-toolbar__previous"><span class="reader-toolbar__direction"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5m0 0 7 7m-7-7 7-7"/></svg></span><span class="reader-toolbar__copy"><small>Previous prerequisite</small><strong>scRNA-seq Integration: Harmony, RPCA, and CCA</strong></span></a><a data-catalogue-return="" href="../tutorials.html" class="reader-toolbar__library"><span class="reader-toolbar__library-mark" aria-hidden="true"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="6" height="6" rx="1.3"/><rect x="14" y="4" width="6" height="6" rx="1.3"/><rect x="4" y="14" width="6" height="6" rx="1.3"/><rect x="14" y="14" width="6" height="6" rx="1.3"/></svg></span><span><small>Browse</small><strong>All tutorials</strong></span></a><a href="scrna-seq-downstream-analysis.html" rel="next" class="reader-toolbar__next"><span class="reader-toolbar__copy"><small>Suggested next</small><strong>Single-Cell RNA-seq Downstream Analysis</strong></span><span class="reader-toolbar__direction"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14m0 0-7-7m7 7-7 7"/></svg></span></a></nav>
 <article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--lab">
-<p class="lesson-lead">Quality control in multi-sample single-cell RNA-seq happens in two stages: sample-aware cell-level filtering before integration (empty droplets, adaptive gene/UMI and mitochondrial bounds, per-lane doublet calling, and ambient RNA checks), followed by quantitative embedding diagnostics after integration (iLISI, cLISI, and silhouette). Both stages require biological context rather than blind optimization of a single score.</p>
+<p class="lesson-lead">When you combine single-cell RNA-seq samples from multiple donors, tissues, or 10x Chromium chemistries, quality control happens twice: first at the cell level within each sample so empty droplets and doublets do not distort downstream distances, and again after batch integration using iLISI, cLISI, and silhouette widths to check whether shared cell types mixed without blurring distinct biological states.</p>
 <section class="lesson-summary tutorial-learning-contract" data-tutorial-format="advanced-template" aria-label="Learning format">
-<p><strong>Format: Advanced template.</strong> Combines a locally executed base-R worked example on 1,686 public multi-chemistry PBMC cells (demonstrating sample-stratified adaptive MAD thresholds and PCA-versus-Harmony silhouette scores) with reusable Seurat/AnnData LISI and silhouette templates.</p>
-</section>
-<h2>Stage 1: Pre-integration cell-level QC across samples and chemistries</h2>
-<p>Readers arriving at this URL for basic single-sample PBMC3K filtering can start with <a href="quality-control-fundamentals.html">Single-Cell QC Fundamentals</a>. In multi-donor or multi-chemistry cohorts (especially solid tumours paired with adjacent normal tissue or blood), cell-level QC errors propagate directly into integration metrics: unremoved empty droplets form low-complexity bridges across batches, heterotypic doublets form false intermediate clusters that depress cLISI and silhouette, and a single global gene-count cutoff discards intact quiescent cells from lower-capture libraries.</p>
+<p><strong>Format: Advanced template</strong> (about 25-35 minutes).</p>
 <ul>
-<li><strong>Empty droplets before count thresholding:</strong> distinguish cell-containing droplets from ambient-RNA barcodes per 10x channel using the multinomial ambient profile in <code>DropletUtils::emptyDrops()</code> (FDR &le; 0.001; Lun et al., 2019) or Cell Ranger's EmptyDrops step before merging channels.</li>
-<li><strong>Joint metric inspection and cancer caveats:</strong> evaluate total UMIs (<code>nCount_RNA</code>), detected genes (<code>nFeature_RNA</code>), and mitochondrial transcript percentage (<code>^MT-</code> in human GRCh38, <code>^mt-</code> in mouse GRCm39) together rather than one axis at a time. Enzymatically dissociated solid tumours, metabolically active carcinoma cells, and necrotic biopsy cores frequently exhibit baseline mitochondrial fractions of 10% to 25%; applying a fixed 5% PBMC cutoff can selectively erase malignant epithelial or myeloid compartments (Luecken &amp; Theis, 2019; Germain et al., 2020).</li>
-<li><strong>Sample-stratified adaptive MAD bounds:</strong> compute median absolute deviation (MAD) thresholds on log-transformed library complexity within each sample or sequencing chemistry (for example <code>scuttle::isOutlier(metric, nmads = 3, type = "both", log = TRUE, batch = sample_id)</code>), then inspect marker expression in flagged populations before discarding cells.</li>
-<li><strong>Per-lane doublets and ambient RNA:</strong> run synthetic doublet simulation (such as <code>scDblFinder(sce, samples = "lane_id")</code>; Germain et al., 2021) separately per capture lane because droplets only co-encapsulate cells from the same microfluidic channel. Where abundant lysed cells shed transcripts (such as <em>LYZ</em> from monocytes, hemoglobin from red cells, or immunoglobulins from plasma cells), inspect contamination fractions with <code>SoupX</code> (Young &amp; Behjati, 2020) or <code>CellBender</code> (Fleming et al., 2023).</li>
+<li><strong>What you will be able to do:</strong> set sample-stratified MAD bounds in R, run local neighborhood mixing and purity checks (<code>iLISI</code> and <code>cLISI</code>), compute identical Euclidean silhouette scores in R and Python, and detect over-correction or batch-biology confounding via per-cell-type slices.</li>
+<li><strong>Prerequisites:</strong> basic single-cell QC concepts (<a href="quality-control-fundamentals.html">Single-Cell QC Fundamentals</a>) and an integrated Seurat or AnnData embedding (<a href="scrna-seq-integration-strategies.html">scRNA-seq Integration: Harmony, RPCA, and CCA</a>).</li>
+<li><strong>Data scope:</strong> Stage 1 uses all 1,686 public PBMC cells bundled across three batches (<code>10x Chromium (v2) A</code>, <code>v2 B</code>, and <code>v3</code>) in <a href="../files/pbmc-methods-worked-example/observed/selected_cells.csv"><code>selected_cells.csv</code></a>; Stage 2 evaluates the 1,149 paired query cells (<code>v2 A</code> vs <code>v3</code>, with <code>v2 B</code> held out as the annotation reference) alongside reusable templates for your own Seurat or AnnData objects.</li>
 </ul>
-<h3>Worked base-R check: why global gene-count cutoffs fail across 10x chemistries</h3>
-<p>The repository includes 1,686 public human PBMC cells assayed across three 10x Chromium batches (<a href="../files/pbmc-methods-worked-example/observed/selected_cells.csv"><code>selected_cells.csv</code></a>: <code>10x Chromium (v2) A</code>, <code>10x Chromium (v2) B</code>, and <code>10x Chromium (v3)</code>). Run this base-R script from the repository root to compare batch-stratified 3-MAD bounds on <code>log10(detected_genes)</code> against a uniform 1,500-gene floor:</p>
+</section>
+<h2 id="stage1-preintegration-qc">Stage 1: Pre-integration cell QC across samples and chemistries</h2>
+<p>If you are filtering a single sample for the first time, start with <a href="quality-control-fundamentals.html">Single-Cell QC Fundamentals</a>. In multi-donor or multi-chemistry studies (especially solid tumours paired with blood or adjacent normal tissue), pre-integration errors carry directly into integration metrics: unremoved empty droplets form low-complexity bridges between batches, doublets create artificial intermediate clusters that inflate cLISI and depress silhouette widths, and a single global gene-count floor removes intact cells from shallower libraries.</p>
+<p>Apply these four checks per capture channel before merging or integrating:</p>
+<ul>
+<li><strong>Empty droplets before count cutoffs:</strong> separate cell-containing droplets from the ambient RNA background per 10x lane using the multinomial test in <a href="https://bioconductor.org/packages/release/bioc/html/DropletUtils.html"><code>DropletUtils::emptyDrops()</code></a> (FDR &le; 0.001; Lun et al., 2019) or Cell Ranger's EmptyDrops filter before combining channels.</li>
+<li><strong>Joint metric inspection and tissue context:</strong> plot total UMIs (<code>nCount_RNA</code>), detected genes (<code>nFeature_RNA</code>), and mitochondrial fraction (<code>^MT-</code> in human GRCh38, <code>^mt-</code> in mouse GRCm39) together rather than thresholding one axis in isolation. Dissociated solid tumours, metabolically active epithelial cells, and biopsy cores often show 10% to 25% mitochondrial reads, so copying a fixed 5% PBMC ceiling can selectively remove malignant or myeloid compartments (Luecken &amp; Theis, 2019; Germain et al., 2020).</li>
+<li><strong>Sample-stratified adaptive MAD bounds:</strong> compute median absolute deviation (MAD) bounds on log-transformed depth or gene counts separately per sample or chemistry with <a href="https://bioconductor.org/packages/release/bioc/html/scuttle.html"><code>scuttle::isOutlier()</code></a> (for example <code>isOutlier(metric, nmads = 3, type = "both", log = TRUE, batch = sample_id)</code>). Setting <code>log = TRUE</code> transforms values to the log2 scale before computing the median and MAD so heavy right tails do not inflate the spread or yield negative lower bounds. As a starting point, Heumos et al. (2023) suggest 5 MADs for total counts and detected genes and 3 MADs (<code>type = "higher"</code>) for mitochondrial fraction, then inspecting marker genes in flagged cells before dropping them.</li>
+<li><strong>Per-lane doublets and ambient RNA:</strong> run <a href="https://bioconductor.org/packages/release/bioc/html/scDblFinder.html"><code>scDblFinder(sce, samples = "lane_id")</code></a> (default <code>dbr.per1k = 0.008</code> for standard 10x Chromium; Germain et al., 2021) separately per microfluidic lane because two cells can only co-encapsulate within the same physical capture. Where lysed cells shed abundant background transcripts (such as <em>LYZ</em>, hemoglobin, or immunoglobulins), inspect and subtract ambient profiles with <code>SoupX</code> (Young &amp; Behjati, 2020) or <code>CellBender</code> (Fleming et al., 2023).</li>
+</ul>
+<figure class="my-8 bg-white border border-gray-200 rounded-xl p-4 shadow-sm"><img src="../images/tutorial-figures/pbmc10x-qc-feature-scatter.png" alt="Scatter correlation between nCount_RNA UMI depth and detected nFeature_RNA in public 10x PBMC data" width="1152" height="768" loading="lazy" class="w-full h-auto rounded-lg" style="aspect-ratio: 1152 / 768;"/><figcaption class="mt-3 text-sm text-gray-600">Public 10x PBMC feature-depth relationship (Pearson r = 0.92): tight scaling between UMI depth (<code>nCount_RNA</code>) and detected genes (<code>nFeature_RNA</code>) flags low-complexity droplets at the bottom left and potential high-UMI doublets at the top right prior to integration.</figcaption></figure>
+<figure class="my-8 bg-white border border-gray-200 rounded-xl p-4 shadow-sm"><img src="../images/tutorial-figures/pbmc10x-qc-violin-postfilter.png" alt="Post-filtering single-cell QC violin plots for nFeature_RNA, nCount_RNA, and percent.mt in public 10x PBMC data" width="1152" height="768" loading="lazy" class="w-full h-auto rounded-lg" style="aspect-ratio: 1152 / 768;"/><figcaption class="mt-3 text-sm text-gray-600">Post-filtering QC distributions for public 10x PBMC singlets across detected genes (<code>nFeature_RNA</code>), total UMIs (<code>nCount_RNA</code>), and mitochondrial percentage (<code>percent.mt</code>).</figcaption></figure>
+<h3 id="worked-mad-check">Worked base-R check: why global gene-count cutoffs fail across 10x chemistries</h3>
+<p>The bundled <a href="../files/pbmc-methods-worked-example/observed/selected_cells.csv"><code>selected_cells.csv</code></a> table holds 1,686 public human PBMC cells across three batches (<code>10x Chromium (v2) A</code>, <code>10x Chromium (v2) B</code>, and <code>10x Chromium (v3)</code>). Run this base-R script from the repository root to compare batch-stratified 3-MAD bounds on <code>log10(detected_genes)</code> against a uniform 1,500-gene cutoff (note that any log base, whether <code>log10</code> here or <code>log2</code> in <code>scuttle::isOutlier(..., log = TRUE)</code>, produces identical back-transformed gene thresholds):</p>
 <pre><code class="language-r">cells &lt;- read.csv("files/pbmc-methods-worked-example/observed/selected_cells.csv",
                   stringsAsFactors = FALSE)
 
@@ -210,21 +218,65 @@ print(by_batch, row.names = FALSE)</code></pre>
  10x Chromium (v2) A 590        898.5       513    238.8    3380.7        508
  10x Chromium (v2) B 537        913.0       400    367.9    2265.7        460
    10x Chromium (v3) 559       1597.0       991    562.4    4534.6        229</code></pre>
-<p><strong>Interpretation:</strong> 10x v3 captures roughly 1.8 times as many genes per cell (median 1,597.0) as 10x v2 (898.5 and 913.0). Even applying the 10x v3 adaptive 3-MAD lower bound (562.4 genes) globally across the cohort would disproportionately penalize intact 10x v2 T and B lymphocytes, while an uncalibrated 1,500-gene cutoff removes 86% (508 / 590) of <code>v2 A</code> cells. Stratifying outlier bounds by library preparation preserves comparable cell-type composition before integration begins.</p>
-<h2>Stage 2: Prerequisites for post-integration LISI and silhouette</h2>
-<p>This workflow assumes that preprocessing and integration are complete and that you have a saved Seurat object or AnnData file. The object needs a cell-by-dimension embedding and cell-level metadata for the batch or sample label and, when available, a biological annotation. Choose the embedding used for downstream clustering or another scientifically justified high-dimensional representation, and record its name and dimensions. Compare integrated and unintegrated representations when the aim is to assess the effect of integration.</p>
-
-<p>First generate a candidate embedding using the <a href="https://satijalab.org/seurat/articles/integration_introduction">Seurat integration guide</a> or your Scanpy workflow, and always work on a copy of that file. Before running LISI or silhouette checks, verify that the embedding matrix is numeric and finite, that cell barcodes align identically with metadata rows in R, and that batch and annotation columns contain no missing values.</p>
-<p>Run R and Python checks in separate environments where your single-cell objects were created. Install <code>lisi</code> from <a href="https://github.com/immunogenomics/lisi">GitHub</a> along with <code>cluster</code> and <code>Seurat</code> for R, or install <code>pandas</code>, <code>numpy</code>, and <code>scikit-learn</code> for the CSV-based Python silhouette script. Check installed versions up front with <code>Rscript -e 'stopifnot(requireNamespace("Seurat", quietly=TRUE), requireNamespace("lisi", quietly=TRUE), requireNamespace("cluster", quietly=TRUE)); sessionInfo()'</code> or <code>python -c 'import pandas, numpy, sklearn; print(pandas.__version__, numpy.__version__, sklearn.__version__)'</code>.</p>
-<p>Save the first R block as <code>lisi_qc.R</code> and run it inside the directory holding your Seurat RDS to write <code>lisi_scores.csv</code>; run either silhouette script inside the folder containing your exported CSV inputs to write <code>silhouette_per_cell.csv</code> without altering inputs. Always verify that output row counts match embedding cell counts, and remember that high mixing scores alone never validate biological preservation.</p>
+<p><strong>Interpretation:</strong> 10x v3 detects roughly 1.8 times as many genes per cell (median 1,597.0) as 10x v2 (898.5 and 913.0). Applying even the v3 lower 3-MAD floor (562.4 genes) globally would discard intact v2 lymphocytes, while a naive 1,500-gene cutoff removes 86.1% (508 / 590) of <code>v2 A</code> cells. Stratifying QC thresholds by batch preserves cell-type proportions before integration starts.</p>
+<h2 id="stage2-prerequisites">Stage 2: Prerequisites and metric definitions for post-integration QC</h2>
+<p>Post-integration diagnostics assume you have a saved Seurat or AnnData object containing a cell-by-dimension embedding (such as unintegrated PCA alongside Harmony, RPCA, CCA, or scVI), a batch/sample column, and a curated cell-type or cluster column. In Seurat v5 workflows using <code>IntegrateLayers()</code> (<a href="https://satijalab.org/seurat/articles/seurat5_integration.html">Seurat v5 integration vignette</a>), integrated reductions are typically named <code>"integrated.harmony"</code>, <code>"integrated.rpca"</code>, or <code>"integrated.cca"</code> (while standalone <code>RunHarmony()</code> uses <code>"harmony"</code>); always verify exact reduction names with <code>Reductions(seurat_obj)</code> in R or <code>adata.obsm.keys()</code> in Python.</p>
+<div class="lesson-checkpoint">
+<p><strong>Pre-flight check before scoring:</strong> verify packages and input integrity on a copy of your saved object.</p>
 <ul>
-<li><strong>iLISI:</strong> local diversity of a categorical batch label. Higher values indicate more batch categories represented in a cell's neighborhood, up to the number of observed categories.</li>
-<li><strong>cLISI:</strong> local diversity of a categorical cell-type label. Lower values indicate greater local label purity; a value near 1 corresponds to a neighborhood dominated by one label. This is meaningful only to the extent that annotations are trustworthy.</li>
-<li><strong>Silhouette:</strong> for a supplied set of cluster labels, compares each cell's average distance to its own cluster with its average distance to the nearest other cluster. It summarizes separation in the chosen representation, not biological correctness.</li>
+<li><strong>R environment:</strong> <code>Rscript -e 'stopifnot(requireNamespace("Seurat", quietly=TRUE), requireNamespace("lisi", quietly=TRUE), requireNamespace("cluster", quietly=TRUE)); sessionInfo()'</code> (install <code>lisi</code> from <a href="https://github.com/immunogenomics/lisi">immunogenomics/lisi</a>).</li>
+<li><strong>Python environment:</strong> <code>python -c 'import pandas, numpy, sklearn; print(pandas.__version__, numpy.__version__, sklearn.__version__)'</code> (for large scIB benchmarks, see <a href="https://scib-metrics.readthedocs.io">scib-metrics</a>).</li>
+<li><strong>Matrix and metadata checks:</strong> confirm the embedding matrix is numeric and finite, cell barcodes match metadata row names in exact order, and batch/annotation columns have zero <code>NA</code> or empty-string entries.</li>
 </ul>
-<p>LISI and silhouette answer different questions. A metric cannot distinguish a technical effect from a real biological difference unless your design and labels make that distinction possible. For example, if each batch contains a different cell type, batch and biology are confounded; stronger batch mixing is not automatically a better result.</p>
-<h2>Calculate LISI in R</h2>
-<p>The <code>lisi</code> package's <code>compute_lisi()</code> takes a matrix with cells in rows and embedding dimensions in columns, plus metadata with one row per cell. It returns one score column for each requested metadata label. The code below uses existing Seurat reductions and reorders metadata to match embedding row names before calculation. Replace the example metadata keys with columns present in your object.</p>
+</div>
+<p>LISI and silhouette evaluate complementary properties of an embedding, and neither can separate batch effects from biology if experimental design confounds the two (for instance, when each batch holds a completely different tissue or cell type):</p>
+<div class="lesson-table-wrap">
+<table>
+<caption>Summary of post-integration QC metrics (note the scaling difference between raw R <code>lisi</code> and Python <code>scib-metrics</code>).</caption>
+<thead>
+<tr>
+<th>Metric</th>
+<th>Question answered</th>
+<th>Raw scale (R <code>lisi</code> / <code>cluster</code>)</th>
+<th>Target direction</th>
+<th>Main blind spot</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>iLISI</strong> (batch LISI)</td>
+<td>How many batches are locally represented around each cell?</td>
+<td><code>1</code> to <code>B</code> batches (default <code>perplexity = 30</code>)</td>
+<td>Higher (toward <code>B</code> for shared cell types)</td>
+<td>Can reach <code>B</code> via over-correction that erases rare subtypes; batch-only cell types cannot reach <code>B</code>.</td>
+</tr>
+<tr>
+<td><strong>cLISI</strong> (cell-type LISI)</td>
+<td>How many cell-type labels mix inside each local neighborhood?</td>
+<td><code>1</code> to <code>C</code> labels in R <code>lisi</code> (Python <code>scib-metrics</code> rescales to <code>[0, 1]</code>)</td>
+<td>Near <code>1</code> in raw R <code>lisi</code> (near <code>1</code> = purer in rescaled <code>scib-metrics</code>)</td>
+<td>Depends on annotation accuracy; noisy labels mimic over-correction.</td>
+</tr>
+<tr>
+<td><strong>Cell-type silhouette</strong> (ASW_label)</td>
+<td>How tight is each cell's cluster relative to its nearest neighboring cluster?</td>
+<td><code>-1</code> to <code>+1</code> (mean per cluster or overall)</td>
+<td>Higher positive values than unintegrated PCA</td>
+<td>Favors compact spherical clusters; can penalize continuous differentiation trajectories.</td>
+</tr>
+<tr>
+<td><strong>Batch silhouette</strong> (ASW_batch)</td>
+<td>Do batches still separate globally within the embedding?</td>
+<td><code>-1</code> to <code>+1</code> in raw silhouette (<code>scib-metrics</code> reports <code>1 - |s(i)|</code> per cell type)</td>
+<td>Near <code>0</code> in raw silhouette (near <code>1</code> in <code>scib-metrics</code>)</td>
+<td>Global batch overlap does not guarantee local mixing within individual cell types.</td>
+</tr>
+</tbody>
+</table>
+</div>
+<figure class="my-8 bg-white border border-gray-200 rounded-xl p-4 shadow-sm"><img src="../images/tutorial-figures/scrna-seq-quality-control-metrics-tradeoff.svg" alt="Four-quadrant concept diagram mapping batch mixing (iLISI) against biological conservation (raw cLISI near 1 and cell-type silhouette) across unintegrated, balanced, over-corrected, and confounded embeddings" width="880" height="520" loading="lazy" class="w-full h-auto rounded-lg" style="aspect-ratio: 880 / 520;"/><figcaption class="mt-3 text-sm text-gray-600">Joint interpretation of local batch mixing (iLISI) and biological purity (raw cLISI near 1 and cell-type silhouette). Always inspect both axes together and stratify by cell type so pooled averages do not hide collapsed rare populations or batch-only cell types.</figcaption></figure>
+<h2 id="compute-lisi-r">Calculate LISI in R</h2>
+<p><code>lisi::compute_lisi(X, meta_data, label_colnames, perplexity = 30)</code> places a Gaussian kernel around each cell tuned to an effective neighborhood size of <code>perplexity</code> (default <code>30</code>) and computes the inverse Simpson's index of the supplied labels in that neighborhood. Save the block below as <code>lisi_qc.R</code> and run it in the directory containing your read-only <code>seurat_obj.rds</code>. Replace <code>"harmony"</code> (for Seurat v5 <code>IntegrateLayers()</code>, often <code>"integrated.harmony"</code>) and <code>c("patient_id", "cell_type")</code> with the reduction and metadata columns present in your object:</p>
 <pre><code># Input: seurat_obj.rds, containing an existing PCA or integration reduction
 # Outputs: lisi_scores.csv and lisi_metadata.csv; the input RDS is read only
 
@@ -254,9 +306,23 @@ write.csv(lisi_res, file = "lisi_scores.csv", row.names = TRUE)
 write.csv(meta, file = "lisi_metadata.csv")
 summary(lisi_res)
 </code></pre>
-<p>Rows in the resulting CSV correspond to cells in the embedding. The selected batch-label column is used as iLISI and the cell-type column as cLISI; the software does not assign those biological meanings for you. The package uses a local-neighborhood calculation whose neighborhood scale affects the score. Check the installed package's documentation for its arguments, record the setting used, and compare a small, justified range if conclusions depend on it.</p>
-<h3>Summarize by cluster without losing cell alignment</h3>
-<p>Run this summary as a separate <code>Rscript</code> process after the LISI calculation block completes. The first block saves the matched metadata to <code>lisi_metadata.csv</code>; this block reloads it instead of relying on an in-memory object from another process. Keep both CSV files in the working directory. The cell-name check stops on mismatched inputs rather than silently assigning scores by row position.</p>
+<p>Illustrative example output (abbreviated, 2 batches and 9 cell types at default <code>perplexity = 30</code>):</p>
+<pre><code class="language-text">   patient_id      cell_type    
+ Min.   :1.000   Min.   :1.000  
+ 1st Qu.:1.789   1st Qu.:1.000  
+ Median :1.918   Median :1.008  
+ Mean   :1.832   Mean   :1.084  
+ 3rd Qu.:1.979   3rd Qu.:1.091  
+ Max.   :2.000   Max.   :2.940  </code></pre>
+<div class="lesson-checkpoint">
+<p><strong>Check after running <code>lisi_qc.R</code>:</strong></p>
+<ul>
+<li>Confirm <code>nrow(lisi_res) == nrow(emb)</code> and that <code>patient_id</code> (iLISI) stays within <code>[1, n_batches]</code> while <code>cell_type</code> (cLISI) stays within <code>[1, n_cell_types]</code>.</li>
+<li>If conclusions sit near a decision boundary, rerun with <code>perplexity = 15</code> and <code>perplexity = 50</code> (keeping <code>perplexity</code> well below the smallest cell-type count) and record the setting used.</li>
+</ul>
+</div>
+<h3 id="summarize-lisi">Summarize by cluster without losing cell alignment</h3>
+<p>Run this summary in a fresh <code>Rscript</code> process after <code>lisi_qc.R</code> finishes. Reloading <code>lisi_metadata.csv</code> and aligning row names by cell barcode prevents silent row-order mismatches:</p>
 <pre><code># Inputs: lisi_scores.csv and lisi_metadata.csv, written by the first block
 meta &lt;- read.csv("lisi_metadata.csv", row.names = 1, check.names = FALSE)
 lisi_df &lt;- read.csv("lisi_scores.csv", row.names = 1, check.names = FALSE)
@@ -271,8 +337,15 @@ if (!"seurat_clusters" %in% colnames(meta)) {
 }
 aggregate(cbind(ilisi, clisi) ~ seurat_clusters, data = meta, median)
 </code></pre>
-<h2>Calculate silhouette values: equivalent R and Python alternatives</h2>
-<p>Whereas LISI tracks local label mixing, silhouette scores measure cluster tightness against inter-cluster distance in an embedding. Export your reviewed embedding coordinates (<code>silhouette_embedding.csv</code> with <code>cell_id</code> plus numeric dimensions) and cluster assignments (<code>silhouette_labels.csv</code> with <code>cell_id</code> and <code>cluster</code>) with identically ordered cell IDs so R and Python compute the exact same Euclidean silhouette distribution without touching source objects. Full pairwise distance scaling grows quadratically with cell count, so document any stratified downsampling clearly.</p>
+<p>Illustrative example output (abbreviated cluster medians):</p>
+<pre><code class="language-text">  seurat_clusters    ilisi    clisi
+1               0 1.912401 1.004112
+2               1 1.884111 1.026402
+3               2 1.366190 1.528612</code></pre>
+<p>Notice cluster 2 in this pattern: lower iLISI alongside elevated cLISI flags either a rare population sitting near a neighboring lineage or a batch-specific cluster that needs marker inspection.</p>
+<h2 id="compute-silhouette">Calculate silhouette values: equivalent R and Python alternatives</h2>
+<p>While LISI inspects local neighborhoods, silhouette width measures global cluster cohesion versus separation: for each cell <em>i</em>, <code>s(i) = (b(i) - a(i)) / max(a(i), b(i))</code>, where <code>a(i)</code> is mean Euclidean distance to other cells in its own cluster and <code>b(i)</code> is mean distance to the nearest neighboring cluster. Export your embedding coordinates (<code>silhouette_embedding.csv</code>: <code>cell_id</code> plus numeric dimensions) and labels (<code>silhouette_labels.csv</code>: <code>cell_id</code> and <code>cluster</code>) so R and Python compute identical scores.</p>
+<p><strong>Memory scaling note:</strong> computing all pairwise distances via <code>stats::dist()</code> scales quadratically (<code>O(n^2)</code>: 50,000 cells require ~10 GB just for the distance triangle). For atlases above ~20,000 cells, use stratified downsampling per batch and cluster (or chunked evaluation via <code>scib_metrics.silhouette_label()</code> in Python) and document the sampling fraction.</p>
 <h3 id="silhouette-r">R: silhouette from the shared embedding and labels</h3>
 <pre id="scrna-silhouette-r"><code># Inputs: silhouette_embedding.csv (cell_id, dim1, dim2, ...) and
 #         silhouette_labels.csv (cell_id, cluster)
@@ -347,50 +420,96 @@ result = pd.DataFrame({"cell_id": labels_df["cell_id"],
 result.to_csv("silhouette_per_cell.csv", index=False)
 print("Mean silhouette across cells:", silhouette_score(embedding, labels.to_numpy(), metric="euclidean"))
 </code></pre>
-<p>Per-cell scores lie between -1 and 1. Positive values mean a cell is closer, on average, to its assigned cluster than to the nearest alternative; values near zero indicate overlap; negative values flag cells whose distances favor another cluster. Treat these as prompts for inspection, not automatic misassignment calls. Silhouette depends on the chosen distance, embedding dimensions and cluster labels, and can favor compact, well-separated clusters even when that geometry is not the biological question.</p>
-<h3>Worked benchmark: PCA versus Harmony silhouette on 1,149 public PBMC cells</h3>
-<p>Using the supplied 20-dimensional PCA (<a href="../files/pbmc-methods-worked-example/observed/embeddings_pca.csv"><code>embeddings_pca.csv</code></a>) and Harmony (<a href="../files/pbmc-methods-worked-example/observed/embeddings_harmony.csv"><code>embeddings_harmony.csv</code></a>) embeddings for the 1,149 paired <code>10x Chromium (v2) A</code> (n = 590) and <code>10x Chromium (v3)</code> (n = 559) PBMC cells, R's <code>cluster::silhouette()</code> reports:</p>
-<pre><code class="language-text">Embedding cells: 1149 (10x Chromium (v2) A = 590, 10x Chromium (v3) = 559)
+<p>Per-cell silhouette widths range from -1 to +1: positive values indicate a cell sits closer to its assigned label than to the nearest alternative; values near 0 sit on a cluster boundary (common along activation or differentiation gradients); negative values flag cells closer to another cluster under the chosen metric. Never use silhouette alone to override marker-gene biology or force continuous lineages into disconnected spheres.</p>
+<h3 id="worked-silhouette-benchmark">Worked benchmark: PCA versus Harmony silhouette and slice analysis (1,149 PBMC cells)</h3>
+<p>Run this R script from the repository root on the bundled 20-dimensional PCA (<a href="../files/pbmc-methods-worked-example/observed/embeddings_pca.csv"><code>embeddings_pca.csv</code></a>) and Harmony (<a href="../files/pbmc-methods-worked-example/observed/embeddings_harmony.csv"><code>embeddings_harmony.csv</code></a>) embeddings for the 1,149 paired <code>10x Chromium (v2) A</code> and <code>10x Chromium (v3)</code> query cells. Notice it reports both pooled averages and a slice table by cell type and batch count:</p>
+<pre><code class="language-r">pca &lt;- read.csv("files/pbmc-methods-worked-example/observed/embeddings_pca.csv",
+                check.names = FALSE, stringsAsFactors = FALSE)
+har &lt;- read.csv("files/pbmc-methods-worked-example/observed/embeddings_harmony.csv",
+                check.names = FALSE, stringsAsFactors = FALSE)
+cells &lt;- read.csv("files/pbmc-methods-worked-example/observed/selected_cells.csv",
+                  stringsAsFactors = FALSE)
+cells &lt;- cells[match(pca$cell_id, cells$cell_id), ]
+
+s_pca &lt;- cluster::silhouette(as.integer(factor(cells$source_label)), dist(as.matrix(pca[, -1])))[, "sil_width"]
+s_har &lt;- cluster::silhouette(as.integer(factor(cells$source_label)), dist(as.matrix(har[, -1])))[, "sil_width"]
+b_pca &lt;- cluster::silhouette(as.integer(factor(cells$batch)), dist(as.matrix(pca[, -1])))[, "sil_width"]
+b_har &lt;- cluster::silhouette(as.integer(factor(cells$batch)), dist(as.matrix(har[, -1])))[, "sil_width"]
+
+cat(sprintf("Embedding cells: %d (v2 A = %d, v3 = %d)\n", nrow(pca),
+            sum(cells$batch == "10x Chromium (v2) A"), sum(cells$batch == "10x Chromium (v3)")))
+cat(sprintf("Mean cell-type silhouette (9 PBMC labels): PCA = %.4f, Harmony = %.4f\n", mean(s_pca), mean(s_har)))
+cat(sprintf("Mean batch silhouette     (2 chemistries): PCA = %.4f, Harmony = %.4f\n\n", mean(b_pca), mean(b_har)))
+
+tab &lt;- table(cells$source_label, cells$batch)
+by_type &lt;- data.frame(
+  cell_type   = rownames(tab),
+  n_v2A       = as.integer(tab[, "10x Chromium (v2) A"]),
+  n_v3        = as.integer(tab[, "10x Chromium (v3)"]),
+  pca_sil     = round(as.numeric(tapply(s_pca, cells$source_label, mean)[rownames(tab)]), 4),
+  harmony_sil = round(as.numeric(tapply(s_har, cells$source_label, mean)[rownames(tab)]), 4)
+)
+by_type$delta &lt;- round(by_type$harmony_sil - by_type$pca_sil, 4)
+print(by_type, row.names = FALSE)</code></pre>
+<p>Observed output (executed locally with R 4.6.1 and <code>cluster</code>):</p>
+<pre><code class="language-text">Embedding cells: 1149 (v2 A = 590, v3 = 559)
 Mean cell-type silhouette (9 PBMC labels): PCA = 0.2731, Harmony = 0.3410
-Mean batch silhouette     (2 chemistries): PCA = 0.0636, Harmony = 0.0008</code></pre>
-<p>Here removing the chemistry shift simultaneously collapses the batch silhouette toward zero (0.0636 to 0.0008, meaning each cell's within-chemistry distance matches its cross-chemistry distance) and increases the 9-population cell-type silhouette (0.2731 to 0.3410) because matching immune cell types from v2 and v3 coalesce instead of splitting into parallel subclusters. Compare these global distances with local neighborhood iLISI and cLISI scores in <a href="scrna-seq-integration-strategies.html">Choosing and evaluating scRNA-seq integration</a>.</p>
-<h2>Read the results as a comparison</h2>
-<p>Compare the same cells and label definitions across the unintegrated and integrated embeddings where possible. Report medians and interquartile ranges for per-cell LISI values, and cluster-wise summaries for silhouette. Keep the embedding name and dimensions, batch and cell-type columns, cluster definition, package versions and LISI neighborhood setting with the result.</p>
+Mean batch silhouette     (2 chemistries): PCA = 0.0636, Harmony = 0.0008
 
-
-
-<figure class="my-8 bg-white border border-gray-200 rounded-xl p-4 shadow-sm"><img src="../images/tutorial-figures/sc-qc-lisi-silhouette.png" alt="Pre- vs post-Harmony iLISI, cLISI, and cell-type silhouette distributions on bundled 10x PBMC data" width="1590" height="795" loading="lazy" class="w-full h-auto rounded-lg" style="aspect-ratio: 1590 / 795;"/><figcaption class="mt-3 text-sm text-gray-600">Real bundled public 10x PBMC v2 A vs v3 benchmark (n = 1,686 cells): (A) Harmony batch correction raises batch-mixing iLISI toward 2 while keeping cell-type purity cLISI near 1; (B) positive cell-type silhouette widths confirm preserved biological structure.</figcaption></figure>
-<figure class="my-8 bg-white border border-gray-200 rounded-xl p-4 shadow-sm"><img src="../images/tutorial-figures/pbmc10x-qc-feature-scatter.png" alt="Scatter correlation between nCount_RNA UMI depth and detected nFeature_RNA in public 10x PBMC data" width="1152" height="768" loading="lazy" class="w-full h-auto rounded-lg" style="aspect-ratio: 1152 / 768;"/><figcaption class="mt-3 text-sm text-gray-600">Public 10x PBMC dataset feature-depth correlation (Pearson r = 0.92): tight scaling between UMI counts and detected genes helps identify abnormal doublets or empty droplets before integration.</figcaption></figure>
-<figure class="my-8 bg-white border border-gray-200 rounded-xl p-4 shadow-sm"><img src="../images/tutorial-figures/pbmc10x-qc-violin-postfilter.png" alt="Post-filtering single-cell QC violin plots for nFeature_RNA, nCount_RNA, and percent.mt in public 10x PBMC data" width="1152" height="768" loading="lazy" class="w-full h-auto rounded-lg" style="aspect-ratio: 1152 / 768;"/><figcaption class="mt-3 text-sm text-gray-600">Public 10x PBMC dataset post-filtering QC distributions verifying retained intact singlets across detected genes (nFeature_RNA), UMI counts (nCount_RNA), and mitochondrial fraction (percent.mt).</figcaption></figure>
+                   cell_type n_v2A n_v3 pca_sil harmony_sil   delta
+                      B cell    80   80  0.4361      0.4884  0.0523
+              CD14+ monocyte    80   80  0.1725      0.3315  0.1590
+              CD16+ monocyte    80   80  0.4007      0.5257  0.1250
+                 CD4+ T cell    80   80  0.1518      0.1894  0.0376
+            Cytotoxic T cell    80   80  0.3097      0.3613  0.0516
+              Dendritic cell    55   38  0.0698      0.0520 -0.0178
+               Megakaryocyte    29   41  0.4249      0.4514  0.0265
+         Natural killer cell    80   80  0.1750      0.2323  0.0573
+ Plasmacytoid dendritic cell    26    0  0.5455      0.5675  0.0220</code></pre>
+<p><strong>Slice-based interpretation:</strong></p>
 <ul>
-<li>Higher batch-label LISI alongside stable cell-type-label LISI may be consistent with improved local batch mixing while retaining annotation purity. It does not demonstrate that all technical effects are gone.</li>
-<li>Higher cell-type-label LISI means neighborhoods contain more annotation labels. Inspect annotation quality and marker expression before attributing this pattern to overcorrection.</li>
-<li>Low or negative silhouette values identify cells or clusters with weak separation under the chosen distance and representation. Review cluster sizes, labels, marker expression and the underlying embedding before changing the clustering.</li>
+<li><strong>Pooled gain:</strong> Harmony collapses the batch silhouette toward zero (0.0636 to 0.0008) while raising the 9-population cell-type silhouette (0.2731 to 0.3410), led by <code>CD14+ monocyte</code> (+0.1590) and <code>CD16+ monocyte</code> (+0.1250) where v2/v3 chemistry splits were largest in PCA.</li>
+<li><strong>Hidden slice behavior:</strong> <code>Dendritic cell</code> silhouette dips slightly (0.0698 to 0.0520), and <code>Plasmacytoid dendritic cell</code> (pDC) appears only in <code>v2 A</code> (<code>n_v2A = 26, n_v3 = 0</code>). Because pDCs have no counterpart in <code>v3</code>, the bundled LISI summary (<a href="../files/pbmc-methods-worked-example/observed/lisi_by_label.csv"><code>lisi_by_label.csv</code></a>) shows Harmony nudging pDC <code>iLISI</code> from 1.26 to 1.37 only by raising pDC <code>cLISI</code> from 1.36 to 1.53 (mixing slightly with non-pDC neighbors). Inspecting per-cell-type slices catches that trade-off immediately.</li>
 </ul>
-<p>Never treat any single LISI or silhouette value as a binary pass/fail cutoff. Both metrics reflect the supplied cluster labels, embedding choice, and neighborhood scale; when processing batches are confounded with cell types, no integration metric can separate technical mixing from real biology on its own.</p>
-<section class="lesson-exercise"><h2>Hypothetical decision check</h2><p>In a hypothetical study, each batch contains a different cell type. Should you maximize batch mixing to improve the integration score, or can these metrics tell whether batch or biology explains the separation?</p><details><summary>Reasoned feedback</summary><p>Neither score resolves this confounding: batch and cell identity change together, so increased mixing is not automatically better and could obscure real differences. iLISI describes local diversity of the supplied batch labels; cLISI describes local diversity of the supplied cell-type labels; silhouette describes separation for supplied clusters in the chosen representation. Report the design limitation and use biological context and independent samples to assess the integration, rather than optimizing a metric in isolation.</p></details></section>
-<h2>Troubleshoot common failures</h2>
+<h2 id="compare-results">Read the results as a comparison</h2>
+<p>Evaluate the exact same cells and label definitions across unintegrated and integrated embeddings. Report medians and interquartile ranges for per-cell LISI, plus per-cluster and per-cell-type summaries for silhouette alongside the reduction name, number of dimensions, LISI <code>perplexity</code>, and package versions. Compare these global silhouette results with the full LISI and UMAP walkthrough in <a href="scrna-seq-integration-strategies.html">scRNA-seq Integration: Harmony, RPCA, and CCA</a>.</p>
+<figure class="my-8 bg-white border border-gray-200 rounded-xl p-4 shadow-sm"><img src="../images/tutorial-figures/sc-qc-lisi-silhouette.png" alt="Pre- vs post-Harmony iLISI, cLISI, and cell-type silhouette distributions on bundled 10x PBMC data" width="1590" height="795" loading="lazy" class="w-full h-auto rounded-lg" style="aspect-ratio: 1590 / 795;"/><figcaption class="mt-3 text-sm text-gray-600">Bundled public 10x PBMC benchmark (from the 1,686-cell 3-batch cohort, evaluating the 1,149 paired <code>v2 A</code> vs <code>v3</code> query cells): (A) Harmony raises batch-mixing iLISI toward 2 while keeping cell-type purity cLISI near 1; (B) cell-type silhouette distributions (10-dim subset shown here; full 20-dim means are 0.2731 vs 0.3410 above) shift higher after batch correction.</figcaption></figure>
 <ul>
-<li><strong>LISI reports an error or yields missing results:</strong> check that embedding rows and metadata rows refer to the same cells in the same order, the requested metadata fields exist, and labels are not missing. A missing reduction name or absent metadata field should be fixed explicitly rather than replaced with a different representation without recording the change.</li>
-<li><strong>Batch LISI remains low:</strong> confirm that the selected embedding is the integrated representation you intended, inspect batch levels and sample sizes, then compare with the unintegrated embedding. Low mixing can also be expected when batches contain genuinely different cell populations.</li>
-<li><strong>Cell-type LISI increases:</strong> check annotation granularity and uncertainty, and review marker expression and the study design. A score change alone does not establish loss of biology.</li>
-<li><strong>Silhouette calculation fails:</strong> confirm labels are present and that the number of distinct labels is between 2 and the number of cells minus 1. Reduce the dataset only with a documented sampling strategy if full pairwise calculation is too costly; a subset estimate is not the exact full-data result.</li>
-<li><strong>LISI and silhouette appear to disagree:</strong> they assess label diversity and cluster separation, respectively. Check whether they use compatible embeddings and whether cluster labels and biological annotations answer the same question before drawing a conclusion.</li>
+<li><strong>High batch iLISI + stable cLISI near 1:</strong> consistent with local batch mixing while preserving supplied annotations, though marker dot plots are still required to verify rare subtypes.</li>
+<li><strong>Rising cLISI (&gt; 1 in raw R <code>lisi</code>):</strong> local neighborhoods hold mixed cell-type labels. Check whether labels are noisy or doublets remain before concluding over-correction.</li>
+<li><strong>Low or negative silhouette:</strong> flags weak separation under Euclidean distance in that embedding; inspect cluster sizes, transitional states, and marker expression before re-clustering.</li>
+</ul>
+<section class="lesson-exercise"><h2>Hypothetical decision check</h2><p>In a study where Batch 1 contains only T cells and Batch 2 contains only myeloid cells, should you tune integration until iLISI approaches 2, or can LISI and silhouette tell whether batch or cell identity drives the separation?</p><details><summary>Reasoned feedback</summary><p>Neither metric can separate technical batch from biological identity when they are completely confounded: pushing iLISI toward 2 would force T cells and myeloid cells together and degrade cLISI and marker separation. Report the confounded design limitation, keep batches unmixed across disjoint lineages, and evaluate integration only where cell types are shared across batches.</p></details></section>
+<h2 id="troubleshooting">Troubleshoot common failures</h2>
+<ul>
+<li><strong><code>Error in compute_lisi(...)</code> or missing reduction/columns:</strong> confirm <code>reduction_name</code> exists in <code>Reductions(seurat_obj)</code> (for Seurat v5, often <code>"integrated.harmony"</code> rather than <code>"harmony"</code>), align <code>meta &lt;- meta[rownames(emb), , drop = FALSE]</code>, and remove or impute <code>NA</code> labels before scoring.</li>
+<li><strong><code>ValueError: Number of labels is 1. Valid values are 2 to n_samples - 1 (inclusive)</code> (scikit-learn) or <code>NA</code> in R <code>cluster::silhouette()</code>:</strong> check <code>table(labels)</code> before scoring; silhouette cannot evaluate a subset with fewer than 2 clusters or where every cell has a unique label.</li>
+<li><strong><code>Error: cannot allocate vector of size ...</code> in <code>stats::dist()</code>:</strong> full pairwise distances grow as <code>O(n^2)</code>. Above ~20,000 cells, downsample proportionally within each batch-by-cell-type stratum (or use chunked <code>scib_metrics.silhouette_label()</code> in Python) and report the exact sample size.</li>
+<li><strong>Batch iLISI stays near 1 after integration:</strong> verify that you scored the integrated reduction rather than <code>"pca"</code>, check batch sample counts per cell type, and confirm that low mixing is not driven by batch-only populations (as seen with <code>v2 A</code> pDCs above).</li>
+<li><strong>cLISI increases and cell-type silhouette drops after integration:</strong> inspect doublet scores, annotation granularity, and canonical lineage markers; if distinct subtypes merged, reduce integration strength (for example, Harmony <code>theta</code>) or compare against RPCA/scVI.</li>
 </ul>
 <aside aria-label="Author's lab note" class="lesson-summary">
 <p><strong>Author's lab note:</strong> High batch iLISI is easy to optimize by over-integrating until rare subpopulations collapse together. Whenever iLISI jumps cleanly after Harmony or scVI, I inspect cLISI and canonical lineage dot plots right beside it so I know donor mixing did not erase real biological subtypes.</p>
 </aside>
-<h2>References</h2>
+<h2 id="next-steps">Recap and next steps</h2>
 <ul>
-<li><a href="https://github.com/immunogenomics/lisi">LISI package repository</a> describes the cell-by-coordinate matrix, metadata input, and effective number of local categories.</li>
-<li><a href="https://scikit-learn.org/stable/modules/clustering.html#silhouette-coefficient">scikit-learn silhouette coefficient guide</a> documents the distance-based definition and valid label-count condition.</li>
-<li><a href="https://anndata.readthedocs.io/en/latest/generated/anndata.AnnData.write_h5ad.html">AnnData write_h5ad reference</a> documents writing the scored object to a distinct file.</li>
-<li><a href="https://satijalab.org/seurat/articles/integration_introduction">Seurat integration introduction</a> explains integration reductions and evaluating shared cell states in context.</li>
-<li><a href="https://www.nature.com/articles/s41592-019-0619-0">Korsunsky et al. (2019), Harmony</a> describes the integration method and LISI metrics cited in this tutorial.</li>
-<li><a href="https://doi.org/10.1186/s13059-019-1662-y">Lun et al. (2019), EmptyDrops</a>, statistical distinction between cell-containing droplets and ambient RNA in <em>Genome Biology</em>.</li>
-<li><a href="https://doi.org/10.15252/msb.20188746">Luecken &amp; Theis (2019)</a>, current best practices in single-cell RNA-seq QC and multivariate outlier filtering in <em>Molecular Systems Biology</em>.</li>
-<li><a href="https://doi.org/10.12688/f1000research.73600.2">Germain et al. (2021), scDblFinder</a>, per-sample artificial doublet generation and classification in <em>F1000Research</em>.</li>
-<li><a href="https://doi.org/10.1093/gigascience/giaa151">Young &amp; Behjati (2020), SoupX</a> and <a href="https://doi.org/10.1038/s41592-023-01943-7">Fleming et al. (2023), CellBender</a> for ambient cell-free RNA estimation and removal.</li>
+<li>Filter each capture lane with empty-droplet tests, per-sample MAD bounds, and per-lane doublet detection before merging batches.</li>
+<li>Evaluate post-integration embeddings on identical cells using batch mixing (iLISI, batch silhouette) paired with biological conservation (cLISI, cell-type silhouette) and cell-type slices.</li>
+<li>Continue to <a href="scrna-seq-downstream-analysis.html">Single-Cell RNA-seq Downstream Analysis</a> once integration metrics and lineage markers agree, or revisit <a href="cell-type-annotation-methods.html">Cell-Type Annotation Methods</a> if high cLISI points to uncertain labels.</li>
+</ul>
+<h2 id="references">References</h2>
+<ul>
+<li><a href="https://github.com/immunogenomics/lisi">immunogenomics/lisi GitHub repository</a>: R implementation of <code>compute_lisi()</code> and effective local category diversity.</li>
+<li><a href="https://scib-metrics.readthedocs.io">scib-metrics documentation</a>: Python/JAX implementations of <code>ilisi_knn</code>, <code>clisi_knn</code>, <code>silhouette_batch</code>, and <code>silhouette_label</code>.</li>
+<li><a href="https://scikit-learn.org/stable/modules/clustering.html#silhouette-coefficient">scikit-learn silhouette coefficient guide</a>: distance-based definition and valid cluster-count bounds.</li>
+<li><a href="https://satijalab.org/seurat/articles/seurat5_integration.html">Seurat v5 integration vignette</a>: <code>IntegrateLayers()</code> workflow and integrated reduction naming.</li>
+<li><a href="https://anndata.readthedocs.io/en/latest/generated/anndata.AnnData.write_h5ad.html">AnnData write_h5ad reference</a>: saving scored objects to a separate output file.</li>
+<li><a href="https://www.nature.com/articles/s41592-019-0619-0">Korsunsky et al. (2019), Harmony</a>: fast, sensitive single-cell integration and LISI metrics in <em>Nature Methods</em>.</li>
+<li><a href="https://doi.org/10.1038/s41592-021-01336-8">Luecken et al. (2022), scIB benchmark</a>: benchmarking atlas-level data integration across batch-removal and biological conservation metrics in <em>Nature Methods</em>.</li>
+<li><a href="https://doi.org/10.1038/s41576-023-00586-w">Heumos et al. (2023), Single-cell best practices</a>: adaptive MAD thresholds, empty-droplet testing, and ambient RNA correction in <em>Nature Reviews Genetics</em>.</li>
+<li><a href="https://doi.org/10.1186/s13059-019-1662-y">Lun et al. (2019), EmptyDrops</a> (<a href="https://bioconductor.org/packages/release/bioc/html/DropletUtils.html">DropletUtils</a>): distinguishing cell-containing droplets from ambient RNA in <em>Genome Biology</em>.</li>
+<li><a href="https://doi.org/10.1186/s13059-020-02136-7">Germain et al. (2020), pipeComp</a> and <a href="https://doi.org/10.12688/f1000research.73600.2">Germain et al. (2021), scDblFinder</a> (<a href="https://bioconductor.org/packages/release/bioc/html/scDblFinder.html">Bioconductor</a>): preprocessing sensitivity and per-lane doublet detection.</li>
+<li><a href="https://doi.org/10.15252/msb.20188746">Luecken &amp; Theis (2019)</a>, <a href="https://doi.org/10.1093/gigascience/giaa151">Young &amp; Behjati (2020), SoupX</a>, and <a href="https://doi.org/10.1038/s41592-023-01943-7">Fleming et al. (2023), CellBender</a> for multivariate QC and ambient RNA removal.</li>
 </ul>
 <aside aria-labelledby="tutorial-feedback-title" class="lesson-feedback" id="tutorial-feedback"><h2 id="tutorial-feedback-title">Help improve this tutorial</h2><p>Found an error, a broken link, or a step that needs a clearer explanation? Please <a href="../contact.html">contact me</a>. Your feedback helps me keep this resource accurate and useful.</p></aside></article>
 <section class="mt-12 mb-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-100">
@@ -530,7 +649,7 @@ Mean batch silhouette     (2 chemistries): PCA = 0.0636, Harmony = 0.0008</code>
 </script>
 <script src="../assets/vendor/prism/prism-1.29.0.js"></script>
 <script id="tutorial-code-data">
-window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"scrna-seq-quality-control":{"blocks":[{"language":"r","sha256":"ac168e7f600fe6d90882c732affb3e023f781c72e3f71822ab14e43010c2ad69"},{"language":"text","sha256":"45b25a9f27ceaa3792b853e1171f4685cca948297452db49797a542ece0ce215"},{"language":"r","sha256":"55bdf94859cad7298bf7ddf77559fb52499ab020402094baf7b6c85737e75cbc"},{"language":"r","sha256":"b5ff68839acda7679055173320a91691ea80dd8f4dead0c39bcba1d0e8bec1f0"},{"language":"r","sha256":"d8121094e673cfd8c398d7e0cd3b6f86cce32aec36772ed3132920e71a964c64"},{"language":"python","sha256":"145b01e5048f38b4ff3139d3113022e539c5dc5f557630af322bd7a0e5ea0f7d"},{"language":"text","sha256":"cfa8db6829da02bdd8e25ce516ab8a58ff19edcee434ff89a1aff0d1d564c08e"}],"groups":[{"title":"Calculate silhouette values","panels":[{"start":27,"end":28,"language":"r","label":"R \u00b7 silhouette"},{"start":29,"end":30,"language":"python","label":"Python \u00b7 scikit-learn"}],"members":[{"index":27,"tag":"h3","sha256":"8ce70a55178b89b6316e40c7fd5013b85ceb3c5a50e039112174771971b16668"},{"index":28,"tag":"pre","sha256":"d8121094e673cfd8c398d7e0cd3b6f86cce32aec36772ed3132920e71a964c64"},{"index":29,"tag":"h3","sha256":"7f03f1078ad355ce92a1fc41bde573f7600664fc5273f4962196769065169b19"},{"index":30,"tag":"pre","sha256":"145b01e5048f38b4ff3139d3113022e539c5dc5f557630af322bd7a0e5ea0f7d"}],"tabOrder":["r","python"]}]}}};
+window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"scrna-seq-quality-control":{"blocks":[{"language":"r","sha256":"ac168e7f600fe6d90882c732affb3e023f781c72e3f71822ab14e43010c2ad69"},{"language":"text","sha256":"45b25a9f27ceaa3792b853e1171f4685cca948297452db49797a542ece0ce215"},{"language":"r","sha256":"55bdf94859cad7298bf7ddf77559fb52499ab020402094baf7b6c85737e75cbc"},{"language":"text","sha256":"b43a0de0aef3712b29d87b6d482a6d1de402dfc7520f0d344a05a882917ef17d"},{"language":"r","sha256":"b5ff68839acda7679055173320a91691ea80dd8f4dead0c39bcba1d0e8bec1f0"},{"language":"text","sha256":"9630a427bee7d4fce46a69bc70a6c168c5307c7ad0cfa1abebe7ed7a2cd9777c"},{"language":"r","sha256":"d8121094e673cfd8c398d7e0cd3b6f86cce32aec36772ed3132920e71a964c64"},{"language":"python","sha256":"145b01e5048f38b4ff3139d3113022e539c5dc5f557630af322bd7a0e5ea0f7d"},{"language":"r","sha256":"ea2e15a6983bd73bbcbe76ce5a7aab7256baa88a26def59c7771067f8b68714a"},{"language":"text","sha256":"e5ccf618b069106842bc07e9d3a86ff7e9ffe9ce083669b9437f649c72462baa"}],"groups":[{"title":"Calculate silhouette values","panels":[{"start":35,"end":36,"language":"r","label":"R \u00b7 silhouette"},{"start":37,"end":38,"language":"python","label":"Python \u00b7 scikit-learn"}],"members":[{"index":35,"tag":"h3","sha256":"8ce70a55178b89b6316e40c7fd5013b85ceb3c5a50e039112174771971b16668"},{"index":36,"tag":"pre","sha256":"d8121094e673cfd8c398d7e0cd3b6f86cce32aec36772ed3132920e71a964c64"},{"index":37,"tag":"h3","sha256":"7f03f1078ad355ce92a1fc41bde573f7600664fc5273f4962196769065169b19"},{"index":38,"tag":"pre","sha256":"145b01e5048f38b4ff3139d3113022e539c5dc5f557630af322bd7a0e5ea0f7d"}],"tabOrder":["r","python"]}]}}};
 </script>
 <script src="../code-tabs.js?v=20261026-startup-v1"></script>
 <script src="../copy-code.js?v=20261025-r-first-v1"></script>

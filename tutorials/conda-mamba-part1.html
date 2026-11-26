@@ -172,10 +172,10 @@ function toggleMobileMenu() {
 <img alt="Micromamba and Conda environments for bioinformatics" class="w-full aspect-video object-cover" decoding="async" loading="eager" src="../images/conda-mamba-part1-workstation.webp" width="1024" height="1024"/>
 </div>
 <nav aria-label="Learning path navigation" class="reader-toolbar"><span class="reader-toolbar__heading">Learning path</span><a href="command-line-part2.html" rel="prev" class="reader-toolbar__previous"><span class="reader-toolbar__direction"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5m0 0 7 7m-7-7 7-7"/></svg></span><span class="reader-toolbar__copy"><small>Previous prerequisite</small><strong>Command-Line Text Processing for Bioinformatics</strong></span></a><a data-catalogue-return="" href="../tutorials.html" class="reader-toolbar__library"><span class="reader-toolbar__library-mark" aria-hidden="true"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="6" height="6" rx="1.3"/><rect x="14" y="4" width="6" height="6" rx="1.3"/><rect x="4" y="14" width="6" height="6" rx="1.3"/><rect x="14" y="14" width="6" height="6" rx="1.3"/></svg></span><span><small>Browse</small><strong>All tutorials</strong></span></a><a href="#reader-course-navigation" class="reader-toolbar__next"><span class="reader-toolbar__copy"><small>Several directions</small><strong>Choose a next step</strong></span><span class="reader-toolbar__direction"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14m0 0 7-7m-7 7-7-7"/></svg></span></a></nav>
-<article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--walkthrough"><p class="lesson-lead">Build and verify isolated Micromamba environments from an explicit <code>environment.yml</code> file so bioinformatics tools never collide with your system Python or older projects.</p><section class="lesson-summary tutorial-learning-contract" data-tutorial-format="hands-on-lab" aria-label="Learning format"><p><strong>Format: Hands-on lab.</strong> Practice building and testing an isolated Micromamba environment from an explicit <code>environment.yml</code> file in your own terminal. This lesson focuses strictly on environment isolation and needs no biological input files.</p></section><div class="flex flex-wrap items-center gap-4 text-xs font-mono text-gray-500 bg-gray-50 p-3 rounded-lg border border-gray-200 mb-6">
+<article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--walkthrough"><p class="lesson-lead">Build and verify isolated Micromamba environments from an explicit <code>environment.yml</code> file so bioinformatics tools never collide with your system Python or older projects.</p><section class="lesson-summary tutorial-learning-contract" data-tutorial-format="hands-on-lab" aria-label="Learning format"><p><strong>Format: Hands-on lab (25-35 minutes).</strong> Install Micromamba, build a clean FastQC + MultiQC environment from an explicit <code>environment.yml</code>, test the executables, and export reproducible lock specs in your terminal. This lab focuses strictly on environment isolation and needs no sequencing data files.</p></section><div class="flex flex-wrap items-center gap-4 text-xs font-mono text-gray-500 bg-gray-50 p-3 rounded-lg border border-gray-200 mb-6">
 <div class="flex items-start gap-2">
 <svg class="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
-<span><strong>Shell scope:</strong> Install instructions cover Linux/macOS/Git Bash and Windows PowerShell; subsequent command examples use Bash on Linux/macOS/WSL unless labeled otherwise.</span>
+<span><strong>Shell scope:</strong> Install instructions cover Linux, macOS, Git Bash, and Windows PowerShell; lab commands use Bash on Linux, macOS, or WSL.</span>
 </div>
 <div class="flex items-start gap-2">
 <svg class="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
@@ -183,85 +183,156 @@ function toggleMobileMenu() {
 </div>
 <div class="p-6 bg-blue-50 border border-blue-100 rounded-xl mb-8">
 <h2 class="text-lg font-bold text-blue-900 mb-2" style="margin-top:0">Learning Objectives &amp; Prerequisites</h2>
-<ul class="list-disc list-inside text-blue-800 space-y-1 mb-4">
-<li><strong>Prerequisites:</strong> A Bash terminal and permission to create files and install packages in a user-owned location. If Micromamba is not installed yet, use the installation section below first; Windows PowerShell has separately labeled installation instructions.</li>
-<li><strong>Objective:</strong> Install Micromamba, create and activate Conda-compatible environments, install Bioconda tools, export a reproducible specification, and diagnose common failures.</li>
-<li><strong>Expected Output:</strong> A tested <code>environment.yml</code> that documents a small bioinformatics environment without modifying the system Python installation.</li>
+<ul class="list-disc list-inside text-blue-800 space-y-1 mb-0">
+<li><strong>Prerequisites:</strong> Basic terminal navigation (creating folders and editing files) and write permission in your home directory (<code>$HOME</code>). Windows users have a dedicated PowerShell install block below.</li>
+<li><strong>What you will learn:</strong> How to install Micromamba without polluting system Python, enforce safe <code>conda-forge</code> and <code>bioconda</code> channel priority, write and test an <code>environment.yml</code> file, export portable vs. locked specifications, and fix common solver or shell errors.</li>
+<li><strong>Outcome:</strong> A verified <code>qc-tools</code> environment (Python 3.11, FastQC, MultiQC) backed by an authored <code>environment.yml</code> and a reviewed lock snapshot.</li>
 </ul>
 </div>
-<p><strong>Required route:</strong> <a href="#install-micromamba">Install and verify Micromamba</a> if needed, read the channel policy, then jump to the <a href="#qc-environment-lab">small QC environment lab</a>. That lab creates and checks one Python/FastQC/MultiQC environment. The other creation commands are alternative reference examples, not extra steps to run in sequence; several deliberately reuse <code>qc-tools</code>. You do not need the combined R/Python environment or any cleanup command to complete the required lab. If you came from Command Line Part 2, finish installation only, then <a href="command-line-part2.html#cli-part2-tool-checkpoint">return to its SeqKit checkpoint</a>.</p>
-<h2>Why environment management matters in bioinformatics</h2>
-<p>Bioinformatics projects combine command-line programs, Python libraries, R packages, compiled dependencies, and reference-data utilities. These components often require different versions of shared libraries. Installing everything into a system Python or one shared environment makes it difficult to identify which project changed a dependency and can break an older analysis.</p>
+<p><strong>Required route:</strong> Follow <a href="#install-micromamba">Install Micromamba</a> (if needed), read the channel policy, and complete the <a href="#qc-environment-lab">small QC environment lab</a> to build and verify <code>qc-tools</code>. The standalone reference examples in between are alternative patterns, not extra steps to run in sequence (several reuse environment names for illustration). Learners arriving from Command Line Part 2 only need the installation step before <a href="command-line-part2.html#cli-part2-tool-checkpoint">returning to its SeqKit checkpoint</a>.</p>
 
-<figure class="my-8 bg-white border border-gray-200 rounded-xl p-4 shadow-sm"><img src="../images/tutorial-figures/micromamba-isolation-diagram.svg" alt="Architecture diagram showing isolated Micromamba environments preventing library collisions on a clean host OS" width="960" height="440" loading="lazy" class="w-full h-auto rounded-lg" style="aspect-ratio: 960 / 440;"/><figcaption class="mt-3 text-sm text-gray-600">Isolating QC, R single-cell, and DNA alignment tools into dedicated Micromamba environments with strict conda-forge -> bioconda channel ordering prevents C++ ABI and version conflicts.</figcaption></figure>
-<p>An environment is an isolated prefix containing an interpreter, packages, and their dependencies. It does not replace good scientific documentation: an environment file records software requirements, while the workflow should also record input data, reference versions, parameters, and results. The goal is to make the computational part of an analysis inspectable and repeatable on another machine.</p>
-<h2>Which tool should you use?</h2>
-<h3>Micromamba: the current lightweight default</h3>
-<p><strong>Micromamba</strong> is a self-contained, statically linked executable. It does not ship with a populated base environment. Instead, it stores environments and package caches below the <code>MAMBA_ROOT_PREFIX</code>, which makes it convenient on shared clusters, containers, and personal machines where you want a small installation. The official Mamba documentation currently identifies its automatic installer as the recommended Micromamba installation route.</p>
-<h3>Conda and Miniforge: useful alternatives</h3>
-<p><strong>Conda</strong> remains a general package and environment manager with a large user base and extensive documentation. <strong>Miniforge</strong> is a small Conda distribution configured for the conda-forge ecosystem and is a practical choice when you want a traditional Conda installation with the familiar <code>conda</code> command. Choose one primary manager per machine or project. Do not initialize several competing base installations and then guess which executable is running.</p>
-<h3>Mamba 2: compatible terminology, different installation story</h3>
-<p>In Mamba 2, the <code>mamba</code> executable has the same user interface and experience as <code>micromamba</code>. Older tutorials that tell users to install the Python-based Mamba package into a Conda base environment are therefore not the best starting point for a new installation. Existing Mamba or Conda environments can still be useful, but new users should follow the current installation documentation for the selected tool.</p>
+<h2>Why environment management matters in bioinformatics</h2>
+<p>A typical genomics workflow mixes command-line C/C++ binaries (such as <code>samtools</code> or <code>bwa-mem2</code>), Java tools (<code>fastqc</code>), Python packages (<code>multiqc</code>, <code>scanpy</code>), and R/Bioconductor libraries (<code>Seurat</code>). Many of these rely on specific versions of shared system libraries such as <code>zlib</code>, <code>libdeflate</code>, <code>openssl</code>, or <code>htslib</code>. Installing everything into the operating system's Python or a single global environment causes version collisions: upgrading a library for a new single-cell project can silently break an older RNA-seq pipeline.</p>
+<p>An <strong>environment</strong> (also called a <strong>prefix</strong>) is an isolated directory containing its own Python or R interpreter, executables, and compiled libraries. Updating or deleting one prefix leaves every other project and your host operating system untouched.</p>
+
+<figure class="my-8 bg-white border border-gray-200 rounded-xl p-4 shadow-sm"><img src="../images/tutorial-figures/micromamba-isolation-diagram.svg" alt="Architecture diagram showing isolated Micromamba environments preventing library collisions on a clean host OS" width="960" height="440" loading="lazy" class="w-full h-auto rounded-lg" style="aspect-ratio: 960 / 440;"/><figcaption class="mt-3 text-sm text-gray-600">Isolating QC, R single-cell, and DNA alignment tools into dedicated Micromamba prefixes prevents C++ ABI (Application Binary Interface) and version conflicts.</figcaption></figure>
+
+<p>An environment specification records the software layer of your analysis. Pair it with your workflow scripts, reference genome versions, and run parameters so another researcher (or your future self) can inspect and rebuild the computational stack on a different machine.</p>
+
+<h2>Which package manager should you use?</h2>
+<p>Choose one primary environment manager per project and stick with the tooling a project already declares. Never run bare global <code>pip install</code> commands outside an active virtual or Conda-compatible environment, and never override a project's existing lockfile with a competing manager.</p>
+
+<div class="overflow-x-auto my-6">
+<table class="min-w-full text-sm border border-gray-200 rounded-lg">
+<thead class="bg-gray-50 text-left text-gray-800">
+<tr>
+<th class="p-3 border-b border-gray-200 font-semibold">Tool</th>
+<th class="p-3 border-b border-gray-200 font-semibold">Best for</th>
+<th class="p-3 border-b border-gray-200 font-semibold">Key trade-off</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-gray-200 text-gray-700">
+<tr>
+<td class="p-3 font-medium text-gray-900">Micromamba (recommended here)</td>
+<td class="p-3">Bioinformatics workflows mixing Python, R, Java, and compiled C/C++ Bioconda tools; HPC clusters and containers.</td>
+<td class="p-3">Single static binary with no pre-populated <code>base</code> environment; stores prefixes under <code>MAMBA_ROOT_PREFIX</code>.</td>
+</tr>
+<tr>
+<td class="p-3 font-medium text-gray-900">Miniforge / Conda</td>
+<td class="p-3">Systems or pipelines (such as Snakemake/Nextflow configs) that specifically invoke the <code>conda</code> command.</td>
+<td class="p-3">Larger initial installation than Micromamba; modern Conda uses <code>libmamba</code> as its default solver.</td>
+</tr>
+<tr>
+<td class="p-3 font-medium text-gray-900">Mamba 2</td>
+<td class="p-3">Users who prefer the <code>mamba</code> command name with Micromamba behavior.</td>
+<td class="p-3">In Mamba 2.x, <code>mamba</code> shares Micromamba's C++ CLI directly. Ignore older guides that install Python Mamba into <code>base</code>.</td>
+</tr>
+<tr>
+<td class="p-3 font-medium text-gray-900"><code>venv</code> + <code>pip</code> or <code>uv</code> / Poetry</td>
+<td class="p-3">Pure-Python repositories that already ship <code>uv.lock</code> (<code>uv sync</code>), <code>pyproject.toml</code> (<code>poetry install</code>), or <code>requirements.txt</code> (<code>python3 -m venv .venv</code> and <code>.venv/bin/pip install -r requirements.txt</code>).</td>
+<td class="p-3">Cannot install non-Python bioinformatics binaries like <code>fastqc</code> or <code>samtools</code>.</td>
+</tr>
+</tbody>
+</table>
+</div>
+
 <h2 id="install-micromamba">Install Micromamba</h2>
-<p>The following route is documented for Linux, macOS, and Git Bash on Windows. It downloads and runs the official installer script over HTTPS, then initializes the selected shell. Review the script and follow local policy before running it on a managed or highly restricted system.</p>
+<p>The official installer downloads a single static binary over HTTPS and configures your shell startup file so <code>micromamba activate</code> can update your <code>PATH</code>. On a managed institutional workstation or HPC cluster, first check <code>module avail micromamba</code> or <code>command -v micromamba</code> before installing a private copy.</p>
+
 <h3>Linux, macOS, or Git Bash</h3>
-<pre><code class="language-bash"># Install the current Micromamba executable using the official installer
+<pre><code class="language-bash"># Install Micromamba using the official installer script
 "${SHELL}" &lt;(curl -L micro.mamba.pm)
 
-# Start a new shell after the installer finishes, or inspect the executable
+# Open a new shell (or source your RC file), then check the binary
 micromamba --version
 
-# Initialize Bash with an explicit root prefix
+# If you skipped shell initialization during install, initialize Bash explicitly
 micromamba shell init -s bash -r "$HOME/micromamba"
 source "$HOME/.bashrc"
 
-# For Zsh, use these two commands instead:
+# For Zsh (default on macOS), initialize ~/.zshrc instead:
 # micromamba shell init -s zsh -r "$HOME/micromamba"
 # source "$HOME/.zshrc"</code></pre>
-<p>If your institution does not allow shell scripts or the automatic installer, use the official manual-install instructions to download the platform-specific static executable. On a cluster, ask the administrator whether Micromamba is already available as a module before installing a private copy.</p>
+<p>If institutional firewalls block script execution from <code>curl</code>, download the static binary directly from the <a href="https://mamba.readthedocs.io/en/latest/installation/micromamba-installation.html" rel="noopener" target="_blank">official Micromamba manual installation guide</a> and place it in <code>~/.local/bin</code>.</p>
+
 <h3>Windows PowerShell</h3>
-<pre><code class="language-powershell"># Official PowerShell installation route
+<pre><code class="language-powershell"># Official PowerShell installer
 Invoke-Expression ((Invoke-WebRequest -Uri https://micro.mamba.pm/install.ps1 -UseBasicParsing).Content)
 
-# Initialize a user-owned root prefix
+# Initialize PowerShell with a user-owned root prefix
 micromamba shell init -s powershell -r "$HOME\micromamba"
 # Restart PowerShell, then verify
 micromamba --version</code></pre>
+
 <h3>Verify the installation and root prefix</h3>
-<pre><code class="language-bash">micromamba info
-micromamba --version</code></pre>
-<p>Check this output before troubleshooting: it reports the root prefix, environment directories, package cache, configuration files, and detected platform. The command examples below are documentation-based; package solving and installation depend on your operating system, channel metadata, and current package availability. No successful biological analysis follows from creating an environment.</p>
+<p>Run <code>micromamba info</code> right after installation. It confirms your binary version, architecture (<code>platform</code>), package cache location, and active config files.</p>
+<pre><code class="language-bash">micromamba --version
+micromamba info</code></pre>
+<p>Example output (illustrative on Linux x86_64):</p>
+<pre><code class="language-text">2.9.0
+
+          libmamba version : 2.9.0
+        micromamba version : 2.9.0
+          envs directories : /home/analyst/micromamba/envs
+             package cache : /home/analyst/micromamba/pkgs
+               environment : base (active)
+              env location : /home/analyst/micromamba
+         user config files : /home/analyst/.mambarc
+          virtual packages : __unix=0=0
+                             __linux=6.8.0=0
+                             __glibc=2.39=0
+                             __archspec=1=x86_64
+          base environment : /home/analyst/micromamba
+                  platform : linux-64</code></pre>
+<p><strong>Check:</strong> Confirm <code>envs directories</code> points to a directory you own with enough free disk space, and note your <code>platform</code> (<code>linux-64</code> on standard Linux servers, <code>osx-arm64</code> on Apple Silicon Macs, <code>osx-64</code> on Intel Macs).</p>
+
 <h2>Configure channels deliberately</h2>
-<p>Use the same explicit channel policy when creating or recreating an environment, and preserve channel intent in the authored specification and resolved export. For Bioconda packages, the documented order and strict priority matter; avoid mixing in additional channels casually.</p>
-<p>A channel is a repository of package metadata and package archives. For many bioinformatics workflows, <strong>conda-forge</strong> provides general dependencies and <strong>bioconda</strong> provides many domain-specific tools. Channel configuration affects the solver, so keep it explicit and avoid mixing unrelated defaults without understanding the consequences.</p>
-<p>For this lesson, keep channel choices on each command instead of changing a shared <code>.condarc</code>/<code>.mambarc</code>. Bioconda recommends <code>conda-forge</code> before <code>bioconda</code> on the command line (higher priority first) and strict priority. Each create command below therefore uses both <code>--override-channels</code> and <code>--channel-priority strict</code>: the first prevents configured default channels from silently joining the solve, while the second enforces the declared order. In particular, do not add Anaconda <code>defaults</code> implicitly.</p>
+<p>A <strong>channel</strong> is a remote package repository. In bioinformatics, two community channels work together: <strong>conda-forge</strong> supplies core compilers, Python, R, and shared C/C++ libraries, while <strong>bioconda</strong> supplies domain tools such as <code>fastqc</code>, <code>multiqc</code>, <code>samtools</code>, and Bioconductor packages.</p>
+<p>Channel order and priority are critical because Bioconda recipes are built against <code>conda-forge</code> shared libraries. Under <strong>strict channel priority</strong>, once a package name exists in a higher-priority channel, the <strong>solver</strong> (the dependency-resolution engine) ignores builds of that package in all lower-priority channels. Putting <code>conda-forge</code> first and <code>bioconda</code> second prevents binary ABI mismatches, such as a tool expecting a <code>conda-forge</code> build of <code>libdeflate</code> receiving an incompatible build from another channel.</p>
+<p>Every <code>micromamba create</code> command in this tutorial passes <code>--override-channels -c conda-forge -c bioconda --channel-priority strict</code> explicitly rather than relying on a global <code>.condarc</code> or <code>.mambarc</code>:</p>
+<ul>
+<li><code>--override-channels</code> prevents configured default channels from silently joining the solve (in particular, it blocks Anaconda <code>defaults</code>).</li>
+<li><code>-c conda-forge -c bioconda</code> puts <code>conda-forge</code> at highest priority, followed by <code>bioconda</code>.</li>
+<li><code>--channel-priority strict</code> forbids mixing builds of the same dependency across channels.</li>
+</ul>
 <pre><code class="language-bash">micromamba create -n qc-demo-channels \
   --override-channels -c conda-forge -c bioconda --channel-priority strict \
   fastqc multiqc</code></pre>
-<p>Include these options on every create command to make its channel selection independent of machine-level channel configuration. <code>micromamba config list</code> and <code>micromamba info</code> are useful for inspecting configured values, but <code>--override-channels</code> governs these invocations. Strict priority constrains solver choices; it cannot make unavailable packages or unsupported platforms work.</p>
-<p>When a package cannot be solved, first check its availability, platform support, channel choice, and version constraints. Do not immediately add many channels or remove all version pins; that can create a solution that is difficult to reproduce.</p>
-<h2>Create, activate, and remove environments</h2>
-<p>Use one environment for one coherent workflow. Keep the base or root prefix small. The reference example below creates an illustrative environment named <code>qc-demo-basic</code> (skip running it if you want to jump straight to <code>qc-tools</code> in the <a href="#qc-environment-lab">required lab</a>).</p>
-<pre><code class="language-bash"># Create an environment with all initial requirements together
+<p>When a solve fails, resist the urge to add extra channels or drop strict priority. First check package availability, spelling, platform support, and version pins.</p>
+
+<h2>Create, activate, and inspect environments</h2>
+<p>Create one environment per coherent workflow and keep your root prefix empty of analysis tools. The quick reference below shows the lifecycle commands using an illustrative name <code>qc-demo-basic</code> (you can skip running this block and jump straight to <code>qc-tools</code> in the <a href="#qc-environment-lab">required lab</a>).</p>
+<pre><code class="language-bash"># Install the initial package set together so the solver sees all constraints at once
 micromamba create -n qc-demo-basic \
   --override-channels -c conda-forge -c bioconda --channel-priority strict \
   python=3.11 fastqc multiqc
 
-# Activate it in the current shell
+# Activate the environment in the current shell
 micromamba activate qc-demo-basic
 
-# Confirm which executable and Python are active
+# Confirm that executables resolve from the environment prefix, not /usr/bin
 which python
 python --version
 which fastqc
 fastqc --version
 
-# List environments and leave the active environment
+# List available environments and deactivate when done
 micromamba env list
 micromamba deactivate</code></pre>
-<p>Installing the first group of packages together gives the solver more information than installing one package at a time. In a shared HPC environment, package installation may need to happen in a login shell while analysis jobs activate the same environment in their job script.</p>
+<p>Example output (illustrative):</p>
+<pre><code class="language-text">/home/analyst/micromamba/envs/qc-demo-basic/bin/python
+Python 3.11.17
+/home/analyst/micromamba/envs/qc-demo-basic/bin/fastqc
+FastQC v0.13.0
+
+  Name           Active  Path
+------------------------------------------------------------------
+  base                   /home/analyst/micromamba
+  qc-demo-basic    *     /home/analyst/micromamba/envs/qc-demo-basic</code></pre>
+<p><strong>Check:</strong> <code>which python</code> must print a path inside <code>envs/qc-demo-basic/bin/</code>. If it still prints <code>/usr/bin/python</code>, activation did not run.</p>
+
 <h3>Use a project-local prefix when appropriate</h3>
-<p>A named environment is convenient for a personal workstation. A project-local prefix makes the environment location visible next to the project, which can be useful for a small reproducible example. It does not make the environment portable by itself; binaries still depend on the operating system and CPU architecture.</p>
+<p>Named environments live together under <code>~/micromamba/envs/</code>, which is convenient on a laptop. A project-local prefix (<code>-p ./env</code>) places the binaries inside the project folder itself, keeping disk usage obvious on shared lab storage. Add <code>env/</code> to <code>.gitignore</code> so binaries are never committed to Git.</p>
 <pre><code class="language-bash">mkdir -p ~/projects/qc-demo
 cd ~/projects/qc-demo
 micromamba create -p ./env \
@@ -269,14 +340,15 @@ micromamba create -p ./env \
   python=3.11 fastqc
 micromamba activate ./env
 micromamba deactivate</code></pre>
+
 <h3>Optional cleanup after you finish</h3>
-<p>Cleanup is not required for the lab. Skip these removal commands while you still need the environment. Remove an environment only after checking that it is not referenced by a scheduled job or notebook kernel:</p>
+<p>Skip removal commands while you still need the environment. Before deleting any environment, confirm no scheduled cluster job or Jupyter kernel points to it:</p>
 <pre><code class="language-bash">micromamba env remove -n qc-tools
-# For a prefix environment:
+# For a project-local prefix environment:
 # micromamba env remove -p ./env</code></pre>
+
 <h2>Optional reference: combine Python, R, and command-line tools</h2>
-<p>Skip this section for the required QC lab. This larger single-cell environment can download substantial dependencies and is not needed for the Bash lessons, SeqKit setup or the authored YAML exercise. Continue at <a href="#qc-environment-lab">the small QC environment lab</a> instead unless you deliberately want this separate, untested extension.</p>
-<p>Prefer packages from the Conda-compatible channels when a suitable package exists. Use <code>pip</code> only for packages that are not available through the selected Conda channels, and install it after the compiled Conda dependencies. Record those pip requirements in the environment file.</p>
+<p>Skip this section for the required QC lab; it is not needed for the Bash lessons, SeqKit setup or the authored YAML exercise. When a real project spans R (<code>r-seurat</code>), Python (<code>scanpy</code>), and compiled CLI tools (<code>samtools</code>), Micromamba can manage all three together because CRAN packages carry an <code>r-</code> prefix and Bioconductor packages carry a <code>bioconductor-</code> prefix.</p>
 <pre><code class="language-bash">micromamba create -n single-cell \
   --override-channels -c conda-forge -c bioconda --channel-priority strict \
   python=3.11 \
@@ -288,10 +360,28 @@ micromamba activate single-cell
 python -c "import scanpy, anndata; print(scanpy.__version__, anndata.__version__)"
 R --no-echo -e "cat(R.version.string, '\n')"
 samtools --version | head -n 1</code></pre>
-<p>Do not assume that a package name is identical across ecosystems. For example, an R package may be named with an <code>r-</code> prefix and a Bioconductor package may use a <code>bioconductor-</code> prefix. Search the relevant channel and read the package recipe before adding it to a production environment.</p>
+
+<h3>When a Python package is only on PyPI</h3>
+<p>Always prefer Conda/Bioconda builds for packages with compiled C/C++ extensions. When a pure-Python tool is only published on PyPI, include <code>pip</code> in your <code>environment.yml</code> and place PyPI packages inside a nested <code>- pip:</code> block. Micromamba installs all Conda/Bioconda dependencies first, then runs the isolated environment's <code>pip</code>:</p>
+<pre><code class="language-yaml">name: single-cell-with-pypi
+channels:
+  - conda-forge
+  - bioconda
+  - nodefaults
+dependencies:
+  - python=3.11
+  - pip
+  - scanpy
+  - anndata
+  - pip:
+      - some-pypi-only-tool==1.2.0</code></pre>
+<p>If you must add a PyPI-only package interactively inside an already active Micromamba environment, verify <code>which python</code> points inside the environment prefix and run <code>python -m pip install &lt;package&gt;</code> rather than bare global <code>pip install</code>. Conversely, if you are working in a pure-Python repository that already tracks dependencies with <code>uv.lock</code>, <code>pyproject.toml</code>, or <code>requirements.txt</code>, use that project's native tool (<code>uv sync</code>, <code>poetry install</code>, or <code>python3 -m venv .venv</code> + <code>.venv/bin/pip install -r requirements.txt</code>) instead of creating a redundant Conda environment.</p>
+
 <h2 id="qc-environment-lab">Required lab: make a small QC environment reproducible</h2>
-<p>An environment file is a readable record of requested packages and channels. It is not a complete record of a scientific analysis, and a broad export can contain platform-specific build details. For teaching and cross-platform sharing, start with a small, intentional specification and test it on a clean environment.</p>
-<p>Work in a project directory so the authored specification and later exports stay together. In Bash, create and enter a directory, then use the displayed here-document to write the exact YAML file; it does not install anything or prove that a solve will succeed.</p>
+<p>In this hands-on lab, you will write a clean <code>environment.yml</code>, solve and test a <code>qc-tools</code> environment, export a pinned snapshot, catch a real channel-ordering pitfall before recreating it as <code>qc-tools-copy</code>, and save both portable and exact lock artifacts.</p>
+
+<h3>Step 1: Author environment.yml</h3>
+<p>Create a dedicated project folder and write an intentional <strong>authored request</strong> using a shell here-document. Adding <code>- conda-forge</code> above <code>- bioconda</code> encodes your channel preference directly in the file.</p>
 <pre><code class="language-bash">mkdir -p ~/projects/qc-environment
 cd ~/projects/qc-environment
 pwd
@@ -305,97 +395,132 @@ dependencies:
   - fastqc
   - multiqc
 YAML</code></pre>
-<p>Before creating an environment, predict: which Python minor version is requested, and what do the two channel lines control? Then confirm <code>pwd</code> is your project directory and inspect exactly what you saved:</p>
+<p>Before running the solver, predict: which Python minor version is requested, and why are no exact build hashes listed yet? Confirm the file contents exactly match what you wrote:</p>
 <pre><code class="language-bash">ls -l environment.yml
 sed -n '1,20p' environment.yml</code></pre>
-<p>The YAML is an <strong>authored request</strong>, not evidence of a successful dependency solve or installation. It records direct package requests and channel intent; the solver still chooses compatible builds using current metadata for your platform.</p>
-<ol>
-<li>If <code>environment.yml</code> is absent or malformed, stop and return to the save step before creating anything.</li>
-<li>Create the named environment from the saved specification, explicitly retaining the documented channel order and strict priority:
+<p>Output from inspecting the saved file:</p>
+<pre><code class="language-text">name: qc-tools
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - python=3.11
+  - fastqc
+  - multiqc</code></pre>
+
+<h3>Step 2: Create the environment from the authored request</h3>
+<p>Writing <code>environment.yml</code> saves your intent, not a solved environment. Run the create command below (<code>micromamba env create -f</code> is an equivalent alias) with strict channel flags so the solver resolves compatible builds for your OS and CPU architecture:</p>
 <pre><code class="language-bash">micromamba create -f environment.yml --override-channels -c conda-forge -c bioconda --channel-priority strict</code></pre>
-A successful solve/install ends without an error. If solving fails, stop and inspect the error, platform support, channels, and configuration rather than continuing with later commands.</li>
-<li>Check that the environment exists and that both requested tools run:
+<p><strong>If this fails:</strong> Stop here, inspect the solver error, and verify your channels and platform with <code>micromamba info</code> before running later steps.</p>
+
+<h3>Step 3: Verify the environment and executables</h3>
+<p>Confirm that <code>qc-tools</code> appears in your environment list and that Python, FastQC, and MultiQC each execute cleanly via <code>micromamba run</code>:</p>
 <pre><code class="language-bash">micromamba env list
 micromamba run -n qc-tools python --version
 micromamba run -n qc-tools fastqc --version
 micromamba run -n qc-tools multiqc --version</code></pre>
-The environment list should include <code>qc-tools</code>; the commands should print version information and return successfully. These checks establish that the commands are available, not that any biological data have been analyzed.</li>
-<li>Export the resolved environment, keep the original as an audit record, and prepare a reviewed copy before recreating it under a distinct, unused name:
+<p>Example output (illustrative):</p>
+<pre><code class="language-text">Python 3.11.17
+FastQC v0.13.0
+multiqc, version 1.35</code></pre>
+
+<h3>Step 4: Export, review, and recreate under a fresh name</h3>
+<p>Exporting the solved environment captures every transitive dependency and its exact version and build string. Keep the raw export as an audit log, copy it to a reviewed file, and inspect the header before recreating:</p>
 <pre><code class="language-bash">micromamba env export -n qc-tools &gt; environment-resolved.yml
 cp environment-resolved.yml environment-resolved-reviewed.yml
 sed -n '1,12p' environment-resolved-reviewed.yml</code></pre>
-In a text editor, make the reviewed copy's <code>channels:</code> block exactly the three lines below. Keep every exported dependency entry unchanged, and remove any top-level <code>prefix:</code> line so the file does not carry a machine-local path. This is a header fragment, not a complete environment file:
+<p><strong>Why review before recreating?</strong> An export can reorder channels (for example, listing <code>bioconda</code> before <code>conda-forge</code>) and appends a machine-local <code>prefix:</code> path at the bottom. Open <code>environment-resolved-reviewed.yml</code> in a text editor, make its <code>channels:</code> block match the three lines below, keep every dependency line intact, and remove any top-level <code>prefix:</code> line (this snippet is only the header block):</p>
 <pre><code class="language-yaml">channels:
   - conda-forge
   - bioconda</code></pre>
-Check the edited file before continuing. An export can reorder channels; do not assume it preserved the authored request or that CLI flags make its own channel block irrelevant. Do not reuse <code>qc-tools</code> for the copy:
+<p>Verify your edit with <code>grep -E '^(name|channels|prefix):|conda-forge|bioconda' environment-resolved-reviewed.yml</code>, then recreate the environment under a distinct unused name (<code>qc-tools-copy</code>) to confirm the pinned file resolves cleanly:</p>
 <pre><code class="language-bash">micromamba create -n qc-tools-copy -f environment-resolved-reviewed.yml --override-channels -c conda-forge -c bioconda --channel-priority strict
 micromamba run -n qc-tools-copy python --version
 micromamba run -n qc-tools-copy fastqc --version
 micromamba run -n qc-tools-copy multiqc --version
 micromamba env list</code></pre>
-The final list should show both names, and all three version checks must succeed. If <code>qc-tools-copy</code> already exists, choose another unused name consistently. The copied environment is a fresh solve on this platform, not a byte-identical lock. If it fails, retain the error and investigate pins and channel order rather than automatically switching to flexible priority.</li>
-<li>Compare your observation with the prediction: Python should report a 3.11 release, and FastQC and MultiQC should each print a version and exit successfully. The environment list should contain both names. This is evidence only that these tools were installed and callable for this platform; no FASTQ was supplied and no biological quality assessment was performed. If any step fails, stop at that step, retain its full error and the output of <code>micromamba info</code>, and report the OS/architecture, executable version, channels, and exact command. Do not label the YAML tested just because it was saved.</li>
-<li>Small variation: make a copy of the authored file, change only <code>python=3.11</code> to <code>python=3.12</code>, and solve into a distinct new name using the same strict channel flags. Predict what version the Python check should show. If solving succeeds, verify that plus both tool versions; if not, the solve may reflect platform/package compatibility or current metadata, not a syntax error by itself. Restore the known-good file rather than loosening channels indiscriminately.</li>
-<li>Optionally retain an intent-oriented export of explicitly requested packages, or an exact same-platform tarball lockfile:
+<p><strong>Check:</strong> Both <code>qc-tools</code> and <code>qc-tools-copy</code> appear in <code>micromamba env list</code>, and all three version commands succeed. Note that recreating from a reviewed YAML still runs a fresh solve on this platform rather than bypassing the solver. Compare your observed Python version (3.11.x) with your prediction from Step 1.</p>
+<p><strong>Small variation (optional check):</strong> Copy <code>environment.yml</code> to <code>environment-py312.yml</code>, change only <code>python=3.11</code> to <code>python=3.12</code>, and solve into a distinct test name (for example <code>qc-tools-py312</code>) using the same strict channel flags. If a package in the graph lacks a Python 3.12-compatible build on your platform, the solver will report which constraint failed rather than silently downgrading channels. Restore your working <code>environment.yml</code> rather than loosening channel priority.</p>
+
+<h3>Step 5: Choose the right export artifact for sharing</h3>
+<p>Different sharing scenarios call for different export formats. You can generate both a minimal intent file and a solver-free explicit lockfile from <code>qc-tools</code>:</p>
 <pre><code class="language-bash">micromamba env export -n qc-tools --from-history &gt; environment-history.yml
-micromamba env export -n qc-tools --explicit &gt; spec-explicit.txt</code></pre></li>
-</ol>
-<p>Keep your authored specification (<code>environment.yml</code>) alongside a resolved or locked export depending on how you share the workflow:</p>
+micromamba env export -n qc-tools --explicit &gt; spec-explicit.txt</code></pre>
+
+<figure class="my-8 bg-white border border-gray-200 rounded-xl p-4 shadow-sm"><img src="../images/tutorial-figures/conda-mamba-part1-spec-tiers.svg" alt="Diagram showing how an authored environment.yml resolves through strict channel priority into three export tiers: --from-history YAML, reviewed env export YAML, and --explicit or conda-lock lockfiles" width="960" height="380" loading="lazy" class="w-full h-auto rounded-lg" style="aspect-ratio: 960 / 380;"/><figcaption class="mt-3 text-sm text-gray-600">Keep your authored <code>environment.yml</code> alongside either a cross-platform intent export (<code>--from-history</code>) or a platform lockfile (<code>--explicit</code> or <code>conda-lock</code>).</figcaption></figure>
+
 <ul>
-<li><code>--from-history</code> keeps only packages you requested directly so you can recreate the intent cleanly across platforms.</li>
-<li><code>environment-resolved-reviewed.yml</code> pins concrete versions and build strings for readable auditing.</li>
-<li><code>--explicit</code> records exact archive URLs and MD5 hashes for deterministic same-OS, same-CPU rebuilds without invoking the solver.</li>
-<li><a href="https://conda.github.io/conda-lock/" rel="noopener" target="_blank"><code>conda-lock</code></a> writes one multi-architecture <code>conda-lock.yml</code> when teammates mix macOS (<code>osx-arm64</code>) laptops and Linux (<code>linux-64</code>) HPC nodes.</li>
+<li><strong><code>--from-history</code> (<code>environment-history.yml</code>):</strong> Stores only packages you requested directly, making it clean and portable across macOS and Linux.</li>
+<li><strong>Reviewed <code>env export</code> (<code>environment-resolved-reviewed.yml</code>):</strong> Pins exact versions and build strings for human-readable auditing on the same OS/architecture.</li>
+<li><strong><code>--explicit</code> (<code>spec-explicit.txt</code>):</strong> Starts with <code>@EXPLICIT</code> and lists exact tarball URLs and MD5 hashes for fast, solver-free rebuilds on the same OS and CPU (pass <code>--file spec-explicit.txt</code> when provisioning a new prefix).</li>
+<li><strong><a href="https://conda.github.io/conda-lock/" rel="noopener" target="_blank"><code>conda-lock</code></a> (<code>conda-lock.yml</code>):</strong> Pre-solves exact lockfiles across multiple platforms (such as <code>osx-arm64</code> laptops and <code>linux-64</code> HPC nodes) in one file.</li>
 </ul>
-<p>None of those files track raw inputs, genome builds, or script parameters, so archive those alongside your environment snapshot.</p>
-<h2>Use the environment in a workflow</h2>
-<p>Activation is a shell feature, so batch systems and scripts should initialize the shell in memory before calling <code>micromamba activate</code> (never write shell hooks to fixed shared paths in <code>/tmp</code> on multi-user clusters). A simpler alternative for single commands is <code>micromamba run</code>, which does not depend on shell initialization.</p>
-<pre><code class="language-bash"># Run one command without activating an interactive shell
+
+<h2>Use the environment in scripts and HPC jobs</h2>
+<p>Shell activation (<code>micromamba activate</code>) modifies your interactive shell's <code>PATH</code> via a shell function. Non-interactive batch scripts (such as Slurm job scripts) often skip <code>~/.bashrc</code>, so either invoke single commands with <code>micromamba run</code> or load the shell hook in memory before activating:</p>
+<pre><code class="language-bash"># Option A: run a single command without shell activation
 micromamba run -n qc-tools fastqc --help
 
-# Safe in-memory Bash job-script hook (no /tmp file collisions)
+# Option B: load the shell hook in memory inside a Bash script (safe on shared clusters)
 eval "$(micromamba shell hook -s bash)"
 micromamba activate qc-tools
 multiqc --version</code></pre>
-<p>For real HPC jobs, adapt the initialization to the cluster's module system and scheduler. Never hard-code a personal home directory into a shared workflow. Print the environment and tool versions into the job log so a later reader can distinguish software changes from biological or parameter changes.</p>
+<p>Avoid writing temporary shell hooks into shared <code>/tmp</code> paths on multi-user systems, and avoid hardcoding personal <code>/home/username</code> paths in shared pipeline scripts. Log tool versions (<code>fastqc --version</code>, <code>multiqc --version</code>) at the start of every batch run.</p>
+
 <h2>Troubleshoot systematically</h2>
-<h3>Command not found or activation fails</h3>
+
+<h3>Error: <code>critical libmamba Shell not initialized</code> or <code>command not found</code></h3>
+<p><strong>Cause:</strong> Your current shell cannot find the <code>micromamba</code> binary or has not loaded the activation shell function.</p>
 <pre><code class="language-bash">command -v micromamba
 micromamba info
 micromamba shell -h
 
-# Reinitialize the shell if the command exists but activation is unavailable
+# Temporary fix for the current Bash session:
+eval "$(micromamba shell hook -s bash)"
+
+# Permanent fix for interactive Bash sessions:
 micromamba shell init -s bash -r "$HOME/micromamba"
 exec bash</code></pre>
-<p>Check that the shell matches the initialization command, that the root prefix is the one you intended, and that a new shell has loaded the updated profile. On clusters, the login shell and batch shell may read different startup files.</p>
-<h3>Solving is slow or fails</h3>
-<pre><code class="language-bash"># Inspect channels and current configuration
+<p>On HPC clusters, login shells and batch shells may read different startup files (<code>~/.bash_profile</code> vs. <code>~/.bashrc</code>); using <code>eval "$(micromamba shell hook -s bash)"</code> or <code>micromamba run</code> inside job scripts avoids startup-file mismatches.</p>
+
+<h3>Error: <code>Could not solve for environment specs</code></h3>
+<p><strong>Cause:</strong> Requested versions conflict, a channel is missing or misordered, or a Bioconda package lacks a build for your CPU architecture (common on Apple Silicon <code>osx-arm64</code> Macs for older tools).</p>
+<pre><code class="language-bash"># Inspect current channel config and platform
 micromamba config list
 micromamba info
 
-# Test the request without changing the environment
+# Test a solve without downloading or installing anything
 micromamba create -n qc-dry-run --override-channels -c conda-forge -c bioconda --channel-priority strict \
   python=3.11 fastqc --dry-run
 
-# Search the selected channels
+# Verify package availability and supported architectures
 micromamba search -c conda-forge -c bioconda fastqc</code></pre>
-<p>Reduce the problem to a small request, make channels explicit, and remove unnecessary pins one at a time. Check whether every requested package supports your platform. A clean environment is usually easier to repair than a heavily modified base environment.</p>
-<h3>Mixing pip and Conda-compatible packages</h3>
-<p>Install compiled libraries and system-sensitive dependencies with Micromamba first. Use pip afterward only for genuinely missing packages. If pip replaces a shared dependency, the environment may still activate while producing runtime errors, so record and test the final state.</p>
-<h3>Disk quota, cache, and permissions</h3>
-<pre><code class="language-bash"># Inspect locations before deleting anything
+<p><strong>Fixes:</strong></p>
+<ul>
+<li>Confirm <code>conda-forge</code> comes before <code>bioconda</code> and strict priority is enabled.</li>
+<li>Remove overly tight patch pins (e.g., use <code>python=3.11</code> instead of <code>python=3.11.2</code>).</li>
+<li><strong>Apple Silicon (<code>osx-arm64</code>) Macs:</strong> If a Bioconda package only has Intel (<code>osx-64</code>) builds, create a dedicated emulated environment (with Rosetta 2 installed) using <code>--platform osx-64</code> and keep it separate from native ARM64 environments.</li>
+</ul>
+
+<h3>Runtime crashes after mixing <code>pip</code> and Conda-compatible packages</h3>
+<p><strong>Cause:</strong> Running bare global <code>pip install</code> or letting <code>pip</code> overwrite a compiled Conda library (such as <code>numpy</code> or <code>scipy</code>) breaks binary compatibility even if the environment still activates.</p>
+<p><strong>Fix:</strong> Install compiled packages with Micromamba first, declare PyPI-only packages under <code>pip:</code> in <code>environment.yml</code>, and check <code>which python</code> before running <code>python -m pip install</code>.</p>
+
+<h3>Error: <code>No space left on device</code> or HPC home quota exceeded</h3>
+<p><strong>Cause:</strong> Conda/Bioconda archives accumulate in <code>package cache</code> inside <code>$HOME/micromamba/pkgs</code>, which quickly fills small HPC home quotas.</p>
+<pre><code class="language-bash"># Inspect cache and environment paths first
 micromamba info
 
-# Remove unused package archives from the Micromamba cache
+# Remove unused tarballs and unreferenced packages
 micromamba clean --all
 
-# Check available disk space and quota using your system tools
+# Check disk space and HPC quota
 df -h "$HOME"
 quota -s 2&gt;/dev/null || true</code></pre>
-<p>Do not use <code>sudo</code> to install packages into a user-owned environment. On a cluster, request a project storage location if the home directory has a small quota, then initialize Micromamba with a root prefix there.</p>
+<p>Never use <code>sudo</code> to install into a user-owned prefix. On a cluster with a tight home quota, initialize Micromamba with <code>-r /project/your_group/$USER/micromamba</code> (or your cluster's recommended scratch/project storage path).</p>
+
 <h2>Optional alternative: two fresh solves from the authored request</h2>
-<p>This workflow uses the authored <code>environment.yml</code> saved above for two fresh solves, checks the tools in each environment, and retains a resolved export as an audit record. Unlike the reviewed-snapshot exercise, its second solve uses the original package requests and may select different compatible versions. Start with one analysis step rather than installing every program used by a laboratory.</p>
+<p>If you want an automated script that verifies your authored <code>environment.yml</code> solves cleanly twice from scratch without manual editing, use the script below. Unlike Step 4, the second environment solves directly from <code>environment.yml</code> rather than pinned build strings.</p>
 <pre><code class="language-bash">set -euo pipefail
 
 test -s environment.yml
@@ -407,6 +532,7 @@ micromamba run -n reproducible-qc python --version
 micromamba run -n reproducible-qc fastqc --version
 micromamba run -n reproducible-qc multiqc --version
 micromamba env export -n reproducible-qc &gt; reproducible-qc-resolved.yml
+
 # Fresh solve from the authored request, not the unreviewed export.
 micromamba create -n reproducible-qc-copy -f environment.yml \
   --override-channels -c conda-forge -c bioconda --channel-priority strict -y
@@ -414,23 +540,25 @@ micromamba run -n reproducible-qc-copy python --version
 micromamba run -n reproducible-qc-copy fastqc --version
 micromamba run -n reproducible-qc-copy multiqc --version
 
-# Keep the command output, YAML file, and input/reference metadata with the project.
 echo "Environment verification completed: $(date -Iseconds)"</code></pre>
+
 <h2>Practical checklist</h2>
 <ul>
-<li>Choose one primary manager and know its root prefix.</li>
-<li>Use separate environments for separate workflows.</li>
-<li>Prefer explicit conda-forge and Bioconda channels with strict priority.</li>
-<li>Install the initial package set together and test the actual executables.</li>
-<li>Keep an authored environment file and document platform-specific resolution.</li>
-<li>Use <code>micromamba run</code> or initialize the shell explicitly in jobs.</li>
-<li>Record versions, channels, references, parameters, and outputs for reproducibility.</li>
+<li>Use one primary manager per project and keep your <code>base</code> / root prefix clean.</li>
+<li>Create one small environment per workflow instead of one giant kitchen-sink environment.</li>
+<li>Enforce <code>conda-forge</code> before <code>bioconda</code> with <code>--override-channels</code> and <code>--channel-priority strict</code>.</li>
+<li>Request initial tools together, then verify executables with <code>which</code> and <code>--version</code>.</li>
+<li>Keep your authored <code>environment.yml</code> alongside a reviewed or locked export (<code>--from-history</code>, <code>--explicit</code>, or <code>conda-lock</code>).</li>
+<li>Use <code>micromamba run</code> or <code>eval "$(micromamba shell hook -s bash)"</code> in batch scripts.</li>
 </ul>
+
 <h2>Next steps</h2>
-<p>Apply this environment pattern to the <a href="scrna-seq-basics.html">single-cell RNA-seq tutorial</a>, the <a href="wes-variant-calling-pipeline.html">WES variant-calling pipeline</a>, or the <a href="reproducible-workflows-snakemake-nextflow.html">reproducible workflow tutorial</a>. Each analysis still needs biological quality control and documented reference data; package installation is only one part of reproducible research.</p>
+<p>Apply this environment pattern to the <a href="scrna-seq-basics.html">single-cell RNA-seq tutorial</a>, the <a href="wes-variant-calling-pipeline.html">WES variant-calling pipeline</a>, or the <a href="reproducible-workflows-snakemake-nextflow.html">reproducible workflow tutorial</a>.</p>
+
 <aside aria-label="Author's lab note" class="lesson-summary">
 <p><strong>Author's lab note:</strong> Keeping the <code>base</code> environment completely untouched and creating one small, named Micromamba environment per project has saved more manuscripts than any single debugging trick. Whenever an analysis finishes, I immediately save both an intent file (<code>--from-history</code>) and a pinned export into the project folder so I can regenerate figures months later even if global tools have upgraded.</p>
 </aside>
+
 <section aria-label="References and further reading" class="mt-10 p-6 bg-slate-50 border border-slate-200 rounded-xl">
 <h2 class="text-xl font-bold text-gray-900 mb-3">References and further reading</h2>
 <p class="text-sm text-gray-600 mb-3">Recorded Ubuntu x86_64 check: with Micromamba 2.9.0 and explicit strict channels, <code>environment.yml</code> solved cleanly and verified Python 3.11.17, FastQC 0.13.0, and MultiQC 1.35.</p>
@@ -441,22 +569,27 @@ echo "Environment verification completed: $(date -Iseconds)"</code></pre>
 <li><a class="text-blue-700 hover:underline" href="https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html" rel="noopener" target="_blank">Conda documentation: Managing environments</a></li>
 <li><a class="text-blue-700 hover:underline" href="https://bioconda.github.io/" rel="noopener" target="_blank">Bioconda documentation</a></li>
 <li><a class="text-blue-700 hover:underline" href="https://github.com/conda-forge/miniforge" rel="noopener" target="_blank">conda-forge Miniforge project</a></li>
+<li><a class="text-blue-700 hover:underline" href="https://conda.github.io/conda-lock/" rel="noopener" target="_blank">conda-lock: Multi-platform Conda lockfiles</a></li>
 </ul>
 </section>
+
 <div class="mt-10 p-8 bg-gray-50 border border-gray-200 rounded-xl">
-<h3 class="text-xl font-bold text-gray-900 mb-4">Knowledge Check &amp; Assessment</h3>
+<h3 class="text-xl font-bold text-gray-900 mb-4">Knowledge Check &amp; Practice</h3>
 <div class="space-y-4">
 <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-<h4 class="font-bold text-gray-800 mb-2">1. Concept Verification</h4>
-<p class="text-gray-600 text-sm">Why is an isolated environment safer than installing packages into a system Python or shared default environment?</p>
+<h4 class="font-bold text-gray-800 mb-2">1. Channel priority diagnosis</h4>
+<p class="text-gray-600 text-sm">Why should <code>conda-forge</code> appear above <code>bioconda</code> under strict channel priority, and what goes wrong if Anaconda <code>defaults</code> silently joins the solve?</p>
+<details class="mt-3"><summary class="text-sm font-medium text-blue-700 cursor-pointer">Show answer</summary><p class="mt-2 text-sm text-gray-700">Bioconda packages are compiled against <code>conda-forge</code> shared C/C++ libraries (such as <code>libdeflate</code>, <code>zlib</code>, and <code>openssl</code>). Putting <code>conda-forge</code> first with strict priority ensures every shared dependency comes from <code>conda-forge</code> rather than mixing incompatible ABI builds from <code>bioconda</code> or <code>defaults</code>.</p></details>
 </div>
 <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-<h4 class="font-bold text-gray-800 mb-2">2. Practical Execution</h4>
-<p class="text-gray-600 text-sm">Create an environment, install a named command-line tool, export the YAML, then recreate the environment from that file. </p>
+<h4 class="font-bold text-gray-800 mb-2">2. Practice exercise: author an alignment environment</h4>
+<p class="text-gray-600 text-sm">Draft an <code>environment.yml</code> named <code>align-dna</code> with Python 3.11, <code>samtools</code>, and <code>bcftools</code>, then write the create command that guarantees no default channels interfere.</p>
+<details class="mt-3"><summary class="text-sm font-medium text-blue-700 cursor-pointer">Show answer</summary><p class="mt-2 text-sm text-gray-700">Save <code>environment.yml</code> with <code>name: align-dna</code>, <code>channels: [conda-forge, bioconda, nodefaults]</code>, and <code>dependencies: [python=3.11, samtools, bcftools]</code>, then run <code>micromamba create -f environment.yml --override-channels -c conda-forge -c bioconda --channel-priority strict</code> and test with <code>micromamba run -n align-dna samtools --version</code>.</p></details>
 </div>
 <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-<h4 class="font-bold text-gray-800 mb-2">3. Troubleshooting</h4>
-<p class="text-gray-600 text-sm">If dependency solving fails, how will you inspect channels, version pins, channel priority, and conflicting packages before deleting the environment?</p>
+<h4 class="font-bold text-gray-800 mb-2">3. Troubleshooting a failed solve</h4>
+<p class="text-gray-600 text-sm">Before deleting an environment or relaxing strict channel priority when a solve fails, which three diagnostic commands should you run?</p>
+<details class="mt-3"><summary class="text-sm font-medium text-blue-700 cursor-pointer">Show answer</summary><p class="mt-2 text-sm text-gray-700">Run <code>micromamba info</code> (to check platform, root prefix, and config files), <code>micromamba search -c conda-forge -c bioconda &lt;pkg&gt;</code> (to confirm the package exists for your OS/CPU architecture), and add <code>--dry-run</code> to a minimal create command to isolate the conflicting pin.</p></details>
 </div>
 </div>
 </div>
@@ -467,7 +600,7 @@ echo "Environment verification completed: $(date -Iseconds)"</code></pre>
 <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
 </div>
 <div>
-<p class="text-sm text-gray-600 mb-2">This tutorial shows requested constraints where specified (for example, Python 3.11); it does not provide a tested version matrix, and unpinned packages resolve to versions available at solve time. Record the actual installed versions and platform for your own project, and re-check commands against official documentation. If a command does not work, you find an error, or the tutorial is no longer reproducible, please report it through the <a class="text-blue-600 hover:underline" href="../contact.html">Contact page</a></p>
+<p class="text-sm text-gray-600 mb-2">Unpinned package requests resolve to current channel builds on your OS and CPU architecture at solve time. Save your resolved export and platform metadata alongside your project code, and re-check syntax against the linked official documentation. Found an error or an outdated flag? Please report it on the <a class="text-blue-600 hover:underline" href="../contact.html">Contact page</a>.</p>
 <p class="text-sm text-gray-500">Author: <a class="text-blue-600 hover:underline font-medium" href="../about.html">Nasir Mahmood Abbasi, PhD</a> - Category: Package Management</p>
 </div>
 </div>
@@ -600,7 +733,7 @@ echo "Environment verification completed: $(date -Iseconds)"</code></pre>
 </script>
 <script src="../assets/vendor/prism/prism-1.29.0.js"></script>
 <script id="tutorial-code-data">
-window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"conda-mamba-part1":{"blocks":[{"language":"bash","sha256":"1c0961616d7a607f4535aff5ecd54a7704cbab02bf248465ed430a01bd7da011"},{"language":"powershell","sha256":"6d4c99dffaef238f83a471721051a4ba8434dc8025d5fe6911ed51f97c877686"},{"language":"bash","sha256":"46ae3f01b99d678ca08925a6dc48d6154f982670e7fcbabb25eb561a20de8b34"},{"language":"bash","sha256":"4438e1e8cde19f7c98a762a30d4e6f716d08a4e440c72e29312378ebff8ba06c"},{"language":"bash","sha256":"ffca64e9442cbfb39e0d018866749da072e2efeb18153af5e5757dbd8b2daca3"},{"language":"bash","sha256":"5f74f694d6840e964833e1fa79515613c32412dceb287e6b5ede6981c3af0763"},{"language":"bash","sha256":"9f75791af1dbf4144774e6a25c81aa5d2d6b080aca6f695bd95fa8a524e1e8d9"},{"language":"bash","sha256":"749ce977f161a9e3d43b3f99864b00693521ad96be56c980caa77ceb0189439c"},{"language":"bash","sha256":"0bc965278edd130ce92e67eee6f4710e8739262f97ba72ed85fb35a35e9ffc48"},{"language":"bash","sha256":"83fbfabadd12411e823402294aaa7ec08e3a008326bc70d70e550a0a9a3d6977"},{"language":"bash","sha256":"905e75066b4c0ab38b4c676a63235e9a6aea179f424541781042cbb6c24a50d1"},{"language":"bash","sha256":"116871028eba5b502eaec303d7bdd284af894f96d1889eeb7348553a2ae9853e"},{"language":"bash","sha256":"86167f1fbb16dc271a1cc7fc7bacf65d54c5023f193c8de44ce399ae8405bd27"},{"language":"yaml","sha256":"ee0ee6fdc5fa1e89a1fa01e62e006335c3f06af59f4c9d9a1339eefe5217478d"},{"language":"bash","sha256":"49e55f782d3986068791581b27416a43aabe99b180aaea6ad2fed2264ee47d92"},{"language":"bash","sha256":"f39974cf91005f284521448d069b3c11d686a30a2c64b0391754ef5cc86b9a55"},{"language":"bash","sha256":"58909245333c715a7ecd2cc59465e97b3c8a945ad89f28ba7370ad0f525eea5a"},{"language":"bash","sha256":"e9db83994efc6d7f1f25018583ef011f1ed60262fb726ea4cdbd14c1d9abd1f2"},{"language":"bash","sha256":"0f241d33e199c45d4c3eee3fce86903208439335b63e51d3aebf8d720cccabb4"},{"language":"bash","sha256":"27e7f67dd3dc78e35e5cb355d4e149af96f754f55ad2694c92e3d96710fb4832"},{"language":"bash","sha256":"ba7f7f7f76022a02e688d6e56eaa4f2d4d1268e5ab3389365e8c38500b7bbfc2"}],"groups":[]}}};
+window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"conda-mamba-part1":{"blocks":[{"language":"bash","sha256":"5aaeef7c2ce110ef52db9cddba9cdd2db7aeaa19858fdb9d93ac35e7ae5dd4d8"},{"language":"powershell","sha256":"777fd50cafc3ef45e753a6faa7a421ac62a45c1f76f0816f63a1c941f5b8d35d"},{"language":"bash","sha256":"c4f63055475fb7710308f60436fd45197c3172d60635bad2040b6ec744dffb04"},{"language":"text","sha256":"652656e4caf265405793c9d9cf2b9214462b45fd0256073ff5799fc001261f8c"},{"language":"bash","sha256":"4438e1e8cde19f7c98a762a30d4e6f716d08a4e440c72e29312378ebff8ba06c"},{"language":"bash","sha256":"401389e7dd40fde5e85c3e1403bc659c7d58460aae8312ba0e8280a3bd81f628"},{"language":"text","sha256":"a8155b6f1cf0711c76bcb456ef62dd61c0e05658c1882b409339d41649f84c59"},{"language":"bash","sha256":"5f74f694d6840e964833e1fa79515613c32412dceb287e6b5ede6981c3af0763"},{"language":"bash","sha256":"82a14c2ac0ea6bf8b5d6a76262c11f335223909296d06124974238de118ac36a"},{"language":"bash","sha256":"749ce977f161a9e3d43b3f99864b00693521ad96be56c980caa77ceb0189439c"},{"language":"yaml","sha256":"ba0d3c3b278da960475693f30edab26b8e165bb92519f124999d5b3bab36ede9"},{"language":"bash","sha256":"0bc965278edd130ce92e67eee6f4710e8739262f97ba72ed85fb35a35e9ffc48"},{"language":"bash","sha256":"83fbfabadd12411e823402294aaa7ec08e3a008326bc70d70e550a0a9a3d6977"},{"language":"text","sha256":"1a338c2ec3d9d9a058caef575b3134fb43bec8b09247fe15c91a980ee59344fc"},{"language":"bash","sha256":"905e75066b4c0ab38b4c676a63235e9a6aea179f424541781042cbb6c24a50d1"},{"language":"bash","sha256":"116871028eba5b502eaec303d7bdd284af894f96d1889eeb7348553a2ae9853e"},{"language":"text","sha256":"29658adfbbd538b90cc69d0d078563e6880178e20aca985216c7c8fa52a47ac3"},{"language":"bash","sha256":"86167f1fbb16dc271a1cc7fc7bacf65d54c5023f193c8de44ce399ae8405bd27"},{"language":"yaml","sha256":"ee0ee6fdc5fa1e89a1fa01e62e006335c3f06af59f4c9d9a1339eefe5217478d"},{"language":"bash","sha256":"49e55f782d3986068791581b27416a43aabe99b180aaea6ad2fed2264ee47d92"},{"language":"bash","sha256":"f39974cf91005f284521448d069b3c11d686a30a2c64b0391754ef5cc86b9a55"},{"language":"bash","sha256":"fba9589368d5e742802c776abdeb44c95f05e8a8bb602eddc834e90ddfecef07"},{"language":"bash","sha256":"2e08199373aafe9d5197fc3fea559d2255b25e84bd39b392fb38ac8e95d991e0"},{"language":"bash","sha256":"128994d9e2c4dc418d6a70e06f141f14d7dccc3fffc74a30df15f2a652dc3e57"},{"language":"bash","sha256":"2d6278c8041229e8541026eec187afd6d2bfaf5b9f80769a9c96beeab027b4de"},{"language":"bash","sha256":"f44a39c140ffb95883439fcafa97e1a4d07e2a93bd9472ea9c6492be8db7c736"}],"groups":[]}}};
 </script>
 <script src="../code-tabs.js?v=20261026-startup-v1"></script>
 <script src="../copy-code.js?v=20261025-r-first-v1"></script>

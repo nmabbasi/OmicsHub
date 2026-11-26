@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 440" width="960" height="440" role="img" aria-label="Comparison of line-oriented tools versus record-oriented seqkit on wrapped FASTA and malformed FASTQ files">
+  <title>Line-Oriented vs. Record-Oriented Text Processing for FASTA and FASTQ</title>
+  <rect x="0" y="0" width="960" height="440" rx="14" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="1.5"/>
+  <text x="32" y="38" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="20" font-weight="700" fill="#0F172A">Line-Oriented vs. Record-Oriented Tools</text>
+  <text x="32" y="62" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="13" fill="#475569">Why grep and awk break on wrapped FASTA or malformed FASTQ, while seqkit parses complete biological records</text>
+
+  <!-- Left panel: Line-oriented -->
+  <rect x="32" y="84" width="436" height="260" rx="10" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.5"/>
+  <path d="M 32 94 Q 32 84 42 84 L 458 84 Q 468 84 468 94 L 468 118 L 32 118 Z" fill="#B45309"/>
+  <text x="48" y="106" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="13" font-weight="700" fill="#FFFFFF">Line-Oriented Tools (grep, sed, cut, awk)</text>
+
+  <text x="48" y="138" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#1E293B">Wrapped FASTA: each newline is tested separately</text>
+  <rect x="48" y="148" width="192" height="22" rx="4" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="1"/>
+  <text x="56" y="163" font-family="monospace" font-size="11" fill="#334155">L3: &gt;gene_B_wrapped</text>
+  <rect x="48" y="174" width="192" height="22" rx="4" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="1"/>
+  <text x="56" y="189" font-family="monospace" font-size="11" fill="#334155">L4: CCA</text>
+  <rect x="48" y="200" width="192" height="22" rx="4" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="1"/>
+  <text x="56" y="215" font-family="monospace" font-size="11" fill="#334155">L5: TGCGTT</text>
+
+  <rect x="252" y="148" width="200" height="74" rx="6" fill="#FEF2F2" stroke="#FCA5A5" stroke-width="1.2"/>
+  <text x="264" y="169" font-family="monospace" font-size="11.5" font-weight="700" fill="#991B1B">grep 'ATGCG'</text>
+  <text x="264" y="189" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11.5" fill="#7F1D1D">Checks L4 and L5 alone.</text>
+  <text x="264" y="208" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11.5" font-weight="700" fill="#7F1D1D">Misses split motif!</text>
+
+  <text x="48" y="245" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#1E293B">Malformed FASTQ: assumes 4 lines without validation</text>
+  <rect x="48" y="255" width="192" height="74" rx="6" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="1"/>
+  <text x="56" y="272" font-family="monospace" font-size="11" fill="#334155">L1: @bad_length</text>
+  <text x="56" y="288" font-family="monospace" font-size="11" fill="#334155">L2: ATGC (4 bases)</text>
+  <text x="56" y="304" font-family="monospace" font-size="11" fill="#334155">L3: +</text>
+  <text x="56" y="320" font-family="monospace" font-size="11" fill="#991B1B">L4: III (3 chars!)</text>
+
+  <rect x="252" y="255" width="200" height="74" rx="6" fill="#FEF2F2" stroke="#FCA5A5" stroke-width="1.2"/>
+  <text x="264" y="276" font-family="monospace" font-size="11" font-weight="700" fill="#991B1B">awk 'NR%4==1 / NR%4==2'</text>
+  <text x="264" y="296" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11.5" fill="#7F1D1D">Skips L3 and L4 checks.</text>
+  <text x="264" y="315" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11.5" font-weight="700" fill="#7F1D1D">Writes misleading FASTA!</text>
+
+  <!-- Right panel: Record-oriented -->
+  <rect x="492" y="84" width="436" height="260" rx="10" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.5"/>
+  <path d="M 492 94 Q 492 84 502 84 L 918 84 Q 928 84 928 94 L 928 118 L 492 118 Z" fill="#0D9488"/>
+  <text x="508" y="106" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="13" font-weight="700" fill="#FFFFFF">Record-Oriented Tool (seqkit)</text>
+
+  <text x="508" y="138" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#1E293B">Wrapped FASTA: joins wrapped lines per record</text>
+  <rect x="508" y="148" width="192" height="74" rx="6" fill="#F0FDF4" stroke="#86EFAC" stroke-width="1.2"/>
+  <text x="518" y="169" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11.5" font-weight="700" fill="#14532D">Record: gene_B_wrapped</text>
+  <text x="518" y="191" font-family="monospace" font-size="12" font-weight="700" fill="#166534">CCATGCGTT</text>
+  <text x="518" y="209" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11" fill="#166534">(L4 + L5 joined in memory)</text>
+
+  <rect x="712" y="148" width="200" height="74" rx="6" fill="#ECFDF5" stroke="#6EE7B7" stroke-width="1.2"/>
+  <text x="724" y="169" font-family="monospace" font-size="11" font-weight="700" fill="#065F46">seqkit grep -s -P -p ATGCG</text>
+  <text x="724" y="189" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11.5" fill="#065F46">Searches joined sequence.</text>
+  <text x="724" y="208" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11.5" font-weight="700" fill="#065F46">Finds gene_B_wrapped.</text>
+
+  <text x="508" y="245" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#1E293B">Malformed FASTQ: checks sequence vs. quality length</text>
+  <rect x="508" y="255" width="192" height="74" rx="6" fill="#F0FDF4" stroke="#86EFAC" stroke-width="1.2"/>
+  <text x="518" y="276" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11.5" font-weight="700" fill="#14532D">Record: bad_length</text>
+  <text x="518" y="296" font-family="monospace" font-size="11" fill="#166534">seq length  = 4</text>
+  <text x="518" y="314" font-family="monospace" font-size="11" fill="#991B1B">qual length = 3 (mismatch)</text>
+
+  <rect x="712" y="255" width="200" height="74" rx="6" fill="#EFF6FF" stroke="#93C5FD" stroke-width="1.2"/>
+  <text x="724" y="276" font-family="monospace" font-size="11.5" font-weight="700" fill="#1E3A8A">seqkit fq2fa</text>
+  <text x="724" y="296" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11.5" fill="#1E40AF">Catches length mismatch.</text>
+  <text x="724" y="315" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11.5" font-weight="700" fill="#1E40AF">Exits nonzero; aborts cleanly.</text>
+
+  <!-- Bottom rule banner -->
+  <rect x="32" y="362" width="896" height="58" rx="10" fill="#EFF6FF" stroke="#BFDBFE" stroke-width="1.4"/>
+  <text x="52" y="385" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="12.5" font-weight="700" fill="#1E3A8A">Rule of thumb: Use grep, cut, and awk when 1 line = 1 record (TSV, BED, GTF, single-line FASTA headers).</text>
+  <text x="52" y="406" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="12.5" fill="#1E40AF">Use seqkit (or samtools / bcftools) whenever records span multiple lines or pair sequence bases with quality scores.</text>
+</svg>

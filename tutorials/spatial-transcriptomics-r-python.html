@@ -173,11 +173,31 @@ function toggleMobileMenu() {
 </div>
 <nav aria-label="Learning path navigation" class="reader-toolbar"><span class="reader-toolbar__heading">Learning path</span><a href="scrna-seq-basics.html" rel="prev" class="reader-toolbar__previous"><span class="reader-toolbar__direction"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5m0 0 7 7m-7-7 7-7"/></svg></span><span class="reader-toolbar__copy"><small>Previous prerequisite</small><strong>scRNA-seq Basics</strong></span></a><a data-catalogue-return="" href="../tutorials.html" class="reader-toolbar__library"><span class="reader-toolbar__library-mark" aria-hidden="true"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="6" height="6" rx="1.3"/><rect x="14" y="4" width="6" height="6" rx="1.3"/><rect x="4" y="14" width="6" height="6" rx="1.3"/><rect x="14" y="14" width="6" height="6" rx="1.3"/></svg></span><span><small>Browse</small><strong>All tutorials</strong></span></a><a href="../start-here.html#sh-single-cell" rel="next" class="reader-toolbar__next"><span class="reader-toolbar__copy"><small>Suggested next</small><strong>Return to single-cell and spatial choices</strong></span><span class="reader-toolbar__direction"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14m0 0-7-7m7 7-7 7"/></svg></span></a></nav>
 <article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--lab">
-<p class="lesson-lead">Spatial assays retain a relationship between measured RNA and a position in a tissue section. This Visium-oriented walkthrough follows the same analysis questions in R and Python: load a Space Ranger output, inspect expression on the tissue image, and compare expression-based clusters with anatomy.</p>
-<section class="lesson-summary tutorial-learning-contract" data-tutorial-format="advanced-template" aria-label="Learning format"><p><strong>Format: Advanced template.</strong> Follow a shared public-data Visium workflow (<code>V1_Adult_Mouse_Brain</code>) in R or Python. Both language branches were executed on the same H5 matrix and spatial assets on Ubuntu so you can inspect spot-QC metrics and clusters firsthand. These are compact, tested examples, not a complete QC workflow or a version-locked analysis pipeline.</p></section>
-<p><strong>Scope and input:</strong> both readers below explicitly use <code>filtered_feature_bc_matrix.h5</code> beside a <code>spatial/</code> directory. A matrix-market folder alone is not the H5 file these calls expect. For your own conventional Visium v1/v2 output, point both readers at the same <code>outs/</code> directory with those assets. The <a href="https://www.10xgenomics.com/support/software/space-ranger/latest/analysis/outputs/output-overview" rel="noopener" target="_blank">Space Ranger output guide</a> documents the files. These calls do not cover Xenium, MERFISH, Visium HD binning, segmentation, deconvolution, or a complete QC workflow.</p>
+<p class="lesson-lead">Dissociating tissue for single-cell RNA-seq erases where cells sat relative to one another. Spatial transcriptomics preserves tissue coordinates alongside gene counts, letting you load a 10x Visium dataset in R (Seurat) or Python (Squidpy and Scanpy), overlay quality metrics and marker genes onto the histology image, and test whether transcriptional clusters match real anatomy.</p>
+<section class="lesson-summary tutorial-learning-contract" data-tutorial-format="advanced-template" aria-label="Learning format"><p><strong>Format: Advanced template.</strong> Work through one shared public Visium dataset (<code>V1_Adult_Mouse_Brain</code>) in R or Python. Steps 1-3 follow the baseline matrix and spatial assets tested on Ubuntu; Step 4 and the QC/resolution checks extend that baseline using documented Seurat v5 and Squidpy APIs.</p></section>
+<div class="lesson-summary">
+<p><strong>What problem this solves:</strong> Unaligned coordinates, aggressive flat UMI filtering, and expression-only clustering can hide real histology or turn multi-cell capture spots into misleading "cell types." This walkthrough pairs spot counts, histology pixels, QC covariates, and spatial statistics in one reproducible sequence.</p>
+<p><strong>What you will be able to do:</strong></p>
+<ul>
+<li>Stage a conventional Visium dataset (<code>filtered_feature_bc_matrix.h5</code> plus <code>spatial/</code>) and handle Space Ranger v1 versus v2+ coordinate files.</li>
+<li>Compute spot-level QC metrics (<code>nCount_Spatial</code>, <code>nFeature_Spatial</code>, and mitochondrial fraction) before normalization without erasing low-UMI anatomical compartments such as white matter.</li>
+<li>Plot QC covariates and marker genes directly over H&amp;E tissue images and diagnose coordinate-scaling mismatches.</li>
+<li>Run PCA, inspect variance explained and clustering resolution sensitivity, and compute Moran's <em>I</em> spatial autocorrelation and neighborhood enrichment.</li>
+<li>Choose resolution-appropriate downstream tools across Visium v1/v2, Visium HD, and targeted imaging platforms (Xenium, CosMx, MERFISH).</li>
+</ul>
+<p><strong>Prerequisites &amp; time:</strong> About 45-60 minutes. Assumes introductory R or Python, basic shell navigation (<a href="command-line-part1.html">Command Line Part 1</a>), and familiarity with single-cell normalization and clustering (<a href="scrna-seq-basics.html">scRNA-seq Basics</a>).</p>
+<p><strong>Scope:</strong> Both language branches target conventional Visium v1/v2 outputs containing <code>filtered_feature_bc_matrix.h5</code> and a sibling <code>spatial/</code> folder (for your own Space Ranger run, point both readers at <code>outs/</code>). Section 5 covers how the workflow changes for Visium HD binning, cell-type deconvolution, and subcellular imaging.</p>
+</div>
+
+<h2 id="how-visium-aligns">How Visium links gene counts to tissue pixels</h2>
+<p>Three Space Ranger outputs must agree before any spatial plot makes sense. A <strong>spot barcode</strong> identifies one 55 micrometre capture spot on the slide (spaced ~100 micrometres center-to-center, typically capturing 1-10+ cells). The H5 matrix stores UMI counts per barcode, the positions CSV maps each barcode to full-resolution microscope pixel coordinates (<code>pxl_row_in_fullres</code>, <code>pxl_col_in_fullres</code>), and <code>scalefactors_json.json</code> rescales those coordinates to match the downsampled PNG histology images.</p>
+<figure class="my-8 bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+<img src="../images/tutorial-figures/spatial-transcriptomics-r-python-coordinate-alignment.svg" alt="Two-part diagram showing Visium file alignment and spatial assay resolution comparison: top row connects filtered_feature_bc_matrix.h5, tissue_positions CSV, and scalefactors_json.json into a Seurat or AnnData spatial object; bottom row compares Visium 55 micrometre spots with deconvolution, Visium HD 8 or 16 micrometre bins with SketchData or SpatialData, and Xenium, CosMx, and MERFISH with Baysor or Proseg segmentation checks." width="960" height="440" loading="lazy" class="w-full h-auto rounded-lg" style="aspect-ratio: 960 / 440;"/>
+<figcaption class="mt-3 text-sm text-gray-600"><strong>From files to spatial interpretation.</strong> Top: Seurat and Squidpy join the count matrix, coordinate table, and scale factors by spot barcode so points land on the H&amp;E image. Bottom: physical capture resolution determines whether multi-cell deconvolution, memory sketching, or cell-segmentation checks are required downstream.</figcaption>
+</figure>
+
 <h2 id="shared-visium-input">Prepare one public sample for both languages</h2>
-<p>Download the <a download="" href="../files/visium-example/prepare_inputs.py">Python input preparer</a> into a fresh project directory and run the command below (Python 3.10+, no R or Squidpy needed yet). It downloads approximately 30 MB from 10x Genomics, checks recorded SHA256 fingerprints and stages the mouse-brain H5 matrix and images together. If a standard request hits HTTP 403 or a transient network error, it retries with validated byte-range requests and refuses to overwrite an existing directory.</p>
+<p>Why stage the data with checksums first: a truncated H5 matrix or missing scale-factor JSON causes cryptic reader errors later. Download the <a download="" href="../files/visium-example/prepare_inputs.py">Python input preparer</a> into a fresh project directory and run it with Python 3.10+ (no R or Squidpy needed yet). It fetches about 30 MB from 10x Genomics, verifies recorded SHA256 fingerprints, retries with byte-range requests if HTTP 403 or a transient network error occurs, and refuses to overwrite an existing folder.</p>
 <pre><code class="language-bash">python3 prepare_inputs.py --output data/visium/V1_Adult_Mouse_Brain
 </code></pre>
 <pre><code class="language-text">data/visium/V1_Adult_Mouse_Brain/
@@ -189,64 +209,125 @@ function toggleMobileMenu() {
     tissue_lowres_image.png
     tissue_hires_image.png
 </code></pre>
-<p><strong>Verified boundary:</strong> checksum verification, archive staging, and loading all 2,702 spots and 32,285 features succeeded end to end in both R and Python on Ubuntu, producing matching QC, marker, and cluster overlays (<a href="../files/visium-example/verified-inputs.json">source digests</a>, <a href="../files/visium-example/README.md">run notes</a>). Always record installed versions before running (<code>python -c "import scanpy,squidpy; print(scanpy.__version__, squidpy.__version__)"</code> and <code>R -q -e 'sessionInfo()'</code>) and verify domain labels against tissue histology.</p>
-<h2>1. Load a Visium library</h2>
-<p>Keep the expression matrix and tissue metadata together. Squidpy's Visium reader loads the count matrix and, when available in the expected output, spot coordinates, image, and scale factors. Seurat's loader similarly expects the matrix file and image data under the specified directory. A missing or mismatched <code>spatial/</code> directory is a common reason an image-backed plot cannot be made.</p>
+<p><strong>Space Ranger v1 vs v2+ layout:</strong> this Space Ranger 1.1.0 sample stores coordinates in <code>spatial/tissue_positions_list.csv</code> without a header row. Space Ranger v2.0+ (including CytAssist Visium) renames that file to <code>spatial/tissue_positions.csv</code> and adds a header row (<code>barcode,in_tissue,array_row,array_col,pxl_row_in_fullres,pxl_col_in_fullres</code>), documented in the <a href="https://www.10xgenomics.com/support/software/space-ranger/latest/analysis/outputs/spatial-outputs" rel="noopener" target="_blank">Space Ranger spatial outputs guide</a>. Current Seurat v5 and Squidpy detect both formats; older package releases fail on v2+ unless updated.</p>
+<p><strong>Verified boundary:</strong> checksum verification, archive staging, and loading all 2,702 spots and 32,285 features succeeded end to end in both R and Python on Ubuntu (<a href="../files/visium-example/verified-inputs.json">source digests</a>, <a href="../files/visium-example/README.md">run notes</a>). Always record installed versions before running (<code>python -c "import scanpy,squidpy; print(scanpy.__version__, squidpy.__version__)"</code> or <code>R -q -e 'sessionInfo()'</code>).</p>
+
+<h2 id="load-and-qc">1. Load the Visium library, compute spot QC, and normalize</h2>
+<p>Compute spot-level QC metrics on the raw counts <strong>before</strong> normalization so <code>nCount_Spatial</code> / <code>total_counts</code> (total UMIs per spot), <code>nFeature_Spatial</code> / <code>n_genes_by_counts</code> (detected genes per spot), and mitochondrial transcript percentage (<code>^mt-</code> in mouse, <code>^MT-</code> in human) reflect true capture depth and tissue preservation. R uses <code>SCTransform</code> (regularized negative binomial Pearson residuals), whereas Python uses library-size normalization plus <code>log1p</code> and 2,000 highly variable genes (HVGs). These are two valid variance-stabilization choices rather than numerically identical transformations.</p>
 <h3>R: Seurat</h3>
-<p>The H5 reader requires <code>hdf5r</code> in the active R library. Install it with <code>install.packages("hdf5r")</code> if missing, then confirm it loads before this branch. On the tested Ubuntu source-install route, HDF5 development files (<code>libhdf5-dev</code>) and an existing R build toolchain were also needed. This is an additional reader dependency, not a complete fresh R/Seurat installation guide.</p>
+<p>The H5 reader requires <code>hdf5r</code> in the active R library (<code>install.packages("hdf5r")</code>; on Ubuntu source installs, <code>libhdf5-dev</code> and a C/C++ build toolchain are also required). Installing the optional Bioconductor package <code>glmGamPoi</code> speeds up <code>SCTransform</code> substantially.</p>
 <pre><code class="language-r">library(Seurat)
 library(ggplot2)
 if (!requireNamespace("hdf5r", quietly = TRUE)) stop("Install hdf5r to read the H5 matrix.")
 
 shared_input &lt;- "data/visium/V1_Adult_Mouse_Brain"
 spatial_data &lt;- Load10X_Spatial(data.dir = shared_input, filename = "filtered_feature_bc_matrix.h5")
+
+# Compute mitochondrial fraction on raw counts (mouse uses lowercase "^mt-"; human uses "^MT-").
+spatial_data[["percent.mt"]] &lt;- PercentageFeatureSet(spatial_data, pattern = "^mt-")
+print(dim(spatial_data))
+print(summary(spatial_data$nCount_Spatial))
+
 spatial_data &lt;- SCTransform(spatial_data, assay = "Spatial", verbose = FALSE)
 </code></pre>
-<p><code>SCTransform</code> can take several minutes on this sample without the optional <code>glmGamPoi</code> backend. The tested run used Seurat's slower native fallback; inspect its messages and let the computation finish rather than changing packages midway through a run.</p>
-<h3>Python: Squidpy and Scanpy</h3>
+<p>Without <code>glmGamPoi</code>, <code>SCTransform</code> falls back to a slower native R fit and can take several minutes on this 2,702-spot library; let it finish rather than interrupting mid-fit. Confirm <code>Images(spatial_data)</code> returns <code>"slice1"</code> before plotting.</p>
+<h3>Python: Squidpy</h3>
 <pre><code class="language-python">import scanpy as sc
 import squidpy as sq
 
 shared_input = "data/visium/V1_Adult_Mouse_Brain"
 adata = sq.read.visium(shared_input, counts_file="filtered_feature_bc_matrix.h5")
 adata.var_names_make_unique()
-sc.pp.calculate_qc_metrics(adata, inplace=True)
+
+# Flag mitochondrial genes on raw counts before normalization (use "MT-" for human).
+adata.var["mt"] = adata.var_names.str.startswith("mt-")
+sc.pp.calculate_qc_metrics(adata, qc_vars=["mt"], inplace=True)
+print(adata)
+
+# Preserve raw counts in a layer before normalizing for clustering and marker plots.
+adata.layers["counts"] = adata.X.copy()
 sc.pp.normalize_total(adata, inplace=True)
 sc.pp.log1p(adata)
 sc.pp.highly_variable_genes(adata, flavor="seurat", n_top_genes=2000)
 </code></pre>
-<p>Python's normalization and highly-variable-gene selection and Seurat's <code>SCTransform</code> are alternative preprocessing choices; they are not identical transformations or numerically interchangeable. Inspect object and assay/layer names when adapting to another release. If loading fails, confirm the selected directory directly contains <code>filtered_feature_bc_matrix.h5</code> and <code>spatial/</code>. For your own Space Ranger run this is usually <code>outs/</code>; the prepared public sample uses the named directory above. If counts load without an image, inspect the spatial assets and library metadata before interpreting plots.</p>
-<aside class="lesson-checkpoint"><strong>Before plotting:</strong> confirm that observations and genes are present, the intended tissue image is attached, and coordinates align with that image. Check the feature names in the object; gene-symbol capitalization and assay/layer selection can make a biologically plausible marker appear absent. Stop if the object has zero observations/features, coordinates are missing, or spot positions do not overlay the tissue; resolve input/library mismatches rather than interpreting a coordinate-only scatter as image validation.</aside>
-<h2>2. Plot a feature against tissue context</h2>
-<p>First plot a basic library-size QC measure, then choose a feature that exists in the object and plot it over the image. The code uses <code>Snap25</code> and <code>Mbp</code> as example labels only; their presence, biological relevance, and pattern depend on species, assay, tissue, and feature naming. Inspect the image key and color scale before interpreting a spatial gradient.</p>
-<h3>R</h3>
-<pre><code class="language-r">SpatialFeaturePlot(spatial_data, features = c("nCount_Spatial", "Snap25")) &amp;
-  theme(legend.position = "right")
+<p>For newer scverse pipelines and Visium HD, <a href="https://spatialdata.scverse.org/" rel="noopener" target="_blank">SpatialData</a> and <code>spatialdata_io.visium</code> provide the Zarr-backed container superseding legacy readers, while <code>sq.read.visium</code> remains convenient for conventional Visium AnnData workflows. After loading, check that your object dimensions and spatial slots match this expected layout:</p>
+<pre><code class="language-text"># Example output (illustrative summary matching the 2,702-spot, 32,285-feature matrix)
+# R: dim(spatial_data) -&gt; 32285 features, 2702 samples (spots); Images(spatial_data) -&gt; "slice1"
+# Python: AnnData object with n_obs x n_vars = 2702 x 32285
+#     obs: 'in_tissue', 'array_row', 'array_col', 'n_genes_by_counts', 'total_counts', 'pct_counts_mt'
+#     var: 'gene_ids', 'feature_types', 'genome', 'mt', 'highly_variable'
+#     uns: 'spatial'
+#     obsm: 'spatial'
 </code></pre>
-<p>The returned R figure combines panels with patchwork. Its <code>&amp;</code> operator applies the legend theme to every panel; using <code>+</code> here only styles the last panel and can leave the QC colorbar cramped above the first plot.</p>
+<aside class="lesson-checkpoint"><strong>Before plotting:</strong> confirm that spot and gene counts are non-zero (<code>2,702 x 32,285</code> here), <code>obsm["spatial"]</code> or <code>Images(spatial_data)</code> is populated, and gene symbols match your species capitalization (<code>Snap25</code> for mouse, <code>SNAP25</code> for human). Stop and fix missing paths or reader mismatches before interpreting any downstream scatter plot.</aside>
+
+<h2 id="plot-spatial-features">2. Plot QC metrics and marker genes against tissue context</h2>
+<p>Inspecting library size and mitochondrial percentage spatially alongside canonical anatomical markers answers two questions at once: whether spots align cleanly over the H&amp;E tissue section, and whether low-UMI spots represent damaged tissue or normal low-RNA histology. Here <code>Snap25</code> marks neuron-rich gray matter and hippocampus, while <code>Mbp</code> marks myelinated white matter.</p>
+<h3>R</h3>
+<pre><code class="language-r">SpatialFeaturePlot(
+  spatial_data,
+  features = c("nCount_Spatial", "percent.mt", "Snap25", "Mbp"),
+  ncol = 2
+) &amp; theme(legend.position = "right")
+</code></pre>
+<p>The returned R figure combines four panels with patchwork. Its <code>&amp;</code> operator applies the legend theme to every panel; using <code>+</code> only styles the last panel and can leave earlier QC colorbars cramped.</p>
 <h3>Python</h3>
-<pre><code class="language-python">sq.pl.spatial_scatter(adata, color=["total_counts", "Snap25"], img_alpha=0.5, cmap="magma")
+<pre><code class="language-python">sq.pl.spatial_scatter(
+    adata,
+    color=["total_counts", "pct_counts_mt", "Snap25", "Mbp"],
+    ncols=2,
+    img_alpha=0.5,
+    cmap="magma",
+)
 </code></pre>
-<p>Calculate <code>total_counts</code> before normalization and log transformation, as above. It then records raw counts per spot; recomputing it from log-transformed expression would no longer measure library size. The marker panel uses the processed expression matrix, so its values are on a different scale from the raw-count QC panel.</p>
-<p>Squidpy's <code>spatial_scatter</code> replaces the deprecated <code>sc.pl.spatial</code> API for image overlays. Confirm your run succeeded by checking that spots align cleanly over the tissue image and both colorbars remain legible; if spots shift or vanish, check the <code>spatial/</code> folder paths and scale factors first. Remember that spatial UMI count is an anatomical QC check rather than a flat filtering cutoff: in mouse brain, myelinated white matter (high <code>Mbp</code>) carries three to five times fewer UMIs per spot than neuron-dense hippocampal pyramidal layers (high <code>Snap25</code>), just as collagen-rich tumour stroma shows lower counts than epithelial tumour nests, so aggressive global UMI thresholds erase real histology.</p>
-<h2>3. Cluster expression profiles, then inspect their locations</h2>
-<p>Expression-neighbor clustering groups observations by transcriptional similarity. It does not by itself define spatial domains. Build the expression graph, cluster, and then display cluster labels in tissue coordinates. Note that Seurat's <code>SCTransform</code> + Louvain/SLM clustering and Scanpy's total-count log-normalization + Leiden clustering weight variance differently across high-abundance markers, so exact cluster numbers and minor cortical sub-layer splits will not match one-to-one even when major anatomical compartments (cortex layers, hippocampus, thalamus, white matter, hypothalamus) align closely.</p>
-<h3>R</h3>
+<p><strong>What you should see:</strong> spots should sit squarely inside the coronal mouse-brain H&amp;E boundary, with high <code>Snap25</code> across the cerebral cortex and hippocampal pyramidal layer and high <code>Mbp</code> tracing the corpus callosum and white-matter tracts. Squidpy's <code>spatial_scatter</code> replaces the deprecated <code>sc.pl.spatial</code> function.</p>
+<p><strong>Why flat UMI filtering fails in spatial data:</strong> in mouse brain, myelinated white matter (high <code>Mbp</code>) carries 3-5x fewer UMIs per spot than neuron-dense hippocampal layers (high <code>Snap25</code>). In solid tumours, collagen-rich stroma similarly shows much lower UMI counts than dense epithelial tumour nests. Applying a rigid global minimum-UMI cutoff without checking tissue overlays deletes intact anatomical compartments rather than technical noise.</p>
+
+<h2 id="cluster-spatial-spots">3. Reduce dimensions, cluster expression profiles, and check resolution sensitivity</h2>
+<p>PCA compresses the 2,000 highly variable genes into orthogonal axes of co-variation. Before clustering, inspect the variance-explained curve (elbow plot) to check how many PCs capture structured signal rather than noise, then test at least two clustering resolutions with fixed random seeds. Because graph clustering groups spots by <strong>transcriptional similarity</strong> alone without using spot coordinates, verify whether clusters correspond to coherent anatomical regions or simply track sequencing depth (<code>nCount_Spatial</code> / <code>total_counts</code>).</p>
+<h3>R: Seurat</h3>
 <pre><code class="language-r">spatial_data &lt;- RunPCA(spatial_data, assay = "SCT", verbose = FALSE)
+ElbowPlot(spatial_data, ndims = 40)
+
 spatial_data &lt;- FindNeighbors(spatial_data, reduction = "pca", dims = 1:30)
-spatial_data &lt;- FindClusters(spatial_data, verbose = FALSE)
-SpatialDimPlot(spatial_data, label = TRUE, label.size = 3)
+spatial_data &lt;- FindClusters(spatial_data, resolution = c(0.4, 0.8), random.seed = 42, verbose = FALSE)
+SpatialDimPlot(
+  spatial_data,
+  group.by = c("SCT_snn_res.0.4", "SCT_snn_res.0.8"),
+  label = TRUE,
+  label.size = 3
+)
 </code></pre>
-<h3>Python</h3>
-<pre><code class="language-python">sc.pp.pca(adata)
-sc.pp.neighbors(adata)
-sc.tl.leiden(adata, key_added="clusters")
-sq.pl.spatial_scatter(adata, color="clusters", img_alpha=0.4)
+<h3>Python: Scanpy</h3>
+<pre><code class="language-python">sc.pp.pca(adata, mask_var="highly_variable")
+sc.pl.pca_variance_ratio(adata, n_pcs=40)
+
+sc.pp.neighbors(adata, n_pcs=30)
+# Scanpy 1.10+ transitions Leiden to the igraph backend (pass flavor="leidenalg" only for legacy runs).
+for res, key in [(0.5, "clusters_05"), (0.8, "clusters_08")]:
+    sc.tl.leiden(
+        adata,
+        resolution=res,
+        flavor="igraph",
+        n_iterations=2,
+        directed=False,
+        random_state=0,
+        key_added=key,
+    )
+
+sq.pl.spatial_scatter(adata, color=["clusters_05", "clusters_08"], ncols=2, img_alpha=0.4)
 </code></pre>
-<p>These are compact workflow fragments, not a fully specified analysis: package versions, feature filtering, dimensionality choices, clustering resolution, and reproducibility settings need to be chosen and recorded for the dataset. A cluster boundary can reflect cell mixture, tissue composition, depth, or technical structure. Compare the map with morphology and QC before assigning a tissue-domain label.</p>
-<h2>4. Test spatially variable features and neighborhood co-enrichment (template extension)</h2>
-<p>Steps 1 to 3 used spatial coordinates only to display expression-derived clusters. To use spatial geometry directly in statistical testing, construct a spatial neighbor graph across tissue spots and test either spatial autocorrelation (Moran's <em>I</em>, identifying genes with coherent anatomical gradients independent of cluster labels) or cluster-to-cluster neighborhood enrichment (testing whether two domains, such as lymphoid aggregates and an invasive tumour front, sit adjacent more often than expected under spatial permutation). The paired R and Python templates below extend the objects created above (not executed in the baseline smoke check):</p>
-<h3>R</h3>
+<p><strong>Sanity checks after clustering:</strong> compare the two resolutions on the tissue image and check per-cluster QC medians (for example, <code>adata.obs.groupby("clusters_05", observed=True)[["total_counts", "pct_counts_mt"]].median()</code> in Python or <code>VlnPlot(spatial_data, features = c("nCount_Spatial", "percent.mt"), group.by = "SCT_snn_res.0.4")</code> in R). Because Seurat's <code>SCTransform</code> + Louvain/SLM and Scanpy's log-normalization + Leiden weight high-abundance genes differently, exact cluster counts and sub-layer splits differ between R and Python even when major compartments (cortex layers, hippocampus, thalamus, white matter, hypothalamus) agree. If you need clusters that enforce spatial contiguity directly, use spatially aware domain methods such as BayesSpace or BANKSY rather than expression-only Leiden/Louvain.</p>
+
+<figure class="my-8 bg-white border border-gray-200 rounded-xl p-4 shadow-sm"><img src="../images/tutorial-figures/spatial-visium-tissue-domains.png" alt="Hexagonal Visium spatial spot lattice showing tissue domains and spatial marker gradient" width="1590" height="795" loading="lazy" class="w-full h-auto rounded-lg" style="aspect-ratio: 1590 / 795;"/><figcaption class="mt-3 text-sm text-gray-600">Illustrative simulated benchmark: aligning transcriptional clusters directly onto the 55 um capture spot geometry verifies contiguous tissue domains before calling spatially variable genes.</figcaption></figure>
+
+<h2 id="spatial-statistics">4. Test spatially variable features and neighborhood enrichment (template extension)</h2>
+<p>Steps 1-3 used spot coordinates only for visualization. To test spatial geometry statistically, construct a spatial neighbor graph and compute two metrics:</p>
+<ul>
+<li><strong>Moran's <em>I</em> spatial autocorrelation:</strong> measures whether a gene's expression correlates between neighboring spots. Values near <code>+1</code> indicate smooth regional gradients or sharp anatomical compartments; values near <code>0</code> indicate spatial randomness.</li>
+<li><strong>Neighborhood enrichment (permutation z-score):</strong> shuffles cluster labels across the spot lattice (<code>n_perms = 1000</code>) to test whether two clusters sit adjacent more often (<code>z &gt; 0</code>) or less often (<code>z &lt; 0</code>) than expected by chance.</li>
+</ul>
+<h3>R: Seurat spatial statistics</h3>
 <pre><code class="language-r"># Compute Moran's I spatial autocorrelation on top SCT variable features (requires Rfast2 or ape).
 spatial_data &lt;- FindSpatiallyVariableFeatures(
   spatial_data,
@@ -254,38 +335,88 @@ spatial_data &lt;- FindSpatiallyVariableFeatures(
   features = VariableFeatures(spatial_data)[1:1000],
   selection.method = "moransi"
 )
-top_svg &lt;- head(SpatiallyVariableFeatures(spatial_data, selection.method = "moransi"), 4)
+moran_tbl &lt;- SVFInfo(spatial_data, method = "moransi")
+head(moran_tbl, 10)
+
+top_svg &lt;- head(SpatiallyVariableFeatures(spatial_data, method = "moransi"), 4)
 SpatialFeaturePlot(spatial_data, features = top_svg, ncol = 2) &amp;
   theme(legend.position = "right")
 </code></pre>
-<h3>Python</h3>
+<h3>Python: Squidpy spatial statistics</h3>
 <pre><code class="language-python"># Build the hexagonal Visium spot-adjacency graph (6 immediate neighbors per interior spot).
 sq.gr.spatial_neighbors(adata, coord_type="grid", n_neighs=6, n_rings=1)
 
-# Rank highly variable genes by Moran's I spatial autocorrelation and permutation FDR.
+# Rank highly variable genes by Moran's I spatial autocorrelation and FDR.
+# Squidpy &lt;= 1.8.3 uses seed=0 (Squidpy &gt;= 1.8.4 renames seed to rng=0).
 hvg_names = adata.var_names[adata.var["highly_variable"]].tolist()
-sq.gr.spatial_autocorr(adata, mode="moran", genes=hvg_names, n_perms=100, n_jobs=1)
-print(adata.uns["moranI"].head(10)[["I", "pval_norm_fdr_bh"]])
+sq.gr.spatial_autocorr(adata, mode="moran", genes=hvg_names, n_perms=1000, seed=0, n_jobs=1)
+print(adata.uns["moranI"].head(10)[["I", "pval_norm_fdr_bh", "pval_sim_fdr_bh"]])
 
 # Test permutation-based spatial neighborhood enrichment across expression clusters.
-sq.gr.nhood_enrichment(adata, cluster_key="clusters")
-sq.pl.nhood_enrichment(adata, cluster_key="clusters")
+sq.gr.nhood_enrichment(adata, cluster_key="clusters_05", n_perms=1000, seed=0)
+sq.pl.nhood_enrichment(adata, cluster_key="clusters_05")
 </code></pre>
-<h2>5. Interpret a pattern without overclaiming: Visium v1/v2 vs Visium HD and subcellular imaging</h2>
-<p>A feature appearing in a region supports a spatial association in this tissue section, not direct ligand-receptor signaling or lineage ancestry. Because nearby spots share microanatomical gradients and lateral mRNA diffusion during permeabilization ("spot bleeding"), spot-level Wilcoxon tests treating adjacent spots as independent observations severely inflate false positives. Match your interpretation and software stack to the physical resolution of the assay:</p>
+<p><strong>Statistical note on <code>n_perms</code>, Squidpy versions, and Seurat v5 syntax:</strong> in Squidpy, setting <code>n_perms=100</code> caps empirical permutation p-values at <code>1 / 101 = 0.0099</code>, which prevents Benjamini-Hochberg adjusted permutation p-values (<code>pval_sim_fdr_bh</code>) from falling below <code>0.05</code> when testing 2,000 genes. Use at least <code>n_perms=1000</code> (or inspect the analytic normal-approximation column <code>pval_norm_fdr_bh</code> alongside effect size <code>I</code>). On Squidpy 1.8.3 (the tested version below), pass <code>seed=0</code>; Squidpy 1.8.4+ renamed <code>seed</code> to <code>rng=0</code> (emitting a <code>FutureWarning</code> if <code>seed</code> is passed, whereas <code>rng=0</code> raises a <code>TypeError</code> on 1.8.3). In Seurat v5 (<code>SeuratObject</code> v5), pass <code>method = "moransi"</code> to <code>SVFInfo()</code> and <code>SpatiallyVariableFeatures()</code> because <code>selection.method</code> in those accessor functions is deprecated; if your object holds multiple merged slices, split by slice before calling <code>FindSpatiallyVariableFeatures()</code>.</p>
+<pre><code class="language-text"># Example output (illustrative table schema from Squidpy adata.uns["moranI"])
+# Columns: I (effect size), pval_norm (analytic p), pval_norm_fdr_bh (BH FDR),
+#          pval_sim (permutation p), pval_sim_fdr_bh (BH permutation FDR)
+# High positive I (&gt; 0.3) with small FDR flags genes restricted to coherent brain regions.
+</code></pre>
 
-<figure class="my-8 bg-white border border-gray-200 rounded-xl p-4 shadow-sm"><img src="../images/tutorial-figures/spatial-visium-tissue-domains.png" alt="Hexagonal Visium spatial spot lattice showing tissue domains and spatial marker gradient" width="1590" height="795" loading="lazy" class="w-full h-auto rounded-lg" style="aspect-ratio: 1590 / 795;"/><figcaption class="mt-3 text-sm text-gray-600">Illustrative simulated benchmark: aligning transcriptional clusters directly onto the 55 um capture spot geometry verifies contiguous tissue domains before calling spatially variable genes.</figcaption></figure>
+<h2 id="interpret-and-scale">5. Interpret patterns without overclaiming across spatial platforms</h2>
+<p>A gene with high Moran's <em>I</em> or co-localized clusters supports spatial association in one tissue section, not direct ligand-receptor signaling, lineage ancestry, or treatment-group differences across donors. Because adjacent Visium spots share microanatomical gradients and lateral mRNA diffusion during permeabilization ("spot bleeding"), naive spot-level Wilcoxon differential expression tests (such as treating 2,702 spots as 2,702 independent replicates) inflate false-positive p-values. For multi-sample condition comparisons, aggregate counts per donor/region or apply spatial-replicate models. Match your downstream stack to your assay's physical resolution:</p>
+<div class="lesson-table-wrap">
+<table>
+<caption>Matching spatial analysis tools to assay resolution and primary artifacts</caption>
+<thead>
+<tr><th scope="col">Platform</th><th scope="col">Physical unit &amp; scale</th><th scope="col">Primary artifact</th><th scope="col">Recommended analysis practice</th></tr>
+</thead>
+<tbody>
+<tr><th scope="row">Conventional Visium v1/v2</th><td>55 um spots (~100 um pitch); 1-10+ cells/spot (~3k-5k spots)</td><td>Multi-cell mixing inside spots and lateral mRNA diffusion</td><td>Deconvolve spots against a matched scRNA-seq reference with <strong>RCTD</strong> (<code>spacexr</code>, Cable et al., 2022) or <strong>cell2location</strong> (Kleshchevnikov et al., 2022) rather than calling mixed spots "hybrid cell states".</td></tr>
+<tr><th scope="row">Visium HD</th><td>2 um capture squares binned to 8 um or 16 um (~100k-1M bins)</td><td>Memory limits and sparse counts per bin</td><td>Use Seurat v5 <code>Load10X_Spatial(..., bin.size = c(8, 16))</code> with <code>SketchData</code> (Hao et al., 2024), or <code>spatialdata_io.visium_hd</code> with Zarr-backed <code>SpatialData</code> (Marconato et al., 2025).</td></tr>
+<tr><th scope="row">Targeted imaging (Xenium, CosMx, MERFISH)</th><td>Single-molecule <code>(x, y, z)</code> coordinates for targeted panels</td><td>Cell-segmentation spillover across touching cell membranes</td><td>Check nuclear-only counts and run transcript-informed re-segmentation with <code>Baysor</code> (Petukhov et al., 2022) or <code>Proseg</code> (Jones et al., 2025) before claiming co-expression inside one cell.</td></tr>
+</tbody>
+</table>
+</div>
+<aside class="lesson-warning"><strong>Interpretation limit:</strong> do not treat expression intensity or spot cluster identity as a pure cell-type label or a causal signal. Review tissue integrity, slide identity, image registration, sequencing depth, spot-level QC, and assay resolution before stating a biological claim.</aside>
+
+<h2 id="troubleshooting">Common errors and how to fix them</h2>
 <ul>
-<li><strong>Conventional Visium v1/v2 (55 micrometre spot diameter, ~100 micrometre center-to-center):</strong> each spot captures roughly 1 to 10+ cells. In solid tumours, an invasive-margin spot routinely blends malignant cells, cancer-associated fibroblasts, and macrophages into one count vector; use spatial deconvolution tools such as <strong>RCTD</strong> (<code>spacexr</code>, Cable et al., 2022) or <strong>cell2location</strong> (Kleshchevnikov et al., 2022) with a matched single-cell reference rather than calling mixed spots "hybrid states".</li>
-<li><strong>Visium HD (2 micrometre capture squares binned to 8 micrometres or segmented into cells):</strong> increases observations from ~3,000 spots to hundreds of thousands of subcellular/single-cell bins, requiring disk-backed or sketched representations (Seurat v5 <code>Load10X_Spatial(..., bin.size = c(8, 16))</code> with <code>SketchData</code>, or <code>SpatialData</code> / Zarr stores in Python; Marconato et al., 2024).</li>
-<li><strong>Targeted subcellular imaging (<code>10x Xenium</code>, <code>NanoString CosMx</code>, <code>Vizgen MERFISH</code>):</strong> records exact <code>(x, y, z)</code> coordinates of hundreds to thousands of targeted transcripts. Here the primary error source shifts from spot-level cell mixing to <strong>cell-segmentation spillover</strong> (assigning a T-cell membrane transcript to an abutting tumour nucleus when boundary masks are mis-expanded; run nuclear-only or <code>Baysor</code> / <code>Proseg</code> segmentation sensitivity checks).</li>
+<li><strong><code>Error: Install hdf5r to read the H5 matrix</code> (R):</strong> install HDF5 system headers first on Linux (<code>sudo apt-get install libhdf5-dev</code>), then run <code>install.packages("hdf5r")</code> in R.</li>
+<li><strong>File not found for <code>tissue_positions_list.csv</code> on Space Ranger 2.0+ data:</strong> Space Ranger v2+ outputs <code>spatial/tissue_positions.csv</code> with a header row. Update Seurat/Squidpy to current versions that detect both filenames automatically.</li>
+<li><strong><code>RunMoransI</code> requires <code>Rfast2</code> or <code>ape</code> (R):</strong> install <code>install.packages("ape")</code> (or <code>Rfast2</code> for speed; if <code>Rfast2</code> fails to compile on your toolchain, remove it and keep <code>ape</code>).</li>
+<li><strong><code>FutureWarning: In the future, the default backend for leiden will be igraph</code> (Python):</strong> pass <code>flavor="igraph", n_iterations=2, directed=False</code> to <code>sc.tl.leiden()</code> (requires <code>python-igraph</code>), or pass <code>flavor="leidenalg"</code> explicitly.</li>
+<li><strong>Spots shifted off the image or all gray in plots:</strong> verify that <code>scalefactors_json.json</code> belongs to the same sample as the PNG image, and check gene-symbol capitalization (<code>Snap25</code> in mouse vs <code>SNAP25</code> in human).</li>
 </ul>
-<aside class="lesson-warning"><strong>Interpretation limit:</strong> do not treat expression intensity as a cell-type label or a causal signal. Review tissue integrity, library/slide identity, image registration, sequencing depth, spot-level QC, and the chosen assay before explaining a pattern. No universal QC cutoff or biological result is supplied here.</aside>
-<h2>Practical check</h2>
-<p>For one conventional Visium library, record the input directory and versions using the commands above, run one language's loading and plotting fragments, and compare a library-size QC measure and an observed marker with the tissue image. Your check passes only when counts/features are nonempty, the image and spots are visibly aligned, and both color panels are interpretable; investigate the path, spatial metadata, image selection, feature name, or assay/layer if not. In a short note, state the coordinate/image choice, whether the pattern is qualitative or tested statistically, at least one plausible technical or composition-related alternative, and what additional evidence your interpretation would need.</p>
+
+<h2 id="practical-check">Practical check and interpretation exercise</h2>
+<p>For one conventional Visium library, record your input path and package versions, run one language branch from loading through clustering, and verify three items: (1) non-empty spots and features, (2) clean spot-to-H&amp;E alignment across <code>nCount_Spatial</code> / <code>total_counts</code>, mitochondrial percentage, and an anatomical marker, and (3) cluster stability across two resolutions. Note whether any low-UMI cluster aligns with normal low-RNA anatomy (such as white matter or stroma) rather than tissue damage.</p>
+<section class="lesson-exercise">
+<h3>Practice check: interpreting co-expressed markers at a tumour border</h3>
+<p>In a 55 micrometre Visium tumour biopsy, a cluster sitting along the invasive margin shows high Moran's <em>I</em> (<code>I = 0.62</code>, <code>pval_norm_fdr_bh &lt; 1e-10</code>) and expresses both epithelial tumour markers (<code>EPCAM</code>) and macrophage markers (<code>CD68</code>). A colleague proposes labeling those spots as a new "macrophage-like epithelial hybrid cell" and claims paracrine signaling via spot-level Wilcoxon tests. What are the three main flaws in that interpretation, and what checks would resolve them?</p>
+<details>
+<summary>Check reasoning and resolution steps</summary>
+<p><strong>1. Spot mixing:</strong> each 55 um spot spans roughly 1-10+ cells, so an invasive-margin spot routinely captures an epithelial tumour cell next to an infiltrating macrophage; run reference-based deconvolution (<code>RCTD</code> or <code>cell2location</code>) and inspect the underlying H&amp;E histology before proposing a hybrid cell state.</p>
+<p><strong>2. Spatial non-independence:</strong> spot-level Wilcoxon tests treat neighboring spots as independent samples, inflating p-values under spatial autocorrelation and lateral mRNA diffusion; test across biological replicates (donors/ROIs) rather than pooling spots from one slide.</p>
+<p><strong>3. Correlation is not signaling:</strong> transcript co-occurrence in a 55 um spot does not prove physical contact or active ligand-receptor signaling; verify single-cell co-localization using subcellular imaging (Xenium, CosMx, or MERFISH with segmentation sensitivity checks) or orthogonal protein staining.</p>
+</details>
+</section>
+
 <aside aria-label="Author's lab note" class="lesson-summary">
 <p><strong>Author's lab note:</strong> Conventional 55 micrometre Visium spots routinely capture multiple neighboring cells, so a spot sitting along a tumour-stroma border often blends transcriptional signatures that never coexist inside one cell. Whenever I interpret cluster domains in spatial data, I inspect the underlying H&amp;E morphology directly beneath the spots first and pair spot expression with a matched single-cell reference for deconvolution rather than treating raw spot clusters as pure cell types.</p>
 </aside>
+
+<section aria-label="Recap and next steps" class="lesson-summary">
+<h2>Recap and next steps</h2>
+<ul>
+<li>Keep raw counts, spot positions, scale factors, and histology images paired from the same Space Ranger directory, and compute QC covariates before normalization.</li>
+<li>Check spot-level UMI and mitochondrial maps over histology before filtering so real low-UMI compartments are preserved.</li>
+<li>Treat PCA count, clustering resolution, and expression-only clusters as tunable exploratory choices to check against anatomy and spatially aware statistics (Moran's <em>I</em>, neighborhood enrichment).</li>
+<li>Match downstream inference to physical resolution: deconvolution for Visium v1/v2, sketching/Zarr for Visium HD, and segmentation checks for imaging platforms.</li>
+</ul>
+<p><strong>Related tutorials:</strong> review single-cell QC tradeoffs in <a href="scrna-seq-quality-control.html">scRNA-seq Quality Control</a>, cell-type labeling limits in <a href="cell-type-annotation-methods.html">Cell-Type Annotation Methods</a>, and downstream DE/communication pitfalls in <a href="scrna-seq-downstream-analysis.html">scRNA-seq Downstream Analysis</a>.</p>
+</section>
+
 <section aria-label="References and further reading" class="lesson-reference">
 <h2>References and official documentation</h2>
 <ul>
@@ -293,10 +424,13 @@ sq.pl.nhood_enrichment(adata, cluster_key="clusters")
 <li>Hao, Y., Stuart, T., Kowalski, M. H., et al. (2024). Dictionary learning for integrative, multimodal and scalable single-cell analysis (Seurat v5). <em>Nature Biotechnology</em>, 42, 293-304. <a href="https://doi.org/10.1038/s41587-023-01767-y" rel="noopener" target="_blank">doi:10.1038/s41587-023-01767-y</a></li>
 <li>Cable, D. M., Murray, E., Zou, L. S., et al. (2022). Robust decomposition of cell type mixtures in spatial transcriptomics (RCTD). <em>Nature Biotechnology</em>, 40, 517-526. <a href="https://doi.org/10.1038/s41587-021-00830-w" rel="noopener" target="_blank">doi:10.1038/s41587-021-00830-w</a></li>
 <li>Kleshchevnikov, V., Shmatko, A., Dann, E., et al. (2022). Cell2location maps fine-grained cell types in spatial transcriptomics. <em>Nature Biotechnology</em>, 40, 661-671. <a href="https://doi.org/10.1038/s41587-021-01139-4" rel="noopener" target="_blank">doi:10.1038/s41587-021-01139-4</a></li>
-<li>Marconato, L., Palla, G., Yamauchi, K. A., et al. (2024). SpatialData: an open and universal data framework for spatial omics. <em>Nature Methods</em>, 21, 901-905. <a href="https://doi.org/10.1038/s41592-024-02212-x" rel="noopener" target="_blank">doi:10.1038/s41592-024-02212-x</a></li>
-<li><a href="https://squidpy.readthedocs.io/en/stable/api/squidpy.read.visium.html" rel="noopener" target="_blank">Squidpy: read.visium</a>, <a href="https://squidpy.readthedocs.io/en/stable/api/squidpy.pl.spatial_scatter.html" rel="noopener" target="_blank">spatial_scatter</a>, and <a href="https://squidpy.readthedocs.io/en/stable/api/squidpy.gr.spatial_neighbors.html" rel="noopener" target="_blank">spatial_neighbors</a></li>
-<li><a href="https://scanpy.readthedocs.io/en/stable/api/scanpy.pp.calculate_qc_metrics.html" rel="noopener" target="_blank">Scanpy: QC matrix selection</a> and <a href="https://scanpy.readthedocs.io/en/latest/api/generated/scanpy.pl.spatial.html" rel="noopener" target="_blank">spatial plotting deprecation note</a></li>
-<li><a href="https://satijalab.org/seurat/articles/spatial_vignette" rel="noopener" target="_blank">Seurat: spatial analysis workflow</a>, <a href="https://satijalab.org/seurat/reference/load10x_spatial" rel="noopener" target="_blank">Load10X_Spatial</a>, and <a href="https://patchwork.data-imaginist.com/articles/guides/annotation.html" rel="noopener" target="_blank">Patchwork: applying a theme to all panels</a></li>
+<li>Marconato, L., Palla, G., Yamauchi, K. A., et al. (2025; online 2024). SpatialData: an open and universal data framework for spatial omics. <em>Nature Methods</em>, 22, 58-62. <a href="https://doi.org/10.1038/s41592-024-02212-x" rel="noopener" target="_blank">doi:10.1038/s41592-024-02212-x</a></li>
+<li>Petukhov, V., Xu, R. J., Soldatov, R. A., et al. (2022). Cell segmentation in imaging-based spatial transcriptomics (Baysor). <em>Nature Biotechnology</em>, 40, 345-354. <a href="https://doi.org/10.1038/s41587-021-01044-w" rel="noopener" target="_blank">doi:10.1038/s41587-021-01044-w</a></li>
+<li>Jones, D. C., et al. (2025). Cell simulation as cell segmentation (Proseg). <em>Nature Methods</em>. <a href="https://doi.org/10.1038/s41592-025-02697-0" rel="noopener" target="_blank">doi:10.1038/s41592-025-02697-0</a></li>
+<li>10x Genomics: <a href="https://www.10xgenomics.com/support/software/space-ranger/latest/analysis/outputs/output-overview" rel="noopener" target="_blank">Space Ranger output overview</a> and <a href="https://www.10xgenomics.com/support/software/space-ranger/latest/analysis/outputs/spatial-outputs" rel="noopener" target="_blank">spatial outputs</a></li>
+<li>Squidpy: <a href="https://squidpy.readthedocs.io/en/stable/api/squidpy.read.visium.html" rel="noopener" target="_blank">read.visium</a>, <a href="https://squidpy.readthedocs.io/en/stable/api/squidpy.pl.spatial_scatter.html" rel="noopener" target="_blank">spatial_scatter</a>, <a href="https://squidpy.readthedocs.io/en/stable/api/squidpy.gr.spatial_neighbors.html" rel="noopener" target="_blank">spatial_neighbors</a>, <a href="https://squidpy.readthedocs.io/en/stable/api/squidpy.gr.spatial_autocorr.html" rel="noopener" target="_blank">spatial_autocorr</a>, and <a href="https://squidpy.readthedocs.io/en/stable/api/squidpy.gr.nhood_enrichment.html" rel="noopener" target="_blank">nhood_enrichment</a></li>
+<li>Scanpy &amp; SpatialData: <a href="https://scanpy.readthedocs.io/en/stable/api/scanpy.pp.calculate_qc_metrics.html" rel="noopener" target="_blank">calculate_qc_metrics</a>, <a href="https://scanpy.readthedocs.io/en/stable/api/generated/scanpy.tl.leiden.html" rel="noopener" target="_blank">tl.leiden</a>, <a href="https://scanpy.readthedocs.io/en/stable/api/generated/scanpy.pl.spatial.html" rel="noopener" target="_blank">spatial plotting deprecation note</a>, and <a href="https://spatialdata.scverse.org/" rel="noopener" target="_blank">SpatialData documentation</a></li>
+<li>Seurat &amp; Patchwork: <a href="https://satijalab.org/seurat/articles/spatial_vignette" rel="noopener" target="_blank">spatial analysis workflow</a>, <a href="https://satijalab.org/seurat/reference/load10x_spatial" rel="noopener" target="_blank">Load10X_Spatial</a>, and <a href="https://patchwork.data-imaginist.com/articles/guides/annotation.html" rel="noopener" target="_blank">Patchwork: applying a theme to all panels</a></li>
 </ul>
 </section>
 <aside aria-labelledby="tutorial-feedback-title" class="lesson-feedback" id="tutorial-feedback"><h2 id="tutorial-feedback-title">Help improve this tutorial</h2><p>Found an error, a broken link, or a step that needs a clearer explanation? Please <a href="../contact.html">contact me</a>. Your feedback helps me keep this resource accurate and useful.</p></aside></article>
@@ -437,7 +571,7 @@ sq.pl.nhood_enrichment(adata, cluster_key="clusters")
 </script>
 <script src="../assets/vendor/prism/prism-1.29.0.js"></script>
 <script id="tutorial-code-data">
-window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"spatial-transcriptomics-r-python":{"blocks":[{"language":"bash","sha256":"16b558c03824e812bcf1a09a46c5fa3b582942da70c67dd661c39982f5eb0e30"},{"language":"text","sha256":"99f3fe0bf491f38b2ddebd10ac9b71a077ebe72db540760678008514a58dd793"},{"language":"r","sha256":"4e801653845ee5159a6d0e45ef944cc79b609c6c2fdbac434e2a9368ad6ff3ee"},{"language":"python","sha256":"718a47a7cadada3f92c2e32f493977843abbe92990c2ed2fcac01314fd5c8f6e"},{"language":"r","sha256":"ee2186be28ad401596278a46d8ac3714427d9dfbca74eff240cbad268ae77c87"},{"language":"python","sha256":"f08859ca1f3a514bb151f77fc3057cc46c81805561cf71a011316f21d07c2b7d"},{"language":"r","sha256":"48c4cb01373a4566b5c154eb71291b221a2614d1dcc422ecb6ffd0bbac92951a"},{"language":"python","sha256":"a3f805aca92f3c5d630164790d4cdef67bea705b447b3928aad630bd79d016bd"},{"language":"r","sha256":"0e9127450e348373a5e9b884abda773779cd69bc79c344dbef0532108106a0cc"},{"language":"python","sha256":"b21c98795b6b671e695e669ba73ab885b07ff8cc8b35114b64d2e7eaeffb33cd"}],"groups":[{"title":"Load and prepare the Visium sample","panels":[{"start":10,"end":13,"language":"r","label":"R \u00b7 Seurat"},{"start":14,"end":15,"language":"python","label":"Python \u00b7 Squidpy"}],"members":[{"index":10,"tag":"h3","sha256":"3dd872e96ae04a3df296aca2c548f4c0834bf3203cea5e6421498702fde45b7c"},{"index":11,"tag":"p","sha256":"953447fe78e0da021f46d1a9081673a16e883456e4801cadcdb2b696137be1e7"},{"index":12,"tag":"pre","sha256":"4e801653845ee5159a6d0e45ef944cc79b609c6c2fdbac434e2a9368ad6ff3ee"},{"index":13,"tag":"p","sha256":"08c9d9ca7cee5d3d17cdafd21fe5d4b1c3ee1e586d342d2210815c92082808fa"},{"index":14,"tag":"h3","sha256":"45e4e88fb06a5c1174befb634f619541c2fceaf403058f897f2c3ce4cb8523a9"},{"index":15,"tag":"pre","sha256":"718a47a7cadada3f92c2e32f493977843abbe92990c2ed2fcac01314fd5c8f6e"}],"tabOrder":["r","python"]},{"title":"Plot a spatial feature","panels":[{"start":20,"end":22,"language":"r","label":"R \u00b7 Seurat"},{"start":23,"end":24,"language":"python","label":"Python \u00b7 Squidpy"}],"members":[{"index":20,"tag":"h3","sha256":"8c2574892063f995fdf756bce07f46c1a5193e54cd52837ed91e32008ccf41ac"},{"index":21,"tag":"pre","sha256":"ee2186be28ad401596278a46d8ac3714427d9dfbca74eff240cbad268ae77c87"},{"index":22,"tag":"p","sha256":"500c3e2ea925fb865960ba9a436520acf12fb38f1ac3f2efc60e6afeaa1d3432"},{"index":23,"tag":"h3","sha256":"18885f27b5af9012df19e496460f9294d5ab76128824c6f993787004f6d9a7db"},{"index":24,"tag":"pre","sha256":"f08859ca1f3a514bb151f77fc3057cc46c81805561cf71a011316f21d07c2b7d"}],"tabOrder":["r","python"]},{"title":"Cluster and inspect spatial locations","panels":[{"start":29,"end":30,"language":"r","label":"R \u00b7 Seurat"},{"start":31,"end":32,"language":"python","label":"Python \u00b7 Scanpy"}],"members":[{"index":29,"tag":"h3","sha256":"8c2574892063f995fdf756bce07f46c1a5193e54cd52837ed91e32008ccf41ac"},{"index":30,"tag":"pre","sha256":"48c4cb01373a4566b5c154eb71291b221a2614d1dcc422ecb6ffd0bbac92951a"},{"index":31,"tag":"h3","sha256":"18885f27b5af9012df19e496460f9294d5ab76128824c6f993787004f6d9a7db"},{"index":32,"tag":"pre","sha256":"a3f805aca92f3c5d630164790d4cdef67bea705b447b3928aad630bd79d016bd"}],"tabOrder":["r","python"]},{"title":"Test spatially variable features and neighborhood enrichment","panels":[{"start":36,"end":37,"language":"r","label":"R \u00b7 Seurat"},{"start":38,"end":39,"language":"python","label":"Python \u00b7 Squidpy"}],"members":[{"index":36,"tag":"h3","sha256":"8c2574892063f995fdf756bce07f46c1a5193e54cd52837ed91e32008ccf41ac"},{"index":37,"tag":"pre","sha256":"0e9127450e348373a5e9b884abda773779cd69bc79c344dbef0532108106a0cc"},{"index":38,"tag":"h3","sha256":"18885f27b5af9012df19e496460f9294d5ab76128824c6f993787004f6d9a7db"},{"index":39,"tag":"pre","sha256":"b21c98795b6b671e695e669ba73ab885b07ff8cc8b35114b64d2e7eaeffb33cd"}],"tabOrder":["r","python"]}]}}};
+window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"spatial-transcriptomics-r-python":{"blocks":[{"language":"bash","sha256":"16b558c03824e812bcf1a09a46c5fa3b582942da70c67dd661c39982f5eb0e30"},{"language":"text","sha256":"99f3fe0bf491f38b2ddebd10ac9b71a077ebe72db540760678008514a58dd793"},{"language":"r","sha256":"169c2e2bc75e1a6bbbad48e5115ec0e57c3218948111f924e3c5fd5c1e0c8948"},{"language":"python","sha256":"17b436270932fa50b7c506971d257ddcd6d4ac0e1d81ed03438d827f9bfa684f"},{"language":"text","sha256":"821c3865576a7f4b3686f8f68ff86a7874e655f1df6d9259a0a91c5aa40b7f48"},{"language":"r","sha256":"833d2f13c79d6e67dd8e2f2e0cec2beb646548564571996d2f52d24e7d47a18c"},{"language":"python","sha256":"2bda8cc7143e2946031de3b8e412a05094a025462734f8d2f4ec3e0559b87f9f"},{"language":"r","sha256":"24530eb323e49052eafbea4c958c41cc32cc43eb47c38c037172090280755f3f"},{"language":"python","sha256":"87ee6fce0215387227390f6371a68ba2b07b69cd995b7434e05a0d1df817b619"},{"language":"r","sha256":"41cf01dad12baaf71407ae4ab60f5b2ffe3d0ae2dfa505addaab948d064b7383"},{"language":"python","sha256":"af99957aa892cb2154e7a8df44e8ea781ccad4c26cab341f7139fd95f7a0c15d"},{"language":"text","sha256":"6975dfdeb6443f197892b4a0db7b11bf0c8204c8fe5c778d610ef2d3f4de89a8"}],"groups":[{"title":"Load and prepare the Visium sample","panels":[{"start":14,"end":17,"language":"r","label":"R \u00b7 Seurat"},{"start":18,"end":19,"language":"python","label":"Python \u00b7 Squidpy"}],"members":[{"index":14,"tag":"h3","sha256":"3dd872e96ae04a3df296aca2c548f4c0834bf3203cea5e6421498702fde45b7c"},{"index":15,"tag":"p","sha256":"eed4d0f5dbde0f16955021baf1da095acc19f9c894abdd39aabab3b5b4bb8b1d"},{"index":16,"tag":"pre","sha256":"169c2e2bc75e1a6bbbad48e5115ec0e57c3218948111f924e3c5fd5c1e0c8948"},{"index":17,"tag":"p","sha256":"f3d898f3c5d8ee2aea3d545fea3c64a06545a0413c5088ff4211d69c716c697c"},{"index":18,"tag":"h3","sha256":"2c7f7145e089cc9d87d923cc25a5c7295d91b8cfcf0f9722e3d0712061b3b5af"},{"index":19,"tag":"pre","sha256":"17b436270932fa50b7c506971d257ddcd6d4ac0e1d81ed03438d827f9bfa684f"}],"tabOrder":["r","python"]},{"title":"Plot a spatial feature","panels":[{"start":25,"end":27,"language":"r","label":"R \u00b7 Seurat"},{"start":28,"end":29,"language":"python","label":"Python \u00b7 Squidpy"}],"members":[{"index":25,"tag":"h3","sha256":"8c2574892063f995fdf756bce07f46c1a5193e54cd52837ed91e32008ccf41ac"},{"index":26,"tag":"pre","sha256":"833d2f13c79d6e67dd8e2f2e0cec2beb646548564571996d2f52d24e7d47a18c"},{"index":27,"tag":"p","sha256":"2a0c20dcc9a5c415108a8573c24c7cd47bc602a7037aaadaa4ce229223f2d03a"},{"index":28,"tag":"h3","sha256":"18885f27b5af9012df19e496460f9294d5ab76128824c6f993787004f6d9a7db"},{"index":29,"tag":"pre","sha256":"2bda8cc7143e2946031de3b8e412a05094a025462734f8d2f4ec3e0559b87f9f"}],"tabOrder":["r","python"]},{"title":"Cluster and inspect spatial locations","panels":[{"start":34,"end":35,"language":"r","label":"R \u00b7 Seurat"},{"start":36,"end":37,"language":"python","label":"Python \u00b7 Scanpy"}],"members":[{"index":34,"tag":"h3","sha256":"3dd872e96ae04a3df296aca2c548f4c0834bf3203cea5e6421498702fde45b7c"},{"index":35,"tag":"pre","sha256":"24530eb323e49052eafbea4c958c41cc32cc43eb47c38c037172090280755f3f"},{"index":36,"tag":"h3","sha256":"8675c5e2f1c90bfa5e5307d2c07750b4a934e637dc473bbdbcaf551d67b7a397"},{"index":37,"tag":"pre","sha256":"87ee6fce0215387227390f6371a68ba2b07b69cd995b7434e05a0d1df817b619"}],"tabOrder":["r","python"]},{"title":"Test spatially variable features and neighborhood enrichment","panels":[{"start":43,"end":44,"language":"r","label":"R \u00b7 Seurat"},{"start":45,"end":46,"language":"python","label":"Python \u00b7 Squidpy"}],"members":[{"index":43,"tag":"h3","sha256":"1eed850fac6bcea65b1ed76e4aaa7a1287d9d8b1765ef0e3d29396505a71efa8"},{"index":44,"tag":"pre","sha256":"41cf01dad12baaf71407ae4ab60f5b2ffe3d0ae2dfa505addaab948d064b7383"},{"index":45,"tag":"h3","sha256":"cd27781f0120e8def26b057d1a7888012691eb2fa33ed59a874f18960d888e4d"},{"index":46,"tag":"pre","sha256":"af99957aa892cb2154e7a8df44e8ea781ccad4c26cab341f7139fd95f7a0c15d"}],"tabOrder":["r","python"]}]}}};
 </script>
 <script src="../code-tabs.js?v=20261026-startup-v1"></script>
 <script src="../copy-code.js?v=20261025-r-first-v1"></script>

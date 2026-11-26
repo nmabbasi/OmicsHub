@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="880" height="520" viewBox="0 0 880 520" role="img" aria-labelledby="qc-tradeoff-title qc-tradeoff-desc">
+  <title id="qc-tradeoff-title">Reading iLISI and cLISI Together: Avoiding Under- and Over-Integration</title>
+  <desc id="qc-tradeoff-desc">A four-quadrant diagram mapping local batch mixing (iLISI) on the horizontal axis against cell-type purity (raw cLISI near 1 and positive cell-type silhouette) on the vertical axis, distinguishing unintegrated embeddings, balanced integration, over-corrected embeddings, and confounded or pre-QC failures.</desc>
+  <defs>
+    <marker id="arrow-axis" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#334155"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="880" height="520" fill="#ffffff"/>
+
+  <text x="440" y="30" text-anchor="middle" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="17" font-weight="700" fill="#0f172a">Reading iLISI and cLISI Together: Avoiding Under- and Over-Integration</text>
+  <text x="440" y="52" text-anchor="middle" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="12.5" fill="#475569">Raw LISI (immunogenomics/lisi) scales from 1 to B categories; evaluate batch mixing alongside cell-type purity.</text>
+
+  <!-- Center dashed dividers -->
+  <line x1="470" y1="80" x2="470" y2="430" stroke="#cbd5e1" stroke-width="1.5" stroke-dasharray="5 5"/>
+  <line x1="110" y1="255" x2="830" y2="255" stroke="#cbd5e1" stroke-width="1.5" stroke-dasharray="5 5"/>
+
+  <!-- Top-Left: Unintegrated / Under-corrected -->
+  <rect x="115" y="85" width="347" height="162" rx="10" fill="#f8fafc" stroke="#94a3b8" stroke-width="1.5"/>
+  <text x="133" y="112" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="14.5" font-weight="700" fill="#1e293b">Unintegrated / Under-corrected</text>
+  <rect x="133" y="122" width="150" height="22" rx="11" fill="#e2e8f0"/>
+  <text x="208" y="137" text-anchor="middle" font-family="JetBrains Mono, ui-monospace, monospace" font-size="11.5" font-weight="600" fill="#334155">iLISI ~ 1  |  cLISI ~ 1</text>
+  <text x="133" y="166" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="12.5" fill="#334155">Shared cell types stay split by batch or chemistry.</text>
+  <text x="133" y="187" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="12.5" fill="#334155">Cell-type silhouette &gt; 0, but batch silhouette &gt; 0.</text>
+  <text x="133" y="216" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="12" font-weight="600" fill="#1d4ed8">Next: Run Harmony, RPCA, or scVI on batch key.</text>
+
+  <!-- Top-Right: Target Balance -->
+  <rect x="478" y="85" width="347" height="162" rx="10" fill="#ecfdf5" stroke="#059669" stroke-width="2"/>
+  <text x="496" y="112" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="14.5" font-weight="700" fill="#065f46">Target Integration Balance</text>
+  <rect x="496" y="122" width="158" height="22" rx="11" fill="#d1fae5"/>
+  <text x="575" y="137" text-anchor="middle" font-family="JetBrains Mono, ui-monospace, monospace" font-size="11.5" font-weight="600" fill="#065f46">iLISI -&gt; B  |  cLISI ~ 1</text>
+  <text x="496" y="166" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="12.5" fill="#064e3b">Shared populations mix locally across batches.</text>
+  <text x="496" y="187" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="12.5" fill="#064e3b">Cell-type silhouette rises; batch silhouette -&gt; 0.</text>
+  <text x="496" y="216" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="12" font-weight="600" fill="#047857">Verify: Slice by cell type + canonical marker plots.</text>
+
+  <!-- Bottom-Left: Confounded or Pre-QC Failure -->
+  <rect x="115" y="263" width="347" height="162" rx="10" fill="#fffbeb" stroke="#d97706" stroke-width="1.5"/>
+  <text x="133" y="290" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="14.5" font-weight="700" fill="#92400e">Confounded or Pre-QC Failure</text>
+  <rect x="133" y="300" width="166" height="22" rx="11" fill="#fde68a"/>
+  <text x="216" y="315" text-anchor="middle" font-family="JetBrains Mono, ui-monospace, monospace" font-size="11.5" font-weight="600" fill="#78350f">Low iLISI  |  cLISI &gt; 1</text>
+  <text x="133" y="344" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="12.5" fill="#78350f">Unfiltered doublets, empty droplets, or ambient RNA,</text>
+  <text x="133" y="365" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="12.5" fill="#78350f">or batch-only cell types (e.g., v2 A pDCs: 26 vs 0).</text>
+  <text x="133" y="394" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="12" font-weight="600" fill="#b45309">Check: Per-sample QC and batch x cell-type table.</text>
+
+  <!-- Bottom-Right: Over-corrected -->
+  <rect x="478" y="263" width="347" height="162" rx="10" fill="#fef2f2" stroke="#dc2626" stroke-width="1.5"/>
+  <text x="496" y="290" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="14.5" font-weight="700" fill="#991b1b">Over-corrected Embedding</text>
+  <rect x="496" y="300" width="158" height="22" rx="11" fill="#fecaca"/>
+  <text x="575" y="315" text-anchor="middle" font-family="JetBrains Mono, ui-monospace, monospace" font-size="11.5" font-weight="600" fill="#7f1d1d">iLISI -&gt; B  |  cLISI &gt; 1</text>
+  <text x="496" y="344" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="12.5" fill="#7f1d1d">Batch forcing merges distinct biological subtypes.</text>
+  <text x="496" y="365" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="12.5" fill="#7f1d1d">Cell-type silhouette falls; rare clusters collapse.</text>
+  <text x="496" y="394" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="12" font-weight="600" fill="#b91c1c">Next: Reduce correction strength or HVG scaling.</text>
+
+  <!-- Y axis -->
+  <line x1="92" y1="425" x2="92" y2="85" stroke="#334155" stroke-width="2" marker-end="url(#arrow-axis)"/>
+  <text x="82" y="102" text-anchor="end" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11.5" font-weight="600" fill="#334155">Pure</text>
+  <text x="82" y="418" text-anchor="end" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11.5" font-weight="600" fill="#334155">Blurred</text>
+  <text x="32" y="255" text-anchor="middle" transform="rotate(-90 32 255)" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="13" font-weight="700" fill="#0f172a">Biological Conservation (raw cLISI -&gt; 1, higher silhouette)</text>
+
+  <!-- X axis -->
+  <line x1="115" y1="452" x2="825" y2="452" stroke="#334155" stroke-width="2" marker-end="url(#arrow-axis)"/>
+  <text x="115" y="470" text-anchor="start" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11.5" font-weight="600" fill="#334155">1 (segregated)</text>
+  <text x="820" y="470" text-anchor="end" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11.5" font-weight="600" fill="#334155">B (fully mixed)</text>
+  <text x="470" y="488" text-anchor="middle" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="13" font-weight="700" fill="#0f172a">Local Batch Mixing (iLISI from 1 to B batches)</text>
+
+  <!-- Footer convention note -->
+  <text x="440" y="510" text-anchor="middle" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11.5" fill="#475569">Convention note: Python scib-metrics rescales cLISI to [0, 1] so higher = purer, inverting raw R lisi::compute_lisi() directionality.</text>
+</svg>

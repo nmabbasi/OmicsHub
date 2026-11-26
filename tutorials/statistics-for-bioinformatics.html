@@ -173,21 +173,37 @@ function toggleMobileMenu() {
 </div>
 <nav aria-label="Learning path navigation" class="reader-toolbar"><span class="reader-toolbar__heading">Learning path</span><a href="../start-here.html#sh-language-choice" class="reader-toolbar__previous"><span class="reader-toolbar__direction"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5m0 0 7 7m-7-7 7-7"/></svg></span><span class="reader-toolbar__copy"><small>Previous path choice</small><strong>Back to R or Python choices</strong></span></a><a data-catalogue-return="" href="../tutorials.html" class="reader-toolbar__library"><span class="reader-toolbar__library-mark" aria-hidden="true"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="6" height="6" rx="1.3"/><rect x="14" y="4" width="6" height="6" rx="1.3"/><rect x="4" y="14" width="6" height="6" rx="1.3"/><rect x="14" y="14" width="6" height="6" rx="1.3"/></svg></span><span><small>Browse</small><strong>All tutorials</strong></span></a><a href="#reader-course-navigation" class="reader-toolbar__next"><span class="reader-toolbar__copy"><small>Several directions</small><strong>Choose a next step</strong></span><span class="reader-toolbar__direction"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14m0 0 7-7m-7 7-7-7"/></svg></span></a></nav>
 <article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--decision-guide">
-<p class="lesson-lead">A two-group test is only meaningful after you decide what counts as an independent sample. This guide uses one numeric feature measured in independent control and treated biological samples. It walks through the input contract, a Welch comparison, its uncertainty, and the separate problem of testing many features.</p>
-<section class="lesson-summary tutorial-learning-contract" data-tutorial-format="conceptual-guide" aria-label="Learning format"><p><strong>Format: Conceptual guide.</strong> Work through a two-group Welch test and false-discovery-rate review on a clean synthetic dataset before applying hypothesis tests to your own biological replicates.</p></section>
-<h2>Start with the experimental unit</h2>
-<p>Write down the unit that was independently assigned to a condition or independently sampled from the biological population. If treatment was applied to animals, the animal may be the unit; if it was applied to cultures, the independently prepared culture may be. Multiple reads, wells, fields of view, or repeated instrument measurements from one unit do not become independent biological replicates merely because they occupy separate rows. Summarize technical repeats at the biological-unit level or use a model that represents their nesting.</p>
-<p>For a single feature, the comparison below targets the difference in group means, defined as treated minus control. It assumes independent observations within and between groups. If the same biological units are measured in both conditions, use a paired analysis with correctly matched units; the independent-samples code here is inappropriate. If samples share a litter, donor, batch, or other dependence, consider a design-aware model rather than treating each row as independent.</p>
-<div class="lesson-warning"><p><strong>Before testing:</strong> confirm the sample mapping, condition labels, biological-unit IDs, and any pairing or blocking. A small p-value cannot repair pseudoreplication or confounding.</p></div>
-<h2>Input contract and reproducible setup</h2>
-<p>Run either the Python or base R script below on two single-column CSV files (column named <code>value</code>, one row per independent biological unit) to compute the Welch difference, 95% confidence interval, t-statistic, degrees of freedom, and p-value. Each script strips and counts blank rows while halting on non-numeric text, infinities, missing columns, zero variance, or groups smaller than two. Swap in your own data only once you have confirmed every row is an independent biological replicate rather than a repeated technical measurement.</p>
+<p class="lesson-lead">Before running a two-group test on a gene such as <em>TP53</em> or a metabolite concentration, you must know how many independent biological samples you have, how big the shift is in real measurement units, and how to control false positives across thousands of features.</p>
+<section class="lesson-summary tutorial-learning-contract" data-tutorial-format="conceptual-guide" aria-label="Learning format">
+<p><strong>Format: Conceptual guide (~25 min).</strong> Learn to identify the independent experimental unit, run a Welch two-group test with 95% confidence intervals in base R or Python, and apply Benjamini-Hochberg false-discovery-rate (FDR) control.</p>
+<p><strong>Prerequisites and scope:</strong> Basic terminal skills plus <a href="r-tidyverse-fundamentals.html">R and Tidyverse Fundamentals</a> or <a href="python-fundamentals-bioinformatics.html">Python Fundamentals for Bioinformatics</a>. Covers independent two-group continuous comparisons and p-value adjustment; paired, multi-batch, and raw count RNA-seq designs are mapped in the decision table below and <a href="experimental-design-batch-effects.html">Experimental Design and Batch Effects</a>.</p>
+</section>
+
+<h2 id="experimental-unit">Start with the experimental unit</h2>
+<p>An <strong>experimental unit</strong> is the smallest entity independently assigned to a condition or sampled from a population (for example, each mouse injected with a drug, or each separately treated culture flask). Repeated measurements from one unit are <strong>technical repeats</strong>, not extra biological replicates.</p>
+<p>Pooling 4 qPCR wells from each of 3 mice and running a t-test with <code>n = 12</code> per group is <strong>pseudoreplication</strong> (Hurlbert, 1984; Lazic, 2010): within-mouse noise is mistaken for mouse-to-mouse variation, shrinking standard errors and inflating false positives. The same occurs in single-cell RNA-seq when 2,000 cells from 3 donors are tested as 2,000 independent samples instead of aggregating by donor (Squair et al., 2021). Average technical repeats to one value per biological unit, or fit a nested/mixed model. Also check for <strong>confounding</strong>: if all treated samples were processed Monday and all controls Friday, batch and treatment cannot be separated.</p>
+
+<figure class="my-8 bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+<img src="../images/tutorial-figures/statistics-for-bioinformatics-experimental-unit.svg" alt="Two-panel diagram comparing pseudoreplication of 4 technical qPCR wells per mouse across 3 mice against summarizing each mouse to 1 biological-unit value before running Welch's t-test" width="840" height="380" loading="lazy" class="w-full h-auto rounded-lg" style="aspect-ratio: 840 / 380;"/>
+<figcaption class="mt-3 text-sm text-gray-600"><strong>Counting replicates at the treatment level:</strong> summarize correlated technical repeats (wells or cells) to one value per independent mouse or donor, or model the nesting explicitly.</figcaption>
+</figure>
+
+<div class="lesson-warning"><p><strong>Before testing:</strong> verify sample IDs, condition labels, biological-unit IDs, and batch or pairing columns. No p-value can repair pseudoreplication or confounding.</p></div>
+
+<h2 id="why-welch">Why Welch's t-test is the default two-group test</h2>
+<p>Student's t-test assumes equal variances in both groups, yet biological treatments often alter spread as well as mean expression. When variances or group sizes differ, Student's t-test distorts Type I error rates, and pre-testing variance with Levene's or an F-test before switching methods also breaks error control (Delacre, Lakens, &amp; Leys, 2017).</p>
+<p><strong>Welch's t-test</strong> adjusts the standard error and <strong>degrees of freedom</strong> (the effective sample-size weight estimating spread) for unequal variances while losing almost no power when variances match. Use it as your default for independent two-group comparisons of continuous, roughly symmetric metrics such as log2-normalized expression or qPCR &Delta;Ct.</p>
+
+<h2 id="welch-workflow">Run a Welch comparison in R or Python</h2>
+<p>Here we compare one numeric feature (such as log2-normalized expression) across 4 control and 4 treated biological replicates. Each CSV has one column named <code>value</code> and one row per biological unit. Create the fixture in Bash first:</p>
 <pre><code># Run from a disposable working directory. Do not overwrite real data.
 mkdir -p data results
 printf "value\n8.9\n9.8\n10.4\n9.5\n" &gt; data/control.csv
 printf "value\n11.2\n10.7\n12.1\n11.4\n" &gt; data/treated.csv
 </code></pre>
+<p>Both scripts strip and count genuinely blank rows while halting on non-numeric strings (including <code>"NA"</code>), infinities, missing columns, fewer than 2 units, or zero variance. Choose either R or Python below.</p>
 <h3>Equivalent test in base R</h3>
-<p>R's built-in <code>t.test</code> uses Welch's two-sample method by default. Save the displayed code as <code>compare_groups.R</code> and run it with the same two CSV files. This branch uses base R only and writes the estimate, interval, statistic, degrees of freedom, and p-value.</p>
+<p>R's <code>t.test()</code> defaults to Welch's method (<code>var.equal = FALSE</code>). Save this base-R script as <code>compare_groups.R</code> and run it on the CSV files to write the <code>treated - control</code> mean difference, 95% confidence interval, t-statistic, degrees of freedom, and p-value to <code>results/comparison_R.csv</code>.</p>
 <pre><code>#!/usr/bin/env Rscript
 args &lt;- commandArgs(trailingOnly = TRUE)
 if (length(args) != 3) stop("Usage: Rscript compare_groups.R CONTROL.csv TREATED.csv OUTDIR")
@@ -218,7 +234,7 @@ write.csv(data.frame(
 <pre><code>Rscript --version
 Rscript compare_groups.R data/control.csv data/treated.csv results
 </code></pre>
-<p>For Python, use Python 3 and install NumPy, pandas, and SciPy 1.11 or newer in an environment you manage; save the displayed code as <code>compare_groups.py</code>. No R packages are needed for the base R route. The Python script tests one feature. Its Welch confidence interval is for the treated-minus-control mean difference; Cohen's d is a standardized descriptive effect estimate, not a substitute for the difference in the feature's original units.</p>
+<p>For Python 3, install NumPy, pandas, and SciPy 1.11+ (which added <code>.df</code> and <code>.confidence_interval()</code> to <code>ttest_ind</code>) and save the code as <code>compare_groups.py</code>. Passing <code>equal_var=False</code> runs Welch's test; pooled-SD Cohen's d is included only as a secondary standardized metric (it assumes equal variances and is upward-biased at small <em>n</em>).</p>
 <pre><code>python -m pip install numpy pandas 'scipy&gt;=1.11'
 # After saving the displayed Python code as compare_groups.py:
 python compare_groups.py data/control.csv data/treated.csv results
@@ -277,30 +293,66 @@ pd.DataFrame([{
 }]).to_csv(outdir / "comparison.csv", index=False)
 print(f"Wrote {outdir / 'comparison.csv'}")
 </code></pre>
-<div class="lesson-result"><p><strong>Output:</strong> Python writes <code>comparison.csv</code> with retained sample counts, group means and standard deviations, treated-minus-control estimate, Welch statistic/degrees of freedom/p-value, a 95% confidence interval, and pooled-SD Cohen's d (note: pooled-SD Cohen's d assumes equal variances across groups, whereas Welch's interval and test allow unequal variances). Base R writes the same core estimate, interval, statistic, degrees of freedom, and p-value to <code>comparison_R.csv</code>.</p></div>
-<h2>Worked output and outlier sensitivity on the 8-unit fixture</h2>
-<p>Running <code>Rscript --vanilla compare_groups.R data/control.csv data/treated.csv results</code> on the 8-observation fixture above (executed locally on R 4.6.1) produces these exact summary numbers:</p>
-<pre><code class="language-text">Control (n = 4): mean = 9.6500, SD = 0.6245   [8.9, 9.8, 10.4, 9.5]
-Treated (n = 4): mean = 11.3500, SD = 0.5802  [11.2, 10.7, 12.1, 11.4]
-Mean difference (treated - control) = +1.7000
-95% Welch CI = [0.6557, 2.7443] | t = 3.9885 | df = 5.9679 | p = 0.007292</code></pre>
-<p>Start with the effect size in raw measurement units: here the treated group shifts by <code>+1.70</code> units (95% CI <code>+0.66</code> to <code>+2.74</code>). With only <code>n = 4</code> per group, a single outlier swings the whole test: shifting one control value from <code>10.4</code> to <code>14.2</code> (for instance from a swapped tube or haemolysed sample) cuts the difference to <code>+0.75</code> and widens the interval to <code>[-3.0038, +4.5038]</code> (<code>p = 0.5864</code>). Always plot individual biological replicates before quoting test statistics, and check lab logs instead of trimming outliers solely to recover significance.</p>
-<h2>Inspect the data and interpret the comparison</h2>
+<div class="lesson-result"><p><strong>Checkpoint:</strong> Both scripts produce the same Welch estimate (<code>+1.70</code>), 95% CI (<code>[0.6557, 2.7443]</code>), t-statistic (<code>3.9885</code>), df (<code>5.9679</code>), and p-value (<code>0.007292</code>). Python also includes group means, SDs, and pooled-SD Cohen's d in <code>results/comparison.csv</code>.</p></div>
+
+<h2 id="verify-output">Verify the output and check outlier sensitivity</h2>
+<p>Running <code>Rscript --vanilla compare_groups.R data/control.csv data/treated.csv results</code> locally on R 4.6.1 prints the blank-row audit and writes <code>results/comparison_R.csv</code>:</p>
+<pre><code class="language-text"># Terminal output:
+data/control.csv: discarded 0 blank value(s)
+data/treated.csv: discarded 0 blank value(s)
+
+# Contents of results/comparison_R.csv:
+"n_control","n_treated","mean_difference_treated_minus_control","ci95_low","ci95_high","statistic","df","p_value"
+4,4,1.7,0.655704771156541,2.74429522884346,3.98851562372945,5.9678526580159,0.00729220264949977</code></pre>
+<p><strong>Check:</strong> confirm <code>discarded</code> is 0 and <code>df</code> is fractional (<code>5.97</code>, not integer <code>6</code>), proving Welch's adjustment ran.</p>
+<p>At <code>n = 4</code> per group, one outlier swings the conclusion: changing a single control value from <code>10.4</code> to <code>14.2</code> (for example, a swapped tube) drops the difference to <code>+0.75</code> and widens the 95% CI to <code>[-3.0038, +4.5038]</code> (<code>t = 0.6006</code>, <code>df = 3.3413</code>, <code>p = 0.5864</code>, verified on R 4.6.1). Always plot individual biological replicates (<a href="data-visualization-fundamentals.html">Data Visualization Fundamentals</a>) and check lab logs instead of trimming outliers just to regain significance.</p>
+
+<h2 id="interpret-comparison">How to read the numbers without misinterpreting them</h2>
 <ul>
-<li>Plot the raw observations by biological unit, alongside group summaries. With few samples, histograms and formal normality tests have little power to establish that a distribution is normal. Look for data-entry problems, severe skew, and influential observations, then check them against records instead of deleting them because they change a p-value.</li>
-<li>Welch's two-sample t-test targets equality of population means for independent groups and does not assume equal population variances. It still relies on a suitable sampling/design structure and a mean-based model; very small samples, strong skew, or influential outliers can make inference fragile. No single diagnostic certifies assumptions.</li>
-<li>The p-value describes how extreme a statistic at least this large would be under the null model and test assumptions. It is not the probability that the null is true, the probability the result is "due to chance," or a measure of biological importance.</li>
-<li>Read the mean difference and interval before the p-value. The interval shows values compatible with the data and model at its stated confidence level; it is not a probability distribution for the fixed true effect. Decide in advance what difference would matter biologically, using domain knowledge rather than generic small/medium/large labels.</li>
-<li>A non-significant result does not establish no effect. It may reflect imprecision, limited independent replication, a small effect, or model mismatch. Increasing technical measurements alone does not replace additional independent biological units.</li>
+<li><strong>Plot raw points first:</strong> With 4 to 8 replicates per group, normality tests (such as Shapiro-Wilk) have low power; plotting each unit catches entry errors and skew directly.</li>
+<li><strong>Read the effect size and 95% CI before the p-value:</strong> Here the shift is <code>+1.70</code> units (95% CI <code>+0.66</code> to <code>+2.74</code>). A <strong>95% confidence interval</strong> contains values compatible with the data and model at 95% confidence; it is not a 95% probability distribution for the fixed true effect (Greenland et al., 2016).</li>
+<li><strong>Read the p-value accurately:</strong> A <strong>p-value</strong> is the probability, under the null model and assumptions, of a statistic at least as extreme as observed, not the probability the null is true or a measure of biological importance (Wasserstein &amp; Lazar, 2016).</li>
+<li><strong>Do not equate "non-significant" with "no effect":</strong> Wide intervals with <code>p &gt; 0.05</code> often reflect small biological sample sizes rather than zero biological difference.</li>
 </ul>
-<h2>When thousands of features are tested</h2>
-<p>The example above produces one raw p-value. If a separate, appropriately specified analysis generates one valid p-value per feature, adjust the prespecified family together rather than interpreting thousands of unadjusted values as independent discoveries. The Benjamini-Hochberg procedure controls the expected false-discovery proportion under its conditions; dependence structure and analysis design matter, and the adjustment does not fix invalid p-values, confounding, or inappropriate feature filtering.</p>
-<p>Choose either language below to apply Benjamini-Hochberg adjustment to four example p-values while preserving input row order. On real high-throughput data, compute raw p-values across the entire tested feature set under a documented model and pass that full vector through multiple-testing control at once.</p>
-<p>First, create the shared input below in a Bash terminal, not an R or Python console. This step applies to both routes. Then save and run only the script for your chosen language; you do not need the other language's installation or run commands.</p>
+
+<h2 id="multiple-testing">Control false discoveries when testing thousands of features</h2>
+<p>Testing 20,000 genes at an unadjusted <code>p &lt;= 0.05</code> cutoff when no genes truly change produces roughly <code>1,000</code> false positives by chance. Adjust the entire prespecified test family together using one of two error frameworks:</p>
+<ul>
+<li><strong>Family-Wise Error Rate (FWER, such as Bonferroni or Holm):</strong> controls the probability of <em>any</em> false positive across all tests; useful for small confirmatory panels, often too strict for genome-wide screens.</li>
+<li><strong>False Discovery Rate (FDR, such as Benjamini-Hochberg):</strong> controls the expected <em>proportion</em> of false positives among rejected features (Benjamini &amp; Hochberg, 1995). At <code>FDR &lt;= 0.05</code>, at most 5% of discoveries are expected to be false positives on average.</li>
+</ul>
+
+<p>Benjamini-Hochberg (BH) sorts the <code>m</code> raw p-values ascending, scales rank <code>i</code> by <code>m / i</code>, and enforces monotonicity from the largest rank down (<code>p_adj[i] = min(1, min_{k &gt;= i}(m / k * p[k]))</code>):</p>
+
+<div class="lesson-table-wrap" role="region" aria-label="Step-by-step Benjamini-Hochberg calculation on four example p-values" tabindex="0">
+<table>
+<caption>Step-by-step Benjamini-Hochberg adjustment (m = 4 tests, alpha = 0.05)</caption>
+<thead>
+<tr>
+<th scope="col">Rank (i)</th>
+<th scope="col">Raw p-value</th>
+<th scope="col">BH critical cutoff (i / m * 0.05)</th>
+<th scope="col">Scaled value (p * m / i)</th>
+<th scope="col">BH adjusted p-value</th>
+<th scope="col">Reject at FDR &lt;= 0.05?</th>
+</tr>
+</thead>
+<tbody>
+<tr><th scope="row">1</th><td>0.01</td><td>0.0125</td><td>0.01 * 4 / 1 = 0.0400</td><td><strong>0.0400</strong></td><td>Yes (1)</td></tr>
+<tr><th scope="row">2</th><td>0.04</td><td>0.0250</td><td>0.04 * 4 / 2 = 0.0800</td><td><strong>0.0800</strong></td><td>No (0)</td></tr>
+<tr><th scope="row">3</th><td>0.20</td><td>0.0375</td><td>0.20 * 4 / 3 = 0.2667</td><td><strong>0.2667</strong></td><td>No (0)</td></tr>
+<tr><th scope="row">4</th><td>0.80</td><td>0.0500</td><td>0.80 * 4 / 4 = 0.8000</td><td><strong>0.8000</strong></td><td>No (0)</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>Although the second test has raw <code>p = 0.04</code>, its BH-adjusted value is <code>0.08</code> because <code>0.04 &gt; 0.025</code>. BH holds under independence or positive regression dependence (PRDS); for arbitrary or negative dependence, use Benjamini-Yekutieli (<code>method = "BY"</code> in R or <code>method="fdr_by"</code> in statsmodels) at the cost of lower power (Benjamini &amp; Yekutieli, 2001).</p>
+
+<p>Create the shared input file in Bash first (applies to both routes):</p>
 <pre id="statistics-bh-shared-input"><code>printf "0.01\n0.04\n0.20\n0.80\n" &gt; pvalues_all_features.txt
 </code></pre>
 <h3>Base R with p.adjust</h3>
-<p>This equivalent route uses the base R <code>p.adjust</code> function with method <code>BH</code>; it needs no add-on packages. Save as <code>adjust_features.R</code> and run it in the same disposable working directory as the shared input above; skip the Python branch entirely.</p>
+<p>Uses base R <code>p.adjust(..., method = "BH")</code> with no add-on packages. Save as <code>adjust_features.R</code> and run in the same working directory.</p>
 <pre><code>#!/usr/bin/env Rscript
 lines &lt;- trimws(readLines("pvalues_all_features.txt", warn = FALSE))
 if (length(lines) == 0 || any(lines == "")) {
@@ -323,7 +375,7 @@ cat("reject:", as.integer(p_adjusted &lt;= alpha), "\n")</code></pre>
 Rscript adjust_features.R
 </code></pre>
 <h3>Python with statsmodels</h3>
-<p>This optional Python branch requires Python 3, NumPy, and statsmodels. Save the code as <code>adjust_features.py</code>. After saving it, run these commands in the same disposable working directory as the shared input.</p>
+<p>Requires Python 3, NumPy, and statsmodels. Save as <code>adjust_features.py</code> and run in the same working directory.</p>
 <pre><code>python -m pip install numpy statsmodels
 python adjust_features.py
 </code></pre>
@@ -346,31 +398,132 @@ np.savetxt("pvalues_adjusted.txt", p_adjusted)
 np.savetxt("discoveries_fdr05.txt", reject.astype(int), fmt="%d")
 print("adjusted:", p_adjusted)
 print("reject:", reject.astype(int))</code></pre>
-<p>With these four inputs, BH adjustment yields roughly <code>[0.04, 0.08, 0.2667, 0.8]</code> and rejects only the first test at alpha = 0.05 (<code>[1, 0, 0, 0]</code>). Both scripts keep input row order, so pair output with a parallel feature-ID file and verify row alignment before joining tables.</p>
-<p>Rejecting at an FDR threshold controls expected false-discovery proportion across the test family rather than proving biological importance. Always halt on missing, non-finite, or out-of-range p-values, and report the exact family definition, correction method, raw and adjusted p-values, and effect sizes together.</p>
-<h2>Choose a method that matches the design</h2>
-<figure class="my-8 bg-white border border-gray-200 rounded-xl p-4 shadow-sm"><img src="../images/tutorial-figures/stats-welch-fdr-power.png" alt="Benjamini-Hochberg FDR adjustment curve and Welch 95% confidence interval width across sample sizes" width="1590" height="795" loading="lazy" class="w-full h-auto rounded-lg" style="aspect-ratio: 1590 / 795;"/><figcaption class="mt-3 text-sm text-gray-600">Illustrative simulated benchmark: (A) Benjamini-Hochberg adjustment guards against false discoveries when testing 2,000 features simultaneously, while (B) increasing biological replicates tightens Welch 95% confidence intervals.</figcaption></figure>
 
-<ul>
-<li><strong>Paired measurements:</strong> analyze within-unit differences with a paired method, or fit a model that represents the repeated structure. Do not pair groups by row order.</li>
-<li><strong>Count-based sequencing measurements:</strong> use methods designed for count distributions and their mean–variance structure, with the experimental design represented. A t-test on raw counts is not the default differential-expression workflow.</li>
-<li><strong>Strong skew or influential values:</strong> inspect the measurement process and estimand. A transformation changes the scale and often the question; rank-based tests do not automatically test equality of means. Choose an alternative based on the scientific target and design.</li>
-<li><strong>Batch, donor, litter, or covariates:</strong> include them in a model only when the design supports estimating their effects. If condition is completely confounded with batch, statistical adjustment cannot separate the two.</li>
-<li><strong>Power and planning:</strong> define the smallest meaningful effect, outcome, design, and expected variability before choosing sample size. A post-hoc "observed power" calculation does not resolve an imprecise result; use a prospective design-specific calculation and document its assumptions.</li>
-</ul>
-<h2>Record an analysis plan</h2>
-<p>Before running any group comparison, jot down your outcome variable, comparison direction, independent experimental unit, inclusion criteria, covariates or blocking factors, primary model, multiplicity family, and minimum biologically meaningful effect size. Afterward, record exact per-group sample sizes, missing-value exclusions, confidence intervals, package versions, and genome or annotation releases.</p>
-<p>If your observations are paired, nested by donor, or raw sequencing counts, stop before applying a two-sample t-test and move to a mixed model or count-based workflow.</p>
+<div class="lesson-result"><p><strong>Expected output (verified on R 4.6.1):</strong> <code>adjust_features.R</code> prints <code>adjusted: 0.04 0.08 0.26666667 0.8</code> and <code>reject: 1 0 0 0</code>; <code>multipletests(..., method="fdr_bh")</code> returns the same vectors while preserving row order for joining back to feature IDs.</p></div>
+
+<figure class="my-8 bg-white border border-gray-200 rounded-xl p-4 shadow-sm"><img src="../images/tutorial-figures/stats-welch-fdr-power.png" alt="Benjamini-Hochberg FDR adjustment curve and Welch 95% confidence interval width across sample sizes" width="1590" height="795" loading="lazy" class="w-full h-auto rounded-lg" style="aspect-ratio: 1590 / 795;"/><figcaption class="mt-3 text-sm text-gray-600">Illustrative simulated benchmark: (A) Benjamini-Hochberg adjustment guards against false discoveries across 2,000 tests, while (B) more biological replicates tighten Welch 95% confidence intervals.</figcaption></figure>
+
+<h2 id="common-mistakes">Common mistakes and how to fix them</h2>
+<div class="lesson-table-wrap" role="region" aria-label="Common statistical and script mistakes with fixes" tabindex="0">
+<table>
+<caption>Troubleshooting errors and analytical pitfalls</caption>
+<thead>
+<tr>
+<th scope="col">Symptom or error</th>
+<th scope="col">Cause</th>
+<th scope="col">Fix</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<th scope="row"><code>nonblank value is not numeric</code></th>
+<td>CSV contains text markers (<code>NA</code>, <code>NaN</code>, <code>NULL</code>), units (<code>"12.4 ng"</code>), or decimal commas (<code>"12,4"</code>).</td>
+<td>Inspect why the value is missing or malformed, audit exclusions explicitly, and convert valid numbers to standard dot decimals.</td>
+</tr>
+<tr>
+<th scope="row"><code>sample variance is zero</code></th>
+<td>All units in a group are identical (e.g., all zeros for an unexpressed gene or duplicate rows).</td>
+<td>Drop invariant/unexpressed features before testing (independent of group labels) or check for copy-paste errors.</td>
+</tr>
+<tr>
+<th scope="row"><code>P-values must be finite and between 0 and 1</code></th>
+<td>Wrong column passed (log2 fold change or <code>-log10(p)</code>) or <code>NA</code> p-values from failed fits.</td>
+<td>Confirm you passed raw p-values and handle untested/excluded features before running adjustment.</td>
+</tr>
+<tr>
+<th scope="row">Filtering <code>p &lt; 0.05</code> before BH</th>
+<td>Pre-filtering by p-value shrinks <code>m</code> artificially and breaks FDR control.</td>
+<td>Pass the full tested feature family to <code>p.adjust(..., method = "BH")</code> or <code>multipletests(..., method="fdr_bh")</code>.</td>
+</tr>
+</tbody>
+</table>
+</div>
+
+<h2 id="choose-method">Choose a method that matches your design</h2>
+<div class="lesson-table-wrap" role="region" aria-label="Decision table mapping study design to statistical method" tabindex="0">
+<table>
+<caption>Matching statistical workflow to study design</caption>
+<thead>
+<tr>
+<th scope="col">Study design and data type</th>
+<th scope="col">Method</th>
+<th scope="col">R / Python tool</th>
+<th scope="col">Key caution</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<th scope="row">2 independent groups, continuous symmetric metric (log2 expression, &Delta;Ct)</th>
+<td>Welch's t-test</td>
+<td><code>t.test(..., var.equal = FALSE)</code> / <code>scipy.stats.ttest_ind(..., equal_var=False)</code></td>
+<td>Check for pseudoreplication and single-point outliers at small <em>n</em>.</td>
+</tr>
+<tr>
+<th scope="row">Same units measured before and after treatment</th>
+<td>Paired t-test</td>
+<td><code>t.test(..., paired = TRUE)</code> / <code>scipy.stats.ttest_rel()</code></td>
+<td>Match rows by biological-unit ID, never by row position alone.</td>
+</tr>
+<tr>
+<th scope="row">Bulk RNA-seq raw gene counts</th>
+<td>Negative-binomial GLM or empirical-Bayes linear model</td>
+<td>R: <code>DESeq2</code>, <code>edgeR</code>, <code>limma-voom</code>; Python: <code>PyDESeq2</code></td>
+<td>Counts have strong mean-variance structure; see <a href="transcriptomics-differential-expression.html">Differential Expression</a>.</td>
+</tr>
+<tr>
+<th scope="row">scRNA-seq condition comparison across donors</th>
+<td>Pseudobulk sum per donor/cell type + count GLM</td>
+<td>Aggregate raw counts per donor/cell type, then <code>DESeq2</code> / <code>edgeR</code></td>
+<td>Cell-level tests inflate false discoveries (Squair et al., 2021); see <a href="scrna-seq-basics.html">scRNA-seq Basics</a>.</td>
+</tr>
+<tr>
+<th scope="row">Batch, donor, or litter covariates</th>
+<td>Linear or mixed-effects model</td>
+<td>R: <code>lm()</code>, <code>lme4::lmer()</code>; Python: <code>statsmodels</code> OLS / MixedLM</td>
+<td>Cannot adjust if batch is completely confounded with condition; see <a href="experimental-design-batch-effects.html">Experimental Design and Batch Effects</a>.</td>
+</tr>
+<tr>
+<th scope="row">Strongly skewed continuous data</th>
+<td>Wilcoxon rank-sum (Mann-Whitney U)</td>
+<td><code>wilcox.test()</code> / <code>scipy.stats.mannwhitneyu()</code></td>
+<td>Tests rank/stochastic shift rather than equality of means.</td>
+</tr>
+</tbody>
+</table>
+</div>
+
+<p><strong>Sample-size planning:</strong> Define the smallest meaningful effect, expected variance, target power (e.g., 80%), and alpha prospectively using <code>power.t.test()</code> or <code>statsmodels.stats.power.TTestIndPower</code>. Avoid post-hoc "observed power" on non-significant results, which is mathematically redundant with the p-value.</p>
+
+<h2 id="practice-check">Quick practice check</h2>
+<div class="lesson-exercise">
+<p><strong>Task 1:</strong> You treat 3 mice with an inhibitor and 3 with vehicle, measuring <em>IFNG</em> in 4 technical qPCR wells per mouse (24 wells total). What is <code>n</code> per group, and how do you prepare inputs for <code>compare_groups.R</code>?</p>
+<p><strong>Task 2:</strong> A 5-gene targeted panel returns raw p-values <code>[0.004, 0.015, 0.040, 0.400, 0.900]</code>. Which genes pass Benjamini-Hochberg at <code>FDR &lt;= 0.05</code>?</p>
+<details class="mt-3 rounded-lg border border-gray-200 bg-gray-50 p-4">
+<summary class="font-semibold cursor-pointer text-blue-700">Check answers</summary>
+<div class="mt-2 space-y-2 text-sm text-gray-800">
+<p><strong>1.</strong> <code>n = 3</code> mice per group (6 mice total), not 12. Average the 4 technical wells per mouse first so each CSV has 3 biological rows, or fit a mixed-effects model with mouse ID as a random effect.</p>
+<p><strong>2.</strong> With <code>m = 5</code>: rank 1 gives <code>0.004 * 5/1 = 0.0200</code> (&lt;= 0.05, reject); rank 2 gives <code>0.015 * 5/2 = 0.0375</code> (&lt;= 0.05, reject); rank 3 gives <code>0.040 * 5/3 = 0.0667</code> (&gt; 0.05, do not reject). Only the first two genes pass.</p>
+</div>
+</details>
+</div>
+
+<h2 id="analysis-plan">Record an analysis plan and next steps</h2>
+<p>Before testing, write down the outcome, comparison direction, independent experimental unit, covariates, primary model, multiple-testing family, and minimum meaningful effect size. Afterward, archive per-group <code>n</code>, exclusions, confidence intervals, raw and adjusted p-values, and software versions.</p>
+
 <aside aria-label="Author's lab note" class="lesson-summary">
-<p><strong>Author's lab note:</strong> The fastest way to accidentally inflate a p-value in biology is treating three technical PCR wells or multiple cells from one mouse as independent samples (pseudoreplication). Before fitting any test, I always ask myself what single number equals <code>n</code> at the level where the treatment was actually applied.</p>
+<p><strong>Author's lab note:</strong> The fastest way to produce an artificially tiny p-value (and an inflated false-positive rate) in biology is treating three technical PCR wells or multiple cells from one mouse as independent samples (pseudoreplication). Before fitting any test, I always ask myself what single number equals <code>n</code> at the level where the treatment was actually applied.</p>
 </aside>
-<h2>References</h2>
+
+<h2 id="references">References</h2>
 <ul>
-<li>Wasserstein, R. L., &amp; Lazar, N. A. (2016). The ASA statement on p-values: context, process, and purpose. <em>The American Statistician</em>, 70(2), 129-133. <a href="https://doi.org/10.1080/00031305.2016.1154108" rel="noopener" target="_blank">doi:10.1080/00031305.2016.1154108</a></li>
-<li>Greenland, S., Senn, S. J., Rothman, K. J., et al. (2016). Statistical tests, P values, confidence intervals, and power: a guide to misinterpretations. <em>European Journal of Epidemiology</em>, 31, 337-350. <a href="https://doi.org/10.1007/s10654-016-0149-3" rel="noopener" target="_blank">doi:10.1007/s10654-016-0149-3</a></li>
 <li>Benjamini, Y., &amp; Hochberg, Y. (1995). Controlling the false discovery rate: a practical and powerful approach to multiple testing. <em>Journal of the Royal Statistical Society Series B</em>, 57(1), 289-300. <a href="https://www.jstor.org/stable/2346101" rel="noopener" target="_blank">jstor:2346101</a></li>
+<li>Benjamini, Y., &amp; Yekutieli, D. (2001). The control of the false discovery rate in multiple testing under dependency. <em>The Annals of Statistics</em>, 29(4), 1165-1188. <a href="https://doi.org/10.1214/aos/1013699998" rel="noopener" target="_blank">doi:10.1214/aos/1013699998</a></li>
+<li>Delacre, M., Lakens, D., &amp; Leys, C. (2017). Why psychologists should by default use Welch's t-test instead of Student's t-test. <em>International Review of Social Psychology</em>, 30(1), 92-101. <a href="https://doi.org/10.5334/irsp.82" rel="noopener" target="_blank">doi:10.5334/irsp.82</a></li>
+<li>Greenland, S., Senn, S. J., Rothman, K. J., et al. (2016). Statistical tests, P values, confidence intervals, and power: a guide to misinterpretations. <em>European Journal of Epidemiology</em>, 31, 337-350. <a href="https://doi.org/10.1007/s10654-016-0149-3" rel="noopener" target="_blank">doi:10.1007/s10654-016-0149-3</a></li>
 <li>Lazic, S. E. (2010). The problem of pseudoreplication in neuroscientific studies: is it affecting your analysis? <em>BMC Neuroscience</em>, 11, 5; and Hurlbert, S. H. (1984), <em>Ecological Monographs</em>, 54(2), 187-211.</li>
-<li><a href="https://stat.ethz.ch/R-manual/R-devel/library/stats/html/t.test.html" rel="noopener" target="_blank">R documentation: t.test</a>, <a href="https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.ttest_ind.html" rel="noopener" target="_blank">SciPy ttest_ind</a>, and <a href="https://www.statsmodels.org/stable/generated/statsmodels.stats.multitest.multipletests.html" rel="noopener" target="_blank">statsmodels multipletests</a></li>
+<li>Squair, J. W., Gautier, M., Kathe, C., et al. (2021). Confronting false discoveries in single-cell differential expression. <em>Nature Communications</em>, 12, 5692. <a href="https://doi.org/10.1038/s41467-021-25960-2" rel="noopener" target="_blank">doi:10.1038/s41467-021-25960-2</a></li>
+<li>Wasserstein, R. L., &amp; Lazar, N. A. (2016). The ASA statement on p-values: context, process, and purpose. <em>The American Statistician</em>, 70(2), 129-133. <a href="https://doi.org/10.1080/00031305.2016.1154108" rel="noopener" target="_blank">doi:10.1080/00031305.2016.1154108</a></li>
+<li>Official software docs: <a href="https://stat.ethz.ch/R-manual/R-devel/library/stats/html/t.test.html" rel="noopener" target="_blank">R t.test</a>, <a href="https://stat.ethz.ch/R-manual/R-devel/library/stats/html/p.adjust.html" rel="noopener" target="_blank">R p.adjust</a>, <a href="https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.ttest_ind.html" rel="noopener" target="_blank">SciPy ttest_ind</a>, and <a href="https://www.statsmodels.org/stable/generated/statsmodels.stats.multitest.multipletests.html" rel="noopener" target="_blank">statsmodels multipletests</a></li>
 </ul>
 <aside aria-labelledby="tutorial-feedback-title" class="lesson-feedback" id="tutorial-feedback"><h2 id="tutorial-feedback-title">Help improve this tutorial</h2><p>Found an error, a broken link, or a step that needs a clearer explanation? Please <a href="../contact.html">contact me</a>. Your feedback helps me keep this resource accurate and useful.</p></aside></article>
 <section class="mt-12 mb-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-100">
@@ -511,7 +664,7 @@ print("reject:", reject.astype(int))</code></pre>
 </script>
 <script src="../assets/vendor/prism/prism-1.29.0.js"></script>
 <script id="tutorial-code-data">
-window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"statistics-for-bioinformatics":{"blocks":[{"language":"bash","sha256":"dcdb52a34f130b85dc772be1cb6bdef9c0055b944dea885f1587d73983c44b28"},{"language":"r","sha256":"7a28da6a70ce0f6e0c81d3c3f589899af65b77a9b9fe3e1fac6898622ee5530d"},{"language":"bash","sha256":"58ce44f49e35e144d9b85600e66f0e016be9745ea7a226bbb7ee4b1941c1ca10"},{"language":"bash","sha256":"476589faeca50c725b38bcad55203785bd1e58020009013e39846aa39ebd3bc9"},{"language":"python","sha256":"48ac7ddca82cb1ce6f3c61042e2e184719030ee49865e17500a5d04541d96258"},{"language":"text","sha256":"a3cb2f4c43b7456d0a6c35cf83efb3226a63d19341d92f02588730402e0056af"},{"language":"bash","sha256":"e80b1429c4202228e31e5c33899ae8f2d7f98dc337d6dc6e8a584e51da4a360e"},{"language":"r","sha256":"6b0ac6128376c9681889320c82eae7b915aae72abcd64f396c04d7d290a5a2a4"},{"language":"bash","sha256":"208a8052eab2a70469d4ca2a1d0403d203985479cafc1f0432082d7d9bace7d3"},{"language":"bash","sha256":"d5b23e015200b67e977d415d0963e03a0112f0ac027bca182c7498be56935be5"},{"language":"python","sha256":"ab20f6484ee838955db07efc39f4e5e97882e9621a9e022a634ebef5cf2acfb5"}],"groups":[{"title":"Compare two independent groups","panels":[{"start":9,"end":12,"language":"r","label":"R \u00b7 base R"},{"start":13,"end":15,"language":"python","label":"Python"}],"members":[{"index":9,"tag":"h3","sha256":"3a7df43313f57390f58493cba4024ea1121edd15306f2804f85a81bcc39cc385"},{"index":10,"tag":"p","sha256":"5a4da109d30f755d925479e4a96800ae1fd07f472f11eefa1254c466e4d85ebb"},{"index":11,"tag":"pre","sha256":"7a28da6a70ce0f6e0c81d3c3f589899af65b77a9b9fe3e1fac6898622ee5530d"},{"index":12,"tag":"pre","sha256":"58ce44f49e35e144d9b85600e66f0e016be9745ea7a226bbb7ee4b1941c1ca10"},{"index":13,"tag":"p","sha256":"ff9b1cf12936ee10edfaa6397b1d4aa5d88ee33a83c96212f90bbbf91291cfa0"},{"index":14,"tag":"pre","sha256":"476589faeca50c725b38bcad55203785bd1e58020009013e39846aa39ebd3bc9"},{"index":15,"tag":"pre","sha256":"48ac7ddca82cb1ce6f3c61042e2e184719030ee49865e17500a5d04541d96258"}],"tabOrder":["r","python"]},{"title":"Adjust for multiple testing","panels":[{"start":28,"end":31,"language":"r","label":"R \u00b7 base R"},{"start":32,"end":35,"language":"python","label":"Python \u00b7 statsmodels"}],"members":[{"index":28,"tag":"h3","sha256":"80605e5284a0fd5ce13a013a21581538490209a8dcf08791335e13e08d80797e"},{"index":29,"tag":"p","sha256":"aaa2c9f585f9c6d6ce50264012f961d43553f7be1e88fbf1fc939432376b110c"},{"index":30,"tag":"pre","sha256":"6b0ac6128376c9681889320c82eae7b915aae72abcd64f396c04d7d290a5a2a4"},{"index":31,"tag":"pre","sha256":"208a8052eab2a70469d4ca2a1d0403d203985479cafc1f0432082d7d9bace7d3"},{"index":32,"tag":"h3","sha256":"764757f186ee5db3b0fcd7b2c68941cd7b6f6dc2ca665158b1f7589861e095e4"},{"index":33,"tag":"p","sha256":"ed25f9c56e087563fe068866950248a42300b8e4987264b65f96a794494d12c9"},{"index":34,"tag":"pre","sha256":"d5b23e015200b67e977d415d0963e03a0112f0ac027bca182c7498be56935be5"},{"index":35,"tag":"pre","sha256":"ab20f6484ee838955db07efc39f4e5e97882e9621a9e022a634ebef5cf2acfb5"}],"tabOrder":["r","python"]}]}}};
+window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"statistics-for-bioinformatics":{"blocks":[{"language":"bash","sha256":"dcdb52a34f130b85dc772be1cb6bdef9c0055b944dea885f1587d73983c44b28"},{"language":"r","sha256":"7a28da6a70ce0f6e0c81d3c3f589899af65b77a9b9fe3e1fac6898622ee5530d"},{"language":"bash","sha256":"58ce44f49e35e144d9b85600e66f0e016be9745ea7a226bbb7ee4b1941c1ca10"},{"language":"bash","sha256":"476589faeca50c725b38bcad55203785bd1e58020009013e39846aa39ebd3bc9"},{"language":"python","sha256":"48ac7ddca82cb1ce6f3c61042e2e184719030ee49865e17500a5d04541d96258"},{"language":"text","sha256":"506e05ea18f9be8ee109f54388a52be1b2d90e9e059e75672968fbcaf9f5c4e7"},{"language":"bash","sha256":"e80b1429c4202228e31e5c33899ae8f2d7f98dc337d6dc6e8a584e51da4a360e"},{"language":"r","sha256":"6b0ac6128376c9681889320c82eae7b915aae72abcd64f396c04d7d290a5a2a4"},{"language":"bash","sha256":"208a8052eab2a70469d4ca2a1d0403d203985479cafc1f0432082d7d9bace7d3"},{"language":"bash","sha256":"d5b23e015200b67e977d415d0963e03a0112f0ac027bca182c7498be56935be5"},{"language":"python","sha256":"ab20f6484ee838955db07efc39f4e5e97882e9621a9e022a634ebef5cf2acfb5"}],"groups":[{"title":"Compare two independent groups","panels":[{"start":14,"end":17,"language":"r","label":"R \u00b7 base R"},{"start":18,"end":20,"language":"python","label":"Python"}],"members":[{"index":14,"tag":"h3","sha256":"3a7df43313f57390f58493cba4024ea1121edd15306f2804f85a81bcc39cc385"},{"index":15,"tag":"p","sha256":"4382fbe68284c042ac65e8fb213b2899f9a163079166a7cabfbd9d4a59449312"},{"index":16,"tag":"pre","sha256":"7a28da6a70ce0f6e0c81d3c3f589899af65b77a9b9fe3e1fac6898622ee5530d"},{"index":17,"tag":"pre","sha256":"58ce44f49e35e144d9b85600e66f0e016be9745ea7a226bbb7ee4b1941c1ca10"},{"index":18,"tag":"p","sha256":"5dbb8687537f48f135d22f3c613e6cefc7a85a0b4062579212af74203a189c89"},{"index":19,"tag":"pre","sha256":"476589faeca50c725b38bcad55203785bd1e58020009013e39846aa39ebd3bc9"},{"index":20,"tag":"pre","sha256":"48ac7ddca82cb1ce6f3c61042e2e184719030ee49865e17500a5d04541d96258"}],"tabOrder":["r","python"]},{"title":"Adjust for multiple testing","panels":[{"start":37,"end":40,"language":"r","label":"R \u00b7 base R"},{"start":41,"end":44,"language":"python","label":"Python \u00b7 statsmodels"}],"members":[{"index":37,"tag":"h3","sha256":"80605e5284a0fd5ce13a013a21581538490209a8dcf08791335e13e08d80797e"},{"index":38,"tag":"p","sha256":"aac9733383e48499b0091ea7f6318563d67510b2d25b2c91810e4d753993c653"},{"index":39,"tag":"pre","sha256":"6b0ac6128376c9681889320c82eae7b915aae72abcd64f396c04d7d290a5a2a4"},{"index":40,"tag":"pre","sha256":"208a8052eab2a70469d4ca2a1d0403d203985479cafc1f0432082d7d9bace7d3"},{"index":41,"tag":"h3","sha256":"764757f186ee5db3b0fcd7b2c68941cd7b6f6dc2ca665158b1f7589861e095e4"},{"index":42,"tag":"p","sha256":"6181d0fa5c808b861fbb506659c4f24fab084944432ebf29b93aa2512b73b596"},{"index":43,"tag":"pre","sha256":"d5b23e015200b67e977d415d0963e03a0112f0ac027bca182c7498be56935be5"},{"index":44,"tag":"pre","sha256":"ab20f6484ee838955db07efc39f4e5e97882e9621a9e022a634ebef5cf2acfb5"}],"tabOrder":["r","python"]}]}}};
 </script>
 <script src="../code-tabs.js?v=20261026-startup-v1"></script>
 <script src="../copy-code.js?v=20261025-r-first-v1"></script>

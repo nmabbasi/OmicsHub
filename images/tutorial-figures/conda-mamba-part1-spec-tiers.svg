@@ -1,0 +1,81 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 380" width="960" height="380" role="img" aria-label="How an authored environment.yml resolves through strict channel priority into three reproducibility export tiers">
+  <title>Environment Specification and Export Tiers in Micromamba</title>
+  <defs>
+    <marker id="arrow-slate" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#475569"/>
+    </marker>
+    <marker id="arrow-blue" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#1D4ED8"/>
+    </marker>
+    <filter id="card-shadow" x="-4%" y="-4%" width="108%" height="112%">
+      <feDropShadow dx="0" dy="3" stdDeviation="4" flood-color="#0F172A" flood-opacity="0.08"/>
+    </filter>
+  </defs>
+
+  <rect x="0" y="0" width="960" height="380" rx="14" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="1.5"/>
+  <text x="32" y="38" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="19" font-weight="700" fill="#0F172A">From Authored Intent to Reproducible Exports</text>
+  <text x="32" y="60" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="13" fill="#475569">Choose the export format based on whether collaborators share your OS/CPU architecture or need cross-platform flexibility</text>
+
+  <!-- Left Card: Authored YAML -->
+  <g filter="url(#card-shadow)">
+    <rect x="32" y="92" width="236" height="236" rx="10" fill="#FFFFFF" stroke="#93C5FD" stroke-width="1.6"/>
+    <path d="M 32 102 Q 32 92 42 92 L 258 92 Q 268 92 268 102 L 268 126 L 32 126 Z" fill="#1D4ED8"/>
+    <text x="46" y="114" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="13" font-weight="700" fill="#FFFFFF">1. Authored Spec</text>
+    <text x="254" y="114" text-anchor="end" font-family="monospace" font-size="11" font-weight="700" fill="#E2E8F0">YAML</text>
+    <text x="46" y="150" font-family="monospace" font-size="12" font-weight="700" fill="#0F172A">environment.yml</text>
+    <text x="46" y="176" font-family="monospace" font-size="11.5" fill="#334155">channels:</text>
+    <text x="46" y="195" font-family="monospace" font-size="11.5" fill="#334155">  - conda-forge (1st)</text>
+    <text x="46" y="214" font-family="monospace" font-size="11.5" fill="#334155">  - bioconda    (2nd)</text>
+    <text x="46" y="240" font-family="monospace" font-size="11.5" fill="#334155">dependencies:</text>
+    <text x="46" y="259" font-family="monospace" font-size="11.5" fill="#334155">  - python=3.11</text>
+    <text x="46" y="278" font-family="monospace" font-size="11.5" fill="#334155">  - fastqc</text>
+    <text x="46" y="297" font-family="monospace" font-size="11.5" fill="#334155">  - multiqc</text>
+  </g>
+
+  <line x1="268" y1="210" x2="314" y2="210" stroke="#1D4ED8" stroke-width="2.2" marker-end="url(#arrow-blue)"/>
+
+  <!-- Middle Card: Strict Solver + Env -->
+  <g filter="url(#card-shadow)">
+    <rect x="318" y="112" width="230" height="196" rx="10" fill="#FFFFFF" stroke="#5EEAD4" stroke-width="1.6"/>
+    <path d="M 318 122 Q 318 112 328 112 L 538 112 Q 548 112 548 122 L 548 146 L 318 146 Z" fill="#0D9488"/>
+    <text x="332" y="134" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="13" font-weight="700" fill="#FFFFFF">2. Strict Solver &amp; Prefix</text>
+    <text x="332" y="172" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="12.5" font-weight="700" fill="#0F172A">libmamba resolves graph</text>
+    <text x="332" y="194" font-family="monospace" font-size="11" fill="#334155">--override-channels</text>
+    <text x="332" y="213" font-family="monospace" font-size="11" fill="#334155">--channel-priority strict</text>
+    <line x1="332" y1="230" x2="534" y2="230" stroke="#E2E8F0" stroke-width="1.2"/>
+    <text x="332" y="252" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="12" fill="#334155">Installs platform builds into:</text>
+    <text x="332" y="274" font-family="monospace" font-size="11.5" font-weight="700" fill="#0F766E">~/micromamba/envs/qc-tools</text>
+    <text x="332" y="294" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11.5" fill="#475569">Test tools before exporting</text>
+  </g>
+
+  <line x1="548" y1="168" x2="598" y2="128" stroke="#475569" stroke-width="2" stroke-dasharray="5 3" marker-end="url(#arrow-slate)"/>
+  <line x1="548" y1="210" x2="598" y2="210" stroke="#475569" stroke-width="2" stroke-dasharray="5 3" marker-end="url(#arrow-slate)"/>
+  <line x1="548" y1="252" x2="598" y2="294" stroke="#475569" stroke-width="2" stroke-dasharray="5 3" marker-end="url(#arrow-slate)"/>
+
+  <!-- Right Top Card: from-history -->
+  <g filter="url(#card-shadow)">
+    <rect x="602" y="84" width="326" height="80" rx="10" fill="#FFFFFF" stroke="#93C5FD" stroke-width="1.6"/>
+    <path d="M 602 94 Q 602 84 612 84 L 918 84 Q 928 84 928 94 L 928 112 L 602 112 Z" fill="#1E40AF"/>
+    <text x="614" y="102" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#FFFFFF">Tier A: Portable Intent (--from-history)</text>
+    <text x="614" y="132" font-family="monospace" font-size="11.5" fill="#0F172A">environment-history.yml</text>
+    <text x="614" y="151" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11.5" fill="#475569">Cross-platform (Mac/Linux); stores direct requests only</text>
+  </g>
+
+  <!-- Right Middle Card: env export reviewed -->
+  <g filter="url(#card-shadow)">
+    <rect x="602" y="176" width="326" height="80" rx="10" fill="#FFFFFF" stroke="#C4B5FD" stroke-width="1.6"/>
+    <path d="M 602 186 Q 602 176 612 176 L 918 176 Q 928 176 928 186 L 928 204 L 602 204 Z" fill="#6D28D9"/>
+    <text x="614" y="194" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#FFFFFF">Tier B: Pinned Audit (env export, reviewed)</text>
+    <text x="614" y="224" font-family="monospace" font-size="11.5" fill="#0F172A">environment-resolved-reviewed.yml</text>
+    <text x="614" y="243" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11.5" fill="#475569">Exact versions + builds; keep channel order, drop prefix:</text>
+  </g>
+
+  <!-- Right Bottom Card: explicit / conda-lock -->
+  <g filter="url(#card-shadow)">
+    <rect x="602" y="268" width="326" height="80" rx="10" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.6"/>
+    <path d="M 602 278 Q 602 268 612 268 L 918 268 Q 928 268 928 278 L 928 296 L 602 296 Z" fill="#0F172A"/>
+    <text x="614" y="286" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#FFFFFF">Tier C: Solver-Free Lock (--explicit / conda-lock)</text>
+    <text x="614" y="316" font-family="monospace" font-size="11.5" fill="#0F172A">spec-explicit.txt  or  conda-lock.yml</text>
+    <text x="614" y="335" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11.5" fill="#475569">Exact tarball URLs + MD5 (--explicit) or multi-OS lockfile</text>
+  </g>
+</svg>

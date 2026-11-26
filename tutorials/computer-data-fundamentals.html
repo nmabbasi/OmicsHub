@@ -175,60 +175,70 @@ function toggleMobileMenu() {
 <article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--walkthrough"><div class="flex flex-wrap items-center gap-4 text-xs font-mono text-gray-500 bg-gray-50 p-3 rounded-lg border border-gray-200 mb-6">
 <div class="flex items-start gap-2">
 <svg class="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
-<span><strong>Examples use:</strong> Bash and GNU command-line utilities; see platform notes.</span>
+<span><strong>Examples use:</strong> Bash and GNU command-line utilities; macOS equivalents noted inline.</span>
 </div>
 <div class="flex items-start gap-2">
 <svg class="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
 <span>Updated 23 October 2026</span></div>
-</div><p class="lesson-lead">Before running an omics workflow, know where its files live, what resources it can exhaust, and how to check that a transfer arrived intact. This walkthrough builds a project directory and practices safe inspection of compressed FASTQ files.</p>
-<section class="lesson-summary tutorial-learning-contract" data-tutorial-format="hands-on-lab" aria-label="Learning format"><p><strong>Format: Hands-on lab.</strong> Create a tiny synthetic paired-end FASTQ fixture on your computer and check file sizes, permissions, gzip integrity, and checksums. Real sequencing deliveries should always be verified against provider checksums on arrival.</p></section>
-<h2>What you will produce and what you need</h2>
-<p>By the end, you will have a documented project layout and a verification log for provider-supplied files. You will also be able to tell whether a failure points to storage, memory, permissions, or file integrity.</p>
+</div><p class="lesson-lead">Before running an alignment or count pipeline, you need to know where your files live, which hardware limit a job can hit first, and whether downloaded sequencing files arrived intact. In about 20-25 minutes, you will build a clean project folder, create a tiny paired-end FASTQ fixture, inspect compressed reads safely, and save a verified checksum log.</p>
+<section class="lesson-summary tutorial-learning-contract" data-tutorial-format="hands-on-lab" aria-label="Learning format"><p><strong>Format: Hands-on lab (20-25 min).</strong> You will build a tiny synthetic paired-end FASTQ fixture on your own computer and verify file sizes, permissions, gzip integrity, and SHA-256 checksums. When real sequencing deliveries arrive, run the same checks against the provider's manifest before launching analysis.</p></section>
+<h2 id="goals-and-prerequisites">What you will build and prerequisites</h2>
+<p>By the end of this lab, you will have a documented project tree at <code>~/projects/my-study</code>, read-only raw FASTQ inputs, and a saved verification log in <code>logs/</code>. You will also be able to:</p>
 <ul>
-<li>Explain the difference between CPU (central processing unit), RAM (random access memory), storage (disk), and network bandwidth and why a bioinformatics workflow can be limited by any of them.</li>
-<li>Describe files, directories, absolute and relative paths, file extensions, basic metadata, and UNIX file permissions.</li>
-<li>Estimate why raw sequencing data often requires large disk and temporary space, and how memory needs grow with certain operations.</li>
-<li>Create a reproducible project folder layout that separates raw data, intermediate files, code, results, and logs, and perform one verified file integrity check (checksum).</li>
+<li>Tell apart <strong>CPU</strong> (processor cores), <strong>RAM</strong> (working memory), <strong>storage</strong> (persistent disk and scratch space), and <strong>network bandwidth</strong> (transfer speed), and match error messages to the right limit.</li>
+<li>Read and write <strong>absolute vs. relative paths</strong>, double extensions such as <code>.fastq.gz</code>, and UNIX file permissions (<code>-rw-r--r--</code>, <code>chmod a-w</code>).</li>
+<li>Inspect gzipped FASTQ files without writing huge uncompressed copies to disk.</li>
+<li>Run two distinct integrity checks (<code>sha256sum -c</code> and <code>gzip -t</code>) and recognize what each catches.</li>
 </ul>
-<p>Prerequisites:</p>
+<p><strong>Prerequisites:</strong> A Bash terminal on Linux, macOS, or Windows Subsystem for Linux (WSL). No prior programming, R, Python, or package installation is needed. Everything here uses built-in shell utilities.</p>
+
+<h2 id="hardware-limits-in-omics">1. Why hardware and file habits matter in omics</h2>
+<p>Sequencing runs and proteomics outputs are large, compressed text or binary files. A single 30x human whole-genome sequencing (WGS) sample produces roughly 60-150 GB of compressed paired-end FASTQ files, and sorting alignments or marking duplicates often needs 300-500 GB of temporary scratch space on top of the inputs. Meanwhile, an RNA-seq aligner such as <strong>STAR</strong> loads a genome index directly into memory (RAM): for the human GRCh38 reference genome, STAR requires roughly 30-32 GB of RAM (ideally 32-40 GB), so a 16 GB laptop will crash with an out-of-memory error even if the hard drive has 500 GB free.</p>
+<figure class="my-8 bg-white border border-gray-200 rounded-xl p-4 shadow-sm"><img src="../images/tutorial-figures/computer-data-fundamentals-resources.svg" alt="Flow diagram showing network transfer feeding persistent disk storage, loading genome indexes into RAM, processing on CPU cores, and spilling temporary sort files to scratch disk" width="960" height="440" loading="lazy" class="w-full h-auto rounded-lg" style="aspect-ratio: 960 / 440;"/><figcaption class="mt-3 text-sm text-gray-600">Disk space holds your files between sessions; RAM holds active indexes while a tool runs. Running out of either produces completely different errors and fixes.</figcaption></figure>
+<div class="lesson-table-wrap overflow-x-auto my-6">
+<table>
+<thead>
+<tr><th>Resource</th><th>What it does</th><th>Typical omics bottleneck</th><th>Command to check</th></tr>
+</thead>
+<tbody>
+<tr><td><strong>Network</strong></td><td>Moves files from sequencing core, SRA, or ENA to your machine</td><td>Interrupted or truncated downloads</td><td><code>sha256sum -c</code>, <code>gzip -t</code></td></tr>
+<tr><td><strong>Storage (disk &amp; scratch)</strong></td><td>Stores files persistently; holds temp files during sorting</td><td><code>No space left on device</code> or quota hit during BAM sorting</td><td><code>du -sh .</code>, <code>df -h .</code></td></tr>
+<tr><td><strong>RAM (memory)</strong></td><td>Fast volatile workspace for genome indexes and count matrices</td><td><code>Killed</code> or <code>out of RAM</code> when loading GRCh38 (~32 GB for STAR)</td><td><code>free -h</code> (Linux), <code>vm_stat</code> (macOS)</td></tr>
+<tr><td><strong>CPU cores</strong></td><td>Executes alignment, compression, and counting in parallel</td><td>Slow runtime; adding threads can also raise RAM use per worker</td><td><code>nproc</code> (Linux), <code>sysctl -n hw.logicalcpu</code> (macOS)</td></tr>
+</tbody>
+</table>
+</div>
+
+<h2 id="paths-extensions-permissions">2. Paths, extensions, and file permissions</h2>
+<p>Before typing commands, three UNIX file concepts prevent most beginner mix-ups:</p>
 <ul>
-<li>A computer with a terminal (macOS Terminal, a Linux shell, or Windows Subsystem for Linux). Commands below use Bash syntax, including brace expansion and <code>set -o pipefail</code>; use Bash on Linux, macOS, or Windows Subsystem for Linux.</li>
-<li>Internet access for downloading example files (optional) and for following references.</li>
-<li>No prior programming experience is required; the lesson focuses on concepts and safe command usage.</li>
+<li><strong>Absolute vs. relative paths:</strong> An <em>absolute path</em> starts at the filesystem root <code>/</code> (for example <code>/home/alex/projects/my-study/data/raw</code>; <code>~</code> expands to your home folder). A <em>relative path</em> starts from your current working directory (for example <code>data/raw/sample_R1.fastq.gz</code>). Keep analysis scripts portable by running from the project root and using relative paths instead of hardcoding your personal username.</li>
+<li><strong>Double file extensions (<code>.fastq.gz</code>):</strong> The inner extension (<code>.fastq</code>) names the data format (plain-text sequencing reads), and the outer extension (<code>.gz</code>) names the compression wrapper (gzip). Unpacking a 40 GB <code>.fastq.gz</code> file just to peek inside can suddenly consume 120-160 GB of disk; stream it through <code>zcat</code> or <code>gzip -dc</code> instead.</li>
+<li><strong>UNIX permissions (<code>-rw-r--r--</code>):</strong> In <code>ls -lah</code> output, the first character shows file type (<code>-</code> for regular file, <code>d</code> for directory), followed by three triplets for <strong>owner</strong>, <strong>group</strong>, and <strong>others</strong> using <code>r</code> (read), <code>w</code> (write), and <code>x</code> (execute or enter directory). Once raw FASTQ files pass verification, removing write bits with <code>chmod a-w</code> turns them read-only (<code>-r--r--r--</code>) so no script can overwrite them by accident.</li>
 </ul>
-<h2>Why these fundamentals matter for biological data</h2>
-<p>Omics work in DNA/RNA sequencing, mass spectrometry proteomics, and large-scale imaging produces many files, often large and compressed. A typical short-read sequencing run can generate tens to hundreds of gigabytes of compressed FASTQ files. A single analysis step (for example, read alignment or large-table joins) can require temporary disk space and memory far in excess of the stored file size, because tools often decompress data or build in-memory indexes.</p>
-<p>Understanding where data lives (storage), where it is processed (RAM), who performs the work (CPU), and how data moves between sites (network bandwidth) helps you:</p>
-<ul>
-<li>Choose an appropriate computer or high-performance computing (HPC) queue.</li>
-<li>Organize data so analyses are reproducible and raw data are preserved.</li>
-<li>Diagnose common error messages such as "out of memory", "disk quota exceeded", or "permission denied".</li>
-</ul>
-<h2>Practical, reproducible workflow</h2>
-<p>We generate a tiny pair of practice files locally so you can test every command without downloading real sequencing runs. Open Bash on Linux, macOS, or WSL and confirm that <code>bash</code>, <code>gzip</code>, and either <code>sha256sum</code> or <code>shasum</code> are installed (<code>command -v bash gzip sha256sum shasum</code>).</p>
-<p>From your working folder, create the two compressed FASTQ files and a matching manifest containing the invented teaching reads below:</p>
+
+<h2 id="build-project-directory">3. Build a documented project directory</h2>
+<p>Separating immutable raw inputs from scripts, regenerable intermediates, outputs, and logs keeps you from losing track of which files came from the sequencer and which were generated by an experiment. The command below uses Bash brace expansion (<code>{a,b}</code>) to create the full directory tree in one step.</p>
+<pre><code># From your home or a working directory, create a project folder and subfolders.
+mkdir -p ~/projects/my-study/{data/raw,data/processed,scripts,results,logs}
+# Create an initial README to document purpose and provenance.
+printf "# my-study\n\nRaw data: data/raw/\nProcessed data: data/processed/\n" &gt; ~/projects/my-study/README.md
+</code></pre>
+<p>Here <code>mkdir -p</code> creates missing parent folders without failing if a directory already exists. Replace <code>my-study</code> with a descriptive study name for your own work. For a full project layout with sample sheets and Git ignore rules, see the <a href="reproducible-workflows-snakemake-nextflow.html">reproducible workflow layout guide</a>.</p>
+<figure class="my-8 bg-white border border-gray-200 rounded-xl p-4 shadow-sm"><img src="../images/tutorial-figures/bioinformatics-project-layout.svg" alt="Directory layout diagram separating Git-tracked scripts, immutable raw data, deletable scratch, and versioned outputs" width="960" height="460" loading="lazy" class="w-full h-auto rounded-lg" style="aspect-ratio: 960 / 460;"/><figcaption class="mt-3 text-sm text-gray-600">Project layout separating small version-controlled code and configs from read-only checksummed FASTQs, temporary scratch, and deliverable results.</figcaption></figure>
+
+<h2 id="create-fastq-fixture">4. Create a tiny synthetic FASTQ fixture</h2>
+<p>Rather than downloading gigabytes of real sequencing data just to practice shell commands, generate two tiny compressed paired-end FASTQ files (<code>sample_R1.fastq.gz</code> and <code>sample_R2.fastq.gz</code>) and a matching <code>SHA256SUMS</code> manifest inside <code>data/raw/</code>. First confirm that Bash, <code>gzip</code>, and either <code>sha256sum</code> (Linux) or <code>shasum</code> (macOS) are available with <code>command -v bash gzip sha256sum shasum</code>.</p>
 <pre><code>mkdir -p ~/projects/my-study/data/raw
 cd ~/projects/my-study/data/raw
 printf '@demo/1\nACGT\n+\nIIII\n@demo/2\nTGCA\n+\nIIII\n' | gzip -c &gt; sample_R1.fastq.gz
 printf '@demo/1\nTGCA\n+\nIIII\n@demo/2\nACGT\n+\nIIII\n' | gzip -c &gt; sample_R2.fastq.gz
 sha256sum sample_R1.fastq.gz sample_R2.fastq.gz &gt; SHA256SUMS
 </code></pre>
-<p>On macOS without <code>sha256sum</code>, make the matching manifest with <code>shasum -a 256 sample_R1.fastq.gz sample_R2.fastq.gz &gt; SHA256SUMS</code>. This locally generated manifest is only a demonstration of checksum mechanics; for downloaded data obtain the manifest from the same provider record as the files and retain it unchanged.</p>
-<h2>Build the project directory</h2>
-<pre><code># From your home or a working directory, create a project folder and subfolders.
-mkdir -p ~/projects/my-study/{data/raw,data/processed,scripts,results,logs}
-# Create an initial README to document purpose and provenance.
-printf "# my-study\n\nRaw data: data/raw/\nProcessed data: data/processed/\n" &gt; ~/projects/my-study/README.md
-</code></pre>
-<p>The command creates separate locations for raw inputs, processed files, scripts, results, and logs. The README records the intended layout. Replace <code>my-study</code> with a project name that is meaningful to you.</p>
+<p>On macOS without GNU <code>sha256sum</code>, create the manifest with <code>shasum -a 256 sample_R1.fastq.gz sample_R2.fastq.gz &gt; SHA256SUMS</code>. Each synthetic read here uses the standard four-line Sanger FASTQ layout (Cock et al., 2010): line 1 starts with <code>@</code> (read ID), line 2 holds nucleotide bases (<code>ACGT</code>), line 3 is <code>+</code>, and line 4 holds Phred+33 ASCII quality characters (<code>IIII</code> encodes ASCII 73, which is Phred Q40). Generating a local manifest here only sets up our practice exercise; for real sequencing deliveries, always keep the provider's original checksum file untouched.</p>
 
-<figure class="my-8 bg-white border border-gray-200 rounded-xl p-4 shadow-sm"><img src="../images/tutorial-figures/bioinformatics-project-layout.svg" alt="Directory layout diagram separating Git-tracked scripts, immutable raw data, deletable scratch, and versioned outputs" width="960" height="460" loading="lazy" class="w-full h-auto rounded-lg" style="aspect-ratio: 960 / 460;"/><figcaption class="mt-3 text-sm text-gray-600">Recommended project tree separating lightweight Git-tracked code from read-only checksummed FASTQs, temporary alignment scratch, and deliverable figures.</figcaption></figure>
-<ul>
-<li>A directory tree at <code>~/projects/my-study</code> with separate places for raw and processed data, scripts, results, and logs.</li>
-<li>A simple README documenting intentions and locations.</li>
-</ul>
-<h2>Check paths and available storage</h2>
-<p>Run these checks from the project directory. Confirm <code>pwd</code> shows the project you intend to inspect before continuing.</p>
+<h2 id="check-paths-and-storage">5. Check your location, disk usage, and free space</h2>
+<p>Run these checks from the project root before downloading large datasets or starting an alignment.</p>
 <pre><code># Show where you are and list contents with human-readable sizes.
 cd ~/projects/my-study
 pwd
@@ -240,15 +250,28 @@ du -sh . | tee logs/disk_usage_$(date +%F).txt
 # Show overall filesystem space and usage.
 df -h .
 </code></pre>
+<p><strong>Observed output on Linux (exact user, timestamps, and filesystem totals vary by machine):</strong></p>
+<pre><code class="language-text">/home/alex/projects/my-study
+total 28K
+drwxr-xr-x 6 alex alex 4.0K Nov 26 20:59 .
+drwxr-xr-x 3 alex alex 4.0K Nov 26 20:59 ..
+drwxr-xr-x 4 alex alex 4.0K Nov 26 20:59 data
+drwxr-xr-x 2 alex alex 4.0K Nov 26 20:59 logs
+-rw-r--r-- 1 alex alex   64 Nov 26 20:59 README.md
+drwxr-xr-x 2 alex alex 4.0K Nov 26 20:59 results
+drwxr-xr-x 2 alex alex 4.0K Nov 26 20:59 scripts
+44K	.</code></pre>
 <ul>
-<li><code>pwd</code> prints your current path: useful to avoid acting in the wrong directory.</li>
-<li><code>ls -lah</code> lists files, including hidden ones, with permissions and sizes.</li>
-<li><code>du -sh .</code> reports the total disk space used by the project and helps plan for expected growth.</li>
-<li><code>df -h .</code> shows remaining space on the filesystem; if you are near capacity you may need to choose a different storage location.</li>
+<li><code>pwd</code> prints your absolute working directory so you never run cleanup or transfer commands in the wrong folder.</li>
+<li><code>ls -lah</code> shows long details (<code>-l</code>), hidden dotfiles such as <code>.</code> and <code>..</code> (<code>-a</code>), and human-readable units like <code>K</code> or <code>G</code> (<code>-h</code>).</li>
+<li><code>du -sh .</code> totals disk space used inside the current folder and pipes a copy through <code>tee</code> into <code>logs/</code> with today's ISO date (<code>date +%F</code>).</li>
+<li><code>df -h .</code> reports free space on the mounted filesystem holding <code>.</code>.</li>
 </ul>
-<div class="lesson-checkpoint"><strong>Checkpoint:</strong> Compare the project total from <code>du</code> with free space from <code>df</code>. A large input can need additional scratch space for temporary and intermediate files, so the compressed size alone is not a capacity estimate.</div>
-<h2>Inspect CPU, memory, storage, and transfer constraints</h2>
-<p>On Linux or WSL, run these read-only checks before a computational job; macOS users can use <code>sysctl -n hw.logicalcpu</code> for logical CPUs and <code>vm_stat</code> for a memory snapshot, while interpreting platform-specific units carefully.</p>
+<div class="lesson-decision"><strong>Decision rule: <code>du</code> vs. <code>df</code> vs. HPC quota.</strong> Use <code>du -sh</code> to see how much space <em>your project</em> consumes, and <code>df -h .</code> to see how much space the <em>disk volume</em> has left. On a shared HPC cluster, <code>df -h</code> can show terabytes free across the whole filesystem while your personal or lab quota is almost full; check your cluster quota command (such as <code>quota -s</code> or <code>lfs quota</code>) before staging large FASTQs.</div>
+<div class="lesson-checkpoint"><strong>Checkpoint:</strong> Confirm that <code>pwd</code> ends in <code>projects/my-study</code> and that <code>logs/disk_usage_YYYY-MM-DD.txt</code> was created inside <code>logs/</code>.</div>
+
+<h2 id="inspect-cpu-and-ram">6. Check available CPU cores and RAM</h2>
+<p>On Linux or WSL, inspect how many logical CPUs and how much RAM are visible before setting thread counts or submitting a cluster job. On macOS, use <code>sysctl -n hw.logicalcpu</code> for logical CPUs and <code>vm_stat</code> (multiply page counts by page size) for memory.</p>
 <pre><code># Linux/WSL: visible logical CPUs and current memory/swap summary
 nproc
 free -h
@@ -256,16 +279,15 @@ free -h
 cd ~/projects/my-study
 df -h .
 </code></pre>
-<p>Read each hardware command carefully before allocating a large run:</p>
-<ul>
-<li><code>nproc</code> shows how many logical CPUs are visible to your shell (for instance <code>8</code>), though shared nodes or Slurm cgroups may restrict how many cores your job can actually use.</li>
-<li><code>free -h</code> summarizes RAM and swap; check the <em>available</em> column as a rough snapshot, bearing in mind that reference indices like STAR for human GRCh38 typically need 30 to 32 GB of RAM.</li>
-<li><code>df -h .</code> reports total filesystem space rather than your user quota; as a rule of thumb, a single 30x human WGS paired-end sample (~60 to 80 GB of compressed FASTQ) often requires 250 to 350 GB of scratch disk during alignment, sorting, and duplicate marking.</li>
-<li><strong>Network throughput</strong> is a transfer rate, not disk size. Time a real authorized download against your provider or cluster policy rather than guessing bandwidth from hardware specs.</li>
-</ul>
-<p>If RAM or scratch quotas look tight, ask your cluster administrator or test on a single downsampled file before submitting a full batch.</p>
-<h2>Inspect compressed FASTQ inputs</h2>
-<p>Use the example filenames below only after placing your own files in <code>data/raw/</code>. These commands read the files without creating uncompressed copies.</p>
+<p><strong>Example output (from a 12-thread, 30 GiB Linux workstation):</strong></p>
+<pre><code class="language-text">12
+               total        used        free      shared  buff/cache   available
+Mem:            30Gi        19Gi       525Mi       1.1Gi        12Gi        11Gi
+Swap:           15Gi       3.7Gi        12Gi</code></pre>
+<p>Notice the <strong>available</strong> column in <code>free -h</code> (<code>11Gi</code> here), not just <code>free</code> (<code>525Mi</code>): Linux keeps reusable filesystem cache in <code>buff/cache</code> and releases it when an application needs RAM. On a shared HPC node, <code>nproc</code> and <code>free -h</code> often show the physical node total rather than your Slurm job allocation; inside a job script, rely on the resources you requested with <code>--cpus-per-task</code> and <code>--mem</code>. For network throughput, time one small authorized transfer against your provider instead of guessing from an Ethernet link rating.</p>
+
+<h2 id="inspect-compressed-fastq">7. Inspect compressed FASTQ inputs safely</h2>
+<p>Never run <code>gunzip</code> on multi-gigabyte FASTQ files just to inspect the first few reads. The commands below verify the container format, inspect compressed size metadata, and print the first two records straight from the gzip stream without writing an uncompressed copy to disk.</p>
 <pre><code># Show file type and compression container. This is safe and non-destructive.
 file data/raw/sample_R1.fastq.gz
 file data/raw/sample_R2.fastq.gz
@@ -277,29 +299,45 @@ gzip -l data/raw/sample_R2.fastq.gz
 # Peek at the first few lines of a FASTQ file without writing uncompressed contents to disk.
 zcat data/raw/sample_R1.fastq.gz | head -n 8
 </code></pre>
-<p>A typical FASTQ record occupies four lines: read identifier, bases, a <code>+</code> separator, and per-base quality values. Seeing the first record is a format spot-check, not a complete validation; the stream test below reads the whole compressed file.</p>
+<p><strong>Observed output on our synthetic fixture:</strong></p>
+<pre><code class="language-text">data/raw/sample_R1.fastq.gz: gzip compressed data, from Unix, original size modulo 2^32 40
+         compressed        uncompressed  ratio uncompressed_name
+                 49                  40  22.5% data/raw/sample_R1.fastq
+@demo/1
+ACGT
++
+IIII
+@demo/2
+TGCA
++
+IIII</code></pre>
+<p>Three practical details in that output often surprise learners:</p>
 <ul>
-<li><code>file</code> reports whether the file is a gzip-compressed stream or plain text, and sometimes the detected character encoding.</li>
-<li><code>gzip -l</code> lists the compressed size, uncompressed size (if recorded), and compression ratio. Note that some gzip streams may not record exact uncompressed sizes for concatenated streams.</li>
-<li><code>zcat</code> (or <code>gzcat</code> on macOS with GNU gzip) streams uncompressed text to stdout. The FASTQ format is line-oriented: the first four lines correspond to one read record (header, sequence, <code>+</code> line, quality). Seeing correct FASTQ headers and no binary or error output suggests the file is intact for basic parsing.</li>
+<li><strong>Why 49 bytes compressed is larger than 40 bytes uncompressed:</strong> A gzip container adds roughly 18 bytes of header and trailer metadata, which outweighs compression on an 8-line fixture. Real multi-gigabyte FASTQ files typically shrink by 3x to 4x.</li>
+<li><strong>Why <code>file</code> says <code>modulo 2^32</code>:</strong> The gzip specification (RFC 1952) stores uncompressed size in a 32-bit trailer field (<code>ISIZE</code>), which caps at 4 GiB minus 1 byte. Older gzip releases (before 1.12) underreport <code>gzip -l</code> sizes for FASTQs larger than 4 GiB uncompressed or files made of concatenated gzip streams; gzip 1.12+ reads through the stream, or you can measure true uncompressed bytes directly with <code>gzip -dc file.fastq.gz | wc -c</code>.</li>
+<li><strong>macOS <code>zcat</code> vs. <code>gzcat</code> vs. <code>gzip -dc</code>:</strong> On macOS, built-in <code>zcat</code> expects legacy <code>.Z</code> files and fails with <code>can't stat: sample_R1.fastq.gz (sample_R1.fastq.gz.Z): No such file or directory</code>. Use built-in <code>gzcat</code> on macOS, or use <code>gzip -dc</code>, which streams <code>.gz</code> files to stdout identically on both Linux and macOS. Also avoid wrapping <code>... | head -n 8</code> inside <code>set -o pipefail</code> on large FASTQs: when <code>head</code> closes the pipe after 8 lines, <code>zcat</code> receives <code>SIGPIPE</code> (exit status 141), causing a false failure even though the file is fine.</li>
 </ul>
-<h2>Verify the downloaded bytes</h2>
-<p>For the generated teaching fixture, verify its local SHA-256 manifest as shown. For actual downloaded data, use the provider's manifest and the matching algorithm; the file names must match those listed in that manifest. Never generate a replacement expected hash from a file whose transfer you are trying to verify.</p>
+<p>In real Illumina Casava 1.8+ and DRAGEN outputs, read headers look like <code>@A00123:8:H5KJ7DSXX:1:1101:10004:1000 1:N:0:ACGTACGT+TGCATGCA</code>, encoding <code>@&lt;instrument&gt;:&lt;run&gt;:&lt;flowcell&gt;:&lt;lane&gt;:&lt;tile&gt;:&lt;x&gt;:&lt;y&gt; &lt;read&gt;:&lt;is_filtered&gt;:&lt;control_number&gt;:&lt;index&gt;</code>. Here <code>1</code> marks Read 1, <code>N</code> means the read passed the chastity filter (<code>Y</code> means failed), <code>0</code> means not a control read, and dual indexes are joined by <code>+</code>.</p>
+
+<h2 id="verify-checksums-and-gzip">8. Verify checksums, test gzip streams, and lock raw data</h2>
+<p>Seeing valid headers in the first 8 lines does not guarantee the rest of a 20 GB file survived download. Always run both a cryptographic checksum check (against the provider's manifest) and a full-stream decompression test (<code>gzip -t</code>), saving the log in <code>logs/</code>. Never regenerate a replacement manifest from a file whose transfer you are testing.</p>
 <pre><code>(
   cd ~/projects/my-study/data/raw
   set -e -o pipefail
   sha256sum -c SHA256SUMS 2&gt;&amp;1 | tee ../../logs/checksum_validation_$(date +%F).log
   # If a real provider supplies MD5SUMS instead, use this command, not sha256sum:
   # md5sum -c MD5SUMS 2&gt;&amp;1 | tee ../../logs/checksum_validation_$(date +%F).log
-  # On macOS use shasum -a 256 -c SHA256SUMS for SHA-256, or md5 -r -c MD5SUMS for MD5.
+  # On macOS use shasum -a 256 -c SHA256SUMS for SHA-256, or install GNU md5sum (brew install coreutils) for MD5SUMS.
   # Also verify gzip streams can be read (a non-zero exit stops this block).
   gzip -t sample_R1.fastq.gz sample_R2.fastq.gz
   echo "gzip exit status: 0"
 )
 </code></pre>
-<div class="lesson-result"><strong>Expected result:</strong> Your terminal should print <code>sample_R1.fastq.gz: OK</code> and <code>sample_R2.fastq.gz: OK</code> with <code>gzip exit status: 0</code>. Stop if either file fails, a filename is missing, or gzip exits non-zero. Keep in mind that a matching SHA-256 hash confirms byte-for-byte transfer integrity against the manifest; it says nothing about sample identity or assay quality.</div>
-<h3>Self-check: interpret a deliberate checksum failure</h3>
-<p>Next, copy one practice file into a temporary directory alongside the expected hash, modify the copy, and watch the check catch the corruption. A cleanup trap removes the temporary directory afterward while leaving your original files and <code>SHA256SUMS</code> untouched.</p>
+<div class="lesson-result"><strong>Expected result:</strong> Your terminal prints <code>sample_R1.fastq.gz: OK</code>, <code>sample_R2.fastq.gz: OK</code>, and <code>gzip exit status: 0</code>, and writes a dated record to <code>logs/checksum_validation_YYYY-MM-DD.log</code>. Stop if any file reports <code>FAILED</code>, a file is missing, or <code>gzip -t</code> exits non-zero.</div>
+<div class="lesson-decision"><strong>What each check catches:</strong> <code>sha256sum -c</code> (or <code>md5sum -c</code> when a repository such as ENA supplies MD5) proves your downloaded bytes are identical to the provider's published bytes, catching silent bit flips or swapped sample files. <code>gzip -t</code> reads every compressed block (including concatenated gzip members) and checks its CRC-32 trailer, catching truncated or corrupt archives even when no checksum file is available. Neither check verifies biological sample identity, consent, or experimental design.</div>
+
+<h3 class="lesson-step" id="deliberate-checksum-failure">Self-check: watch a deliberate checksum failure</h3>
+<p>To see how <code>sha256sum -c</code> catches a 1-byte corruption before you trust real data, copy <code>sample_R1.fastq.gz</code> into a temporary directory, append a single character <code>x</code>, and run the check against the original hash. A <code>trap</code> cleans up the temporary folder automatically.</p>
 <pre><code class="language-bash">(
   set -e
   cd ~/projects/my-study/data/raw
@@ -321,23 +359,14 @@ zcat data/raw/sample_R1.fastq.gz | head -n 8
     fi
   )
 )</code></pre>
-<p><strong>Expected diagnostic:</strong> the check should report <code>sample_R1.check-demo.fastq.gz: FAILED</code>, then print the expected-failure message; the temporary directory is removed when the block ends. On macOS, replace <code>sha256sum -c</code> with <code>shasum -a 256 -c</code>. Do not apply this exercise to provider data.</p>
-<h2>Interpret the checks and count records</h2>
-<ul>
-<li>sha256sum -c reads the manifest and checks each listed file. For each entry you should see "OK" or "FAILED". Save the output to logs/checksum_validation_YYYY-MM-DD.log for provenance.</li>
-<li>gzip -t tests whether the gzip stream can be decompressed to the end without producing errors. A non-zero exit code or stderr messages indicate a corrupted stream.</li>
-<li>Important: a checksum check confirms the file you downloaded matches the provider's published bytes. It does not guarantee the biological suitability of the data (correct sample, experimental design, or consent and metadata). Always keep the manifest and your log files with the project.</li>
-</ul>
-<h2>Reading your outputs</h2>
-<p>Use the output to decide what to investigate next. File checks answer narrow questions; they do not certify the experiment or metadata.</p>
-<ul>
-<li>ls -lah shows file permissions in the left-most column, e.g., -rw-r--r--. The first character indicates type (dash for regular file, d for directory). The next three are owner permissions (read/write/execute), then group, then others. If you cannot read a file, you may see permission denied errors; changing permissions requires caution and appropriate authorization.</li>
-<li>du -sh . returns the total size used by the directory. If this number is much larger than the sum of compressed FASTQ sizes, check for hidden files, intermediate files, or large temporary directories (for example, alignment index files or temporary directories used by tools).</li>
-<li>gzip -l shows if the uncompressed size recorded in the gzip header is plausible. Some tools concatenate gzip streams (multiple gzip members), which can complicate uncompressed-size reporting; in those cases rely on streaming verification with zcat and counting lines if needed (see commands below).</li>
-<li>sha256sum -c manifest reports "OK" for matching files. If you see "FAILED", the file is different from the manifest. Do not edit the manifest to force a match; instead re-download the affected file and re-verify.</li>
-<li><code>zcat</code> + <code>head</code> lets you confirm the FASTQ header format. A typical Illumina Casava 1.8+ header has the template <code>@&lt;instrument&gt;:&lt;run&gt;:&lt;flowcell&gt;:&lt;lane&gt;:&lt;tile&gt;:&lt;x&gt;:&lt;y&gt; &lt;read&gt;:&lt;is_filtered&gt;:&lt;control_number&gt;:&lt;index_sequence&gt;</code>, for example <code>@A00123:8:H5KJ7DSXX:1:1101:10004:1000 1:N:0:ACGTACGT</code> (read 1, not filtered out, sample index <code>ACGTACGT</code>). If FASTQ records look truncated or lines are missing, the file may be corrupt.</li>
-</ul>
-<p>Example check: count records without writing an uncompressed copy. The checksum block above runs in a subshell, so this relative path remains rooted at <code>~/projects/my-study</code>.</p>
+<p><strong>Expected diagnostic:</strong> <code>sample_R1.check-demo.fastq.gz: FAILED</code> followed by <code>sha256sum: WARNING: 1 computed checksum did NOT match</code> and the expected-failure message. On macOS, replace <code>sha256sum -c</code> with <code>shasum -a 256 -c</code>. Never modify real provider data or manifests.</p>
+<p>Once your raw inputs pass verification and you finish testing, remove write permissions on the raw FASTQ files so accidental redirection (<code>&gt;</code>) cannot clobber them:</p>
+<pre><code class="language-bash">chmod a-w ~/projects/my-study/data/raw/*.fastq.gz
+ls -lh ~/projects/my-study/data/raw/</code></pre>
+<p>In the resulting <code>ls -lh</code> output, the permissions column changes from <code>-rw-r--r--</code> to <code>-r--r--r--</code>.</p>
+
+<h2 id="count-fastq-records">9. Count FASTQ records safely in a stream</h2>
+<p>Running <code>zcat file.fastq.gz | wc -l</code> blindly on a broken file can print <code>0</code> and mislead a script into thinking an empty sample succeeded. The shell function below sets <code>set -o pipefail</code> (so a failure in <code>zcat</code> propagates through the pipe), tests gzip integrity first, verifies a non-zero line count divisible by 4, and then divides lines by 4.</p>
 <pre><code># Each FASTQ record is 4 lines. Check the gzip stream before counting it.
 set -o pipefail
 count_fastq_records() {
@@ -360,65 +389,61 @@ count_fastq_records() {
 }
 count_fastq_records data/raw/sample_R1.fastq.gz
 </code></pre>
-<p>Expected result for the invented fixture: <code>2 records</code>. Negative example: the following command must exit nonzero and must not print a record count if that file is missing or contains a corrupt gzip stream.</p>
+<p><strong>Expected result:</strong> <code>2 records</code>. Now test the failure path on a missing filename (exit status must be non-zero with no record count printed):</p>
 <pre><code>count_fastq_records data/raw/missing_R1.fastq.gz
 </code></pre>
-<p>Counting reads scans the entire compressed archive twice (once for the gzip test, once for line counting), so budget I/O time on multi-gigabyte FASTQs. Dividing lines by four is a quick sanity check on record count rather than full FASTQ validation: it does not verify matching sequence/quality lengths, unique read IDs, or mate synchronization.</p>
-<h2>Troubleshooting: common symptoms, likely causes, and fixes</h2>
+<p><strong>Expected error output:</strong></p>
+<pre><code class="language-text">gzip: data/raw/missing_R1.fastq.gz: No such file or directory
+Cannot count records: gzip integrity check failed for data/raw/missing_R1.fastq.gz</code></pre>
+<p>On macOS, substitute <code>gzcat</code> or <code>gzip -dc</code> for <code>zcat</code> inside <code>count_fastq_records</code>. Note that counting reads scans the compressed file twice (once for <code>gzip -t</code>, once for <code>awk</code>) and checks line count divisibility by 4 rather than per-read base/quality length agreement or R1/R2 mate pairing (use dedicated QC tools such as FastQC or SeqKit for full read validation).</p>
+
+<h2 id="troubleshooting">10. Troubleshooting common errors</h2>
+<div class="lesson-table-wrap overflow-x-auto my-6">
+<table>
+<thead>
+<tr><th>Error or symptom</th><th>Likely cause</th><th>Fix</th></tr>
+</thead>
+<tbody>
+<tr><td><code>Permission denied</code> when writing or reading</td><td>File is locked read-only (<code>-r--r--r--</code>), owned by another user, or on a read-only mount</td><td>Inspect with <code>ls -lah</code>. Never edit files in <code>data/raw/</code>; copy into <code>data/processed/</code> or ask your sysadmin if a shared directory lacks group read access.</td></tr>
+<tr><td><code>Killed</code> or STAR <code>fatal error trying to allocate genome arrays</code></td><td>Process exceeded available RAM (OOM killer)</td><td>Check <code>free -h</code> or Slurm <code>sacct</code> MaxRSS. Request more RAM (32-40 GB for human GRCh38 STAR), reduce parallel samples, or use sparse index options.</td></tr>
+<tr><td><code>No space left on device</code> or <code>Disk quota exceeded</code></td><td>Full filesystem or small default <code>/tmp</code> during sorting</td><td>Run <code>df -h .</code> and cluster quota checks. Clean old files in <code>work/</code> or point <code>export TMPDIR=/path/to/scratch</code> to a larger volume.</td></tr>
+<tr><td><code>sha256sum -c</code> reports <code>FAILED</code></td><td>Truncated transfer, network corruption, or wrong manifest version</td><td>Do not edit <code>SHA256SUMS</code>. Re-download the affected file and re-run verification.</td></tr>
+<tr><td><code>gzip -t</code> reports <code>unexpected end of file</code> or CRC error</td><td>Corrupted or incomplete <code>.gz</code> download</td><td>Re-download using a single-stream or resumable client (<code>curl -C -</code>, <code>rsync --partial</code>, or SRA Toolkit <code>prefetch</code>) and re-test.</td></tr>
+<tr><td>macOS <code>zcat: can't stat: ... (.Z)</code></td><td>macOS native <code>zcat</code> expects legacy <code>.Z</code> archives</td><td>Use <code>gzcat</code> or cross-platform <code>gzip -dc</code> instead of <code>zcat</code>.</td></tr>
+</tbody>
+</table>
+</div>
+
+<h2 id="practice-check">11. Practice check</h2>
+<details class="my-4 rounded-xl border border-gray-200 bg-gray-50 p-4">
+<summary class="cursor-pointer font-semibold text-gray-900">Quick scenario check: diagnose a failing RNA-seq run before re-running it</summary>
+<div class="mt-3 text-sm text-gray-700">
+<p>Suppose your <code>data/raw/</code> folder holds 18 GB of paired-end human RNA-seq <code>.fastq.gz</code> files. Your laptop has 250 GB free on disk (<code>df -h .</code>) and 16 GB total RAM (<code>free -h</code>). You launch STAR against human GRCh38 and the job exits immediately with <code>EXITING: fatal error trying to allocate genome arrays</code>. Which resource failed, and why did <code>df -h</code> not warn you?</p>
+<p><strong>Solution:</strong> <strong>RAM</strong> failed, not disk storage. <code>df -h .</code> measures persistent hard-drive space (250 GB free is plenty for 18 GB of inputs), whereas STAR loads the GRCh38 suffix-array index into volatile RAM (~30-32 GB). Moving to an HPC node or workstation with at least 32-40 GB of RAM (or using a lighter pseudoaligner) resolves the crash.</p>
+</div>
+</details>
+
+<h2 id="scope-and-platform-notes">12. Scope and platform notes</h2>
 <ul>
-<li>
-<strong>Symptom:</strong> "Permission denied" when trying to read or write files.<br/>
-<strong>Likely causes:</strong> file owner or permission bits prevent your user from reading/writing; trying to write to a read-only mounted filesystem.<br/>
-<strong>Fixes:</strong> check ownership with ls -lah, use sudo only if you understand system-wide implications, or copy files to a directory you own (cp /path/to/source ~/projects/my-study/data/raw/). Contact your sysadmin if adjusting permissions is needed on shared systems.
-  </li>
-<li>
-<strong>Symptom:</strong> Out-of-memory (OOM) or process killed during large operations.<br/>
-<strong>Likely causes:</strong> tool requires more RAM than available (for example, building a large in-memory index or loading many samples at once).<br/>
-<strong>Fixes:</strong> reduce parallelism, split work into smaller batches, run on a machine with more RAM, or use tools designed for streaming (low-memory) processing.
-  </li>
-<li>
-<strong>Symptom:</strong> Disk quota exceeded or "No space left on device".<br/>
-<strong>Likely causes:</strong> insufficient storage for temporary files, large intermediate files, or logs.<br/>
-<strong>Fixes:</strong> clean temporary directories, move raw data to a larger volume, compress processed files (when safe), and review workflow temporary directory settings (many tools respect TMPDIR). Consider using an HPC scratch filesystem for temporary I/O-heavy steps.
-  </li>
-<li>
-<strong>Symptom:</strong> Checksum mismatch ("FAILED").<br/>
-<strong>Likely causes:</strong> interrupted download, transfer corruption, or manifest mismatch (manifest corresponds to a different filename/version).<br/>
-<strong>Fixes:</strong> re-download the file from the original provider; verify that the manifest lists the exact filename; if the provider's manifest lists different names, consult the provider's documentation or contact their support.
-  </li>
-<li>
-<strong>Symptom:</strong> gzip -t reports an error or zcat fails partway through.<br/>
-<strong>Likely causes:</strong> corrupted gzip stream or truncated file.<br/>
-<strong>Fixes:</strong> re-download; if using transfer acceleration (e.g., parallel downloads) try a single-stream download; verify network stability.
-  </li>
+<li><strong>Scope of this lab:</strong> This lesson covers local file layout, hardware resource limits, gzip stream inspection, and checksum integrity on Bash using preinstalled OS tools. Software environment setup (Micromamba/Conda, or isolated project <code>.venv</code> environments rather than global <code>pip install</code>) is covered later in the <a href="conda-mamba-part1.html">Micromamba and Conda guide</a>.</li>
+<li><strong>Checksum algorithms:</strong> Prefer SHA-256 when available for stronger collision resistance. Archives such as ENA and many sequencing cores still supply MD5 manifests; match whichever algorithm the provider published and record it in <code>logs/</code>.</li>
+<li><strong>Data governance:</strong> Passing a checksum proves byte-level integrity, not permission to analyze or redistribute clinical or controlled-access samples. Verify ethics approvals and data-use agreements before sharing outputs.</li>
 </ul>
-<h2>Scope limits and version checks</h2>
-<ul>
-<li>These examples use GNU utilities. macOS ships BSD variants, and <code>sha256sum</code> may be unavailable by default; use the checksum utility and options documented for your system, and confirm they accept the provider manifest. macOS may also use <code>gzcat</code> where this lesson uses <code>zcat</code>. Consult the relevant system manual pages before adapting commands.</li>
-<li>Checksum algorithms: SHA-256 is preferred for collision resistance. Some archives still publish MD5 manifests; MD5 detects most accidental corruption but is cryptographically weaker. Use whatever algorithm the provider supplies and record which one you used.</li>
-<li>Storage considerations: compressed file size on disk is only part of the story. Some tools need temporary space equal to several times the uncompressed input size (for sorting, indexing, or intermediate BAM files). Plan for large tmp/scratch spaces or pipeline parameters that allow streaming to avoid materializing large intermediates.</li>
-<li>Data governance and ethics: verifying file integrity does not verify consent, provenance, or legal permission to use a dataset. Always confirm metadata, consent, and any access restrictions before reusing or publishing analyses derived from public or controlled-access data.</li>
-</ul>
-<h2>Decide what to fix when a check fails</h2>
-<ol>
-<li>Create and document your project directory: README.md, and separate raw/processed/data locations.</li>
-<li>Verify all downloaded files with the provider's manifest using the same checksum algorithm supplied by the provider.</li>
-<li>Keep verification logs (checksum output, gzip -t output) inside your project logs directory for reproducibility.</li>
-<li>Confirm available RAM and disk before running memory- or I/O-intensive steps; adjust pipeline parallelism and temporary directories accordingly.</li>
-<li>Confirm legal and ethical permissions for data use before analysis or sharing results.</li>
-</ol>
+
 <aside aria-label="Author's lab note" class="lesson-summary">
 <p><strong>Author's lab note:</strong> Almost every corrupted-FASTQ ticket I see boils down to a truncated download that nobody hashed before launching alignment. Running <code>sha256sum -c</code> and <code>gzip -t</code> takes two minutes at the start of a project and saves days of troubleshooting downstream tools that crash mid-chromosome.</p>
 </aside>
-<h2>References</h2>
+
+<h2 id="references-and-next">13. References and next steps</h2>
 <ul>
-<li><a href="https://www.gnu.org/software/coreutils/manual/coreutils.html">GNU coreutils manual (ls, du, df, mkdir, printf)</a></li>
-<li><a href="https://www.gnu.org/software/gzip/manual/gzip.html">gzip documentation (gzip, zcat, gzip -t)</a></li>
-<li><a href="https://www.openssh.com/">OpenSSH and secure transfer recommendations (scp, sftp; see provider instructions for secure download)</a></li>
-<li><a href="https://www.ncbi.nlm.nih.gov/sra/docs/sradownload">NCBI SRA: downloading public runs with the SRA Toolkit</a></li>
-<li><a href="https://www.gnu.org/software/coreutils/manual/html_node/sha2-utilities.html">GNU Coreutils: calculating and checking SHA-2 checksums</a></li>
+<li><a href="https://www.gnu.org/software/coreutils/manual/coreutils.html">GNU Coreutils Manual (ls, du, df, mkdir, chmod, printf)</a></li>
+<li><a href="https://www.gnu.org/software/coreutils/manual/html_node/sha2-utilities.html">GNU Coreutils: SHA-2 checksum utilities (sha256sum)</a></li>
+<li><a href="https://www.gnu.org/software/gzip/manual/gzip.html">GNU Gzip Manual (gzip, gzip -t, gzip -l, zcat)</a></li>
+<li><a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2847217/">Cock PJA et al. (2010), The Sanger FASTQ file format for sequences with quality scores, Nucleic Acids Research (PMC2847217)</a></li>
+<li><a href="https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf">Dobin A, STAR Aligner Manual (GRCh38 genome index RAM requirements)</a></li>
+<li><a href="https://www.ncbi.nlm.nih.gov/sra/docs/sradownload">NCBI SRA: Downloading public sequencing runs with the SRA Toolkit</a></li>
 </ul>
-<p>Keep the manifest and verification output with the project so another analyst can see which bytes were checked and against which provider record. Before analysis or sharing, confirm dataset permissions and metadata separately.</p>
+<p><strong>Where to go next:</strong> Continue to <a href="command-line-part1.html">Command-Line Navigation for Bioinformatics</a> to practice moving through directories and safe file operations, then learn <a href="command-line-part2.html">Command-Line Text Processing</a>, isolated environments in <a href="conda-mamba-part1.html">Conda and Mamba</a>, and full <a href="reproducible-workflows-snakemake-nextflow.html">reproducible project structures</a>.</p>
 <aside aria-labelledby="tutorial-feedback-title" class="lesson-feedback" id="tutorial-feedback"><h2 id="tutorial-feedback-title">Help improve this tutorial</h2><p>Found an error, a broken link, or a step that needs a clearer explanation? Please <a href="../contact.html">contact me</a>. Your feedback helps me keep this resource accurate and useful.</p></aside></article>
 <section class="mt-12 mb-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-100">
 <div class="flex items-start gap-4">
@@ -557,7 +582,7 @@ count_fastq_records data/raw/sample_R1.fastq.gz
 </script>
 <script src="../assets/vendor/prism/prism-1.29.0.js"></script>
 <script id="tutorial-code-data">
-window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"computer-data-fundamentals":{"blocks":[{"language":"bash","sha256":"f54ceb9357e8be480252edd57e19acb7992e4f77d5b96837da42234a6614d49a"},{"language":"bash","sha256":"45b06d95c3a1234d36951ce3e70a3f46cfd74ee37bc170450f4b2cde248c88c3"},{"language":"bash","sha256":"cd5480a18b07b8ae0fc0b443a97d57b78c0e2993e9509c4c3d9caba5a9d14739"},{"language":"bash","sha256":"90e8c393f58f2ee4c7ff72f2b4090ae724c7462f992f88ab1456ce641d9e2ff6"},{"language":"bash","sha256":"c782e5daafd10c9d5a632e6f3fb2223cd560ea9bc03933e759eb798839f8720c"},{"language":"bash","sha256":"28580fa6cc3cafcda126385f9ca815f37f9d27e98eb49a17ba29d44d88b9bf3e"},{"language":"bash","sha256":"66c1bcf74376d18289fff65350ba28b0e47199ec771c61983aa0a8d00f7b9d7c"},{"language":"bash","sha256":"a1278460aa99620c0adef15d72399a6481d1859e15144bf080173411c0bc89d2"},{"language":"bash","sha256":"4ef3a3a8bc8ec2581d555fcaa6c4882df9bf0c6cac1967c03f210c0409732919"}],"groups":[]}}};
+window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"computer-data-fundamentals":{"blocks":[{"language":"bash","sha256":"45b06d95c3a1234d36951ce3e70a3f46cfd74ee37bc170450f4b2cde248c88c3"},{"language":"bash","sha256":"f54ceb9357e8be480252edd57e19acb7992e4f77d5b96837da42234a6614d49a"},{"language":"bash","sha256":"cd5480a18b07b8ae0fc0b443a97d57b78c0e2993e9509c4c3d9caba5a9d14739"},{"language":"text","sha256":"d22d55a5ec5fd3e4060c8a3be671277d045cdda70b20f249ad79e8171f28651e"},{"language":"bash","sha256":"90e8c393f58f2ee4c7ff72f2b4090ae724c7462f992f88ab1456ce641d9e2ff6"},{"language":"text","sha256":"416e6a08d99016044e6733294d41c44737cf01624bceaad095fda0857136334d"},{"language":"bash","sha256":"c782e5daafd10c9d5a632e6f3fb2223cd560ea9bc03933e759eb798839f8720c"},{"language":"text","sha256":"9a07e62d1a07a04f794b28fe54ee58862a2d66f4783916dae13eb17016d4c5f7"},{"language":"bash","sha256":"71ed0b226624e705217d5550458f5f3c6c65e9a9ab9eb7284d2f343f98f0155a"},{"language":"bash","sha256":"66c1bcf74376d18289fff65350ba28b0e47199ec771c61983aa0a8d00f7b9d7c"},{"language":"bash","sha256":"9b64b2f036a5c4cdb4f8f66be216cde86aeb299f2a09fcf64755c4aadf4f7045"},{"language":"bash","sha256":"a1278460aa99620c0adef15d72399a6481d1859e15144bf080173411c0bc89d2"},{"language":"bash","sha256":"4ef3a3a8bc8ec2581d555fcaa6c4882df9bf0c6cac1967c03f210c0409732919"},{"language":"text","sha256":"8009c757c9ec06d1a95ca1f4b9c3d194d64e4c28d18e21e994b7d679f1967721"}],"groups":[]}}};
 </script>
 <script src="../code-tabs.js?v=20261026-startup-v1"></script>
 <script src="../copy-code.js?v=20261025-r-first-v1"></script>

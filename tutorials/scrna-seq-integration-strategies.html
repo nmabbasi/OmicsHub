@@ -174,42 +174,110 @@ function toggleMobileMenu() {
 </div>
 <nav aria-label="Learning path navigation" class="reader-toolbar"><span class="reader-toolbar__heading">Learning path</span><a href="cell-type-annotation-methods.html" rel="prev" class="reader-toolbar__previous"><span class="reader-toolbar__direction"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5m0 0 7 7m-7-7 7-7"/></svg></span><span class="reader-toolbar__copy"><small>Previous prerequisite</small><strong>Choosing and Checking Cell-Type Annotations</strong></span></a><a data-catalogue-return="" href="../tutorials.html" class="reader-toolbar__library"><span class="reader-toolbar__library-mark" aria-hidden="true"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="6" height="6" rx="1.3"/><rect x="14" y="4" width="6" height="6" rx="1.3"/><rect x="4" y="14" width="6" height="6" rx="1.3"/><rect x="14" y="14" width="6" height="6" rx="1.3"/></svg></span><span><small>Browse</small><strong>All tutorials</strong></span></a><a href="scrna-seq-quality-control.html" rel="next" class="reader-toolbar__next"><span class="reader-toolbar__copy"><small>Suggested next</small><strong>scRNA-seq Integration QC: LISI and Silhouette</strong></span><span class="reader-toolbar__direction"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14m0 0-7-7m7 7-7 7"/></svg></span></a></nav>
 <article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--lab worked-example">
-<p class="lesson-lead">A better-mixed UMAP is not enough to justify integration. This worked example compares an unintegrated PCA representation with Harmony on exactly the same public PBMC cells, then asks two separate questions: did batch diversity change, and what happened to the purity of the supplied cell-type labels?</p>
-<section class="lesson-summary tutorial-learning-contract" data-tutorial-format="hands-on-lab" aria-label="Learning format"> <p><strong>Format: Hands-on lab.</strong> The public-data PCA → Harmony workflow and LISI calculations were executed for this lesson. Scripts, selected cell IDs, settings, environment records and observed results are downloadable. RPCA and CCA are discussed as <strong>unexecuted extensions</strong>; this page does not report their performance.</p>
+<p class="lesson-lead">When you combine single-cell RNA-seq libraries across sequencing chemistries, donors, or labs, the same cell type often splits into separate clusters by batch rather than biology. Integration algorithms align shared cell states across batches so you can cluster and annotate them together, without merging distinct or batch-unique populations.</p>
+<section class="lesson-summary tutorial-learning-contract" data-tutorial-format="hands-on-lab" aria-label="Learning format">
+<p><strong>What you will do (Hands-on lab, ~30 min):</strong> Compare unintegrated PCA against Harmony on <strong>1,149 public PBMC query cells</strong> sequenced with 10x Chromium v2 and v3, measure batch mixing (<strong>iLISI</strong>) and cell-type purity (<strong>cLISI</strong>) in 20-dimensional space, and inspect a rare batch-unique population where integration creates false mixing.</p>
+<p><strong>Prerequisites and scope:</strong> Assumes familiarity with <a href="scrna-seq-basics.html">single-cell normalization and PCA</a> and <a href="cell-type-annotation-methods.html">cell-type annotation</a>. The PCA to Harmony workflow and LISI metrics were executed in R for this lesson with downloadable scripts and outputs; Seurat v5 RPCA, CCA, and scVI/scANVI are covered as unexecuted comparison guides.</p>
 </section>
-<nav aria-label="On this page"> <ul> <li><a href="#integration-design">Design and inputs</a></li> <li><a href="#run-integration">Run the example</a></li> <li><a href="#observed-integration">Observed comparison</a></li> <li><a href="#integration-interpretation">Interpret the trade-off</a></li> <li><a href="#rpca-cca-extensions">RPCA and CCA extensions</a></li> </ul>
-</nav><h2 id="integration-design">1. Start with a comparison the data can support</h2>
-<p>We use the public <code>pbmcsca.SeuratData 3.0.0</code> dataset from <a href="https://github.com/satijalab/seurat-data">SeuratData</a>, based on <a href="https://doi.org/10.1038/s41587-020-0465-8">Ding et al.'s systematic comparison of sequencing methods</a>. The two query groups are <code>10x Chromium (v2) A</code> and <code>10x Chromium (v3)</code>: genuine assay groups, not an artificial split of one count matrix. A third group is reserved for the separate <a href="cell-type-annotation-methods.html">annotation lesson</a> and does not enter this integration comparison. </p>
-<div class="lesson-table-wrap" role="region" aria-label="Scrollable public-data selection table" tabindex="0"> <table> <caption>The recorded public-data selection</caption> <thead> <tr> <th scope="col">Source Method</th> <th scope="col">Role</th> <th scope="col">Source cells</th> <th scope="col">Eligible cells</th> <th scope="col">Selected</th> </tr> </thead> <tbody> <tr> <th scope="row">10x Chromium (v2) A</th> <td>Query</td> <td>3222</td> <td>2992</td> <td>590</td> </tr> <tr> <th scope="row">10x Chromium (v2) B</th> <td>Reference</td> <td>3222</td> <td>3011</td> <td>537</td> </tr> <tr> <th scope="row">10x Chromium (v3)</th> <td>Query</td> <td>3222</td> <td>2993</td> <td>559</td> </tr> </tbody> </table>
+<nav aria-label="On this page">
+<ul>
+<li><a href="#integration-design">1. Design the comparison and inspect batch balance</a></li>
+<li><a href="#run-integration">2. Run preprocessing and Harmony on PCA coordinates</a></li>
+<li><a href="#score-lisi">3. Score batch mixing and label purity in 20D space</a></li>
+<li><a href="#observed-integration">4. Inspect the observed comparison and rare-subset slice</a></li>
+<li><a href="#integration-interpretation">5. Decide whether to accept, tune, or reject</a></li>
+<li><a href="#rpca-cca-extensions">6. Choose among Harmony, RPCA, CCA, and scVI/scANVI</a></li>
+<li><a href="#troubleshooting-next">7. Common errors, fixes, and next steps</a></li>
+</ul>
+</nav>
+<h2 id="integration-design">1. Design the comparison and inspect batch balance</h2>
+<p>A <strong>batch effect</strong> is systematic variation introduced by technical factors (such as library chemistry, capture lane, or sequencing depth) rather than cell identity. Before running any correction tool, verify that your batches share comparable cell types and record how many cells each batch contributes to each population.</p>
+<p>This lab uses the public <code>pbmcsca.SeuratData 3.0.0</code> PBMC dataset from <a href="https://github.com/satijalab/seurat-data" rel="noopener" target="_blank">SeuratData</a>, published by <a href="https://doi.org/10.1038/s41587-020-0465-8" rel="noopener" target="_blank">Ding et al. (2020)</a>. The two query batches are genuine library-chemistry groups, <code>10x Chromium (v2) A</code> and <code>10x Chromium (v3)</code>, rather than an artificial split of one count matrix. A third group (<code>10x Chromium (v2) B</code>) is held out as the reference for the <a href="cell-type-annotation-methods.html">annotation tutorial</a> and never enters this integration run.</p>
+<div class="lesson-table-wrap" role="region" aria-label="Scrollable public-data selection table" tabindex="0">
+<table>
+<caption>Recorded public-data selection from pbmcsca.SeuratData (3.0.0)</caption>
+<thead>
+<tr>
+<th scope="col">Source Method</th>
+<th scope="col">Role</th>
+<th scope="col">Raw cells</th>
+<th scope="col">Eligible (&gt; 200 genes, valid label)</th>
+<th scope="col">Selected (&lt;= 80 / stratum)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<th scope="row">10x Chromium (v2) A</th>
+<td>Query</td>
+<td>3,222</td>
+<td>2,992</td>
+<td>590</td>
+</tr>
+<tr>
+<th scope="row">10x Chromium (v2) B</th>
+<td>Reference (held out)</td>
+<td>3,222</td>
+<td>3,011</td>
+<td>537</td>
+</tr>
+<tr>
+<th scope="row">10x Chromium (v3)</th>
+<td>Query</td>
+<td>3,222</td>
+<td>2,993</td>
+<td>559</td>
+</tr>
+</tbody>
+</table>
 </div>
-<p>The workflow retains cells with more than 200 detected genes and usable supplied <code>CellType</code> annotations, then takes at most 80 cells per assay-group × source-label stratum with a fixed seed and stable ordering. Smaller strata are retained. The query has <strong>1,149 cells</strong> across <strong>9 supplied source-label categories</strong>; exact selections and exclusions are recorded. This capped sample is deliberately compact and label-stratified, so neither cell-type frequencies nor score distributions represent the full study or natural blood composition. </p>
-<div class="lesson-decision"> <p><strong>Why integration is a question, not an obligation.</strong> Shared populations make a comparison possible, but an assay label can still be confounded with donor, processing, depth or genuine state. If comparable populations already mix, correction may add little. A type seen in only one batch has no demonstrated counterpart to align. Keep the baseline and check the batch-by-label composition before interpreting any score.</p>
+<p>The script keeps cells with more than 200 detected genes and valid supplied <code>CellType</code> labels (excluding empty, <code>Unknown</code>, or <code>Unassigned</code>), then samples up to 80 cells per <code>(Method, CellType)</code> stratum with seed <code>20261023</code>. Smaller strata are kept whole. Capping prevents abundant monocytes and CD4+ T cells from dominating pooled medians, yielding <strong>1,149 query cells</strong> across <strong>9 categories</strong> (not natural blood proportions).</p>
+<div class="lesson-decision">
+<p><strong>Why integration is a question, not an obligation:</strong> Shared cell types make cross-batch alignment possible, whereas a cell state restricted to one batch has no cross-batch counterpart to align. Always check your batch-by-cell-type counts first: forcing a batch-unique population to mix with another batch pulls it into unrelated cell types (overcorrection).</p>
 </div>
-<h2 id="run-integration">2. Run one recorded preprocessing path</h2>
-<p><a href="../downloads/pbmc-methods-worked-example.zip" download>Download the worked-example bundle</a>, follow its <a href="../files/pbmc-methods-worked-example/README.md">setup and reproduction notes</a>, and inspect the <a href="../files/pbmc-methods-worked-example/run_example.R">full executable script</a>. The input is fetched from its public provider and checked against a recorded SHA-256; no private data or pre-existing local RDS object is required.</p>
+<figure class="lesson-figure">
+<img src="../images/tutorial-figures/scrna-seq-integration-strategies-overcorrection.svg" alt="Three-panel diagram showing unintegrated PCA separation by batch, balanced integration where shared cell types align and batch-unique plasmacytoid dendritic cells remain distinct, and overcorrection where batch-unique cells are pulled toward unrelated cells." width="960" height="390" loading="lazy" decoding="async" style="aspect-ratio: 960 / 390;"/>
+<figcaption><strong>Integration goal vs. overcorrection:</strong> Good integration aligns shared populations (such as B cells and monocytes across 10x v2 A and v3) while leaving batch-unique subsets (such as the 26 v2-A-only pDCs) isolated from unrelated neighbors.</figcaption>
+</figure>
+<h2 id="run-integration">2. Run preprocessing and Harmony on PCA coordinates</h2>
+<p><a href="../downloads/pbmc-methods-worked-example.zip" download="">Download the worked-example bundle</a>, follow its <a href="../files/pbmc-methods-worked-example/README.md">setup instructions</a> (Ubuntu 24.04), and inspect the <a href="../files/pbmc-methods-worked-example/run_example.R">full R script</a>. The input archive is fetched from its public repository and verified against a pinned SHA-256 checksum.</p>
 <pre><code>cd pbmc-methods-worked-example
-# On Ubuntu 24.04, follow the setup instructions in README.md first.
+# On Ubuntu 24.04, complete the package setup in README.md first.
 python3 prepare_inputs.py --data-dir data
 Rscript run_example.R \
   --data-package data/pbmcsca.SeuratData_3.0.0.tar.gz \
-  --output reproduced-results</code></pre><p><strong>Tested environment:</strong> R 4.3.3; Seurat / SeuratObject 5.0.1; SingleR 2.4.1; scuttle 1.12.0; scran 1.30.2; Harmony 1.2.3; LISI 1.0; ggplot2 3.4.4. The run uses <strong>2000 variable genes</strong>, <strong>20 PCs</strong>, seed <code>20261023</code> and one-thread settings. It rebuilds a classic RNA assay from public counts, applies log normalization and variable-feature scaling, and preserves the unintegrated PCA. This uses Seurat 5 with a classic assay workflow; it is not an interchangeable recipe for every layered object.</p>
-<h3>Correct coordinates, not the RNA count matrix</h3>
-<p>Harmony receives the existing PCA representation and the recorded batch field. The tested run uses <code>theta = 2</code>, <code>lambda = 1</code> and at most <code>10</code> Harmony iterations. Harmony 1.2.3 is deliberately pinned; the newer Harmony2 release is not silently substituted. The script creates separate UMAPs from PCA and Harmony with the same visualization settings and checks that the original RNA counts remain unchanged. </p>
-<pre><code># Excerpt: the downloadable script supplies the complete input checks.
+  --output reproduced-results</code></pre>
+<p><strong>Tested environment:</strong> R 4.3.3; Seurat / SeuratObject 5.0.1 (with <code>options(Seurat.object.assay.version = "v3")</code> to construct a classic single-matrix RNA assay); SingleR 2.4.1; scuttle 1.12.0; scran 1.30.2; Harmony 1.2.3; LISI 1.0; ggplot2 3.4.4. Preprocessing selects <strong>2,000 highly variable genes (HVGs)</strong>, runs log normalization (<code>scale.factor = 10000</code>), scales those variable features, and computes <strong>20 PCs</strong> on one thread with seed <code>20261023</code>.</p>
+<p><strong>Expected output:</strong> On a single thread, the full script finishes in roughly 80-90 seconds (82.1 s in the recorded run), writes 14 CSV tables, 4 PNG figures, <code>run_summary.json</code>, and <code>sessionInfo.txt</code> into <code>reproduced-results/</code>, and prints:</p>
+<pre><code>Completed public pbmcsca worked example. Selected query cells: 1149; reference cells: 537; output: reproduced-results</code></pre>
+<h3>Why Harmony adjusts PCA coordinates instead of RNA counts</h3>
+<p>Harmony (<a href="https://doi.org/10.1038/s41592-019-0619-0" rel="noopener" target="_blank">Korsunsky et al., 2019</a>) operates in low-dimensional PCA space rather than altering the gene expression matrix. It alternates between two steps: grouping cells into soft clusters with a batch-diversity penalty, then computing linear ridge-regression offsets per centroid to shift batch-specific cells closer together.</p>
+<pre><code># Excerpt from run_example.R: Harmony 1.2.3 on 20 unintegrated PCs
 query_harmony &lt;- harmony::RunHarmony(
   object = query,
   group.by.vars = "batch",
   reduction.use = "pca",
   dims.use = 1:20,
-  theta = 2, lambda = 1,
-  max_iter = 10, ncores = 1
-)</code></pre><p>In <code>RunHarmony</code>, <code>theta = 2</code> sets the soft-cluster diversity penalty (higher <code>theta</code> forces stronger cross-batch mixing within soft centroids, increasing overcorrection risk when cell types are unshared across batches) and <code>lambda = 1</code> sets the ridge-regression penalty that stabilizes the linear batch-offset step across iterations. Integration does not manufacture biological replicates: cells are not independent donor replicates, and corrected coordinates are not corrected gene counts for differential expression. Keep the original RNA assay and use a suitable sample-aware inferential design for downstream expression comparisons. </p>
-<h2>3. Score the same cells in the same order</h2>
-<p>The calculation uses <a href="https://github.com/immunogenomics/LISI"><code>lisi::compute_lisi()</code></a> on the <strong>20-dimensional coordinates, not UMAP</strong>, with perplexity <code>30</code> for both branches. Coordinate rows, metadata rows and cell IDs must match exactly. Missing labels, duplicate IDs, too few cells or a different cell set cause the workflow to stop. </p>
-<pre><code># These invariants are checked before each paired score calculation.
+  theta = 2,
+  lambda = 1,
+  max_iter = 10,
+  ncores = 1
+)</code></pre>
+<ul>
+<li><code>theta = 2</code> sets the soft-cluster diversity penalty. Raising <code>theta</code> pushes batches to mix more aggressively, increasing the risk of merging batch-unique or disease-restricted states into unrelated clusters.</li>
+<li><code>lambda = 1</code> sets the ridge-regression penalty that shrinks batch correction offsets, guarding against overcorrection when a cluster is dominated by one batch.</li>
+<li><code>max_iter = 10</code> caps optimization rounds (Harmony 1.2.3 and newer 2.x releases use <code>max_iter</code>, whereas older pre-1.0 versions used <code>max.iter.harmony</code>).</li>
+</ul>
+<div class="lesson-checkpoint">
+<p><strong>Keep raw RNA counts untouched for downstream expression tests:</strong> Integration creates aligned coordinates for clustering and neighbor graphs, not biological replicates or batch-corrected gene counts. In <code>run_example.R</code>, an explicit check verifies that the raw <code>RNA</code> counts before and after <code>RunHarmony()</code> are identical. Always run differential expression on the uncorrected <code>RNA</code> assay using a sample-aware design.</p>
+</div>
+<h2 id="score-lisi">3. Score batch mixing and label purity in 20D space</h2>
+<p>Visual UMAP overlap can mislead because UMAP warps global distances and changes layout across random seeds. To measure integration quantitatively, we use <a href="https://github.com/immunogenomics/LISI" rel="noopener" target="_blank"><code>lisi::compute_lisi()</code></a> (Local Inverse Simpson's Index) directly on the <strong>20-dimensional PCA and Harmony embeddings</strong>, never on 2D UMAP coordinates.</p>
+<p>With <code>perplexity = 30</code>, LISI builds a Gaussian kernel over roughly <code>3 * perplexity = 90</code> nearest neighbors per cell (meaning you need at least <code>91</code> cells) and reports the <strong>effective number of categories</strong> present in that local neighborhood. Before scoring, the script enforces exact row-order and missingness invariants so every cell in PCA pairs 1-to-1 with the same cell in Harmony.</p>
+<pre><code># Invariants checked in run_example.R before paired scoring
 stopifnot(identical(rownames(pca_coordinates), rownames(harmony_coordinates)))
 stopifnot(identical(rownames(pca_coordinates), rownames(evaluation_metadata)))
 stopifnot(!anyNA(evaluation_metadata[, c("batch", "source_label")]))
+
 pca_lisi &lt;- lisi::compute_lisi(
   pca_coordinates, evaluation_metadata,
   label_colnames = c("batch", "source_label"), perplexity = 30
@@ -217,39 +285,294 @@ pca_lisi &lt;- lisi::compute_lisi(
 harmony_lisi &lt;- lisi::compute_lisi(
   harmony_coordinates, evaluation_metadata,
   label_colnames = c("batch", "source_label"), perplexity = 30
-)</code></pre><div class="lesson-table-wrap" role="region" aria-label="Scrollable explanation of LISI scores" tabindex="0"> <table> <caption>Two labels, two different questions</caption> <thead> <tr> <th scope="col">Diagnostic</th> <th scope="col">What it measures here</th> <th scope="col">What it does not establish</th> </tr> </thead> <tbody> <tr> <th scope="row">Batch iLISI</th> <td>Effective local number of assay-group labels. With two groups, 1 indicates local dominance by one group; values approaching 2 indicate greater diversity.</td> <td>A universal target of 2, removal of a causal technical effect, or permission to mix distinct states.</td> </tr> <tr> <th scope="row">Source-label cLISI</th> <td>Effective local number of supplied cell-type labels. Values near 1 mean greater source-label purity.</td> <td>Independent biological validation, correct labels, or preservation of every rare state and continuous trajectory.</td> </tr> </tbody> </table>
+)</code></pre>
+<div class="lesson-table-wrap" role="region" aria-label="Scrollable explanation of LISI scores" tabindex="0">
+<table>
+<caption>Two LISI metrics answer two opposite questions</caption>
+<thead>
+<tr>
+<th scope="col">Diagnostic</th>
+<th scope="col">How to read the value here</th>
+<th scope="col">What it does not prove</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<th scope="row">Batch iLISI (integration LISI)</th>
+<td>Ranges from <strong>1</strong> (local neighborhood dominated by one batch) toward <strong>2</strong> (equal local mix of both batches). Higher is better only when cell types are shared.</td>
+<td>A universal target of 2, removal of causal technical artifacts, or permission to mix batch-unique populations.</td>
+</tr>
+<tr>
+<th scope="row">Source-label cLISI (cell-type LISI)</th>
+<td>Ranges from <strong>1</strong> (pure single cell-type neighborhood) upward when distinct cell types mix. Values near <strong>1</strong> mean label structure is preserved.</td>
+<td>Independent biological ground truth, correct initial annotations, or preservation of continuous trajectories and rare subtypes.</td>
+</tr>
+</tbody>
+</table>
 </div>
-<p>These are raw local-diversity diagnostics, not normalized benchmark scores. Neighborhood scale, category proportions, embedding geometry and label quality affect their values. The source labels are pre-existing expression-derived annotations (not clusters newly defined from Harmony), but they still are not independent ground truth. No silhouette or held-out biological validation is reported.</p>
-<h2 id="observed-integration">4. Inspect the observed comparison</h2>
-<div class="lesson-result"> <p><strong>Saved run:</strong> The same 1,149 query cells were scored in 20-dimensional PCA and Harmony representations; the reference cells were not included in integration.</p>
+<p>The supplied <code>source_label</code> annotations come from the original study's expression-based labeling (not clusters newly derived from Harmony), which makes them useful as a consistency check rather than an independent gold standard. Additional conservation metrics such as silhouette width are covered in the follow-up <a href="scrna-seq-quality-control.html">integration QC tutorial</a>.</p>
+<h2 id="observed-integration">4. Inspect the observed comparison and rare-subset slice</h2>
+<div class="lesson-result">
+<p><strong>Saved run summary:</strong> Scoring the exact same 1,149 query cells in 20D PCA and 20D Harmony raises median batch iLISI from <code>1.066</code> to <code>1.918</code> while keeping median source-label cLISI near <code>1</code> (<code>1.016</code> to <code>1.008</code>).</p>
 </div>
-<div class="lesson-table-wrap" role="region" aria-label="Scrollable observed integration diagnostics" tabindex="0"> <table> <caption>Observed raw LISI scores: median [25th–75th percentile]</caption> <thead> <tr> <th scope="col">Representation</th> <th scope="col">Cells</th> <th scope="col">Batch iLISI</th> <th scope="col">Source-label cLISI</th> </tr> </thead> <tbody> <tr> <th scope="row">PCA</th> <td>1,149</td> <td>1.066 [1.011–1.257]</td> <td>1.016 [1.001–1.140]</td> </tr> <tr> <th scope="row">Harmony</th> <td>1,149</td> <td>1.918 [1.789–1.979]</td> <td>1.008 [1.000–1.091]</td> </tr> </tbody> </table>
+<div class="lesson-table-wrap" role="region" aria-label="Scrollable observed integration diagnostics" tabindex="0">
+<table>
+<caption>Observed raw LISI scores across 1,149 query cells: median [25th-75th percentile]</caption>
+<thead>
+<tr>
+<th scope="col">Representation</th>
+<th scope="col">Cells</th>
+<th scope="col">Batch iLISI</th>
+<th scope="col">Source-label cLISI</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<th scope="row">PCA (unintegrated baseline)</th>
+<td>1,149</td>
+<td>1.066 [1.011-1.257]</td>
+<td>1.016 [1.001-1.140]</td>
+</tr>
+<tr>
+<th scope="row">Harmony (theta = 2, lambda = 1)</th>
+<td>1,149</td>
+<td>1.918 [1.789-1.979]</td>
+<td>1.008 [1.000-1.091]</td>
+</tr>
+<tr>
+<th scope="row">Paired per-cell delta (Harmony minus PCA)</th>
+<td>1,149</td>
+<td>+0.766 [0.484-0.912]</td>
+<td>-0.003 [-0.031-0.000]</td>
+</tr>
+</tbody>
+</table>
 </div>
-<p>Median batch diversity increases from 1.066 to 1.918, while the pooled source-label purity diagnostic remains close to 1. This supports a limited mixing interpretation for the annotated sample, not a claim that all biological structure was preserved. The median paired iLISI change is 0.766; that is not the same quantity as subtracting the two pooled medians.</p>
-<figure class="lesson-figure"><a href="../files/pbmc-methods-worked-example/observed/umap_before_after.png"><img loading="lazy" decoding="async" width="2160" height="1440" src="../files/pbmc-methods-worked-example/observed/umap_before_after.png" alt="Paired PCA and Harmony UMAPs for the same public PBMC query cells; top panels color assay group, bottom panels color supplied source labels." style="aspect-ratio: 2160 / 1440;"/></a> <figcaption>PCA-derived UMAPs are on the left and Harmony-derived UMAPs on the right. The top row colors assay group; the bottom row colors supplied source labels. The two UMAP fits have arbitrary orientations and different coordinate scales; use them qualitatively, not as a shared coordinate system or numerical integration score. <a href="../files/pbmc-methods-worked-example/observed/umap_before_after.png">Open full-size figure</a>. New analysis of the public Ding et al. / SeuratData PBMC input; see provenance below. </figcaption> </figure> <figure class="lesson-figure"><a href="../files/pbmc-methods-worked-example/observed/lisi_distributions.png"><img loading="lazy" decoding="async" width="1620" height="990" src="../files/pbmc-methods-worked-example/observed/lisi_distributions.png" alt="Per-cell batch iLISI and source-label cLISI box plots comparing PCA with Harmony; baseline and Harmony are scored in 20 dimensions." style="aspect-ratio: 1620 / 990;"/></a> <figcaption>Boxes show the middle half of per-cell scores with median lines; points beyond the whiskers are displayed. More batch diversity is not automatically better if distinct states are being mixed. Source-label diversity is a limited, expression-derived diagnostic. <a href="../files/pbmc-methods-worked-example/observed/lisi_distributions.png">Open full-size figure</a>. New analysis of the public Ding et al. / SeuratData PBMC input; see provenance below. </figcaption> </figure> <h3>Do not let a pooled median hide a population</h3>
-<p>The bundle includes <a href="../files/pbmc-methods-worked-example/observed/lisi_per_cell.csv">paired per-cell scores</a> and <a href="../files/pbmc-methods-worked-example/observed/lisi_by_label.csv">summaries by source label</a>. Compare each category with its own baseline, and consult the actual batch counts: a rare group or a label missing from one batch cannot be interpreted like a balanced shared population.</p>
-<div class="lesson-table-wrap" role="region" aria-label="Scrollable per-label integration diagnostics" tabindex="0"> <table> <caption>Per-source-label medians: PCA → Harmony, with actual query composition</caption> <thead> <tr> <th scope="col">Source label</th> <th scope="col">v2 A cells</th> <th scope="col">v3 cells</th> <th scope="col">Batch iLISI</th> <th scope="col">Source-label cLISI</th> </tr> </thead> <tbody> <tr> <th scope="row">B cell</th> <td>80</td> <td>80</td> <td>1.140 → 1.941</td> <td>1.000 → 1.000</td> </tr> <tr> <th scope="row">CD14+ monocyte</th> <td>80</td> <td>80</td> <td>1.007 → 1.825</td> <td>1.018 → 1.016</td> </tr> <tr> <th scope="row">CD16+ monocyte</th> <td>80</td> <td>80</td> <td>1.004 → 1.929</td> <td>1.001 → 1.000</td> </tr> <tr> <th scope="row">CD4+ T cell</th> <td>80</td> <td>80</td> <td>1.144 → 1.884</td> <td>1.049 → 1.026</td> </tr> <tr> <th scope="row">Cytotoxic T cell</th> <td>80</td> <td>80</td> <td>1.037 → 1.947</td> <td>1.076 → 1.035</td> </tr> <tr> <th scope="row">Dendritic cell</th> <td>55</td> <td>38</td> <td>1.385 → 1.921</td> <td>1.078 → 1.022</td> </tr> <tr> <th scope="row">Megakaryocyte</th> <td>29</td> <td>41</td> <td>1.689 → 1.903</td> <td>1.003 → 1.001</td> </tr> <tr> <th scope="row">Natural killer cell</th> <td>80</td> <td>80</td> <td>1.064 → 1.949</td> <td>1.070 → 1.036</td> </tr> <tr> <th scope="row">Plasmacytoid dendritic cell</th> <td>26</td> <td>0</td> <td>1.261 → 1.366</td> <td>1.360 → 1.529</td> </tr> </tbody> </table>
+<p>Notice that the paired per-cell median delta in batch iLISI is <code>+0.766</code>, whereas subtracting the pooled medians gives <code>1.918 - 1.066 = 0.852</code>, because each cell starts from its own neighborhood baseline. Paired medians and interquartile ranges (IQR) measure within-cell change without inflating significance through cell-level p-values (cells from one library are pseudoreplicates, not independent donors).</p>
+<figure class="lesson-figure">
+<a href="../files/pbmc-methods-worked-example/observed/umap_before_after.png"><img loading="lazy" decoding="async" width="2160" height="1440" src="../files/pbmc-methods-worked-example/observed/umap_before_after.png" alt="Paired PCA and Harmony UMAPs for the same 1,149 public PBMC query cells; top row colors batch, bottom row colors supplied source labels." style="aspect-ratio: 2160 / 1440;"/></a>
+<figcaption>Qualitative UMAP illustration using identical UMAP settings (<code>n_neighbors = 30</code>, <code>min_dist = 0.3</code>, cosine metric). Left: unintegrated PCA separates 10x v2 A and v3 within major lineages. Right: Harmony overlays shared lineages across batches. Use UMAPs to inspect layout qualitatively; rely on 20D LISI tables for scoring. <a href="../files/pbmc-methods-worked-example/observed/umap_before_after.png">Open full-size figure</a>.</figcaption>
+</figure>
+<figure class="lesson-figure">
+<a href="../files/pbmc-methods-worked-example/observed/lisi_distributions.png"><img loading="lazy" decoding="async" width="1620" height="990" src="../files/pbmc-methods-worked-example/observed/lisi_distributions.png" alt="Box plots of per-cell batch iLISI and source-label cLISI comparing unintegrated PCA with Harmony in 20 dimensions." style="aspect-ratio: 1620 / 990;"/></a>
+<figcaption>Per-cell 20D LISI distributions across all 1,149 query cells (boxes show median and IQR; outlier points beyond whiskers are plotted). Pooled box plots show overall mixing, but cannot reveal whether a rare subset lost purity. <a href="../files/pbmc-methods-worked-example/observed/lisi_distributions.png">Open full-size figure</a>.</figcaption>
+</figure>
+<h3>Slice the scores by source label to catch hidden overcorrection</h3>
+<p>A pooled median can hide failure on a small cell type. The bundle saves <a href="../files/pbmc-methods-worked-example/observed/lisi_per_cell.csv">per-cell scores</a>, <a href="../files/pbmc-methods-worked-example/observed/lisi_by_label.csv">per-label summaries</a>, and <a href="../files/pbmc-methods-worked-example/observed/lisi_paired_differences.csv">paired cell-level differences</a>. You can reproduce the per-label paired median check locally with standard-library Python 3:</p>
+<pre><code>import csv, statistics
+
+groups = {}
+with open("observed/lisi_paired_differences.csv", newline="", encoding="utf-8") as f:
+    for row in csv.DictReader(f):
+        groups.setdefault(row["source_label"], []).append((
+            float(row["delta_iLISI_batch_Harmony_minus_PCA"]),
+            float(row["delta_cLISI_source_label_Harmony_minus_PCA"]),
+        ))
+
+for label, vals in sorted(groups.items()):
+    di = statistics.median(v[0] for v in vals)
+    dc = statistics.median(v[1] for v in vals)
+    print(f"{label:28s} n={len(vals):3d}  med_d_iLISI={di:+.3f}  med_d_cLISI={dc:+.3f}")</code></pre>
+<p><strong>Actual output on the saved bundle:</strong></p>
+<pre><code>B cell                       n=160  med_d_iLISI=+0.765  med_d_cLISI=+0.000
+CD14+ monocyte               n=160  med_d_iLISI=+0.790  med_d_cLISI=-0.003
+CD16+ monocyte               n=160  med_d_iLISI=+0.888  med_d_cLISI=-0.000
+CD4+ T cell                  n=160  med_d_iLISI=+0.674  med_d_cLISI=-0.010
+Cytotoxic T cell             n=160  med_d_iLISI=+0.883  med_d_cLISI=-0.018
+Dendritic cell               n= 93  med_d_iLISI=+0.513  med_d_cLISI=-0.005
+Megakaryocyte                n= 70  med_d_iLISI=+0.174  med_d_cLISI=-0.001
+Natural killer cell          n=160  med_d_iLISI=+0.842  med_d_cLISI=-0.023
+Plasmacytoid dendritic cell  n= 26  med_d_iLISI=+0.145  med_d_cLISI=+0.073</code></pre>
+<div class="lesson-table-wrap" role="region" aria-label="Scrollable per-label integration diagnostics" tabindex="0">
+<table>
+<caption>Per-source-label batch counts and median LISI shifts (PCA -&gt; Harmony)</caption>
+<thead>
+<tr>
+<th scope="col">Source label</th>
+<th scope="col">v2 A cells</th>
+<th scope="col">v3 cells</th>
+<th scope="col">Batch iLISI (PCA -&gt; Harmony)</th>
+<th scope="col">Source-label cLISI (PCA -&gt; Harmony)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<th scope="row">B cell</th>
+<td>80</td>
+<td>80</td>
+<td>1.140 -&gt; 1.941</td>
+<td>1.000 -&gt; 1.000</td>
+</tr>
+<tr>
+<th scope="row">CD14+ monocyte</th>
+<td>80</td>
+<td>80</td>
+<td>1.007 -&gt; 1.825</td>
+<td>1.018 -&gt; 1.016</td>
+</tr>
+<tr>
+<th scope="row">CD16+ monocyte</th>
+<td>80</td>
+<td>80</td>
+<td>1.004 -&gt; 1.929</td>
+<td>1.001 -&gt; 1.000</td>
+</tr>
+<tr>
+<th scope="row">CD4+ T cell</th>
+<td>80</td>
+<td>80</td>
+<td>1.144 -&gt; 1.884</td>
+<td>1.049 -&gt; 1.026</td>
+</tr>
+<tr>
+<th scope="row">Cytotoxic T cell</th>
+<td>80</td>
+<td>80</td>
+<td>1.037 -&gt; 1.947</td>
+<td>1.076 -&gt; 1.035</td>
+</tr>
+<tr>
+<th scope="row">Dendritic cell</th>
+<td>55</td>
+<td>38</td>
+<td>1.385 -&gt; 1.921</td>
+<td>1.078 -&gt; 1.022</td>
+</tr>
+<tr>
+<th scope="row">Megakaryocyte</th>
+<td>29</td>
+<td>41</td>
+<td>1.689 -&gt; 1.903</td>
+<td>1.003 -&gt; 1.001</td>
+</tr>
+<tr>
+<th scope="row">Natural killer cell</th>
+<td>80</td>
+<td>80</td>
+<td>1.064 -&gt; 1.949</td>
+<td>1.070 -&gt; 1.036</td>
+</tr>
+<tr>
+<th scope="row">Plasmacytoid dendritic cell</th>
+<td>26</td>
+<td>0</td>
+<td>1.261 -&gt; 1.366</td>
+<td>1.360 -&gt; 1.529</td>
+</tr>
+</tbody>
+</table>
 </div>
-<h2 id="integration-interpretation">5. Make a bounded decision</h2>
-<p>Overall, Harmony raises median batch iLISI from <code>1.066</code> to <code>1.918</code> while keeping median source-label cLISI steady near <code>1</code> (<code>1.016</code> to <code>1.008</code>). Yet looking beneath that global summary shows why rare subsets must be checked separately: all <strong>26 plasmacytoid dendritic cells come exclusively from v2 A</strong>, and their median cLISI rises from <code>1.360</code> to <code>1.529</code>.</p>
-<p>Because there is no matched v3 counterpart inside perplexity <code>30</code>, higher neighborhood batch diversity for those 26 cells means pulling unrelated v3 cell types closer rather than aligning true pDC replicates. Treat these metrics as exploratory clues rather than automatic approval, since they are <strong>not independent biological validation</strong>.</p>
-<ul> <li><strong>Batch diversity rises while source-label purity stays similar:</strong> evidence consistent with improved mixing of those annotated categories. It is not proof of preserved function or rare-state structure.</li> <li><strong>Batch and source-label diversity both rise:</strong> inspect possible overcorrection, annotation errors or genuine transitional states before accepting the representation.</li> <li><strong>Batch diversity barely changes:</strong> the baseline may already mix, or correction may not address the relevant effect. Increasing correction strength is not automatically appropriate.</li> <li><strong>A population moves unexpectedly:</strong> check cell identity, source-label reliability, original RNA marker expression, depth and batch composition before blaming or endorsing the algorithm. </li> </ul>
-<p>Pair this check with the <a href="cell-type-annotation-methods.html#review-disagreement">annotation lesson's RNA marker plot</a> on the same query cells: Harmony adjusts PCA coordinates without touching RNA counts, so confirm cluster identity using raw marker expression and rare-population checks before trusting an integrated UMAP.</p>
-<div class="lesson-exercise"> <h3>Practice: retain, investigate or reject?</h3>
-<p>Choose one source-label category. Record its cell counts in both groups, its baseline and Harmony iLISI/cLISI summaries, and one RNA marker observation. Make a retain/investigate/reject decision for that limited purpose and state what additional evidence would change your mind. Do not infer population-level significance from cell-level scores.</p>
+<p>The table reveals three distinct outcomes:</p>
+<ol>
+<li><strong>Balanced shared lineages gain mixing:</strong> <code>CD16+ monocyte</code> and <code>B cell</code> move from batch-separated to well-mixed while keeping cLISI at <code>1.000</code>.</li>
+<li><strong>Already-mixed lineages shift modestly:</strong> <code>Megakaryocyte</code> (29 v2 A, 41 v3) starts near <code>1.689</code> iLISI in PCA and shifts by <code>+0.174</code>.</li>
+<li><strong>Batch-unique rare subsets lose purity:</strong> All <strong>26 plasmacytoid dendritic cells (pDCs) come from v2 A (0 from v3)</strong>. With no v3 pDCs within <code>perplexity = 30</code>, raising pDC iLISI pulls those 26 cells toward unrelated v3 types, worsening cLISI from <code>1.360</code> to <code>1.529</code> (paired delta <code>+0.073</code>).</li>
+</ol>
+<h2 id="integration-interpretation">5. Decide whether to accept, tune, or reject</h2>
+<p>Treat LISI metrics as exploratory screening diagnostics rather than independent biological validation. Combine batch counts, per-label iLISI/cLISI changes, and raw RNA marker inspection before accepting an integrated embedding for clustering.</p>
+<ul>
+<li><strong>Batch iLISI rises while source-label cLISI stays near 1:</strong> Consistent with aligned shared populations. Still verify canonical RNA markers (as shown in the <a href="cell-type-annotation-methods.html#review-disagreement">annotation lesson's marker audit</a>) on the untouched RNA assay.</li>
+<li><strong>Batch iLISI and source-label cLISI both rise:</strong> Warning sign of overcorrection (as seen in the 26 v2-A-only pDCs), label errors, or transitional states being collapsed. Lower <code>theta</code> (for example, compare <code>theta = 1</code> vs. <code>theta = 2</code>), increase <code>lambda</code>, or switch to a more conservative anchor method such as RPCA.</li>
+<li><strong>Batch iLISI barely changes from baseline:</strong> Either the populations already mix (like megakaryocytes here), or the batch covariate you supplied is not driving the separation. Inspect donor, QC depth, and cell-cycle effects before increasing correction strength.</li>
+<li><strong>A small population shifts into a larger cluster:</strong> Check its batch-by-label counts first. If it exists in only one batch or condition, inspect its defining markers in unintegrated PCA and raw counts rather than trusting the integrated UMAP.</li>
+</ul>
+<div class="lesson-exercise">
+<h3>Practice: retain, investigate, or reject?</h3>
+<p>Pick one source-label category from the table above. Record its counts in v2 A and v3, its PCA-to-Harmony iLISI and cLISI medians, and make a retain, investigate, or reject decision for joint clustering. State what raw-RNA evidence would change your decision, without using cell-level scores to claim population-level significance.</p>
+<details>
+<summary>Check worked example reasoning (CD16+ monocyte vs. Plasmacytoid dendritic cell)</summary>
+<p><strong>CD16+ monocyte (Retain for joint clustering):</strong> Balanced counts (80 in v2 A, 80 in v3); batch iLISI rises from <code>1.004</code> to <code>1.929</code> (paired median <code>+0.888</code>) while cLISI holds at <code>1.001 -&gt; 1.000</code>. I would check <code>FCGR3A</code>/<code>MS4A7</code>/<code>LYZ</code> in the uncorrected RNA assay across both batches to confirm both groups express the expected monocyte markers; only discordant marker loss or subcluster collapse would overturn this decision.</p>
+<p><strong>Plasmacytoid dendritic cell (Investigate / do not rely on integrated neighborhood alone):</strong> Unbalanced counts (26 in v2 A, 0 in v3); iLISI rises slightly (<code>1.261 -&gt; 1.366</code>) while cLISI worsens from <code>1.360</code> to <code>1.529</code> (paired median <code>+0.073</code>). Because v3 has zero pDCs, mixing here pulls v2 A pDCs toward non-pDC neighbors. I would inspect canonical pDC markers (<code>LILRA4</code>, <code>IL3RA</code>, <code>CLEC4C</code>) in uncorrected space and test <code>theta = 1</code> or conservative RPCA before clustering.</p>
+</details>
 </div>
-<h2 id="rpca-cca-extensions">6. Choosing across integration method families</h2>
-<div class="lesson-warning"> <p><strong>Unexecuted extensions.</strong> RPCA, CCA, scVI, and scANVI were not run for this saved example. No benchmark rankings or runtimes are claimed from this subset; consult large multi-task benchmarks such as Luecken et al. (2022, scIB) for cross-atlas evidence.</p>
+<h2 id="rpca-cca-extensions">6. Choose among Harmony, RPCA, CCA, and scVI/scANVI</h2>
+<p>Seurat v5 RPCA, Seurat v5 CCA, scVI, and scANVI were <strong>not executed</strong> on this 1,149-cell subset. The comparison below summarizes their documented behavior in <a href="https://satijalab.org/seurat/articles/integration.html" rel="noopener" target="_blank">Seurat v5</a>, <a href="https://docs.scvi-tools.org/en/stable/" rel="noopener" target="_blank">scvi-tools</a>, and the <a href="https://doi.org/10.1038/s41592-021-01336-8" rel="noopener" target="_blank">scIB benchmark (Luecken et al., 2022)</a> to help you choose the right family for your own dataset.</p>
+<div class="lesson-table-wrap" role="region" aria-label="Scrollable comparison of scRNA-seq integration families" tabindex="0">
+<table>
+<caption>Comparison of major scRNA-seq integration method families</caption>
+<thead>
+<tr>
+<th scope="col">Method family</th>
+<th scope="col">Input and corrected output</th>
+<th scope="col">Scaling and compute</th>
+<th scope="col">When to choose and primary failure mode</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<th scope="row">Harmony (<code>harmony::RunHarmony</code> or <code>HarmonyIntegration</code>)</th>
+<td>Takes unintegrated PCA; returns corrected low-dimensional coordinates (counts unchanged).</td>
+<td>Very fast; scales to 10<sup>5</sup>-10<sup>6</sup> cells on CPU.</td>
+<td>Strong default baseline for routine donor/lane batches. High <code>theta</code> can pull batch-unique or disease-restricted subsets into unrelated clusters.</td>
+</tr>
+<tr>
+<th scope="row">Seurat v5 RPCA (<code>RPCAIntegration</code>)</th>
+<td>Projects split log-normalized or SCTransform (SCT) layers into each other's PCA space to find reciprocal anchors; returns an integrated reduction.</td>
+<td>Fast and memory-efficient across many samples.</td>
+<td>Preferred over CCA for large cohorts, same-platform batches, or datasets with unshared cell types. More conservative, so it can under-align strong cross-chemistry or cross-species shifts.</td>
+</tr>
+<tr>
+<th scope="row">Seurat v5 CCA (<code>CCAIntegration</code>)</th>
+<td>Finds canonical correlation vectors maximizing shared covariance across split layers to build anchors.</td>
+<td>Slowest; quadratic memory/runtime growth with batch count and cell number.</td>
+<td>Useful when strong technical shifts (such as scRNA-seq vs. snRNA-seq or cross-species) separate clear shared types. High overcorrection risk when batch compositions differ sharply (such as tumor vs. healthy).</td>
+</tr>
+<tr>
+<th scope="row">scVI / scANVI (<code>scvi-tools</code> in Python)</th>
+<td>Deep variational autoencoder modeling <strong>raw integer UMI counts</strong> with batch covariates (plus partial cell labels in <code>scANVI</code>); returns latent space <code>X_scVI</code> / <code>X_scANVI</code>.</td>
+<td>Scales to millions of cells; GPU strongly recommended.</td>
+<td>Top performer on complex multi-batch atlases in scIB (especially <code>scANVI</code> when reliable seed labels exist). Sensitive to highly variable gene (HVG) selection, latent dimensions, and training epochs; fails if fed log-normalized counts instead of raw UMI counts.</td>
+</tr>
+</tbody>
+</table>
 </div>
-<div class="lesson-table-wrap" role="region" aria-label="Scrollable comparison of scRNA-seq integration families" tabindex="0"> <table> <caption>Method classes, corrected outputs, and typical failure modes</caption> <thead> <tr> <th scope="col">Method</th> <th scope="col">What it corrects</th> <th scope="col">Scaling</th> <th scope="col">Primary failure mode to audit</th> </tr> </thead> <tbody> <tr> <th scope="row">Harmony (<code>RunHarmony</code>)</th> <td>Low-dimensional linear embedding (PC coordinates only; counts unchanged).</td> <td>Fast; scales to &gt;10<sup>5</sup>-10<sup>6</sup> cells on CPU.</td> <td>High <code>theta</code> can pull batch-unique or disease-restricted states into unrelated shared clusters.</td> </tr> <tr> <th scope="row">Seurat v5 RPCA (<code>IntegrateLayers(..., RPCAIntegration)</code>)</th> <td>Reciprocal-PCA anchors producing an integrated low-dim reduction (or optional reconstructed layer).</td> <td>Fast and memory-efficient for large cohorts and reference mapping.</td> <td>More conservative than CCA; can under-align strong cross-chemistry or cross-species shifts. </td> </tr> <tr> <th scope="row">Seurat v5 CCA (<code>CCAIntegration</code>)</th> <td>Canonical correlation anchors maximizing shared covariance across batches.</td> <td>Quadratic memory/time growth across many large batches.</td> <td>Prone to overcorrection when biological composition differs sharply (for example tumor vs healthy tissue).</td> </tr> <tr> <th scope="row">scVI / scANVI (<code>scvi-tools</code>)</th> <td>Deep variational autoencoder directly modeling raw UMI counts with batch covariates (plus partial labels in <code>scANVI</code>).</td> <td>Scales to millions of cells (GPU-accelerated).</td> <td>Sensitive to HVG count, latent dimensionality, and epoch tuning; <code>scANVI</code> generally outperforms unsupervised methods on bio-conservation in scIB when reliable seed labels exist. </td> </tr> </tbody> </table>
+<p>In Seurat v5, integration runs across <strong>split layers</strong> inside one <code>RNA</code> assay via <code>IntegrateLayers()</code> (documented in the <a href="https://satijalab.org/seurat/articles/integration.html" rel="noopener" target="_blank">Seurat v5 integration vignette</a> and <a href="https://satijalab.org/seurat/articles/integration_rpca.html" rel="noopener" target="_blank">RPCA guide</a>). After building your neighbor graph and UMAP on the new integrated reduction, rejoin layers with <code>JoinLayers()</code> before running marker tests on the normalized RNA data:</p>
+<pre><code># Unexecuted Seurat v5 syntax reference (not run in run_example.R)
+obj[["RNA"]] &lt;- split(obj[["RNA"]], f = obj$batch)
+obj &lt;- NormalizeData(obj)
+obj &lt;- FindVariableFeatures(obj)
+obj &lt;- ScaleData(obj)
+obj &lt;- RunPCA(obj)
+
+# Swap RPCAIntegration for CCAIntegration or HarmonyIntegration
+obj &lt;- IntegrateLayers(
+  object = obj,
+  method = RPCAIntegration,
+  orig.reduction = "pca",
+  new.reduction = "integrated.rpca"
+)
+
+obj &lt;- FindNeighbors(obj, reduction = "integrated.rpca", dims = 1:20)
+obj &lt;- RunUMAP(obj, reduction = "integrated.rpca", dims = 1:20, reduction.name = "umap.rpca")
+obj &lt;- JoinLayers(obj, assay = "RNA")  # Required before FindMarkers()</code></pre>
+<p>To benchmark any alternative fairly against this worked example, keep the exact same 1,149 query cells, 2,000 HVGs, and 20-dimensional comparison policy, align every embedding by cell ID, and re-run <code>compute_lisi()</code> on both the pooled set and each individual source label.</p>
+<h2 id="troubleshooting-next">7. Common errors, fixes, and next steps</h2>
+<ul>
+<li><strong><code>Error in harmony::RunHarmony(...): unused argument (max.iter.harmony = 10)</code>:</strong> Harmony 1.2.x and 2.x renamed <code>max.iter.harmony</code> to <code>max_iter</code>. Check <code>packageVersion("harmony")</code> and update the argument name to <code>max_iter</code>.</li>
+<li><strong><code>Error: data layers are not joined. Please run JoinLayers</code> in Seurat v5:</strong> After <code>IntegrateLayers()</code>, the RNA assay still holds per-batch layers. Call <code>obj &lt;- JoinLayers(obj, assay = "RNA")</code> before running <code>FindMarkers()</code> or extracting a combined expression matrix.</li>
+<li><strong><code>compute_lisi()</code> crashes or scrambles scores across cells:</strong> LISI requires at least <code>3 * perplexity + 1</code> cells (91 cells at <code>perplexity = 30</code>) and exact matching row order between the embedding matrix and metadata frame. Add <code>stopifnot(identical(rownames(emb), rownames(meta)))</code> before scoring.</li>
+<li><strong><code>run_example.R</code> stops with <code>Output directory is not empty</code>:</strong> The script refuses to clobber existing results by default. Point <code>--output</code> to a fresh directory or pass <code>--force</code> to refresh managed output files cleanly.</li>
+<li><strong>scVI raises a count-type warning or produces poor mixing:</strong> Verify that <code>SCVI.setup_anndata(adata, layer="counts", batch_key="batch")</code> points to raw integer UMI counts, never log-normalized floats.</li>
+</ul>
+<div class="lesson-summary">
+<h3>Next steps</h3>
+<ul>
+<li><strong>Deepen metric checks:</strong> Measure silhouette width alongside LISI in <a href="scrna-seq-quality-control.html">scRNA-seq Integration QC: LISI and Silhouette</a>.</li>
+<li><strong>Verify cluster markers:</strong> Inspect raw RNA markers on these same cells in <a href="cell-type-annotation-methods.html#review-disagreement">Choosing and Checking Cell-Type Annotations</a>.</li>
+<li><strong>Run sample-aware DE:</strong> Keep raw counts separate from integrated embeddings and follow <a href="scrna-seq-downstream-analysis.html">Single-Cell RNA-seq Downstream Analysis</a>.</li>
+</ul>
 </div>
-<p>Seurat's RPCA and CCA workflows find anchors between datasets rather than applying the same iterative soft-clustering correction as Harmony. Use the <a href="https://satijalab.org/seurat/articles/seurat5_integration.html">current Seurat v5 <code>IntegrateLayers</code> vignette</a> and <a href="https://satijalab.org/seurat/articles/integration_rpca.html">RPCA guide</a> for the API matching your object version.</p>
-<p>To extend this experiment fairly, preserve the same selected cells, source labels and dimensions policy; record any method-specific preprocessing; align every branch by cell ID; rerun the same diagnostic calculations (or try a small sensitivity sweep across <code>theta = 1, 2, 4</code>); and inspect original RNA markers and rare populations. Different integration assays and corrected coordinates are not interchangeable with raw counts.</p>
 <aside aria-label="Author's lab note" class="lesson-summary">
 <p><strong>Author's lab note:</strong> The biggest mistake I see in multi-sample cohorts is cranking up integration strength until every batch looks uniformly blended on a UMAP. In disease datasets, that often merges patient-specific tumour states or small plasmacytoid dendritic / cycling subsets into unrelated clusters. Before trusting a "well-mixed" embedding, I always inspect condition-restricted markers in uncorrected space and verify small populations individually with per-label cLISI.</p>
 </aside>
 <h2>Provenance and references</h2>
-<ul> <li>Luecken MD, Büttner M, Chaichoompu K, et al. (2022). Benchmarking atlas-level data integration in single-cell genomics. <em>Nature Methods</em>, 19, 41-50 (scIB). <a href="https://doi.org/10.1038/s41592-021-01336-8" rel="noopener" target="_blank">doi:10.1038/s41592-021-01336-8</a></li> <li>Tran HTN, Ang KS, Chevrier M, et al. (2020). A benchmark of batch-effect correction methods for single-cell RNA sequencing data. <em>Genome Biology</em>, 21, 12. <a href="https://doi.org/10.1186/s13059-019-1850-9" rel="noopener" target="_blank">doi:10.1186/s13059-019-1850-9</a></li> <li><a href="https://doi.org/10.1038/s41587-020-0465-8">Ding et al. (2020), public comparative study</a>; <a href="https://github.com/satijalab/seurat-data">SeuratData public distribution</a>. The bundle records exact input and source-package checksums.</li> <li><a href="https://doi.org/10.1038/s41592-019-0619-0">Korsunsky et al. (2019), Harmony</a>; <a href="https://github.com/immunogenomics/harmony">Harmony project</a>; <a href="https://github.com/immunogenomics/LISI">LISI implementation</a>. This saved run uses Harmony 1.2.3 and a pinned LISI source commit.</li> <li><a href="https://satijalab.org/seurat/articles/seurat5_integration.html">Seurat v5 integration overview</a>; <a href="https://www.sc-best-practices.org/cellular-structure/integration/">Single-cell best-practices integration chapter</a>.</li> <li>Upstream preparation: <a href="scrna-seq-basics.html">PBMC QC-to-clustering worked lab</a> and <a href="scrna-seq-quality-control.html">LISI &amp; silhouette integration diagnostics</a>. Annotation checks: <a href="cell-type-annotation-methods.html">the paired public annotation example</a>.</li> </ul>
+<ul>
+<li>Luecken MD, Büttner M, Chaichoompu K, et al. (2022). Benchmarking atlas-level data integration in single-cell genomics. <em>Nature Methods</em>, 19, 41-50 (scIB). <a href="https://doi.org/10.1038/s41592-021-01336-8" rel="noopener" target="_blank">doi:10.1038/s41592-021-01336-8</a></li>
+<li>Tran HTN, Ang KS, Chevrier M, et al. (2020). A benchmark of batch-effect correction methods for single-cell RNA sequencing data. <em>Genome Biology</em>, 21, 12. <a href="https://doi.org/10.1186/s13059-019-1850-9" rel="noopener" target="_blank">doi:10.1186/s13059-019-1850-9</a></li>
+<li>Ding J, Adiconis X, Simmons SK, et al. (2020). Systematic comparison of single-cell and single-nucleus RNA-sequencing methods. <em>Nature Biotechnology</em>, 38, 737-746. <a href="https://doi.org/10.1038/s41587-020-0465-8" rel="noopener" target="_blank">doi:10.1038/s41587-020-0465-8</a>; <a href="https://github.com/satijalab/seurat-data" rel="noopener" target="_blank">SeuratData public distribution</a>.</li>
+<li>Korsunsky I, Millard N, Fan J, et al. (2019). Fast, sensitive and accurate integration of single-cell data with Harmony. <em>Nature Methods</em>, 16, 1289-1296. <a href="https://doi.org/10.1038/s41592-019-0619-0" rel="noopener" target="_blank">doi:10.1038/s41592-019-0619-0</a>; <a href="https://github.com/immunogenomics/harmony" rel="noopener" target="_blank">Harmony</a>; <a href="https://github.com/immunogenomics/LISI" rel="noopener" target="_blank">LISI</a>.</li>
+<li>Official guides: <a href="https://satijalab.org/seurat/articles/integration.html" rel="noopener" target="_blank">Seurat v5 integration vignette</a>; <a href="https://satijalab.org/seurat/articles/integration_rpca.html" rel="noopener" target="_blank">Seurat RPCA guide</a>; <a href="https://docs.scvi-tools.org/en/stable/" rel="noopener" target="_blank">scvi-tools documentation</a>; <a href="https://www.sc-best-practices.org/cellular_structure/integration.html" rel="noopener" target="_blank">Single-cell best practices: Data integration</a>.</li>
+</ul>
 <aside aria-labelledby="tutorial-feedback-title" class="lesson-feedback" id="tutorial-feedback"><h2 id="tutorial-feedback-title">Help improve this tutorial</h2>
 <p>Found an error, a broken link, or a step that needs a clearer explanation? Please <a href="../contact.html">contact me</a>. Your feedback helps me keep this resource accurate and useful.</p>
 </aside>
@@ -391,7 +714,7 @@ harmony_lisi &lt;- lisi::compute_lisi(
 </script>
 <script src="../assets/vendor/prism/prism-1.29.0.js"></script>
 <script id="tutorial-code-data">
-window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"scrna-seq-integration-strategies":{"blocks":[{"language":"bash","sha256":"d99c6f9724437277cd4d4f2f0e8319c00a6c818d2dc18e3187eba31ee2bc8d89"},{"language":"r","sha256":"cc700d2e97d38f0679f607f56381a0a8e8741538776ffec1bbb79feaf75e4ae0"},{"language":"r","sha256":"1c3518126eb42a8c88a13ea3e192fdff3f82f628631b90ce34d8abbcc5cb4e98"}],"groups":[]}}};
+window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"scrna-seq-integration-strategies":{"blocks":[{"language":"bash","sha256":"b4737f29cd55dbe98545ff05a6f46cdcdc3e8b4c1a8f846a57638a5a2d64fc3d"},{"language":"text","sha256":"024e36f359463b26b3310032a61ed5e98c9f28d15fff254108c0a6139beef677"},{"language":"r","sha256":"6d93a4f2d73952237b13cc418728117db87126367ac2e212725d65910ed9bf71"},{"language":"r","sha256":"904775e97954852ef251e2485ee2fc8f830af36dff535dfdb455764af483dc66"},{"language":"python","sha256":"702e479ef4592294e2c4cfc9dc51ac6861c23e13b7e47994d865cc395fd5150f"},{"language":"text","sha256":"819ac849cf82bf39939e0b7c338605b2bb338cc2cfd2680d9edb06c8be99f96a"},{"language":"r","sha256":"41e4ed5c06bb86e2d39f217d8dc892042cbc85584f3a9df5c1eed7832d677a74"}],"groups":[]}}};
 </script>
 <script src="../code-tabs.js?v=20261026-startup-v1"></script>
 <script src="../copy-code.js?v=20261025-r-first-v1"></script>

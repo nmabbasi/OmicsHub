@@ -172,202 +172,278 @@ function toggleMobileMenu() {
 <img alt="Command-Line Navigation for Bioinformatics" class="w-full aspect-video object-cover" decoding="async" loading="eager" src="../images/shell-commands-part1-workstation.webp" width="1024" height="1024"/>
 </div>
 <nav aria-label="Learning path navigation" class="reader-toolbar"><span class="reader-toolbar__heading">Learning path</span><a href="computer-data-fundamentals.html" rel="prev" class="reader-toolbar__previous"><span class="reader-toolbar__direction"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5m0 0 7 7m-7-7 7-7"/></svg></span><span class="reader-toolbar__copy"><small>Previous prerequisite</small><strong>Computer and Data Fundamentals for Biologists</strong></span></a><a data-catalogue-return="" href="../tutorials.html" class="reader-toolbar__library"><span class="reader-toolbar__library-mark" aria-hidden="true"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="6" height="6" rx="1.3"/><rect x="14" y="4" width="6" height="6" rx="1.3"/><rect x="4" y="14" width="6" height="6" rx="1.3"/><rect x="14" y="14" width="6" height="6" rx="1.3"/></svg></span><span><small>Browse</small><strong>All tutorials</strong></span></a><a href="command-line-part2.html" rel="next" class="reader-toolbar__next"><span class="reader-toolbar__copy"><small>Suggested next</small><strong>Command-Line Text Processing for Bioinformatics</strong></span><span class="reader-toolbar__direction"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14m0 0-7-7m7 7-7 7"/></svg></span></a></nav>
-<article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--walkthrough"><p class="lesson-lead">Build a small project directory, practice moving through it, and inspect file operations without mistaking placeholder files for usable sequencing data. The examples use a Bash-like shell and common command-line utilities.</p><section class="lesson-summary tutorial-learning-contract" data-tutorial-format="hands-on-lab" aria-label="Learning format"><p><strong>Format: Hands-on lab.</strong> Open a terminal and practice navigating, inspecting, and safely moving files inside a disposable bioinformatics directory tree. Every command builds lightweight zero-byte practice files on the spot, so no external sequencing data are needed.</p></section><h2>Learning objectives and prerequisites</h2>
-<p>Prerequisites: a working terminal on Linux, macOS, or Windows Subsystem for Linux (WSL). No prior shell experience required, but basic familiarity with copying and pasting text will help.</p>
-<p>By the end of this lesson you will be able to:</p>
+<article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--walkthrough"><p class="lesson-lead">On remote servers and high-performance clusters (HPC), you rarely have a graphical file browser. In this lab, you will build a reproducible bioinformatics folder tree, move across directories with relative and absolute paths, verify compressed sequence files, and protect raw data from accidental overwrites.</p><section class="lesson-summary tutorial-learning-contract" data-tutorial-format="hands-on-lab" aria-label="Learning format"><p><strong>Format: Hands-on lab (about 20 minutes).</strong> Open a terminal and practice navigating, inspecting, and safely moving files inside a disposable <code>~/projects/basic-nav</code> directory. Every file is created locally on the spot, so no external sequencing downloads are required.</p></section><h2>Overview, prerequisites, and learning objectives</h2>
+<p><strong>Prerequisites:</strong> A Bash or Zsh terminal on Linux, macOS, or Windows Subsystem for Linux (WSL). No prior shell experience is needed, and every command runs inside a disposable practice folder.</p>
+<p>By the end of this lab, you will be able to:</p>
 <ul>
-<li>Identify your current directory and list its contents.</li>
-<li>Move between directories using absolute and relative paths.</li>
-<li>Create, copy, move, and inspect files and directories reliably.</li>
-<li>Use safe practices for naming and working with bioinformatics project files.</li>
+<li>Check your current working directory (<code>pwd</code>) and interpret detailed directory listings (<code>ls -la</code>, <code>ls -lh</code>).</li>
+<li>Move cleanly between folders using absolute paths (<code>/</code>), relative paths (<code>../</code>), home shortcuts (<code>~</code>), and previous-directory toggles (<code>cd -</code>).</li>
+<li>Inspect files safely with <code>file</code>, <code>gzip -dc</code>, <code>head</code>, and <code>less</code> without mistaking empty placeholders for real FASTQ data.</li>
+<li>Copy, move, rename, write-protect (<code>chmod a-w</code>), and checksum-verify files while avoiding common shell traps.</li>
 </ul>
 
 <figure class="my-8 bg-white border border-gray-200 rounded-xl p-4 shadow-sm"><img src="../images/tutorial-figures/command-line-directory-tree.svg" alt="Diagram showing Linux bioinformatics directory hierarchy with absolute path /home/user/project/data/raw, relative navigation commands, and safety rules" width="960" height="460" loading="lazy" class="w-full h-auto rounded-lg" style="aspect-ratio: 960 / 460;"/><figcaption class="mt-3 text-sm text-gray-600">Mastering <code>pwd</code>, relative (<code>../</code>) vs absolute (<code>/</code>) paths, and safe flags (<code>cp -i</code>, <code>mv -n</code>, dry runs) prevents accidental overwrites of raw sequencing data.</figcaption></figure>
-<h2>Why basic command-line navigation matters in bioinformatics</h2>
-<p>Bioinformatics projects accumulate hundreds of files across raw FASTQs, reference genomes, logs, and outputs, often on headless remote servers where graphical file browsers are slow or unavailable. A handful of reliable terminal commands helps you verify locations and move files without accidental overwrites.</p>
-<p>Examples where these skills are essential:</p>
+<h2>Why bioinformatics relies on the terminal</h2>
+<p>A single RNA-seq or variant-calling project often produces hundreds of FASTQ, BAM, log, and summary files stored on headless remote servers (machines with no graphical desktop). Terminal commands let you inspect dozens of samples in seconds and avoid silent mistakes when:</p>
 <ul>
-<li>Transferring files between a local laptop and a remote cluster with scp or rsync.</li>
-<li>Running containerised software (Docker/Singularity) that expects file paths as inputs.</li>
-<li>Reading and inspecting log files produced by long-running alignment or variant-calling jobs.</li>
+<li>Transferring large sequencing runs between your laptop and an HPC cluster with <code>scp</code> or <code>rsync</code>.</li>
+<li>Passing exact input and output directory paths into containerized tools such as Docker or Apptainer (formerly Singularity).</li>
+<li>Checking log files from overnight alignment or variant-calling jobs to see why a run succeeded or stalled.</li>
 </ul>
-<h2>Step-by-step workflow</h2>
-<p>We'll create a small project directory, add example files (empty placeholders for practice), and run commands that show the file system state at each step. Replace the example paths with ones appropriate for your machine. Commands assume a Bourne-like shell (bash, zsh).</p>
-<h3 class="lesson-step">1. Start from your home directory and create a project structure</h3>
-<p>Open a terminal and run the following. They create directories and three empty files under <code>~/projects/basic-nav</code>; they do not create sequencing data. Note that brace expansion (<code>{data,results,scripts,logs}</code>) works in <code>bash</code>, <code>zsh</code> (macOS's default login shell), and <code>ksh</code>, whereas strict POSIX <code>/bin/sh</code> (such as <code>dash</code> on Debian/Ubuntu) treats braces literally.</p>
-<pre><code># Move to your home directory to start from a predictable location
+<h2>Step-by-step lab</h2>
+<p>Run these commands in order in a Bourne-like shell (<code>bash</code> or <code>zsh</code>, the default login shell on modern macOS). Commands work on Linux, WSL, and macOS unless a platform difference is noted.</p>
+<h3 class="lesson-step">1. Start in your home directory and build a project tree</h3>
+<p><strong>Why:</strong> Keeping raw inputs, scripts, logs, and results in separate folders keeps scripts reproducible and stops intermediate files from mixing with original sequencing reads.</p>
+<p>In Bash and Zsh, the tilde (<code>~</code>) expands to your personal home directory, and curly braces perform <em>brace expansion</em>, generating multiple folder paths from one command. Strict POSIX <code>/bin/sh</code> (such as <code>dash</code> on Debian/Ubuntu) treats braces as literal characters, so stick to <code>bash</code> or <code>zsh</code> here.</p>
+<pre><code># Move to your home directory so every relative path starts from a known place
 cd ~
 
-# Create a reproducible project directory tree
+# Create the project root and four standard subdirectories (-p creates parents as needed)
 mkdir -p projects/basic-nav/{data,results,scripts,logs}
 
-# Create placeholder files that emulate common inputs
+# Create three empty (0-byte) placeholder files for navigation practice
 touch projects/basic-nav/data/sample_R1.fastq.gz
 touch projects/basic-nav/data/sample_R2.fastq.gz
 touch projects/basic-nav/scripts/README.md
-</code></pre>
-<p>What these commands do (inputs/outputs):</p>
-<ul>
-<li><code>cd ~</code> moves to your home directory (no file creation).</li>
-<li><code>mkdir -p projects/basic-nav/{data,results,scripts,logs}</code> creates a nested folder tree <code>~/projects/basic-nav</code> with four subdirectories. The <code>-p</code> flag ensures parent directories are created as needed.</li>
-<li><code>touch</code> creates three empty files as placeholders: two compressed FASTQ names and a README. These are zero-byte files used for practice; they are not real sequencing data.</li>
-</ul>
-<h3 class="lesson-step">2. Check where you are and list contents</h3>
-<pre><code># Show the current directory (absolute path)
+
+# Check: list the four subdirectories inside the new project folder
+ls -l projects/basic-nav</code></pre>
+<p><strong>Expected output</strong> (usernames, groups, and timestamps match your own machine):</p>
+<pre><code>total 16
+drwxrwxr-x 2 user user 4096 Nov 26 20:59 data
+drwxrwxr-x 2 user user 4096 Nov 26 20:59 logs
+drwxrwxr-x 2 user user 4096 Nov 26 20:59 results
+drwxrwxr-x 2 user user 4096 Nov 26 20:59 scripts</code></pre>
+<p>The leading <code>d</code> in <code>drwxrwxr-x</code> marks each entry as a directory. Notice that <code>touch</code> only creates empty 0-byte files: naming a file <code>.fastq.gz</code> does not compress it or put sequence reads inside it.</p>
+
+<h3 class="lesson-step">2. Confirm your location and read detailed listings</h3>
+<p><strong>Why:</strong> Before moving, copying, or deleting files, always verify your <em>working directory</em> (the folder your shell is currently inside) and check whether a file is empty or hidden.</p>
+<pre><code># Print the full absolute path of your current working directory
 pwd
 
-# List the new project folder (short and detailed views)
-ls projects/basic-nav
-ls -l projects/basic-nav
+# Include hidden dotfiles (-a) and permissions/sizes (-l) in the project root
 ls -la projects/basic-nav
-</code></pre>
-<p>Expected observations:</p>
+
+# List the practice files inside data/ with human-readable sizes (-h)
+ls -lh projects/basic-nav/data</code></pre>
+<p><strong>Expected output:</strong></p>
+<pre><code>/home/user
+total 24
+drwxrwxr-x 6 user user 4096 Nov 26 20:59 .
+drwxrwxr-x 3 user user 4096 Nov 26 20:59 ..
+drwxrwxr-x 2 user user 4096 Nov 26 20:59 data
+drwxrwxr-x 2 user user 4096 Nov 26 20:59 logs
+drwxrwxr-x 2 user user 4096 Nov 26 20:59 results
+drwxrwxr-x 2 user user 4096 Nov 26 20:59 scripts
+total 0
+-rw-rw-r-- 1 user user 0 Nov 26 20:59 sample_R1.fastq.gz
+-rw-rw-r-- 1 user user 0 Nov 26 20:59 sample_R2.fastq.gz</code></pre>
+<p>Key details to read in <code>ls -la</code>:</p>
 <ul>
-<li><code>pwd</code> prints a full path such as <code>/home/yourusername</code> or <code>/Users/yourname</code>.</li>
-<li><code>ls projects/basic-nav</code> shows the subdirectories created (<code>data</code>, <code>results</code>, <code>scripts</code>, <code>logs</code>).</li>
-<li><code>ls -l projects/basic-nav</code> lists the four subdirectories and their directory metadata; it does not show files nested inside them. To see the empty practice files and their sizes, run <code>ls -l projects/basic-nav/data projects/basic-nav/scripts</code>. Hidden entries (those starting with a dot) appear with <code>-a</code>.</li>
+<li><code>.</code> represents the current directory itself, and <code>..</code> represents its parent directory (here <code>~/projects</code>).</li>
+<li><code>ls -l projects/basic-nav</code> lists only the items directly inside <code>basic-nav</code>; to inspect files inside <code>data</code>, pass <code>projects/basic-nav/data</code>.</li>
+<li>On macOS, <code>pwd</code> prints <code>/Users/yourname</code> instead of <code>/home/yourname</code>.</li>
 </ul>
-<h3 class="lesson-step">3. Change directory into the project and use relative navigation</h3>
-<pre><code># Change into the project directory using a relative path
+
+<h3 class="lesson-step">3. Move between folders with absolute and relative paths</h3>
+<p><strong>Why:</strong> Hardcoding absolute paths (such as <code>/home/alice/projects/basic-nav/data</code>) breaks scripts when a collaborator or cluster node uses a different home path. Relative paths keep workflows portable.</p>
+<ul>
+<li><strong>Absolute path:</strong> Starts with <code>/</code> (filesystem root) and works regardless of your current directory.</li>
+<li><strong>Relative path:</strong> Starts from your current working directory (<code>pwd</code>), using folder names, <code>.</code> (here), or <code>..</code> (one level up).</li>
+<li><strong>Previous-directory toggle:</strong> <code>cd -</code> jumps back to the directory you were in immediately before your last <code>cd</code>.</li>
+</ul>
+<pre><code># Move into the project and then into data/ using relative paths
 cd projects/basic-nav
-
-# Move into the data subdirectory
 cd data
+pwd
 
-# Move up to the project root using the parent shortcut
+# Step up one directory (back to basic-nav) and then toggle back to data/
 cd ..
+pwd
+cd -
+pwd
 
-# Quickly return to home using the tilde
+# Return to your home directory before Step 4
 cd ~
-</code></pre>
-<p>Notes on paths:</p>
-<ul>
-<li>An absolute path begins with <code>/</code> (Linux/macOS) and names every directory from the root, for example <code>/home/youruser/projects/basic-nav</code>.</li>
-<li>A relative path is interpreted from your current working directory; for example <code>cd data</code> only works if <code>data</code> is inside your current directory.</li>
-<li>Shortcuts: <code>.</code> means current directory, <code>..</code> means parent directory, <code>~</code> means your home directory, and <code>-</code> returns to the previous directory you were in (<code>cd -</code>).</li>
-</ul>
-<h3 class="lesson-step">4. Inspect files safely (viewing without modifications)</h3>
-<pre><code># Show a short listing with human-readable sizes
-ls -lh projects/basic-nav/data
+pwd</code></pre>
+<p><strong>Expected output:</strong></p>
+<pre><code>/home/user/projects/basic-nav/data
+/home/user/projects/basic-nav
+/home/user/projects/basic-nav/data
+/home/user/projects/basic-nav/data
+/home/user</code></pre>
+<p>Notice that <code>cd -</code> prints the destination path as it switches back, and <code>cd ~</code> returns you to <code>/home/user</code> (or <code>/Users/user</code> on macOS) so the relative paths in the next step work directly.</p>
 
-# Check the placeholders: their .fastq.gz names do not make them compressed data
+<h3 class="lesson-step">4. Inspect files without modifying them</h3>
+<p><strong>Why:</strong> Never guess a file's format from its extension, and never open a multi-gigabyte FASTQ in a text editor (which tries to load the whole file into memory). Use read-only streaming commands instead.</p>
+<p>In the commands below, <em>standard output</em> (<code>stdout</code>) is the stream of text a command prints to your terminal, and the pipe symbol (<code>|</code>) passes that stream directly into the next command without writing temporary files.</p>
+<pre><code># 1. Check what the empty placeholder actually is
 file projects/basic-nav/data/sample_R1.fastq.gz
-ls -lh projects/basic-nav/data/sample_R1.fastq.gz
+gzip -dc projects/basic-nav/data/sample_R1.fastq.gz
 
-# Preview only if this path names a real, non-empty gzip-compressed FASTQ
-zcat /path/to/real_sample_R1.fastq.gz | head -n 20
+# 2. Build one tiny valid gzipped FASTQ record locally so you can inspect real compressed text
+printf '@demo_read_1\nATGCGTAC\n+\nIIIIIIII\n' | gzip -c &gt; projects/basic-nav/data/demo_read_1.fastq.gz
 
-# Read the text README; press q to quit
-less projects/basic-nav/scripts/README.md
-</code></pre>
-<p>What these commands check:</p>
-<ul>
-<li><code>file</code> identifies a zero-byte placeholder here. A filename ending in <code>.fastq.gz</code> is only a name; <code>touch</code> did not compress or populate it.</li>
-<li><code>zcat</code> decompresses to standard output, and <code>head</code> limits the displayed lines. Replace the example path with a real compressed file. Running GNU <code>zcat</code> on the zero-byte placeholder created above prints an error (<code>gzip: ...: unexpected end of file</code>), demonstrating directly that a <code>.fastq.gz</code> filename extension does not make an empty file valid gzip data.</li>
-<li><code>less</code> is a pager that lets you view large files page by page.</li>
-</ul>
-<h3 class="lesson-step">5. Copy, move, and rename files with examples</h3>
-<p>Check both source and destination before modifying files: <code>-i</code> prompts you before overwriting an existing file. Treat these commands as safe file handling rather than a backup system for irreplaceable raw reads.</p>
-<pre><code># Copy only the R1 placeholder into results; the original remains in data
+# 3. Verify file type, size, and the first 4 lines without unpacking to disk
+file projects/basic-nav/data/demo_read_1.fastq.gz
+ls -lh projects/basic-nav/data/demo_read_1.fastq.gz
+gzip -dc projects/basic-nav/data/demo_read_1.fastq.gz | head -n 4
+
+# 4. Page through a plain-text file safely (press q to quit less)
+less projects/basic-nav/scripts/README.md</code></pre>
+<p><strong>Expected output</strong> (the second command intentionally fails on the empty placeholder):</p>
+<pre><code>projects/basic-nav/data/sample_R1.fastq.gz: empty
+gzip: projects/basic-nav/data/sample_R1.fastq.gz: unexpected end of file
+projects/basic-nav/data/demo_read_1.fastq.gz: gzip compressed data, from Unix, original size modulo 2^32 33
+-rw-rw-r-- 1 user user 47 Nov 26 20:59 projects/basic-nav/data/demo_read_1.fastq.gz
+@demo_read_1
+ATGCGTAC
++
+IIIIIIII</code></pre>
+<p>Each valid FASTQ record has four lines: a <code>@</code> header, the DNA sequence, a <code>+</code> separator, and one Phred quality character per base. On Linux, <code>zcat</code> is shorthand for <code>gzip -dc</code>, whereas macOS <code>zcat</code> expects legacy <code>.Z</code> archives and fails on <code>.gz</code> files. Using <code>gzip -dc</code> (or <code>gzcat</code> on macOS) works reliably without modifying the compressed file on disk. Because <code>README.md</code> is still empty (0 bytes), <code>less</code> opens to a blank screen showing <code>(END)</code> until you press <code>q</code>; on larger files, press <code>Space</code> to page forward, <code>/word</code> to search, and <code>q</code> to quit.</p>
+
+<h3 class="lesson-step">5. Copy, move, rename, and write-protect raw files</h3>
+<p><strong>Why:</strong> By default, <code>cp</code> and <code>mv</code> overwrite an existing destination file with no warning and no recycle bin. Always protect original sequencing files before organizing folders.</p>
+<pre><code># Copy sample_R1 into results/ (original stays in data/)
 cp -i projects/basic-nav/data/sample_R1.fastq.gz projects/basic-nav/results/
 
-# Rename the README to indicate it's a template (move within the same folder)
+# Rename README.md in place to mark it as a template
 mv -i projects/basic-nav/scripts/README.md projects/basic-nav/scripts/README.template.md
 
-# Move both FASTQ files into a "raw" subfolder (create it first)
+# Move all three FASTQ files from data/ into a dedicated data/raw/ subfolder
 mkdir -p projects/basic-nav/data/raw
 mv -i projects/basic-nav/data/sample_R1.fastq.gz projects/basic-nav/data/raw/
 mv -i projects/basic-nav/data/sample_R2.fastq.gz projects/basic-nav/data/raw/
-</code></pre>
-<p>What to expect:</p>
+mv -i projects/basic-nav/data/demo_read_1.fastq.gz projects/basic-nav/data/raw/
+
+# Lock raw FASTQ files as read-only for all users (a-w removes write permission)
+chmod a-w projects/basic-nav/data/raw/*.fastq.gz
+ls -l projects/basic-nav/data/raw</code></pre>
+<p><strong>Expected output:</strong></p>
+<pre><code>total 4
+-r--r--r-- 1 user user 47 Nov 26 20:59 demo_read_1.fastq.gz
+-r--r--r-- 1 user user  0 Nov 26 20:59 sample_R1.fastq.gz
+-r--r--r-- 1 user user  0 Nov 26 20:59 sample_R2.fastq.gz</code></pre>
+<p>Notice the permissions changed from <code>-rw-rw-r--</code> to <code>-r--r--r--</code>: the <code>w</code> (write) bit is gone, so an accidental redirect like <code>&gt; demo_read_1.fastq.gz</code> is blocked with <code>Permission denied</code>.</p>
+<div class="lesson-decision">
+<p><strong>Choosing overwrite-protection flags:</strong></p>
 <ul>
-<li>The <code>cp</code> command duplicates only <code>sample_R1.fastq.gz</code> into <code>results/</code>; its original remains in <code>data/</code>. The later moves place both original mate files in <code>data/raw/</code>, so <code>results/</code> contains only the copied R1 file.</li>
-<li><code>mv</code> renames or relocates files; when used to rename it is generally fast because it alters metadata rather than copying contents (on the same filesystem).</li>
-<li>Without an interactive or no-clobber option, a command may replace an existing destination. Here <code>-i</code> prompts before replacement; read the prompt and answer carefully.</li>
+<li><code>cp -i</code> and <code>mv -i</code> (interactive): prompt <code>overwrite ...?</code> before replacing an existing file. Portable across Linux and macOS, and best for manual terminal work.</li>
+<li><code>cp -n</code> and <code>mv -n</code> (no-clobber): skip existing files silently on macOS and older Linux, but deprecated in GNU Coreutils 9.2+ (where versions 9.2-9.4 exit with status <code>1</code> and print <code>not replacing</code>). On modern Linux scripts, prefer GNU's <code>--update=none</code> or check <code>[[ ! -e "$dest" ]]</code>.</li>
+<li><code>chmod a-w</code>: locks raw FASTQ files at the filesystem level so neither you nor a buggy script can overwrite them.</li>
 </ul>
-<h3 class="lesson-step">6. Bioinformatics file-naming rules and shell globbing (<code>*</code>, <code>?</code>)</h3>
-<p>Consistent file naming makes cohorts scriptable and prevents silent sample mix-ups:</p>
+</div>
+
+<h3 class="lesson-step">6. Follow safe naming rules, preview wildcards, and avoid shell traps</h3>
+<p><strong>Why:</strong> Wildcards (<em>globs</em>) let you target dozens of samples in one command, but one typo or space in a filename can split arguments or delete the wrong files.</p>
 <ul>
-<li><strong>Never use spaces, parentheses, or slashes in filenames:</strong> an unquoted path such as <code>Patient 1 (Tumour)_R1.fastq.gz</code> splits on spaces into multiple shell arguments and breaks loops. Restrict names to ASCII letters, digits, underscores, hyphens, and dots, use zero-padded IDs (<code>P01</code>, <code>P02</code>, ..., <code>P10</code>) and ISO dates (<code>2026-11-18</code>) so alphabetical order matches numerical and chronological order, and never rename raw core-facility FASTQs without recording their original names and SHA-256 checksums in a sample sheet.</li>
-<li><strong>Preview shell globs with <code>ls</code> or <code>echo</code> before running a command that modifies files:</strong> in Bash and Zsh, <code>*</code> matches zero or more characters and <code>?</code> matches exactly one character:</li>
+<li><strong>Keep filenames script-safe:</strong> Use only ASCII letters, digits, underscores (<code>_</code>), hyphens (<code>-</code>), and dots (<code>.</code>). Avoid spaces, parentheses, and slashes: an unquoted <code>Patient 1 (Tumour)_R1.fastq.gz</code> breaks into three separate shell arguments.</li>
+<li><strong>Sort cleanly by name:</strong> Zero-pad sample IDs (<code>P01</code>, <code>P02</code>, ..., <code>P10</code>) and use ISO dates (<code>2026-11-18</code>) so alphabetical order matches numeric and chronological order. Keep a sample sheet mapping original core-facility filenames and checksums before renaming copies.</li>
+<li><strong>Preview wildcards first:</strong> In Bash and Zsh, <code>*</code> matches zero or more characters and <code>?</code> matches any single character. Always preview with <code>ls</code> or <code>echo</code> before running <code>cp</code>, <code>mv</code>, or <code>rm</code>.</li>
 </ul>
-<pre><code># Preview read-1 files only across a cohort directory before looping or moving
+<pre><code># Preview only Read 1 files, then preview single-character matches
 ls -lh projects/basic-nav/data/raw/*_R1.fastq.gz
 echo projects/basic-nav/data/raw/sample_R?.fastq.gz</code></pre>
-<p><strong>Four shell traps that destroy bioinformatics data:</strong> (1) typing <code>&gt;</code> instead of <code>&gt;&gt;</code> immediately truncates an existing output file to 0 bytes before the command even starts; (2) spaces around a wildcard in <code>rm * .tmp</code> delete every file in the current directory instead of <code>*.tmp</code>; (3) on default case-insensitive macOS filesystems (APFS), writing <code>tp53.tsv</code> overwrites <code>TP53.tsv</code> whereas Linux ext4/XFS treats them as two distinct files; (4) copying a directory recursively into a subdirectory of itself creates nested copies.</p>
-<h2>How to inspect the results</h2>
-<p>After each command, inspect the file system state. Here are concrete checks and how to interpret them safely.</p>
-<ul>
-<li>After creating directories with <code>mkdir -p</code>, run <code>ls -la projects/basic-nav</code>. You should see the subdirectories; if one is missing, check for typos in the path.</li>
-<li>Use <code>ls -lh</code> on files. Files created with <code>touch</code> are 0 bytes and cannot serve as reads for downstream tools. File size alone cannot establish whether a nonempty FASTQ is valid.</li>
-<li>If <code>file</code> identifies gzip data, <code>zcat</code> or <code>gunzip -c</code> can write decompressed text to standard output. If the file is plain text, inspect it with text tools instead. Neither file type nor a short preview checks FASTQ record structure, sequence/quality lengths, read pairing, or biological suitability.</li>
-</ul>
-<p>What a quick glance shows (and what it misses):</p>
-<ul>
-<li>Every FASTQ record spans four lines (<code>@header</code>, sequence, <code>+</code> separator, and quality scores), so peeking at the top two lines confirms readable text without verifying mate pairing or quality integrity.</li>
-<li>A quiet exit from <code>cp</code> or <code>mv</code> means the filesystem completed the write, not that the archive downloaded intact; run checksums before deleting originals (see Troubleshooting below).</li>
-</ul>
-<h2>Troubleshooting</h2>
-<p>Common symptoms, likely causes, and fixes.</p>
-<h3>Symptom: "No such file or directory" when running cd, cp, or mv</h3>
-<ul>
-<li>Cause: typo in the path or the target has not been created.</li>
-<li>Fix: use <code>ls -la</code> on the parent directory to confirm names; consider tab-completion to avoid typos (press Tab in your shell).</li>
-</ul>
-<h3>Symptom: Files appear missing after mv</h3>
-<ul>
-<li>Cause: moved to a different directory than expected, or the mv command overwrote an existing file of the same name.</li>
-<li>Fix: use <code>cd -</code> to return to the previous directory and run <code>ls</code>. Use <code>ls -l &lt;path&gt;</code> on both source and destination to confirm. If overwriting occurred, there is no general undo; restore from a backup if available.</li>
-</ul>
-<h3>Symptom: Unexpected file sizes or zero bytes</h3>
-<ul>
-<li>Cause: transfers that terminated early, placeholder files created by mistake, or mistaken redirection that truncated a file (e.g., using a single greater-than sign).</li>
-<li>Fix: If the file came from a remote machine, re-transfer and verify checksums. Compute an MD5 or SHA256 checksum on both ends and compare:</li>
-</ul>
-<pre><code># Create a checksum on the source machine
-sha256sum sample_R1.fastq.gz &gt; sample_R1.sha256
-
-# After transfer, verify the checksum on the destination machine
-sha256sum -c sample_R1.sha256
-</code></pre>
-<h3>Symptom: Permission denied when listing or moving files</h3>
-<ul>
-<li>Cause: you do not own the file or lack read/write permission.</li>
-<li>Fix: check ownership and permissions with <code>ls -l</code>. If appropriate and you have sudo privileges, ask an administrator to change ownership (<code>chown</code>) or permission (<code>chmod</code>), or use a group with shared access. Avoid changing permissions to 777 on production systems.</li>
-</ul>
-<h2>Practical limits and version checks</h2>
-<p>Limitations:</p>
-<ul>
-<li><code>cd</code> and <code>pwd</code> are shell built-ins; <code>ls</code>, <code>cp</code>, <code>mv</code>, and other file commands have platform-specific variants. Bash brace expansion is not portable to every shell, and GNU-only options such as <code>--backup=numbered</code> may not exist on macOS or other systems. Check your shell and local manual pages before using options from a different platform.</li>
-<li>Empty files created with <code>touch</code> only test filenames and paths here; real alignment or QC tools fail on zero-byte FASTQs.</li>
-</ul>
-<p><strong>A few boundary notes:</strong></p>
-<ul>
-<li>Always record the versions of key tools (bash, coreutils, samtools, etc.) and reference files (genomes, annotations) as part of project metadata. Small differences in tool versions or reference genomes can change reproducibility.</li>
-</ul>
-<p>Responsible-use notes:</p>
-<ul>
-<li>Be cautious with destructive commands (<code>rm</code>, <code>rm -rf</code>). Never run a remove command unless you are sure of the target path. Prefer making backups or moving files to a <code>trash</code> directory in the project for safe deletion workflows.</li>
-<li>When working with sensitive biological or patient data, follow your institution's data governance policies. Do not copy or expose controlled-access files to unsecured systems.</li>
-</ul>
-<h2>Next steps</h2>
+<p><strong>Expected output:</strong></p>
+<pre><code>-r--r--r-- 1 user user 0 Nov 26 20:59 projects/basic-nav/data/raw/sample_R1.fastq.gz
+projects/basic-nav/data/raw/sample_R1.fastq.gz projects/basic-nav/data/raw/sample_R2.fastq.gz</code></pre>
+<div class="lesson-warning">
+<p><strong>Four shell traps that destroy bioinformatics data:</strong></p>
 <ol>
-<li>Confirm that you can run <code>pwd</code>, <code>ls -la</code>, and <code>cd</code> without errors in your environment.</li>
-<li>Create a new project tree under <code>~/projects</code> and add at least one real small test FASTQ (or download a small public sample) rather than placeholders.</li>
-<li>Practice <code>cp -i</code> and <code>mv -i</code> on disposable files first. For important data, use a verified backup and check the destination before any move.</li>
-<li>Learn how to compute and check checksums (<code>sha256sum</code>) for file integrity after transfers.</li>
-<li>Read the man pages for the commands covered: <code>man ls</code>, <code>man cp</code>, <code>man mv</code>, <code>man mkdir</code>.</li>
+<li><strong><code>&gt;</code> instead of <code>&gt;&gt;</code>:</strong> Single <code>&gt;</code> truncates an existing output file to 0 bytes before the command even runs; <code>&gt;&gt;</code> appends to the end.</li>
+<li><strong>Space inside a wildcard:</strong> Typing <code>rm * .tmp</code> instead of <code>rm *.tmp</code> deletes every file in the current folder first and only then complains that <code>.tmp</code> does not exist.</li>
+<li><strong>Case sensitivity differences:</strong> Default macOS APFS is case-insensitive, so writing <code>tp53.tsv</code> overwrites <code>TP53.tsv</code>; Linux ext4 and XFS treat them as two separate files.</li>
+<li><strong>Recursive copy into self:</strong> Running <code>cp -r dir dir/sub</code> creates an invalid self-nested target. GNU <code>cp</code> aborts with <code>cp: cannot copy a directory, 'dir', into itself</code>, and macOS BSD <code>cp</code> differs between <code>-r</code> (follows symlinks) and <code>-R</code> as well as trailing slashes (<code>dir/</code>). Use <code>rsync</code> with <code>--exclude</code> or copy to a sibling directory instead.</li>
 </ol>
+</div>
+
+<h2>Verify your workspace and file checksums</h2>
+<p>After organizing files, verify two things: that every file landed in the right folder, and that transferred archives match their original byte-for-byte fingerprint (<em>checksum</em>).</p>
+<pre><code># Inspect the whole project directory tree down to depth 3
+find projects/basic-nav -maxdepth 3 | sort</code></pre>
+<p><strong>Expected output:</strong></p>
+<pre><code>projects/basic-nav
+projects/basic-nav/data
+projects/basic-nav/data/raw
+projects/basic-nav/data/raw/demo_read_1.fastq.gz
+projects/basic-nav/data/raw/sample_R1.fastq.gz
+projects/basic-nav/data/raw/sample_R2.fastq.gz
+projects/basic-nav/logs
+projects/basic-nav/results
+projects/basic-nav/results/sample_R1.fastq.gz
+projects/basic-nav/scripts
+projects/basic-nav/scripts/README.template.md</code></pre>
+<p>A quiet exit from <code>cp</code>, <code>mv</code>, or <code>scp</code> only confirms that the local write finished; it cannot detect a truncated download from a sequencing core. Always generate and verify a SHA-256 checksum inside the folder containing the file (on macOS, replace <code>sha256sum</code> with <code>shasum -a 256</code>):</p>
+<pre><code># Compute and verify a SHA-256 checksum on Linux (macOS: use shasum -a 256)
+(cd projects/basic-nav/data/raw &amp;&amp; sha256sum demo_read_1.fastq.gz &gt; demo_read_1.sha256 &amp;&amp; sha256sum -c demo_read_1.sha256)</code></pre>
+<p><strong>Expected output:</strong></p>
+<pre><code>demo_read_1.fastq.gz: OK</code></pre>
+
+<h2>Common errors and how to fix them</h2>
+<h3>Error: "No such file or directory" from cd, cp, or mv</h3>
+<ul>
+<li><strong>Cause:</strong> A typo in the path, running a relative path from the wrong <code>pwd</code>, a missing parent directory, or an unquoted space in a filename.</li>
+<li><strong>Fix:</strong> Run <code>pwd</code> and <code>ls -la</code> on the parent directory to check exact spelling and capitalization, use the <code>Tab</code> key for autocomplete, and add <code>-p</code> when creating nested folders with <code>mkdir</code>.</li>
+</ul>
+<h3>Symptom: Files appear missing or overwritten after mv</h3>
+<ul>
+<li><strong>Cause:</strong> Moving a file into a different directory than intended, or forgetting <code>-i</code> when a file with the same name already existed at the destination.</li>
+<li><strong>Fix:</strong> Run <code>cd -</code> and <code>ls -la</code> to check your previous folder, or search by name from the project root with <code>find ~/projects/basic-nav -name "*sample*"</code>. Because Unix <code>mv</code> has no undo, keep backups and use <code>-i</code> before moving files.</li>
+</ul>
+<h3>Symptom: Zero-byte file or "unexpected end of file" from gzip</h3>
+<ul>
+<li><strong>Cause:</strong> An interrupted download, a <code>touch</code> placeholder, or accidental truncation with <code>&gt;</code>.</li>
+<li><strong>Fix:</strong> Check size and type with <code>ls -lh</code> and <code>file</code>. Re-transfer the archive from the source and confirm integrity with <code>sha256sum -c</code> (Linux) or <code>shasum -a 256 -c</code> (macOS) before deleting the original.</li>
+</ul>
+<h3>Error: "Permission denied" when reading, writing, or moving files</h3>
+<ul>
+<li><strong>Cause:</strong> Either the file was intentionally write-protected with <code>chmod a-w</code>, or it belongs to another user or group without read/write access.</li>
+<li><strong>Fix:</strong> Check the permission string and owner with <code>ls -l</code>. If you locked your own file with <code>chmod a-w</code> and genuinely need to edit it, restore owner write access with <code>chmod u+w filename</code>. On shared HPC systems, ask your administrator for group permissions; never run <code>chmod 777</code> on research directories.</li>
+</ul>
+
+<h2>Practice exercise</h2>
+<section class="lesson-exercise">
+<p>Without leaving your home directory (<code>cd ~</code>), test what you learned in <code>~/projects/basic-nav</code>:</p>
+<ol>
+<li>Use <code>find</code> to locate <code>README.template.md</code> inside <code>projects/basic-nav</code>.</li>
+<li>Preview all <code>.fastq.gz</code> files in <code>projects/basic-nav/data/raw</code> using <code>echo</code>, then copy <code>demo_read_1.fastq.gz</code> into <code>projects/basic-nav/results/</code> with interactive protection (<code>cp -i</code>).</li>
+<li>Confirm that <code>projects/basic-nav/results/demo_read_1.fastq.gz</code> decompresses to 4 lines using <code>gzip -dc</code> and <code>head</code>.</li>
+</ol>
+<details><summary>Check solution</summary>
+<pre><code>cd ~
+find projects/basic-nav -name "README.template.md"
+echo projects/basic-nav/data/raw/*.fastq.gz
+cp -i projects/basic-nav/data/raw/demo_read_1.fastq.gz projects/basic-nav/results/
+gzip -dc projects/basic-nav/results/demo_read_1.fastq.gz | head -n 4</code></pre>
+<p>Because <code>cp</code> initializes a new destination file using the source file's permission bits masked by <code>umask</code>, <code>results/demo_read_1.fastq.gz</code> remains read-only (<code>-r--r--r--</code> under typical umasks) even without <code>-p</code>; run <code>chmod u+w</code> on the copy if you ever need to edit it. Finally, <code>gzip -dc ... | head -n 4</code> prints the four-line <code>@demo_read_1</code> FASTQ record.</p>
+</details>
+</section>
+
+<h2>Platform notes and safe habits</h2>
+<ul>
+<li><strong>Built-ins vs external utilities:</strong> <code>cd</code> and <code>pwd</code> are built into the shell, while <code>ls</code>, <code>cp</code>, <code>mv</code>, <code>find</code>, and <code>sha256sum</code> are standalone programs that differ slightly between GNU/Linux and BSD/macOS. Check <code>man ls</code> or <code>man cp</code> on your machine before relying on platform-specific flags such as GNU <code>--backup=numbered</code>.</li>
+<li><strong>Safe cleanup:</strong> Before deleting practice or temporary folders, check the target path with <code>ls</code> first. Many researchers move unwanted files into a temporary <code>trash/</code> folder and inspect it before running <code>rm -rf</code>. When finished with this lab, you can remove only the practice tree with <code>ls -ld ~/projects/basic-nav</code> followed by <code>rm -rf ~/projects/basic-nav</code> (if it contains write-protected files, <code>chmod -R u+w ~/projects/basic-nav</code> first or use <code>rm -rf</code> after checking the path).</li>
+<li><strong>Sensitive data:</strong> Follow your institution's data governance rules for clinical or controlled-access sequencing files, and never copy restricted data to personal laptops or unsecured servers.</li>
+</ul>
+
+<h2>Recap and next steps</h2>
+<p>You now have a working command-line routine: check <code>pwd</code>, inspect with <code>ls -lh</code> and <code>file</code>, navigate with relative paths, preview globs before modifying files, lock raw data with <code>chmod a-w</code>, and verify transfers with SHA-256 checksums.</p>
+<ul>
+<li>Need a refresher on bits, bytes, encodings, and filesystems? Review <a href="computer-data-fundamentals.html">Computer and Data Fundamentals for Biologists</a>.</li>
+<li>Ready to filter FASTA, FASTQ, and TSV files with <code>grep</code>, <code>awk</code>, <code>cut</code>, and <code>seqkit</code>? Continue to <a href="command-line-part2.html">Command-Line Text Processing for Bioinformatics</a>.</li>
+<li>Setting up reproducible bioinformatics software? See <a href="conda-mamba-part1.html">Micromamba Environments for Bioinformatics</a> or <a href="hpc-connection.html">Connecting to Remote HPC Clusters</a>.</li>
+</ul>
+
 <aside aria-label="Author's lab note" class="lesson-summary">
-<p><strong>Author's lab note:</strong> Always running <code>pwd</code> and <code>ls</code> before any wildcard move or removal is a five-second habit that protects raw sequencing runs. On shared HPC scratch folders, pairing interactive commands with <code>cp -i</code> or <code>mv -n</code> stops accidental clobbering before it happens.</p>
+<p><strong>Author's lab note:</strong> Always running <code>pwd</code> and <code>ls</code> before any wildcard move or removal is a five-second habit that protects raw sequencing runs. On shared HPC scratch folders, pairing interactive commands with <code>cp -i</code> or <code>mv -i</code> (or <code>mv --update=none</code> on GNU Coreutils 9.2+, which replaced the deprecated <code>mv -n</code>) stops accidental clobbering before it happens.</p>
 </aside>
 <h2>References</h2>
 <ul>
-<li><a href="https://www.gnu.org/software/bash/manual/bash.html">GNU Bash Reference Manual: shell behavior, including brace expansion and <code>cd</code></a></li>
-<li><a href="https://www.gnu.org/software/coreutils/manual/coreutils.html">GNU Coreutils manual: official documentation for ls, cp, mv, mkdir, touch, and checksums</a></li>
-<li><a href="https://www.gnu.org/software/gzip/manual/gzip.html">GNU Gzip manual: <code>zcat</code> decompression behavior</a></li>
-<li><a href="https://www.man7.org/linux/man-pages/">The Linux man-pages project: canonical manual pages for Linux system calls and library functions</a></li>
-<li><a href="https://swcarpentry.github.io/shell-novice/">Software Carpentry: The Unix Shell lesson, with practical, beginner-friendly shell tutorials</a></li>
+<li><a href="https://www.gnu.org/software/bash/manual/bash.html">GNU Bash Reference Manual: shell behavior, including brace expansion, <code>cd</code>, and <code>pwd</code></a></li>
+<li><a href="https://www.gnu.org/software/coreutils/manual/coreutils.html">GNU Coreutils manual: official documentation for <code>ls</code>, <code>cp</code>, <code>mv</code>, <code>mkdir</code>, <code>chmod</code>, and <code>sha256sum</code></a></li>
+<li><a href="https://www.gnu.org/software/gzip/manual/gzip.html">GNU Gzip manual: <code>gzip -dc</code> and <code>zcat</code> decompression behavior</a></li>
+<li><a href="https://www.man7.org/linux/man-pages/">The Linux man-pages project: canonical manual pages for Linux utilities</a></li>
+<li><a href="https://swcarpentry.github.io/shell-novice/">Software Carpentry: The Unix Shell lesson</a></li>
 </ul>
 <aside aria-labelledby="tutorial-feedback-title" class="lesson-feedback" id="tutorial-feedback"><h2 id="tutorial-feedback-title">Help improve this tutorial</h2><p>Found an error, a broken link, or a step that needs a clearer explanation? Please <a href="../contact.html">contact me</a>. Your feedback helps me keep this resource accurate and useful.</p></aside></article>
 <section class="mt-12 mb-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-100">
@@ -507,7 +583,7 @@ sha256sum -c sample_R1.sha256
 </script>
 <script src="../assets/vendor/prism/prism-1.29.0.js"></script>
 <script id="tutorial-code-data">
-window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"command-line-part1":{"blocks":[{"language":"bash","sha256":"b97f062ffdd77ec91abb2abae8600011edc05acdfaee565b50d91e7d26d7d8f6"},{"language":"bash","sha256":"b55909b70d538bfcc6788fc78dc8475e69419818a19f86357028bd8289471fb2"},{"language":"bash","sha256":"b367bec733660b34328f10eb4653bea542f1cdec2d7155198b2e8346ba08025e"},{"language":"bash","sha256":"24f029d9cdca8f22179bbe7e5abcf8d427caec1e66227c28bd07cccd51e6bb40"},{"language":"bash","sha256":"df5c59d450316241b8f2ddea3187271be17f2e34361b15d1637675717d7d55ee"},{"language":"bash","sha256":"e1d2c85f20c2cfc9862991958156edc3d78ea2c3507c8add21a28d2c4ef74eae"},{"language":"bash","sha256":"ed8377f05425232ef6f7b089d750cc2a354dd4643f346f40d7f8ed7c7cf7fa58"}],"groups":[]}}};
+window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"command-line-part1":{"blocks":[{"language":"bash","sha256":"7d8ea4744eb851cf115a263fe9eec6e7b2a21ef2e32e897d8f2143a07b46c551"},{"language":"text","sha256":"e77ed827934318e9ddf2fbd1b0f35b9ba4e945382799c8a226477aa4cab5b526"},{"language":"bash","sha256":"0ca82b62e0a73fc69727267f82bf692e037e243226db0de91adaac2557bd5762"},{"language":"text","sha256":"14d266b68d9f756bd32d2c2dc2f63ec9a3b95d6c4183490a4b46519d85b1e2ed"},{"language":"bash","sha256":"01c2ed62f6f51aaa7f82548a633f9f6b623ea37586827be82f3589ab8cebfe1e"},{"language":"text","sha256":"8cb04719a204c3c5eefd462d2ada5256640519c433235945c6e9f805a18b7864"},{"language":"bash","sha256":"93c9e5588e5d7f8af076f39277e2e1beff949cee2ff1dbc68d7dd84496695dc2"},{"language":"text","sha256":"87534df55a30df6a53529ef44f918473de0b18407f2aca4f788e8bb67dc6964f"},{"language":"bash","sha256":"684624ef36fb9d5d38b4411c3c457b280adcf257d4cf1ff323fc1f7061ec3e95"},{"language":"text","sha256":"5a81a7907af470a92869a358390f28310ac28c836fafffb05f729eac8d0547f3"},{"language":"bash","sha256":"06b66aa6158c2bf4c6fc784b829611710760f613933dc250b23aca8beb75ef7d"},{"language":"text","sha256":"5a3e716d8c4587ea578b2179393e80872288334bbfc9d96d08e393f28fab834b"},{"language":"bash","sha256":"d5fe72208e6497808b7dd4ea450f46c1d781c61d8644b8e069d3e9dfaf5cca65"},{"language":"text","sha256":"588cebe5a14c7af562a3d2b0064959f03be10d23d1465a39562d4e24febca6fa"},{"language":"bash","sha256":"cd62079d5c3959aa84bd7115983f62507d11a386a22aa218708e3978d9072b3f"},{"language":"text","sha256":"8469e1771ae9f79adee5aae5a3858edcdabec0a3f736613e18f82ea4b23421fc"},{"language":"bash","sha256":"757b85402caf63b1b7614f3b353abb8f48684a7db0d1691f1f876624f5bc8c5b"}],"groups":[]}}};
 </script>
 <script src="../code-tabs.js?v=20261026-startup-v1"></script>
 <script src="../copy-code.js?v=20261025-r-first-v1"></script>

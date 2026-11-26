@@ -1,0 +1,94 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 440" width="960" height="440" role="img" aria-labelledby="qc-flow-title qc-flow-desc">
+  <title id="qc-flow-title">Four-stage sequencing quality control funnel from raw FASTQ files to documented sample decisions</title>
+  <desc id="qc-flow-desc">Diagram showing four sequential QC layers: Stage 1 File Integrity using sha256sum and gzip -t; Stage 2 Read QC using FastQC, MultiQC, and fastp; Stage 3 Alignment, Duplicates, and Coverage using bwa-mem2 or STAR, samtools, Picard MarkDuplicates, and bedtools; Stage 4 Contamination, Identity, and Single-Cell QC using Kraken2, VerifyBamID2, and Seurat or Scanpy, feeding into a qc_summary.tsv decision log with pass, review, or exclude status.</desc>
+  <defs>
+    <marker id="qc-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#475569"/>
+    </marker>
+    <filter id="qc-shadow" x="-4%" y="-4%" width="108%" height="112%">
+      <feDropShadow dx="0" dy="3" stdDeviation="4" flood-color="#0F172A" flood-opacity="0.08"/>
+    </filter>
+  </defs>
+
+  <rect x="0" y="0" width="960" height="440" rx="14" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="1.5"/>
+  <text x="32" y="40" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="20" font-weight="700" fill="#0F172A">Sequencing QC Is a Layered Filter, Not a Single Pass/Fail Cutoff</text>
+  <text x="32" y="63" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="13" fill="#475569">Each stage catches a different failure mode before downstream modeling; keep raw/ read-only and log every decision in qc_summary.tsv</text>
+
+  <!-- Stage 1 -->
+  <g filter="url(#qc-shadow)">
+    <rect x="32" y="92" width="200" height="218" rx="10" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.6"/>
+    <path d="M 32 102 Q 32 92 42 92 L 222 92 Q 232 92 232 102 L 232 130 L 32 130 Z" fill="#1E3A8A"/>
+    <text x="46" y="116" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="13" font-weight="700" fill="#FFFFFF">1. File Integrity</text>
+    <text x="46" y="152" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#1E3A8A">Tools</text>
+    <text x="46" y="170" font-family="monospace" font-size="11.5" fill="#334155">sha256sum -c / md5sum -c</text>
+    <text x="46" y="188" font-family="monospace" font-size="11.5" fill="#334155">gzip -t *.fastq.gz</text>
+    <line x1="46" y1="202" x2="218" y2="202" stroke="#E2E8F0" stroke-width="1"/>
+    <text x="46" y="220" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#0F172A">What it catches</text>
+    <text x="46" y="238" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="12" fill="#475569">Truncated transfers,</text>
+    <text x="46" y="254" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="12" fill="#475569">silent bit flips, wrong</text>
+    <text x="46" y="270" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="12" fill="#475569">or corrupted FASTQs</text>
+    <text x="46" y="294" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11.5" font-weight="600" fill="#B91C1C">Fail: stop &amp; re-download</text>
+  </g>
+
+  <line x1="234" y1="200" x2="258" y2="200" stroke="#475569" stroke-width="2" marker-end="url(#qc-arrow)"/>
+
+  <!-- Stage 2 -->
+  <g filter="url(#qc-shadow)">
+    <rect x="262" y="92" width="204" height="218" rx="10" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.6"/>
+    <path d="M 262 102 Q 262 92 272 92 L 456 92 Q 466 92 466 102 L 466 130 L 262 130 Z" fill="#0F766E"/>
+    <text x="276" y="116" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="13" font-weight="700" fill="#FFFFFF">2. Read &amp; Adapter QC</text>
+    <text x="276" y="152" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#0F766E">Tools</text>
+    <text x="276" y="170" font-family="monospace" font-size="11.5" fill="#334155">FastQC + MultiQC</text>
+    <text x="276" y="188" font-family="monospace" font-size="11.5" fill="#334155">fastp (targeted trim)</text>
+    <line x1="276" y1="202" x2="452" y2="202" stroke="#E2E8F0" stroke-width="1"/>
+    <text x="276" y="220" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#0F172A">What it catches</text>
+    <text x="276" y="238" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="12" fill="#475569">Low Phred Q-scores,</text>
+    <text x="276" y="254" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="12" fill="#475569">adapter read-through,</text>
+    <text x="276" y="270" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="12" fill="#475569">2-color poly-G tails</text>
+    <text x="276" y="294" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11.5" font-weight="600" fill="#0F766E">Action: trim if supported</text>
+  </g>
+
+  <line x1="468" y1="200" x2="492" y2="200" stroke="#475569" stroke-width="2" marker-end="url(#qc-arrow)"/>
+
+  <!-- Stage 3 -->
+  <g filter="url(#qc-shadow)">
+    <rect x="496" y="92" width="204" height="218" rx="10" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.6"/>
+    <path d="M 496 102 Q 496 92 506 92 L 690 92 Q 700 92 700 102 L 700 130 L 496 130 Z" fill="#B45309"/>
+    <text x="510" y="116" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="13" font-weight="700" fill="#FFFFFF">3. Alignment &amp; Depth</text>
+    <text x="510" y="152" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#B45309">Tools</text>
+    <text x="510" y="170" font-family="monospace" font-size="11.5" fill="#334155">samtools flagstat / depth</text>
+    <text x="510" y="188" font-family="monospace" font-size="11.5" fill="#334155">Picard, bedtools, RSeQC</text>
+    <line x1="510" y1="202" x2="686" y2="202" stroke="#E2E8F0" stroke-width="1"/>
+    <text x="510" y="220" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#0F172A">What it catches</text>
+    <text x="510" y="238" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="12" fill="#475569">Wrong reference build,</text>
+    <text x="510" y="254" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="12" fill="#475569">PCR over-amplification,</text>
+    <text x="510" y="270" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="12" fill="#475569">target dropouts, 3' bias</text>
+    <text x="510" y="294" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11.5" font-weight="600" fill="#B45309">Check: breadth + pairing</text>
+  </g>
+
+  <line x1="702" y1="200" x2="726" y2="200" stroke="#475569" stroke-width="2" marker-end="url(#qc-arrow)"/>
+
+  <!-- Stage 4 -->
+  <g filter="url(#qc-shadow)">
+    <rect x="730" y="92" width="198" height="218" rx="10" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.6"/>
+    <path d="M 730 102 Q 730 92 740 92 L 918 92 Q 928 92 928 102 L 928 130 L 730 130 Z" fill="#6D28D9"/>
+    <text x="744" y="116" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="13" font-weight="700" fill="#FFFFFF">4. Identity &amp; Cell QC</text>
+    <text x="744" y="152" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#6D28D9">Tools</text>
+    <text x="744" y="170" font-family="monospace" font-size="11.5" fill="#334155">Kraken2, VerifyBamID2</text>
+    <text x="744" y="188" font-family="monospace" font-size="11.5" fill="#334155">Seurat / Scanpy (scRNA)</text>
+    <line x1="744" y1="202" x2="914" y2="202" stroke="#E2E8F0" stroke-width="1"/>
+    <text x="744" y="220" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#0F172A">What it catches</text>
+    <text x="744" y="238" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="12" fill="#475569">Microbial or cross-human</text>
+    <text x="744" y="254" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="12" fill="#475569">contamination, sample</text>
+    <text x="744" y="270" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="12" fill="#475569">swaps, dead cells/doublets</text>
+    <text x="744" y="294" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11.5" font-weight="600" fill="#6D28D9">Output: cohort comparison</text>
+  </g>
+
+  <!-- Decision Bar -->
+  <line x1="829" y1="312" x2="829" y2="338" stroke="#475569" stroke-width="2" marker-end="url(#qc-arrow)"/>
+  <g filter="url(#qc-shadow)">
+    <rect x="32" y="344" width="896" height="72" rx="10" fill="#EFF6FF" stroke="#93C5FD" stroke-width="1.6"/>
+    <text x="50" y="370" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="13.5" font-weight="700" fill="#1E3A8A">Documented Decision Record (qc/qc_summary.tsv)</text>
+    <text x="50" y="394" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="12.5" fill="#1E293B">Log tool versions, batch-matched metrics, and status:  PASS (analyze)  |  REVIEW (check controls/build)  |  EXCLUDE (keep raw/ intact)</text>
+  </g>
+</svg>

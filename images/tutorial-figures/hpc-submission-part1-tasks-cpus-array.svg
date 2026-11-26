@@ -1,0 +1,115 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 440" width="960" height="440" role="img" aria-labelledby="fig-title fig-desc">
+  <title id="fig-title">Choosing Slurm --ntasks, --cpus-per-task, --mem, and --array</title>
+  <desc id="fig-desc">Comparison of three Slurm resource patterns: a single multithreaded task with 8 CPUs and 32G shared memory, four independent MPI tasks with 1 CPU and 4G per CPU, and a throttled 50-sample job array reading rows from a sample sheet.</desc>
+  <defs>
+    <filter id="card-shadow" x="-4%" y="-4%" width="108%" height="112%">
+      <feDropShadow dx="0" dy="3" stdDeviation="4" flood-color="#0F172A" flood-opacity="0.08"/>
+    </filter>
+  </defs>
+
+  <rect x="0" y="0" width="960" height="440" rx="14" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="1.5"/>
+  <text x="32" y="38" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="19" font-weight="700" fill="#0F172A">Choosing --ntasks, --cpus-per-task, --mem, and --array</text>
+  <text x="32" y="61" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="13" fill="#475569">Match your Slurm directives to the tool's parallel model so CPUs and RAM are neither wasted nor oversubscribed</text>
+
+  <!-- Card 1: Multithreaded -->
+  <g filter="url(#card-shadow)">
+    <rect x="32" y="84" width="284" height="270" rx="10" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.5"/>
+    <path d="M 32 94 Q 32 84 42 84 L 306 84 Q 316 84 316 94 L 316 122 L 32 122 Z" fill="#0D9488"/>
+    <text x="46" y="108" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="13.5" font-weight="700" fill="#FFFFFF">1. Multithreaded (1 process)</text>
+
+    <rect x="46" y="134" width="256" height="62" rx="6" fill="#F1F5F9"/>
+    <text x="56" y="152" font-family="monospace" font-size="11.5" fill="#0F172A">#SBATCH --ntasks=1</text>
+    <text x="56" y="169" font-family="monospace" font-size="11.5" fill="#0F172A">#SBATCH --cpus-per-task=8</text>
+    <text x="56" y="186" font-family="monospace" font-size="11.5" fill="#0F172A">#SBATCH --mem=32G</text>
+
+    <!-- 1 box with 8 thread pills -->
+    <rect x="46" y="206" width="256" height="62" rx="6" fill="#CCFBF1" stroke="#0D9488" stroke-width="1.2"/>
+    <text x="56" y="224" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11.5" font-weight="700" fill="#115E59">1 Task sharing 32 GiB RAM</text>
+    <rect x="56" y="233" width="26" height="22" rx="4" fill="#0D9488"/><text x="69" y="248" text-anchor="middle" font-family="monospace" font-size="10.5" font-weight="700" fill="#FFFFFF">T1</text>
+    <rect x="86" y="233" width="26" height="22" rx="4" fill="#0D9488"/><text x="99" y="248" text-anchor="middle" font-family="monospace" font-size="10.5" font-weight="700" fill="#FFFFFF">T2</text>
+    <rect x="116" y="233" width="26" height="22" rx="4" fill="#0D9488"/><text x="129" y="248" text-anchor="middle" font-family="monospace" font-size="10.5" font-weight="700" fill="#FFFFFF">T3</text>
+    <rect x="146" y="233" width="26" height="22" rx="4" fill="#0D9488"/><text x="159" y="248" text-anchor="middle" font-family="monospace" font-size="10.5" font-weight="700" fill="#FFFFFF">T4</text>
+    <rect x="176" y="233" width="26" height="22" rx="4" fill="#0D9488"/><text x="189" y="248" text-anchor="middle" font-family="monospace" font-size="10.5" font-weight="700" fill="#FFFFFF">T5</text>
+    <rect x="206" y="233" width="26" height="22" rx="4" fill="#0D9488"/><text x="219" y="248" text-anchor="middle" font-family="monospace" font-size="10.5" font-weight="700" fill="#FFFFFF">T6</text>
+    <rect x="236" y="233" width="26" height="22" rx="4" fill="#0D9488"/><text x="249" y="248" text-anchor="middle" font-family="monospace" font-size="10.5" font-weight="700" fill="#FFFFFF">T7</text>
+    <rect x="266" y="233" width="26" height="22" rx="4" fill="#0D9488"/><text x="279" y="248" text-anchor="middle" font-family="monospace" font-size="10.5" font-weight="700" fill="#FFFFFF">T8</text>
+
+    <text x="46" y="290" font-family="monospace" font-size="11" fill="#1E293B">bwa mem -t "$SLURM_CPUS_PER_TASK"</text>
+    <text x="46" y="314" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="12" fill="#475569">Use for: bwa, STAR, fastp,</text>
+    <text x="46" y="332" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="12" fill="#475569">samtools -@, R, Python</text>
+  </g>
+
+  <!-- Card 2: Multi-task / MPI -->
+  <g filter="url(#card-shadow)">
+    <rect x="338" y="84" width="284" height="270" rx="10" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.5"/>
+    <path d="M 338 94 Q 338 84 348 84 L 612 84 Q 622 84 622 94 L 622 122 L 338 122 Z" fill="#1D4ED8"/>
+    <text x="352" y="108" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="13.5" font-weight="700" fill="#FFFFFF">2. Multi-task / MPI (N ranks)</text>
+
+    <rect x="352" y="134" width="256" height="62" rx="6" fill="#F1F5F9"/>
+    <text x="362" y="152" font-family="monospace" font-size="11.5" fill="#0F172A">#SBATCH --ntasks=4</text>
+    <text x="362" y="169" font-family="monospace" font-size="11.5" fill="#0F172A">#SBATCH --cpus-per-task=1</text>
+    <text x="362" y="186" font-family="monospace" font-size="11.5" fill="#0F172A">#SBATCH --mem-per-cpu=4G</text>
+
+    <!-- 4 separate task boxes -->
+    <rect x="352" y="206" width="58" height="62" rx="6" fill="#DBEAFE" stroke="#1D4ED8" stroke-width="1.2"/>
+    <text x="381" y="228" text-anchor="middle" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="700" fill="#1E3A8A">Task 0</text>
+    <text x="381" y="245" text-anchor="middle" font-family="monospace" font-size="10.5" fill="#1E40AF">1 CPU</text>
+    <text x="381" y="259" text-anchor="middle" font-family="monospace" font-size="10.5" fill="#1E40AF">4 GiB</text>
+
+    <rect x="418" y="206" width="58" height="62" rx="6" fill="#DBEAFE" stroke="#1D4ED8" stroke-width="1.2"/>
+    <text x="447" y="228" text-anchor="middle" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="700" fill="#1E3A8A">Task 1</text>
+    <text x="447" y="245" text-anchor="middle" font-family="monospace" font-size="10.5" fill="#1E40AF">1 CPU</text>
+    <text x="447" y="259" text-anchor="middle" font-family="monospace" font-size="10.5" fill="#1E40AF">4 GiB</text>
+
+    <rect x="484" y="206" width="58" height="62" rx="6" fill="#DBEAFE" stroke="#1D4ED8" stroke-width="1.2"/>
+    <text x="513" y="228" text-anchor="middle" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="700" fill="#1E3A8A">Task 2</text>
+    <text x="513" y="245" text-anchor="middle" font-family="monospace" font-size="10.5" fill="#1E40AF">1 CPU</text>
+    <text x="513" y="259" text-anchor="middle" font-family="monospace" font-size="10.5" fill="#1E40AF">4 GiB</text>
+
+    <rect x="550" y="206" width="58" height="62" rx="6" fill="#DBEAFE" stroke="#1D4ED8" stroke-width="1.2"/>
+    <text x="579" y="228" text-anchor="middle" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="700" fill="#1E3A8A">Task 3</text>
+    <text x="579" y="245" text-anchor="middle" font-family="monospace" font-size="10.5" fill="#1E40AF">1 CPU</text>
+    <text x="579" y="259" text-anchor="middle" font-family="monospace" font-size="10.5" fill="#1E40AF">4 GiB</text>
+
+    <text x="352" y="290" font-family="monospace" font-size="11" fill="#1E293B">srun --ntasks=4 mpi_program</text>
+    <text x="352" y="314" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="12" fill="#475569">Use for: MPI software or</text>
+    <text x="352" y="332" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="12" fill="#475569">parallel srun --exact steps</text>
+  </g>
+
+  <!-- Card 3: Job Array -->
+  <g filter="url(#card-shadow)">
+    <rect x="644" y="84" width="284" height="270" rx="10" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.5"/>
+    <path d="M 644 94 Q 644 84 654 84 L 918 84 Q 928 84 928 94 L 928 122 L 644 122 Z" fill="#7C3AED"/>
+    <text x="658" y="108" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="13.5" font-weight="700" fill="#FFFFFF">3. Job Array (N samples)</text>
+
+    <rect x="658" y="134" width="256" height="62" rx="6" fill="#F1F5F9"/>
+    <text x="668" y="152" font-family="monospace" font-size="11.5" fill="#0F172A">#SBATCH --array=1-50%8</text>
+    <text x="668" y="169" font-family="monospace" font-size="11.5" fill="#0F172A">#SBATCH --cpus-per-task=4</text>
+    <text x="668" y="186" font-family="monospace" font-size="11.5" fill="#0F172A">#SBATCH --mem=16G</text>
+
+    <!-- Array independent jobs -->
+    <rect x="658" y="206" width="76" height="62" rx="6" fill="#EDE9FE" stroke="#7C3AED" stroke-width="1.2"/>
+    <text x="696" y="226" text-anchor="middle" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="700" fill="#4C1D95">JobID_1</text>
+    <text x="696" y="243" text-anchor="middle" font-family="monospace" font-size="10.5" fill="#5B21B6">Sample 1</text>
+    <text x="696" y="258" text-anchor="middle" font-family="monospace" font-size="10" fill="#5B21B6">4 CPU, 16G</text>
+
+    <rect x="744" y="206" width="76" height="62" rx="6" fill="#EDE9FE" stroke="#7C3AED" stroke-width="1.2"/>
+    <text x="782" y="226" text-anchor="middle" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="700" fill="#4C1D95">JobID_2</text>
+    <text x="782" y="243" text-anchor="middle" font-family="monospace" font-size="10.5" fill="#5B21B6">Sample 2</text>
+    <text x="782" y="258" text-anchor="middle" font-family="monospace" font-size="10" fill="#5B21B6">4 CPU, 16G</text>
+
+    <rect x="830" y="206" width="84" height="62" rx="6" fill="#F5F3FF" stroke="#7C3AED" stroke-width="1.2" stroke-dasharray="4 3"/>
+    <text x="872" y="226" text-anchor="middle" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="700" fill="#4C1D95">... JobID_50</text>
+    <text x="872" y="243" text-anchor="middle" font-family="monospace" font-size="10.5" fill="#5B21B6">Max 8 active</text>
+    <text x="872" y="258" text-anchor="middle" font-family="monospace" font-size="10" fill="#5B21B6">at a time (%8)</text>
+
+    <text x="658" y="290" font-family="monospace" font-size="11" fill="#1E293B">Row $SLURM_ARRAY_TASK_ID</text>
+    <text x="658" y="314" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="12" fill="#475569">Use for: 10-500 FASTQ/BAM</text>
+    <text x="658" y="332" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="12" fill="#475569">samples via samples.tsv</text>
+  </g>
+
+  <!-- Bottom Pitfall Strip -->
+  <rect x="32" y="370" width="896" height="52" rx="8" fill="#FEF3C7" stroke="#F59E0B" stroke-width="1.2"/>
+  <text x="48" y="392" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="12.5" font-weight="700" fill="#92400E">Common beginner trap: --ntasks=8 is NOT 8 threads for bwa mem or R.</text>
+  <text x="48" y="410" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="12.5" fill="#78350F">Without MPI, a single program uses only 1 task slot. For multithreaded tools, set --ntasks=1 and --cpus-per-task=N.</text>
+</svg>

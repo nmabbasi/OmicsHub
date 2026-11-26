@@ -1,0 +1,133 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="920" height="440" viewBox="0 0 920 440" role="img" aria-labelledby="svg-title svg-desc">
+  <title id="svg-title">Whole Exome Sequencing (WES) Germline Variant Calling Workflow and QC Gates</title>
+  <desc id="svg-desc">Four-stage diagram of a single-sample WES pipeline: Stage 1 aligns paired FASTQ reads with BWA-MEM and Read Groups, sorts with samtools, and flags duplicates with MarkDuplicates. Stage 2 runs optional BaseRecalibrator on padded target intervals and ApplyBQSR on the full BAM, then branches between germline HaplotypeCaller and somatic Mutect2. Stage 3 splits SNPs and indels for class-specific VariantFiltration and extracts PASS-only calls with bcftools. Stage 4 runs CollectHsMetrics on a sequence-dictionary interval list and calculates biallelic VAF and coding Ti/Tv QC.</desc>
+  <defs>
+    <marker id="arrow-blue" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#2057a5"/>
+    </marker>
+    <marker id="arrow-slate" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#64748b"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="920" height="440" rx="12" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
+
+  <text x="460" y="34" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="16" font-weight="700" fill="#0f172a">Single-Sample WES Variant Calling: Data Flow and Quality Gates</text>
+
+  <!-- Stage 1 -->
+  <rect x="20" y="56" width="204" height="270" rx="10" fill="#ffffff" stroke="#94a3b8" stroke-width="1.5"/>
+  <rect x="20" y="56" width="204" height="36" rx="10" fill="#1e3a5f"/>
+  <rect x="20" y="80" width="204" height="12" fill="#1e3a5f"/>
+  <text x="122" y="79" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="12.5" font-weight="700" fill="#ffffff">1. Align &amp; Mark Dups</text>
+
+  <rect x="34" y="106" width="176" height="38" rx="6" fill="#f1f5f9" stroke="#cbd5e1"/>
+  <text x="122" y="122" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="11" font-weight="600" fill="#1e293b">Paired FASTQ (R1, R2)</text>
+  <text x="122" y="137" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="10" fill="#475569">+ GRCh38 FASTA &amp; BWA index</text>
+
+  <line x1="122" y1="144" x2="122" y2="160" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow-slate)"/>
+
+  <rect x="34" y="162" width="176" height="50" rx="6" fill="#eff6ff" stroke="#bfdbfe"/>
+  <text x="122" y="179" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="11" font-weight="700" fill="#1e3a8a">bwa mem | samtools sort</text>
+  <text x="122" y="194" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="10" fill="#1e40af">Must include @RG (ID, SM, PL)</text>
+  <text x="122" y="206" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="9.5" fill="#475569">Index BAM only if pipeline succeeds</text>
+
+  <line x1="122" y1="212" x2="122" y2="228" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow-slate)"/>
+
+  <rect x="34" y="230" width="176" height="48" rx="6" fill="#eff6ff" stroke="#bfdbfe"/>
+  <text x="122" y="247" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="11" font-weight="700" fill="#1e3a8a">gatk MarkDuplicates</text>
+  <text x="122" y="262" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="10" fill="#1e40af">Flags 0x400 PCR/optical dups</text>
+  <text x="122" y="273" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="9.5" fill="#475569">NovaSeq pixel distance: 2500</text>
+
+  <rect x="34" y="288" width="176" height="28" rx="5" fill="#fef3c7" stroke="#f59e0b"/>
+  <text x="122" y="306" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="10" font-weight="600" fill="#92400e">QC: Duplication ~5-20%</text>
+
+  <!-- Arrow 1 -> 2 -->
+  <line x1="226" y1="191" x2="244" y2="191" stroke="#2057a5" stroke-width="2.2" marker-end="url(#arrow-blue)"/>
+
+  <!-- Stage 2 -->
+  <rect x="248" y="56" width="204" height="270" rx="10" fill="#ffffff" stroke="#94a3b8" stroke-width="1.5"/>
+  <rect x="248" y="56" width="204" height="36" rx="10" fill="#2057a5"/>
+  <rect x="248" y="80" width="204" height="12" fill="#2057a5"/>
+  <text x="350" y="79" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="12.5" font-weight="700" fill="#ffffff">2. BQSR &amp; Variant Calling</text>
+
+  <rect x="262" y="106" width="176" height="50" rx="6" fill="#f1f5f9" stroke="#cbd5e1"/>
+  <text x="350" y="122" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="11" font-weight="600" fill="#1e293b">Optional BQSR</text>
+  <text x="350" y="137" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="10" fill="#475569">BaseRecalibrator (-L -ip 100)</text>
+  <text x="350" y="150" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="9.5" fill="#b91c1c" font-weight="600">ApplyBQSR on full BAM (no -L!)</text>
+
+  <line x1="350" y1="156" x2="350" y2="172" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow-slate)"/>
+
+  <rect x="262" y="174" width="176" height="58" rx="6" fill="#ecfeff" stroke="#0891b2"/>
+  <text x="350" y="191" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="11" font-weight="700" fill="#0e7490">Germline: HaplotypeCaller</text>
+  <text x="350" y="206" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="10" fill="#155e75">Diploid model (VAF ~0.5 / 1.0)</text>
+  <text x="350" y="220" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="9.5" fill="#475569">-L capture.bed -ip 100 (-ERC GVCF)</text>
+
+  <rect x="262" y="240" width="176" height="44" rx="6" fill="#fff1f2" stroke="#fda4af"/>
+  <text x="350" y="256" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="10.5" font-weight="700" fill="#9f1239">Somatic? Use Mutect2 instead</text>
+  <text x="350" y="271" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="9.5" fill="#881337">Matched normal + gnomAD + PoN</text>
+
+  <rect x="262" y="292" width="176" height="24" rx="5" fill="#f1f5f9" stroke="#cbd5e1"/>
+  <text x="350" y="308" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="10" font-weight="600" fill="#334155">Alt germline: DeepVariant WES</text>
+
+  <!-- Arrow 2 -> 3 -->
+  <line x1="454" y1="191" x2="472" y2="191" stroke="#2057a5" stroke-width="2.2" marker-end="url(#arrow-blue)"/>
+
+  <!-- Stage 3 -->
+  <rect x="476" y="56" width="204" height="270" rx="10" fill="#ffffff" stroke="#94a3b8" stroke-width="1.5"/>
+  <rect x="476" y="56" width="204" height="36" rx="10" fill="#0f766e"/>
+  <rect x="476" y="80" width="204" height="12" fill="#0f766e"/>
+  <text x="578" y="79" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="12.5" font-weight="700" fill="#ffffff">3. Filter &amp; PASS Handoff</text>
+
+  <rect x="490" y="106" width="176" height="44" rx="6" fill="#f1f5f9" stroke="#cbd5e1"/>
+  <text x="578" y="122" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="11" font-weight="600" fill="#1e293b">Split SNPs vs INDELs</text>
+  <text x="578" y="137" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="9.5" fill="#475569">SelectVariants (split MIXED first)</text>
+
+  <line x1="578" y1="150" x2="578" y2="166" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow-slate)"/>
+
+  <rect x="490" y="168" width="176" height="58" rx="6" fill="#f0fdf4" stroke="#86efac"/>
+  <text x="578" y="185" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="11" font-weight="700" fill="#166534">gatk VariantFiltration</text>
+  <text x="578" y="200" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="9.5" fill="#15803d">SNP: QD, FS, SOR, MQ, RankSums</text>
+  <text x="578" y="214" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="9.5" fill="#15803d">INDEL: QD, FS&gt;200, SOR&gt;10, ReadPos</text>
+
+  <line x1="578" y1="226" x2="578" y2="242" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow-slate)"/>
+
+  <rect x="490" y="244" width="176" height="44" rx="6" fill="#f0fdf4" stroke="#86efac"/>
+  <text x="578" y="261" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="11" font-weight="700" fill="#166534">MergeVcfs + PASS filter</text>
+  <text x="578" y="276" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="9.5" fill="#15803d">bcftools view --apply-filters PASS</text>
+
+  <rect x="490" y="294" width="176" height="22" rx="5" fill="#fef3c7" stroke="#f59e0b"/>
+  <text x="578" y="309" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="9.5" font-weight="600" fill="#92400e">Drops failed tags AND FILTER=.</text>
+
+  <!-- Arrow 3 -> 4 -->
+  <line x1="682" y1="191" x2="700" y2="191" stroke="#2057a5" stroke-width="2.2" marker-end="url(#arrow-blue)"/>
+
+  <!-- Stage 4 -->
+  <rect x="704" y="56" width="196" height="270" rx="10" fill="#ffffff" stroke="#94a3b8" stroke-width="1.5"/>
+  <rect x="704" y="56" width="196" height="36" rx="10" fill="#4338ca"/>
+  <rect x="704" y="80" width="196" height="12" fill="#4338ca"/>
+  <text x="802" y="79" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="12.5" font-weight="700" fill="#ffffff">4. Capture QC &amp; VAF</text>
+
+  <rect x="718" y="106" width="168" height="52" rx="6" fill="#eef2ff" stroke="#c7d2fe"/>
+  <text x="802" y="122" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="11" font-weight="700" fill="#3730a3">CollectHsMetrics</text>
+  <text x="802" y="137" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="9.5" fill="#4338ca">Convert BED -&gt; .interval_list first</text>
+  <text x="802" y="150" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="9.5" fill="#4338ca">Check on-target % &amp; 20x/30x</text>
+
+  <line x1="802" y1="158" x2="802" y2="174" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow-slate)"/>
+
+  <rect x="718" y="176" width="168" height="58" rx="6" fill="#eef2ff" stroke="#c7d2fe"/>
+  <text x="802" y="193" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="11" font-weight="700" fill="#3730a3">VAF = ALT_AD / (REF+ALT)</text>
+  <text x="802" y="208" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="9.5" fill="#4338ca">Single-sample biallelic PASS</text>
+  <text x="802" y="221" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="9.5" fill="#475569">FORMAT/DP is not denominator</text>
+
+  <rect x="718" y="246" width="168" height="68" rx="6" fill="#f8fafc" stroke="#cbd5e1"/>
+  <text x="802" y="263" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="10.5" font-weight="700" fill="#0f172a">Sanity Benchmarks</text>
+  <text x="802" y="279" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="9.5" fill="#334155">VAF peaks: ~0.5 (het), ~1.0 (hom)</text>
+  <text x="802" y="294" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="9.5" fill="#334155">Coding Ti/Tv: ~2.8 - 3.3</text>
+  <text x="802" y="308" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="9.5" fill="#334155">~20k-30k PASS SNVs (~50 Mb)</text>
+
+  <!-- Bottom cross-cutting rule banner -->
+  <rect x="20" y="344" width="880" height="78" rx="8" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.4"/>
+  <text x="38" y="366" font-family="Inter, system-ui, sans-serif" font-size="11.5" font-weight="700" fill="#0f172a">Build and Interval Contracts (must match across every step):</text>
+  <text x="38" y="385" font-family="Inter, system-ui, sans-serif" font-size="11" fill="#334155">1. Reference build &amp; contig style: FASTA (.fa + .fai + .dict + 5 BWA files), known-sites VCFs, and capture BED must share one assembly (e.g. GRCh38) and chr naming.</text>
+  <text x="38" y="403" font-family="Inter, system-ui, sans-serif" font-size="11" fill="#334155">2. Do not substitute a GIAB benchmark truth BED for your assay's capture-target BED; keep the raw annotated VCF as an audit trail alongside the PASS-only VCF.</text>
+</svg>

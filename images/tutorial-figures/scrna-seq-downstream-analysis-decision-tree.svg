@@ -1,0 +1,146 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 524" width="960" height="524" role="img" aria-labelledby="svg-title svg-desc">
+  <title id="svg-title">Post-Annotation scRNA-seq Downstream Analysis Decision Map</title>
+  <desc id="svg-desc">Five-row decision matrix mapping single-cell post-annotation biological questions to their statistical unit and input layer, representative R and Python tools, and primary failure modes to check.</desc>
+  <defs>
+    <marker id="arrow-slate" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#64748B"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="960" height="524" rx="14" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="1.5"/>
+  <text x="28" y="36" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="19" font-weight="700" fill="#0F172A">Post-Annotation scRNA-seq Decision Map</text>
+  <text x="28" y="57" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="12.5" fill="#475569">Start from the biological question and replicate unit, not a default list of packages.</text>
+
+  <!-- Column headers -->
+  <rect x="28" y="74" width="194" height="30" rx="6" fill="#17324F"/>
+  <text x="125" y="93" text-anchor="middle" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="12" font-weight="700" fill="#FFFFFF">1. Biological Question</text>
+
+  <rect x="238" y="74" width="208" height="30" rx="6" fill="#17324F"/>
+  <text x="342" y="93" text-anchor="middle" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="12" font-weight="700" fill="#FFFFFF">2. Unit &amp; Input Layer</text>
+
+  <rect x="462" y="74" width="224" height="30" rx="6" fill="#17324F"/>
+  <text x="574" y="93" text-anchor="middle" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="12" font-weight="700" fill="#FFFFFF">3. Representative Tools</text>
+
+  <rect x="702" y="74" width="230" height="30" rx="6" fill="#7F1D1D"/>
+  <text x="817" y="93" text-anchor="middle" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="12" font-weight="700" fill="#FFFFFF">4. Primary Trap to Check</text>
+
+  <!-- Row 1: Pseudobulk DE -->
+  <rect x="28" y="114" width="194" height="72" rx="8" fill="#EFF6FF" stroke="#93C5FD" stroke-width="1.3"/>
+  <text x="40" y="136" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="12.5" font-weight="700" fill="#1E3A8A">Gene expression shift</text>
+  <text x="40" y="153" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11" fill="#334155">Within a cell type across</text>
+  <text x="40" y="168" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11" fill="#334155">conditions (patient vs ctrl)</text>
+
+  <line x1="222" y1="150" x2="236" y2="150" stroke="#64748B" stroke-width="1.3" marker-end="url(#arrow-slate)"/>
+  <rect x="238" y="114" width="208" height="72" rx="8" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.3"/>
+  <text x="250" y="136" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="12" font-weight="700" fill="#0F172A">Donor x cell type</text>
+  <text x="250" y="153" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11" fill="#475569">Summed raw integer UMI</text>
+  <text x="250" y="168" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11" fill="#475569">counts (>=3 donors/group)</text>
+
+  <line x1="446" y1="150" x2="460" y2="150" stroke="#64748B" stroke-width="1.3" marker-end="url(#arrow-slate)"/>
+  <rect x="462" y="114" width="224" height="72" rx="8" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.3"/>
+  <text x="474" y="136" font-family="monospace" font-size="11.5" font-weight="700" fill="#1E40AF">DESeq2, edgeR, muscat</text>
+  <text x="474" y="153" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11" fill="#475569">R: AggregateExpression()</text>
+  <text x="474" y="168" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11" fill="#475569">Py: dc.pp.pseudobulk()</text>
+
+  <line x1="686" y1="150" x2="700" y2="150" stroke="#64748B" stroke-width="1.3" marker-end="url(#arrow-slate)"/>
+  <rect x="702" y="114" width="230" height="72" rx="8" fill="#FEF2F2" stroke="#FECACA" stroke-width="1.3"/>
+  <text x="714" y="136" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11.5" font-weight="700" fill="#991B1B">Cell-level pseudoreplication</text>
+  <text x="714" y="153" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11" fill="#7F1D1D">Single-cell Wilcoxon inflates</text>
+  <text x="714" y="168" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11" fill="#7F1D1D">FDR; check ambient RNA &amp; min cells</text>
+
+  <!-- Row 2: Compositional / DA -->
+  <rect x="28" y="194" width="194" height="72" rx="8" fill="#F0FDFA" stroke="#5EEAD4" stroke-width="1.3"/>
+  <text x="40" y="216" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="12.5" font-weight="700" fill="#115E59">Abundance / proportion</text>
+  <text x="40" y="233" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11" fill="#334155">Do cell-type fractions or</text>
+  <text x="40" y="248" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11" fill="#334155">cell states shift by group?</text>
+
+  <line x1="222" y1="230" x2="236" y2="230" stroke="#64748B" stroke-width="1.3" marker-end="url(#arrow-slate)"/>
+  <rect x="238" y="194" width="208" height="72" rx="8" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.3"/>
+  <text x="250" y="216" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="12" font-weight="700" fill="#0F172A">Donor counts or kNN graph</text>
+  <text x="250" y="233" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11" fill="#475569">Cell counts per donor x label</text>
+  <text x="250" y="248" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11" fill="#475569">(>=3 donors/group)</text>
+
+  <line x1="446" y1="230" x2="460" y2="230" stroke="#64748B" stroke-width="1.3" marker-end="url(#arrow-slate)"/>
+  <rect x="462" y="194" width="224" height="72" rx="8" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.3"/>
+  <text x="474" y="216" font-family="monospace" font-size="11.5" font-weight="700" fill="#0F766E">propeller, scCODA, miloR</text>
+  <text x="474" y="233" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11" fill="#475569">Clusters: speckle / pertpy</text>
+  <text x="474" y="248" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11" fill="#475569">Sub-cluster states: miloR</text>
+
+  <line x1="686" y1="230" x2="700" y2="230" stroke="#64748B" stroke-width="1.3" marker-end="url(#arrow-slate)"/>
+  <rect x="702" y="194" width="230" height="72" rx="8" fill="#FEF2F2" stroke="#FECACA" stroke-width="1.3"/>
+  <text x="714" y="216" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11.5" font-weight="700" fill="#991B1B">Compositional closure</text>
+  <text x="714" y="233" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11" fill="#7F1D1D">Proportions sum to 100%; one</text>
+  <text x="714" y="248" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11" fill="#7F1D1D">gaining type shrinks others</text>
+
+  <!-- Row 3: Trajectory & Velocity -->
+  <rect x="28" y="274" width="194" height="72" rx="8" fill="#F5F3FF" stroke="#C4B5FD" stroke-width="1.3"/>
+  <text x="40" y="296" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="12.5" font-weight="700" fill="#5B21B6">State transitions</text>
+  <text x="40" y="313" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11" fill="#334155">How do cells progress along</text>
+  <text x="40" y="328" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11" fill="#334155">differentiation or activation?</text>
+
+  <line x1="222" y1="310" x2="236" y2="310" stroke="#64748B" stroke-width="1.3" marker-end="url(#arrow-slate)"/>
+  <rect x="238" y="274" width="208" height="72" rx="8" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.3"/>
+  <text x="250" y="296" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="12" font-weight="700" fill="#0F172A">Connected manifold</text>
+  <text x="250" y="313" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11" fill="#475569">Normalized counts + root state;</text>
+  <text x="250" y="328" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11" fill="#475569">spliced/unspliced for velocity</text>
+
+  <line x1="446" y1="310" x2="460" y2="310" stroke="#64748B" stroke-width="1.3" marker-end="url(#arrow-slate)"/>
+  <rect x="462" y="274" width="224" height="72" rx="8" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.3"/>
+  <text x="474" y="296" font-family="monospace" font-size="11.5" font-weight="700" fill="#6D28D9">Slingshot, Monocle 3</text>
+  <text x="474" y="313" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11" fill="#475569">Py: PAGA / DPT</text>
+  <text x="474" y="328" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11" fill="#475569">Velocity: scVelo, veloVI</text>
+
+  <line x1="686" y1="310" x2="700" y2="310" stroke="#64748B" stroke-width="1.3" marker-end="url(#arrow-slate)"/>
+  <rect x="702" y="274" width="230" height="72" rx="8" fill="#FEF2F2" stroke="#FECACA" stroke-width="1.3"/>
+  <text x="714" y="296" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11.5" font-weight="700" fill="#991B1B">Disconnected lineages</text>
+  <text x="714" y="313" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11" fill="#7F1D1D">Never force 1 tree on all types;</text>
+  <text x="714" y="328" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11" fill="#7F1D1D">check velocity kinetic assumptions</text>
+
+  <!-- Row 4: Cell-cell communication -->
+  <rect x="28" y="354" width="194" height="72" rx="8" fill="#FFFBEB" stroke="#FCD34D" stroke-width="1.3"/>
+  <text x="40" y="376" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="12.5" font-weight="700" fill="#92400E">Cell-cell signaling</text>
+  <text x="40" y="393" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11" fill="#334155">Which pairs co-express known</text>
+  <text x="40" y="408" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11" fill="#334155">ligands and receptors?</text>
+
+  <line x1="222" y1="390" x2="236" y2="390" stroke="#64748B" stroke-width="1.3" marker-end="url(#arrow-slate)"/>
+  <rect x="238" y="354" width="208" height="72" rx="8" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.3"/>
+  <text x="250" y="376" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="12" font-weight="700" fill="#0F172A">Sender-receiver pairs</text>
+  <text x="250" y="393" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11" fill="#475569">Log-normalized expression,</text>
+  <text x="250" y="408" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11" fill="#475569">matched IDs, spatial/donor info</text>
+
+  <line x1="446" y1="390" x2="460" y2="390" stroke="#64748B" stroke-width="1.3" marker-end="url(#arrow-slate)"/>
+  <rect x="462" y="354" width="224" height="72" rx="8" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.3"/>
+  <text x="474" y="376" font-family="monospace" font-size="11.5" font-weight="700" fill="#B45309">LIANA+, CellChat v2</text>
+  <text x="474" y="393" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11" fill="#475569">Py: CellPhoneDB v5</text>
+  <text x="474" y="408" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11" fill="#475569">Multi-donor: MultiNicheNet</text>
+
+  <line x1="686" y1="390" x2="700" y2="390" stroke="#64748B" stroke-width="1.3" marker-end="url(#arrow-slate)"/>
+  <rect x="702" y="354" width="230" height="72" rx="8" fill="#FEF2F2" stroke="#FECACA" stroke-width="1.3"/>
+  <text x="714" y="376" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11.5" font-weight="700" fill="#991B1B">Overclaiming tissue contact</text>
+  <text x="714" y="393" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11" fill="#7F1D1D">Label permutations test cluster</text>
+  <text x="714" y="408" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11" fill="#7F1D1D">specificity, not patient diffs</text>
+
+  <!-- Row 5: Regulons & Pathways -->
+  <rect x="28" y="434" width="194" height="72" rx="8" fill="#ECFEFF" stroke="#67E8F9" stroke-width="1.3"/>
+  <text x="40" y="456" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="12.5" font-weight="700" fill="#155E75">TF &amp; pathway activity</text>
+  <text x="40" y="473" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11" fill="#334155">Which regulators match</text>
+  <text x="40" y="488" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11" fill="#334155">target-gene footprints?</text>
+
+  <line x1="222" y1="470" x2="236" y2="470" stroke="#64748B" stroke-width="1.3" marker-end="url(#arrow-slate)"/>
+  <rect x="238" y="434" width="208" height="72" rx="8" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.3"/>
+  <text x="250" y="456" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="12" font-weight="700" fill="#0F172A">Targets + prior network</text>
+  <text x="250" y="473" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11" fill="#475569">Normalized counts or DE stats</text>
+  <text x="250" y="488" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11" fill="#475569">+ CollecTRI / PROGENy network</text>
+
+  <line x1="446" y1="470" x2="460" y2="470" stroke="#64748B" stroke-width="1.3" marker-end="url(#arrow-slate)"/>
+  <rect x="462" y="434" width="224" height="72" rx="8" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.3"/>
+  <text x="474" y="456" font-family="monospace" font-size="11.5" font-weight="700" fill="#0E7490">decoupleR / decoupler v2</text>
+  <text x="474" y="473" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11" fill="#475569">ULM or MLM (minsize/tmin &gt;= 5)</text>
+  <text x="474" y="488" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11" fill="#475569">Check v1 vs v2 Python API</text>
+
+  <line x1="686" y1="470" x2="700" y2="470" stroke="#64748B" stroke-width="1.3" marker-end="url(#arrow-slate)"/>
+  <rect x="702" y="434" width="230" height="72" rx="8" fill="#FEF2F2" stroke="#FECACA" stroke-width="1.3"/>
+  <text x="714" y="456" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11.5" font-weight="700" fill="#991B1B">ID mismatch &amp; DNA binding</text>
+  <text x="714" y="473" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11" fill="#7F1D1D">Strip ENSG.version suffixes;</text>
+  <text x="714" y="488" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11" fill="#7F1D1D">score != direct ChIP/ATAC binding</text>
+</svg>

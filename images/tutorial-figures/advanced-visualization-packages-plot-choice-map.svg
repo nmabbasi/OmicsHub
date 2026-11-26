@@ -1,0 +1,122 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 456" width="960" height="456" role="img" aria-labelledby="svg-title svg-desc">
+  <title id="svg-title">Single-Cell R Visualization Decision Map</title>
+  <desc id="svg-desc">Four-row guide mapping single-cell visualization questions to required metadata or assay layers, Seurat, SCpubr, dittoSeq, and ggplot2 functions, and key scale traps to verify.</desc>
+  <defs>
+    <marker id="arrow-slate" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#64748B"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="960" height="456" rx="14" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="1.5"/>
+  <text x="28" y="36" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="19" font-weight="700" fill="#0F172A">Single-Cell R Visualization Decision Map</text>
+  <text x="28" y="57" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="12.5" fill="#475569">Match each plot type to its data layer and visual scale before adjusting aesthetics.</text>
+
+  <!-- Column headers -->
+  <rect x="28" y="74" width="194" height="30" rx="6" fill="#17324F"/>
+  <text x="125" y="93" text-anchor="middle" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="12" font-weight="700" fill="#FFFFFF">1. Visual Question</text>
+
+  <rect x="238" y="74" width="208" height="30" rx="6" fill="#17324F"/>
+  <text x="342" y="93" text-anchor="middle" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="12" font-weight="700" fill="#FFFFFF">2. Input &amp; Assay Layer</text>
+
+  <rect x="462" y="74" width="224" height="30" rx="6" fill="#17324F"/>
+  <text x="574" y="93" text-anchor="middle" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="12" font-weight="700" fill="#FFFFFF">3. R Plotting Function</text>
+
+  <rect x="702" y="74" width="230" height="30" rx="6" fill="#7F1D1D"/>
+  <text x="817" y="93" text-anchor="middle" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="12" font-weight="700" fill="#FFFFFF">4. Scale &amp; Trap to Check</text>
+
+  <!-- Row 1: Categorical embedding -->
+  <rect x="28" y="114" width="194" height="72" rx="8" fill="#EFF6FF" stroke="#93C5FD" stroke-width="1.3"/>
+  <text x="40" y="135" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="12.5" font-weight="700" fill="#1E3A8A">Cluster &amp; label layout</text>
+  <text x="40" y="152" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11" fill="#334155">Discrete cell types or</text>
+  <text x="40" y="167" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11" fill="#334155">batches on UMAP / PCA</text>
+
+  <line x1="222" y1="150" x2="236" y2="150" stroke="#64748B" stroke-width="1.3" marker-end="url(#arrow-slate)"/>
+  <rect x="238" y="114" width="208" height="72" rx="8" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.3"/>
+  <text x="250" y="135" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="12" font-weight="700" fill="#0F172A">Metadata factor + 2D coords</text>
+  <text x="250" y="152" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11" fill="#475569">Factor column (cell_type)</text>
+  <text x="250" y="167" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11" fill="#475569">+ umap / tsne / pca reduction</text>
+
+  <line x1="446" y1="150" x2="460" y2="150" stroke="#64748B" stroke-width="1.3" marker-end="url(#arrow-slate)"/>
+  <rect x="462" y="114" width="224" height="72" rx="8" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.3"/>
+  <text x="474" y="135" font-family="monospace" font-size="11" font-weight="700" fill="#1E40AF">Seurat::DimPlot()</text>
+  <text x="474" y="152" font-family="monospace" font-size="11" font-weight="700" fill="#1E40AF">SCpubr::do_DimPlot()</text>
+  <text x="474" y="168" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11" fill="#475569">shuffle = TRUE, repel = TRUE</text>
+
+  <line x1="686" y1="150" x2="700" y2="150" stroke="#64748B" stroke-width="1.3" marker-end="url(#arrow-slate)"/>
+  <rect x="702" y="114" width="230" height="72" rx="8" fill="#FEF2F2" stroke="#FCA5A5" stroke-width="1.3"/>
+  <text x="714" y="135" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="12" font-weight="700" fill="#991B1B">Overplotting &amp; giant PDFs</text>
+  <text x="714" y="152" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11" fill="#450A0A">Shuffle point order; set</text>
+  <text x="714" y="167" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11" fill="#450A0A">raster = TRUE above ~50k cells</text>
+
+  <!-- Row 2: Feature map -->
+  <rect x="28" y="198" width="194" height="72" rx="8" fill="#EFF6FF" stroke="#93C5FD" stroke-width="1.3"/>
+  <text x="40" y="219" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="12.5" font-weight="700" fill="#1E3A8A">Single-gene expression</text>
+  <text x="40" y="236" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11" fill="#334155">Continuous marker signal</text>
+  <text x="40" y="251" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11" fill="#334155">across the UMAP embedding</text>
+
+  <line x1="222" y1="234" x2="236" y2="234" stroke="#64748B" stroke-width="1.3" marker-end="url(#arrow-slate)"/>
+  <rect x="238" y="198" width="208" height="72" rx="8" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.3"/>
+  <text x="250" y="219" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="12" font-weight="700" fill="#0F172A">Log-normalized data layer</text>
+  <text x="250" y="236" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11" fill="#475569">Normalized counts per cell</text>
+  <text x="250" y="251" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11" fill="#475569">(avoid raw unscaled UMI counts)</text>
+
+  <line x1="446" y1="234" x2="460" y2="234" stroke="#64748B" stroke-width="1.3" marker-end="url(#arrow-slate)"/>
+  <rect x="462" y="198" width="224" height="72" rx="8" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.3"/>
+  <text x="474" y="219" font-family="monospace" font-size="11" font-weight="700" fill="#1E40AF">Seurat::FeaturePlot()</text>
+  <text x="474" y="236" font-family="monospace" font-size="11" font-weight="700" fill="#1E40AF">SCpubr::do_FeaturePlot()</text>
+  <text x="474" y="252" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11" fill="#475569">use_viridis = TRUE, order = TRUE</text>
+
+  <line x1="686" y1="234" x2="700" y2="234" stroke="#64748B" stroke-width="1.3" marker-end="url(#arrow-slate)"/>
+  <rect x="702" y="198" width="230" height="72" rx="8" fill="#FEF2F2" stroke="#FCA5A5" stroke-width="1.3"/>
+  <text x="714" y="219" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="12" font-weight="700" fill="#991B1B">Per-gene autoscaling</text>
+  <text x="714" y="236" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11" fill="#450A0A">Seurat takes "q95"; SCpubr takes</text>
+  <text x="714" y="251" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11" fill="#450A0A">numeric cutoffs or scale.limits</text>
+
+  <!-- Row 3: Multi-gene marker summary -->
+  <rect x="28" y="282" width="194" height="72" rx="8" fill="#EFF6FF" stroke="#93C5FD" stroke-width="1.3"/>
+  <text x="40" y="303" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="12.5" font-weight="700" fill="#1E3A8A">Multi-gene marker panel</text>
+  <text x="40" y="320" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11" fill="#334155">Marker specificity across</text>
+  <text x="40" y="335" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11" fill="#334155">annotated cell populations</text>
+
+  <line x1="222" y1="318" x2="236" y2="318" stroke="#64748B" stroke-width="1.3" marker-end="url(#arrow-slate)"/>
+  <rect x="238" y="282" width="208" height="72" rx="8" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.3"/>
+  <text x="250" y="303" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="12" font-weight="700" fill="#0F172A">Log-normalized data + groups</text>
+  <text x="250" y="320" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11" fill="#475569">Biologically ordered</text>
+  <text x="250" y="335" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11" fill="#475569">cell_type levels &amp; markers</text>
+
+  <line x1="446" y1="318" x2="460" y2="318" stroke="#64748B" stroke-width="1.3" marker-end="url(#arrow-slate)"/>
+  <rect x="462" y="282" width="224" height="72" rx="8" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.3"/>
+  <text x="474" y="303" font-family="monospace" font-size="11" font-weight="700" fill="#1E40AF">Seurat::DotPlot()</text>
+  <text x="474" y="320" font-family="monospace" font-size="11" font-weight="700" fill="#1E40AF">dittoSeq::dittoHeatmap()</text>
+  <text x="474" y="336" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11" fill="#475569">+ scale_color_viridis_c()</text>
+
+  <line x1="686" y1="318" x2="700" y2="318" stroke="#64748B" stroke-width="1.3" marker-end="url(#arrow-slate)"/>
+  <rect x="702" y="282" width="230" height="72" rx="8" fill="#FEF2F2" stroke="#FCA5A5" stroke-width="1.3"/>
+  <text x="714" y="303" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="12" font-weight="700" fill="#991B1B">Size vs. z-score confusion</text>
+  <text x="714" y="320" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11" fill="#450A0A">Dot size = % detected; color =</text>
+  <text x="714" y="335" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11" fill="#450A0A">row z-score (hides raw scale)</text>
+
+  <!-- Row 4: Composition -->
+  <rect x="28" y="366" width="194" height="72" rx="8" fill="#EFF6FF" stroke="#93C5FD" stroke-width="1.3"/>
+  <text x="40" y="387" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="12.5" font-weight="700" fill="#1E3A8A">Sample composition</text>
+  <text x="40" y="404" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11" fill="#334155">Cell-type shares across</text>
+  <text x="40" y="419" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11" fill="#334155">donors or clinical arms</text>
+
+  <line x1="222" y1="402" x2="236" y2="402" stroke="#64748B" stroke-width="1.3" marker-end="url(#arrow-slate)"/>
+  <rect x="238" y="366" width="208" height="72" rx="8" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.3"/>
+  <text x="250" y="387" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="12" font-weight="700" fill="#0F172A">Donor x cell-type counts</text>
+  <text x="250" y="404" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11" fill="#475569">Group by patient_id, ordered</text>
+  <text x="250" y="419" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11" fill="#475569">by condition or treatment</text>
+
+  <line x1="446" y1="402" x2="460" y2="402" stroke="#64748B" stroke-width="1.3" marker-end="url(#arrow-slate)"/>
+  <rect x="462" y="366" width="224" height="72" rx="8" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.3"/>
+  <text x="474" y="387" font-family="monospace" font-size="11" font-weight="700" fill="#1E40AF">ggplot2::geom_col()</text>
+  <text x="474" y="404" font-family="monospace" font-size="11" font-weight="700" fill="#1E40AF">dittoSeq::dittoBarPlot()</text>
+  <text x="474" y="420" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11" fill="#475569">scale = "percent" / "count"</text>
+
+  <line x1="686" y1="402" x2="700" y2="402" stroke="#64748B" stroke-width="1.3" marker-end="url(#arrow-slate)"/>
+  <rect x="702" y="366" width="230" height="72" rx="8" fill="#FEF2F2" stroke="#FCA5A5" stroke-width="1.3"/>
+  <text x="714" y="387" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="12" font-weight="700" fill="#991B1B">Compositional closure</text>
+  <text x="714" y="404" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11" fill="#450A0A">Bars sum to 100%; confirm shifts</text>
+  <text x="714" y="419" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11" fill="#450A0A">with propeller or scCODA</text>
+</svg>

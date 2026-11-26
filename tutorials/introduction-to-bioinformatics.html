@@ -173,66 +173,144 @@ function toggleMobileMenu() {
 </div>
 <nav aria-label="Learning path navigation" class="reader-toolbar"><span class="reader-toolbar__heading">Learning path</span><a href="../start-here.html#sh-foundation" class="reader-toolbar__previous"><span class="reader-toolbar__direction"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5m0 0 7 7m-7-7 7-7"/></svg></span><span class="reader-toolbar__copy"><small>Previous path choice</small><strong>Back to the foundations</strong></span></a><a data-catalogue-return="" href="../tutorials.html" class="reader-toolbar__library"><span class="reader-toolbar__library-mark" aria-hidden="true"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="6" height="6" rx="1.3"/><rect x="14" y="4" width="6" height="6" rx="1.3"/><rect x="4" y="14" width="6" height="6" rx="1.3"/><rect x="14" y="14" width="6" height="6" rx="1.3"/></svg></span><span><small>Browse</small><strong>All tutorials</strong></span></a><a href="computer-data-fundamentals.html" rel="next" class="reader-toolbar__next"><span class="reader-toolbar__copy"><small>Suggested next</small><strong>Computer and Data Fundamentals for Biologists</strong></span><span class="reader-toolbar__direction"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14m0 0-7-7m7 7-7 7"/></svg></span></a></nav>
 <article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--concepts">
-<p class="lesson-lead">Bioinformatics combines biology, statistics, and computing to turn raw measurements into testable answers. This orientation maps common omics assays to analysis tools, covers the habits that keep workflows reproducible, and finishes with a short planning exercise.</p>
-<section class="lesson-summary tutorial-learning-contract" data-tutorial-format="conceptual-guide" aria-label="Learning format"><p><strong>Format: Conceptual guide.</strong> Start here if you are organizing your first omics analysis: connect a concrete biological question to the data types and computational skills it requires, then draft a clear one-page study plan.</p></section>
-<h2>Start with the biological question</h2>
-<p>A computational analysis is useful when its inputs and comparisons match a question that can be answered by the available experiment. “Which genes differ in expression between these conditions?” calls for an expression study with appropriate biological replicates and a design that records relevant covariates. “What protein might this sequence resemble?” calls for a sequence search and careful assessment of the matches. The question, sampling design, and measurement method constrain what the results can support.</p>
-<p>Bioinformatics weaves biology together with statistics and software engineering: choosing methods that fit the design, checking assumptions and data quality, interpreting effect sizes in biological context, and documenting everything cleanly enough that a colleague can reproduce it. A script that runs twice on your own laptop is a working piece of code, not yet proof of a reproducible scientific claim.</p>
-<h2>Choose data and methods that fit</h2>
-<div aria-label="Scrollable table: Examples of questions, data, and common analysis families. These are starting points, not complete protocols." class="lesson-table-wrap" role="region" tabindex="0"><table><caption class="lesson-caption">Examples of questions, data, and common analysis families. These are starting points, not complete protocols.</caption><thead><tr><th scope="col">Question</th><th scope="col">Typical data</th><th scope="col">Analysis family</th><th scope="col">Interpretive check</th></tr></thead><tbody>
-<tr><th scope="row">How does a sample genome differ from a reference?</th><td>Sequencing reads plus an appropriate reference genome</td><td>Read quality checks, alignment, and variant calling</td><td>Check reference build, coverage, sample design, and caller-specific filters; a called variant is not automatically causal.</td></tr>
-<tr><th scope="row">Which transcripts differ across conditions?</th><td>RNA-seq reads, sample metadata, and a design with biological replication</td><td>Quantification and statistical differential-expression analysis</td><td>Inspect library quality, design and confounding; association in this experiment does not alone establish mechanism.</td></tr>
-<tr><th scope="row">What sequences are similar to a protein query?</th><td>A protein FASTA query and a defined protein sequence database</td><td>Protein sequence similarity search, for example BLASTP</td><td>Review alignment coverage, identity, database scope, and biological context; similarity does not prove identical function.</td></tr>
-<tr><th scope="row">Where are transcripts detected in tissue?</th><td>Spatial gene-expression measurements linked to tissue locations</td><td>Spatial-transcriptomics analysis</td><td>Account for assay resolution, tissue processing, and the distinction between spatial spots and individual cells.</td></tr>
-<tr><th scope="row">How do cells differ within a sample?</th><td>Single-cell RNA-seq counts with cell and sample metadata</td><td>Cell-level quality control, normalization, dimensional reduction, clustering, and annotation</td><td>Cell-level observations are nested within biological samples; avoid treating every cell as an independent replicate.</td></tr>
-</tbody></table></div>
-<p>Other common areas include genome assembly, phylogenetic analysis, protein-structure analysis, and systems biology. They address different inputs and questions: assembly reconstructs sequence from reads, phylogenetics compares evolutionary relationships, structural bioinformatics studies molecular structures, and systems biology models interactions among components. "Omics" measurements can also be integrated, but combining assays requires compatible samples, identifiers, designs, and explicit assumptions.</p>
+<p class="lesson-lead">Bioinformatics combines biology, statistics, and computing to turn raw measurements into testable answers. This orientation maps biological questions to assays, core file formats, a runnable header check, a BLASTP example, and a one-page study plan.</p>
+<section class="lesson-summary tutorial-learning-contract" data-tutorial-format="conceptual-guide" aria-label="Learning format"><p><strong>Format: Conceptual guide.</strong> Connect a biological question to the data formats, checks, and computing skills it requires, then draft a one-page study plan.</p></section>
+<div class="lesson-summary" aria-label="Lesson overview">
+<p><strong>What you will be able to do:</strong> select a matching assay family, distinguish the six core file formats and coordinate systems, catch a chromosome-prefix mismatch before counting reads, and read a BLASTP table safely.</p>
+<p><strong>Prerequisites and time:</strong> introductory biology (DNA, RNA, proteins, genes); no coding or terminal experience required. Estimated time: 20 to 25 minutes.</p>
+<p><strong>Scope:</strong> orientation on study framing, file formats, tool roles, and interpretation limits; hands-on terminal, environment, and R/Python labs begin in the Foundations track below.</p>
+</div>
 
-<figure class="my-8 bg-white border border-gray-200 rounded-xl p-4 shadow-sm"><img src="../images/tutorial-figures/bioinformatics-core-roadmap.svg" alt="Four-pillar bioinformatics foundations roadmap: Biological Question &amp; Study Design, Raw &amp; Reference Formats, Reproducible Analysis Code, and Verified Reporting" width="960" height="460" loading="lazy" class="w-full h-auto rounded-lg" style="aspect-ratio: 960 / 460;"/><figcaption class="mt-3 text-sm text-gray-600">Every bioinformatics workflow begins with a clearly framed biological hypothesis and study design before touching file formats, command-line pipelines, statistical testing, and biological interpretation.</figcaption></figure>
-<h2>What happens in a reproducible workflow</h2>
+<h2 id="start-with-the-question">Start with the biological question</h2>
+<p>Pipelines calculate fold changes, clusters, and p-values even when an experiment cannot answer the question asked. Before opening a terminal, define the comparison, the biological unit measured, and potential confounders:</p>
+<ul>
+<li><strong>Omics assay:</strong> genome-wide or large-scale measurements of DNA variants (genomics), RNA transcripts (transcriptomics), or proteins (proteomics).</li>
+<li><strong>Biological vs. technical replicates:</strong> biological replicates are independent individuals, animals, or cultures; technical replicates are repeated preps or lanes from one sample. Condition comparisons require biological replicates.</li>
+<li><strong>Covariates and confounding:</strong> recorded traits such as age, sex, or processing batch. If all treated samples are prepared Monday and all controls Friday, batch and treatment are confounded.</li>
+</ul>
+<p>For example, "Which genes differ between <em>TP53</em>-mutant and wild-type lung tumors?" requires RNA-seq across multiple independent patients per group, with stage, smoking history, and batch recorded in the sample sheet.</p>
+
+<h2 id="choose-data-and-methods">Match questions, assays, and analysis families</h2>
+<div aria-label="Scrollable table: Examples of questions, data, and common analysis families. These are starting points, not complete protocols." class="lesson-table-wrap" role="region" tabindex="0"><table><caption class="lesson-caption">Examples of questions, data, and common analysis families. These are starting points, not complete protocols.</caption><thead><tr><th scope="col">Question</th><th scope="col">Typical data</th><th scope="col">Analysis family</th><th scope="col">Interpretive check</th></tr></thead><tbody>
+<tr><th scope="row">How does a sample genome differ from a reference?</th><td>DNA reads plus a reference build (such as human <code>GRCh38</code>)</td><td>Read QC, alignment, and variant calling</td><td>Check reference build, depth, design, and caller filters; a called variant is not automatically causal.</td></tr>
+<tr><th scope="row">Which transcripts differ across conditions?</th><td>RNA-seq reads, metadata, and biological replicates</td><td>Quantification and differential-expression testing</td><td>Inspect library QC, design, and confounding; expression association does not prove mechanism.</td></tr>
+<tr><th scope="row">What proteins resemble a query sequence?</th><td>Protein FASTA query and a defined database (for example, UniProtKB/Swiss-Prot)</td><td>Local sequence search, such as <code>blastp</code></td><td>Review alignment length, query coverage, identity, and database scope; similarity does not prove identical function.</td></tr>
+<tr><th scope="row">Where are transcripts located in tissue?</th><td>Spatial counts linked to tissue coordinates and histology</td><td>Spatial-transcriptomics analysis</td><td>Account for spot resolution (multi-cell spots vs. subcellular) and tissue artifacts.</td></tr>
+<tr><th scope="row">How do cell states differ within a sample?</th><td>Single-cell RNA-seq (scRNA-seq) counts with cell and donor metadata</td><td>Cell QC, normalization, PCA/UMAP, clustering, and annotation</td><td>Cells are nested within donors; test condition differences at the donor (pseudobulk) level.</td></tr>
+</tbody></table></div>
+
+<aside class="lesson-decision" aria-label="Decision guide: Bulk RNA-seq vs. scRNA-seq vs. spatial transcriptomics">
+<p><strong>Choosing an RNA assay:</strong> use <strong>bulk RNA-seq</strong> for deep coverage across many biological replicates at lower cost when average expression in a tissue or sorted population answers the question. Use <strong>scRNA-seq</strong> when cell-type proportions or rare cell states matter. Use <strong>spatial transcriptomics</strong> when physical tissue neighborhoods (such as tumor-immune borders) are central. Genome assembly, phylogenetics, and structural biology follow the same rule: match the assay to the biological unit.</p>
+</aside>
+
+<h2 id="core-file-formats">Core bioinformatics file formats and coordinates</h2>
+<p>Many errors occur when two tools expect different formats, genome builds, or coordinate rules. These six formats cover most genomics and transcriptomics workflows:</p>
+<div aria-label="Scrollable table: Six core bioinformatics file formats, their contents, and coordinate conventions" class="lesson-table-wrap" role="region" tabindex="0"><table><caption class="lesson-caption">Six core bioinformatics file formats, contents, and coordinate conventions.</caption><thead><tr><th scope="col">Format (extension)</th><th scope="col">Contents</th><th scope="col">Coordinates</th><th scope="col">Key check before use</th></tr></thead><tbody>
+<tr><th scope="row">FASTA (<code>.fa</code>, <code>.fasta</code>)</th><td>Reference DNA or protein sequences; entries start with <code>&gt;</code></td><td>1-based positions</td><td>Confirm genome build (<code>GRCh38</code> vs. <code>GRCm39</code>) and chromosome style (<code>chr1</code> vs. <code>1</code>).</td></tr>
+<tr><th scope="row">FASTQ (<code>.fastq.gz</code>)</th><td>Raw reads: 4 lines per read (ID, sequence, <code>+</code>, Phred+33 ASCII-encoded base quality)</td><td>Unaligned read bases</td><td>Verify SHA-256 checksums on arrival and inspect quality with FastQC.</td></tr>
+<tr><th scope="row">SAM / BAM / CRAM</th><td>Aligned reads with coordinates, alignment match/gap string (CIGAR), and mapping quality (<code>MAPQ</code>)</td><td>1-based closed in SAM; binary BAM/CRAM (<code>.bai</code>/<code>.crai</code>)</td><td>Confirm alignment used the exact reference build matched by downstream annotations.</td></tr>
+<tr><th scope="row">GTF / GFF3 (<code>.gtf</code>, <code>.gff3</code>)</th><td>Gene, transcript, and exon intervals with IDs</td><td>1-based closed <code>[start, end]</code></td><td>Match chromosome prefixes and release to the BAM before running read counters.</td></tr>
+<tr><th scope="row">BED (<code>.bed</code>)</th><td>Plain-text genomic intervals (peaks, capture targets)</td><td>0-based half-open <code>[start, end)</code></td><td>Convert before comparing to 1-based GTF or VCF positions (<code>start_1 = start_0 + 1</code>).</td></tr>
+<tr><th scope="row">VCF (<code>.vcf.gz</code>)</th><td>Variants relative to a reference (<code>CHROM</code> chromosome, <code>POS</code> position, <code>REF</code> reference allele, <code>ALT</code> alternate allele, <code>GT</code> genotype, <code>DP</code> read depth)</td><td>1-based closed</td><td>Check <code>FILTER</code> (<code>PASS</code>) and read depth before trusting a variant call.</td></tr>
+</tbody></table></div>
+
+<figure class="my-8 bg-white border border-gray-200 rounded-xl p-4 shadow-sm"><img src="../images/tutorial-figures/introduction-to-bioinformatics-formats-flow.svg" alt="Flow diagram connecting FASTA and FASTQ inputs through SAM/BAM alignments and GTF or BED annotations to count matrices, VCF variant tables, and BLAST TSV outputs, highlighting chromosome naming and 0-based versus 1-based coordinate checks" width="960" height="400" loading="lazy" class="w-full h-auto rounded-lg" style="aspect-ratio: 960 / 400;"/><figcaption class="mt-3 text-sm text-gray-600">How raw sequences become analysis tables: verify genome builds, chromosome prefixes (<code>chr1</code> vs. <code>1</code>), and coordinate conventions (0-based BED vs. 1-based GTF/VCF/SAM) at every handoff.</figcaption></figure>
+
+<h2 id="reproducible-workflow">What happens in a reproducible workflow</h2>
+<figure class="my-8 bg-white border border-gray-200 rounded-xl p-4 shadow-sm"><img src="../images/tutorial-figures/bioinformatics-core-roadmap.svg" alt="Four-pillar bioinformatics foundations roadmap: Biological Question and Study Design, Raw and Reference Formats, Reproducible Analysis Code, and Verified Reporting" width="960" height="460" loading="lazy" class="w-full h-auto rounded-lg" style="aspect-ratio: 960 / 460;"/><figcaption class="mt-3 text-sm text-gray-600">Every workflow starts with a biological question and study design before file formats, pipelines, statistical tests, and interpretation.</figcaption></figure>
 <ol class="lesson-steps">
-<li class="lesson-step"><strong>Define the question and design.</strong> State the unit being measured, comparison of interest, biological replicates, and known covariates before choosing a tool.</li>
-<li class="lesson-step"><strong>Check inputs.</strong> Verify file formats, sample identifiers, reference genome or database version, and basic quality summaries. A filename alone does not establish that a file has the expected contents.</li>
-<li class="lesson-step"><strong>Run methods suited to the data.</strong> Record software versions, parameters, and the exact inputs. Use small test data to learn mechanics, but keep synthetic examples distinct from biological evidence.</li>
-<li class="lesson-step"><strong>Inspect outputs and failure signals.</strong> Check logs, sample counts, expected file formats, missing values, and whether results agree with the study design. A program exit code of zero does not establish that the analysis is appropriate.</li>
-<li class="lesson-step"><strong>Interpret with limits.</strong> Relate evidence to the original question and distinguish a statistical association, sequence similarity, or model prediction from a demonstrated biological mechanism.</li>
-<li class="lesson-step"><strong>Preserve the record.</strong> Keep scripts, input provenance, software environment details, parameters, and concise notes under version control or another traceable record. Protect sensitive human data and follow access controls.</li>
+<li class="lesson-step"><strong>Define the question and design.</strong> State the comparison, experimental unit, biological replicates, and covariates before choosing software.</li>
+<li class="lesson-step"><strong>Check inputs.</strong> Keep raw files read-only, verify SHA-256 checksums, confirm sample IDs, and log exact reference and annotation versions.</li>
+<li class="lesson-step"><strong>Run methods in an isolated environment.</strong> Record package versions and parameters, keeping synthetic practice files distinct from biological evidence.</li>
+<li class="lesson-step"><strong>Inspect outputs and failure signals.</strong> Review alignment rates, assigned counts, missing values, and clustering; exit code zero does not validate the biology.</li>
+<li class="lesson-step"><strong>Interpret within limits.</strong> Connect effect sizes back to the design and separate statistical association or sequence similarity from mechanism.</li>
+<li class="lesson-step"><strong>Preserve the record.</strong> Track scripts, environments, and notes in Git, and keep sensitive human data under authorized access controls.</li>
 </ol>
-<aside class="lesson-warning"><strong>Interpretation boundary:</strong> computational output depends on assay design, data quality, reference resources, model assumptions, and thresholds. A strong-looking score or small p-value does not remove those limitations, and no single threshold is valid for every dataset.</aside>
-<h2>Skills and tools to learn</h2>
-<p>Start with command-line navigation, file handling, and text inspection (for example, checking whether chromosome names use <code>chr1</code> vs <code>1</code> between an aligned BAM header and a GTF annotation before counting reads). Tools such as <code>grep</code>, <code>awk</code>, and <code>sed</code> help inspect plain-text headers, while structured formats (BAM/CRAM, VCF, 10x matrices) require format-aware utilities (<code>samtools</code>, <code>bcftools</code>). On shared high-performance computing systems, learn the local scheduler and resource rules from that facility; job commands and limits are system-specific.</p>
-<p>Most lessons here focus on R and Bioconductor for statistical modeling, plotting, and R Markdown reports that keep code alongside prose. Follow the R track first for most analyses; Python panels appear where libraries like Scanpy lead the workflow, and Bash ties command-line tools together reliably without mangling gene IDs or filenames.</p>
-<p>Statistical literacy helps with uncertainty, experimental design, multiple testing, bias, and confounding. Biological knowledge helps assess whether a comparison and interpretation make sense for the organism, assay, and question. Version control, documented environments, and well-organized project directories make analyses easier to inspect and repeat.</p>
-<h2>Example command: what a BLASTP search requires</h2>
-<p>The snippet below illustrates a standard search pattern using NCBI BLAST+ against a local <code>protein.fasta</code> query file. Because NCBI's full <code>nr</code> database spans hundreds of gigabytes, most users start locally with the compact <code>swissprot</code> database (<code>update_blastdb.pl --decompress swissprot</code>) or test small non-sensitive queries with <code>-remote</code>:</p>
-<pre><code class="language-bash"># Option A: compact local curated UniProtKB/Swiss-Prot database (recommended for practice)
+<aside class="lesson-warning"><strong>Interpretation boundary:</strong> computational output depends on design, data quality, reference completeness, model assumptions, and cutoffs. A small p-value or high score does not remove confounding, and no single threshold fits every dataset.</aside>
+
+<h2 id="skills-and-tools">Skills and tools in the order you need them</h2>
+<ol>
+<li><strong>Unix shell and text inspection:</strong> navigate directories and check headers with <code>head</code>, <code>grep</code>, and <code>awk</code> without altering raw files.</li>
+<li><strong>Conda/Mamba environments and format tools:</strong> isolate CLI utilities such as <code>samtools</code>, <code>bcftools</code>, and <code>blast</code> per project.</li>
+<li><strong>R (Bioconductor) or Python for analysis:</strong> this site leads with R, Bioconductor, and R Markdown for modeling and plotting; Python tabs cover ecosystems such as Scanpy.</li>
+<li><strong>Git and workflow engines:</strong> track scripts with Git, and adopt Slurm, Snakemake, or Nextflow once sample counts or RAM outgrow a laptop.</li>
+</ol>
+<p>A two-line header check catches a classic silent failure: Ensembl FASTA files often use <code>1</code>, whereas UCSC or GENCODE GTF files often use <code>chr1</code>:</p>
+<pre><code class="language-bash"># Check chromosome naming in a FASTA reference and a GTF annotation
+echo "=== FASTA sequence names ==="
+grep '^&gt;' ref.fa | head -n 5
+echo "=== GTF chromosome names ==="
+awk '!/^#/ {print $1}' genes.gtf | sort -u | head -n 5</code></pre>
+<p>Expected output on a mismatched pair (executed locally in Bash):</p>
+<pre><code class="language-text">=== FASTA sequence names ===
+&gt;1 chromosome 1
+=== GTF chromosome names ===
+chr1</code></pre>
+<div class="lesson-checkpoint"><strong>Check:</strong> if FASTA headers (or <code>samtools view -H sample.bam</code>) do not match column 1 of your GTF, a read counter will assign zero reads to genes while exiting cleanly. Standardize naming before counting.</div>
+
+<h2 id="blastp-worked-example">Worked example: reading a BLASTP sequence search</h2>
+<p>To test whether an uncharacterized protein in <code>protein.fasta</code> resembles known proteins, NCBI BLAST+ compares it against an indexed database. Because full <code>nr</code> spans hundreds of gigabytes, start locally with curated UniProtKB/Swiss-Prot (<code>update_blastdb.pl --decompress swissprot</code>) or pass <code>-remote</code> for small non-sensitive queries:</p>
+<pre><code class="language-bash"># Option A: local curated UniProtKB/Swiss-Prot database with query coverage (qcovs)
 blastp -query protein.fasta -db swissprot -evalue 1e-5 \
   -outfmt "6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore qcovs" \
   -out results.tsv
 
-# Option B: standard 12-column outfmt 6 against a pre-installed local database
+# Option B: standard 12-column tabular output (-outfmt 6) against a local database
 blastp -query protein.fasta -db nr -evalue 1e-5 -out results.txt -outfmt 6</code></pre>
-<p><code>-query</code> supplies the query FASTA, <code>-db</code> selects the target protein database, <code>-evalue</code> sets the expectation-value reporting threshold, and standard <code>-outfmt 6</code> writes 12 headerless tab-separated columns in fixed order: <code>qseqid</code>, <code>sseqid</code>, <code>pident</code> (% amino-acid identity), <code>length</code> (alignment length), <code>mismatch</code>, <code>gapopen</code>, <code>qstart</code>, <code>qend</code>, <code>sstart</code>, <code>send</code>, <code>evalue</code>, and <code>bitscore</code> (appending <code>qcovs</code> in Option A adds whole-query coverage % as column 13):</p>
+<p>Default <code>-outfmt 6</code> writes 12 headerless tab-separated columns: <code>qseqid</code>, <code>sseqid</code>, <code>pident</code> (% identity), <code>length</code> (aligned columns), <code>mismatch</code>, <code>gapopen</code>, <code>qstart</code>, <code>qend</code>, <code>sstart</code>, <code>send</code>, <code>evalue</code>, and <code>bitscore</code>. Option A appends whole-query coverage % (<code>qcovs</code>) as column 13.</p>
+<p>Example output (illustrative, abbreviated) for a 142-amino-acid query <code>query_prot1</code>:</p>
 <pre><code class="language-text">query_prot1	sp|P69905|HBA_HUMAN	99.3	142	1	0	1	142	1	142	2.1e-98	296	100
-query_prot1	sp|P02144|MYG_HUMAN	27.5	138	92	3	5	141	6	146	4.8e-09	56.2	96</code></pre>
-<p>The E-value estimates the number of alignments with a score at least this high expected by chance in a database of the searched size. Always inspect <strong>alignment length and query coverage</strong> alongside <code>pident</code> and <code>evalue</code>: a 35-residue conserved kinase or zinc-finger domain inside a 600-residue protein can achieve <code>1e-12</code> and <code>85%</code> local identity while covering less than <code>6%</code> of the query, which indicates a shared domain rather than full-length orthology or identical biological function.</p>
-<h2>Build a learning path around a small question</h2>
-<p>Learn the command line and project organization first, then practice R with a small, clearly described dataset. Use a Python tab only when you choose the alternative implementation. Move from file-format and quality checks to one analysis method, and learn statistics and biological interpretation alongside it. Suitable next topics include genome and transcriptome analysis, sequence databases, single-cell methods, and reproducibility. Use public or teaching data whose provenance and reuse terms are clear; do not upload identifiable or controlled human data to services without authorization.</p>
-<section aria-labelledby="planning-exercise" class="lesson-exercise"><h2 id="planning-exercise">Exercise: make a one-page analysis plan</h2>
-<p>Pick one biological question you can state in a single sentence and sketch out the items below before touching data or tools.</p>
-<ol><li>What is the experimental unit, and what data would measure it?</li><li>What samples, comparison, biological replicates, and metadata are needed?</li><li>Which analysis family fits those inputs, and what reference or database does it require?</li><li>Name one quality check and one plausible failure (for example, mismatched sample IDs or unavailable reference files).</li><li>What can the planned result support, and what would require independent evidence?</li></ol>
-<p><strong>Check your plan:</strong> someone else should be able to identify the inputs, comparison, method, one quality check, and a limit on interpretation. If you cannot name those, narrow the question or identify the missing information before running software.</p></section>
+query_prot1	sp|P02144|MYG_HUMAN	27.5	138	94	3	5	141	6	138	4.8e-09	56.2	96</code></pre>
+<p>The E-value estimates how many hits scoring at least this high are expected by chance in a database of that size:</p>
+<ul>
+<li><strong>Hit 1 (<code>sp|P69905|HBA_HUMAN</code>, hemoglobin subunit alpha, 142 aa):</strong> 99.3% identity (141 matches, 1 mismatch, 0 gaps) across 100% of the query (<code>2.1e-98</code>), matching the full protein.</li>
+<li><strong>Hit 2 (<code>sp|P02144|MYG_HUMAN</code>, myoglobin, 154 aa):</strong> 27.5% identity (38 matches, 94 mismatches, 6 gap positions across 3 gap openings) over 96% coverage (<code>4.8e-09</code>). Both are globin superfamily members, but myoglobin (muscle oxygen storage) and hemoglobin alpha (blood oxygen transport) are distinct paralogs, not identical in function.</li>
+</ul>
+<aside class="lesson-warning"><strong>Short-domain E-value trap:</strong> always inspect <code>length</code> and <code>qcovs</code> alongside <code>evalue</code>. A 35-residue kinase or zinc-finger domain inside a 600-residue protein can reach <code>1e-12</code> and <code>85%</code> local identity while covering under <code>6%</code> of the query, indicating one shared domain rather than full-length orthology.</aside>
+
+<h2 id="common-mistakes">Common mistakes and how to fix them</h2>
+<ul>
+<li><strong>Zero reads assigned during RNA-seq counting:</strong> caused by <code>chr1</code> vs. <code>1</code> or build mismatches between BAM and GTF. <em>Fix:</em> check <code>samtools view -H sample.bam</code> against the GTF and use matching release files.</li>
+<li><strong><code>BLAST Database error: No alias or index file found for protein database</code>:</strong> caused by passing a folder, raw <code>.fasta</code>, or <code>.pin</code> extension to <code>-db</code>, or unset <code>$BLASTDB</code>. <em>Fix:</em> run <code>makeblastdb -in my_proteins.fasta -dbtype prot -out my_db</code>, pass only the prefix (<code>-db my_db</code>), or export <code>BLASTDB</code>.</li>
+<li><strong>Treating single cells as independent replicates:</strong> comparing 5,000 cells from 1 control vs. 1 treated donor inflates false positives. <em>Fix:</em> collect multiple donors per condition and test at the donor level.</li>
+<li><strong>Uploading clinical human sequences to public servers:</strong> <code>blastp -remote</code> sends queries over the internet. <em>Fix:</em> query local databases on authorized institutional machines for controlled data.</li>
+</ul>
+
+<h2 id="build-learning-path">Build your learning path on this site</h2>
+<ol>
+<li><a href="computer-data-fundamentals.html">Computer and Data Fundamentals for Biologists</a>: project trees, storage/RAM limits, gzip, and SHA-256 checksums.</li>
+<li><a href="command-line-part1.html">Command-Line Navigation</a> and <a href="command-line-part2.html">Text Processing</a>: inspecting FASTA, FASTQ, and GTF files safely with <code>grep</code>, <code>awk</code>, and <code>sed</code>.</li>
+<li><a href="conda-mamba-part1.html">Conda and Mamba Environments</a>: isolated, reproducible package installation.</li>
+<li><a href="r-tidyverse-fundamentals.html">R and Tidyverse Fundamentals</a> (primary track) or <a href="python-fundamentals-bioinformatics.html">Python Fundamentals for Bioinformatics</a>, then <a href="statistics-for-bioinformatics.html">Statistics for Bioinformatics</a> and <a href="experimental-design-batch-effects.html">Experimental Design and Batch Effects</a>.</li>
+</ol>
+
+<section aria-labelledby="planning-exercise" class="lesson-exercise"><h2 id="planning-exercise">Exercise: write a one-page analysis plan</h2>
+<p>Pick one biological question you can state in one sentence and answer these five prompts before running software:</p>
+<ol><li>What is the experimental unit, and what assay/file format measures it?</li><li>What groups, biological replicates, and covariates belong in the sample sheet?</li><li>Which analysis family fits those inputs, and which reference build is required?</li><li>Name one input QC check and one plausible silent failure (such as <code>chr1</code> vs. <code>1</code> or batch confounding).</li><li>What can the result support, and what requires independent validation?</li></ol>
+<p><strong>Check your plan:</strong> a colleague should see the comparison, replicates, reference, one QC gate, and one explicit limit.</p>
+<details><summary>See a completed example plan (RNA-seq)</summary>
+<ol>
+<li><strong>Unit and assay:</strong> mouse liver samples measured by paired-end bulk RNA-seq (<code>.fastq.gz</code> to gene count matrix).</li>
+<li><strong>Design:</strong> 4 vehicle vs. 4 drug-treated mice (8 biological replicates), balanced for cage and sex, with extraction batch and RNA Integrity Number (RIN) in <code>samples.csv</code>.</li>
+<li><strong>Analysis and reference:</strong> FastQC, alignment/quantification to mouse <code>GRCm39</code> + matching GTF, and DESeq2 modeling treatment + batch.</li>
+<li><strong>QC and silent failure:</strong> verify FASTQ SHA-256 checksums and FASTA/GTF chromosome prefixes; check PCA for batch dominance.</li>
+<li><strong>Interpretive limit:</strong> bulk RNA-seq finds tissue-level transcript associations; cell specificity or causal mechanism requires qPCR, protein assays, or perturbation.</li>
+</ol>
+</details>
+</section>
+
 <aside aria-label="Author's lab note" class="lesson-summary">
 <p><strong>Author's lab note:</strong> Whenever I review a bioinformatics project that feels stuck, the problem is almost never a missing package or slow server. Nine times out of ten, the sample sheet, hypothesis, and negative controls were never written down clearly before running the first command.</p>
 </aside>
-<h2>Further reading</h2>
+
+<h2 id="further-reading">Further reading</h2>
 <ul>
 <li>Altschul SF, Gish W, Miller W, Myers EW, Lipman DJ (1990). Basic local alignment search tool. <em>Journal of Molecular Biology</em>, 215(3), 403-410. <a href="https://doi.org/10.1016/S0022-2836(05)80360-2" rel="noopener" target="_blank">doi:10.1016/S0022-2836(05)80360-2</a></li>
 <li>Camacho C, Coulouris G, Avagyan V, et al. (2009). BLAST+: architecture and applications. <em>BMC Bioinformatics</em>, 10, 421. <a href="https://doi.org/10.1186/1471-2105-10-421" rel="noopener" target="_blank">doi:10.1186/1471-2105-10-421</a></li>
 <li><a href="https://www.ncbi.nlm.nih.gov/books/NBK569856/" rel="noopener" target="_blank">NCBI BLAST+ quick start</a> for query/database requirements and local database setup; the <a href="https://www.ncbi.nlm.nih.gov/books/NBK279684/table/appendices.T.options_common_to_all_blast/" rel="noopener" target="_blank">common-options table</a> documents flags and output formats.</li>
-<li><a href="https://blast.ncbi.nlm.nih.gov/doc/blast-help/FAQ.html" rel="noopener" target="_blank">NCBI BLAST FAQ</a> for E-value interpretation and other search concepts.</li>
-<li><a href="https://www.bioconductor.org/about/" rel="noopener" target="_blank">About Bioconductor</a> for its mission, release model, and genomic analysis resources.</li>
-<li><a href="https://www.ebi.ac.uk/training/online/" rel="noopener" target="_blank">EMBL-EBI on-demand training catalogue</a> for searchable online tutorials and webinars.</li>
+<li><a href="https://blast.ncbi.nlm.nih.gov/doc/blast-help/FAQ.html" rel="noopener" target="_blank">NCBI BLAST FAQ</a> for E-value interpretation and search concepts.</li>
+<li><a href="https://www.bioconductor.org/about/" rel="noopener" target="_blank">About Bioconductor</a> for its semiannual release model synchronized with R and genomic analysis resources.</li>
+<li><a href="https://www.ebi.ac.uk/training/online/" rel="noopener" target="_blank">EMBL-EBI on-demand training catalogue</a> for self-paced online tutorials and webinars.</li>
 </ul>
 <div class="lesson-reference"><strong>Next step guide:</strong> Explore structured bioinformatics tracks across shell foundations, HPC, single-cell, and genomics on the <a href="../start-here.html">Start Here learning path</a>.</div>
 <aside aria-labelledby="tutorial-feedback-title" class="lesson-feedback" id="tutorial-feedback"><h2 id="tutorial-feedback-title">Help improve this tutorial</h2><p>Found an error, a broken link, or a step that needs a clearer explanation? Please <a href="../contact.html">contact me</a>. Your feedback helps me keep this resource accurate and useful.</p></aside></article>
@@ -373,7 +451,7 @@ query_prot1	sp|P02144|MYG_HUMAN	27.5	138	92	3	5	141	6	146	4.8e-09	56.2	96</code>
 </script>
 <script src="../assets/vendor/prism/prism-1.29.0.js"></script>
 <script id="tutorial-code-data">
-window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"introduction-to-bioinformatics":{"blocks":[{"language":"bash","sha256":"11ccc100929948d061ec380b425d105abf786b2295bd2af5a519ab938da9e32f"},{"language":"text","sha256":"dcbc20b714184b450bcf1076204504b83b30ceb225552969b3a2cb6f74bbf710"}],"groups":[]}}};
+window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"introduction-to-bioinformatics":{"blocks":[{"language":"bash","sha256":"2d0573c0f0e708c2aedea459d5c9f9466060ed392ca35c6e94db6e4867b63eec"},{"language":"text","sha256":"d53c79bdf4aa5adb995c85e75252abf92a85247034b5d98aa6f6f88233a0c57e"},{"language":"bash","sha256":"7cc3573a76d512effdd6e03078b4370d5ea28a2fbc8c7cbad02c05d4cb64d9f4"},{"language":"text","sha256":"6a6721f04f2301101fd2165a6ee80903566bae745166e732894dc81a973179ca"}],"groups":[]}}};
 </script>
 <script src="../code-tabs.js?v=20261026-startup-v1"></script>
 <script src="../copy-code.js?v=20261025-r-first-v1"></script>

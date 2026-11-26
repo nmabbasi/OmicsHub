@@ -175,44 +175,83 @@ function toggleMobileMenu() {
 <article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--walkthrough lesson-format--advanced-template"><div class="flex flex-wrap items-center gap-4 text-xs font-mono text-gray-500 bg-gray-50 p-3 rounded-lg border border-gray-200 mb-6">
 <div class="flex items-start gap-2">
 <svg class="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
-<span><strong>Scope:</strong> command examples require local R/package validation before analysis</span>
+<span><strong>Scope:</strong> prepared-input R template (requires local R, JAGS 4.x, and infercnv)</span>
 </div>
 <div class="flex items-start gap-2">
 <svg class="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
 <span>Updated 24 October 2026</span></div>
-</div><p class="lesson-lead">This tutorial is a prepared-input template: it validates the three inferCNV inputs, constructs an R analysis object, and guides inspection of expression patterns without treating them as DNA copy-number measurements.</p>
-<section class="lesson-summary tutorial-learning-contract" data-tutorial-format="advanced-template" aria-label="Learning format"><p><strong>Format: Advanced template.</strong> Designed for single-cell analysts who already have filtered raw UMI counts, confident non-malignant reference cell annotations, and a build-matched gene-ordering file. Prepare those inputs first before running the workflow.</p></section>
-<h2>Learning objectives and prerequisites</h2>
-<p>By the end of this lesson you will be able to:</p>
+</div><p class="lesson-lead">In tumor single-cell RNA-seq (scRNA-seq), transcriptional clustering alone can blur malignant cells with stressed normal tissue. Because gaining or losing a large chromosomal segment shifts the average mRNA expression of dozens of adjacent genes together, <code>inferCNV</code> compares genome-ordered expression in query cells against trusted diploid reference cells to separate broad aneuploid clones from normal cells.</p>
+<section class="lesson-summary tutorial-learning-contract" data-tutorial-format="advanced-template" aria-label="Learning format"><p><strong>Format: Advanced template.</strong> Designed for single-cell analysts who already have filtered raw UMI counts, confident non-malignant reference annotations, and a build-matched gene-ordering table. It validates all three inputs, runs the R <code>infercnv</code> workflow with HMM state calling, scores per-cell CNV burden, and guards against treating RNA shifts as direct DNA measurements.</p></section>
+<div class="lesson-checkpoint" aria-label="Before you start">
+<p><strong>What you will be able to do:</strong> Validate raw counts, cell labels, and chromosome coordinates; install and verify native JAGS 4.x with <code>infercnv</code>; execute the R pipeline (or inspect the Python <code>infercnvpy</code> equivalent); compute a per-cell CNV score against internal diploid controls; and diagnose common baseline artifacts.</p>
+<p><strong>Prerequisites and time:</strong> Completed scRNA-seq QC and cell-type annotation (<a href="cell-type-annotation-methods.html">Choosing and Checking Cell-Type Annotations</a>), R (&gt;= 4.0) with <code>infercnv</code> and JAGS 4.x, and non-malignant reference cells from the same sample or matched normal tissue. Input validation takes ~15 minutes; a full HMM run takes 10-60+ minutes depending on cell count and CPU threads.</p>
+</div>
+<nav aria-label="On this page"><ul><li><a href="#how-infercnv-works">1. How inferCNV works and tool selection</a></li><li><a href="#prepare-inputs">2. Prepare and validate the three inputs</a></li><li><a href="#install-jags">3. Install JAGS 4.x and verify R setup</a></li><li><a href="#run-infercnv">4. Run the inferCNV workflow in R (or Python)</a></li><li><a href="#inspect-results">5. Inspect heatmaps, HMM calls, and CNV scores</a></li><li><a href="#troubleshooting">6. Troubleshooting and practice check</a></li><li><a href="#next-steps">7. Next steps and references</a></li></ul></nav>
+
+<h2 id="how-infercnv-works">1. How inferCNV works and when to use another tool</h2>
+<p>Direct copy-number assays such as whole-genome sequencing (WGS) or single-cell DNA-seq measure chromosomal DNA dosage directly. Standard scRNA-seq measures mRNA transcripts instead, where any single gene varies widely due to transcriptional bursts, cell-cycle state, and dropout. <strong>Copy number variation (CNV)</strong> refers to gains or losses of chromosomal regions. When a tumor cell gains a chromosome arm (three or more copies instead of the normal <strong>diploid</strong> two copies) or loses an arm (one copy), dozens of neighboring genes along that arm tend to shift upward or downward together.</p>
+<p>To expose those broad <strong>aneuploid</strong> (abnormal chromosome copy) patterns above single-gene noise, <code>inferCNV</code> performs three operations in sequence:</p>
+<ol>
+<li><strong>Genome ordering:</strong> Filters out sex and mitochondrial chromosomes by default and sorts remaining genes along autosomes (<code>chr1</code> to <code>chr22</code>) by physical start coordinate.</li>
+<li><strong>Diploid reference subtraction:</strong> Normalizes raw counts, log-transforms them, subtracts the mean expression of designated <strong>reference cells</strong> (for example infiltrating T cells or endothelial cells) to center residuals around <code>0</code> in log space, and later converts back to linear relative expression (<code>2^x</code>) so neutral genes center around <code>1.0</code>.</li>
+<li><strong>Moving-window smoothing and segmentation:</strong> Averages residuals across a sliding block of consecutive genes (<code>window_length = 101</code> by default), applies noise thresholding (<code>denoise = TRUE</code>), and optionally fits a Hidden Markov Model (<code>HMM = TRUE</code>) to segment contiguous gains and losses.</li>
+</ol>
+<figure class="my-8 bg-white border border-gray-200 rounded-xl p-4 shadow-sm"><img src="../images/tutorial-figures/infercnv-copy-number-variation-workflow.svg" alt="Three-step conceptual diagram of inferCNV: Step 1 orders raw UMI counts along chromosomes, Step 2 subtracts trusted diploid reference expression in log space and converts back to a 1.0 linear baseline, and Step 3 applies a 101-gene moving window and JAGS HMM segmentation while flagging contaminated references and focal MHC blocks." width="920" height="422" loading="lazy" class="w-full h-auto rounded-lg" style="aspect-ratio: 920 / 422;"/><figcaption class="mt-3 text-sm text-gray-600">Conceptual workflow of <code>inferCNV</code>: sorting genes by genomic coordinate and averaging across 101-gene windows cancels single-gene noise while exposing broad arm-scale gains and losses.</figcaption></figure>
+
+<div class="lesson-decision">
+<h3>Choosing an scRNA-seq CNV inference tool</h3>
+<div class="lesson-table-wrap" role="region" aria-label="Scrollable CNV tool comparison" tabindex="0"><table><caption>Comparison of scRNA-seq CNV callers by input requirement and analytical goal</caption><thead><tr><th scope="col">Tool</th><th scope="col">Required input</th><th scope="col">Strengths</th><th scope="col">When to choose another method</th></tr></thead><tbody><tr><th scope="row"><code>infercnv</code> (R / Bioconductor)</th><td>Raw unnormalized counts, cell labels, gene coordinates</td><td>JAGS-based 3-state (<code>i3</code>) or 6-state (<code>i6</code>) HMM calls, subcluster tree partitioning, detailed stage objects</td><td>Slow on &gt;20,000 cells without reference subsampling and multi-threading</td></tr><tr><th scope="row"><code>infercnvpy</code> (Python)</th><td>Log-normalized <code>adata.X</code>, coordinates in <code>adata.var</code></td><td>Fast Scanpy/AnnData integration, built-in <code>cnv_score()</code> and Leiden clustering on <code>X_cnv</code></td><td>Does not include the JAGS Bayesian HMM state model</td></tr><tr><th scope="row"><code>Numbat</code> (R)</th><td>Raw counts + aligned BAMs for SNP allele frequencies</td><td>Combines expression with haplotype-phased B-allele frequency (BAF); detects copy-neutral LOH</td><td>Requires aligned BAM/pileup access and SNP phasing</td></tr><tr><th scope="row"><code>CopyKAT</code> / <code>SCEVAN</code> (R)</th><td>Raw UMI count matrix</td><td>Identifies diploid baseline cells automatically when normal annotations are uncertain</td><td>Still expression-derived; validate calls against canonical cell-type markers</td></tr></tbody></table></div>
+</div>
+
+<h2 id="prepare-inputs">2. Prepare and validate the three input files</h2>
+<p>This template assumes you have already removed empty droplets, low-quality cells, and obvious doublets, and placed three prepared files in your working directory:</p>
 <ul>
-<li>Validate prepared raw counts, cell annotations, and assembly-matched gene ordering, including the degree of gene overlap.</li>
-<li>Create an inferCNV object and run the core pipeline in R with reproducible commands.</li>
-<li>Locate and critically inspect the run heatmap and available outputs, while understanding caveats that prevent over-interpretation.</li>
-<li>Recognize common failure modes and apply practical troubleshooting steps.</li>
+<li><code>counts_matrix.rds</code>: raw, unnormalized integer counts (genes as rows, cell barcodes as columns, stored as a base <code>matrix</code> or sparse <code>dgCMatrix</code>). <strong>Never</strong> pass log-normalized or z-scored values to R <code>infercnv</code>; it performs its own total-sum normalization and log2 scaling.</li>
+<li><code>cell_annotations.tsv</code>: tab-delimited table with header columns <code>cell_id</code> and <code>cell_type</code>. Every <code>cell_id</code> must match a column name in <code>counts_matrix.rds</code>.</li>
+<li><code>gene_ordering.tsv</code>: tab-delimited table with header columns <code>gene_symbol</code>, <code>chromosome</code>, <code>start</code>, and <code>end</code> from one declared genome assembly (for example GRCh38/hg38 or GRCh37/hg19). Identifiers in <code>gene_symbol</code> must match the row names of <code>counts_matrix.rds</code> (HGNC symbols or Ensembl IDs, without mixing).</li>
 </ul>
-<p>Prerequisites:</p>
+<div class="lesson-columns">
+<div>
+<p><strong>Example <code>cell_annotations.tsv</code>:</strong></p>
+<pre><code class="language-text">cell_id	cell_type
+CELL_001	T_cell
+CELL_002	Endothelial
+CELL_003	Malignant_like
+CELL_004	Malignant_like</code></pre>
+</div>
+<div>
+<p><strong>Example <code>gene_ordering.tsv</code> (GRCh38):</strong></p>
+<pre><code class="language-text">gene_symbol	chromosome	start	end
+NOC2L	chr1	943527	960714
+EGFR	chr7	55019017	55211628
+PTEN	chr10	87863625	87971930</code></pre>
+</div>
+</div>
+<div class="lesson-warning">
+<p><strong>Three input traps that silently corrupt heatmaps:</strong></p>
 <ul>
-<li>Completed basic single-cell RNA-seq (scRNA-seq) workflows: quality control, normalization, integration, clustering, and cell-type annotation.</li>
-<li>Familiarity with R (&gt;= 4.0 recommended) and a working install of the inferCNV package (see References).</li>
-<li>Access to non-malignant reference cells within the same sample or a matched normal sample; using unrelated clinical samples as references is discouraged.</li>
+<li><strong>Chromosome naming mismatch:</strong> <code>CreateInfercnvObject()</code> defaults to <code>chr_exclude = c("chrX", "chrY", "chrM")</code>. If your coordinates use Ensembl chromosome names (<code>X</code>, <code>Y</code>, <code>MT</code>), pass <code>chr_exclude = c("X", "Y", "MT")</code> explicitly so sex-linked and mitochondrial genes do not appear as artificial blocks.</li>
+<li><strong>Alphabetical chromosome sorting:</strong> Standard lexical sorting places <code>chr10</code> right after <code>chr1</code>. Order <code>gene_ordering.tsv</code> in natural chromosome order (<code>chr1</code>, <code>chr2</code>, ..., <code>chr22</code>) and ascending <code>start</code> coordinate before running.</li>
+<li><strong>Single or contaminated reference group:</strong> Select at least two independent normal lineages (such as <code>T_cell</code> and <code>Endothelial</code>) from the same sample when possible. Including misannotated tumor cells inside <code>ref_group_names</code> subtracts real CNVs from the baseline and creates mirror-image artifacts in normal cells.</li>
 </ul>
-<h2>Context: why infer CNVs from scRNA-seq?</h2>
-<p>Copy number variation (CNV) refers to gains and losses of chromosomal segments and is a hallmark of many cancers. Direct measurement of CNV requires DNA-based assays (e.g., whole-genome sequencing, shallow WGS, or single-cell DNA-seq). However, broad CNV events often change the aggregate expression of genes across genomic regions. inferCNV is an R package that leverages single-cell transcriptomes to infer large-scale CNV patterns by comparing expression in "query" cells to a set of "reference" (presumed diploid) cells. This makes inferCNV useful for prioritising putative malignant or aneuploid populations in tumors, or for exploring chromosomal perturbations in heterogeneous tissues.</p>
-<p>Important conceptual points:</p>
-<ul>
-<li>inferCNV infers broad-scale (megabase-level) copy number changes rather than precise small focal events.</li>
-<li>It is an expression-based, not DNA-based, method: differences in expression programs, cell cycle, or sample composition can create patterns that mimic CNV.</li>
-<li>Reference selection is the most critical factor: if the reference set contains cells with copy-number lesions, inferences will be biased.</li>
-</ul>
-<h2>Reproducible workflow</h2>
-<p>This is a run template, not an end-to-end reproducible dataset: it requires three prepared files and does not download or construct them. Before running, set the working directory to the folder containing those files, verify the identifier and genome-assembly contract below, and use the official <a href="https://github.com/broadinstitute/inferCNV/wiki/File-Definitions">file definitions</a> to prepare missing inputs. The commands read inputs and write files in that directory.</p>
-<p>Check the installed R and package versions before analysis with <code>R --version</code> and, in R, <code>packageVersion("infercnv")</code>. The examples assume raw, unnormalized gene-by-cell counts; do not substitute normalized or scaled expression. Record these versions with the assembly and identifier mapping.</p>
-<h3>Install and verify the JAGS prerequisite</h3>
-<p>The R package needs native <strong>JAGS 4.x</strong> as well as the R binding <code>rjags</code>. Installing R packages alone does not install JAGS. With R and its build tools already configured, Ubuntu 24.04 users can install JAGS in a terminal:</p>
-<pre><code>sudo apt-get update
+</div>
+<p>Before opening R, run a fast shell check on your two TSV tables to catch malformed coordinates, duplicate gene IDs, or tiny reference groups:</p>
+<pre><code class="language-bash">awk -F'\t' 'NR&gt;1 {if (NF!=4 || $3+0&lt;1 || $3+0&gt;$4+0) bad++; seen[$1]++}
+  END {for (g in seen) if (seen[g]&gt;1) dup++;
+       printf "Genes: %d | Bad coords: %d | Duplicate IDs: %d\n", NR-1, bad+0, dup+0}' gene_ordering.tsv
+awk -F'\t' 'NR&gt;1 {counts[$2]++} END {for (c in counts) printf "%s\t%d\n", c, counts[c]}' cell_annotations.tsv | sort</code></pre>
+<p><strong>Observed output</strong> (executed locally on the 3-gene and 4-cell example tables above):</p>
+<pre><code class="language-text">Genes: 3 | Bad coords: 0 | Duplicate IDs: 0
+Endothelial	1
+Malignant_like	2
+T_cell	1</code></pre>
+
+<h2 id="install-jags">3. Install JAGS 4.x and verify R setup</h2>
+<p>The R package requires the native <strong>JAGS 4.x</strong> library as well as the R package <code>rjags</code>. Installing R packages alone does not install the system JAGS binary. On Ubuntu 24.04, install JAGS first in a terminal (for macOS or Windows, follow the <a href="https://github.com/broadinstitute/inferCNV/wiki/Installing-infercnv" rel="noopener" target="_blank">official inferCNV installation guide</a>):</p>
+<pre><code class="language-bash">sudo apt-get update
 sudo apt-get install jags</code></pre>
-<p>On other operating systems, use the <a href="https://github.com/broadinstitute/inferCNV/wiki/Installing-infercnv">official installation instructions</a> to install JAGS first. Then run this separate setup step in the R environment you will use for analysis. Bioconductor selects the release matching your R version; <code>update=FALSE</code> avoids a blanket update of existing packages.</p>
-<pre><code># Setup only: do this before opening the analysis script below.
+<p>Next, run this one-time setup check inside the R environment you will use for analysis. Passing <code>update = FALSE</code> prevents unintended upgrades across existing Bioconductor libraries:</p>
+<pre><code class="language-r"># Setup only: do this before opening the analysis script below.
 if (!requireNamespace("BiocManager", quietly = TRUE)) {
     install.packages("BiocManager", repos = "https://cloud.r-project.org")
 }
@@ -222,18 +261,14 @@ missing &lt;- needed[!vapply(needed, requireNamespace, logical(1), quietly = TRU
 if (length(missing)) stop("Setup incomplete: ", paste(missing, collapse = ", "))
 message("JAGS: ", as.character(rjags::jags.version()))
 message("infercnv: ", as.character(packageVersion("infercnv")))</code></pre>
-<p>Proceed only when both packages load and the native JAGS version prints. R package installers can print compilation warnings without throwing an error, so always load the packages and check JAGS directly before starting an analysis. Keep setup and analysis in the same R library/environment.</p>
-<h3>Verified execution and limits</h3>
-<p>The original R route was executed on Ubuntu 24.04.4 with R 4.3.3, infercnv 1.18.1 and JAGS 4.3.2 using 170 genuine public cells from a CELLxGENE-curated <a href="https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE84465">GSE84465</a> subset and 20,374 exact GRCh37 gene matches. The run retained 14,319 genes and all 170 cells, with HMM and denoising enabled. The returned object was reloaded in a fresh R process; gene coordinates, cell identities, HMM report links and opaque white-background heatmaps were checked. Reference labels, input paths and a two-thread limit were adapted for this bounded test.</p>
-<p>This is software-execution evidence, not DNA or clinical validation. The input is a Smart-seq2 GBM subset: <code>cutoff=0.1</code> was retained to test the displayed template, not established as the appropriate threshold for these full-length data. Choose the assay-appropriate cutoff before your own analysis. Candidate reference labels were not independently verified as diploid. Setup reused existing R libraries, so this was not a fresh whole-stack installation or a test of inferCNV on other operating systems or hardware.</p>
-<h3>Required files (inputs)</h3>
-<ul>
-<li>Raw counts matrix in R format or as an on-disk matrix: counts_matrix.rds (genes x cells). Name rows with consistent gene identifiers, such as approved HGNC symbols or stable Ensembl IDs; use exactly matching identifiers in the gene-ordering file.</li>
-<li>Cell annotations: a table with <code>cell_id</code> and <code>cell_type</code> columns, one row per cell. IDs must match the count-matrix column names; the package input written below is headerless.</li>
-<li>Gene ordering: gene_ordering.tsv with gene, chromosome, start, and end coordinates from a declared assembly (the example metadata table has headers). Use the same gene identifiers as the count-matrix row names and document the source, assembly, and any identifier conversion; only overlapping genes are analyzed.</li>
-</ul>
-<h3>Example R session</h3>
-<pre><code># Start R in the directory containing the three prepared input files.
+<p><strong>Example output (illustrative):</strong></p>
+<pre><code class="language-text">JAGS: 4.3.2
+infercnv: 1.18.1</code></pre>
+<p><strong>Stop-and-fix check:</strong> If <code>rjags</code> fails during installation with <code>configure: error: "JAGS library not found"</code> or fails to load, the native JAGS binary is missing or not on your <code>PATH</code>/<code>PKG_CONFIG_PATH</code>. Install JAGS 4.x first, then reinstall <code>rjags</code> before continuing.</p>
+
+<h2 id="run-infercnv">4. Run the inferCNV workflow in R (or Python)</h2>
+<p>Start R in the directory holding your three prepared files. Notice two safety checks in the script below: it validates sparse <code>dgCMatrix</code> values directly via <code>counts@x</code> (avoiding memory blowups from evaluating millions of zeroes on &gt;20,000-cell datasets), and it refuses to write into a non-empty output directory because <code>infercnv::run()</code> resumes from intermediate checkpoint files if old stage objects are present.</p>
+<pre><code class="language-r"># Start R in the directory containing the three prepared input files.
 # Do not install inside this analysis script; follow official Bioconductor
 # installation instructions, then record R.version.string and packageVersion().
 stopifnot(requireNamespace("infercnv", quietly = TRUE))
@@ -246,13 +281,14 @@ counts &lt;- readRDS("counts_matrix.rds")             # gene x cell matrix (raw 
 annotations &lt;- read.delim("cell_annotations.tsv", header=TRUE, stringsAsFactors=FALSE)
 gene_order &lt;- read.delim("gene_ordering.tsv", header=TRUE, stringsAsFactors=FALSE)
 
-# Check cell IDs and coordinate metadata before writing headerless package inputs.
+# Check cell IDs, raw integer counts, and coordinate metadata before writing inputs.
 stopifnot(!anyDuplicated(colnames(counts)), !anyDuplicated(annotations$cell_id))
 stopifnot(setequal(colnames(counts), annotations$cell_id))
 stopifnot(all(c("cell_id", "cell_type") %in% names(annotations)))
 stopifnot(!anyNA(annotations$cell_type), all(nzchar(annotations$cell_type)))
 stopifnot(is.matrix(counts) || inherits(counts, "Matrix"))
-stopifnot(all(is.finite(counts)), all(counts >= 0), all(counts == floor(counts)))
+count_vals &lt;- if (inherits(counts, "dgCMatrix")) counts@x else as.numeric(counts)
+stopifnot(all(is.finite(count_vals)), all(count_vals &gt;= 0), all(count_vals == floor(count_vals)))
 stopifnot(all(c("gene_symbol", "chromosome", "start", "end") %in% names(gene_order)))
 stopifnot(!anyDuplicated(gene_order$gene_symbol))
 stopifnot(!anyNA(gene_order$gene_symbol), all(nzchar(gene_order$gene_symbol)))
@@ -269,23 +305,18 @@ if (length(unmatched_genes) &gt; 0L) {
     print(utils::head(unmatched_genes, 10))
     warning("Unmatched count genes remain: review the reported IDs and document exclusions before analysis")
 }
-# Review chromosome distribution and why genes are absent before continuing.
-# Neither the overlap percentage nor a fixed gene count establishes adequate
-# genomic coverage or biological validity; no universal cutoff is imposed here.
 
-# 2) Write annotation file required by inferCNV (if not already in file form)
-# inferCNV expects cell_id and group, without a header row.
+# 2) Write headerless annotation file expected by inferCNV.
 write.table(annotations[,c("cell_id","cell_type")],
             file="infercnv_annotations.tsv", sep="\t", quote=FALSE, row.names=FALSE, col.names=FALSE)
 
-# 3) Write gene ordering file in inferCNV expected format:
-# headerless columns: gene, chromosome, start, end
+# 3) Write headerless gene ordering file: gene, chromosome, start, end.
 write.table(gene_order[,c("gene_symbol","chromosome","start","end")],
             file="infercnv_gene_ordering.tsv", sep="\t", quote=FALSE, row.names=FALSE, col.names=FALSE)
 
 # 4) Create the inferCNV object.
-# Choose reference groups: names in 'cell_type' that represent normal/diploid cells
-reference_groups &lt;- c("T_cell","B_cell","Endothelial")  # example; adjust to your annotations
+# Choose reference groups: non-malignant diploid cell types in 'cell_type'.
+reference_groups &lt;- c("T_cell","B_cell","Endothelial")  # adjust to your annotations
 
 infercnv_obj &lt;- CreateInfercnvObject(
     raw_counts_matrix = counts,
@@ -296,8 +327,8 @@ infercnv_obj &lt;- CreateInfercnvObject(
 )
 
 # 5) Run inferCNV.
-# - cutoff: 0.1 for droplet-based 10x (sparse); 1 for Smart-seq2-like full-length counts.
-# - out_dir: path to write outputs (creates directory if needed).
+# - cutoff: 0.1 for sparse 10x UMI counts; 1 for Smart-seq2 full-length counts.
+# - out_dir: must be empty so old checkpoint objects are never reused.
 out_dir &lt;- "infercnv_output"
 if (dir.exists(out_dir) &amp;&amp; length(list.files(out_dir, all.files = TRUE, no.. = TRUE))) {
     stop("Choose an empty output directory for a new run; do not mix old and new results")
@@ -347,60 +378,53 @@ for (path in hmm_reports) {
     message(basename(path), ": ", nrow(report), " reported regions")
 }
 writeLines(capture.output(sessionInfo()), file.path(out_dir, "session-info.txt"))
-print(list.files(out_dir, recursive = TRUE))
-# Inventory is not proof of completion. Inspect the heatmap and reports below.
-</code></pre>
-<p>Notes on parameters:</p>
-<ul>
-<li>cutoff: filters genes by mean counts across cells. The Broad workflow documentation suggests 0.1 for sparse droplet counts and 1 for Smart-seq-like data; treat these as starting points, not universal thresholds.</li>
-<li>denoise: enables inferCNV denoising procedures. Inspect the preliminary and processed views; whether denoising helps depends on the data and chosen filters.</li>
-<li>HMM: runs an optional Hidden Markov Model to assign discrete copy-number states. Treat HMM outputs as smoothed calls, not definitive DNA copy numbers.</li>
-<li>Runtime and sparse-matrix tips: on large <code>dgCMatrix</code> objects (&gt;20,000 cells), validate stored non-zero entries directly (<code>counts@x</code>) rather than evaluating dense matrix comparisons across zeroes, set <code>num_threads</code> in <code>infercnv::run()</code> to match your allocated CPU cores, and consider subsampling oversized normal reference clusters (for example 500-1,000 high-quality T/B/endothelial cells per patient) to bound JAGS HMM runtime.</li>
-</ul>
-<h3>Alternative: infercnvpy in Python</h3>
-<pre><code># infercnvpy is a distinct Python implementation. Unlike the R workflow above,
-# its documented input is normalized, log-transformed expression.
-# This is an API sketch, not a runnable preparation recipe: adata must already
-# contain filtered cells and normalized, log-transformed X, coordinate columns
-# in adata.var, and cell labels in adata.obs. See the official input guide:
-# https://infercnvpy.readthedocs.io/en/latest/infercnv.html
+print(list.files(out_dir, recursive = TRUE))</code></pre>
 
+<h3>Key <code>infercnv::run()</code> parameters and scaling guidance</h3>
+<div class="lesson-table-wrap" role="region" aria-label="Scrollable infercnv parameter table" tabindex="0"><table><caption>Core infercnv::run() options, defaults, and when to adjust them</caption><thead><tr><th scope="col">Parameter</th><th scope="col">Default / starting value</th><th scope="col">Purpose and adjustment rule</th></tr></thead><tbody><tr><th scope="row"><code>cutoff</code></th><td><code>0.1</code> (10x) or <code>1</code> (Smart-seq2)</td><td>Minimum mean count per gene across cells. Dropping below <code>0.1</code> on sparse 10x data floods windows with zero-inflated genes; <code>1</code> avoids noisy low-depth genes in deeper full-length libraries.</td></tr><tr><th scope="row"><code>window_length</code></th><td><code>101</code></td><td>Number of consecutive genes per moving window. Widen (for example <code>151</code>) if noisy spikes dominate; narrow only on dense, high-depth datasets.</td></tr><tr><th scope="row"><code>analysis_mode</code></th><td><code>"samples"</code> (or <code>"subclusters"</code>)</td><td><code>"samples"</code> models each annotation group together; <code>"subclusters"</code> partitions heterogeneous tumor groups via <code>tumor_subcluster_partition_method</code> (such as <code>"leiden"</code> or <code>"random_trees"</code>) before HMM calling.</td></tr><tr><th scope="row"><code>denoise</code> &amp; <code>sd_amplifier</code></th><td><code>TRUE</code>, <code>1.5</code></td><td>Shrinks residual values near <code>1.0</code> within <code>sd_amplifier</code> standard deviations of the reference noise floor. Increase <code>sd_amplifier</code> (for example <code>2.0</code>) if background noise remains speckled.</td></tr><tr><th scope="row"><code>HMM_type</code> &amp; <code>BayesMaxPNormal</code></th><td><code>"i6"</code>, <code>0.5</code></td><td><code>"i6"</code> calls 6 states (0x to &gt;3x copies); <code>"i3"</code> calls loss/neutral/gain. <code>BayesMaxPNormal</code> filters predicted regions whose posterior probability of being normal exceeds the threshold (lower = stricter).</td></tr><tr><th scope="row"><code>num_threads</code></th><td><code>4</code></td><td>Match allocated CPU cores. On large cohorts (&gt;20,000 cells), also subsample oversized normal clusters to 500-1,000 high-QC cells per normal lineage to bound JAGS HMM runtime.</td></tr></tbody></table></div>
+
+<div class="lesson-result">
+<p><strong>Verified execution note (software check, not clinical validation):</strong> The R route above was executed on Ubuntu 24.04.4 with R 4.3.3, <code>infercnv</code> 1.18.1, and JAGS 4.3.2 using 170 genuine public cells from a CELLxGENE-curated <a href="https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE84465" rel="noopener" target="_blank">GSE84465</a> Smart-seq2 glioblastoma subset and 20,374 GRCh37 gene matches. The run retained 14,319 genes across all 170 cells with <code>denoise = TRUE</code> and <code>HMM = TRUE</code>, and the reloaded <code>returned_final_infercnv.rds</code> object passed all coordinate, cell-identity, and HMM report schema assertions. Because <code>cutoff = 0.1</code> was retained specifically to test the displayed template rather than tuned for Smart-seq2, and candidate reference labels were not independently verified as diploid, treat this as execution verification of the code rather than biological proof.</p>
+</div>
+
+<h3>Python alternative: <code>infercnvpy</code> on AnnData</h3>
+<p>Unlike R <code>infercnv</code>, the Python package <code>infercnvpy</code> expects <strong>normalized, log-transformed</strong> expression in <code>adata.X</code> and genomic coordinates (<code>chromosome</code>, <code>start</code>, <code>end</code>) in <code>adata.var</code>. Populate coordinates with <code>cnv.io.genomic_position_from_gtf()</code> or <code>cnv.io.genomic_position_from_biomart()</code> before running:</p>
+<pre><code class="language-python"># API sketch for Python / Scanpy workflows (requires log-normalized adata.X
+# and chromosome, start, end columns in adata.var).
 import infercnvpy as cnv
 
-# Inputs:
-# adata: filtered AnnData with normalized, log-transformed expression in X
-# reference_cat: list of cell-type names to use as diploid reference
 cnv.tl.infercnv(
     adata,
     reference_key="cell_type",
     reference_cat=["T_cell", "B_cell", "Endothelial"],
-    window_size=100
+    window_size=100,
+    step=10,
 )
 
-# With inplace=True (the default), results are stored at adata.obsm["X_cnv"].
-# Confirm the installed version and coordinate metadata before downstream use.
-cnv_matrix = adata.obsm["X_cnv"]
-</code></pre>
-<h2>How to inspect the results</h2>
-<p>Primary outputs to inspect in the inferCNV output directory:</p>
+# Compute CNV PCA and neighborhood graph, then cluster, score (defaults to groupby="cnv_leiden"), and plot
+cnv.tl.pca(adata)
+cnv.pp.neighbors(adata)
+cnv.tl.leiden(adata)
+cnv.tl.cnv_score(adata)
+cnv.pl.chromosome_heatmap(adata, groupby="cnv_leiden")</code></pre>
 
-<figure class="my-8 bg-white border border-gray-200 rounded-xl p-4 shadow-sm"><img src="../images/tutorial-figures/infercnv-chr-profile.png" alt="Genome-ordered relative expression deviation profile comparing diploid baseline and synthetic clone across chr1-chr22" width="1560" height="840" loading="lazy" class="w-full h-auto rounded-lg" style="aspect-ratio: 1560 / 840;"/><figcaption class="mt-3 text-sm text-gray-600">Illustrative simulated benchmark (synthetic chromosome coordinates, zero patient data): sustained multi-gene arm gains (>1.15) and deletions (<0.85) stand out above diploid transcriptional noise.</figcaption></figure>
+<h2 id="inspect-results">5. Inspect heatmaps, HMM calls, and per-cell CNV scores</h2>
+<p>Once <code>infercnv::run()</code> finishes, check both the visual heatmaps and the numerical HMM region tables in <code>infercnv_output/</code>:</p>
 <ul>
-<li>The documented final heatmap is commonly named <code>infercnv.png</code>; the preliminary view is <code>infercnv.preliminary.png</code>. Read the plot labels and package version when interpreting axes and colors.</li>
-<li>If HMM prediction is enabled, inspect its generated files using the installed version documentation. These are model-derived states, not direct measurements of DNA dosage.</li>
-<li>InferCNV also saves stage-specific R objects and text matrices; consult the output directory and package documentation rather than relying on an assumed filename.</li>
+<li><code>infercnv.preliminary.png</code> and <code>infercnv.png</code>: preliminary (pre-denoising) and final smoothed heatmaps. Rows are cells grouped by annotation (references on top, observations below) and columns are genes ordered from <code>chr1</code> to <code>chr22</code>. Values center around <code>1.0</code> (white = neutral, red &gt; <code>1.0</code> = putative gain, blue &lt; <code>1.0</code> = putative loss).</li>
+<li><code>*.pred_cnv_regions.dat</code>: HMM region predictions listing each cell group, chromosome interval, and integer state. Under the default <code>"i6"</code> model: <code>1</code> = complete loss, <code>2</code> = loss of one copy, <code>3</code> = neutral diploid, <code>4</code> = gain of one copy, <code>5</code> = gain of two copies, <code>6</code> = &gt;2 extra copies. Under <code>"i3"</code>: <code>1</code> = loss, <code>2</code> = neutral, <code>3</code> = gain.</li>
 </ul>
-<p>The verification block inspects the returned object and verifies HMM region columns directly. Remember that zero retained regions can be a valid outcome after neutral-state filtering or stringent posterior thresholds, so inspect both unfiltered and filtered outputs alongside the log before assuming a run failed.</p>
-<p>Start every fresh run in a clean empty output directory rather than pointing inferCNV at leftover files from an earlier attempt.</p>
-<p>What to look for:</p>
-<ul>
-<li>Look for broad, contiguous expression shifts across genes in genomic order. A regional pattern is a candidate signal to investigate, not a CNV call by itself.</li>
-<li>Ask whether a broad pattern recurs across cells and is compatible with the reference and sample design. Shared expression patterns can still arise from cell state or other confounding, so they do not establish clonality.</li>
-<li>Compare HMM states with continuous heatmap patterns where both are present. Agreement is a consistency check within related model outputs, not independent validation; disagreement warrants review of assumptions and parameters.</li>
-</ul>
-<h3>Quantifying a per-cell CNV burden score against the diploid reference</h3>
-<p>In addition to visual inspection of <code>infercnv.png</code> (where, for example, IDH-wildtype glioblastoma cohorts such as Darmanis et al. <code>GSE84465</code> classically exhibit coordinated chromosome 7 gain paired with chromosome 10 loss in neoplastic cells while immune/vascular reference rows stay neutral), summarize each cell's genome-wide deviation from the neutral baseline in <code>final_check@expr.data</code> and compare observation groups against the reference distribution:</p>
-<pre><code class="language-r"># Compute per-cell mean-squared CNV deviation from the neutral baseline (typically 1.0)
+<p><strong>Example HMM region output (abbreviated, illustrative format):</strong></p>
+<pre><code class="language-text">cell_group_name	cnv_name	state	chr	start	end
+observations.Malignant_like	chr7-region_1	4	chr7	54120	159138663
+observations.Malignant_like	chr10-region_2	2	chr10	93142	133797422</code></pre>
+<p>Remember that zero retained regions can be a valid outcome after neutral-state filtering or stringent <code>BayesMaxPNormal</code> thresholds, so inspect both unfiltered HMM outputs and the continuous <code>infercnv.png</code> heatmap before assuming a run failed.</p>
+
+<figure class="my-8 bg-white border border-gray-200 rounded-xl p-4 shadow-sm"><img src="../images/tutorial-figures/infercnv-chr-profile.png" alt="Genome-ordered relative expression deviation profile comparing diploid baseline and synthetic clone across chr1-chr22" width="1560" height="840" loading="lazy" class="w-full h-auto rounded-lg" style="aspect-ratio: 1560 / 840;"/><figcaption class="mt-3 text-sm text-gray-600">Illustrative simulated benchmark (synthetic chromosome coordinates, zero patient data): sustained multi-gene arm gains (&gt;1.15) and deletions (&lt;0.85) stand out above diploid transcriptional noise.</figcaption></figure>
+
+<h3>Quantify per-cell CNV burden against internal diploid controls</h3>
+<p>Visual heatmaps show arm structure, while a per-cell CNV score summarizes how far each cell deviates from the internal reference baseline across the genome. For example, in IDH-wildtype glioblastoma cohorts such as Darmanis et al. (<code>GSE84465</code>), neoplastic cells classically pair chromosome 7 gain with chromosome 10 loss while infiltrating immune and vascular cells stay near <code>1.0</code>. Compare every observation cluster against quantiles (such as the median and 99th percentile) of your internal reference cells, and always stratify summaries by sample or patient:</p>
+<pre><code class="language-r"># Compute per-cell mean-squared CNV deviation from the neutral baseline (centered near 1.0)
 expr_mat &lt;- final_check@expr.data
 neutral_center &lt;- stats::median(expr_mat[, unlist(final_check@reference_grouped_cell_indices), drop = FALSE])
 cnv_score &lt;- colMeans((expr_mat - neutral_center)^2)
@@ -411,100 +435,46 @@ score_df &lt;- data.frame(
   cell_type = annotations$cell_type[match(names(cnv_score), annotations$cell_id)],
   is_reference = annotations$cell_type[match(names(cnv_score), annotations$cell_id)] %in% reference_groups
 )
-# Compare candidate malignant clusters against the 95th/99th percentile of diploid reference cells
+# Compare candidate malignant clusters against the 99th percentile of internal reference cells
 ref_q99 &lt;- stats::quantile(score_df$cnv_msq[score_df$is_reference], probs = 0.99, na.rm = TRUE)
 print(aggregate(cnv_msq ~ cell_type + is_reference, data = score_df, FUN = stats::median))
 message("99th percentile of diploid reference CNV score: ", round(ref_q99, 5))</code></pre>
-<p>A global CNV burden score flags high-aneuploidy clusters relative to internal normal cells, though diploid or near-diploid tumors (such as many acute leukemias or pediatric cancers driven by balanced translocations) will score near the reference distribution and require fusion, mutation, or allele-specific BAF callers (such as <code>Numbat</code> when BAMs are available).</p>
-<p>How to interpret candidate CNV blocks:</p>
+<p><strong>How to interpret CNV scores responsibly:</strong></p>
 <ul>
-<li>Large contiguous amplifications or deletions spanning many neighboring genes alongside malignant markers help prioritize clusters for DNA validation.</li>
+<li><strong>High <code>cnv_msq</code> is a candidate signal, not proof of malignancy:</strong> Check whether the elevation comes from broad whole-arm blocks across multiple chromosomes rather than a single localized gene cluster (such as chr6p MHC or immunoglobulin loci) or cell-cycle genes.</li>
+<li><strong>Near-diploid tumors score near the baseline:</strong> Many acute leukemias, pediatric tumors, and fusion-driven sarcomas have few or no large arm-level CNVs. A low CNV score does not rule out malignancy; pair expression analysis with mutation/fusion calling or haplotype-aware BAF methods (<code>Numbat</code>) when BAMs are available.</li>
+<li><strong>Focal events and balanced rearrangements:</strong> Single-exon deletions, focal amplifications narrower than the smoothing window, and balanced translocations fall below moving-window resolution and require DNA sequencing or FISH.</li>
 </ul>
-<p>Interpretation limits:</p>
-<ul>
-<li>Expression smoothing infers relative RNA dosage shifts, not direct DNA copy number; cell-cycle programs, lineage-specific loci (such as MHC or immunoglobulins), or non-diploid reference cells can mimic copy-number arms.</li>
-<li>Focal single-gene events and balanced translocations fall below moving-window resolution and require targeted DNA sequencing or FISH.</li>
-</ul>
-<h2>Troubleshooting</h2>
-<p>Below are common symptoms, likely causes, and practical fixes.</p>
-<h3>Symptom: No clear signal (noisy or flat heatmap)</h3>
-<ul>
-<li>Possible causes:
-    <ul>
-<li>Reference groups contain contaminated or aneuploid cells (non-diploid).</li>
-<li>Too aggressive filtering of genes removed informative genes.</li>
-<li>Incorrect gene ordering or mismatched genome build (e.g., gene symbols matched to different coordinates).</li>
-<li>cutoff parameter too high for sparse data.</li>
-</ul>
-</li>
-<li>Fixes:
-    <ul>
-<li>Confirm reference groups are high-confidence normal cells (e.g., stromal or immune cells not expected to be malignant). If unsure, restrict to well-characterised cell subsets.</li>
-<li>Check the gene_ordering file for completeness and that gene symbols match rownames(counts). Use Ensembl-to-HGNC mapping if necessary.</li>
-<li>Check whether the chosen cutoff excludes too many genes, using the installed version documentation as a guide. A run with <code>HMM=FALSE</code> can help separate continuous expression patterns from discrete HMM states; it does not guarantee improved signal.</li>
-</ul>
-</li>
-</ul>
-<h3>Symptom: Many small fragmented gains and losses scattered across genome</h3>
-<ul>
-<li>Possible causes:
-    <ul>
-<li>Batch effects or strong cell-type-specific transcriptional programs (such as the MHC locus on chr6p or immunoglobulin loci) dominate the local signal.</li>
-<li>A smoothing window (<code>window_length</code>, default 101 genes) that is too narrow, or insufficient denoising (for example <code>sd_amplifier</code> set too low), producing short spurious local excursions.</li>
-<li>Counts were normalized prior to inferCNV (inferCNV expects raw counts).</li>
-</ul>
-</li>
-<li>Fixes:
-    <ul>
-<li>For the R inferCNV workflow shown here, use raw counts. Do not pass log-normalized or scaled values as raw counts.</li>
-<li><code>cluster_by_groups=TRUE</code> organizes cells by annotation for visualization; it does not correct batch effects or validate a regional signal.</li>
-<li>Experiment with disabling HMM and examining continuous signal; adjust denoise and smoothing parameters.</li>
-</ul>
-</li>
-</ul>
-<h3>Symptom: Reference appears shifted relative to expectation</h3>
-<ul>
-<li>Possible causes: reference set contains a subpopulation with true CNV; reference composition differs across samples.</li>
-<li>Fixes: build a stricter reference set (e.g., only well-characterised immune subsets), or use matched normal tissue when available. Run inferCNV with reference groups from the same sample where possible.</li>
-</ul>
-<h2>Scope limits and version checks</h2>
-<p><strong>A few boundary notes:</strong></p>
-<ul>
-<li>Genome build consistency: gene coordinates in the gene_order file must match the gene symbols and the genome assembly you intend to represent (e.g., hg19/GRCh37 vs hg38/GRCh38). Mismatches will produce incorrect genomic ordering and misleading heatmaps.</li>
-<li>Resolution depends on gene coverage, expression, smoothing, and data quality. This expression-based approach is intended for broad patterns, not single-exon or small focal CNV detection.</li>
-<li>Noise model: sequencing depth, protocol differences (10x vs Smart-seq2), and sample composition influence sensitivity. Parameter choices (cutoff, denoise) must reflect data type.</li>
-<li>Reference fidelity: a diploid reference is assumed. If references are not diploid, inferred relative shifts may be inverted or dampened.</li>
-</ul>
-<p>Version and reproducibility:</p>
-<ul>
-<li>Different inferCNV releases may change default parameters and output formats. Record the package version (e.g., sessionInfo() in R) and document genome build and gene ID mapping used.</li>
-<li>Keep the input raw counts, annotation file, and gene_ordering file in an archival folder alongside the output directory for reproducibility.</li>
-</ul>
-<p>Responsible use and interpretation:</p>
-<ul>
-<li>Treat inferCNV results as hypothesis-generating. Any claim about malignancy or diagnostics should rely on orthogonal DNA-based validation and expert pathology review.</li>
-<li>Do not report expression-inferred CNVs as clinical diagnoses. Label results explicitly as inferred from transcriptome data in any downstream communication.</li>
-</ul>
-<h2>Next steps</h2>
-<ol>
-<li>Confirm raw counts and gene-ordering are consistent (matching gene symbols and genome build).</li>
-<li>Define and document reference groups; re-check that these cells are likely diploid.</li>
-<li>Run inferCNV with denoise=TRUE and appropriate cutoff for your platform; inspect both continuous heatmap and HMM outputs.</li>
-<li>Compare CNV patterns to cluster annotations and known marker genes to prioritise candidate malignant clusters.</li>
-<li>Validate prioritized candidates with orthogonal DNA assays (shallow WGS, targeted DNA panels, FISH, or single-cell DNA-seq) before making biological or clinical claims.</li>
-</ol>
+
+<h2 id="troubleshooting">6. Troubleshooting and practice check</h2>
+<div class="lesson-table-wrap" role="region" aria-label="Scrollable troubleshooting guide" tabindex="0"><table><caption>Common inferCNV failure modes, root causes, and fixes</caption><thead><tr><th scope="col">Symptom</th><th scope="col">Likely cause</th><th scope="col">Actionable fix</th></tr></thead><tbody><tr><th scope="row">Flat or washed-out heatmap</th><td><code>cutoff</code> too high for sparse 10x data (for example <code>1</code> instead of <code>0.1</code>), mismatched genome build, or contaminated reference cells</td><td>Verify gene overlap (&gt;10,000 genes typically retained for human 10x), match build (GRCh38 vs GRCh37), and restrict <code>ref_group_names</code> to high-confidence diploid lineages</td></tr><tr><th scope="row">Fragmented spikes scattered across chromosomes</th><td>Log-normalized/scaled values passed instead of raw counts, strong batch effects, or narrow smoothing window</td><td>Pass raw integer UMI counts to R <code>infercnv</code>; inspect <code>infercnv.preliminary.png</code>; adjust <code>window_length</code> or <code>sd_amplifier</code>; run per sample/patient when batches confound</td></tr><tr><th scope="row">Reference cells show faint mirror-image gains/losses</th><td>Reference cluster contains mislabeled tumor cells or tumor-immune doublets</td><td>Audit reference cells with canonical markers and doublet scores; split into at least two independent normal cell types (such as <code>T_cell</code> + <code>Endothelial</code>)</td></tr><tr><th scope="row">OOM crash or stalled JAGS HMM on &gt;20,000 cells</th><td>Dense evaluation across zeroes or thousands of reference cells inflating JAGS</td><td>Validate <code>counts@x</code> on <code>dgCMatrix</code>, increase <code>num_threads</code>, and downsample oversized reference groups to 500-1,000 cells per normal cell type</td></tr></tbody></table></div>
+
 <aside aria-label="Author's lab note" class="lesson-summary">
 <p><strong>Author's lab note:</strong> The classic inferCNV trap in solid tumors is including cycling T cells or fibroblasts with stressed gene programs as the sole diploid baseline, or leaving mitochondrial/ribosomal blocks cluttering chromosome arms. Checking that chromosome 6 MHC and immunoglobulin clusters aren't misread as focal gains alongside at least two independent normal cell types (such as endothelial cells and T cells) keeps tumor-clone calls grounded.</p>
 </aside>
-<h2>References</h2>
+
+<div class="lesson-exercise">
+<h3>Practice check: diagnose a contaminated reference baseline</h3>
+<p>Suppose you run <code>infercnv</code> on a 10x glioblastoma sample using <code>"Myeloid"</code> as your only reference group. In <code>infercnv.png</code>, the <code>"Myeloid"</code> reference rows show faint blue across <code>chr7</code> and faint red across <code>chr10</code>, while <code>"Cluster_3"</code> looks nearly neutral and your reference 99th-percentile CNV score (<code>ref_q99</code>) is unexpectedly high. Identify the two issues in this setup and explain how to fix them.</p>
+<details class="mt-3"><summary class="text-sm font-medium text-blue-700 cursor-pointer">Check worked diagnosis</summary><p class="mt-2 text-sm text-gray-700">First, <code>"Myeloid"</code> likely contains misannotated malignant cells or tumor-macrophage doublets carrying <code>+chr7 / -chr10</code>, raising the reference mean on <code>chr7</code> and lowering it on <code>chr10</code> so tumor cells appear neutral while diploid cells invert. Second, relying on a single reference cell type makes myeloid-specific transcriptional blocks (such as chr6p MHC class II genes) appear as relative losses in non-myeloid cells. Fix: filter doublets, audit <code>"Myeloid"</code> with lineage markers (<code>PTPRC</code>, <code>CD68</code>, <code>C1QA</code> vs tumor markers <code>EGFR</code>/<code>SOX2</code>), add at least one second normal lineage (such as <code>T_cell</code> or <code>Endothelial</code>) to <code>ref_group_names</code>, and re-run into a fresh empty output directory.</p></details>
+</div>
+
+<h2 id="next-steps">7. Next steps and references</h2>
+<ol>
+<li>Verify your reference cell labels and marker purity using <a href="cell-type-annotation-methods.html">Choosing and Checking Cell-Type Annotations</a> and <a href="scrna-seq-quality-control.html">Single-Cell RNA-seq Quality Control</a>.</li>
+<li>Archive your exact <code>counts_matrix.rds</code>, annotation/gene-ordering tables, genome build, and <code>session-info.txt</code> alongside <code>infercnv_output/</code>.</li>
+<li>Confirm prioritized malignant clones with orthogonal DNA assays such as shallow WGS, FISH, or exome/panel sequencing (<a href="wes-variant-calling-pipeline.html">Whole Exome Sequencing (WES): Variant Calling</a>), or continue broader downstream single-cell analysis in <a href="scrna-seq-downstream-analysis.html">Single-Cell RNA-seq Downstream Analysis</a>.</li>
+</ol>
+<h3 id="references">References</h3>
 <ul>
 <li>Patel AP, Tirosh I, Trombetta JJ, et al. (2014). Single-cell RNA-seq highlights intratumoral heterogeneity in primary glioblastoma. <em>Science</em>, 344(6190), 1396-1401 (origin of moving-window scRNA-seq CNV inference). <a href="https://doi.org/10.1126/science.1254257" rel="noopener" target="_blank">doi:10.1126/science.1254257</a></li>
 <li>Tirosh I, Izar B, Prakadan SM, et al. (2016). Dissecting the multicellular ecosystem of metastatic melanoma by single-cell RNA-seq. <em>Science</em>, 352(6282), 189-196. <a href="https://doi.org/10.1126/science.aad0501" rel="noopener" target="_blank">doi:10.1126/science.aad0501</a></li>
-<li>Gao T, Soldatov R, Sarkar H, et al. (2023). Haplotype-aware analysis of somatic copy number variations from single-cell transcriptomes. <em>Nature Biotechnology</em>, 41, 417-426 (<code>Numbat</code>, an allele-plus-expression alternative when aligned BAM reads are available). <a href="https://doi.org/10.1038/s41587-022-01468-y" rel="noopener" target="_blank">doi:10.1038/s41587-022-01468-y</a></li>
-<li><a href="https://github.com/broadinstitute/inferCNV">inferCNV GitHub repository (Broad Institute)</a>, <a href="https://github.com/broadinstitute/inferCNV/wiki/Running-InferCNV">Running inferCNV wiki</a>, and <a href="https://github.com/broadinstitute/inferCNV/wiki/Output-Files">documented outputs</a></li>
-<li><a href="https://bioconductor.org/packages/release/bioc/html/infercnv.html">Bioconductor infercnv package</a> and <a href="https://infercnvpy.readthedocs.io/en/latest/infercnv.html">infercnvpy documentation</a></li>
+<li>Gao R, Bai S, Henderson YC, et al. (2021). Delineating copy number and clonal substructure in human tumors from single-cell transcriptomes. <em>Nature Biotechnology</em>, 39, 599-608 (<code>CopyKAT</code>). <a href="https://doi.org/10.1038/s41587-020-00795-2" rel="noopener" target="_blank">doi:10.1038/s41587-020-00795-2</a></li>
+<li>De Falco A, Caruso F, Su XD, et al. (2023). A variational algorithm to detect the clonal copy number substructure of tumors from scRNA-seq data. <em>Nature Communications</em>, 14, 1074 (<code>SCEVAN</code>). <a href="https://doi.org/10.1038/s41467-023-36790-9" rel="noopener" target="_blank">doi:10.1038/s41467-023-36790-9</a></li>
+<li>Gao T, Soldatov R, Sarkar H, et al. (2023). Haplotype-aware analysis of somatic copy number variations from single-cell transcriptomes. <em>Nature Biotechnology</em>, 41, 417-426 (<code>Numbat</code>, combining expression with allele frequencies). <a href="https://doi.org/10.1038/s41587-022-01468-y" rel="noopener" target="_blank">doi:10.1038/s41587-022-01468-y</a></li>
+<li><a href="https://github.com/broadinstitute/inferCNV" rel="noopener" target="_blank">inferCNV GitHub repository (Broad Institute)</a>, <a href="https://github.com/broadinstitute/inferCNV/wiki/File-Definitions" rel="noopener" target="_blank">File Definitions</a>, <a href="https://github.com/broadinstitute/inferCNV/wiki/Running-InferCNV" rel="noopener" target="_blank">Running inferCNV</a>, and <a href="https://github.com/broadinstitute/inferCNV/wiki/Output-Files" rel="noopener" target="_blank">Output Files</a></li>
+<li><a href="https://bioconductor.org/packages/release/bioc/html/infercnv.html" rel="noopener" target="_blank">Bioconductor infercnv package</a> and <a href="https://infercnvpy.readthedocs.io/en/latest/infercnv.html" rel="noopener" target="_blank">infercnvpy documentation</a></li>
 </ul>
-<p>Record the R and inferCNV versions, genome assembly, gene identifier mapping, reference groups, and parameter values with each run.</p>
 <aside aria-labelledby="tutorial-feedback-title" class="lesson-feedback" id="tutorial-feedback"><h2 id="tutorial-feedback-title">Help improve this tutorial</h2><p>Found an error, a broken link, or a step that needs a clearer explanation? Please <a href="../contact.html">contact me</a>. Your feedback helps me keep this resource accurate and useful.</p></aside></article>
 <section class="mt-12 mb-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-100">
 <div class="flex items-start gap-4">
@@ -643,7 +613,7 @@ message("99th percentile of diploid reference CNV score: ", round(ref_q99, 5))</
 </script>
 <script src="../assets/vendor/prism/prism-1.29.0.js"></script>
 <script id="tutorial-code-data">
-window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"infercnv-copy-number-variation":{"blocks":[{"language":"bash","sha256":"e4b13125b60bf61914758683b9cce33c0aee28adb551cdbc2d46a0befb995648"},{"language":"r","sha256":"85b92e1efcf970701b8f0b9cbd1ba4093cb65c0d91862797430f29264858bc5b"},{"language":"r","sha256":"58344d02a15cb48f66ce4b685e45c359bcf97945007098a24c5e8a79a0f296e1"},{"language":"python","sha256":"03f6e1035fb2aabc2001d2b0956bc92ac49097a3515ea12db004afba8abad06b"},{"language":"r","sha256":"ffa543945764053d605b0dd4729747f89c3f39255c6fef2fbe4b4c207865997f"}],"groups":[]}}};
+window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"infercnv-copy-number-variation":{"blocks":[{"language":"text","sha256":"377d8a8a1efecc7337b614601ce04e3f1ba12635c51d58e71e59bf191c4e481e"},{"language":"text","sha256":"858f358c99ef0aea5d42f6416010142ebc0a85f6f30dc769d8467c197c5324c2"},{"language":"bash","sha256":"740fcc4f75551934230f0066bcfa00768c8138a9d8649496e330d0bfaf2eccb9"},{"language":"text","sha256":"c2136c7d33643cba48d6281694f1dd3d5d89a05145cd34b56f5a51b6972db82d"},{"language":"bash","sha256":"e4b13125b60bf61914758683b9cce33c0aee28adb551cdbc2d46a0befb995648"},{"language":"r","sha256":"85b92e1efcf970701b8f0b9cbd1ba4093cb65c0d91862797430f29264858bc5b"},{"language":"text","sha256":"8927053d44797d63a7ed0158335f23248cf1902d0dab02c7263b46b5b2cba0ba"},{"language":"r","sha256":"bd23768592f98dbbd5a0a6691e8c7b8dd52c73087270423c3e168ed35d74568a"},{"language":"python","sha256":"5c6a74ef03e0115318aad5b9ae2e21c77035c6b0420b61a78f05f53e6eecd8d0"},{"language":"text","sha256":"9f0c98f720c459ccd12b1ade8b2a6e15ad2ecf2270af90b8edb47d53280ac728"},{"language":"r","sha256":"13bc927ab738545cb525d61deb6fb95d18d60c4b5de2ff90f371528316276794"}],"groups":[]}}};
 </script>
 <script src="../code-tabs.js?v=20261026-startup-v1"></script>
 <script src="../copy-code.js?v=20261025-r-first-v1"></script>

@@ -172,52 +172,64 @@ function toggleMobileMenu() {
 <img alt="Text Processing" class="w-full aspect-video object-cover" decoding="async" loading="eager" src="../images/shell-commands-part2-workstation.webp" width="1024" height="1024"/>
 </div>
 <nav aria-label="Learning path navigation" class="reader-toolbar"><span class="reader-toolbar__heading">Learning path</span><a href="command-line-part1.html" rel="prev" class="reader-toolbar__previous"><span class="reader-toolbar__direction"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5m0 0 7 7m-7-7 7-7"/></svg></span><span class="reader-toolbar__copy"><small>Previous prerequisite</small><strong>Command-Line Navigation for Bioinformatics</strong></span></a><a data-catalogue-return="" href="../tutorials.html" class="reader-toolbar__library"><span class="reader-toolbar__library-mark" aria-hidden="true"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="6" height="6" rx="1.3"/><rect x="14" y="4" width="6" height="6" rx="1.3"/><rect x="4" y="14" width="6" height="6" rx="1.3"/><rect x="14" y="14" width="6" height="6" rx="1.3"/></svg></span><span><small>Browse</small><strong>All tutorials</strong></span></a><a href="conda-mamba-part1.html" rel="next" class="reader-toolbar__next"><span class="reader-toolbar__copy"><small>Suggested next</small><strong>Micromamba Environments for Bioinformatics</strong></span><span class="reader-toolbar__direction"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14m0 0-7-7m7 7-7 7"/></svg></span></a></nav>
-<article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--walkthrough"><p class="lesson-lead">Use line-oriented shell commands for quick inspection and simple tables. For sequence records, first check whether the format and operation can safely be handled one line at a time.</p><section class="lesson-summary tutorial-learning-contract" data-tutorial-format="hands-on-lab" aria-label="Learning format"><p><strong>Format: Hands-on lab.</strong> Build five small text fixtures in your terminal (a TSV, an ID list, a wrapped FASTA, a clean FASTQ, and a broken FASTQ) and practice streaming checks with Unix pipes and <code>seqkit</code>. Everything runs on locally generated test files.</p></section><h2>Learning objectives and prerequisites</h2>
-<p><strong>Prerequisites:</strong> Basic shell navigation, a Bash terminal, the usual text utilities, and SeqKit. Start in a fresh practice directory, not a directory containing research data: the setup writes the five named teaching files. The table exercises need only the shell utilities; complete the SeqKit preflight before the sequence-aware exercises.</p>
-<p><strong>Learning objectives:</strong> After working through this lesson, you will be able to:</p>
+<article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--walkthrough"><p class="lesson-lead">Sequencing reads (FASTQ), reference sequences (FASTA), and count tables (TSV) are often gigabytes of plain text that stall spreadsheets and waste RAM if loaded whole. Learn how to inspect, filter, and summarize them in a Bash terminal with standard Unix tools and <code>seqkit</code>, and how to tell when line-by-line commands silently break.</p>
+<section class="lesson-summary tutorial-learning-contract" data-tutorial-format="hands-on-lab" aria-label="Learning format"><p><strong>Format: Hands-on lab (about 20-25 minutes).</strong> Generate five small invented test files in a disposable directory (a gene-count TSV, an ID list, a wrapped FASTA, a valid FASTQ, and a malformed FASTQ) and compare streaming Unix pipes against record-aware <code>seqkit</code> commands.</p></section>
+
+<h2 id="objectives-and-formats">What you will learn and prerequisites</h2>
+<p><strong>Prerequisites:</strong> Basic directory navigation (<code>pwd</code>, <code>cd</code>, <code>ls</code>, <code>head</code>) from <a href="command-line-part1.html">Command-Line Navigation for Bioinformatics</a>, and a Bash terminal on Linux, macOS, or Windows Subsystem for Linux (WSL). You do not need R, Python, Scanpy or Seurat for this lesson: standard Unix utilities handle the table tasks, and <code>seqkit</code> handles multi-line sequence records.</p>
+<p><strong>By the end of this lab, you will be able to:</strong></p>
 <ul>
-<li>Use grep (global regular expression print), sed (stream editor), cut, sort, uniq, and pipes to filter and reshape biological text files.</li>
-<li>Write short, reproducible one-line or small multi-step shell workflows that extract specific records and produce simple summaries.</li>
-<li>Recognize when line-oriented tools are appropriate versus when sequence-aware tools are required.</li>
+<li>Stream and reshape tab-delimited tables using <code>grep</code> (global regular expression print), <code>sed</code> (stream editor), <code>cut</code>, <code>awk</code>, <code>sort</code>, and <code>uniq</code>.</li>
+<li>Read compressed sequencing files safely with <code>gzip -dc</code> or <code>seqkit</code> without unpacking multi-gigabyte archives onto disk.</li>
+<li>Distinguish line-oriented formats (one row per record, such as TSV) from multi-line sequence records (wrapped FASTA and four-line FASTQ) so you pick the right tool before filtering.</li>
+<li>Write outputs atomically with temporary files so a failed command never publishes a truncated file.</li>
 </ul>
+
+<div class="lesson-table-wrap" role="region" aria-label="Bioinformatics text formats at a glance" tabindex="0">
+<table>
+<caption>Common plain-text bioinformatics formats and how tools read them</caption>
+<thead>
+<tr><th scope="col">Format</th><th scope="col">Record layout</th><th scope="col">Main line-tool pitfall</th><th scope="col">Recommended tool</th></tr>
+</thead>
+<tbody>
+<tr><th scope="row">TSV / BED / GTF</th><td>1 line = 1 row, columns separated by tabs (<code>\t</code>)</td><td>Non-numeric text such as <code>NA</code> can pass naive <code>&gt;</code> checks in <code>awk</code>; <code>grep -F -f</code> matches substrings</td><td><code>cut</code>, <code>awk -F'\t'</code>, <code>LC_ALL=C sort</code></td></tr>
+<tr><th scope="row">FASTA</th><td>1 header line starting with <code>&gt;</code>, followed by 1 or more wrapped sequence lines (often 60-80 bases per line)</td><td>Line-based <code>grep</code> misses motifs split across a line wrap and loses the header line</td><td><code>grep -c '^&gt;'</code> for header counts only; <code>seqkit</code> for sequence searches and stats</td></tr>
+<tr><th scope="row">FASTQ</th><td>4 coupled lines per read: <code>@header</code>, sequence, <code>+</code>, and Phred quality scores of equal length</td><td><code>awk 'NR%4==...'</code> skips quality-length checks and breaks if a sequence wraps</td><td><code>seqkit</code> (<code>stats</code>, <code>fq2fa</code>, <code>sana</code>)</td></tr>
+</tbody>
+</table>
+</div>
+
+<figure class="my-8 bg-white border border-gray-200 rounded-xl p-4 shadow-sm"><img src="../images/tutorial-figures/command-line-unix-pipe-stream.svg" alt="Pipeline diagram showing stdin/stdout flow across compressed input zcat, grep/awk filtering, cut/sort/uniq aggregation, and safe file output redirection" width="960" height="460" loading="lazy" class="w-full h-auto rounded-lg" style="aspect-ratio: 960 / 460;"/><figcaption class="mt-3 text-sm text-gray-600">Unix pipes connect standard output (<code>stdout</code>) of one command directly into standard input (<code>stdin</code>) of the next, processing multi-gigabyte tables line by line with minimal RAM.</figcaption></figure>
+
 <h2 id="cli-part2-tool-checkpoint">Setup checkpoint before the exercise</h2>
-<p>Use a Bash terminal, not an R or Python console. On Windows, use a Linux/WSL terminal for this Bioconda route rather than native PowerShell. You do not need R, Python, Scanpy or Seurat for this lesson. Check the tools before creating the practice files.</p>
-<p><strong>Already have SeqKit?</strong> Run this readiness check. It stops at the first missing command without closing your interactive terminal. If every command is found and a SeqKit version prints, skip the installation steps and continue to the exercise.</p>
+<p>Run this readiness check in a Bash terminal (Linux, macOS, or WSL rather than native PowerShell or an R/Python console). It tests each required command in a subshell and stops at the first missing tool without closing your terminal.</p>
 <pre id="cli-part2-preflight"><code>(
   for tool in awk cut sort uniq grep sed seqkit; do
     command -v "$tool" || { printf 'Missing tool: %s\n' "$tool" &gt;&amp;2; exit 1; }
   done
   seqkit version
 )</code></pre>
-<p><strong>Need SeqKit?</strong> First check whether Micromamba is available:</p>
+<p>If every utility resolves and a <code>seqkit</code> version prints (for example <code>seqkit v2.14.0</code>), skip the installation block below and jump straight to creating the practice files. Note that the TSV table exercises (Steps 6 and 7) only need the standard shell utilities, so you can run those even before installing <code>seqkit</code>.</p>
+
+<details>
+<summary>Need SeqKit? Expand Micromamba installation steps</summary>
+<p>First check whether <code>micromamba</code> is already installed:</p>
 <pre id="cli-part2-micromamba-check"><code>command -v micromamba &amp;&amp; micromamba --version</code></pre>
-<p>If it is not found, stop here and follow only <a href="conda-mamba-part1.html#install-micromamba">Install Micromamba and verify the executable</a>, then return to this checkpoint. You do not need to complete that later lesson's QC environment lab or its optional R/Python examples first. On a managed computer, use your institution's approved installation route.</p>
-<p>Once the executable is available, load its Bash hook in this terminal. This enables activation for the current shell; it does not rewrite your startup files. Stop if either command fails:</p>
+<p>If it is not found, follow <a href="conda-mamba-part1.html#install-micromamba">Install Micromamba and verify the executable</a> and then return here (you do not need that lesson's QC environment or R/Python examples). On a managed workstation or cluster, use your institution's module system or approved installer instead.</p>
+<p>Load the Micromamba Bash hook for your current shell session (this does not edit your startup files):</p>
 <pre id="cli-part2-shell-hook"><code>hook="$(micromamba shell hook --shell bash)" &amp;&amp; eval "$hook"</code></pre>
-<p>For the first setup only, create a separate environment containing SeqKit. Review the package transaction and confirm it when prompted. Do not install it into a research environment. If <code>cli-sequences</code> already exists from an earlier visit, skip creation and try the activation check instead; do not overwrite it.</p>
+<p>Create a dedicated <code>cli-sequences</code> environment containing only <code>seqkit</code> (do not install extra tools into an existing analysis environment; if <code>cli-sequences</code> already exists, skip straight to activation):</p>
 <pre id="cli-part2-install"><code>micromamba create -n cli-sequences --override-channels -c conda-forge -c bioconda --channel-priority strict seqkit</code></pre>
-<p>After creation succeeds, activate it and verify the actual command. The chained checks do not print a success from another installed SeqKit if activation fails:</p>
+<p>Activate the environment and verify that the binary inside <code>cli-sequences</code> responds:</p>
 <pre id="cli-part2-activate"><code>micromamba activate cli-sequences &amp;&amp;
 command -v seqkit &amp;&amp;
 seqkit version</code></pre>
-<p>Rerun the readiness check above before continuing so you verify an installed command path for each utility plus a working SeqKit binary, rather than relying on an inactive environment name. In a new terminal, repeat the hook and activation checks rather than recreating the environment. If solving stalls, keep the error message and inspect platform support or channel priority; see the <a href="https://mamba.readthedocs.io/en/latest/installation/micromamba-installation.html" rel="noopener" target="_blank">Micromamba installation guide</a> and <a href="https://bioconda.github.io/" rel="noopener" target="_blank">Bioconda channel policy</a>.</p>
-<p><strong>Setup validation:</strong> On Ubuntu Linux x86_64, the displayed check, Bash hook, creation and activation commands succeeded with Micromamba 2.9.0 and SeqKit 2.14.0 in a fresh home directory and environment root, reusing an existing executable and package cache. The readiness check and both expected FASTA motif matches passed. The installer itself and other operating systems were not retested in this revision.</p>
+<p>In a new terminal session later, run the shell hook and activation commands again rather than recreating the environment. If package solving stalls, inspect channel priority or platform support in the <a href="https://mamba.readthedocs.io/en/latest/installation/micromamba-installation.html" rel="noopener noreferrer" target="_blank">Micromamba installation guide</a> and <a href="https://bioconda.github.io/" rel="noopener noreferrer" target="_blank">Bioconda documentation</a>.</p>
+</details>
 
-<figure class="my-8 bg-white border border-gray-200 rounded-xl p-4 shadow-sm"><img src="../images/tutorial-figures/command-line-unix-pipe-stream.svg" alt="Pipeline diagram showing stdin/stdout flow across compressed input zcat, grep/awk filtering, cut/sort/uniq aggregation, and safe file output redirection" width="960" height="460" loading="lazy" class="w-full h-auto rounded-lg" style="aspect-ratio: 960 / 460;"/><figcaption class="mt-3 text-sm text-gray-600">Unix pipelines stream text line by line from stdin to stdout, letting tools like <code>zcat</code>, <code>grep</code>, <code>cut</code>, and <code>awk</code> filter and summarize compressed annotations or count tables at minimal memory cost.</figcaption></figure>
-<h2>Why text processing matters in bioinformatics</h2>
-<p>Standard genomic formats (FASTA, FASTQ, variant tables, and gene annotations) are plain text. Filtering and reshaping them on the command line lets you inspect cohorts quickly and wire reproducible preprocessing steps into larger pipelines.</p>
-<p>Because these utilities stream input line by line, inspect file layout first (for instance, whether FASTA sequences wrap across lines) before cutting fields, and remember that <code>sort</code> can require large amounts of memory or temporary disk space on big datasets.</p>
-<h3>Key concept: line orientation vs. record orientation</h3>
-<p>Tools such as grep, sed, cut, sort, and uniq work on lines. If a biological record spans multiple lines (common in wrapped FASTA), naive line-based commands can yield incorrect results. Sequence-aware tools (for example, seqkit) treat sequences as records and should be used when format complexity matters.</p>
-<h2>Reproducible workflow: filter, extract, and summarize</h2>
-<p>Below is a sequential workflow demonstrating typical tasks. Each code block lists the expected input files and what each command produces. Use exact paths if your files are in another directory (for example, /home/user/data/sequences.fasta).</p>
-<h3>Files used in this example</h3>
-<ul>
-<li><code>sequences.fasta</code>: three invented records, including one whose motif is split across two sequence lines.</li>
-<li><code>reads.fastq</code>: two invented eight-base reads, with equal sequence and quality lengths. <code>malformed.fastq</code> deliberately has four bases but only three quality characters.</li>
-<li>data.tsv: a tab-delimited table with a header line and multiple columns (e.g., gene_id, sample, count).</li>
-</ul>
-<p>Set up a clean practice folder with invented sequences, IDs, counts, and quality strings (these are practice inputs, not biological observations). If you rerun setup while inside <code>cli-part2-practice</code>, first run <code>cd ..</code> to return to its parent directory and verify <code>pwd</code>; otherwise the setup creates a nested practice directory. Running setup again from the same parent overwrites the five practice files, which you can also download individually: <a href="../files/text-processing-lesson/sequences.fasta">FASTA</a>, <a href="../files/text-processing-lesson/reads.fastq">valid FASTQ</a>, <a href="../files/text-processing-lesson/malformed.fastq">malformed FASTQ</a>, <a href="../files/text-processing-lesson/data.tsv">TSV</a>, and <a href="../files/text-processing-lesson/genes_of_interest.txt">ID list</a>.</p>
+<h2 id="practice-fixtures">Build the five practice files</h2>
+<p>Start in a fresh working folder rather than a directory with research files. The commands below write five small invented fixtures (not biological observations): a four-row gene-count table (<code>data.tsv</code>), a target ID list (<code>genes_of_interest.txt</code>), a wrapped FASTA (<code>sequences.fasta</code>) where one motif crosses a line break, a valid FASTQ (<code>reads.fastq</code>), and a broken FASTQ (<code>malformed.fastq</code>) with four bases but only three quality characters.</p>
+<p>If you rerun setup while already inside <code>cli-part2-practice</code>, first run <code>cd ..</code> to return to its parent directory and check <code>pwd</code>; otherwise the setup creates a nested practice directory. You can also download the identical files individually: <a href="../files/text-processing-lesson/sequences.fasta">FASTA</a>, <a href="../files/text-processing-lesson/reads.fastq">valid FASTQ</a>, <a href="../files/text-processing-lesson/malformed.fastq">malformed FASTQ</a>, <a href="../files/text-processing-lesson/data.tsv">TSV</a>, and <a href="../files/text-processing-lesson/genes_of_interest.txt">ID list</a>.</p>
 <pre id="cli-part2-setup"><code>mkdir -p cli-part2-practice
 cd cli-part2-practice
 printf 'gene_id\tsample\tcount\nGENE_A\tS1\t120\nGENE_B\tS1\t45\nGENE_A\tS2\t90\nGENE_C\tS2\t200\n' &gt; data.tsv
@@ -249,36 +261,65 @@ III
 BAD_FASTQ
 head -n 2 data.tsv
 </code></pre>
-<p>The first two TSV lines should be its header and <code>GENE_A/S1/120</code>, separated by tabs. Inspect the fixtures before processing them. The split sequence <code>CCA</code> followed by <code>TGCGTT</code> is one record, not two reads.</p>
+<div class="lesson-result">
+<p><strong>Expected output from <code>head -n 2 data.tsv</code>:</strong></p>
+<p><samp>gene_id&nbsp;&nbsp;sample&nbsp;&nbsp;count<br/>GENE_A&nbsp;&nbsp;S1&nbsp;&nbsp;120</samp></p>
+</div>
 
-<h3>1) Inspect files safely</h3>
-<p>Before running extraction commands, inspect the file to determine layout.</p>
+<h2 id="line-vs-record">Why line-oriented tools break on multi-line records</h2>
+<p>Standard Unix utilities (<code>grep</code>, <code>sed</code>, <code>cut</code>, <code>sort</code>, <code>uniq</code>, and default <code>awk</code>) treat each newline character (<code>\n</code>) as a record boundary. That works cleanly for TSV, BED, or GTF files where every row is self-contained, but breaks down when a biological record spans multiple lines.</p>
+
+<figure class="my-8 bg-white border border-gray-200 rounded-xl p-4 shadow-sm"><img src="../images/tutorial-figures/command-line-part2-line-vs-record.svg" alt="Side-by-side comparison showing line-oriented grep missing a motif split across wrapped FASTA lines and awk outputting broken FASTA from a malformed FASTQ, while seqkit joins wrapped FASTA lines and rejects mismatched FASTQ quality lengths" width="960" height="440" loading="lazy" class="w-full h-auto rounded-lg" style="aspect-ratio: 960 / 440;"/><figcaption class="mt-3 text-sm text-gray-600">Line-oriented tools evaluate each line in isolation. Record-aware tools such as <code>seqkit</code> reconstruct full FASTA sequences and verify that FASTQ sequence and quality strings match in length.</figcaption></figure>
+
+<h2 id="fasta-fastq-workflow">Part A: Inspect and process FASTA and FASTQ files</h2>
+
+<h3>1) Inspect layout before filtering</h3>
+<p><strong>Why:</strong> Before writing any extraction command, check whether headers start with <code>&gt;</code> (FASTA) or <code>@</code> (FASTQ), whether sequences wrap onto multiple lines, and whether fields are separated by tabs or spaces.</p>
 <pre><code># Show the first 40 lines of a FASTA to check header and wrap behavior
 head -n 40 sequences.fasta
 
 # View the file interactively (use q to quit)
 less sequences.fasta
 </code></pre>
-<p>What these produce: text printed to your terminal showing the file start. Look for whether sequence headers begin with "&gt;" (FASTA) and whether sequences continue on multiple lines.</p>
-<h3>2) Count sequence records in a FASTA file (safe line-based and record-aware)</h3>
-<p>If each FASTA header begins with "&gt;" and headers are on separate lines, counting headers is a quick proxy for record count. If sequences are wrapped, this remains valid because headers are still single lines.</p>
+<div class="lesson-result">
+<p><strong>Expected output from <code>head -n 40 sequences.fasta</code>:</strong></p>
+<p><samp>&gt;gene_A_unwrapped forward_motif<br/>ATGCGTAA<br/>&gt;gene_B_wrapped split_motif<br/>CCA<br/>TGCGTT<br/>&gt;gene_C_negative no_forward_motif<br/>TTTTAAAA</samp></p>
+<p>Notice that <code>gene_B_wrapped</code> has two sequence lines (<code>CCA</code> and <code>TGCGTT</code>) belonging to a single record, not two separate sequences.</p>
+</div>
+<p><strong>Compressed real-world files:</strong> Real FASTQ and annotation files usually end in <code>.gz</code>. Stream them without decompressing to disk using <code>gzip -dc reads.fastq.gz | head -n 8</code> (unlike <code>zcat</code>, which expects a <code>.Z</code> suffix on macOS unless you use <code>gzcat</code>, <code>gzip -dc</code> works identically on Linux and macOS). <code>seqkit</code> reads <code>.gz</code>, <code>.xz</code>, and <code>.zst</code> files directly with no wrapper pipe.</p>
+
+<h3>2) Count sequence records and check for duplicate IDs</h3>
+<p><strong>Why:</strong> Counting records quickly verifies whether a download or filter returned the expected number of sequences. Because every FASTA record has one <code>&gt;</code> header line regardless of sequence wrapping, counting lines that start with <code>&gt;</code> is a valid fast proxy for record count.</p>
 <pre><code># Count FASTA headers (sequences.fasta -&gt; counts to stdout)
 grep -c '^&gt;' sequences.fasta
 </code></pre>
-<p><strong>Predict, then check:</strong> the practice FASTA returns <code>3</code> because <code>grep</code> counts lines starting with <code>&gt;</code>. That assumes one header per record and does not check sequence bases or duplicate IDs.</p>
-<p>If you prefer a sequence-aware count using seqkit (recommended for complex FASTA files):</p>
+<div class="lesson-result">
+<p><strong>Expected output:</strong> <samp>3</samp>. The <code>^</code> anchor ensures <code>grep</code> matches <code>&gt;</code> only at the start of a line, and <code>-c</code> prints the line count instead of the lines themselves.</p>
+</div>
+<p>For a full summary including total bases, min/average/max length, and format validation (for either FASTA or FASTQ, plain or <code>.gz</code>), use <code>seqkit stats</code>:</p>
 <pre><code># Requires seqkit installed; replace path or install in your environment
 seqkit stats sequences.fasta
 </code></pre>
-<p>SeqKit should report three FASTA records and a total length of 25 bases for this fixture. Inspect errors and the input format; successful parsing cannot establish that the file represents the intended biological data.</p>
-<h3>3) Extract headers and tidy them (remove the leading &gt;)</h3>
+<div class="lesson-result">
+<p><strong>Example output (illustrative):</strong></p>
+<p><samp>file&nbsp;&nbsp;format&nbsp;&nbsp;type&nbsp;&nbsp;num_seqs&nbsp;&nbsp;sum_len&nbsp;&nbsp;min_len&nbsp;&nbsp;avg_len&nbsp;&nbsp;max_len<br/>sequences.fasta&nbsp;&nbsp;FASTA&nbsp;&nbsp;DNA&nbsp;&nbsp;3&nbsp;&nbsp;25&nbsp;&nbsp;8&nbsp;&nbsp;8.3&nbsp;&nbsp;9</samp></p>
+<p>Add <code>-a</code> (<code>--all</code>) for N50, GC%, Q20%, and Q30% (FASTQ), and <code>-T</code> for tab-delimited output ready for scripts.</p>
+</div>
+
+<h3>3) Extract and clean FASTA headers</h3>
+<p><strong>Why:</strong> Downstream ID lookups often need bare sequence identifiers without the leading <code>&gt;</code> symbol.</p>
 <pre><code># Extract header lines and remove the leading '&gt;'
 grep '^&gt;' sequences.fasta | sed 's/^&gt;//' &gt; headers.txt
 # Output: headers.txt contains one header per line (header text only)
 </code></pre>
-<p>Explanation: grep selects header lines; sed substitutes the leading character. headers.txt is ready to be used for lookups or counts.</p>
-<h3>4) Compare a line hit with a complete record</h3>
-<p><strong>Predict:</strong> will a line search and a sequence-record search find the same two motif-containing records? Read <code>sequences.fasta</code> before running either command.</p>
+<div class="lesson-result">
+<p><strong>Expected contents of <code>headers.txt</code>:</strong></p>
+<p><samp>gene_A_unwrapped forward_motif<br/>gene_B_wrapped split_motif<br/>gene_C_negative no_forward_motif</samp></p>
+<p>To check for duplicate accession IDs (the first space-delimited token), sort before calling <code>uniq -d</code>: <code>cut -d' ' -f1 headers.txt | LC_ALL=C sort | uniq -d</code> (empty output with exit status 0 means all IDs are unique).</p>
+</div>
+
+<h3>4) Compare a line-based motif search against a record-aware search</h3>
+<p><strong>Predict before running:</strong> Read <code>sequences.fasta</code> above. Two records contain the motif <code>ATGCG</code> (<code>gene_A_unwrapped</code> and <code>gene_B_wrapped</code>, where <code>CCA</code> + <code>TGCGTT</code> forms <code>CCATGCGTT</code>). Will <code>grep</code> find both records?</p>
 <pre id="cli-part2-motif"><code># Line search: includes the following line, not the preceding record header
 # The next line may actually be the NEXT record's header.
 grep -n -A 1 'ATGCG' sequences.fasta &gt; matching_lines.txt
@@ -287,22 +328,26 @@ grep -n -A 1 'ATGCG' sequences.fasta &gt; matching_lines.txt
 seqkit grep -s -P -p 'ATGCG' sequences.fasta &gt; matching_records.fasta
 seqkit seq -n -i matching_records.fasta
 </code></pre>
-<p><strong>Worked result:</strong> the line search finds only <code>ATGCGTAA</code> on line 2; its extra context line is the next record's header, not the matching record's header. SeqKit returns <code>gene_A_unwrapped</code> and <code>gene_B_wrapped</code>. The second motif crosses <code>CCA</code> and <code>TGCGTT</code>, so it cannot appear in a single-line match.</p>
-<p><code>-s</code> searches sequence content; <code>-P</code> restricts this exercise to the forward strand. Without <code>-P</code>, SeqKit also searches the reverse complement by default. Neither a motif match nor a matching record count establishes function or experimental validity.</p>
-<h3>Quick AWK primer before steps 5 to 7</h3>
-<p>Steps 5, 6, and 7 use <code>awk</code>, a streaming field-oriented processor that reads input one line (record) at a time and runs rules of the form <code>pattern { action }</code>:</p>
+<div class="lesson-result">
+<p><strong>Expected outputs:</strong></p>
 <ul>
-<li><strong>Fields and delimiters:</strong> <code>-F'\t'</code> splits each line strictly on tabs rather than arbitrary whitespace; <code>$0</code> is the whole line, <code>$1</code> is column 1, <code>$3</code> is column 3, and <code>$NF</code> is the last column on the line.</li>
-<li><strong>Line counters:</strong> <code>NR</code> is the cumulative line number across inputs (<code>NR &gt; 1</code> skips a single-line header; <code>NR % 4 == 1</code> matches lines 1, 5, 9, ...).</li>
-<li><strong>Associative arrays for exact joins:</strong> in <code>awk -F'\t' 'FILENAME == ARGV[1] {a[$1]=1; next} ($1 in a)' ids.txt data.tsv</code>, the first pass stores every ID from <code>ids.txt</code> as a hash key in <code>a</code>, and the second pass prints rows of <code>data.tsv</code> whose column 1 matches an exact key in <code>a</code> in linear time.</li>
+<li><code>matching_lines.txt</code> (from <code>grep -n -A 1</code>):<br/><samp>2:ATGCGTAA<br/>3-&gt;gene_B_wrapped split_motif</samp><br/>Line 2 matched, and line 3 (marked with <code>-</code> by <code>-A 1</code>) is actually the <em>next</em> record's header, not <code>gene_A_unwrapped</code>. Meanwhile, <code>gene_B_wrapped</code>'s split motif was missed completely.</li>
+<li><code>seqkit seq -n -i matching_records.fasta</code>:<br/><samp>gene_A_unwrapped<br/>gene_B_wrapped</samp></li>
 </ul>
-<h3>5) Convert the toy FASTQ, then challenge the assumption</h3>
-<p>The supplied valid FASTQ has exactly four lines per record. The following AWK example is a demonstration for that fixture only, not a validator or a general FASTQ parser. It copies the header and sequence while discarding quality information.</p>
+<p>Here <code>-s</code> searches sequence content instead of headers, <code>-P</code> restricts matching to the positive (forward) strand (since SeqKit v2.0.0, <code>-s</code> searches both strands by default), <code>-n</code> prints header names only, and <code>-i</code> strips everything after the first whitespace to return bare IDs.</p>
+</div>
+
+<h3>5) Convert FASTQ safely, and catch malformed records</h3>
+<p><strong>Why:</strong> A FASTQ record packs four lines together: <code>@ID</code>, sequence bases, <code>+</code>, and ASCII Phred quality scores (one character per base). A quick <code>awk</code> modulo-4 shortcut can extract headers and bases on a known clean file, but it is <strong>not a validator</strong> and silently outputs plausible-looking FASTA from corrupted reads.</p>
 <pre id="cli-part2-fastq-toy"><code># Demonstration ONLY for the supplied valid four-line teaching fixture
 awk 'NR%4==1{printf "&gt;%s\n", substr($0,2)} NR%4==2{print}' reads.fastq &gt; reads.toy.fasta
 </code></pre>
-<p>You should see two eight-base FASTA records (<code>read_1</code> and <code>read_2</code>). Notice that the quick AWK shortcut skips checking <code>+</code> separator lines and quality lengths, so it cannot catch a truncated record.</p>
-<p>For real data, use the record-aware parser below. Because a parser can fail partway through a corrupt file, the command writes to a temporary file first and publishes the final output only after a successful exit.</p>
+<div class="lesson-result">
+<p><strong>Expected contents of <code>reads.toy.fasta</code>:</strong></p>
+<p><samp>&gt;read_1<br/>ATGCGTAA<br/>&gt;read_2<br/>CCATGCGT</samp></p>
+<p>Notice what <code>awk</code> does: <code>NR % 4 == 1</code> prints lines 1, 5, 9... with <code>@</code> replaced by <code>&gt;</code> (<code>substr($0,2)</code> drops character 1), and <code>NR % 4 == 2</code> prints lines 2, 6, 10... It never inspects line 3 (<code>+</code>) or compares line 2 and line 4 lengths.</p>
+</div>
+<p>For real FASTQ files, use <code>seqkit fq2fa</code> and write atomically through a temporary file so the final output is published <strong>only after a successful exit</strong>. That prevents downstream tools from reading a half-written file if parsing aborts partway through:</p>
 <pre id="cli-part2-fastq-record-aware"><code># Run in a child Bash shell so a parse failure stops before publishing output.
 bash &lt;&lt;'BASH'
 set -euo pipefail
@@ -314,8 +359,8 @@ seqkit fq2fa "$input" &gt; "$tmp"
 mv "$tmp" "$output"
 BASH
 </code></pre>
-<p>For the valid fixture, <code>reads.checked.fasta</code> should match <code>reads.toy.fasta</code>. Quality characters are intentionally lost in both outputs; keep the original FASTQ when downstream steps need quality scores.</p>
-<p><strong>Deliberate failure:</strong> <code>malformed.fastq</code> has four bases and three quality characters. Predict what each method will do, then run:</p>
+<p>On the valid <code>reads.fastq</code> fixture, <code>reads.checked.fasta</code> matches <code>reads.toy.fasta</code> byte for byte. Quality scores are intentionally discarded when converting to FASTA; keep the original FASTQ for alignment or QC.</p>
+<p><strong>Test the failure case on <code>malformed.fastq</code>:</strong> <code>malformed.fastq</code> has 4 bases (<code>ATGC</code>) and only 3 quality characters (<code>III</code>). Compare how <code>awk</code> and <code>seqkit fq2fa</code> react:</p>
 <pre id="cli-part2-malformed"><code># This creates plausible-looking FASTA even though the supplied FASTQ is broken.
 # It is a counterexample, NOT a conversion method for unknown inputs.
 awk 'NR%4==1{printf "&gt;%s\n", substr($0,2)} NR%4==2{print}' malformed.fastq &gt; misleading.fasta
@@ -330,8 +375,23 @@ else
   printf 'Rejected the malformed FASTQ as expected.\n'
 fi
 </code></pre>
-<p><strong>Worked result:</strong> AWK writes <code>&gt;bad_length</code> and <code>ATGC</code> and exits successfully. SeqKit rejects the unequal sequence and quality lengths with a nonzero exit; the exact numeric error code can vary. The expected final message is <code>Rejected the malformed FASTQ as expected.</code> Do not use partial output from a failed parse, and do not treat parser acceptance as proof of correct samples, quality encoding or biological provenance.</p>
-<h3>6) Work with tab-delimited data (column selection, filtering, counting)</h3>
+<div class="lesson-result">
+<p><strong>Expected result:</strong> <code>misleading.fasta</code> silently receives <code>&gt;bad_length</code> and <code>ATGC</code> with exit code 0, whereas <code>seqkit fq2fa</code> prints a format error, exits nonzero, cleans up <code>rejected.fasta.tmp</code>, and prints <code>Rejected the malformed FASTQ as expected.</code> (If you ever need to repair or inspect broken FASTQ files in real pipelines, see <code>seqkit sana</code> in the SeqKit docs.)</p>
+</div>
+
+<h2 id="tabular-workflow">Part B: Filter and summarize tab-delimited tables</h2>
+<p>For TSV files (differential expression results, gene-count matrices, GTF/BED annotations), each line is one independent record, so streaming line tools are both fast and safe.</p>
+
+<div class="lesson-checkpoint">
+<p><strong>Quick AWK primer for Steps 6 and 7:</strong> <code>awk</code> reads one line at a time and runs <code>condition { action }</code> rules:</p>
+<ul>
+<li><code>-F'\t'</code> splits fields strictly on tabs (default AWK splits on runs of spaces or tabs, which breaks columns containing spaces). <code>$0</code> is the whole line, <code>$1</code> is column 1, <code>$3</code> is column 3, and <code>$NF</code> is the last column.</li>
+<li><code>NR</code> is the cumulative line counter across input files (<code>NR &gt; 1</code> skips a single-line header).</li>
+<li><code>FILENAME == ARGV[1]</code> tests whether <code>awk</code> is currently reading the first input file. Using <code>FILENAME == ARGV[1]</code> instead of <code>NR == FNR</code> stays safe even when the first file (your ID list) is empty.</li>
+</ul>
+</div>
+
+<h3>6) Select columns, filter counts, and tally frequencies</h3>
 <pre id="cli-part2-tables"><code># Show header and first 5 rows (safe inspection)
 head -n 6 data.tsv
 
@@ -348,9 +408,27 @@ cut -f 1,3 data.tsv &gt; col1_col3.tsv
 cut -f1 data.tsv | tail -n +2 | sort | uniq -c | sort -k1,1nr &gt; gene_counts.txt
 # Output: column-1 value frequencies in descending count order (ties are not explicitly ordered)
 </code></pre>
-<p>Notes: The parentheses around the header-preserve pipeline ensure the header is copied, then rows are filtered. Replace column indices based on your file schema. With the supplied table, the count filter produces GENE_A/S1/120 and GENE_C/S2/200. Column-1 frequencies are 2 for GENE_A and 1 each for GENE_B and GENE_C (the tied values may appear in either order).</p>
-<h3>7) Small example: extract records for a set of gene IDs</h3>
-<p>The setup block created <code>genes_of_interest.txt</code> with two IDs that occur in the sample table. First-column matching matters: a whole-line search can match an ID in another field or as part of a longer string.</p>
+<div class="lesson-result">
+<p><strong>Expected outputs:</strong></p>
+<ul>
+<li><code>col1_col3.tsv</code> keeps <code>gene_id</code> and <code>count</code> across all 5 lines.</li>
+<li><code>filtered_counts.tsv</code>:<br/><samp>gene_id&nbsp;&nbsp;sample&nbsp;&nbsp;count<br/>GENE_A&nbsp;&nbsp;S1&nbsp;&nbsp;120<br/>GENE_C&nbsp;&nbsp;S2&nbsp;&nbsp;200</samp></li>
+<li><code>gene_counts.txt</code>:<br/><samp>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2 GENE_A<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;1 GENE_B<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;1 GENE_C</samp></li>
+</ul>
+<p>Because <code>uniq -c</code> only counts adjacent duplicates, <code>sort</code> must run directly before <code>uniq -c</code>. Prefixing <code>LC_ALL=C sort</code> forces predictable ASCII byte ordering and speeds up large tables.</p>
+</div>
+
+<aside class="lesson-warning">
+<p><strong>AWK numeric trap with <code>NA</code> or text strings:</strong> In <code>awk</code>, comparing a non-numeric string to a number (such as <code>"NA" &gt; 100</code>) falls back to alphabetical string comparison where <code>"N" &gt; "1"</code> evaluates to <strong>true</strong>. Always validate that a field looks numeric before filtering real tables (here <code>^[0-9]+$</code> checks integer counts; use <code>^[+-]?[0-9]+(\.[0-9]+)?$</code> for decimals):</p>
+<pre id="cli-part2-awk-numeric-guard"><code># Demonstrates why "NA" passes a bare &gt; 100 check unless guarded by a regex
+printf 'gene\tcount\nGENE_X\tNA\nGENE_Y\t50\nGENE_Z\t200\n' |
+  awk -F'\t' 'NR&gt;1 &amp;&amp; $2 ~ /^[0-9]+$/ &amp;&amp; $2+0 &gt; 100'
+</code></pre>
+<p>Without <code>$2 ~ /^[0-9]+$/</code>, <code>GENE_X	NA</code> would slip into the output alongside <code>GENE_Z	200</code>.</p>
+</aside>
+
+<h3>7) Extract rows for a list of gene IDs</h3>
+<p><strong>Why:</strong> Subsetting a count matrix by a gene panel is one of the most common shell tasks, and one of the easiest to get slightly wrong with <code>grep</code>.</p>
 <pre id="cli-part2-gene-ids"><code># genes_of_interest.txt contains gene IDs, one per line
 # Fixed-string substring search across each entire line; not a column-exact match
 grep -F -f genes_of_interest.txt data.tsv &gt; genes_subset_grep.tsv
@@ -358,73 +436,71 @@ grep -F -f genes_of_interest.txt data.tsv &gt; genes_subset_grep.tsv
 awk -F'\t' 'FILENAME == ARGV[1] {a[$1]=1; next} ($1 in a)' genes_of_interest.txt data.tsv &gt; genes_subset.tsv
 # Output: three matching data rows; empty if there are no matches
 </code></pre>
-<p>Inspect with <code>cat genes_subset.tsv</code>; the expected first fields are GENE_A, GENE_A, and GENE_C. To test no matches, temporarily replace the list with <code>NOT_PRESENT</code>; the output should contain zero rows. Restore the original list afterward. This result intentionally omits the TSV header.</p>
-<h2>Interpreting the output files</h2>
-<p>What to look for after each step:</p>
+<div class="lesson-result">
+<p><strong>Expected contents of <code>genes_subset.tsv</code>:</strong></p>
+<p><samp>GENE_A&nbsp;&nbsp;S1&nbsp;&nbsp;120<br/>GENE_A&nbsp;&nbsp;S2&nbsp;&nbsp;90<br/>GENE_C&nbsp;&nbsp;S2&nbsp;&nbsp;200</samp></p>
+<p>Both outputs intentionally omit the header row; prepend <code>head -n 1 data.tsv</code> when you need headers preserved. Notice why <code>awk</code> is safer than <code>grep -F -f</code> on real data: <code>grep -F -f</code> matches anywhere in the line as a substring (so <code>TP53</code> also pulls in <code>TP53BP1</code>, and an accidental blank line in the ID list matches every row in the table), whereas <code>($1 in a)</code> performs an exact hash lookup on column 1 in linear time.</p>
+</div>
+
+<h2 id="when-to-use-what">Decision guide: which tool fits the job?</h2>
+<div class="lesson-table-wrap" role="region" aria-label="Tool selection guide for bioinformatics text tasks" tabindex="0">
+<table>
+<caption>Choosing between Unix text utilities, SeqKit, domain tools, and R/Python</caption>
+<thead>
+<tr><th scope="col">Task</th><th scope="col">Best tool</th><th scope="col">Why</th></tr>
+</thead>
+<tbody>
+<tr><th scope="row">Quick preview, line/header count, column slicing, exact ID lookup in TSV/BED/GTF</th><td><code>head</code>, <code>gzip -dc</code>, <code>cut</code>, <code>awk</code>, <code>LC_ALL=C sort</code></td><td>Streams line by line with minimal memory and zero startup overhead</td></tr>
+<tr><th scope="row">FASTA/FASTQ stats, motif grep across wrapped lines, length/GC filtering, paired-read sync, format conversion</th><td><code>seqkit</code></td><td>Record-aware, reads <code>.gz</code> natively, checks quality lengths, multithreaded</td></tr>
+<tr><th scope="row">Aligned reads (BAM/CRAM) or variant calls (VCF/BCF)</th><td><code>samtools</code>, <code>bcftools</code></td><td>Binary and indexed formats cannot be parsed with plain-text tools</td></tr>
+<tr><th scope="row">Multi-table joins, statistical tests, differential expression, plots</th><td>R (<code>tidyverse</code> / Bioconductor) or Python (<code>pandas</code>)</td><td>Rich data types, missing-value handling, and reproducible modeling</td></tr>
+</tbody>
+</table>
+</div>
+
+<h2 id="common-mistakes">Common mistakes and how to fix them</h2>
 <ul>
-<li>Counts from grep -c '^&gt;' or seqkit stats: confirm the number matches expectations (e.g., sample metadata). A mismatch can indicate extra header-like lines, concatenated files, or file corruption.</li>
-<li>Headers.txt contents: verify that IDs are what downstream tools expect (no extra whitespace, no &gt; character).</li>
-<li>Matching_records.fasta: check that full records were preserved; if only partial sequences appear, you may have used a line-based grep on wrapped FASTA.</li>
-<li>Filtered TSV outputs: confirm the header presence and that numeric comparisons (such as $3 &gt; 100) behave as intended. Do not rely on an AWK numeric comparison to validate a field: nonnumeric text can be coerced or compared in ways that do not express the intended numeric threshold. Validate the field and normalize it before filtering.</li>
+<li><strong>Truncating your input file with <code>&gt;</code>:</strong> Running <code>awk '...' data.tsv &gt; data.tsv</code> empties <code>data.tsv</code> before <code>awk</code> reads a single byte. <em>Fix:</em> Always redirect to a new filename or write to a temporary file first and rename on success.</li>
+<li><strong><code>grep</code> returns zero hits or misses wrapped motifs:</strong> Case mismatch, shell-expanded characters (<code>$</code>, <code>*</code>), or a motif split across wrapped FASTA lines. <em>Fix:</em> Use single quotes around patterns, <code>-i</code> for case-insensitive matching, <code>-F</code> for literal strings, and <code>seqkit grep -s</code> for wrapped sequences.</li>
+<li><strong><code>cut</code> returns the whole line or wrong columns:</strong> File uses spaces or commas instead of tabs, or header has trailing spaces. <em>Fix:</em> Inspect whitespace portably across Linux and macOS with <code>head -n 5 file | cat -vet</code> (tabs appear as <code>^I</code>, Windows CRLF endings appear as <code>^M$</code>, and each line ends with <code>$</code>). Pass <code>-d','</code> to <code>cut</code>, or normalize line 1 portably across GNU and macOS/BSD <code>sed</code> with <code>sed '1s/^[[:space:]]*//; 1s/[[:space:]]*$//' file</code>.</li>
+<li><strong>Windows CRLF (<code>\r\n</code>) breaks exact ID matching:</strong> A trailing <code>\r</code> on <code>genes_of_interest.txt</code> causes <code>($1 in a)</code> to fail silently because <code>"GENE_A\r" != "GENE_A"</code>. <em>Fix:</em> Strip carriage returns with <code>tr -d '\r' &lt; win.txt &gt; unix.txt</code> or <code>dos2unix</code>.</li>
+<li><strong><code>sort</code> runs slowly or fills <code>/tmp</code> on multi-gigabyte tables:</strong> Locale collation is slow and <code>/tmp</code> is often small on HPC login/compute nodes. <em>Fix:</em> Create the scratch directory first (or point <code>-T</code> to an existing scratch folder): <code>mkdir -p ./tmp_sort &amp;&amp; LC_ALL=C sort -S 2G -T ./tmp_sort big.tsv &gt; big.sorted.tsv</code>.</li>
 </ul>
-<p>How to read a passing output (and its limits):</p>
+
+<section class="lesson-exercise" aria-labelledby="practice-variation-heading">
+<h2 id="practice-variation-heading">Try a variation and check your reasoning</h2>
+<ol>
+<li>In Step 4, change the forward-strand motif from <code>ATGCG</code> to <code>TTTT</code>. Predict which FASTA ID will match before running <code>seqkit grep -s -P -p 'TTTT' sequences.fasta | seqkit seq -n -i</code>.</li>
+<li>Repeat the atomic conversion block from Step 5 in a fresh directory with <code>input=malformed.fastq</code> and <code>output=must-not-publish.fasta</code>. Predict the exit status and whether <code>must-not-publish.fasta</code> should exist.</li>
+<li>In the <code>awk</code> numeric-guard snippet (Step 6), predict what happens if you remove <code>$2 ~ /^[0-9]+$/ &amp;&amp;</code> when <code>GENE_X</code> has count <code>NA</code>.</li>
+</ol>
+<details><summary>Compare your reasoning</summary>
+<p><strong>1.</strong> <code>TTTT</code> selects only <code>gene_C_negative</code>; its name indicates no hit for the original <code>ATGCG</code> motif, not a biological negative control.</p>
+<p><strong>2.</strong> <code>seqkit fq2fa</code> exits nonzero, <code>set -euo pipefail</code> stops before <code>mv</code>, and the <code>EXIT</code> trap removes the temporary file, leaving no <code>must-not-publish.fasta</code>.</p>
+<p><strong>3.</strong> Without the regex check, AWK compares <code>"NA" &gt; 100</code> as strings and prints <code>GENE_X	NA</code> alongside <code>GENE_Z	200</code>.</p>
+</details>
+</section>
+
+<h2 id="next-steps">Summary and next steps</h2>
 <ul>
-<li>A list of sequence IDs matching 'ATGCG' indicates those sequences contain that motif. It does NOT imply functional significance or experimental validity; further validation and context are required.</li>
-<li>A high read count or many matching records may indicate biological signal or contamination; text processing alone cannot distinguish these possibilities.</li>
-<li>Counting headers gives the number of records in the file, but not the uniqueness of IDs. Because <code>uniq</code> only compares adjacent lines, sort the extracted accession tokens first when checking for duplicate FASTA IDs: <code>grep '^&gt;' sequences.fasta | cut -d' ' -f1 | sort | uniq -d</code> (empty output means no exact duplicate IDs).</li>
+<li>Use <code>head</code>, <code>gzip -dc</code>, <code>cut</code>, <code>awk -F'\t'</code>, <code>LC_ALL=C sort</code>, and <code>uniq</code> when one line equals one record.</li>
+<li>Switch to <code>seqkit</code> whenever sequences wrap across lines or couple bases with Phred quality scores, and write outputs atomically through temporary files.</li>
+<li>Next in the Foundations track: learn isolated software environments in <a href="conda-mamba-part1.html">Micromamba Environments for Bioinformatics</a>, inspect sequencing quality metrics in <a href="quality-control-fundamentals.html">Quality Control Fundamentals</a>, or analyze count tables in <a href="r-tidyverse-fundamentals.html">R and Tidyverse Fundamentals</a> and <a href="python-fundamentals-bioinformatics.html">Python Fundamentals for Bioinformatics</a>.</li>
 </ul>
-<h2>Try a variation and explain the result</h2>
-<ol><li>Change the forward-strand motif from <code>ATGCG</code> to <code>TTTT</code>. Predict the matching ID before running the record-aware command.</li><li>Repeat the checked-conversion block in a fresh practice directory with <code>input=malformed.fastq</code> and <code>output=must-not-publish.fasta</code>. Predict the exit status and whether that final file should exist.</li></ol>
-<details><summary>Compare your reasoning</summary><p>The new motif selects only <code>gene_C_negative</code>; its name meant no hit for the original motif, not a biological negative control. The checked conversion must fail, remove its temporary file, and leave no new final output. If an older output already exists, it is not evidence that the failed run succeeded. Describe both what a command checks and what it does not check.</p></details>
-<h2>What was checked</h2>
-<p>The displayed fixture setup, table filters and ID matching, wrapped-motif comparison, both valid conversions and malformed-record rejection were run on invented inputs under Ubuntu Linux x86_64 with Bash 5.2.21, mawk 1.3.4 (20240123), GNU grep 3.11, GNU Coreutils 9.4, and SeqKit 2.14.0. The failed checked-conversion variation was tested for temporary-file cleanup and no new final output. The Micromamba preparation route, other operating systems, performance on large files and biological analyses were not tested here.</p>
-<h2>Troubleshooting</h2>
-<p>Below are common symptoms, likely causes, and suggested fixes.</p>
-<h3>Symptom: grep returns no matches, but you expect hits</h3>
-<ul>
-<li>Cause: pattern case mismatch. Fix: use -i for case-insensitive search: grep -i 'pattern' file.</li>
-<li>Cause: pattern contains characters interpreted by the shell. Fix: quote patterns properly (single quotes preferred) and escape regex metacharacters, or use grep -F for fixed-string matching.</li>
-<li>Cause: line wrapping or multi-line records. Fix: use a record-aware tool like seqkit or reformat the file so each record is single-line if appropriate.</li>
-</ul>
-<h3>Symptom: cut results include empty columns or wrong fields</h3>
-<ul>
-<li>Cause: different delimiter than tab. Fix: identify delimiter (use head | sed or less) and supply -d option to cut, or use awk -F to specify delimiter.</li>
-<li>Cause: header line contains leading or trailing whitespace. Fix: trim only line 1 with POSIX character classes (portable across GNU and macOS/BSD <code>sed</code>, unlike GNU-only <code>\t</code> inside brackets): <code>sed '1s/^[[:space:]]*//; 1s/[[:space:]]*$//' file</code>.</li>
-</ul>
-<h3>Symptom: awk numeric comparison fails</h3>
-<ul>
-<li>Cause: non-numeric characters (commas, units) in the numeric column. Fix: remove or convert non-numeric characters before numeric comparison, e.g., gsub(/,/, "", $3) inside awk.</li>
-</ul>
-<h3>Symptom: pipelines run slowly on very large files</h3>
-<ul>
-<li>Cause: using algorithms that are not streaming-friendly or too many intermediate writes to disk. Fix: keep operations piped where possible (avoid unnecessary temporary files), or use specialized tools (seqkit, samtools for SAM/BAM) and appropriate hardware.</li>
-</ul>
-<h2>Limits to keep in mind</h2>
-<ul>
-<li>Line-based tools assume a consistent file structure. If input formats vary across files, automated scripts can silently produce incorrect outputs. Always inspect representative samples with head or less.</li>
-<li>Command behavior can vary slightly with tool versions (GNU vs BSD variants). When writing reproducible pipelines, document tool versions (for example, grep --version) and consider using a package manager (conda/mamba) to pin versions.</li>
-<li>On very large datasets, file encoding and newline styles (Windows CRLF vs Unix LF) can affect pattern matching. Normalize files with dos2unix if needed.</li>
-<li>Responsible use: extracting sequence IDs or motifs does not replace proper ethical review or consent checks for sensitive genomic data. Do not share sensitive outputs without appropriate permissions.</li>
-<li>Record-aware tools (seqkit, samtools, bcftools) are preferable for formats with multi-line records or binary representations (e.g., BAM/CRAM). Prefer these when available rather than attempting complex sed/awk workarounds.</li>
-</ul>
-<h2>Checklist before moving on</h2>
-<ul>
-<li>Verify file layout for each dataset (wrapped vs unwrapped FASTA, tab delimiter).</li>
-<li>Create and test one small, documented command-line workflow for a common task (e.g., extract gene set, count reads).</li>
-<li>Record tool versions used and consider containerizing workflows (Docker/Singularity) or using an environment manager (conda) for reproducibility.</li>
-<li>When uncertain about format complexities, use seqkit or other format-aware tools rather than relying solely on line-based utilities.</li>
-<li>Practice safe data handling and check institutional policies before sharing processed data.</li>
-</ul>
+<p class="lesson-caption"><strong>Checked environment and scope:</strong> The table filtering, exact ID matching, wrapped-motif comparison, valid FASTQ conversion, malformed-record rejection, and temp-file cleanup commands were verified on the five invented teaching fixtures under Ubuntu Linux x86_64 with Bash 5.2.21, mawk 1.3.4 (20240123), GNU grep 3.11, GNU Coreutils 9.4, and SeqKit 2.14.0 (and the Micromamba 2.9.0 setup commands were verified in a fresh environment root on the same platform). Performance on large datasets, biological conclusions, and other operating systems were not tested here.</p>
+
 <aside aria-label="Author's lab note" class="lesson-summary">
-<p><strong>Author's lab note:</strong> Before writing a clever one-line <code>awk</code> parser for a new FASTA or TSV file, I always run <code>head</code> and check whether sequence lines wrap or header fields contain spaces. Half of the silent off-by-one bugs in bash pipelines come from multi-line FASTA wrapping breaking four-line record assumptions.</p>
+<p><strong>Author's lab note:</strong> Before writing a clever one-line <code>awk</code> parser for a new FASTA or TSV file, I always run <code>head</code> and check whether sequence lines wrap or header fields contain spaces. Many silent off-by-one bugs in bash pipelines come from multi-line FASTA wrapping breaking two-line header-plus-sequence assumptions (or wrapped FASTQ breaking four-line record assumptions).</p>
 </aside>
+
 <h2>References</h2>
 <ul>
-<li><a href="https://www.gnu.org/software/grep/manual/grep.html">GNU grep manual</a>: documentation and options for pattern searching.</li>
-<li><a href="https://www.gnu.org/software/sed/manual/sed.html">GNU sed manual</a>: stream editor reference for substitution and simple text transformations.</li>
-<li><a href="https://www.gnu.org/software/coreutils/manual/coreutils.html">GNU Coreutils (cut, sort, uniq, wc)</a>: authoritative reference for standard text-processing utilities.</li>
-<li><a href="https://bioinf.shenwei.me/seqkit/usage/">SeqKit usage documentation</a>: a fast toolkit for FASTA/Q manipulation with record-aware operations.</li>
-<li><a href="https://www.ncbi.nlm.nih.gov/genbank/fastaformat">FASTA format guidance (NCBI)</a>: definition-line identifiers and sequence-format requirements.</li>
+<li><a href="https://www.gnu.org/software/grep/manual/grep.html" rel="noopener noreferrer" target="_blank">GNU grep manual</a>: regular expressions, fixed-string matching (<code>-F</code>), and context options.</li>
+<li><a href="https://www.gnu.org/software/sed/manual/sed.html" rel="noopener noreferrer" target="_blank">GNU sed manual</a>: stream editor addressing, substitutions, and POSIX character classes.</li>
+<li><a href="https://www.gnu.org/software/gawk/manual/gawk.html" rel="noopener noreferrer" target="_blank">GNU Awk (gawk) manual</a>: field splitting, array lookups, and string-versus-number comparison rules.</li>
+<li><a href="https://www.gnu.org/software/coreutils/manual/coreutils.html" rel="noopener noreferrer" target="_blank">GNU Coreutils manual (cut, sort, uniq, head, tail)</a>: standard text-processing utilities and locale sorting behavior.</li>
+<li><a href="https://bioinf.shenwei.me/seqkit/usage/" rel="noopener noreferrer" target="_blank">SeqKit usage documentation</a>: record-aware FASTA/Q manipulation, strand flags (<code>-P</code>), <code>stats</code>, <code>fq2fa</code>, and <code>sana</code>.</li>
+<li><a href="https://www.ncbi.nlm.nih.gov/genbank/fastaformat" rel="noopener noreferrer" target="_blank">NCBI GenBank FASTA format specification</a>: definition-line identifiers and sequence wrapping conventions.</li>
 </ul>
 <aside aria-labelledby="tutorial-feedback-title" class="lesson-feedback" id="tutorial-feedback"><h2 id="tutorial-feedback-title">Help improve this tutorial</h2><p>Found an error, a broken link, or a step that needs a clearer explanation? Please <a href="../contact.html">contact me</a>. Your feedback helps me keep this resource accurate and useful.</p></aside></article>
 <section class="mt-12 mb-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-100">
@@ -564,7 +640,7 @@ awk -F'\t' 'FILENAME == ARGV[1] {a[$1]=1; next} ($1 in a)' genes_of_interest.txt
 </script>
 <script src="../assets/vendor/prism/prism-1.29.0.js"></script>
 <script id="tutorial-code-data">
-window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"command-line-part2":{"blocks":[{"language":"bash","sha256":"57b44fd0528b408c07861b72f91843c004b50ee36aa160d682f5110b084cb9c9"},{"language":"bash","sha256":"242c079fe3cc0f8ee515359750755c069c0de6e2169b47d6dd701e7584cc47a7"},{"language":"bash","sha256":"1ffa0b20080dcfe5f25f86e0511b1bc3cc8fd405a9f00eaf5de362b36006b63b"},{"language":"bash","sha256":"1d0633676ad8475f636acb74a1d8f6c09dc4cd8ab57c225323dce896e9d69494"},{"language":"bash","sha256":"4832cd96af376d265ebd6ff98348aec5f7ceceb584a8234e0bd210bf6e89cba2"},{"language":"diff","sha256":"0c6e9f5761d3ec09f2e6c6c3c0b2eef55dd7e5642573f54c504f926cd6edab7e"},{"language":"bash","sha256":"f9ec6b254f0fd5fb95ae5743b07def4fcd97e322370a25f44428239cbaf8cf00"},{"language":"bash","sha256":"aa64246b344899ec4c92b69b6c8b2dcea1991b6cd56d2a45c4317fad8bae1edd"},{"language":"bash","sha256":"8c69d7a79b2a5c50f75d11fe3a55b9956f96c248e10c5e2d8bf02cd0d7c4678c"},{"language":"bash","sha256":"fe6830170459b7e40901b19914cf447f4c72143a27848be0c65e0bcffc1f0e24"},{"language":"bash","sha256":"45f50b11f0726707a7eb79e1551d1f404b34bdc6f6d130a7d51f0e00092629f3"},{"language":"bash","sha256":"b38d9214f82645cbd29909bcb127deef99bcbcd61e6dcbe7e29ccc82dea1b4d6"},{"language":"bash","sha256":"1e7b01b29d3f058bc707ca19b25a82510693fb4c565e337da43cf642a541355d"},{"language":"bash","sha256":"97c0fb872c3329301b74ec56b1cf23bdc70f74a343f6770fc3a9d9a0453adb1c"},{"language":"bash","sha256":"6f58e9d7f0f48e1fa970128c11dbeaf119b315e787d0f6c0a48706289a7b8fe1"},{"language":"bash","sha256":"0ed8c8a38c24bad7a3f716ce1250d0b0d6509ec34824f29975164819ae499a9d"}],"groups":[]}}};
+window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"command-line-part2":{"blocks":[{"language":"bash","sha256":"57b44fd0528b408c07861b72f91843c004b50ee36aa160d682f5110b084cb9c9"},{"language":"bash","sha256":"242c079fe3cc0f8ee515359750755c069c0de6e2169b47d6dd701e7584cc47a7"},{"language":"bash","sha256":"1ffa0b20080dcfe5f25f86e0511b1bc3cc8fd405a9f00eaf5de362b36006b63b"},{"language":"bash","sha256":"1d0633676ad8475f636acb74a1d8f6c09dc4cd8ab57c225323dce896e9d69494"},{"language":"bash","sha256":"4832cd96af376d265ebd6ff98348aec5f7ceceb584a8234e0bd210bf6e89cba2"},{"language":"bash","sha256":"0c6e9f5761d3ec09f2e6c6c3c0b2eef55dd7e5642573f54c504f926cd6edab7e"},{"language":"bash","sha256":"f9ec6b254f0fd5fb95ae5743b07def4fcd97e322370a25f44428239cbaf8cf00"},{"language":"bash","sha256":"aa64246b344899ec4c92b69b6c8b2dcea1991b6cd56d2a45c4317fad8bae1edd"},{"language":"bash","sha256":"8c69d7a79b2a5c50f75d11fe3a55b9956f96c248e10c5e2d8bf02cd0d7c4678c"},{"language":"bash","sha256":"fe6830170459b7e40901b19914cf447f4c72143a27848be0c65e0bcffc1f0e24"},{"language":"bash","sha256":"45f50b11f0726707a7eb79e1551d1f404b34bdc6f6d130a7d51f0e00092629f3"},{"language":"bash","sha256":"b38d9214f82645cbd29909bcb127deef99bcbcd61e6dcbe7e29ccc82dea1b4d6"},{"language":"bash","sha256":"1e7b01b29d3f058bc707ca19b25a82510693fb4c565e337da43cf642a541355d"},{"language":"bash","sha256":"97c0fb872c3329301b74ec56b1cf23bdc70f74a343f6770fc3a9d9a0453adb1c"},{"language":"bash","sha256":"6f58e9d7f0f48e1fa970128c11dbeaf119b315e787d0f6c0a48706289a7b8fe1"},{"language":"bash","sha256":"ebdb868657e1c3c18a717131dbf7e3757cf9302167f7e8c98aa64c3122072f11"},{"language":"bash","sha256":"0ed8c8a38c24bad7a3f716ce1250d0b0d6509ec34824f29975164819ae499a9d"}],"groups":[]}}};
 </script>
 <script src="../code-tabs.js?v=20261026-startup-v1"></script>
 <script src="../copy-code.js?v=20261025-r-first-v1"></script>

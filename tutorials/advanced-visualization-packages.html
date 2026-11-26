@@ -173,60 +173,129 @@ function toggleMobileMenu() {
 </div>
 <nav aria-label="Learning path navigation" class="reader-toolbar"><span class="reader-toolbar__heading">Learning path</span><a href="scrna-seq-downstream-analysis.html" rel="prev" class="reader-toolbar__previous"><span class="reader-toolbar__direction"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5m0 0 7 7m-7-7 7-7"/></svg></span><span class="reader-toolbar__copy"><small>Previous prerequisite</small><strong>Single-Cell RNA-seq Downstream Analysis</strong></span></a><a data-catalogue-return="" href="../tutorials.html" class="reader-toolbar__library"><span class="reader-toolbar__library-mark" aria-hidden="true"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="6" height="6" rx="1.3"/><rect x="14" y="4" width="6" height="6" rx="1.3"/><rect x="4" y="14" width="6" height="6" rx="1.3"/><rect x="14" y="14" width="6" height="6" rx="1.3"/></svg></span><span><small>Browse</small><strong>All tutorials</strong></span></a><a href="../start-here.html#sh-single-cell" rel="next" class="reader-toolbar__next"><span class="reader-toolbar__copy"><small>Suggested next</small><strong>Return to single-cell choices</strong></span><span class="reader-toolbar__direction"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14m0 0-7-7m7 7-7 7"/></svg></span></a></nav>
 <article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--walkthrough">
-<p class="lesson-lead">This walkthrough provides a tested, runnable Seurat/ggplot2 route using a small synthetic fixture, followed by optional SCpubr and dittoSeq templates. The synthetic plots demonstrate code and plot mechanics only; they are not biological observations or evidence about real cell types.</p>
+<p class="lesson-lead">Default Seurat plots work well for quick exploration, but turning them into clear publication figures requires matching each plot type to its data layer, using colour-vision-safe scales, and keeping legends comparable across panels. In about 30 minutes, you will run a self-contained Seurat and ggplot2 script that produces four core single-cell figures, then adapt templates for <code>SCpubr</code>, <code>dittoSeq</code>, and <code>patchwork</code> to your own QC-reviewed object.</p>
 <section class="lesson-summary tutorial-learning-contract" data-tutorial-format="advanced-template" aria-label="Learning format">
-<p><strong>Format: Executable core example plus advanced templates.</strong> Start with the included example count and metadata CSVs, then adapt the core script to your own QC-reviewed object. The optional wrapper examples require extra packages and your own compatible object; they were not executed in this revision.</p>
+<p><strong>Format: Executable core example plus advanced templates.</strong> The core script runs from the repository root on a 36-feature by 48-cell synthetic count and metadata fixture using only Seurat and ggplot2; those synthetic plots illustrate code mechanics and are not biological observations. The later <code>SCpubr</code> and <code>dittoSeq</code> blocks are adaptation templates for your own object and were not executed in this revision.</p>
 </section>
-<div class="lesson-summary"><p><strong>Core input contract:</strong> the runnable script generates and reloads a 36-feature by 48-cell example count matrix and metadata, then computes normalization, variable features, scaling, PCA, and UMAP. No precomputed object or optional plotting wrapper is needed. The SCpubr/dittoSeq templates later in this page instead expect your own compatible Seurat object and metadata.</p></div>
-<h2>Learning objectives &amp; prerequisites</h2>
-<p><strong>By the end of this lesson</strong> you will be able to:</p>
-<ul>
-<li>Choose plot types that match categorical annotations, continuous expression, or sample-level composition.</li>
-<li>Inspect grouping variables and expression scales, then save plots with dimensions and formats suited to the intended use.</li>
-<li>Explain what the plots show and what they cannot establish about biological differences.</li>
-</ul>
-<p><strong>Prerequisites</strong> (assumed completed):</p>
-<ul>
-<li>Completed a basic single-cell RNA-seq (scRNA-seq) workflow: alignment, count matrix, cell/gene QC, normalization, dimensional reduction and clustering (e.g., using Seurat).</li>
-<li>For the optional wrapper templates only: a QC-reviewed Seurat object saved as <code>data/seurat_obj.rds</code>, containing the metadata columns and assay data used in each template. The core route creates its own small object.</li>
-<li>For the runnable core: R, Seurat, and ggplot2. This core route was executed with the exact versions recorded in <code>files/visualization-example/package-versions.txt</code>. The later SCpubr and dittoSeq templates remain unexecuted examples; check their installed help and release requirements before adapting them.</li>
-</ul>
-<h2>How plot choices affect interpretation</h2>
-<p>Exploratory plots in Seurat (DimPlot, FeaturePlot, DotPlot) are excellent for iterative analysis, but default styling is designed for quick inspection rather than publication. Well-crafted figures must communicate a specific biological message: which cell types change with condition, which genes mark a cluster, or how pathway activities distribute across cell states. Poor color choices, inconsistent legends, and cluttered axis labels can obscure biological signals or, worse, mislead the reader.</p>
-<p>These packages expose different plotting interfaces and defaults. A helper function can shorten repeated plotting code, but it does not make a palette accessible to every reader or make separate plots directly comparable. Check the data mapping, legends, and scale in each exported figure.</p>
-<h2>Step-by-step workflow</h2>
-<p>The first route below runs from the repository root with the included example dataset. The later wrapper examples are optional templates, not required dependencies for the core route; when adapting them, verify that your object contains the named metadata, features, and reductions.</p>
-<h3>Verified core route: generate the fixture, compute PCA/UMAP, and export plots</h3>
-<p>The script builds a deterministic example dataset (seed <code>20261023</code>) and writes its input files to <code>files/visualization-example/synthetic_counts.csv</code> and <code>synthetic_metadata.csv</code>. It then reloads those files, builds a Seurat object, computes PCA and R-native uwot UMAP, and exports the four figures shown here. Run it from the repository root with <code>Rscript files/visualization-example/run_example.R</code>; only Seurat and ggplot2 are required. The tested environment used R 4.3.3, Seurat 5.0.1, SeuratObject 5.0.1, ggplot2 3.4.4, and uwot 0.1.16. See the script, captured run output, session info, and checksums in <code>files/visualization-example/</code>.</p>
-<p>Open the <a href="../files/visualization-example/run_example.R">complete R script</a>, <a href="../files/visualization-example/README.md">reproduction notes</a>, <a href="../files/visualization-example/run-evidence.txt">captured execution output</a>, and <a href="../files/visualization-example/session-info.txt">tested R session</a>. The <a href="../files/visualization-example/synthetic_counts.csv">example count matrix</a> and <a href="../files/visualization-example/synthetic_metadata.csv">example cell metadata</a> are also available to inspect.</p>
-<p>These figures demonstrate plotting layout and Seurat/ggplot2 mechanics on fixed-seed counts rather than a biological cohort; UMAP axes and group spacing are shown purely to illustrate code output.</p>
-<figure><img alt="UMAP embedding of 48 example cells colored by assigned group labels for plotting layout reference" loading="lazy" decoding="async" width="1296" height="936" src="../images/tutorial-figures/visualization-synthetic-umap.png" style="aspect-ratio: 1296 / 936;"/><figcaption><strong>Example UMAP.</strong> 48 example cells colored by group labels after normalization, variable-feature selection, scaling, and PCA.</figcaption></figure>
-<figure><img alt="Feature plot of Gene01 expression across the example UMAP layout" loading="lazy" decoding="async" width="1152" height="936" src="../images/tutorial-figures/visualization-synthetic-feature.png" style="aspect-ratio: 1152 / 936;"/><figcaption><strong>Example feature plot.</strong> Gene01 displayed from the normalized assay to verify continuous color-scale rendering.</figcaption></figure>
-<figure><img alt="Seurat dot plot summarizing six example genes across three cell groups" loading="lazy" decoding="async" width="1296" height="827" src="../images/tutorial-figures/visualization-synthetic-dotplot.png" style="aspect-ratio: 1296 / 827;"/><figcaption><strong>Example dot plot.</strong> Dot size shows the fraction detected and color shows scaled average expression across the three groups.</figcaption></figure>
-<figure><img alt="Stacked bar chart of balanced cell-group proportions across four example samples" loading="lazy" decoding="async" width="1296" height="827" src="../images/tutorial-figures/visualization-synthetic-composition.png" style="aspect-ratio: 1296 / 827;"/><figcaption><strong>Example composition chart.</strong> Stacked proportions across four example samples showing even label group balance.</figcaption></figure>
-<h3>Optional wrapper templates (not executed in this revision)</h3>
-<p>The following SCpubr and dittoSeq code preserves the original examples as adaptation templates. They are not required to run the core example above, and this page does not claim that those packages, their calls, or the seven original plotting steps were tested. Check package compatibility, object assays, feature names, and the installed function documentation before use.</p>
-<h3>1) Optional wrapper setup: load libraries and your Seurat object</h3>
-<pre><code># Input files:
-# - data/seurat_obj.rds  (Seurat object with metadata: 'cell_type', 'condition')
-# Outputs:
-# - An R session with the object loaded as 'seurat_obj'
 
-library(Seurat)          # core single-cell object
-library(SCpubr)         # plotting wrappers
-library(dittoSeq)       # composition &amp; heatmaps
-library(ggplot2)        # underlying plotting system
+<h2 id="objectives">What you will learn and prerequisites</h2>
+<p>By the end of this lesson, you will be able to:</p>
+<ul>
+<li>Match categorical embeddings, continuous expression maps, multi-gene marker panels, and donor composition bars to the right R plotting function and assay layer.</li>
+<li>Control colour scales, quantile or numeric cutoffs, factor ordering, and rasterization so dense or skewed single-cell datasets stay readable.</li>
+<li>Assemble compatible <code>ggplot</code> objects with <code>patchwork</code>, export grid-based <code>dittoSeq</code> heatmaps cleanly, and diagnose common Seurat v5 plotting errors.</li>
+</ul>
+<p><strong>Prerequisites:</strong></p>
+<ul>
+<li>Completed upstream scRNA-seq processing (cell/gene QC, normalization, PCA, clustering, and UMAP) as covered in <a href="scrna-seq-downstream-analysis.html">Single-Cell RNA-seq Downstream Analysis</a>.</li>
+<li><strong>For the runnable core:</strong> R with <code>Seurat</code> and <code>ggplot2</code> (tested on R 4.3.3, Seurat 5.0.1, SeuratObject 5.0.1, ggplot2 3.4.4, and uwot 0.1.16).</li>
+<li><strong>For the optional wrapper templates:</strong> your own QC-reviewed Seurat object at <code>data/seurat_obj.rds</code> containing metadata columns (<code>cell_type</code>, <code>condition</code>, <code>patient_id</code>) and a <code>umap</code> reduction, plus <code>SCpubr</code>, <code>dittoSeq</code>, and <code>patchwork</code>.</li>
+</ul>
 
-seurat_obj &lt;- readRDS("data/seurat_obj.rds")
-stopifnot(inherits(seurat_obj, "Seurat"))
-required_meta &lt;- c("cell_type", "condition")
-missing_meta &lt;- setdiff(required_meta, colnames(seurat_obj[[]]))
-if (length(missing_meta)) stop("Missing metadata: ", paste(missing_meta, collapse = ", "))
-if (!("umap" %in% names(seurat_obj@reductions))) stop("UMAP reduction not found")
-# patient_id is needed for step 5; set this to the metadata column for your samples.
-</code></pre>
-<p>Use a project-specific R library and check current release requirements before installing. As of October 2026, the Bioconductor release page lists R 4.6 for the current dittoSeq release; use its Bioconductor-matched <code>BiocManager</code>, rather than installing dittoSeq from CRAN. Install CRAN packages separately, then verify availability and capture exact versions:</p>
-<pre><code># In R; run from the project directory. Review release requirements first.
+<h2 id="choosing-plots">1. Choosing the right plot type and package</h2>
+<p>Every single-cell figure answers one visual question: where cell states sit in low-dimensional space, where one gene is active, which genes distinguish clusters, or how cell-type shares vary across donors. Using the wrong visual encoding hides real biology or creates false patterns. For example, plotting raw UMI counts on a UMAP reflects sequencing depth rather than transcriptional identity, whereas per-gene autoscaling makes a noisy background gene look as bright as a canonical lineage marker.</p>
+<p>Before writing plotting code, keep four terms straight:</p>
+<ul>
+<li><strong>Assay layer (<code>data</code> vs. <code>counts</code>):</strong> Seurat v5 stores raw integer UMI counts in the <code>counts</code> layer and log-normalized counts in the <code>data</code> layer. Feature maps, dot plots, and heatmaps should read normalized <code>data</code> unless you are explicitly auditing UMI depth.</li>
+<li><strong>Cutoff clipping (<code>min.cutoff</code> / <code>max.cutoff</code>):</strong> Clamping outliers at a high percentile (such as the 95th percentile) prevents a handful of ultra-high cells from compressing the rest of the colour gradient into near-zero grey.</li>
+<li><strong>Row z-score vs. max-scaling:</strong> Centering and scaling each gene across groups highlights relative cluster specificity, while erasing differences in absolute expression magnitude between lowly and highly expressed genes.</li>
+<li><strong>Compositional closure:</strong> Within any sample, cell-type percentages must sum to 100%. An expansion in infiltrating neutrophils shrinks resident T-cell percentages even when absolute T-cell counts are unchanged.</li>
+</ul>
+
+<figure class="my-8 bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+<img src="../images/tutorial-figures/advanced-visualization-packages-plot-choice-map.svg" alt="Decision map linking four single-cell visual questions to input assay layers, Seurat, SCpubr, dittoSeq, and ggplot2 functions, and key scale traps" width="960" height="456" loading="lazy" decoding="async" class="w-full h-auto rounded-lg" style="aspect-ratio: 960 / 456;"/>
+<figcaption class="mt-3 text-sm text-gray-600"><strong>Figure 1. Plot-choice decision map.</strong> Start with the question and required assay layer before choosing between base Seurat, <code>SCpubr</code>, <code>dittoSeq</code>, or custom <code>ggplot2</code>.</figcaption>
+</figure>
+
+<div aria-label="Scrollable table: Comparing R single-cell visualization packages" class="lesson-table-wrap" role="region" tabindex="0">
+<table>
+<caption>When to use base Seurat + ggplot2, SCpubr, dittoSeq, or patchwork for single-cell figures.</caption>
+<thead>
+<tr><th scope="col">Package</th><th scope="col">Best used for</th><th scope="col">Key strength</th><th scope="col">Main watch-out</th></tr>
+</thead>
+<tbody>
+<tr><th scope="row"><code>Seurat</code> + <code>ggplot2</code></th><td>Core UMAPs, feature maps, dot plots, and custom donor bar charts</td><td>Minimal dependencies, returns standard <code>ggplot</code> objects, supports quantile cutoffs (<code>"q95"</code>)</td><td>Default palettes (such as two-colour grey-blue) and unshuffled point order often need manual overrides</td></tr>
+<tr><th scope="row"><code>SCpubr</code></th><td>Styled UMAPs, feature maps, pathway/enrichment views, and dense multi-panel layouts</td><td>Clean defaults (<code>shuffle = TRUE</code>, clean axes, viridis options, cell borders)</td><td><code>min.cutoff</code> and <code>max.cutoff</code> expect numeric values rather than <code>"q95"</code> strings; use <code>scale.limits</code> for unclipped legend bounds</td></tr>
+<tr><th scope="row"><code>dittoSeq</code></th><td>Sample composition bar plots and multi-annotation gene heatmaps</td><td>Okabe-Ito-inspired colourblind-safe palette (<code>dittoColors()</code>) and accepts both <code>Seurat</code> and <code>SingleCellExperiment</code></td><td><code>dittoHeatmap()</code> returns a <code>pheatmap</code> list (export <code>$gtable</code>), not a <code>ggplot</code>; update to <code>dittoSeq &gt;= 1.14</code> for Seurat v5 <code>Assay5</code></td></tr>
+<tr><th scope="row"><code>patchwork</code></th><td>Multi-panel figure assembly with shared legends and A/B/C tags</td><td>Operator syntax (<code>+</code>, <code>/</code>) and <code>plot_layout(guides = "collect")</code></td><td>Grid graphics such as <code>pheatmap</code> gtables require <code>wrap_elements()</code> or separate PDF export</td></tr>
+</tbody>
+</table>
+</div>
+
+<h2 id="core-walkthrough">2. Verified core route: Seurat and ggplot2 end-to-end</h2>
+<p>To verify your R environment without downloading a multi-gigabyte cohort, run the repository's self-contained core script. It builds a deterministic 36-feature by 48-cell fixture (seed <code>20261023</code>; 16 cells per synthetic label across four balanced samples), writes <code>synthetic_counts.csv</code> and <code>synthetic_metadata.csv</code>, reloads both CSVs into a Seurat object, runs <code>NormalizeData()</code>, <code>FindVariableFeatures()</code>, <code>ScaleData()</code>, <code>RunPCA()</code>, and <code>RunUMAP()</code>, and writes four PNG figures.</p>
+<p>Run the script from the repository root:</p>
+<pre><code class="language-bash">Rscript files/visualization-example/run_example.R</code></pre>
+<p>Recorded execution output from <code>files/visualization-example/run-evidence.txt</code> (paths abbreviated to <code>&lt;repo-root&gt;</code>):</p>
+<pre><code class="language-text">Warning: Data is of class matrix. Coercing to dgCMatrix.
+Warning: The default method for RunUMAP has changed from calling Python UMAP via reticulate to the R-native UWOT using the cosine metric
+To use Python UMAP via reticulate, set umap.method to 'umap-learn' and metric to 'correlation'
+This message will be shown once per session
+Warning: Scaling data with a low number of groups may produce misleading results
+Completed synthetic Seurat/ggplot2 example.
+Seed: 20261023
+Cells: 48  Features: 36
+Reductions: pca, umap
+Figures:
+ &lt;repo-root&gt;/images/tutorial-figures/visualization-synthetic-umap.png
+&lt;repo-root&gt;/images/tutorial-figures/visualization-synthetic-feature.png
+&lt;repo-root&gt;/images/tutorial-figures/visualization-synthetic-dotplot.png
+&lt;repo-root&gt;/images/tutorial-figures/visualization-synthetic-composition.png
+Package versions:
+ Seurat 5.0.1
+SeuratObject 5.0.1
+ggplot2 3.4.4
+uwot 0.1.16</code></pre>
+<p class="lesson-checkpoint"><strong>Check:</strong> The three startup warnings are expected here: Seurat coerces dense CSV counts to sparse <code>dgCMatrix</code>, uses R-native <code>uwot</code> for UMAP, and warns because 48 cells is intentionally tiny. Confirm the summary prints <code>Cells: 48 Features: 36</code> and <code>Reductions: pca, umap</code>. Inspect the full <a href="../files/visualization-example/run_example.R">R script</a>, <a href="../files/visualization-example/README.md">reproduction notes</a>, <a href="../files/visualization-example/run-evidence.txt">execution log</a>, <a href="../files/visualization-example/session-info.txt">R session info</a>, <a href="../files/visualization-example/synthetic_counts.csv">counts CSV</a>, and <a href="../files/visualization-example/synthetic_metadata.csv">metadata CSV</a>.</p>
+
+<p>Below are the four core plotting calls inside <code>run_example.R</code> that produce the figures:</p>
+<pre><code class="language-r"># Excerpt from files/visualization-example/run_example.R (Seurat + ggplot2 core)
+p_umap &lt;- Seurat::DimPlot(seurat_obj, reduction = "umap", group.by = "cell_type",
+                          pt.size = 1.5) +
+  ggplot2::labs(title = "Synthetic cells by assigned label",
+                subtitle = "Toy data; no biological inference")
+
+p_feature &lt;- Seurat::FeaturePlot(seurat_obj, features = "Gene01", reduction = "umap",
+                                 cols = c("#E9EEF2", "#8A3FFC"), order = TRUE) +
+  ggplot2::labs(title = "Synthetic Gene01 counts after normalization")
+
+p_dot &lt;- Seurat::DotPlot(seurat_obj, features = sprintf("Gene%02d", 1:6),
+                         group.by = "cell_type") +
+  ggplot2::labs(title = "Toy-feature summary by assigned label",
+                x = "Feature", y = "Label")
+
+composition &lt;- as.data.frame(table(sample_id = seurat_obj$sample_id,
+                                   cell_type = seurat_obj$cell_type),
+                             stringsAsFactors = FALSE)
+composition$proportion &lt;- ave(composition$Freq, composition$sample_id,
+                              FUN = function(x) x / sum(x))
+
+p_composition &lt;- ggplot2::ggplot(composition,
+  ggplot2::aes(x = sample_id, y = proportion, fill = cell_type)) +
+  ggplot2::geom_col(width = 0.78, color = "white", linewidth = 0.25) +
+  ggplot2::scale_y_continuous(labels = scales::percent, limits = c(0, 1),
+                              expand = c(0, 0)) +
+  ggplot2::scale_fill_manual(values = c(Type_A = "#0072B2", Type_B = "#D55E00",
+                                        Type_C = "#009E73")) +
+  ggplot2::labs(title = "Synthetic cell-label proportions by sample",
+                subtitle = "Balanced by construction; not measured sample composition",
+                x = "Synthetic sample", y = "Fraction of toy cells",
+                fill = "Assigned label") +
+  ggplot2::theme_minimal(base_size = 11) +
+  ggplot2::theme(panel.grid.major.x = ggplot2::element_blank())</code></pre>
+
+<p>These four synthetic panels illustrate plot layout and colour encoding only; they are not biological observations or evidence about real cell types.</p>
+<figure><img alt="UMAP embedding of 48 example cells colored by assigned group labels for plotting layout reference" loading="lazy" decoding="async" width="1296" height="936" src="../images/tutorial-figures/visualization-synthetic-umap.png" style="aspect-ratio: 1296 / 936;"/><figcaption><strong>Example UMAP (<code>DimPlot</code>).</strong> 48 synthetic cells coloured by <code>cell_type</code> after log-normalization, variable-feature selection, scaling, and PCA.</figcaption></figure>
+<figure><img alt="Feature plot of Gene01 expression across the example UMAP layout" loading="lazy" decoding="async" width="1152" height="936" src="../images/tutorial-figures/visualization-synthetic-feature.png" style="aspect-ratio: 1152 / 936;"/><figcaption><strong>Example feature plot (<code>FeaturePlot</code>).</strong> Normalized <code>Gene01</code> values rendered with <code>order = TRUE</code> so expressing cells draw on top of zero-count cells.</figcaption></figure>
+<figure><img alt="Seurat dot plot summarizing six example genes across three cell groups" loading="lazy" decoding="async" width="1296" height="827" src="../images/tutorial-figures/visualization-synthetic-dotplot.png" style="aspect-ratio: 1296 / 827;"/><figcaption><strong>Example dot plot (<code>DotPlot</code>).</strong> Dot size encodes percentage of cells with detected counts; colour encodes z-scored average expression across the three labels.</figcaption></figure>
+<figure><img alt="Stacked bar chart of balanced cell-group proportions across four example samples" loading="lazy" decoding="async" width="1296" height="827" src="../images/tutorial-figures/visualization-synthetic-composition.png" style="aspect-ratio: 1296 / 827;"/><figcaption><strong>Example composition chart (<code>ggplot2::geom_col</code>).</strong> Okabe-Ito colours across four balanced synthetic samples (33.3% per label by construction).</figcaption></figure>
+
+<h2 id="wrapper-templates">3. Optional wrapper templates (not executed in this revision)</h2>
+<p>Once your own QC-reviewed Seurat object is ready at <code>data/seurat_obj.rds</code>, you can adapt the templates below using <code>SCpubr</code>, <code>dittoSeq</code>, and <code>patchwork</code>. The examples use canonical human PBMC markers (<code>CD3D</code> for T cells, <code>NKG7</code> for NK/cytotoxic lymphocytes, <code>MS4A1</code> for B cells, <code>LYZ</code> for classical monocytes/DCs, <code>FCGR3A</code> for CD16+ monocytes, and <code>PPBP</code> for megakaryocytes). These wrapper templates were not executed in this revision; verify package versions and your object's metadata columns, assay layers, and feature names before running them.</p>
+
+<h3>3.1 Install compatible packages in an isolated library</h3>
+<p>Install CRAN packages with <code>install.packages()</code> and Bioconductor packages (such as <code>dittoSeq</code>) with <code>BiocManager::install()</code> so Bioconductor matches your R version. For example, Bioconductor Release 3.24 targets R 4.6.0 or higher; on an existing project with an older R version, keep your project's established lockfile rather than upgrading packages mid-analysis.</p>
+<pre><code class="language-r"># Run in R inside your project environment
 install.packages(c("Seurat", "SCpubr", "ggplot2", "patchwork"))
 if (!requireNamespace("BiocManager", quietly = TRUE)) install.packages("BiocManager")
 BiocManager::install("dittoSeq")
@@ -234,186 +303,208 @@ BiocManager::install("dittoSeq")
 stopifnot(all(vapply(c("Seurat", "SCpubr", "ggplot2", "patchwork", "dittoSeq"),
   requireNamespace, logical(1), quietly = TRUE)))
 dir.create("results", showWarnings = FALSE)
-writeLines(capture.output(sessionInfo()), "results/session_info.txt")
-</code></pre>
-<p>These instructions identify package sources, not a tested lockfile or guaranteed compatibility set. Bioconductor release and R versions must match; for an existing project, follow its established environment rather than updating packages in place.</p>
-<h3>2) Optional SCpubr template: standardized UMAP</h3>
-<pre><code># Purpose: create a dimensional-reduction plot grouped by cell type.
-# Input: seurat_obj
-# Output: PNG and PDF files saved to results/umap_celltype.png and results/umap_celltype.pdf
+writeLines(capture.output(sessionInfo()), "results/session_info.txt")</code></pre>
 
-dir.create("results", showWarnings = FALSE)
+<h3>3.2 Load and validate your Seurat object</h3>
+<p>Fail fast if required metadata columns or reductions are missing. In Seurat v5, also check whether sample layers are still split inside the <code>RNA</code> assay; wrapper functions such as <code>dittoHeatmap()</code> expect unified <code>counts</code> and <code>data</code> layers, so run <code>SeuratObject::JoinLayers()</code> after integration if multiple <code>data.*</code> layers appear.</p>
+<pre><code class="language-r"># Input: data/seurat_obj.rds with 'cell_type', 'condition', 'patient_id', and 'umap'
+library(Seurat)
+library(SCpubr)
+library(dittoSeq)
+library(ggplot2)
+
+seurat_obj &lt;- readRDS("data/seurat_obj.rds")
+stopifnot(inherits(seurat_obj, "Seurat"))
+
+required_meta &lt;- c("cell_type", "condition", "patient_id")
+missing_meta &lt;- setdiff(required_meta, colnames(seurat_obj[[]]))
+if (length(missing_meta)) stop("Missing metadata: ", paste(missing_meta, collapse = ", "))
+if (!("umap" %in% SeuratObject::Reductions(seurat_obj))) stop("UMAP reduction not found")
+
+# Seurat v5 check: if layers are split by sample, join them before downstream plotting
+print(SeuratObject::Layers(seurat_obj[["RNA"]]))
+# seurat_obj &lt;- SeuratObject::JoinLayers(seurat_obj)</code></pre>
+
+<h3>3.3 Standardized categorical UMAP with SCpubr</h3>
+<p>Default scatter plots draw factor levels in order, so the last cluster plotted paints over earlier cells at cluster boundaries; <code>SCpubr::do_DimPlot()</code> avoids this by defaulting to <code>shuffle = TRUE</code>, dropping redundant axis ticks on UMAPs, and formatting legends cleanly.</p>
+<pre><code class="language-r">dir.create("results", showWarnings = FALSE)
 
 p_umap &lt;- SCpubr::do_DimPlot(
   sample = seurat_obj,
-  reduction = "umap",         # verify that UMAP is present; change to 'tsne' if needed
+  reduction = "umap",
   group.by = "cell_type",
-  label = TRUE,               # add cluster labels
-  repel = TRUE,               # avoid label overlap
+  shuffle = TRUE,             # avoid factor-order overplotting
+  label = TRUE,
+  repel = TRUE,               # push overlapping cluster labels apart
   font.size = 12,
-  legend.position = "right"   # or "bottom"
+  legend.position = "right"
 )
 
 ggsave("results/umap_celltype.png", p_umap, width = 8, height = 6, dpi = 300)
-ggsave("results/umap_celltype.pdf", p_umap, width = 8, height = 6)
-</code></pre>
-<p class="lesson-checkpoint"><strong>Check before export:</strong> confirm <code>"umap"</code> appears in <code>names(seurat_obj@reductions)</code> and that <code>cell_type</code> is present in the object's metadata. <code>repel = TRUE</code> requests label repulsion; it does not ensure that every label will fit. Reduce label size, remove labels, or enlarge the plot if the result remains crowded.</p>
-<h3>3) Optional SCpubr template: feature expression map</h3>
-<pre><code># Purpose: plot expression of a marker gene with a sequential color gradient.
-# Input: seurat_obj; feature: "GeneA" must be present (check FeaturePlot support).
-# Output: results/feature_GeneA.png
+ggsave("results/umap_celltype.pdf", p_umap, width = 8, height = 6)</code></pre>
+<p class="lesson-checkpoint"><strong>Check:</strong> For datasets above ~50,000 cells, pass <code>raster = TRUE</code> so vector PDFs stay small and quick to open in Illustrator or Inkscape. If <code>repel = TRUE</code> still leaves crowded labels on tiny subclusters, omit on-plot labels (<code>label = FALSE</code>) and rely on a well-ordered legend.</p>
 
-feature &lt;- "GeneA"  # replace with a real gene symbol from your dataset
+<h3>3.4 Feature expression map with explicit scale bounds</h3>
+<p>Single-cell expression counts often have a long right tail: if two cells have normalized expression of 6.5 while most expressing cells sit between 1.5 and 3.0, autoscaling compresses visual contrast across the rest of the cluster. Pairing a perceptually uniform sequential palette (<code>use_viridis = TRUE</code>, Crameri et al., 2020) with explicit bounds preserves that contrast.</p>
+<pre><code class="language-r">feature &lt;- "LYZ"  # classical monocyte and dendritic-cell marker
+stopifnot(feature %in% rownames(seurat_obj))
+
+# Compute a numeric 95th-percentile cutoff (SCpubr expects numeric cutoffs, unlike Seurat's "q95")
+expr_vals &lt;- Seurat::FetchData(seurat_obj, vars = feature, layer = "data")[, 1]
+q95_cutoff &lt;- unname(stats::quantile(expr_vals, probs = 0.95))
+# Guard sparse markers (&lt;5% expressing cells, such as PPBP) where q95 equals 0
+if (q95_cutoff &lt;= 0) q95_cutoff &lt;- max(expr_vals)
 
 p_feat &lt;- SCpubr::do_FeaturePlot(
   sample = seurat_obj,
   features = feature,
   reduction = "umap",
-  use_viridis = TRUE,    # use a sequential viridis palette
+  use_viridis = TRUE,
+  viridis.palette = "D",
+  order = TRUE,               # draw high-expressing cells on top
+  min.cutoff = 0,
+  max.cutoff = q95_cutoff,    # clamp top 5% to preserve contrast; or use scale.limits = c(0, 4)
   pt.size = 0.5
 )
 
-ggsave(sprintf("results/feature_%s.png", feature), p_feat, width = 6, height = 5, dpi = 300)
-</code></pre>
-<p>For cross-gene comparisons, do not assume matching colors imply matching expression values: the plotting function may rescale each feature. Use a shared, scientifically justified range only when the quantities and transformations are comparable, and disclose any clipping. SCpubr's <code>min.cutoff</code> and <code>max.cutoff</code> can clamp values at the endpoints, so endpoint colors then include values beyond the cutoff.</p>
-<h3>4) Optional template: dot plot of selected features with Seurat</h3>
-<pre><code># Purpose: summarize marker expression across annotated cell types.
-# Input: a vector of gene names; seurat_obj metadata column 'cell_type'
-# Output: results/dotplot_top_markers.pdf
+ggsave(sprintf("results/feature_%s.png", feature), p_feat, width = 6, height = 5, dpi = 300)</code></pre>
+<p><strong>Seurat vs. SCpubr cutoff trap:</strong> <code>Seurat::FeaturePlot()</code> accepts quantile strings such as <code>max.cutoff = "q95"</code>, whereas <code>SCpubr::do_FeaturePlot()</code> expects numeric vectors for <code>min.cutoff</code> and <code>max.cutoff</code> (which clip cell values) or <code>scale.limits = c(low, high)</code> (which fixes legend limits across panels without altering underlying values). Always state in the figure caption whether values were clipped.</p>
 
-top_markers &lt;- c("GeneA", "GeneB", "GeneC", "GeneD", "GeneE")  # replace with validated markers
+<h3>3.5 Marker specificity dot plot with Seurat and viridis</h3>
+<p><code>Seurat::DotPlot()</code> encodes two distinct quantities at once: <strong>dot size</strong> shows the fraction of cells in a group with nonzero expression (controlled by <code>dot.min</code> and <code>dot.scale</code>), while <strong>dot colour</strong> shows the z-scored average expression across groups (<code>scale = TRUE</code> by default, clamped to <code>[-2.5, 2.5]</code>). Ordering both <code>cell_type</code> factor levels and marker genes biologically turns a scrambled grid into a clean diagonal block.</p>
+<pre><code class="language-r"># Order cell types and canonical PBMC markers by lineage for a diagonal pattern
+lineage_order &lt;- c("CD4+ T cell", "Cytotoxic T", "NK cell",
+                   "B cell", "CD14+ mono", "CD16+ mono",
+                   "Dendritic cell", "Megakaryocyte")
+observed_levels &lt;- unique(as.character(seurat_obj$cell_type))
+present_levels &lt;- c(intersect(lineage_order, observed_levels),
+                    setdiff(observed_levels, lineage_order))
+seurat_obj$cell_type &lt;- factor(seurat_obj$cell_type, levels = present_levels)
+
+pbmc_markers &lt;- c("CD3D", "NKG7", "MS4A1", "LYZ", "FCGR3A", "PPBP")
+pbmc_markers &lt;- intersect(pbmc_markers, rownames(seurat_obj))
 
 p_dot &lt;- Seurat::DotPlot(
   object = seurat_obj,
-  features = top_markers,
+  features = pbmc_markers,
   group.by = "cell_type",
   dot.scale = 6
-)
+) +
+  ggplot2::scale_color_viridis_c(option = "D") +
+  Seurat::RotatedAxis()
 
-ggsave("results/dotplot_top_markers.pdf", p_dot, width = 9, height = 4)
-</code></pre>
-<p class="lesson-checkpoint">Confirm every feature is present in the assay you intend to plot, and order both <code>top_markers</code> and the <code>cell_type</code> factor levels biologically (for example lymphoid, myeloid, stromal, then epithelial lineages) rather than alphabetically so marker enrichment forms a clean diagonal block across the dot plot. Seurat's <code>DotPlot()</code> encodes detection prevalence in dot size and scaled mean expression in color; always pair continuous colorbars with colour-vision-deficiency-safe sequential scales such as <code>viridis</code> or <code>scico</code> rather than rainbow or red-green gradients (Crameri et al., 2020).</p>
-<h3>5) Optional dittoSeq template: composition barplot</h3>
-<pre><code># Purpose: show relative cell type composition across samples or patients.
-# Input: seurat_obj with 'cell_type' and 'patient_id' metadata columns
-# Output: results/composition_by_patient.png
+ggsave("results/dotplot_top_markers.pdf", p_dot, width = 9, height = 4)</code></pre>
+
+<h3>3.6 Donor-level composition bar plot with dittoSeq</h3>
+<p><code>dittoSeq::dittoBarPlot()</code> defaults to an Okabe-Ito-inspired categorical palette (<code>dittoColors()</code>; Bunis et al., 2020) and returns a standard <code>ggplot</code> object. Group bars by <code>patient_id</code> (ordered by clinical arm or response) rather than pooling all cells by condition, so readers can see donor-to-donor variation directly. Note that the theme argument in <code>dittoBarPlot()</code> is <code>theme</code> (not <code>plot.theme</code>).</p>
+<pre><code class="language-r"># Order patient_id by condition so donor variability within arms is immediately visible
+sample_order &lt;- unique(seurat_obj@meta.data[order(seurat_obj$condition, seurat_obj$patient_id), "patient_id"])
+seurat_obj$patient_id &lt;- factor(seurat_obj$patient_id, levels = sample_order)
 
 p_comp &lt;- dittoSeq::dittoBarPlot(
-  seurat_obj,
+  object = seurat_obj,
   var = "cell_type",
   group.by = "patient_id",
-  plot.theme = theme_bw(),
+  scale = "percent",          # use "count" to inspect raw cell recovery per donor
+  theme = ggplot2::theme_bw(),
   legend.title = "Cell type"
 )
 
-ggsave("results/composition_by_patient.png", p_comp, width = 9, height = 4, dpi = 300)
-</code></pre>
-<p><code>dittoSeq</code> uses an Okabe-Ito-inspired colour-vision-safe categorical palette by default (Bunis et al., 2020). When preparing figure panels, order <code>patient_id</code> factor levels intentionally (for example grouped by treatment arm or clinical response rather than string sort order) so between-donor variability within each condition is immediately visible.</p>
-<h3>6) Optional dittoSeq template: heatmap of marker genes</h3>
-<pre><code># Purpose: multi-annotation heatmap with explicit z-score vs unscaled choice.
-# Input: seurat_obj and vector top_markers
-# Output: results/heatmap_top_markers.pdf
+ggsave("results/composition_by_patient.png", p_comp, width = 9, height = 4, dpi = 300)</code></pre>
 
-p_heat &lt;- dittoSeq::dittoHeatmap(
-  seurat_obj,
-  genes = top_markers,
+<h3>3.7 Multi-annotation marker heatmap with dittoSeq</h3>
+<p><code>dittoSeq::dittoHeatmap()</code> wraps <code>pheatmap</code> so you can stack multiple metadata annotation tracks (<code>annot.by = c("cell_type", "condition")</code>) above your marker genes. Pay close attention to scaling: when <code>scaled.to.max = FALSE</code> (the default), <code>pheatmap</code> defaults to <code>scale = "row"</code> (per-gene z-scoring), which emphasizes relative contrast while hiding absolute expression. Setting <code>scaled.to.max = TRUE</code> scales each gene from 0 to 1 relative to its own maximum and automatically forces <code>scale = "none"</code>; pass <code>scale = "none", scaled.to.max = FALSE</code> to inspect unscaled log-normalized values.</p>
+<pre><code class="language-r">p_heat &lt;- dittoSeq::dittoHeatmap(
+  object = seurat_obj,
+  genes = pbmc_markers,
   annot.by = c("cell_type", "condition"),
-  scale = "row",          # default in pheatmap/dittoHeatmap: row z-score; use "none" for log-normalized values
+  slot = "data",              # log-normalized layer
+  scale = "row",              # per-gene z-score; set "none" for unscaled log-normalized values
   scaled.to.max = FALSE,
   show_colnames = FALSE
 )
 
-# dittoHeatmap returns a pheatmap object; pass p_heat$gtable to ggsave (or use filename= inside dittoHeatmap).
-ggsave("results/heatmap_top_markers.pdf", plot = p_heat$gtable, width = 8, height = 6)
-</code></pre>
-<p>Remember two details when exporting <code>dittoHeatmap()</code>. First, even with <code>scaled.to.max = FALSE</code>, <code>pheatmap</code> defaults to <code>scale = "row"</code> (per-gene z-scoring across columns), which shows relative cluster contrast while hiding raw expression magnitude; pass <code>scale = "none"</code> if you need unscaled log-normalized values. Second, pass <code>plot = p_heat$gtable</code> to <code>ggsave()</code> (or set <code>filename = "results/heatmap_top_markers.pdf"</code> directly inside <code>dittoHeatmap()</code>) because it returns a <code>pheatmap</code> list rather than a <code>ggplot</code> object.</p>
-<h3>7) Optional template: assemble compatible ggplot panels; export the heatmap separately</h3>
-<pre><code># Purpose: combine ggplot panels; keep the dittoSeq heatmap as a separate file
-# Input: p_umap, p_feat, p_dot (ggplot panels); p_heat exported in step 6
-# Output: results/panel_figure.pdf plus results/heatmap_top_markers.pdf
+# dittoHeatmap returns a pheatmap list; pass $gtable to ggsave (or pass filename= directly)
+ggsave("results/heatmap_top_markers.pdf", plot = p_heat$gtable, width = 8, height = 6)</code></pre>
 
-library(patchwork)
+<h3>3.8 Multi-panel assembly with patchwork</h3>
+<p><code>patchwork</code> merges legends cleanly across compatible <code>ggplot</code> panels using <code>plot_layout(guides = "collect")</code> and adds publication panel labels with <code>plot_annotation(tag_levels = "A")</code>. Because <code>p_heat</code> is a <code>pheatmap</code> gtable rather than a <code>ggplot</code>, either export it separately or wrap <code>p_heat$gtable</code> inside <code>patchwork::wrap_elements()</code>.</p>
+<pre><code class="language-r">library(patchwork)
+
 stopifnot(all(vapply(list(p_umap, p_feat, p_dot), inherits, logical(1), "ggplot")))
-combined &lt;- (p_umap + p_feat) / p_dot + plot_layout(guides = "collect")
-ggsave("results/panel_figure.pdf", combined, width = 12, height = 10)
-</code></pre>
-<p>Patchwork's <code>guides = "collect"</code> merges legends only across <code>ggplot</code> objects with compatible scales, which is why we type-check <code>p_umap</code>, <code>p_feat</code>, and <code>p_dot</code> above and export the <code>dittoSeq</code> heatmap separately. Open both exported PDFs afterward to check font size, clipping, and readability before using them in a figure panel.</p>
-<p>If your grid-based heatmap must share the same page, check patchwork's <code>wrap_elements()</code> helper and inspect the combined output directly.</p>
-<h2>Interpreting the output files</h2>
-<p>When you open the generated images, inspect the following:</p>
 
-<figure class="my-8 bg-white border border-gray-200 rounded-xl p-4 shadow-sm"><img src="../images/tutorial-figures/advanced-viz-scpubr-layout.png" alt="Publication-grade PBMC Harmony UMAP paired with canonical marker expression matrix" width="1590" height="795" loading="lazy" class="w-full h-auto rounded-lg" style="aspect-ratio: 1590 / 795;"/><figcaption class="mt-3 text-sm text-gray-600">Real bundled public 10x PBMC data: (A) balanced colorblind-safe UMAP clustering paired with (B) compact mean marker expression intensities across CD3D, MS4A1, LYZ, and NKG7.</figcaption></figure>
+combined &lt;- (p_umap + p_feat) / p_dot +
+  plot_layout(guides = "collect", heights = c(1.2, 1)) +
+  plot_annotation(tag_levels = "A")
+
+ggsave("results/panel_figure.pdf", combined, width = 12, height = 10)
+# Optional: combine a ggplot with p_heat$gtable via patchwork::wrap_elements(full = p_heat$gtable)</code></pre>
+
+<h2 id="interpreting">4. Reading the figures and checking for traps</h2>
+<figure class="my-8 bg-white border border-gray-200 rounded-xl p-4 shadow-sm"><img src="../images/tutorial-figures/advanced-viz-scpubr-layout.png" alt="Multi-panel PBMC Harmony UMAP paired with mean canonical marker expression heatmap" width="1590" height="795" loading="lazy" class="w-full h-auto rounded-lg" style="aspect-ratio: 1590 / 795;"/><figcaption class="mt-3 text-sm text-gray-600"><strong>Figure 2. Multi-panel figure structure on 1,149 public 10x PBMC cells.</strong> (A) Colourblind-safe Harmony UMAP across nine annotated populations paired with (B) mean expression intensities for canonical markers <code>CD3D</code>, <code>MS4A1</code>, <code>LYZ</code>, and <code>NKG7</code>.</figcaption></figure>
+<p>Before submitting a figure, run this four-point visual audit:</p>
 <ul>
-<li>UMAP: Are clusters coherent and consistent with annotated <code>cell_type</code>? Look for outlier cells, doublet-like intermediate states, or batch effects (clusters dominated by one patient).</li>
-<li>Feature plots: Does the expression pattern match expectation (e.g., marker expression enriched in specific clusters)? High expression in many clusters may indicate a housekeeping or ambient RNA gene.</li>
-<li>Dot plots: in Seurat's <code>DotPlot()</code>, dot size encodes the percentage of cells expressing the feature and color encodes average expression under the function's scaling. Read its legend and document the assay and scale; a large dot is prevalence, not high expression per cell.</li>
-<li>Heatmap: Confirm whether row-scaling was applied; heatmaps can emphasize relative differences but hide absolute expression scale.</li>
+<li><strong>UMAP layout:</strong> Do clusters match annotated <code>cell_type</code> boundaries, or do you see a bridge of intermediate cells expressing mutually exclusive markers (such as <code>CD3D</code> and <code>MS4A1</code> together, a classic doublet artifact) or clusters dominated by a single donor (batch effect)?</li>
+<li><strong>Feature maps:</strong> Is signal restricted to the expected lineage, or does a ubiquitous low haze appear everywhere (ambient RNA spillover from abundant transcripts such as <code>LYZ</code> or <code>HBB</code>)?</li>
+<li><strong>Dot plots and heatmaps:</strong> Confirm dot size means detection prevalence, not expression magnitude, and record whether colour shows row z-scores, 0-1 max-scaling, or unscaled log-normalized expression.</li>
+<li><strong>Composition charts:</strong> Always report donor counts (<em>n</em> samples per condition) and cell counts per group, especially for rare populations such as plasmacytoid DCs or megakaryocytes.</li>
 </ul>
-<p>How to read a passing figure (and its limits):</p>
+
+<h2 id="troubleshooting">5. Common errors and how to fix them</h2>
+<div aria-label="Scrollable table: Common single-cell R plotting errors and fixes" class="lesson-table-wrap" role="region" tabindex="0">
+<table>
+<caption>Frequent errors across Seurat v5, SCpubr, dittoSeq, and patchwork, with root causes and fixes.</caption>
+<thead>
+<tr><th scope="col">Symptom or error message</th><th scope="col">Likely cause</th><th scope="col">Fix</th></tr>
+</thead>
+<tbody>
+<tr><th scope="row"><code>Error: Cannot find 'umap' in this Seurat object</code></th><td>The object only has <code>pca</code> (or an integrated reduction such as <code>umap.harmony</code>).</td><td>Check <code>SeuratObject::Reductions(seurat_obj)</code>. Pass the exact reduction name, or compute UMAP on verified PCs and write a new <code>.rds</code> file (code below).</td></tr>
+<tr><th scope="row"><code>Error in dittoBarPlot(...): unused argument (plot.theme = ...)</code></th><td><code>dittoBarPlot()</code> uses <code>theme</code>, not <code>plot.theme</code>.</td><td>Pass <code>theme = ggplot2::theme_bw()</code> inside <code>dittoBarPlot()</code>, or add <code>+ ggplot2::theme_bw()</code> afterwards.</td></tr>
+<tr><th scope="row"><code>dittoHeatmap()</code> fails on Seurat v5 <code>Assay5</code> or split layers</th><td>Older <code>dittoSeq</code> versions assume v4 monolithic slots, or layers remain split per sample.</td><td>Update to Bioconductor <code>dittoSeq &gt;= 1.14</code> and run <code>seurat_obj &lt;- SeuratObject::JoinLayers(seurat_obj)</code> if <code>Layers(seurat_obj[["RNA"]])</code> shows split <code>data.*</code> layers.</td></tr>
+<tr><th scope="row"><code>SCpubr::do_FeaturePlot()</code> errors on <code>max.cutoff = "q95"</code></th><td><code>SCpubr</code> requires numeric cutoffs rather than Seurat's <code>"q95"</code> string shorthand.</td><td>Compute the quantile numerically via <code>quantile(FetchData(seurat_obj, "LYZ")[, 1], 0.95)</code> or set <code>scale.limits = c(0, 4)</code>.</td></tr>
+<tr><th scope="row">Missing genes in <code>DotPlot()</code> or <code>dittoHeatmap()</code></th><td>Species casing (human <code>CD3D</code> vs. mouse <code>Cd3d</code>) or Ensembl IDs instead of gene symbols.</td><td>Check <code>head(rownames(seurat_obj[["RNA"]]))</code> and match case or map IDs cleanly before plotting.</td></tr>
+<tr><th scope="row">Exported PDF takes minutes to open or exceeds 50 MB</th><td>Vector PDFs store an individual circle path for every cell in large (&gt;50,000-cell) datasets.</td><td>Set <code>raster = TRUE</code> in <code>DimPlot()</code>, <code>FeaturePlot()</code>, <code>do_DimPlot()</code>, or <code>do_FeaturePlot()</code> (Seurat auto-rasterizes above 100,000 cells when <code>raster = NULL</code>).</td></tr>
+</tbody>
+</table>
+</div>
+
+<pre><code class="language-r"># Recovery example if UMAP is missing (run only after checking PCA dimensions)
+seurat_obj &lt;- Seurat::RunUMAP(seurat_obj, reduction = "pca", dims = 1:30)
+saveRDS(seurat_obj, file = "data/seurat_obj_with_umap.rds")</code></pre>
+
+<section class="lesson-exercise">
+<h2>Practice check: spot two figure traps</h2>
+<p>A collaborator sends two draft panels from a 4-sample PBMC study (2 control donors, 2 treated donors): (1) a <code>FeaturePlot</code> of <code>LYZ</code> where monocytes are bright purple and nearly every T-cell cluster is pale lavender, and (2) a stacked <code>dittoBarPlot</code> showing B cells drop from 24% in Control_1 to 11% in Treated_1, concluding that "<code>LYZ</code> is expressed across T cells and treatment depleted B cells." Identify two plotting or interpretive mistakes before these panels go into a figure.</p>
+<details class="mt-3">
+<summary class="font-medium cursor-pointer text-blue-700">Check your diagnosis</summary>
+<p class="mt-2"><strong>1. Unchecked ambient spillover or missing cutoff / colour baseline:</strong> High-abundance myeloid transcripts like <code>LYZ</code> frequently contaminate T-cell droplets as ambient RNA, and a pale lavender zero/low baseline without checking <code>DotPlot</code> prevalence or setting <code>min.cutoff</code>/<code>max.cutoff</code> makes 1-2 background UMIs look like genuine lineage expression. Verify fraction detected per cluster with <code>DotPlot()</code> before claiming expression.</p>
+<p class="mt-2"><strong>2. Compositional closure and sample size:</strong> Stacked percentages are constrained to sum to 100%, so an expansion of monocytes or neutrophils in Treated_1 mechanically lowers the B-cell percentage even if absolute B-cell numbers did not fall. Moreover, with only <code>n = 2</code> donors per arm, descriptive bar plots cannot establish a statistically significant compositional shift; test multi-donor counts formally with <code>propeller</code> (<code>speckle</code>) or <code>scCODA</code> once enough biological replicates are available.</p>
+</details>
+</section>
+
+<h2 id="scope-and-next">Scope, statistical boundaries, and next steps</h2>
 <ul>
-<li>Cluster-restricted marker expression supports an assigned label, but independent protein or spatial validation is still needed before claiming lineage or function.</li>
-<li>Visual shifts in cluster abundance across conditions are descriptive; test donor-level proportions properly instead of treating individual cells as biological replicates.</li>
+<li><strong>Visualization is not hypothesis testing:</strong> For condition-level differential expression within a cell type, aggregate raw UMI counts per donor and cell type into pseudobulks and test with <code>DESeq2</code> or <code>edgeR</code> rather than running cell-level Wilcoxon tests on pooled cells (Squair et al., 2021; see <a href="transcriptomics-differential-expression.html">Differential Expression</a>). For donor-level cell-type abundance shifts, use compositional or neighborhood models such as <code>propeller</code> (<code>speckle</code>; Phipson et al., 2022), <code>scCODA</code>, or <code>miloR</code>.</li>
+<li><strong>Document transformations in every caption:</strong> Always record the dataset, assay and layer (for example, RNA log-normalized <code>data</code>), any cutoff clipping or row z-scoring, and the number of biological donors and cells per group.</li>
+<li><strong>Reproducibility:</strong> Save <code>sessionInfo()</code> alongside exported figures so package defaults remain traceable.</li>
 </ul>
-<ul>
-<li>Figures generate hypotheses rather than proving mechanism or fixing upstream doublets, batch effects, or ambient RNA.</li>
-</ul>
-<h2>Troubleshooting</h2>
-<p>Here are common symptoms, likely causes, and suggested fixes.</p>
-<h3>Symptom: Plot fails with "reduction not found" or UMAP missing</h3>
-<ul>
-<li>Cause: The Seurat object lacks the requested reduction name (e.g., "umap").</li>
-<li>Fix: Check available reductions with <code>names(seurat_obj@reductions)</code>. If the object is intended to have UMAP coordinates but lacks them, compute them only after confirming the preprocessing and dimensions suit your analysis. This changes the in-memory object; write a new file rather than overwriting your input:</li>
-</ul>
-<pre><code># Example only: requires a suitable PCA reduction and installed Seurat dependencies
-seurat_obj &lt;- RunUMAP(seurat_obj, dims = 1:30)
-saveRDS(seurat_obj, file = "data/seurat_obj_with_umap.rds")
-</code></pre>
-<h3>Symptom: FeaturePlot colors inconsistent across genes</h3>
-<ul>
-<li>Cause: Per-plot autoscaling of expression ranges.</li>
-<li>Fix: inspect the function's scale behavior and use common cutoffs only when values are commensurate. Clipping changes endpoint interpretation; report the chosen limits and transformation.</li>
-</ul>
-<h3>Symptom: Overlapping labels in DimPlot</h3>
-<ul>
-<li>Cause: Dense embedding or many small clusters.</li>
-<li>Fix: reduce <code>font.size</code>, turn labels off, or enlarge the exported figure and annotate manually using cluster centroids or inset tables.</li>
-</ul>
-<h3>Symptom: Missing genes in DotPlot or Heatmap</h3>
-<ul>
-<li>Cause: Gene naming inconsistencies (e.g., case differences, gene symbols vs Ensembl IDs).</li>
-<li>Fix: compare the requested symbols with feature names in the selected assay (for example, <code>rownames(seurat_obj[["RNA"]])</code> for a common assay). Identifier conversion depends on organism, reference annotation, and assay; do not assume a symbol-to-Ensembl mapping is one-to-one.</li>
-</ul>
-<h2>Scope limits and version checks</h2>
-<ul>
-<li>Package versions matter: plotting functions and defaults can change between versions. Save the package versions used with <code>sessionInfo()</code> inside a <code>results/session_info.txt</code> file to aid reproducibility.</li>
-<li>Visualization does not substitute for statistical testing. For multi-donor condition differential expression, aggregate raw counts to sample-by-cell-type pseudobulks and test with <code>DESeq2</code>, <code>edgeR</code>, or <code>limma-voom</code> rather than treating pooled cells as independent replicates (Squair et al., 2021; see <a href="transcriptomics-differential-expression.html">Differential Expression</a>). For differential cell-type proportions across patients, use compositional models such as <code>propeller</code> (<code>speckle</code>), <code>scCODA</code>, or neighborhood-level <code>miloR</code>.</li>
-<li>Color choices: Even colorblind-friendly palettes can fail for readers with other visual impairments. Provide clear legends, shape encodings, and high contrast. Include figure captions that explicitly describe color meaning and any transformation (for example, row z-score vs unscaled log-normalized values, or per-feature max scaling).</li>
-<li>Data provenance: For multi-sample comparisons, ensure the object accounts for batch correction where needed. Visual patterns dominated by a single batch may reflect technical artifact rather than biology.</li>
-</ul>
-<p>Responsible-use notes:</p>
-<ul>
-<li>Report the number of biological samples and cells behind a plotted group, especially for rare populations. A fixed cell-count cutoff does not establish reliability; interpret it in the context of sampling and the analysis design.</li>
-<li>When publishing, provide the exact code and data (or a minimal reproducible example) so peers can reproduce the figure-generation steps.</li>
-</ul>
-<h2>Next steps</h2>
-<ul>
-<li>Confirm Seurat object has required metadata and reductions; save a snapshot: <code>saveRDS(seurat_obj, "data/seurat_obj_for_figures.rds")</code>.</li>
-<li>Run the provided scripts and save high-resolution outputs in <code>results/</code>.</li>
-<li>Record <code>sessionInfo()</code> to document package versions.</li>
-<li>Create figure captions that state: data source, normalization/scale (e.g., log-normalized, row-scaled), color scales used, and any filtering applied.</li>
-<li>Perform the appropriate statistical tests for claims suggested by the visuals (differential expression, composition tests, etc.).</li>
-</ul>
+<p><strong>Continue on The Omics Hub:</strong> review general colour and layout rules in <a href="data-visualization-fundamentals.html">Data Visualization Fundamentals</a>, check batch structure in <a href="experimental-design-batch-effects.html">Experimental Design and Batch Effects</a>, or move to downstream testing in <a href="scrna-seq-downstream-analysis.html">Single-Cell RNA-seq Downstream Analysis</a> and <a href="transcriptomics-differential-expression.html">Transcriptomics Differential Expression</a>.</p>
+
 <aside aria-label="Author's lab note" class="lesson-summary">
-<p><strong>Author's lab note:</strong> Whenever a single-cell feature plot looks misleadingly bright across every cluster, the culprit is almost always autoscaling without an explicit cutoff (<code>max.cutoff = "q95"</code>) or unscaled <code>DotPlot</code> dot sizes. Fixing expression quantiles globally across panels and exporting vectors at 300 DPI stops figures from needing last-minute redraws before journal submission.</p>
+<p><strong>Author's lab note:</strong> Whenever a single-cell feature plot looks misleadingly bright across every cluster, the culprit is almost always autoscaling without an explicit cutoff (<code>max.cutoff = "q95"</code>) or misreading <code>DotPlot</code> colour scaling (<code>scale = TRUE</code> scales average expression for colour, while dot size reflects detection percentage). Fixing expression limits globally across panels and exporting resolution-independent vector PDF/SVG files (or 300 DPI raster PNG/TIFF when rasterizing dense point clouds) stops figures from needing last-minute redraws before journal submission.</p>
 </aside>
+
 <h2>References</h2>
 <ul>
 <li>Bunis, D. G., Andrews, J., Fragiadakis, G. K., Burt, T. D., &amp; Sirota, M. (2020). dittoSeq: universal user-friendly single-cell and bulk RNA sequencing visualization toolkit. <em>Bioinformatics</em>, 36(22-23), 5535-5536. <a href="https://doi.org/10.1093/bioinformatics/btaa1011" rel="noopener" target="_blank">doi:10.1093/bioinformatics/btaa1011</a></li>
 <li>Crameri, F., Shephard, G. E., &amp; Heron, P. J. (2020). The misuse of colour in science communication. <em>Nature Communications</em>, 11, 5444. <a href="https://doi.org/10.1038/s41467-020-19160-7" rel="noopener" target="_blank">doi:10.1038/s41467-020-19160-7</a></li>
-<li>Blanco-Carmona, E. (2022). Generating publication ready visualizations for Single Cell transcriptomics using SCpubr. <em>bioRxiv</em> / <a href="https://enblacar.github.io/SCpubr-book-v1/" rel="noopener" target="_blank">SCpubr book</a>.</li>
+<li>Blanco-Carmona, E. (2022). Generating publication ready visualizations for Single Cell transcriptomics using SCpubr. <em>bioRxiv</em>. <a href="https://doi.org/10.1101/2022.02.28.482303" rel="noopener" target="_blank">doi:10.1101/2022.02.28.482303</a> | <a href="https://enblacar.github.io/SCpubr-book/" rel="noopener" target="_blank">SCpubr book</a></li>
+<li>Squair, J. W., Gautier, M., Kathe, C., Anderson, M. A., James, N. D., Hutson, T. H., et al. (2021). Confronting false discoveries in single-cell differential expression. <em>Nature Communications</em>, 12, 5692. <a href="https://doi.org/10.1038/s41467-021-25960-2" rel="noopener" target="_blank">doi:10.1038/s41467-021-25960-2</a></li>
+<li>Phipson, B., Sim, C. B., Porrello, E. R., Hewitt, A. W., Powell, J., &amp; Oshlack, A. (2022). propeller: testing for differences in cell type proportions in single cell data. <em>Bioinformatics</em>, 38(20), 4720-4726. <a href="https://doi.org/10.1093/bioinformatics/btac582" rel="noopener" target="_blank">doi:10.1093/bioinformatics/btac582</a></li>
 <li><a href="https://satijalab.org/seurat/" rel="noopener" target="_blank">Seurat documentation (Satija Lab)</a> and <a href="https://bioconductor.org/packages/release/bioc/html/dittoSeq.html" rel="noopener" target="_blank">dittoSeq Bioconductor landing page</a>.</li>
 </ul>
-<div class="lesson-result"><p><strong>Deliverable:</strong> a set of exported exploratory plots plus a short figure caption recording the input object, assay/transformation, grouping metadata, scale or clipping, and sample counts. Before interpreting a pattern, check that plot legends and panel scales support the comparison you intend to make.</p></div>
+
+<div class="lesson-result"><p><strong>Deliverable:</strong> four reproducible Seurat/ggplot2 figures from the synthetic fixture (or your adapted <code>SCpubr</code>, <code>dittoSeq</code>, and <code>patchwork</code> figure panels in <code>results/</code>) paired with a figure caption recording the assay layer, scaling or cutoffs, sample counts, and <code>results/session_info.txt</code>.</p></div>
 <aside aria-labelledby="tutorial-feedback-title" class="lesson-feedback" id="tutorial-feedback"><h2 id="tutorial-feedback-title">Help improve this tutorial</h2><p>Found an error, a broken link, or a step that needs a clearer explanation? Please <a href="../contact.html">contact me</a>. Your feedback helps me keep this resource accurate and useful.</p></aside></article>
 <section class="mt-12 mb-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-100">
 <div class="flex items-start gap-4">
@@ -552,7 +643,7 @@ saveRDS(seurat_obj, file = "data/seurat_obj_with_umap.rds")
 </script>
 <script src="../assets/vendor/prism/prism-1.29.0.js"></script>
 <script id="tutorial-code-data">
-window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"advanced-visualization-packages":{"blocks":[{"language":"r","sha256":"c793f29075659cf24fb5f7676ea6669dc7fbab7e2d3ae902a40b7fe81c5d4370"},{"language":"bash","sha256":"3a4f5ce854600d98e926ecfb1a9e5feaa573e73685c26b851ce47539564536e5"},{"language":"r","sha256":"dcc5647a2a6de66ab0bb58ba6fbf85b4a191d8b4259e81f891bf8cb9807c3e07"},{"language":"r","sha256":"ea1e12b5f967c149bd1fa602465414e2701de846c0840275d52f7a3653c5d68e"},{"language":"r","sha256":"e6604a6d2405cb1100f5e2ed9dea2f39bf39c0dca2d9fee30f11068ca9c3a008"},{"language":"r","sha256":"704553f3a642d607c34c5eb5640f36198489f5757415508fd4bb78236fd23030"},{"language":"r","sha256":"8bf1a1ceeb4073b509d7cb76fde5581d9026ed52a28725b272cbba9b39d87083"},{"language":"r","sha256":"9c7be96f2704db082e77cbe739e8973286699f3c70fe2f0af37eef11788bd07d"},{"language":"r","sha256":"cab50077e421c316227894b4eecbe2e49d5201caa74096ddeb7f48b472db4d03"}],"groups":[]}}};
+window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"advanced-visualization-packages":{"blocks":[{"language":"bash","sha256":"fbee7c28fcd53a164e42767a534717ec5982b0d2e0d6eba03d3955a616f23321"},{"language":"text","sha256":"031c611aa07be9125f26849fcb64728c4087da446207f9495011b7fa85c783c6"},{"language":"r","sha256":"46346248e7576aa354c811630e37079596c8be91890e79c55d12e16e5c24caf2"},{"language":"r","sha256":"0812669390a972b8fc8596f2cabed124ec9a4ffe3b8cbefa6b99e0ddee232f5d"},{"language":"r","sha256":"1d8d19ebd2daf7f464b2a20c6e4ea41fd8635a9747087dd2494d936abd7426b5"},{"language":"r","sha256":"07b0b66917e6c353b83a3ccab4cd8ef02fb37d10b8a982ec5b9b1c7c73bdb5b4"},{"language":"r","sha256":"39290a2165c4974961fe25b22db46d4bdba75b96f25a082f0a37de33c232615c"},{"language":"r","sha256":"422685b6617cc6249f47ed5ce4103a472c8a46000d7c29c5773c551421e1bc64"},{"language":"r","sha256":"1e2e32281511f6edf6cccb913e3bf6eab20dc535e8c3fa831735d8c0795fa594"},{"language":"r","sha256":"60d397ca3791858c8667f81cf0aa0c8b13992991b98acb5613442907b16f5210"},{"language":"r","sha256":"a0786ea826a13782f39d967f28a408a3ef152146a1e5f83446854a58cb6ffd9f"},{"language":"r","sha256":"8ed15ce30f595d3b1d871a672c1632ef51e9a7b6162ac1f8705e97af8e769552"}],"groups":[]}}};
 </script>
 <script src="../code-tabs.js?v=20261026-startup-v1"></script>
 <script src="../copy-code.js?v=20261025-r-first-v1"></script>

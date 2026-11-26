@@ -173,29 +173,49 @@ function toggleMobileMenu() {
 </div>
 <nav aria-label="Learning path navigation" class="reader-toolbar"><span class="reader-toolbar__heading">Learning path</span><a href="statistics-for-bioinformatics.html" rel="prev" class="reader-toolbar__previous"><span class="reader-toolbar__direction"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5m0 0 7 7m-7-7 7-7"/></svg></span><span class="reader-toolbar__copy"><small>Previous prerequisite</small><strong>Statistics for Bioinformatics</strong></span></a><a data-catalogue-return="" href="../tutorials.html" class="reader-toolbar__library"><span class="reader-toolbar__library-mark" aria-hidden="true"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="6" height="6" rx="1.3"/><rect x="14" y="4" width="6" height="6" rx="1.3"/><rect x="4" y="14" width="6" height="6" rx="1.3"/><rect x="14" y="14" width="6" height="6" rx="1.3"/></svg></span><span><small>Browse</small><strong>All tutorials</strong></span></a><a href="../start-here.html#sh-routes" rel="next" class="reader-toolbar__next"><span class="reader-toolbar__copy"><small>Suggested next</small><strong>Choose a question-led route</strong></span><span class="reader-toolbar__direction"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14m0 0-7-7m7 7-7 7"/></svg></span></a></nav>
 <article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--decision-guide">
-<p class="lesson-lead">Before sequencing, ask whether the biological comparison can be separated from the way samples are processed. A sample sheet and a condition-by-batch table expose design problems while they can still be fixed. This guide walks through those decisions, then shows lightweight metadata checks and an exploratory expression PCA.</p>
-<section class="lesson-summary tutorial-learning-contract" data-tutorial-format="conceptual-guide" aria-label="Learning format"><p><strong>Format: Conceptual guide.</strong> Evaluate replication, batch balance, and donor confounding before writing downstream models, then test a quick exploratory PCA on a tiny synthetic count table or your own matrix.</p></section>
-<h2>Start with the experimental unit</h2>
-<p>The experimental unit is the unit independently assigned to a treatment or condition. It is often a participant, animal, culture, or independently prepared sample. Repeated measurements from one unit and technical replicates do not create additional independent biological replicates. Keep the unit identifier in metadata so the analysis can represent pairing or repeated measurements when the design requires it.</p>
-<p>A batch is a group processed under shared technical conditions, such as a sequencing run, plate, reagent lot, operator, or processing date. Record the actual factors that could differ; a single column called <code>batch</code> may not capture all relevant sources of variation. Give each row an unambiguous sample ID, and maintain a separate, stable mapping from that ID to raw files.</p>
-<h2>Check whether condition and batch are separable</h2>
-<p>Plan for each processing batch to contain samples from each condition whenever practical. Randomize sample order within blocks that matter to the study, such as donor or collection site, and preserve paired samples together when the protocol requires it. Record the allocation method and random seed. Balance is a design goal, not a guarantee that all other covariates are balanced.</p>
+<p class="lesson-lead">If all treated samples are processed on Tuesday and all controls on Monday, no statistical tool can prove whether a gene changed because of the drug or the calendar. Good experimental design keeps biological comparisons separable from technical handling before sequencing begins.</p>
+<section class="lesson-summary tutorial-learning-contract" data-tutorial-format="conceptual-guide" aria-label="Learning format">
+<p><strong>Format: Conceptual guide</strong> (~25 min). <strong>Prerequisites:</strong> basic CSV familiarity, plus R or Python if running the optional scripts.</p>
+<p><strong>Outcomes:</strong> count biological replicates (<em>n</em>) at the true experimental unit, audit sample sheets for direct and hidden batch confounding, run an exploratory PCA, and pick the right batch-modeling strategy. The scripts use a 4-sample fixture to verify schema and code flow; real studies also require assay QC and power planning.</p>
+</section>
+
+<h2 id="experimental-unit">Start with the experimental unit</h2>
+<p>The <strong>experimental unit</strong> is the smallest entity independently assigned to a treatment. Comparing 3 drug-treated mice against 3 control mice gives <strong>n = 3 per group</strong>. Sequencing 2 tissue punches across 2 lanes per mouse produces 12 FASTQ files, still from only 3 biological replicates per group.</p>
+<p>Treating repeated punches, lanes, or single cells from one donor as independent samples is <strong>pseudoreplication</strong>: measurements from the same donor share genetics and physiology, so treating them as independent underestimates variance and inflates false positives (Zimmerman et al., 2021).</p>
+<p>A <strong>batch</strong> is any shared technical step: extraction date, 96-well plate, kit lot, operator, flow-cell lane, or center. Record each technical factor in its own column rather than one generic <code>batch</code> label, and link every row to a unique <code>sample_id</code> and its parent <code>experimental_unit</code>.</p>
+
+<figure class="my-8 bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+<img src="../images/tutorial-figures/experimental-design-batch-effects-unit-vs-batch.svg" alt="Two-panel concept diagram showing pseudoreplication versus independent donors in Panel A, and confounded, covariate-confounded, and balanced batch allocations in Panel B" width="960" height="440" loading="lazy" class="w-full h-auto rounded-lg" style="aspect-ratio: 960 / 440;"/>
+<figcaption class="mt-3 text-sm text-gray-600"><strong>Panel A:</strong> Technical replicates from one donor do not increase biological sample size (<em>n</em>). <strong>Panel B:</strong> Crossing condition across batches fails if another biological covariate (such as sex) remains aligned with batch.</figcaption>
+</figure>
+
+<h2 id="separability">Check whether condition and batch are separable</h2>
+<p>Statistical models separate technical shifts from biological signal by comparing conditions <em>within</em> each batch and comparing batches <em>within</em> each condition. If a batch contains only one group, there is no overlap to estimate the technical shift.</p>
 <div aria-label="Scrollable table: Illustrative condition-by-batch designs. Counts are examples, not sample-size recommendations." class="lesson-table-wrap" role="region" tabindex="0"><table>
-<caption>Illustrative condition-by-batch designs. Counts are examples, not sample-size recommendations.</caption>
+<caption>Illustrative condition-by-batch designs (examples of structure, not sample-size recommendations)</caption>
 <thead><tr><th scope="col">Design</th><th scope="col">Batch 1</th><th scope="col">Batch 2</th><th scope="col">What can be learned</th></tr></thead>
 <tbody>
-<tr><th scope="row">Crossed</th><td>control and treated</td><td>control and treated</td><td>Condition and batch effects may be modeled separately, subject to adequate replication and the full design.</td></tr>
-<tr><th scope="row">Perfectly confounded</th><td>control only</td><td>treated only</td><td>The data cannot distinguish condition from batch. A model cannot identify both effects from this design.</td></tr>
+<tr><th scope="row">Crossed and covariate-balanced</th><td>control (F, M) and treated (F, M)</td><td>control (F, M) and treated (F, M)</td><td>Condition, batch, and sex effects can be estimated separately in one model, given adequate replication.</td></tr>
+<tr><th scope="row">Condition-balanced, covariate-confounded</th><td>control (F) and treated (F)</td><td>control (M) and treated (M)</td><td>Condition and batch can be separated, but batch and sex are 100% collinear and cannot be separated.</td></tr>
+<tr><th scope="row">Perfectly confounded</th><td>control only</td><td>treated only</td><td>Batch and condition carry identical information; no model or batch-correction tool can separate them.</td></tr>
 </tbody></table></div>
-<p>A table with both conditions in every batch is a useful first check, but it does not prove the design is adequate. Replication, missing combinations, paired structure, and other covariates still matter. If condition and batch encode identical information, the model matrix is rank-deficient and the separate coefficients are not identifiable. If that happens before processing, redesign the allocation; after data collection, state the limitation and avoid claiming a correction recovered the separate effects.</p>
-<h2>Build and validate a sample sheet</h2>
-<p>Use one row per measured sample. If several samples come from one experimental unit, repeat its unit ID in those rows rather than treating those rows as independent units. Include all variables needed to link data files and describe the planned model. This small invented sample sheet is a code fixture, not a sample-size recommendation or biological result:</p>
-<pre><code>sample_id,experimental_unit,condition,batch,library_id,sex,collection_date
-S01,Donor01,control,Lane1,L01,F,2024-01-12
-S02,Donor02,control,Lane2,L02,M,2024-01-13
-S03,Donor03,treated,Lane1,L03,F,2024-01-12
-S04,Donor04,treated,Lane2,L04,M,2024-01-13</code></pre>
-<p>Use the same metadata file for either language. The Python route requires Python 3 and pandas; the base R route requires only R. Save and run one validator, not both. Each checks required fields, blanks, and unique sample IDs, prints the batch-by-condition counts, and writes <code>metadata.validated.csv</code>. Repeated experimental-unit IDs remain allowed because repeated or paired measurements can be legitimate; this structural check does not validate identities, replication, or model suitability.</p>
+<p>When one column in a regression design can be constructed from a combination of other columns (for example, <code>Batch 2</code> equals <code>treated</code>, or <code>Lane 2</code> equals <code>male</code>), the design matrix is <strong>rank-deficient</strong>. That means the separate effects are not <strong>identifiable</strong>: infinitely many combinations of technical shift and biological change fit the exact same counts. Catching rank deficiency before library prep lets you re-randomize plates; catching it after sequencing means you must state the limitation rather than claiming a batch-correction tool recovered the truth.</p>
+
+<h2 id="sample-sheet">Build and validate a sample sheet</h2>
+<p>Use one row per measured library. If multiple libraries come from one donor, repeat that donor ID in <code>experimental_unit</code> while keeping <code>sample_id</code> and <code>library_id</code> unique.</p>
+<div aria-label="Scrollable table: Recommended sample sheet columns and purpose" class="lesson-table-wrap" role="region" tabindex="0"><table>
+<caption>Sample sheet columns used in the validation fixture</caption>
+<thead><tr><th scope="col">Column</th><th scope="col">Purpose</th><th scope="col">Examples</th></tr></thead>
+<tbody>
+<tr><th scope="row"><code>sample_id</code></th><td>Unique ID matching count-matrix columns</td><td><code>S01</code>, <code>S02</code></td></tr>
+<tr><th scope="row"><code>experimental_unit</code></th><td>Independently assigned donor, animal, or culture</td><td><code>Donor01</code>, <code>Donor02</code></td></tr>
+<tr><th scope="row"><code>condition</code></th><td>Biological group</td><td><code>control</code>, <code>treated</code></td></tr>
+<tr><th scope="row"><code>batch</code></th><td>Technical group (lane, plate, extraction day)</td><td><code>Lane1</code>, <code>Lane2</code></td></tr>
+<tr><th scope="row"><code>library_id</code></th><td>Library prep ID mapped to raw FASTQ files</td><td><code>L01</code>, <code>L02</code></td></tr>
+<tr><th scope="row"><code>sex</code>, <code>collection_date</code></th><td>Covariates checked for hidden confounding</td><td><code>F</code> / <code>M</code>, <code>2024-01-12</code></td></tr>
+</tbody></table></div>
+
+<p>Create the small 4-sample fixture <code>metadata.csv</code> below in a clean working directory. It is a structural fixture for testing code flow, not a sample-size recommendation.</p>
 <pre><code>cat &gt; metadata.csv &lt;&lt;'EOF'
 sample_id,experimental_unit,condition,batch,library_id,sex,collection_date
 S01,Donor01,control,Lane1,L01,F,2024-01-12
@@ -204,6 +224,7 @@ S03,Donor03,treated,Lane1,L03,F,2024-01-12
 S04,Donor04,treated,Lane2,L04,M,2024-01-13
 EOF
 </code></pre>
+<p>Choose either the base R validator (requires only R) or the Python validator (requires Python 3 and pandas). Both reject missing columns, blank values, and duplicate <code>sample_id</code> entries, print the <code>batch</code>-by-<code>condition</code> table, and write <code>metadata.validated.csv</code>.</p>
 <h3>Base R validator</h3>
 <p>Save this equivalent base R script as <code>validate_metadata.R</code>. It has no package installation step.</p>
 <pre><code>meta &lt;- read.csv("metadata.csv", check.names = FALSE, colClasses = "character",
@@ -256,11 +277,36 @@ if meta["sample_id"].duplicated().any():
 print(pd.crosstab(meta["batch"], meta["condition"], dropna=False))
 meta.to_csv("metadata.validated.csv", index=False)
 print("Wrote metadata.validated.csv")</code></pre>
-<p>Look closely at the fixture table: each lane holds one control and one treated sample, which looks balanced at first glance. Yet <code>Lane1</code> contains only female donors (<code>sex = F</code>) collected on <code>2024-01-12</code>, while <code>Lane2</code> contains only male donors (<code>sex = M</code>) collected on <code>2024-01-13</code>. Even though <code>condition</code> crosses <code>batch</code>, lane is 100% collinear with donor sex and collection date, making biological sex indistinguishable from a technical lane shift. Always cross-tabulate <code>table(meta$batch, meta$sex)</code> and <code>table(meta$batch, meta$collection_date)</code> alongside <code>condition</code> before library prep begins.</p>
-<h2>Explore expression patterns with PCA</h2>
-<p>PCA highlights the largest sources of variance in an expression matrix, though it cannot tell biology from technical noise on its own. Run either the base R or Python script below on <code>counts.csv</code> (features in column 1, sample IDs as headers) and your validated metadata file; each script matches sample order automatically and applies a quick log-CPM transform suited to exploratory plotting rather than differential-expression modeling.</p>
+
+<div class="lesson-checkpoint">
+<p><strong>Check: Expected validator output</strong> (observed locally with R 4.6.1 on the fixture above):</p>
+<pre><code>        control treated
+  Lane1       1       1
+  Lane2       1       1
+Wrote metadata.validated.csv</code></pre>
+<p>If validation fails with <code>Missing or blank values in experimental_unit</code>, inspect the CSV for empty cells or trailing spaces. If it fails with <code>Duplicate sample_id values</code>, remember that repeated libraries from one donor share <code>experimental_unit</code>, never <code>sample_id</code>.</p>
+</div>
+
+<p>Now look past <code>condition</code>. In the fixture above, <code>Lane1</code> and <code>Lane2</code> each hold 1 control and 1 treated sample, so <code>batch x condition</code> looks balanced. Yet checking <code>sex</code> and <code>collection_date</code> exposes hidden confounding: <code>Lane1</code> contains only female donors collected on <code>2024-01-12</code>, while <code>Lane2</code> contains only male donors collected on <code>2024-01-13</code>. Run this base R rank check to test whether all covariates in your planned formula can be estimated simultaneously:</p>
+<pre><code class="language-r">meta &lt;- read.csv("metadata.validated.csv")
+print(table(meta$batch, meta$sex))
+mm_simple &lt;- model.matrix(~ batch + condition, meta)
+mm_full   &lt;- model.matrix(~ batch + sex + condition, meta)
+cat("rank(~ batch + condition) =", qr(mm_simple)$rank, "of", ncol(mm_simple), "columns\n")
+cat("rank(~ batch + sex + condition) =", qr(mm_full)$rank, "of", ncol(mm_full), "columns\n")</code></pre>
+<p>Observed output on the fixture:</p>
+<pre><code>        F M
+  Lane1 2 0
+  Lane2 0 2
+rank(~ batch + condition) = 3 of 3 columns
+rank(~ batch + sex + condition) = 3 of 4 columns</code></pre>
+<p>The two-factor model <code>~ batch + condition</code> is full rank (3 of 3), but adding <code>sex</code> drops the rank below the number of columns (3 of 4). Biological sex and technical lane are 100% collinear, so neither effect can be separated if both are needed in the model.</p>
+
+<h2 id="pca-exploration">Explore expression patterns with PCA</h2>
+<p><strong>Principal Component Analysis (PCA)</strong> projects thousands of genes onto orthogonal axes (<code>PC1</code>, <code>PC2</code>, ...) ordered by variance explained. Color PCA plots by <code>condition</code> and every technical column (<code>batch</code>, <code>sex</code>, <code>collection_date</code>) to spot batch structure.</p>
+<p>To prevent sequencing depth from dominating PC1, the scripts compute <strong>Counts Per Million (CPM)</strong> (dividing each sample's counts by its library total and multiplying by 1,000,000) and take <code>log2(CPM + 1)</code>. For real bulk RNA-seq PCA, use <code>DESeq2::vst()</code> or <code>edgeR::cpm(log = TRUE)</code>; keep raw integer counts for differential expression.</p>
 <h3>Shared invented count fixture</h3>
-<p>This tiny table uses the same four invented sample IDs as the metadata above. It tests file structure and code flow only; values do not represent an assay and support no biological conclusion.</p>
+<p>Create <code>counts.csv</code> in the same directory as <code>metadata.validated.csv</code>. These four invented genes test file structure, sample-ID matching, and PCA math only.</p>
 <pre><code>cat &gt; counts.csv &lt;&lt;'EOF'
 feature_id,S01,S02,S03,S04
 gene_A,10,12,40,38
@@ -368,25 +414,36 @@ with open("pca_coordinates.csv", "w", newline="", encoding="utf-8") as handle:
         writer.writerow({"PC1": coordinates[index, 0], "PC2": coordinates[index, 1],
                          **sample_metadata})
 print("Wrote pca_coordinates.csv")</code></pre>
-<p>Run either PCA script inside the folder holding <code>counts.csv</code> and <code>metadata.validated.csv</code> to write <code>pca_coordinates.csv</code> (four sample rows plus <code>PC1</code>, <code>PC2</code>, and the seven metadata columns). Here <code>PC1</code> separates treated samples (<code>S03</code>, <code>S04</code>) from controls (<code>S01</code>, <code>S02</code>) via shifts in <code>gene_A</code>, <code>gene_B</code>, and <code>gene_C</code>, while <code>PC2</code> reflects the smaller lane/sex/date offset.</p>
-<p>Sign flips along any principal component are normal between R and Python SVD solvers, so compare relative sample spacing and variance explained rather than axis polarity. For end-to-end RNA-seq matrix-to-metadata setup, see the <a href="https://bioconductor.org/packages/release/bioc/vignettes/DESeq2/inst/doc/DESeq2.html">DESeq2 worked vignette</a>.</p>
-<h2>Choose a modeling response</h2>
+
+<div class="lesson-checkpoint">
+<p><strong>Check: Expected PCA output</strong> (observed locally with R 4.6.1; Python prints <code>Wrote pca_coordinates.csv</code> and writes the same coordinate magnitudes):</p>
+<pre><code>Importance of components:
+                          PC1     PC2     PC3       PC4
+Standard deviation     1.3224 0.20965 0.04951 1.656e-16
+Proportion of Variance 0.9741 0.02448 0.00137 0.000e+00
+Cumulative Proportion  0.9741 0.99863 1.00000 1.000e+00</code></pre>
+<p>In <code>pca_coordinates.csv</code>, <code>PC1</code> accounts for 97.4% of variance and separates treated samples (<code>S03</code> at +1.281, <code>S04</code> at +0.956) from controls (<code>S01</code> at -1.425, <code>S02</code> at -0.813), while <code>PC2</code> accounts for 2.4% of variance and captures small residual differences across the four toy genes. Notice that sign flips (+ vs. -) along any principal component are normal between R and Python SVD solvers; compare relative distances and variance explained rather than sign.</p>
+</div>
+
+<p>Common errors caught by the PCA checks include <code>Counts columns and metadata sample_id values must match exactly</code> (usually a typoed sample name or a QC-dropped sample left in one file) and <code>A sample has zero total counts</code> (an empty or failed library that should be removed before normalization).</p>
+
+<h2 id="modeling-response">Choose a modeling response</h2>
+<p>Once you know how batches relate to your biological condition, choose an analysis strategy that matches the downstream task. Avoid the common mistake of running a batch-removal tool and then feeding those adjusted values into a differential expression test as if they were raw data: when groups are unbalanced, two-step "correct-then-test" pipelines distort residual degrees of freedom and inflate false positives (Nygaard et al., 2016).</p>
 <div aria-label="Scrollable table: How to handle known batch variables by downstream task" class="lesson-table-wrap" role="region" tabindex="0"><table>
 <caption>How to handle known batch variables by downstream task</caption>
-<thead><tr><th scope="col">Downstream goal</th><th scope="col">Recommended approach</th><th scope="col">Why not substitute another matrix?</th></tr></thead>
+<thead><tr><th scope="col">Downstream goal</th><th scope="col">Recommended approach</th><th scope="col">Why this approach is preferred</th></tr></thead>
 <tbody>
-<tr><th scope="row">Differential expression on RNA-seq counts</th><td>Include batch directly in the count GLM design (for example <code>~ batch + condition</code> in <code>DESeq2</code>, <code>edgeR</code>, or <code>limma-voom</code>).</td><td>Preserves count mean-variance relationships and exact residual degrees of freedom; feeding batch-regressed continuous values into count models distorts dispersion and inflates false positives.</td></tr>
-<tr><th scope="row">Exploratory PCA, clustering, or heatmaps</th><td>Compute <code>vst()</code> or <code>log2(CPM + 1)</code>, then apply <code>limma::removeBatchEffect(mat, batch = meta$batch, design = model.matrix(~ condition, meta))</code> or <code>sva::ComBat</code> for display only.</td><td>Unadjusted PCA can be visually dominated by lane/center shifts even when condition is well balanced, but the regressed matrix should never be passed back into DE testing.</td></tr>
-<tr><th scope="row">Count-scale batch adjustment across studies</th><td>Use a negative-binomial count adjustment such as <code>sva::ComBat_seq(counts, batch = meta$batch, group = meta$condition)</code> when downstream tools strictly require integer counts.</td><td>Still requires conditions to overlap across batches; cannot unconfound a batch that contains only one biological group.</td></tr>
+<tr><th scope="row">Bulk RNA-seq differential expression</th><td>Include batch directly in the count GLM design (<code>~ batch + condition</code> in <code>DESeq2</code>, <code>edgeR</code>, or <code>limma-voom</code>).</td><td>Preserves count mean-variance relationships and exact residual degrees of freedom instead of distorting variance via pre-correction.</td></tr>
+<tr><th scope="row">Exploratory PCA, clustering, or heatmaps</th><td>Transform with <code>DESeq2::vst(dds, blind = FALSE)</code> or <code>log2(CPM + 1)</code>, then apply <code>limma::removeBatchEffect(mat, batch = meta$batch, design = model.matrix(~ condition, meta))</code> for plotting only.</td><td>Unadjusted PCA can be dominated by lane or center shifts. Passing <code>design = model.matrix(~ condition, meta)</code> protects biological signal from being subtracted out; never pass this adjusted matrix back to DE testing.</td></tr>
+<tr><th scope="row">Repeated measures or multiple samples per donor</th><td>Include donor as a fixed block (<code>~ donor + condition</code>) when paired, use <code>limma::duplicateCorrelation(..., block = meta$experimental_unit)</code>, or aggregate single cells to pseudobulk per donor and cell type.</td><td>Accounts for within-donor correlation and prevents pseudoreplication.</td></tr>
+<tr><th scope="row">Cross-study count harmonization</th><td>Use negative-binomial adjustment such as <code>sva::ComBat_seq(counts, batch = meta$batch, group = meta$condition)</code> when a downstream tool strictly requires integer counts.</td><td>Still requires biological groups to overlap across batches and cannot rescue a completely confounded design.</td></tr>
+<tr><th scope="row">Unrecorded (latent) technical variation</th><td>Estimate surrogate variables with <code>sva::svaseq()</code> (protecting the condition model) and inspect their correlation with known covariates before adding them to the DE model.</td><td>Captures unmeasured drift such as RNA degradation or reagent changes, provided the latent batch is not collinear with treatment.</td></tr>
 </tbody></table></div>
-<ul>
-<li><strong>Conditions represented across batches:</strong> include batch and condition in the analysis design when supported by the study structure. Paired, repeated-measures, interaction, or nested designs require terms (or random effects such as <code>limma::duplicateCorrelation</code>) that reflect those units.</li>
-<li><strong>Perfect confounding or missing combinations:</strong> inspect <code>qr(model.matrix(~ batch + condition, meta))$rank</code> before data collection if possible. When the study is already complete and effects are not identifiable, report that limitation transparently.</li>
-</ul>
-<h3>Reproducible block randomization before library preparation</h3>
-<p>Prevent batch confounding before wet-lab processing by assigning samples to plates or lanes within condition strata using a recorded random seed:</p>
-<figure class="my-8 bg-white border border-gray-200 rounded-xl p-4 shadow-sm"><img src="../images/tutorial-figures/batch-effect-pca-diagnostic.png" alt="PCA diagnostic plots comparing confounded versus balanced factorial experimental batch designs" width="1590" height="795" loading="lazy" class="w-full h-auto rounded-lg" style="aspect-ratio: 1590 / 795;"/><figcaption class="mt-3 text-sm text-gray-600">Illustrative simulated benchmark: (A) when condition and batch align perfectly on PC1, statistics cannot separate technical drift from biology; (B) balanced batches occupy orthogonal variance axes separable in linear models.</figcaption></figure>
 
+<figure class="my-8 bg-white border border-gray-200 rounded-xl p-4 shadow-sm"><img src="../images/tutorial-figures/batch-effect-pca-diagnostic.png" alt="PCA diagnostic plots comparing confounded versus balanced factorial experimental batch designs" width="1590" height="795" loading="lazy" class="w-full h-auto rounded-lg" style="aspect-ratio: 1590 / 795;"/><figcaption class="mt-3 text-sm text-gray-600">Simulated benchmark illustrating PCA interpretation: <strong>(A)</strong> when condition and batch align along the same axis (PC1), statistics cannot separate technical drift from biology; <strong>(B)</strong> when batches are balanced across conditions, batch (PC1) and treatment (PC2) occupy orthogonal axes separable in <code>~ batch + condition</code>.</figcaption></figure>
+
+<h3 id="block-randomization">Reproducible block randomization before library preparation</h3>
+<p>The cheapest way to keep batch and condition separable is stratified block randomization before RNA extraction or plating. This base R example distributes 6 control and 6 treated samples evenly across two plates and shuffles processing order within each plate using a recorded random seed:</p>
 <pre><code class="language-r">set.seed(20261018)
 samples &lt;- data.frame(
   sample_id = sprintf("S%02d", 1:12),
@@ -398,34 +455,67 @@ samples$plate &lt;- ave(samples$condition, samples$condition, FUN = function(x) 
 })
 samples &lt;- samples[order(samples$plate, sample(seq_len(nrow(samples)))), ]
 print(table(samples$plate, samples$condition))</code></pre>
-<p>Strong clustering by processing batch warns you to inspect technical covariates, while separation by treatment never guarantees a clean experiment if covariates are confounded underneath. Check design tables, run sensitivity models, and never treat a batch-corrected plot as standalone statistical proof.</p>
-<h2>Investigate unexpected patterns before excluding samples</h2>
+<p>Expected cross-tabulation (observed locally with R 4.6.1):</p>
+<pre><code>         control treated
+  Plate1       3       3
+  Plate2       3       3</code></pre>
+<p>Extend the grouping vector in <code>ave()</code> to stratify by <code>paste(samples$condition, samples$sex)</code> when both treatment and sex must be balanced across plates.</p>
+
+<h2 id="unexpected-patterns">Investigate unexpected patterns before excluding samples</h2>
 <ul>
-<li><strong>One sample separates from the rest:</strong> check sample identity and raw-data QC, including read quality and mapping or library metrics appropriate to the assay. A rare biological state can also be an outlier. Exclude a sample only with a documented, assay-relevant reason and report the decision.</li>
-<li><strong>A known technical variable tracks principal components:</strong> check whether it is recorded consistently and whether it is confounded with condition. Include it in models only if the design permits its effect to be estimated.</li>
-<li><strong>Biological patterns change after adjustment:</strong> revisit the input, the adjustment variables, and the method's assumptions. Compare the unadjusted and adjusted analyses for the stated purpose. Large changes are a reason to investigate, not proof that either output is correct.</li>
+<li><strong>One sample separates far from its group:</strong> check raw sequencing QC (mapping rate, duplication, rRNA/mitochondrial fraction) and verify sample identity (for example, checking sex-chromosome markers such as <em>XIST</em> and <em>UTY</em> against recorded <code>sex</code> to catch sample swaps). Exclude a sample only for a documented technical or identity failure, never solely because it looks inconvenient on PCA.</li>
+<li><strong>A technical variable tracks PC1 or PC2:</strong> confirm whether it is balanced across conditions using <code>table()</code> and <code>qr(model.matrix(...))$rank</code>. Large batch variance on PC1 does not ruin a study as long as conditions cross batches cleanly.</li>
+<li><strong>Results change sharply after adding batch:</strong> inspect unadjusted vs. batch-adjusted models side by side. Large swings signal partial confounding or an overly aggressive adjustment model; investigate rather than picking whichever output yields more hits.</li>
 </ul>
-<h2>Limits and records to keep</h2>
-<p>Batch adjustment can account for measured technical structure under suitable design and method assumptions. It cannot create information that was not collected, and methods can alter biological variation when variables are confounded or the model is misspecified. The appropriate procedure depends on assay, data type, study design, and downstream question.</p>
-<p>Keep the sample-to-file mapping, metadata version, processing allocation and random seed, exclusions with reasons, software/package versions, and the model formula with analysis records. When datasets come from different centers, protocols, or platforms, document those differences and interpret harmonized data cautiously.</p>
-<h2>Worked decision checklist</h2>
+
+<h2 id="checklist-practice">Worked decision checklist and practice</h2>
 <ol>
-<li>Identify the independently assigned experimental unit and count biological replicates at that level.</li>
-<li>Record each measured sample, its unit, condition, batch, file identifier, and relevant covariates.</li>
-<li>Cross-tabulate condition against each planned batch. Investigate empty combinations and exact overlap before processing.</li>
-<li>Randomize within appropriate blocks and save the allocation procedure and seed.</li>
-<li>After data generation, inspect sample identity and assay-specific QC before interpreting PCA.</li>
-<li>Specify a model that represents the design. If condition and batch cannot be separated, describe the limitation instead of claiming correction solved it.</li>
+<li>Identify the independently assigned experimental unit and count biological replicates (<em>n</em>) at that level.</li>
+<li>Record each measured sample, its <code>experimental_unit</code>, <code>condition</code>, every candidate batch factor, <code>library_id</code>, and key biological covariates.</li>
+<li>Cross-tabulate <code>condition</code> and covariates against every batch, and check <code>qr(model.matrix(...))$rank</code> before library prep.</li>
+<li>Randomize sample placement within strata and archive the allocation script and random seed.</li>
+<li>After sequencing, verify sample identity and QC metrics before interpreting PCA or clustering.</li>
+<li>Model known batch covariates directly in the differential expression formula, or state confounding transparently if the design cannot support estimation.</li>
 </ol>
+
+<div class="lesson-exercise">
+<p><strong>Practice check: Diagnose a collaborator's sample table</strong></p>
+<p>A collaborator sends 12 bulk RNA-seq samples split across two RNA extraction batches:</p>
+<ul>
+<li><strong>Batch A (Monday):</strong> 4 control donors and 2 treated donors (all 6 donors are under age 40).</li>
+<li><strong>Batch B (Friday):</strong> 2 control donors and 4 treated donors (all 6 donors are over age 65).</li>
+</ul>
+<p>Can you separate <code>condition</code> from <code>batch</code>? Can you separate <code>age_group</code> from <code>batch</code>? What should you report?</p>
+<details><summary>Check your diagnosis</summary>
+<p><strong>1. Treatment vs. batch:</strong> Separable (partially imbalanced, not confounded). Both batches contain both control and treated samples (4:2 in Batch A, 2:4 in Batch B), so <code>~ batch + condition</code> is full rank, though precision is lower than in a 3:3 balanced design.</p>
+<p><strong>2. Age group vs. batch:</strong> Completely confounded. Every Monday sample is under 40 and every Friday sample is over 65, so <code>~ batch + age_group + condition</code> is rank-deficient. No statistical method can separate an age effect from a Monday-vs-Friday extraction shift in this dataset.</p>
+<p><strong>3. What to report:</strong> Include <code>batch</code> in <code>~ batch + condition</code> if you assume age does not modify the response, state explicitly that age and extraction batch are completely confounded, and require age-stratified randomization in follow-up cohorts.</p>
+</details>
+</div>
+
 <aside aria-label="Author's lab note" class="lesson-summary">
 <p><strong>Author's lab note:</strong> Nine times out of ten, a batch effect cannot be rescued statistically because wet-lab randomization was skipped weeks before sequencing. Sending a randomized plate map (crossing condition, sex, and donor across every extraction batch and flow-cell lane) to the bench team before sample collection is the highest-leverage bioinformatics step you can take.</p>
 </aside>
-<h2>References</h2>
-<p>For additional method details, consult the <a href="https://www.bioconductor.org/packages/release/bioc/vignettes/DESeq2/inst/doc/DESeq2.html">DESeq2 vignette</a>, the <a href="https://bioconductor.org/packages/devel/bioc/vignettes/sva/inst/doc/sva.pdf">Bioconductor sva vignette</a>, and R's <a href="https://stat.ethz.ch/R-manual/R-devel/library/stats/html/prcomp.html"><code>prcomp</code> documentation</a>. These examples do not replace method-specific analysis guidance.</p>
+
+<h2 id="next-steps">Next steps and references</h2>
+<p>Once your sample sheet passes design checks, continue with assay-level QC and downstream modeling:</p>
 <ul>
+<li><a href="quality-control-fundamentals.html">Quality Control Fundamentals</a> to check per-sample sequencing depth, mapping rates, and outlier diagnostics.</li>
+<li><a href="data-visualization-fundamentals.html">Data Visualization Fundamentals</a> for PCA, UMAP, heatmap, and volcano plotting workflows in R and Python.</li>
+<li><a href="transcriptomics-differential-expression.html">Pseudobulk Differential Expression for scRNA-seq</a> for donor-level aggregation that avoids single-cell pseudoreplication.</li>
+<li><a href="scrna-seq-integration-strategies.html">scRNA-seq Integration: Harmony, RPCA, and CCA</a> when harmonizing multi-batch single-cell datasets.</li>
+</ul>
+<p>Official documentation and primary methodology papers:</p>
+<ul>
+<li><a href="https://bioconductor.org/packages/release/bioc/vignettes/DESeq2/inst/doc/DESeq2.html" rel="noopener" target="_blank">DESeq2 vignette: Analyzing RNA-seq data with DESeq2</a> (multi-factor batch designs and <code>vst()</code> + <code>removeBatchEffect()</code> visualization).</li>
+<li><a href="https://bioconductor.org/packages/release/bioc/html/limma.html" rel="noopener" target="_blank">Bioconductor limma package</a> (<code>removeBatchEffect</code>, <code>duplicateCorrelation</code>, and <code>limma-voom</code> linear modeling).</li>
+<li><a href="https://bioconductor.org/packages/release/bioc/vignettes/sva/inst/doc/sva.pdf" rel="noopener" target="_blank">Bioconductor sva vignette (PDF)</a> and <a href="https://bioconductor.org/packages/release/bioc/html/sva.html" rel="noopener" target="_blank">sva package page</a> (<code>ComBat</code>, <code>ComBat_seq</code>, and surrogate variable analysis).</li>
+<li><a href="https://stat.ethz.ch/R-manual/R-devel/library/stats/html/prcomp.html" rel="noopener" target="_blank">R stats::prcomp documentation</a>.</li>
 <li>Leek JT, Scharpf RB, Bravo HC, et al. (2010). Tackling the widespread and critical impact of batch effects in high-throughput data. <em>Nature Reviews Genetics</em>, 11(10), 733-739. <a href="https://doi.org/10.1038/nrg2825" rel="noopener" target="_blank">doi:10.1038/nrg2825</a></li>
 <li>Johnson WE, Li C, Rabinovic A (2007). Adjusting batch effects in microarray expression data using empirical Bayes methods. <em>Biostatistics</em>, 8(1), 118-127. <a href="https://doi.org/10.1093/biostatistics/kxj037" rel="noopener" target="_blank">doi:10.1093/biostatistics/kxj037</a></li>
+<li>Nygaard V, Rødland EA, Hovig E (2016). Methods that remove batch effects while retaining group differences may lead to exaggerated confidence in downstream analyses. <em>Biostatistics</em>, 17(1), 29-39. <a href="https://doi.org/10.1093/biostatistics/kxv027" rel="noopener" target="_blank">doi:10.1093/biostatistics/kxv027</a></li>
 <li>Zhang Y, Parmigiani G, Johnson WE (2020). ComBat-seq: batch effect adjustment for RNA-seq count data. <em>NAR Genomics and Bioinformatics</em>, 2(3), lqaa078. <a href="https://doi.org/10.1093/nargab/lqaa078" rel="noopener" target="_blank">doi:10.1093/nargab/lqaa078</a></li>
+<li>Zimmerman KD, Espeland MA, Langefeld CD (2021). A practical solution to pseudoreplication bias in single-cell studies. <em>Nature Communications</em>, 12, 738. <a href="https://doi.org/10.1038/s41467-021-21038-1" rel="noopener" target="_blank">doi:10.1038/s41467-021-21038-1</a></li>
 </ul>
 <aside aria-labelledby="tutorial-feedback-title" class="lesson-feedback" id="tutorial-feedback"><h2 id="tutorial-feedback-title">Help improve this tutorial</h2><p>Found an error, a broken link, or a step that needs a clearer explanation? Please <a href="../contact.html">contact me</a>. Your feedback helps me keep this resource accurate and useful.</p></aside></article>
 <section class="mt-12 mb-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-100">
@@ -565,7 +655,7 @@ print(table(samples$plate, samples$condition))</code></pre>
 </script>
 <script src="../assets/vendor/prism/prism-1.29.0.js"></script>
 <script id="tutorial-code-data">
-window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"experimental-design-batch-effects":{"blocks":[{"language":"csv","sha256":"5d8815335d8c51428e7677c1a7df855d7d3db10983c6c0f581ca8240eb54ac57"},{"language":"bash","sha256":"6e258e560e973aed6912f0ddff2cb328044cd9f5f1d6cb2d5552946d0cac5f1a"},{"language":"r","sha256":"09a35c79e258cf76194f25100d2a4c0cd6a37afc19ffb4c83b5d2c6edb752141"},{"language":"bash","sha256":"9f0bf18173a5954f56f2ce867bace5982084c4435fb4decf7702e1e23e48f9ee"},{"language":"bash","sha256":"5351983d3f126531279ad9ee744f6b95fac6bd89db6d1b2b92882485d4a8aee1"},{"language":"python","sha256":"9afeb10f4e3bb2bba4f432dcaef34d650d9cc31a8a33c1bd997fec12e09e782f"},{"language":"bash","sha256":"b5bfb790d327c421ae14addc6091c257e44fbfd1f25fcfb47319f6d1a76fdafc"},{"language":"r","sha256":"63f68bb9be7e4bed932adab7893785ba04c79f71692a2114d857191b838ca4fe"},{"language":"bash","sha256":"ffdf04aa63d4c347f6dcd9a40d6ddd25644316fb4e537fc35f266a68e04f3c52"},{"language":"python","sha256":"35c18b375497c0de28c11743274e60790b0772618f423723768b7947bdc22173"},{"language":"r","sha256":"8f60b794f76f9081b6b56f52ebe3a0ef1012cbe1420c0219b43dea39e9c74a5e"}],"groups":[{"title":"Validate your sample sheet","panels":[{"start":14,"end":17,"language":"r","label":"R \u00b7 base R"},{"start":18,"end":21,"language":"python","label":"Python"}],"members":[{"index":14,"tag":"h3","sha256":"5f6dc58b5b6ade7066fde01bb1682fa24bb64c53ceaaacffb0d77efaf463c92c"},{"index":15,"tag":"p","sha256":"0775c794a78dcaea36aaacbf811de1186ff740845d0a556f6db40ef64627c506"},{"index":16,"tag":"pre","sha256":"09a35c79e258cf76194f25100d2a4c0cd6a37afc19ffb4c83b5d2c6edb752141"},{"index":17,"tag":"pre","sha256":"9f0bf18173a5954f56f2ce867bace5982084c4435fb4decf7702e1e23e48f9ee"},{"index":18,"tag":"h3","sha256":"5307f027aaac8a470e06134c634fd4023c3963e1dd1ca8d6bb62af75d77415f5"},{"index":19,"tag":"p","sha256":"b624621ad67ada37a995bd598403eed2c2d646a645b12f410b8bf024bba4bd80"},{"index":20,"tag":"pre","sha256":"5351983d3f126531279ad9ee744f6b95fac6bd89db6d1b2b92882485d4a8aee1"},{"index":21,"tag":"pre","sha256":"9afeb10f4e3bb2bba4f432dcaef34d650d9cc31a8a33c1bd997fec12e09e782f"}],"tabOrder":["r","python"]},{"title":"Explore sample variation with PCA","panels":[{"start":28,"end":30,"language":"r","label":"R \u00b7 base R"},{"start":31,"end":34,"language":"python","label":"Python"}],"members":[{"index":28,"tag":"h3","sha256":"b5bc5baa7042ce8804cf58a77ce919884021c36f7e5cecb6ba9b3b8b1455bd8c"},{"index":29,"tag":"p","sha256":"cc3f0f6270253a50017385726d6398650c9bdc927ed214b4447d15127b238505"},{"index":30,"tag":"pre","sha256":"63f68bb9be7e4bed932adab7893785ba04c79f71692a2114d857191b838ca4fe"},{"index":31,"tag":"h3","sha256":"566e7c5bfb91c2ab86775ceeeacd4425fa3b770e2db2494ddf5af27e5c20b72a"},{"index":32,"tag":"p","sha256":"c3365dc872decc43dbd6d0a91c3a8cbe3c810b3263e403246231318a3cc1d50d"},{"index":33,"tag":"pre","sha256":"ffdf04aa63d4c347f6dcd9a40d6ddd25644316fb4e537fc35f266a68e04f3c52"},{"index":34,"tag":"pre","sha256":"35c18b375497c0de28c11743274e60790b0772618f423723768b7947bdc22173"}],"tabOrder":["r","python"]}]}}};
+window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"experimental-design-batch-effects":{"blocks":[{"language":"bash","sha256":"6e258e560e973aed6912f0ddff2cb328044cd9f5f1d6cb2d5552946d0cac5f1a"},{"language":"r","sha256":"09a35c79e258cf76194f25100d2a4c0cd6a37afc19ffb4c83b5d2c6edb752141"},{"language":"bash","sha256":"9f0bf18173a5954f56f2ce867bace5982084c4435fb4decf7702e1e23e48f9ee"},{"language":"bash","sha256":"5351983d3f126531279ad9ee744f6b95fac6bd89db6d1b2b92882485d4a8aee1"},{"language":"python","sha256":"9afeb10f4e3bb2bba4f432dcaef34d650d9cc31a8a33c1bd997fec12e09e782f"},{"language":"text","sha256":"067e0448d9bb56e81436cba6d2e1390cde7c9c547d9d6fbbb39bd8097fcfd9f5"},{"language":"r","sha256":"fcf6a3d70f6cef1278896b8b0608f13c59c943cbdf19d00b12759b251fcdcb46"},{"language":"text","sha256":"8d117cdbeed6b03cc075d89a4bb5f7feefe28f56c56dbb79e477fa3b41fd1e46"},{"language":"bash","sha256":"b5bfb790d327c421ae14addc6091c257e44fbfd1f25fcfb47319f6d1a76fdafc"},{"language":"r","sha256":"63f68bb9be7e4bed932adab7893785ba04c79f71692a2114d857191b838ca4fe"},{"language":"bash","sha256":"ffdf04aa63d4c347f6dcd9a40d6ddd25644316fb4e537fc35f266a68e04f3c52"},{"language":"python","sha256":"35c18b375497c0de28c11743274e60790b0772618f423723768b7947bdc22173"},{"language":"text","sha256":"f3bf66b9928e5405f2732599d02d5442a37735304e211f170a417798545004ff"},{"language":"r","sha256":"8f60b794f76f9081b6b56f52ebe3a0ef1012cbe1420c0219b43dea39e9c74a5e"},{"language":"text","sha256":"ad216790d45354ca3abdd604b9c65f4978a1e95dd5cca0856e2f3a155aa44244"}],"groups":[{"title":"Validate your sample sheet","panels":[{"start":17,"end":20,"language":"r","label":"R \u00b7 base R"},{"start":21,"end":24,"language":"python","label":"Python"}],"members":[{"index":17,"tag":"h3","sha256":"5f6dc58b5b6ade7066fde01bb1682fa24bb64c53ceaaacffb0d77efaf463c92c"},{"index":18,"tag":"p","sha256":"0775c794a78dcaea36aaacbf811de1186ff740845d0a556f6db40ef64627c506"},{"index":19,"tag":"pre","sha256":"09a35c79e258cf76194f25100d2a4c0cd6a37afc19ffb4c83b5d2c6edb752141"},{"index":20,"tag":"pre","sha256":"9f0bf18173a5954f56f2ce867bace5982084c4435fb4decf7702e1e23e48f9ee"},{"index":21,"tag":"h3","sha256":"5307f027aaac8a470e06134c634fd4023c3963e1dd1ca8d6bb62af75d77415f5"},{"index":22,"tag":"p","sha256":"b624621ad67ada37a995bd598403eed2c2d646a645b12f410b8bf024bba4bd80"},{"index":23,"tag":"pre","sha256":"5351983d3f126531279ad9ee744f6b95fac6bd89db6d1b2b92882485d4a8aee1"},{"index":24,"tag":"pre","sha256":"9afeb10f4e3bb2bba4f432dcaef34d650d9cc31a8a33c1bd997fec12e09e782f"}],"tabOrder":["r","python"]},{"title":"Explore sample variation with PCA","panels":[{"start":37,"end":39,"language":"r","label":"R \u00b7 base R"},{"start":40,"end":43,"language":"python","label":"Python"}],"members":[{"index":37,"tag":"h3","sha256":"b5bc5baa7042ce8804cf58a77ce919884021c36f7e5cecb6ba9b3b8b1455bd8c"},{"index":38,"tag":"p","sha256":"cc3f0f6270253a50017385726d6398650c9bdc927ed214b4447d15127b238505"},{"index":39,"tag":"pre","sha256":"63f68bb9be7e4bed932adab7893785ba04c79f71692a2114d857191b838ca4fe"},{"index":40,"tag":"h3","sha256":"566e7c5bfb91c2ab86775ceeeacd4425fa3b770e2db2494ddf5af27e5c20b72a"},{"index":41,"tag":"p","sha256":"c3365dc872decc43dbd6d0a91c3a8cbe3c810b3263e403246231318a3cc1d50d"},{"index":42,"tag":"pre","sha256":"ffdf04aa63d4c347f6dcd9a40d6ddd25644316fb4e537fc35f266a68e04f3c52"},{"index":43,"tag":"pre","sha256":"35c18b375497c0de28c11743274e60790b0772618f423723768b7947bdc22173"}],"tabOrder":["r","python"]}]}}};
 </script>
 <script src="../code-tabs.js?v=20261026-startup-v1"></script>
 <script src="../copy-code.js?v=20261025-r-first-v1"></script>

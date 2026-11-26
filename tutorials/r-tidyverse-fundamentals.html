@@ -176,11 +176,20 @@ function toggleMobileMenu() {
 <article aria-labelledby="tutorial-title" class="prose prose-blue prose-lg max-w-none lesson-page lesson-format--lab">
 <p class="lesson-lead">Reshape a wide gene-count table into tidy long form in R, validate sample IDs against metadata, and summarize library sizes across a compact example dataset.</p>
 <section class="lesson-summary tutorial-learning-contract" data-tutorial-format="hands-on-lab" aria-label="Learning format"><p><strong>Format: Hands-on lab.</strong> Create two tiny synthetic TSV count tables, run an end-to-end tidyverse summary script in R, and inspect the resulting QC table and plot locally with no external sequencing files required.</p></section>
-<h2>What you need and what you will make</h2>
-<p>Use an R session with <code>tidyverse</code> and <code>here</code> installed. This walkthrough was tested on Ubuntu 24.04.4 with R 4.3.3, Tidyverse 2.0.0, dplyr 1.2.1, here 1.0.2, and ggplot2 4.0.3; treat those versions as a baseline reference, not a lockfile.</p>
-<p>The script assumes the project root contains the two tab-separated files below. Each count-table row is a gene, the first column is named <code>gene</code>, and every remaining column is one sample with non-negative integer counts. Metadata has exactly one row per sample and includes <code>sample_id</code> and <code>condition</code>.</p>
+<h2>Why tidy data matters for gene-count tables</h2>
+<p>Quantification tools such as <code>featureCounts</code>, <code>Salmon</code>, or <code>STAR</code> typically output a <strong>wide count matrix</strong>: each row is a gene, and each sample occupies its own column. That layout is compact to store, but plotting libraries like <code>ggplot2</code> and grouped summaries in <code>dplyr</code> expect <strong>tidy (long) data</strong>, where each variable has its own column (<code>gene</code>, <code>sample_id</code>, <code>raw_count</code>) and each gene-by-sample measurement is one row.</p>
+<p>Combining counts with sample metadata (such as <code>condition</code>, batch, or donor ID) introduces a classic bioinformatics trap: if a metadata spreadsheet accidentally lists the same <code>sample_id</code> twice, a standard table join silently duplicates every gene row for that sample and doubles its apparent sequencing depth. This lab teaches you how to reshape, guard, and summarize count tables so bad metadata stops the script before reaching a figure.</p>
+<ul>
+<li><strong>What you will build:</strong> a reproducible script (<code>scripts/01-tidy-qc.R</code>) that validates a 3-gene by 3-sample matrix, joins metadata strictly, and writes <code>results/sample_qc.tsv</code> plus <code>results/reads_qc.png</code>.</li>
+<li><strong>Skills practiced:</strong> project-root paths with <code>here</code>, reshaping with <code>tidyr::pivot_longer()</code>, cardinality-checked joins with <code>dplyr::left_join()</code>, core <code>dplyr</code> transformation verbs, and <code>ggplot2</code> export.</li>
+<li><strong>Prerequisites &amp; time:</strong> basic terminal navigation (<a href="command-line-part1.html">Command-Line Navigation</a> and <a href="conda-mamba-part1.html">Micromamba Environments</a>); no prior R experience required. Takes about 20 minutes if R and <code>tidyverse</code> are already installed, or 35 minutes including Ubuntu package setup.</li>
+</ul>
+<figure class="my-8 bg-white border border-gray-200 rounded-xl p-4 shadow-sm"><img src="../images/tutorial-figures/r-tidyverse-fundamentals-wide-to-long-join.svg" alt="Diagram showing wide gene_counts.tsv (3 genes by 3 samples) and samples.tsv metadata reshaped by pivot_longer() and joined with relationship = 'many-to-one', then grouped into per-sample QC totals." width="960" height="460" loading="lazy" decoding="async" class="w-full h-auto rounded-lg" style="aspect-ratio: 960 / 460;"/><figcaption class="mt-3 text-sm text-gray-600">Workflow overview: <code>pivot_longer()</code> turns sample columns into rows, <code>left_join(..., relationship = "many-to-one")</code> enforces unique sample IDs in metadata, and <code>group_by() + summarise()</code> computes per-sample library totals.</figcaption></figure>
+<h2>Input tables and project setup</h2>
+<p>This lab uses an R session with <code>tidyverse</code> (which loads <code>readr</code>, <code>tidyr</code>, <code>dplyr</code>, <code>ggplot2</code>, <code>tibble</code>, <code>stringr</code>, <code>forcats</code>, <code>purrr</code>, and <code>lubridate</code>) and <code>here</code>. It was tested on Ubuntu 24.04.4 with R 4.3.3, Tidyverse 2.0.0, dplyr 1.2.1, here 1.0.2, and ggplot2 4.0.3; treat those versions as a baseline reference, not a lockfile.</p>
+<p>Every count row represents a gene, the first column is named <code>gene</code>, and the remaining columns contain non-negative integer counts for each sample. Metadata holds one row per sample with <code>sample_id</code> and <code>condition</code>:</p>
 <pre><code># data/raw/gene_counts.tsv
- gene	S01	S02	S03
+gene	S01	S02	S03
 TP53	150	175	160
 BRCA1	320	280	305
 MYC	890	920	900
@@ -190,8 +199,11 @@ sample_id	condition
 S01	control
 S02	treated
 S03	treated</code></pre>
-<h3 id="tidyverse-ubuntu-setup">Ubuntu 24.04: install R and system prerequisites first</h3>
-<p>Run this Bash setup block on Ubuntu 24.04 with sudo rights to install R, compilers, system headers, and fonts before building packages. Because <code>apt</code> modifies system libraries globally, ask your cluster administrator for R modules on shared servers instead of attempting <code>sudo</code>. If R and the required packages already load in a managed module, skip straight to the verification step. (On Ubuntu laptops, <a href="https://packagemanager.posit.co/client/" rel="noopener" target="_blank">Posit Public Package Manager</a> precompiled binaries or <a href="https://eddelbuettel.github.io/r2u/" rel="noopener" target="_blank">r2u</a> save minutes of C++ compilation.)</p>
+<p><strong>Choose your setup path:</strong> If R (&gt;= 4.1) with <code>tidyverse</code> and <code>here</code> is already available (via micromamba, an HPC <code>module load</code>, or RStudio), create the practice workspace below and jump straight to the readiness check. Only expand the Ubuntu prerequisite block if you are installing R from scratch on Ubuntu 24.04.</p>
+<details class="mt-4 mb-6 rounded-xl border border-gray-200 bg-gray-50 p-4">
+<summary class="font-semibold cursor-pointer" id="tidyverse-ubuntu-setup">Ubuntu 24.04 only: install R and system C/font libraries first</summary>
+<div class="mt-3">
+<p>Run this Bash setup block with <code>sudo</code> rights on Ubuntu 24.04 to install R, compilers, system headers, and fonts before building packages from CRAN. On shared HPC clusters, ask your administrator for an R module instead of running <code>sudo</code>. (On Ubuntu laptops, <a href="https://packagemanager.posit.co/client/" rel="noopener" target="_blank">Posit Public Package Manager</a> precompiled binaries or <a href="https://eddelbuettel.github.io/r2u/" rel="noopener" target="_blank">r2u</a> avoid several minutes of C++ compilation.)</p>
 <pre id="tidyverse-ubuntu-prerequisites"><code>sudo apt-get update &amp;&amp;
 sudo apt-get install -y --no-install-recommends \
   r-base r-base-dev build-essential pkg-config ca-certificates \
@@ -199,9 +211,11 @@ sudo apt-get install -y --no-install-recommends \
   libfontconfig1-dev libfreetype6-dev libharfbuzz-dev libfribidi-dev \
   libpng-dev libtiff-dev libjpeg-dev libwebp-dev libicu-dev zlib1g-dev \
   fonts-dejavu-core</code></pre>
-<p>The libraries cover HTTPS and XML imports (<code>curl</code>, <code>openssl</code>, <code>xml2</code>), filesystem support (<code>fs</code>), and plot text and images (<code>systemfonts</code>, <code>textshaping</code>, <code>ragg</code>).</p>
-<p>Fontconfig and FreeType find and draw fonts; HarfBuzz and FriBidi support text shaping; PNG, TIFF, JPEG and WebP libraries support image output. The ICU headers allow <code>stringi</code> to use system ICU rather than build its bundled fallback, and DejaVu supplies a basic runtime font on minimal Ubuntu. System requirements can change with package releases; consult the maintainers' <a href="https://pak.r-lib.org/reference/sysreqs.html">system-requirement guidance</a>. These libraries do not replace the R-package installation below.</p>
-<p>Use R (including <code>Rscript</code>) and the <code>tidyverse</code> and <code>here</code> packages. Start in a fresh practice directory, not a directory containing research files you need to keep; these commands write the named input files and create the script and output folders. Paste the complete R code in the next section into <code>scripts/01-tidy-qc.R</code> using a text editor.</p>
+<p>These system headers cover HTTPS and XML imports (<code>curl</code> requires <code>libcurl4-openssl-dev</code>, <code>openssl</code> requires <code>libssl-dev</code>, <code>xml2</code> requires <code>libxml2-dev</code>), filesystem helpers (<code>fs</code> requires <code>libuv1-dev</code>), text shaping and fonts (<code>systemfonts</code>, <code>textshaping</code>, <code>ragg</code>), and ICU string handling (<code>stringi</code>). DejaVu supplies a fallback runtime font on minimal Linux images. Consult the maintainers' <a href="https://pak.r-lib.org/reference/sysreqs.html" rel="noopener" target="_blank">pak system-requirement guidance</a> if your distribution differs.</p>
+</div>
+</details>
+<h3 id="tidyverse-project-root">Create the isolated practice directory</h3>
+<p>Run these Bash commands inside a clean scratch directory (not inside an active research folder). Creating <code>.here</code> before R starts pins the project root to <code>tidy-qc</code> even if your home or parent folder already contains a <code>.git</code> repository.</p>
 <pre id="tidyverse-fixture-setup"><code>mkdir -p tidy-qc/data/raw tidy-qc/data/metadata tidy-qc/scripts tidy-qc/results
 cd tidy-qc
 touch .here
@@ -219,9 +233,9 @@ S02	treated
 S03	treated
 EOF
 Rscript --version</code></pre>
-<h3 id="tidyverse-package-setup">Check the package setup before running the lab</h3>
-<p>The commands below are Bash terminal commands, run from <code>tidy-qc</code>. They put a writable project package library first without replacing system-wide packages. Install dplyr before the other packages so a preinstalled copy does not silently decide the dependency versions. Downloads and source compilation can take time; do not continue past an installation error. If the packages already load in a suitable managed environment, skip installation but run the readiness check there and keep using that environment.</p>
-<p>Keep <code>.r-library/</code> out of Git and create a fresh library when changing R versions or operating systems. Record the loaded versions with the readiness check below; copying installed packages is not an environment lockfile.</p>
+<p><strong>Check:</strong> <code>Rscript --version</code> should print R 4.1 or newer (for example <code>Rscript (R) version 4.3.3</code>). Keep <code>.r-library/</code> out of version control; for long-term multi-machine reproducibility, use a lockfile tool such as <a href="https://rstudio.github.io/renv/" rel="noopener" target="_blank"><code>renv</code></a> rather than copying installed package folders.</p>
+<h3 id="tidyverse-package-setup">Install (if needed) and verify R packages</h3>
+<p>If <code>tidyverse</code> and <code>here</code> are not yet installed in your active R environment, run this block from inside <code>tidy-qc</code>. Setting <code>R_LIBS_USER="$PWD/.r-library"</code> places a project-specific package library first without altering global system packages, and installing <code>dplyr</code> first prevents an older system copy from pinning mismatched dependencies (for example, a newer <code>dbplyr</code> importing <code>filter_out</code> against an older <code>dplyr</code> that lacks it).</p>
 <pre id="tidyverse-package-install"><code>R_LIBS_USER="$PWD/.r-library" Rscript --vanilla -e '
 lib &lt;- Sys.getenv("R_LIBS_USER")
 options(repos = c(CRAN = "https://cloud.r-project.org"),
@@ -237,8 +251,8 @@ if (!all(loaded)) {
 }
 stopifnot(packageVersion("dplyr", lib.loc = lib) &gt;= "1.1.1")
 '</code></pre>
-<p><strong>Do not treat exit code 0 from <code>install.packages()</code> alone as success.</strong> R package compilation or downloads can fail with warnings while R itself exits successfully. The installation block above checks that the required packages actually load from the project library and stops on an incomplete installation. A ten-minute download timeout and two build workers make the source-install route less fragile; use one worker on a resource-limited machine. A stable network is still required.</p>
-<p>Launch a clean R session pointing to the same library folder. The strict <code>relationship</code> join check requires dplyr 1.1.1 or newer, and printing loaded package versions alongside library paths proves R resolves the intended environment before any analysis runs.</p>
+<p><strong>Do not treat exit code 0 from <code>install.packages()</code> alone as success.</strong> R package compilation can emit non-fatal warnings and still exit 0 when a package failed to build. The verification block above checks that every required package loads from <code>.r-library</code> and enforces <code>dplyr &gt;= 1.1.1</code> (needed for <code>relationship = "many-to-one"</code>). Set <code>Ncpus = 1</code> on low-memory machines.</p>
+<p>Next, run a separate readiness check in a fresh R session to confirm library precedence and package attachment before executing any analysis. If you are using a pre-configured conda/module environment instead of <code>.r-library</code>, omit <code>R_LIBS_USER="$PWD/.r-library"</code>.</p>
 <pre id="tidyverse-package-preflight"><code>R_LIBS_USER="$PWD/.r-library" Rscript --vanilla -e '
 stopifnot(requireNamespace("tidyverse", quietly = TRUE),
           requireNamespace("here", quietly = TRUE))
@@ -251,16 +265,15 @@ for (pkg in c("tidyverse", "dplyr", "here", "ggplot2")) {
 print(.libPaths())
 sessionInfo()
 '</code></pre>
-<p><strong>If setup fails:</strong> stop before the analysis and inspect the first failed package in the compiler output rather than the final cascade summary. Source builds on minimal Linux images fail most often from missing C/C++ development headers: <code>xml2</code> requires <code>libxml2-dev</code>, <code>curl</code> requires <code>libcurl4-openssl-dev</code>, <code>openssl</code> requires <code>libssl-dev</code>, <code>fs</code> requires <code>libuv1-dev</code>, and <code>systemfonts</code> requires Fontconfig and FreeType headers. Installing the complete prerequisite block upfront avoids piecemeal rebuild failures.</p>
-<p>If the error is a download timeout or unavailable mirror, distinguish it from a missing-header or compiler error. After restoring the network, rerun the same package-installation block and the separate readiness check; do not skip readiness because some packages compiled. If the readiness check fails, the lab is not ready to run. Do not fix source-build failures by deleting another project's package library or changing research inputs.</p>
-<p>Version skew inside a mixed R library can also break imports: for example, a newer <code>dbplyr</code> release importing <code>filter_out</code> fails if paired with an older <code>dplyr</code> release lacking that export. Updating <code>dplyr</code> in the project library before installing dependent Tidyverse packages prevents that mismatch. Restart any open R session after package updates, and check <code>.libPaths()</code>, <code>find.package("dplyr")</code>, and <code>packageVersion("dplyr")</code> if an older system copy still shadows the project library.</p>
-<p>See the <a href="https://tidyverse.tidyverse.org/">Tidyverse installation guidance</a>, <a href="https://xml2.r-lib.org/">xml2 documentation</a>, and R's <a href="https://stat.ethz.ch/R-manual/R-devel/library/base/html/libPaths.html">library-path documentation</a> for system requirements and library precedence. R's <a href="https://stat.ethz.ch/R-manual/R-devel/library/utils/html/install.packages.html">installation documentation</a> explains parallel builds and dependencies, and the <a href="https://stat.ethz.ch/R-manual/R-devel/library/utils/html/download.file.html">download documentation</a> explains timeout settings.</p>
-<h3 id="tidyverse-project-root">Keep this lab inside its own project root</h3>
-<p><code>touch .here</code> creates a local root marker before R starts. This matters if <code>tidy-qc</code> is inside another Git project: automatic discovery can otherwise select the ancestor instead. The workflow also declares <code>here::i_am("scripts/01-tidy-qc.R")</code> before any file paths, so an already loaded here session is reset to the script's intended project. Save the complete script at that exact relative path and run from <code>tidy-qc</code>; a wrong location should stop with a root error, not send you looking for inputs in an unrelated directory.</p>
-<p>After saving the R code below, run this Bash command from <code>tidy-qc</code>. Repeat the library selection in a new terminal; <code>.here</code> selects file paths, not R packages.</p>
-<pre id="tidyverse-run"><code>R_LIBS_USER="$PWD/.r-library" Rscript --vanilla scripts/01-tidy-qc.R</code></pre>
-<p>The script writes <code>results/sample_qc.tsv</code> and <code>results/reads_qc.png</code>. If you chose an existing managed R environment instead, run <code>Rscript --vanilla scripts/01-tidy-qc.R</code> from its active shell without selecting the project library.</p>
-<h2>Run the workflow</h2>
+<p>Example output (abbreviated; your library paths and versions will reflect your machine):</p>
+<pre><code class="language-text">tidyverse 2.0.0 
+dplyr 1.2.1 
+here 1.0.2 
+ggplot2 4.0.3 
+[1] "/path/to/tidy-qc/.r-library" "/usr/local/lib/R/site-library" ...</code></pre>
+<p><strong>If setup fails:</strong> If the readiness check fails, the lab is not ready to run. Inspect the <em>first</em> error in the compiler log (most often a missing C header such as <code>libxml2-dev</code> or a download timeout) rather than the cascade summary at the end, fix the missing header or network issue, and rerun both the installation block and the separate readiness check. Restart any open R session after updating packages so an older copy in memory does not shadow <code>.r-library</code>. See the <a href="https://tidyverse.tidyverse.org/" rel="noopener" target="_blank">Tidyverse documentation</a>, <a href="https://stat.ethz.ch/R-manual/R-devel/library/base/html/libPaths.html" rel="noopener" target="_blank"><code>.libPaths()</code> manual</a>, <a href="https://stat.ethz.ch/R-manual/R-devel/library/utils/html/install.packages.html" rel="noopener" target="_blank"><code>install.packages()</code> manual</a>, and <a href="https://stat.ethz.ch/R-manual/R-devel/library/utils/html/download.file.html" rel="noopener" target="_blank"><code>download.file()</code> manual</a> for details.</p>
+<h2>Run the end-to-end QC workflow</h2>
+<p>Save the complete R script below as <code>scripts/01-tidy-qc.R</code> inside <code>tidy-qc</code>. Read through the comments, then execute it and walk through each stage below.</p>
 <pre id="tidyverse-workflow"><code>library(tidyverse)
 library(here)
 here::i_am("scripts/01-tidy-qc.R")
@@ -322,16 +335,28 @@ p &lt;- ggplot(sample_qc, aes(x = condition, y = total_counts_millions, colour =
   theme_minimal() +
   theme(legend.position = "none")
 ggsave(out_plot, plot = p, width = 6, height = 4, dpi = 150, bg = "white")</code></pre>
+<p>Execute the script from the <code>tidy-qc</code> directory (drop <code>R_LIBS_USER="$PWD/.r-library"</code> if using an existing conda or cluster module environment):</p>
+<pre id="tidyverse-run"><code>R_LIBS_USER="$PWD/.r-library" Rscript --vanilla scripts/01-tidy-qc.R</code></pre>
+<h3>How each part of the script works</h3>
+<ul>
+<li><strong>Project-relative paths (<code>here::i_am()</code> and <code>here()</code>):</strong> Calling <code>here::i_am("scripts/01-tidy-qc.R")</code> tells R where this script sits inside <code>tidy-qc</code>. Instead of brittle <code>setwd()</code> calls, <code>here("data", "raw", "gene_counts.tsv")</code> builds the full path safely on Linux, macOS, and Windows.</li>
+<li><strong>Column-type inspection (<code>read_tsv(..., show_col_types = TRUE)</code>):</strong> Unlike base R's <code>read.delim()</code>, <code>readr::read_tsv()</code> returns a <strong>tibble</strong> (a tidyverse data frame that never converts strings to factors silently and prints guessed types like <code>&lt;chr&gt;</code> and <code>&lt;dbl&gt;</code>). Keeping <code>show_col_types = TRUE</code> prints those column types so you notice immediately if a numeric sample column was accidentally read as text.</li>
+<li><strong>Defensive input checks (<code>stopifnot()</code>, <code>setequal()</code>, <code>vapply()</code>):</strong> Before transforming anything, the script verifies that <code>gene</code> and <code>sample_id</code> have no <code>NA</code> or duplicate keys, that the sample columns in <code>gene_counts.tsv</code> match <code>samples$sample_id</code> regardless of column order (<code>setequal()</code>), and that every sample column is finite, non-negative, and integer-valued (<code>vapply(..., logical(1))</code> checks each column and guarantees a logical vector).</li>
+<li><strong>The pipe (<code>%&gt;%</code>) and factor ordering:</strong> The tidyverse pipe <code>%&gt;%</code> (from <code>magrittr</code>, closely related to R 4.1+'s built-in native pipe <code>|&gt;</code>) passes the data frame on the left as the first argument to the function on the right. Converting <code>condition</code> into a <code>factor</code> with explicit <code>levels = c("control", "treated")</code> pins <code>control</code> before <code>treated</code> on plots and in reference-level contrasts instead of relying on alphabetical order.</li>
+<li><strong>Reshaping wide to long (<code>pivot_longer()</code> + <code>all_of()</code>):</strong> Passing a character vector of column names directly into tidyverse functions can be ambiguous if a column shares that name, so <code>all_of(count_samples)</code> explicitly tells <code>pivot_longer()</code> to pivot every sample column into two columns: <code>sample_id</code> and <code>raw_count</code>, turning 3 genes x 3 samples into 9 rows.</li>
+<li><strong>Cardinality-checked join (<code>left_join(..., relationship = "many-to-one")</code>):</strong> Since <code>dplyr</code> 1.1.0, <code>relationship</code> lets you state the expected key multiplicity. Here, many rows in <code>long_counts</code> (3 genes per sample) map to exactly one row in <code>samples</code>. If metadata duplicates a sample ID, <code>left_join()</code> stops with an error rather than multiplying rows.</li>
+<li><strong>Grouped summary and opaque PNG export:</strong> <code>group_by(sample_id, condition)</code> followed by <code>summarise(..., .groups = "drop")</code> collapses the 9 rows into 3 per-sample rows and removes grouping metadata so later operations do not stay unexpectedly grouped. In <code>ggsave()</code>, <code>bg = "white"</code> prevents <code>theme_minimal()</code>'s transparent background from rendering dark labels illegible in dark-mode image viewers.</li>
+</ul>
 <h2>Check the tables and plot</h2>
-<p>The PNG is exported with an explicit white background so its dark labels remain readable in dark-background viewers. This changes the saved image background only, not the counts, scale or statistical meaning.</p>
-<p>After the script finishes, confirm both files exist from the project root with <code>file.exists(c("results/sample_qc.tsv", "results/reads_qc.png"))</code> in R; both values should be <code>TRUE</code>. If either is <code>FALSE</code>, stop and check that the working directory is <code>tidy-qc</code>, the script completed without an error, and the output directory is writable.</p>
-<p><code>pivot_longer()</code> makes one row for each gene-sample pair. For this three-gene, three-sample fixture, <code>long_counts</code> and <code>joined</code> each contain nine rows. The sample totals are 1,360, 1,375, and 1,365, respectively; the displayed values in millions are those totals divided by one million. The median gene counts are 320, 280, and 305. These values are arithmetic checks on the fixture, not expected results for a biological experiment.</p>
-<div class="lesson-checkpoint"><h3>Before interpreting the figure</h3><ul><li>Confirm all three sample IDs appear exactly once in the output.</li><li>Check that the plotted y-axis says supplied count totals in millions. This is not RPM; the script does not divide individual gene counts by a library-size denominator.</li><li>Look for unexpectedly small or large totals relative to the study's own design and sequencing records. No universal cutoff is implied here.</li></ul></div>
-<h2>What this QC can and cannot tell you</h2>
-<p>Large shifts in raw column sums help flag sample swaps, low-input libraries, or broken file imports early, though raw totals alone never justify calling differential expression. Always feed unnormalized counts into depth-normalized statistical models that account for experimental design and dispersion.</p>
-<p>Note why the column is named <code>total_counts_millions</code> rather than RPM (reads per million) or CPM (counts per million): dividing a sample's sum of counts by <code>1e6</code> merely rescales the sample total into millions of counts, whereas RPM/CPM divides each individual gene's count by the sample library size and multiplies by one million so every sample sums to <code>1e6</code>.</p>
+<p>After running the script, verify that both outputs exist from <code>tidy-qc</code> (for example via <code>cat results/sample_qc.tsv</code> in Bash or <code>file.exists(c("results/sample_qc.tsv", "results/reads_qc.png"))</code> in R). Exact contents of <code>results/sample_qc.tsv</code>:</p>
+<pre><code class="language-text">sample_id	condition	total_counts	median_gene_count	total_counts_millions
+S01	control	1360	320	0.00136
+S02	treated	1375	280	0.001375
+S03	treated	1365	305	0.001365</code></pre>
+<p>Notice the arithmetic: <code>150 + 320 + 890 = 1,360</code> for <code>S01</code> (median <code>320</code>), <code>175 + 280 + 920 = 1,375</code> for <code>S02</code> (median <code>280</code>), and <code>160 + 305 + 900 = 1,365</code> for <code>S03</code> (median <code>305</code>). The final column divides those totals by <code>1e6</code> to display counts in millions.</p>
+<div class="lesson-checkpoint"><h3>Before interpreting the figure</h3><ul><li>Confirm all three sample IDs appear exactly once in <code>results/sample_qc.tsv</code>.</li><li>Check the y-axis label: <code>total_counts_millions</code> rescales the raw sample sum by <code>1e6</code>. This is <strong>not</strong> RPM or CPM, which divide each individual gene's count by the sample's library size.</li><li>In real cohorts, compare library totals against your sequencing depth records and experimental design rather than applying a universal cutoff. Large shifts help flag sample swaps or failed libraries early, though raw totals never justify calling differential expression: feed unnormalized integer counts into depth-normalized count models such as <a href="https://bioconductor.org/packages/release/bioc/html/DESeq2.html" rel="noopener" target="_blank">DESeq2</a>.</li></ul></div>
 <h2>Core dplyr verbs on the joined gene-by-sample table</h2>
-<p>Once <code>joined</code> passes key and integer-count checks in <code>scripts/01-tidy-qc.R</code>, five core <code>dplyr</code> verbs handle most exploratory tabular transformations in bioinformatics: <code>select()</code> chooses columns, <code>filter()</code> subsets rows by logical predicates, <code>group_by()</code> + <code>mutate()</code> computes within-sample quantities such as counts-per-million (CPM), <code>summarise()</code> collapses groups to one summary row, and <code>arrange()</code> sorts results:</p>
+<p>Once <code>joined</code> passes key and integer checks, five <code>dplyr</code> verbs cover most exploratory transformations in bioinformatics: <code>select()</code> picks columns, <code>filter()</code> keeps rows matching a logical predicate, <code>group_by()</code> + <code>mutate()</code> adds within-group derived columns (such as per-sample counts-per-million, CPM), <code>summarise()</code> collapses groups into summary rows, and <code>arrange()</code> sorts the result:</p>
 <pre><code class="language-r"># Run interactively in R after sourcing scripts/01-tidy-qc.R (uses the 9-row `joined` tibble):
 gene_summary &lt;- joined %&gt;%
   select(gene, sample_id, condition, raw_count) %&gt;%
@@ -349,7 +374,7 @@ gene_summary &lt;- joined %&gt;%
   arrange(desc(mean_raw_count), gene)
 
 print(gene_summary)</code></pre>
-<p>Expected summary on the 3-gene x 3-sample fixture (notice that within every sample, the three <code>sample_cpm</code> values sum to <code>1,000,000</code>, unlike <code>total_counts_millions</code> which rescales the library total):</p>
+<p>Expected summary on the 3-gene x 3-sample fixture (notice that within each sample, the three <code>sample_cpm</code> values sum to <code>1,000,000</code>, unlike <code>total_counts_millions</code>):</p>
 <pre><code class="language-text">gene   condition  n_samples  mean_raw_count  mean_sample_cpm
 MYC    treated            2           910.0         664215.8
 MYC    control            1           890.0         654411.8
@@ -357,16 +382,48 @@ BRCA1  control            1           320.0         235294.1
 BRCA1  treated            2           292.5         213539.8
 TP53   treated            2           167.5         122244.4
 TP53   control            1           150.0         110294.1</code></pre>
-<h2>Diagnose common failures</h2>
-<ul><li><strong>Missing or extra sample columns:</strong> the <code>setequal()</code> check stops unless the count-column names and metadata IDs match exactly. Inspect <code>setdiff(count_samples, samples$sample_id)</code> and the reverse comparison. Standardize whitespace or case only when the identifier source confirms that transformation is appropriate.</li><li><strong>Duplicate metadata IDs:</strong> the uniqueness assertion stops before the join. A duplicated key can multiply gene-sample rows; correct or explain the metadata records rather than accepting inflated totals.</li><li><strong>Missing metadata after join:</strong> <code>stopifnot(!anyNA(joined$condition))</code> catches unmatched or missing condition values. Check keys and missing condition values separately; <code>left_join()</code> preserves count rows while unmatched metadata fields become missing.</li><li><strong>Counts fail validation:</strong> investigate blank values, text, non-finite values, or negative entries in the source file. A missing count is not interchangeable with zero, so do not replace missing values without a documented data-specific reason.</li><li><strong>Root or input path is wrong:</strong> check <code>getwd()</code>, the local <code>.here</code> file and the script location. Rerun the complete script from <code>tidy-qc</code>; <code>here::i_am()</code> should resolve this lab even inside an ancestor Git repository. If you move or rename the script, update that declaration to match.</li><li><strong>Output write fails:</strong> this script creates <code>results/</code>, but permissions or an incorrect project root can still prevent writing. Inspect <code>here()</code> and the exact output path.</li></ul>
-<h2>R objects and data choices behind the script</h2>
-<p>Atomic vectors hold values of one basic type. A data frame stores columns of equal length, and a factor stores categorical values together with an explicit set and order of levels. Here the condition factor places <code>control</code> before <code>treated</code> in the plot; choose levels that reflect the study's intended display or model contrast rather than relying on alphabetical order.</p>
-<p>Missing values (<code>NA</code>) represent unavailable or unrecorded observations; zero is a measured count of zero. Preserve the distinction while importing and decide how to handle missingness based on the data and analysis. Text formats such as TSV avoid some spreadsheet auto-formatting, but they still require inspection of imported column types and identifiers.</p>
-<p>For reproducible work, record R and package versions with <code>sessionInfo()</code>. Larger datasets may need memory-aware tools or specialized Bioconductor workflows. Consult the package documentation and the relevant analysis method before extending this small teaching example.</p>
+<h2>Decision guide: choosing the right verb and data structure</h2>
+<table>
+<thead><tr><th>Situation</th><th>Recommended option</th><th>Alternative &amp; when to switch</th></tr></thead>
+<tbody>
+<tr><td>Attaching sample metadata to counts</td><td><code>left_join(..., relationship = "many-to-one")</code></td><td>Use <code>anti_join(samples, tibble(sample_id = count_samples))</code> to list samples present in metadata but missing from counts; avoid silent <code>inner_join()</code> until mismatches are resolved.</td></tr>
+<tr><td>Keeping vs dropping rows with <code>NA</code></td><td><code>filter(cond)</code> keeps <code>TRUE</code> and drops <code>NA</code></td><td>Since <code>dplyr</code> 1.2.0, <code>filter_out(cond)</code> drops rows where <code>cond</code> is <code>TRUE</code> while keeping <code>NA</code> rows intact.</td></tr>
+<tr><td>Pipe operator in new scripts</td><td><code>|&gt;</code> (built into R &gt;= 4.1) or <code>%&gt;%</code> (tidyverse)</td><td>Use <code>|&gt;</code> if minimizing package dependencies; <code>%&gt;%</code> works identically in tidyverse pipelines and older R &lt; 4.1 scripts.</td></tr>
+<tr><td>Scaling beyond small QC tables</td><td><code>tibble</code> + <code>dplyr</code> for metadata &amp; summary tables</td><td>Switch to <code>data.table</code> or Bioconductor <code>SummarizedExperiment</code> / sparse <code>dgCMatrix</code> when matrices exceed tens of thousands of genes by hundreds of samples.</td></tr>
+</tbody>
+</table>
+<h2>Diagnose common failures (real errors and fixes)</h2>
+<ul>
+<li><strong><code>Error in left_join(): ! Each row in x must match at most 1 row in y.</code></strong> Your metadata table has duplicate <code>sample_id</code> rows. Inspect duplicates with <code>samples %&gt;% count(sample_id) %&gt;% filter(n &gt; 1)</code> and fix the source metadata rather than removing <code>relationship = "many-to-one"</code>.</li>
+<li><strong><code>Error: Can't subset columns that don't exist.</code></strong> One or more names passed inside <code>all_of()</code> do not match the data frame headers (often caused by a leading space in a TSV header or renamed sample IDs). Print <code>names(counts)</code> and compare with <code>setdiff(count_samples, samples$sample_id)</code> and <code>setdiff(samples$sample_id, count_samples)</code>.</li>
+<li><strong><code>Error: Could not find associated project in working directory or any parent directory.</code></strong> You ran the script outside <code>tidy-qc</code>, deleted <code>.here</code>, or passed the wrong relative path to <code>here::i_am()</code>. Check <code>getwd()</code> and confirm <code>.here</code> exists at the root of <code>tidy-qc</code>.</li>
+<li><strong><code>filter()</code> fails unexpectedly on a time series or numeric vector:</strong> Both <code>dplyr</code> and base R's <code>stats</code> package export a function named <code>filter</code> (<code>dplyr::filter() masks stats::filter()</code>). Call <code>dplyr::filter()</code> explicitly when mixing packages, or load <code>conflicted</code> to turn ambiguous names into errors.</li>
+<li><strong>Invalid counts or missing metadata values:</strong> If <code>stopifnot()</code> stops on <code>is.numeric</code>, <code>is.finite</code>, or <code>!anyNA(joined$condition)</code>, inspect the raw TSV for blank cells, text strings, negative values, or unexpected labels (such as <code>other</code> instead of <code>control</code>/<code>treated</code>). Keep missing values as <code>NA</code> rather than silently replacing them with <code>0</code>, because an unmeasured value is not a zero count.</li>
+</ul>
+<h2>Practice exercise: per-sample gene detection</h2>
+<p>Using the 9-row <code>joined</code> tibble created by <code>scripts/01-tidy-qc.R</code>, write a short <code>dplyr</code> pipeline that calculates, for each sample and condition, how many genes have <code>raw_count &gt;= 300</code> alongside <code>total_counts</code>.</p>
+<details class="mt-4 mb-6 rounded-xl border border-gray-200 bg-gray-50 p-4">
+<summary class="font-semibold cursor-pointer">Show solution and expected output</summary>
+<div class="mt-3">
+<pre><code class="language-r">detection_qc &lt;- joined %&gt;%
+  group_by(sample_id, condition) %&gt;%
+  summarise(
+    genes_ge_300 = sum(raw_count &gt;= 300),
+    total_counts = sum(raw_count),
+    .groups = "drop"
+  )
+
+print(detection_qc)</code></pre>
+<p>Expected output:</p>
+<pre><code class="language-text">sample_id  condition  genes_ge_300  total_counts
+S01        control               2          1360
+S02        treated               1          1375
+S03        treated               2          1365</code></pre>
+<p>Notice why counting detected genes alongside total counts is useful in RNA-seq QC: <code>S02</code> has the highest total count (<code>1,375</code>) but fewer genes reaching 300 reads than <code>S01</code> or <code>S03</code>, because a larger fraction of its reads comes from <code>MYC</code>.</p>
+</div>
+</details>
 <h2>Validation boundary</h2>
-<p>The fresh-install check began with a new Ubuntu 24.04.4 base filesystem without R or a reused R package library. The displayed system prerequisites installed R and its standard recommended packages from Ubuntu; the displayed R commands then compiled the lab packages from CRAN into the new project library. The installation check, separate fresh-process readiness check and complete workflow all exited successfully without an additional dependency repair or retry.</p>
-<p>On a clean install, this script writes the QC table, joins nine reshaped observations, rejects all 12 invalid-input checks cleanly without leaving partial files, handles reordered metadata and zero counts, and renders a white-background 900x600 PNG.</p>
-<p>This was minimal Ubuntu userspace in an isolated filesystem on the same Linux host, sharing its kernel. A full desktop VM, other operating systems and independent hardware remain untested.</p>
+<p>This workflow was verified from a clean Ubuntu 24.04.4 base filesystem (system R 4.3.3 plus CRAN source builds into <code>.r-library</code>). On a clean run, <code>scripts/01-tidy-qc.R</code> joins nine reshaped rows, writes <code>results/sample_qc.tsv</code>, renders an opaque 900x600 white-background PNG, handles reordered metadata and valid zero counts, and rejects all 12 invalid-input test cases cleanly without leaving partial output files. Desktop VMs, macOS, and Windows remain outside that Linux validation check.</p>
 <!-- Verified analysis outputs: 2026-10-25 -->
 <section class="lesson-results" aria-labelledby="observed-analysis-results">
 <h2 id="observed-analysis-results">What this run produced</h2>
@@ -381,8 +438,15 @@ TP53   control            1           150.0         110294.1</code></pre>
 <aside aria-label="Author's lab note" class="lesson-summary">
 <p><strong>Author's lab note:</strong> Explicitly passing <code>relationship = "many-to-one"</code> inside <code>left_join()</code> has caught more silent sample-duplication bugs in my RNA-seq scripts than any manual <code>nrow()</code> assertion afterward. Whenever metadata accidentally holds two rows for one donor ID, failing loudly at the join stops wrong counts from ever reaching a plot.</p>
 </aside>
+<h2>Next steps</h2>
+<p>Now that you can reshape matrices, guard joins, and summarize QC metrics in R, apply those tables in downstream workflows:</p>
+<ul>
+<li><a href="data-visualization-fundamentals.html">Data Visualization Fundamentals</a>: build QC boxplots, PCA, UMAP, and volcano plots with <code>ggplot2</code>.</li>
+<li><a href="statistics-for-bioinformatics.html">Statistics for Bioinformatics</a>: test group differences and control false discovery rates on tidy summary tables.</li>
+<li><a href="quality-control-fundamentals.html">Quality Control Fundamentals</a> and <a href="transcriptomics-differential-expression.html">Differential Expression Analysis</a>: move from library QC checks into count-based modeling.</li>
+</ul>
 <h2>References</h2>
-<ul><li><a href="https://here.r-lib.org/reference/i_am.html">here: declare a script location</a></li><li><a href="https://here.r-lib.org/reference/set_here.html">here: project marker behavior</a></li><li><a href="https://readr.tidyverse.org/reference/read_delim.html">readr: read delimited files</a></li><li><a href="https://tidyr.tidyverse.org/reference/pivot_longer.html">tidyr: pivot longer</a></li><li><a href="https://dplyr.tidyverse.org/reference/mutate-joins.html">dplyr: mutating joins</a></li><li><a href="https://ggplot2.tidyverse.org/reference/ggsave.html">ggplot2: save a plot</a></li><li><a href="https://bioconductor.org/packages/release/bioc/html/DESeq2.html">DESeq2 package documentation</a></li></ul>
+<ul><li><a href="https://here.r-lib.org/reference/i_am.html" rel="noopener" target="_blank">here: declare a script location</a></li><li><a href="https://here.r-lib.org/reference/set_here.html" rel="noopener" target="_blank">here: project marker behavior</a></li><li><a href="https://readr.tidyverse.org/reference/read_delim.html" rel="noopener" target="_blank">readr: read delimited files</a></li><li><a href="https://tidyr.tidyverse.org/reference/pivot_longer.html" rel="noopener" target="_blank">tidyr: pivot longer</a></li><li><a href="https://dplyr.tidyverse.org/reference/mutate-joins.html" rel="noopener" target="_blank">dplyr: mutating joins and relationship checks</a></li><li><a href="https://dplyr.tidyverse.org/reference/filter.html" rel="noopener" target="_blank">dplyr: subset rows with filter()</a></li><li><a href="https://ggplot2.tidyverse.org/reference/ggsave.html" rel="noopener" target="_blank">ggplot2: save a plot</a></li><li><a href="https://rstudio.github.io/renv/" rel="noopener" target="_blank">renv: reproducible R project environments</a></li><li><a href="https://bioconductor.org/packages/release/bioc/html/DESeq2.html" rel="noopener" target="_blank">DESeq2 package documentation</a></li></ul>
 <aside aria-labelledby="tutorial-feedback-title" class="lesson-feedback" id="tutorial-feedback"><h2 id="tutorial-feedback-title">Help improve this tutorial</h2><p>Found an error, a broken link, or a step that needs a clearer explanation? Please <a href="../contact.html">contact me</a>. Your feedback helps me keep this resource accurate and useful.</p></aside></article>
 <p class="text-sm text-gray-500 mt-6">Author: <a class="text-blue-600 hover:underline font-medium" href="../about.html">Nasir Mahmood Abbasi, PhD</a> · Category: Foundations &amp; Prerequisites</p>
 <nav aria-label="Learning path continuation" class="reader-sequence" id="reader-course-navigation">
@@ -511,7 +575,7 @@ TP53   control            1           150.0         110294.1</code></pre>
 </script>
 <script src="../assets/vendor/prism/prism-1.29.0.js"></script>
 <script id="tutorial-code-data">
-window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"r-tidyverse-fundamentals":{"blocks":[{"language":"text","sha256":"b3d2639c18b0af49cfa982a99b7aeefec2bfe9d3bf2ae1bcf633cfe616079e47"},{"language":"bash","sha256":"7780b3d7bb4b1e72bb3b99016e70a46fc7238556a0dbd0d24770d287f4692322"},{"language":"bash","sha256":"50e2224ffe2f207f3ff17f80330756fd84512635e9c1917a0f533f9a9708bd4e"},{"language":"bash","sha256":"afc606ff5162f55a40390f53d251a45c97f3eed169212eb22524a258e6dff55b"},{"language":"bash","sha256":"6a54bf90be78eaf7ea800d50896e14335cfe5a93eb5311f3399f4b7a802bfcbe"},{"language":"bash","sha256":"960f2b2cd8b1cf5bdc7b34e748526eb7c3cbc0638669deaf03e5fbe6045e95a7"},{"language":"r","sha256":"b2314ec7da026b83d17f0924ea164fea6d0d12e544239b9ca4437590b522a1d1"},{"language":"r","sha256":"722bc1c6eb03e6e517473c29aa31a98dce75c68744d8ff199d7f7665a8d80983"},{"language":"text","sha256":"95509b709469334b72a352c6b04e2c9ca4e371b1cbd63997b65fd34f06089491"}],"groups":[]}}};
+window.OMICS_TUTORIAL_CODE = {"schema":1,"tutorials":{"r-tidyverse-fundamentals":{"blocks":[{"language":"text","sha256":"ecc86b34007f7021ef76a7d8affb2ef86ec8e96caeb54c0e44ec08aed0f18f8a"},{"language":"bash","sha256":"7780b3d7bb4b1e72bb3b99016e70a46fc7238556a0dbd0d24770d287f4692322"},{"language":"bash","sha256":"50e2224ffe2f207f3ff17f80330756fd84512635e9c1917a0f533f9a9708bd4e"},{"language":"bash","sha256":"afc606ff5162f55a40390f53d251a45c97f3eed169212eb22524a258e6dff55b"},{"language":"bash","sha256":"6a54bf90be78eaf7ea800d50896e14335cfe5a93eb5311f3399f4b7a802bfcbe"},{"language":"text","sha256":"3af84683e6dd1aace4702f2e88ad7596fe4671a4343c91e5a1c6501e5d2105f9"},{"language":"r","sha256":"b2314ec7da026b83d17f0924ea164fea6d0d12e544239b9ca4437590b522a1d1"},{"language":"bash","sha256":"960f2b2cd8b1cf5bdc7b34e748526eb7c3cbc0638669deaf03e5fbe6045e95a7"},{"language":"text","sha256":"2b8ff35a5dbada01a8ca4670a86c432c28821b3f4552f6dbd38a4b5b9cbda64e"},{"language":"r","sha256":"722bc1c6eb03e6e517473c29aa31a98dce75c68744d8ff199d7f7665a8d80983"},{"language":"text","sha256":"95509b709469334b72a352c6b04e2c9ca4e371b1cbd63997b65fd34f06089491"},{"language":"r","sha256":"e83e328e30a301cffe6188ad9a7b02222da1f78241ec2070cda31942fb21567c"},{"language":"text","sha256":"dc94f492751f91876682afbf3959a95194356c65800101dd030e5f876cc5ff08"}],"groups":[]}}};
 </script>
 <script src="../code-tabs.js?v=20261026-startup-v1"></script>
 <script src="../copy-code.js?v=20261025-r-first-v1"></script>

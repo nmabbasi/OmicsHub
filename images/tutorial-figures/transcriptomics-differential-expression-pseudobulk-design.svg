@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 450" width="960" height="450" role="img" aria-labelledby="pb-svg-title pb-svg-desc">
+  <title id="pb-svg-title">Cell-level pseudoreplication versus donor-level pseudobulk differential expression</title>
+  <desc id="pb-svg-desc">Comparison showing why pooling single cells across donors inflates false discoveries, whereas summing raw integer UMI counts per donor and cell type, checking full-rank design matrices, and fitting DESeq2 with apeglm shrinkage calibrates inference.</desc>
+  <defs>
+    <marker id="arrow-red" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#B91C1C"/>
+    </marker>
+    <marker id="arrow-blue" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#1D4ED8"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="960" height="450" rx="14" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="1.5"/>
+  <text x="24" y="34" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="18.5" font-weight="700" fill="#0F172A">Pseudoreplication vs. Donor-Aware Pseudobulk Differential Expression</text>
+  <text x="24" y="55" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="12.5" fill="#475569">Biological replicates are donors or specimens, not individual cells sampled from the same tissue suspension.</text>
+
+  <!-- Row 1: Wrong route (pseudoreplication) -->
+  <rect x="24" y="74" width="912" height="138" rx="10" fill="#FEF2F2" stroke="#FCA5A5" stroke-width="1.4"/>
+  <rect x="38" y="84" width="440" height="22" rx="5" fill="#991B1B"/>
+  <text x="48" y="99" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11.5" font-weight="700" fill="#FFFFFF">AVOID: Cell-level test across donors (pseudoreplication)</text>
+
+  <rect x="38" y="116" width="252" height="82" rx="8" fill="#FFFFFF" stroke="#FECACA" stroke-width="1.3"/>
+  <text x="50" y="137" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="12.5" font-weight="700" fill="#7F1D1D">Pool all cells by condition</text>
+  <text x="50" y="155" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11" fill="#334155">3 Control donors -&gt; 750 cells</text>
+  <text x="50" y="171" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11" fill="#334155">3 Treated donors -&gt; 750 cells</text>
+  <text x="50" y="187" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="10.5" fill="#64748B">Donor identity is ignored</text>
+
+  <line x1="292" y1="157" x2="322" y2="157" stroke="#B91C1C" stroke-width="1.8" marker-end="url(#arrow-red)"/>
+
+  <rect x="326" y="116" width="272" height="82" rx="8" fill="#FFFFFF" stroke="#FECACA" stroke-width="1.3"/>
+  <text x="338" y="137" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="12.5" font-weight="700" fill="#7F1D1D">Run cell-level Wilcoxon / GLM</text>
+  <text x="338" y="155" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11" fill="#334155">Counts 1,500 correlated cells as</text>
+  <text x="338" y="171" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11" fill="#334155">1,500 independent replicates</text>
+  <text x="338" y="187" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="10.5" fill="#64748B">Use cell tests only for cluster markers</text>
+
+  <line x1="600" y1="157" x2="630" y2="157" stroke="#B91C1C" stroke-width="1.8" marker-end="url(#arrow-red)"/>
+
+  <rect x="634" y="116" width="288" height="82" rx="8" fill="#FFFFFF" stroke="#FECACA" stroke-width="1.3"/>
+  <text x="646" y="137" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="12.5" font-weight="700" fill="#991B1B">Inflated false discoveries</text>
+  <text x="646" y="155" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11" fill="#334155">Standard errors shrink artificially;</text>
+  <text x="646" y="171" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11" fill="#334155">donor baseline noise yields tiny p</text>
+  <text x="646" y="187" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="10.5" fill="#64748B">Null example: p = 2.96e-06 vs 0.76</text>
+
+  <!-- Row 2: Recommended pseudobulk route -->
+  <rect x="24" y="226" width="912" height="152" rx="10" fill="#EFF6FF" stroke="#93C5FD" stroke-width="1.4"/>
+  <rect x="38" y="236" width="492" height="22" rx="5" fill="#1E3A8A"/>
+  <text x="48" y="251" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11.5" font-weight="700" fill="#FFFFFF">RECOMMENDED: Donor-level pseudobulk aggregation + DESeq2</text>
+
+  <rect x="38" y="268" width="252" height="96" rx="8" fill="#FFFFFF" stroke="#BFDBFE" stroke-width="1.3"/>
+  <text x="50" y="289" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="12.5" font-weight="700" fill="#1E3A8A">1. Sum raw UMI counts</text>
+  <text x="50" y="307" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11" fill="#334155">Filter to one cell type (e.g., CD4 T)</text>
+  <text x="50" y="323" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11" fill="#334155">Join Assay5 layers; drop &lt; 20 cells</text>
+  <text x="50" y="339" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11" fill="#334155">Sum integer counts per sample_id</text>
+  <text x="48" y="355" font-family="monospace" font-size="9.5" fill="#1D4ED8">AggregateExpression(return.seurat=FALSE)</text>
+
+  <line x1="292" y1="316" x2="322" y2="316" stroke="#1D4ED8" stroke-width="1.8" marker-end="url(#arrow-blue)"/>
+
+  <rect x="326" y="268" width="272" height="96" rx="8" fill="#FFFFFF" stroke="#BFDBFE" stroke-width="1.3"/>
+  <text x="338" y="289" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="12.5" font-weight="700" fill="#1E3A8A">2. Verify sample sheet &amp; rank</text>
+  <text x="338" y="307" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11" fill="#334155">1 matrix column = 1 biological donor</text>
+  <text x="338" y="323" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11" fill="#334155">n = 3 Control vs 3 Treated columns</text>
+  <text x="338" y="339" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11" fill="#334155">Confirm qr(X)$rank == ncol(X)</text>
+  <text x="338" y="355" font-family="monospace" font-size="10.5" fill="#1D4ED8">~ condition  or  ~ donor + condition</text>
+
+  <line x1="600" y1="316" x2="630" y2="316" stroke="#1D4ED8" stroke-width="1.8" marker-end="url(#arrow-blue)"/>
+
+  <rect x="634" y="268" width="288" height="96" rx="8" fill="#FFFFFF" stroke="#BFDBFE" stroke-width="1.3"/>
+  <text x="646" y="289" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="12.5" font-weight="700" fill="#1E3A8A">3. Model &amp; validate diagnostics</text>
+  <text x="646" y="307" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11" fill="#334155">Pre-filter by smallestGroupSize</text>
+  <text x="646" y="323" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11" fill="#334155">DESeq() NB GLM + apeglm lfcShrink</text>
+  <text x="646" y="339" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11" fill="#334155">Audit p-value hist, PCA, &amp; donor counts</text>
+  <text x="646" y="355" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="10.5" fill="#0F766E">Controls FDR across biological donors</text>
+
+  <!-- Footer design boundary -->
+  <rect x="24" y="392" width="912" height="44" rx="8" fill="#FFFBEB" stroke="#FCD34D" stroke-width="1.3"/>
+  <text x="38" y="411" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11.5" font-weight="700" fill="#92400E">Design limit:</text>
+  <text x="118" y="411" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11.5" fill="#78350F">If all Control donors sit in Batch 1 and all Treated donors sit in Batch 2, the model ~ batch + condition is rank-deficient</text>
+  <text x="38" y="427" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11" fill="#78350F">(rank &lt; ncol). Sequencing more cells per donor does not fix experimental confounding or add biological degrees of freedom.</text>
+</svg>
