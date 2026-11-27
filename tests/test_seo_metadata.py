@@ -23,7 +23,7 @@ class SeoMetadataTests(unittest.TestCase):
                 self.assertIn(field, entity)
         self.assertEqual(entity['author']['name'], 'Nasir Mahmood Abbasi, PhD')
         self.assertTrue(entity['mainEntityOfPage']['@id'].endswith('/tutorials/scrna-seq-basics.html'))
-        self.assertEqual(entity['dateModified'], '2026-11-20')
+        self.assertEqual(entity['dateModified'], '2026-11-26')
 
     def test_tutorial_catalogue_has_correct_open_graph_url(self):
         text = (ROOT / 'tutorials.html').read_text(encoding='utf-8')

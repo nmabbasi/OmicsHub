@@ -211,7 +211,7 @@ class AdSenseTrustAndPolicyPageTests(unittest.TestCase):
             with self.subTest(excluded=url):
                 self.assertNotIn(url, dates)
         self.assertEqual(dates["https://theomicshub.com/"], "2026-11-20")
-        self.assertEqual(dates["https://theomicshub.com/tutorials.html"], "2026-11-20")
+        self.assertEqual(dates["https://theomicshub.com/tutorials.html"], "2026-11-27")
 
 
 if __name__ == "__main__":
